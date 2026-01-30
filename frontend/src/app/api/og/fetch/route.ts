@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-export const runtime = "edge";
+import { createClient } from "@/lib/supabase/server";
 
 function decodeHTMLEntities(text: string): string {
   return text.replace(/&(#?[a-zA-Z0-9]+);/g, (match, entity) => {
@@ -68,6 +67,12 @@ async function extractMetadata(html: string) {
 }
 
 export async function GET(request: Request) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
 

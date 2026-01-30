@@ -66,6 +66,10 @@ export async function GET(
     const statusFilter = searchParams.get("status"); // 'approved', 'pending', 'all'
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // If budgetLineId is provided, get the cost_code_id from budget_lines
     let costCodeId: string | null = null;

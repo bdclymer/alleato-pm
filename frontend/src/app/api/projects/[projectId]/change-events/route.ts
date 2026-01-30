@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * ============================================================================
  * CHANGE EVENTS API ROUTE (Collection-Level)
@@ -192,7 +190,7 @@ export async function GET(
     const changeEventsWithTotals: ChangeEventWithTotals[] = await Promise.all(
       (data || []).map(async (event: ChangeEvent & { change_event_line_items?: { count: number }[] }) => {
         // Get line items to calculate totals
-        const { data: lineItems } = await supabase
+        const { data: lineItems } = await (supabase as any)
           .from('change_event_line_items')
           .select('revenue_rom, cost_rom, non_committed_cost')
           .eq('change_event_id', event.id)
@@ -307,12 +305,13 @@ export async function POST(
       parseInt(projectId, 10)
     )
 
-    // Check if user exists in the users/profiles table (for foreign key constraint)
-    const { data: userExists } = await (supabase as any)
-      .from('profiles')
-      .select('id')
-      .eq('id', user.id)
+    // Look up person via users_auth bridge (for foreign key constraint)
+    const { data: authLink } = await (supabase as any)
+      .from('users_auth')
+      .select('person_id')
+      .eq('auth_user_id', user.id)
       .single()
+    const userExists = authLink ? { id: authLink.person_id } : null
 
     // Map the validated data to database schema
     const dbData: Database['public']['Tables']['change_events']['Insert'] = {

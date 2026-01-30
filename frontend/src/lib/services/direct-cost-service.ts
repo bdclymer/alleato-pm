@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * =============================================================================
  * DIRECT COST SERVICE LAYER
@@ -49,11 +47,12 @@ export class DirectCostService {
 
     // Build the main query
     let query = this.supabase
-      .from("direct_costs_with_details")
+      .from("direct_costs")
       .select(
         `
         *,
-        line_items:direct_cost_line_items(*)
+        line_items:direct_cost_line_items(*),
+        vendor:vendors(*)
       `
       )
       .eq("project_id", projectId)
@@ -94,12 +93,9 @@ export class DirectCostService {
 
     // Apply search across multiple fields
     if (search) {
-      query = query.or(`
-        description.ilike.%${search}%,
-        invoice_number.ilike.%${search}%,
-        vendor_name.ilike.%${search}%,
-        employee_name.ilike.%${search}%
-      `);
+      query = query.or(
+        `description.ilike.%${search}%,invoice_number.ilike.%${search}%`
+      );
     }
 
     // Apply sorting
@@ -191,12 +187,12 @@ export class DirectCostService {
     costId: string
   ): Promise<DirectCostWithLineItems | null> {
     const { data, error } = await this.supabase
-      .from("direct_costs_with_details")
+      .from("direct_costs")
       .select(
         `
         *,
         line_items:direct_cost_line_items(*),
-        attachments:direct_cost_attachments(*)
+        vendor:vendors(*)
       `
       )
       .eq("project_id", projectId)
@@ -565,8 +561,8 @@ export class DirectCostService {
 
     // Get recent activity
     const { data: recentCosts } = await this.supabase
-      .from("direct_costs_with_details")
-      .select("*")
+      .from("direct_costs")
+      .select("*, vendor:vendors(*)")
       .eq("project_id", projectId)
       .eq("is_deleted", false)
       .order("updated_at", { ascending: false })

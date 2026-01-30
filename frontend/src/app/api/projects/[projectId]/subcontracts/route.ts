@@ -92,15 +92,21 @@ export async function POST(
       `[Subcontracts API] Authenticated user: ${user.email} (${user.id})`,
     );
 
-    // Check if user has access to this project
-    const { data: projectAccess, error: accessError } = await supabase
-      .from("project_users")
-      .select("role")
-      .eq("project_id", parseInt(projectId))
-      .eq("user_id", user.id)
+    // Look up person_id from auth user
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
       .single();
 
-    if (accessError || !projectAccess) {
+    const { data: membership, error: accessError } = await supabase
+      .from("project_directory_memberships")
+      .select("role, status")
+      .eq("project_id", parseInt(projectId))
+      .eq("person_id", authLink?.person_id ?? "")
+      .single();
+
+    if (accessError || !membership || membership.status !== "active") {
       console.error(
         "[Subcontracts API] Project access check failed:",
         accessError,
@@ -108,30 +114,15 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Access denied - you do not have permission to create subcontracts for this project",
-          details: `User ${user.email} is not a member of project ${projectId}`,
-        },
-        { status: 403 },
-      );
-    }
-
-    const allowedRoles = ["admin", "project_manager", "editor"];
-    if (!allowedRoles.includes(projectAccess.role)) {
-      console.error(
-        `[Subcontracts API] Insufficient role: ${projectAccess.role}`,
-      );
-      return NextResponse.json(
-        {
-          error:
-            "Insufficient permissions - you need admin, project_manager, or editor role to create subcontracts",
-          details: `Your current role is: ${projectAccess.role}`,
+            "Forbidden: You do not have permission to access this project",
+          details: `User ${user.email} is not an active member of project ${projectId}`,
         },
         { status: 403 },
       );
     }
 
     console.warn(
-      `[Subcontracts API] User role: ${projectAccess.role} - authorized`,
+      `[Subcontracts API] User membership status: ${membership.status} - authorized`,
     );
 
     // Parse and validate request body

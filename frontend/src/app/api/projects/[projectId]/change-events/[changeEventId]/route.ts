@@ -81,8 +81,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Get creator info
     const { data: creator } = await supabase
-      .from("users")
-      .select("id, email")
+      .from("people")
+      .select("id, email, first_name, last_name")
       .eq("id", changeEvent.created_by)
       .single();
 

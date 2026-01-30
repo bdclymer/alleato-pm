@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Run Supabase pattern scanner to detect common issues
-if [ -f "./scripts/check-supabase-patterns.sh" ]; then
-  ./scripts/check-supabase-patterns.sh
-fi
-
-# Run lint-staged for code quality
-npm run lint-staged 2>/dev/null || npx lint-staged

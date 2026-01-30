@@ -74,10 +74,11 @@ export function BudgetModificationsModal({
       if (response.ok) {
         const data = await response.json();
         setModifications(data.modifications || []);
-      } else {
-        }
+      }
     } catch (error) {
-      } finally {
+      console.error("Failed to fetch budget modifications:", error);
+      // Intentionally swallowed: modal shows empty state on error
+    } finally {
       setLoading(false);
     }
   }, [projectId, budgetLineId, statusFilter]);

@@ -85,6 +85,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           setSelectedProjectState(null);
         }
       } catch (error) {
+        console.error("Failed to fetch project details:", error);
         setSelectedProjectState(null);
       } finally {
         setIsLoading(false);

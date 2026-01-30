@@ -68,7 +68,12 @@ export function CommittedCostsModal({
         setCommitments(data.commitments || []);
       }
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch committed costs:", error);
+
+      // Intentionally swallowed: modal shows empty state on error
+
+    } finally {
       setLoading(false);
     }
   };

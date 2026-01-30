@@ -1,3 +1,27 @@
+/**
+ * @file etl_ingest_procore_crawl.js
+ * @description ETL script that reads metadata.json files from crawl output and
+ * ingests discovered UI actions into Supabase (app_system_actions table).
+ *
+ * Reads from: dom/<page-name>/metadata.json
+ *
+ * Extracts actions from:
+ *   - systemActions[]    (interaction-discovered actions)
+ *   - clickableDetails[] (buttons, links)
+ *   - dropdownDetails[]  (dropdown menus)
+ *   - tabDetails[]       (tab navigation)
+ *
+ * Environment variables:
+ *   SUPABASE_URL              - Supabase project URL
+ *   SUPABASE_SERVICE_ROLE_KEY - Supabase service role key
+ *   PROCORE_MODULE            - Module name (e.g. "submittals")
+ *   CRAWL_ROOT_DIR            - Root directory for crawl data (default: ./procore-crawls)
+ *   CRAWL_DIR                 - Absolute path override for module directory
+ *
+ * Usage:
+ *   PROCORE_MODULE=submittals node etl_ingest_procore_crawl.js
+ *   CRAWL_DIR=/path/to/crawl PROCORE_MODULE=submittals node etl_ingest_procore_crawl.js
+ */
 import fs from "fs-extra";
 import path from "path";
 import dotenv from "dotenv";
@@ -17,10 +41,8 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
-// CRAWL_DIR: absolute path override (new PRPs folder structure)
-// Falls back to CRAWL_ROOT_DIR + PROCORE_MODULE for backwards compatibility
 const MODULE_DIR = process.env.CRAWL_DIR || path.join(CRAWL_ROOT_DIR, PROCORE_MODULE);
-const PAGES_DIR = path.join(MODULE_DIR, "pages");
+const DOM_DIR = path.join(MODULE_DIR, "dom");
 
 async function getAllMetadataFiles(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -64,21 +86,23 @@ async function insertAction(label, triggerType, source) {
   }
 }
 
-// V1: metadata.systemActions[] — used by scheduling and earlier crawls
-function extractV1(metadata) {
-  if (!Array.isArray(metadata.systemActions)) return [];
-  return metadata.systemActions.map(a => ({
-    label: a.label,
-    triggerType: a.type,
-    source: "interaction"
-  }));
-}
-
-// V2: clickableDetails[], dropdownDetails[], menuItems[], tabDetails[], tabName
-function extractV2(metadata) {
+/**
+ * Extract actions from metadata produced by the generic crawler.
+ * Reads systemActions[], clickableDetails[], dropdownDetails[], tabDetails[].
+ */
+function extractActions(metadata) {
   const actions = [];
 
-  // Buttons from clickableDetails
+  // Interaction-discovered actions (context menus, modal buttons, etc.)
+  if (Array.isArray(metadata.systemActions)) {
+    for (const a of metadata.systemActions) {
+      if (a.text) {
+        actions.push({ label: a.text, triggerType: a.type, source: "interaction" });
+      }
+    }
+  }
+
+  // Clickable elements (buttons, links)
   if (Array.isArray(metadata.clickableDetails)) {
     for (const btn of metadata.clickableDetails) {
       if (btn.text) {
@@ -87,21 +111,16 @@ function extractV2(metadata) {
     }
   }
 
-  // Menu items from dropdown pages (menuItems at top level)
-  if (Array.isArray(metadata.menuItems)) {
-    for (const item of metadata.menuItems) {
-      if (item.text) {
-        actions.push({ label: item.text, triggerType: item.type || "menu-item", source: "dropdown" });
+  // Dropdown details
+  if (Array.isArray(metadata.dropdownDetails)) {
+    for (const item of metadata.dropdownDetails) {
+      if (item.text || item.label) {
+        actions.push({ label: item.text || item.label, triggerType: item.type || "dropdown", source: "dropdown" });
       }
     }
   }
 
-  // Tab name from tab pages (tabName at top level)
-  if (metadata.tabName) {
-    actions.push({ label: metadata.tabName, triggerType: "tab", source: "tab" });
-  }
-
-  // Tabs from tabDetails on main pages
+  // Tabs
   if (Array.isArray(metadata.tabDetails)) {
     for (const tab of metadata.tabDetails) {
       if (tab.text) {
@@ -116,7 +135,12 @@ function extractV2(metadata) {
 async function runETL() {
   console.log(`🚀 ETL for ${PROCORE_MODULE}`);
 
-  const files = await getAllMetadataFiles(PAGES_DIR);
+  if (!await fs.pathExists(DOM_DIR)) {
+    console.error(`❌ No dom/ directory found at ${DOM_DIR}`);
+    process.exit(1);
+  }
+
+  const files = await getAllMetadataFiles(DOM_DIR);
   console.log(`📄 Found ${files.length} metadata files`);
 
   let inserted = 0;
@@ -124,12 +148,7 @@ async function runETL() {
 
   for (const file of files) {
     const metadata = await fs.readJson(file);
-
-    // Try V1 first, then V2
-    let actions = extractV1(metadata);
-    if (actions.length === 0) {
-      actions = extractV2(metadata);
-    }
+    const actions = extractActions(metadata);
 
     if (actions.length === 0) {
       skipped++;

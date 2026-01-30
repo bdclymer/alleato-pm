@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getPasswordChecks, isPasswordValid } from "@/lib/validation/password";
 
 export function SignUpForm({
   className,
@@ -39,8 +40,8 @@ export function SignUpForm({
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    if (!isPasswordValid(password)) {
+      setError("Password does not meet all requirements");
       setIsLoading(false);
       return;
     }
@@ -118,6 +119,18 @@ export function SignUpForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {password.length > 0 && (
+                  <ul className="space-y-1 text-xs">
+                    {getPasswordChecks(password).map((check) => (
+                      <li
+                        key={check.label}
+                        className={check.met ? "text-emerald-600" : "text-muted-foreground"}
+                      >
+                        {check.met ? "\u2713" : "\u2022"} {check.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">

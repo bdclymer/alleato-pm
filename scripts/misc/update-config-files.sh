@@ -203,7 +203,7 @@ backend/backend.log
 
 # Tests
 frontend/tests/test-results/
-frontend/tests/playwright-report/
+tests/playwright-report/
 backend/tests/.pytest_cache/
 
 EOF

@@ -169,7 +169,9 @@ export function OriginalBudgetEditModal({
 
       onClose();
     } catch (err) {
-      } finally {
+      console.error("Failed to save original budget:", err);
+      // Intentionally swallowed: onSave callback handles error notifications
+    } finally {
       setSaving(false);
     }
   };

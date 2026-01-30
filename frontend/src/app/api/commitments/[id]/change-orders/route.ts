@@ -1,5 +1,35 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+// Zod schema for commitment change order creation
+// OWASP: Input validation on financial mutation endpoints (A03:2021 - Injection)
+const createCommitmentChangeOrderSchema = z.object({
+  change_order_number: z
+    .string()
+    .trim()
+    .min(1, "Change order number is required")
+    .max(100, "Change order number must be at most 100 characters"),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(2000, "Description must be at most 2000 characters"),
+  amount: z.coerce
+    .number({ message: "Amount must be a number" }),
+  status: z
+    .enum(["draft", "pending", "approved", "executed", "void"])
+    .default("draft"),
+  requested_date: z
+    .string()
+    .refine(
+      (val) => !val || !Number.isNaN(Date.parse(val)),
+      "Must be a valid date string",
+    )
+    .optional()
+    .nullable(),
+  requested_by: z.string().uuid().optional().nullable(),
+});
 
 /**
  * GET /api/commitments/[id]/change-orders
@@ -126,39 +156,28 @@ export async function POST(
       );
     }
 
-    // Validate required fields
-    if (!body.change_order_number || body.change_order_number.trim() === "") {
+    // Validate request body with Zod schema
+    const validation = createCommitmentChangeOrderSchema.safeParse(body);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Change order number is required" },
+        { error: "Validation failed", details: validation.error.flatten() },
         { status: 400 },
       );
     }
 
-    if (!body.description || body.description.trim() === "") {
-      return NextResponse.json(
-        { error: "Description is required" },
-        { status: 400 },
-      );
-    }
-
-    if (body.amount === undefined || body.amount === null) {
-      return NextResponse.json(
-        { error: "Amount is required" },
-        { status: 400 },
-      );
-    }
+    const validated = validation.data;
 
     // Create change order
     const { data: newChangeOrder, error: createError } = await supabase
       .from("contract_change_orders")
       .insert({
         contract_id: id,
-        change_order_number: body.change_order_number.trim(),
-        description: body.description.trim(),
-        amount: Number(body.amount),
-        status: body.status || "draft",
-        requested_date: body.requested_date || new Date().toISOString(),
-        requested_by: body.requested_by || user.id,
+        change_order_number: validated.change_order_number,
+        description: validated.description,
+        amount: validated.amount,
+        status: validated.status,
+        requested_date: validated.requested_date || new Date().toISOString(),
+        requested_by: validated.requested_by || user.id,
       })
       .select()
       .single();

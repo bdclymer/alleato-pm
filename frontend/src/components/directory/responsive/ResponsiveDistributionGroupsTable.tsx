@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { type DistributionGroupWithMembers } from "@/services/distributionGroupService";

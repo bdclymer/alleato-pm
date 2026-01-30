@@ -97,6 +97,10 @@ export async function POST(
     }
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Fetch project's vertical markup settings
     const { data: markups, error } = await supabase

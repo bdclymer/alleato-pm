@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -28,6 +26,7 @@ interface UseDirectoryResult {
   };
   refetch: () => void;
   updateFilters: (filters: DirectoryFilters) => void;
+  offline: boolean;
 }
 
 /**
@@ -68,10 +67,9 @@ export function useDirectory(
     const signature = JSON.stringify({
       projectId,
       filters,
-      search,
     });
     return `directory:${signature}`;
-  }, [projectId, filters, search]);
+  }, [projectId, filters]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

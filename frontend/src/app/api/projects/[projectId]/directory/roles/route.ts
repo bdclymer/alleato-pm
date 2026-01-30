@@ -1,7 +1,5 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -12,13 +10,17 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
-    const supabase = createServiceClient();
+    const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
 
     // Fetch roles
     const { data: roles, error: rolesError } = await supabase
       .from("project_roles")
       .select("id, role_name, role_type, display_order")
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .order("display_order", { ascending: true });
 
     if (rolesError) {
@@ -125,6 +127,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
     const body = await request.json();
     const { role_id, member_person_ids } = body;
 
@@ -142,14 +150,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = createServiceClient();
-
     // Verify the role belongs to this project
     const { data: role, error: roleError } = await supabase
       .from("project_roles")
       .select("id, project_id")
       .eq("id", role_id)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .single();
 
     if (roleError || !role) {
@@ -205,6 +211,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
     const body = await request.json();
     const { role_name, role_type = "Person" } = body;
 
@@ -215,13 +227,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = createServiceClient();
-
     // Get the highest display_order for this project
     const { data: maxOrder } = await supabase
       .from("project_roles")
       .select("display_order")
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .order("display_order", { ascending: false })
       .limit(1)
       .single();
@@ -232,7 +242,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data: newRole, error: insertError } = await supabase
       .from("project_roles")
       .insert({
-        project_id: parseInt(projectId, 10),
+        project_id: projectIdNum,
         role_name,
         role_type,
         display_order: newDisplayOrder,

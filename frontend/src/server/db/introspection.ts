@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * Database Introspection Utilities
  *
@@ -85,7 +83,7 @@ async function getTableColumnsViaQuery(
   const supabase = createServiceClient();
 
   // Get one row (or empty) to determine columns
-  const { data, error } = await supabase.from(table).select("*").limit(1);
+  const { data, error } = await (supabase as any).from(table).select("*").limit(1);
 
   if (error) {
     throw new Error(`Failed to query table ${table}: ${error.message}`);

@@ -69,7 +69,12 @@ export function DirectCostsModal({
         setCosts(data.costs || []);
       }
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch direct costs:", error);
+
+      // Intentionally swallowed: modal shows empty state on error
+
+    } finally {
       setLoading(false);
     }
   };

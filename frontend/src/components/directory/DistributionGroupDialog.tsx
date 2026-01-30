@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -76,7 +74,7 @@ export function DistributionGroupDialog({
   const isEditing = !!group;
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       name: "",
       description: "",
@@ -89,30 +87,35 @@ export function DistributionGroupDialog({
   // Load existing group data and members
   useEffect(() => {
     if (group) {
+      // Extract metadata fields if they exist
+      const metadata = (group as any).metadata || {};
+      const type = metadata.type || "internal";
+      const isActive = group.status === "active";
+
       form.reset({
         name: group.name || "",
         description: group.description || "",
-        type: (group.type as "internal" | "external" | "mixed") || "internal",
-        is_active: group.is_active ?? true,
+        type: type as "internal" | "external" | "mixed",
+        is_active: isActive,
         member_ids: [],
       });
 
       // Load group members
-      loadGroupMembers(group.id);
+      loadGroupMembers(String(group.id));
     } else {
       form.reset();
       setSelectedMembers([]);
     }
   }, [group, form]);
 
-  const loadGroupMembers = async (groupId: number) => {
+  const loadGroupMembers = async (groupId: string) => {
     try {
       const response = await fetch(
         `/api/projects/${projectId}/directory/groups/${groupId}/members`
       );
       if (response.ok) {
         const members = await response.json();
-        const memberIds = members.map((m: any) => m.person_id);
+        const memberIds = members.map((m: any) => Number(m.person_id));
         setSelectedMembers(memberIds);
         form.setValue("member_ids", memberIds);
       }
@@ -221,7 +224,7 @@ export function DistributionGroupDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -244,7 +247,7 @@ export function DistributionGroupDialog({
                   <FormItem>
                     <FormLabel>Group Type</FormLabel>
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={field.onChange as any}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -319,7 +322,7 @@ export function DistributionGroupDialog({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selectedMembers.map((memberId) => {
-                      const person = people.find((p) => p.id === memberId);
+                      const person = people.find((p) => String(p.id) === String(memberId));
                       if (!person) return null;
                       return (
                         <Badge
@@ -330,7 +333,7 @@ export function DistributionGroupDialog({
                           {person.first_name} {person.last_name}
                           <button
                             type="button"
-                            onClick={() => removeMember(memberId)}
+                            onClick={() => removeMember(Number(memberId))}
                             className="ml-1 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
@@ -368,12 +371,12 @@ export function DistributionGroupDialog({
                           className="flex items-center space-x-3"
                         >
                           <Checkbox
-                            checked={selectedMembers.includes(person.id)}
-                            onCheckedChange={() => toggleMember(person.id)}
+                            checked={selectedMembers.includes(Number(person.id))}
+                            onCheckedChange={() => toggleMember(Number(person.id))}
                           />
                           <label
                             className="flex-1 cursor-pointer text-sm"
-                            onClick={() => toggleMember(person.id)}
+                            onClick={() => toggleMember(Number(person.id))}
                           >
                             <div className="font-medium">
                               {person.first_name} {person.last_name}

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -107,7 +105,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Template name is required").max(255),
   description: z.string().optional(),
   scope: z.enum(["global", "project"]).default("project"),
-  permissions: z.record(z.boolean()).default({}),
+  permissions: z.record(z.string(), z.boolean()).default({}),
   is_active: z.boolean().default(true),
 });
 
@@ -134,7 +132,7 @@ export function PermissionTemplateDialog({
   const isEditing = !!template;
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       name: "",
       description: "",
@@ -147,16 +145,16 @@ export function PermissionTemplateDialog({
   // Load existing template data
   useEffect(() => {
     if (template) {
-      const permissions = typeof template.permissions === 'object' && template.permissions !== null
-        ? template.permissions as Record<string, boolean>
-        : {};
+      // Extract permissions from rules_json field
+      const rulesJson = template.rules_json as Record<string, any> || {};
+      const permissions = rulesJson.permissions || {};
 
       form.reset({
         name: template.name || "",
         description: template.description || "",
         scope: (template.scope as "global" | "project") || "project",
-        permissions: permissions,
-        is_active: template.is_active ?? true,
+        permissions: permissions as Record<string, boolean>,
+        is_active: !template.is_system,
       });
     } else {
       form.reset();
@@ -189,12 +187,11 @@ export function PermissionTemplateDialog({
 
   // Copy permissions from selected template
   const handleCopyTemplate = () => {
-    const templateToCopy = existingTemplates.find(t => t.id === selectedTemplate);
-    if (templateToCopy && templateToCopy.permissions) {
-      const permissions = typeof templateToCopy.permissions === 'object'
-        ? templateToCopy.permissions as Record<string, boolean>
-        : {};
-      form.setValue("permissions", permissions);
+    const templateToCopy = existingTemplates.find(t => String(t.id) === selectedTemplate);
+    if (templateToCopy) {
+      const rulesJson = templateToCopy.rules_json as Record<string, any> || {};
+      const permissions = rulesJson.permissions || {};
+      form.setValue("permissions", permissions as Record<string, boolean>);
       toast.success(`Copied permissions from ${templateToCopy.name}`);
     }
   };
@@ -299,7 +296,7 @@ export function PermissionTemplateDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col space-y-6 overflow-hidden">
+          <form onSubmit={form.handleSubmit(onSubmit as any)} className="flex-1 flex flex-col space-y-6 overflow-hidden">
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -323,7 +320,7 @@ export function PermissionTemplateDialog({
                     <FormItem>
                       <FormLabel>Scope</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={field.onChange as any}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -399,7 +396,7 @@ export function PermissionTemplateDialog({
                     </SelectTrigger>
                     <SelectContent>
                       {existingTemplates.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <SelectItem key={t.id} value={String(t.id)}>
                           {t.name}
                         </SelectItem>
                       ))}
@@ -460,7 +457,7 @@ export function PermissionTemplateDialog({
                         {Object.entries(config.permissions).map(([permission, description]) => (
                           <FormField
                             key={permission}
-                            control={form.control}
+                            control={form.control as any}
                             name="permissions"
                             render={({ field }) => (
                               <FormItem className="flex flex-row items-start space-x-3 space-y-0">

@@ -36,7 +36,7 @@ test.describe.serial('Procore Budget Page - Interactive Verification', () => {
     console.log('✅ Login successful');
 
     // Save the auth state for all tests
-    await context.storageState({ path: 'playwright/.auth/procore.json' });
+    await context.storageState({ path: '../../../tests/.auth/procore.json' });
     await context.close();
   });
 

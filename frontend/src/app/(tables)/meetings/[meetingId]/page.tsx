@@ -121,7 +121,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       } else {
         }
     } catch (error) {
-      }
+
+      console.error("Failed to process meeting data:", error);
+
+    }
   }
 
   // Fallback: use meeting.content

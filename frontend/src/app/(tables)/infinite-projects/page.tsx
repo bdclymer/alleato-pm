@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * DocumentsInfiniteDemoPage (Annotated)
  *
@@ -225,7 +223,7 @@ export default function DocumentsInfiniteDemoPage() {
           </>
         ) : (
           <>
-            {data.map((row: TableRow) => {
+            {data.map((row: any) => {
               const createdLabel = safeDistanceToNow(row.created_at);
               const displayDate = safeFormatDate(row.date, "MMM d, yyyy");
 

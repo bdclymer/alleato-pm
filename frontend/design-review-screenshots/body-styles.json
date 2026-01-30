@@ -1,0 +1,7 @@
+{
+  "fontFamily": "Inter, ui-sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif, system-ui, -apple-system, \"system-ui\", \"Segoe UI\", Roboto, sans-serif",
+  "fontSize": "16px",
+  "color": "rgb(77, 77, 77)",
+  "backgroundColor": "rgb(255, 255, 255)",
+  "lineHeight": "24px"
+}

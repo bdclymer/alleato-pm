@@ -54,7 +54,7 @@ import { Text } from "@/components/ui/text";
 import type { Database } from "@/types/database.types";
 import { ContactDetailsSheet } from "./contact-details-sheet";
 
-type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface ContactWithCompany extends Contact {
@@ -166,10 +166,10 @@ const columns: ColumnDef<ContactWithCompany>[] = [
     },
   },
   {
-    accessorKey: "phone",
+    accessorKey: "phone_business",
     header: "Phone",
     cell: ({ row }) => {
-      const phone = row.original.phone;
+      const phone = row.original.phone_business || row.original.phone_mobile;
 
       return phone ? (
         <a href={`tel:${phone}`} className="text-primary hover:underline">
@@ -189,9 +189,13 @@ const columns: ColumnDef<ContactWithCompany>[] = [
     header: "Created",
     cell: ({ row }) => {
       const date = row.original.created_at;
-      return (
+      return date ? (
         <Text as="span" size="sm" tone="muted">
           {new Date(date).toLocaleDateString()}
+        </Text>
+      ) : (
+        <Text as="span" tone="muted" size="sm">
+          N/A
         </Text>
       );
     },
@@ -261,7 +265,7 @@ export function ContactsDataTable({
       columnFilters,
       pagination,
     },
-    getRowId: (row) => row.id.toString(),
+    getRowId: (row) => row.id,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,

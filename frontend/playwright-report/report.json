@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 2
     },
     "preserveOutput": "always",
     "reporter": [
@@ -44,7 +44,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "setup",
         "name": "setup",
@@ -60,7 +60,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "chromium",
         "name": "chromium",
@@ -76,7 +76,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "debug",
         "name": "debug",
@@ -92,7 +92,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "no-auth",
         "name": "no-auth",
@@ -139,7 +139,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 245,
+                  "duration": 277,
                   "errors": [],
                   "stdout": [
                     {
@@ -148,7 +148,7 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-01-28T06:14:18.621Z",
+                  "startTime": "2026-01-29T05:00:08.289Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -170,71 +170,135 @@
       ]
     },
     {
-      "title": "budget-button-center.spec.ts",
-      "file": "budget-button-center.spec.ts",
+      "title": "design-review-schedule.spec.ts",
+      "file": "design-review-schedule.spec.ts",
       "column": 0,
       "line": 0,
-      "specs": [
+      "specs": [],
+      "suites": [
         {
-          "title": "verify Add Line Item button is centered",
-          "ok": true,
-          "tags": [],
-          "tests": [
+          "title": "Schedule Page Design Review",
+          "file": "design-review-schedule.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
             {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [
+              "title": "capture all schedule views",
+              "ok": false,
+              "tags": [],
+              "tests": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 4772,
-                  "errors": [],
-                  "stdout": [
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
                     {
-                      "text": "WARNING: Could not find centered Add Line Item button container\n"
-                    },
-                    {
-                      "text": "Found 0 Add Line Item button(s)\n"
-                    },
-                    {
-                      "text": "Total buttons on page: 11\n"
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 65912,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/design-review-schedule.spec.ts",
+                            "column": 16,
+                            "line": 43
+                          },
+                          "message": "Error: page.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Board\")')\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/67/schedule\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/67/schedule\"\u001b[22m\n\n\n  41 |\n  42 |     // Capture 2: Board View\n> 43 |     await page.click('button:has-text(\"Board\")');\n     |                ^\n  44 |     await page.waitForTimeout(500);\n  45 |     await page.screenshot({\n  46 |       path: `${screenshotsDir}/02-board-view.png`,\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/design-review-schedule.spec.ts:43:16"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-29T05:00:22.819Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/design-review-schedule-Sch-92677--capture-all-schedule-views-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/design-review-schedule-Sch-92677--capture-all-schedule-views-chromium/error-context.md"
+                        }
+                      ]
                     }
                   ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-01-28T06:14:19.499Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/budget-button-center-verify-Add-Line-Item-button-is-centered-chromium/test-finished-1.png"
-                    }
-                  ]
+                  "status": "unexpected"
                 }
               ],
-              "status": "expected"
+              "id": "8ffb9896fdd9f30b48b7-ff1d344e3a4f20e280e2",
+              "file": "design-review-schedule.spec.ts",
+              "line": 14,
+              "column": 7
+            },
+            {
+              "title": "capture all schedule views",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 13783,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Screenshots saved to: /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/screenshots/schedule-design-review\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-29T05:00:08.289Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/design-review-schedule-Sch-92677--capture-all-schedule-views-debug/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "8ffb9896fdd9f30b48b7-e19b822037ee6499e4bf",
+              "file": "design-review-schedule.spec.ts",
+              "line": 14,
+              "column": 7
             }
-          ],
-          "id": "41369c56da3b4220c691-80fcc0d4d19ac1862049",
-          "file": "budget-button-center.spec.ts",
-          "line": 3,
-          "column": 5
+          ]
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-01-28T06:14:18.114Z",
-    "duration": 6301.697,
+    "startTime": "2026-01-29T05:00:07.750Z",
+    "duration": 81334.91399999999,
     "expected": 2,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }

@@ -6,7 +6,8 @@ type StatusType =
   | "change-event"
   | "change-order"
   | "prime-contract"
-  | "invoice";
+  | "invoice"
+  | "direct-cost";
 
 interface StatusConfig {
   label: string;
@@ -60,6 +61,13 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
   invoice: {
     draft: { label: "Draft", variant: "secondary" },
     submitted: { label: "Submitted", variant: "default" },
+    approved: { label: "Approved", variant: "success" },
+    paid: { label: "Paid", variant: "success", className: "bg-green-500" },
+    void: { label: "Void", variant: "destructive" },
+  },
+  "direct-cost": {
+    draft: { label: "Draft", variant: "secondary" },
+    pending_approval: { label: "Pending Approval", variant: "warning" },
     approved: { label: "Approved", variant: "success" },
     paid: { label: "Paid", variant: "success", className: "bg-green-500" },
     void: { label: "Void", variant: "destructive" },

@@ -173,7 +173,7 @@ Timestamp: YYYY-MM-DD HH:MM
 ### 2. Test Results (REQUIRED)
 Command: npx playwright test tests/e2e/{feature}*.spec.ts
 Results: X/X passing (100%)
-Report: frontend/playwright-report/index.html
+Report: tests/playwright-report/index.html
 
 ### 3. Status Update (REQUIRED)
 - TASKS.mdx checkboxes updated

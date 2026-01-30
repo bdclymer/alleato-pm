@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * Apple-style Cards Carousel Component
  *
@@ -222,7 +220,7 @@ export const Card = ({ card, index, layout = false }: CardProps) => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, handleClose]);
 
-  useOutsideClick(containerRef, () => handleClose());
+  useOutsideClick(containerRef as React.RefObject<HTMLElement>, () => handleClose());
 
   const handleOpen = () => {
     setOpen(true);

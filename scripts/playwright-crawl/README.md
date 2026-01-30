@@ -118,37 +118,32 @@ Skipping or blending these steps introduces errors.
 ```
 /scripts/playwright-crawl/
 ├── scripts/
+│   ├── crawl-procore-module.js         # Generic Playwright crawler
 │   ├── init-procore-module.js          # Initialize a new module
-│   ├── crawl-procore-scheduling.js     # Interactive Playwright crawler
+│   ├── generate-crawl-summary.js       # Post-crawl aggregation
 │   └── generate-procore-module-spec.js # Generate specs from Supabase
+│
+├── module-configs/                      # Per-tool crawler configurations
+│   ├── scheduling.json
+│   └── submittals.json
 │
 ├── etl_ingest_procore_crawl.js          # Ingest crawler data into Supabase
 │
-├── crawls/
+├── procore-crawls/                      # Crawl output (one dir per module)
 │   ├── scheduling/
-│   │   ├── screenshots/
-│   │   │   └── screenshot.png
-│   │   ├── dom/
-│   │   │   └── dom.html
-│   │   │   └── metadata.json
+│   │   ├── screenshots/               # One screenshot per page
+│   │   ├── dom/                       # DOM snapshots + metadata per page
+│   │   │   └── <page-name>/
+│   │   │       ├── dom.html
+│   │   │       ├── metadata.json
+│   │   │       └── network.json       # Intercepted API requests
 │   │   ├── reports/
-│   │   │   ├── sitemap-table.md
-│   │   │   └── detailed-report.json
-│   │   ├── spec/
-│   │   │   ├── COMMANDS.md
-│   │   │   ├── FORMS.md
-│   │   │   ├── MUTATIONS.md
-│   │   │   ├── schema.sql
-│   │   │   ├── implementation.html
-│   │   │   └── README.md
-│   │   └── README.md
+│   │   └── spec/
 │   │
-│   └── commitments/
+│   └── submittals/
 │       ├── screenshots/
 │       ├── dom/
-│       ├── reports/
-│       ├── spec/
-│       └── README.md
+│       └── reports/
 │
 ├── .env
 └── README.md
@@ -257,24 +252,85 @@ All implementations must conform to these specs.
 ## Execution Workflow (DO NOT SKIP OR REORDER)
 
 ```bash
-# 1. Initialize a new module
+# 1. Initialize a new module (creates directories + starter config)
 node scripts/init-procore-module.js <module-name>
 
-# 2. Run the crawler (interactive)
-node scripts/crawl-procore-scheduling.js
+# 2. Edit module-configs/<module-name>.json
+#    Set the correct startUrl and add page-specific interactions
 
-# 3. Ingest data into Supabase
+# 3. Run the generic crawler
+PROCORE_MODULE=<module-name> node scripts/crawl-procore-module.js
+
+# 4. Ingest data into Supabase
 PROCORE_MODULE=<module-name> node etl_ingest_procore_crawl.js
 
-# 4. Generate spec artifacts
+# 5. Generate crawl summary
+PROCORE_MODULE=<module-name> node scripts/generate-crawl-summary.js
+
+# 6. Generate spec artifacts
 PROCORE_MODULE=<module-name> node scripts/generate-procore-module-spec.js
 
-# 5. Review specs
-# 6. Define mutation behavior
-# 7. Only then: implement
+# 7. Review specs
+# 8. Define mutation behavior
+# 9. Only then: implement
 ```
 
 Skipping steps increases rework and error risk.
+
+---
+
+## Module Config Format
+
+Each module needs a JSON config in `module-configs/<module>.json`:
+
+```json
+{
+  "module": "submittals",
+  "startUrl": "https://us02.procore.com/.../tools/submittals",
+  "pages": [
+    {
+      "name": "submittals-list",
+      "label": "Submittals List",
+      "category": "submittals",
+      "interactions": [
+        {
+          "type": "right-click",
+          "selector": "tr.submittal-row",
+          "description": "Right-click row for context menu",
+          "captureMenuItems": true
+        },
+        {
+          "type": "click",
+          "selector": "button:has-text('Create')",
+          "description": "Open create dialog",
+          "waitMs": 2000,
+          "captureAfterClick": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Interaction Types
+
+| Type | Options | Description |
+|------|---------|-------------|
+| `right-click` | `captureMenuItems` | Right-click element, capture context menu items |
+| `double-click` | `captureModalButtons` | Double-click element, capture modal buttons |
+| `click` | `captureAfterClick`, `goBack`, `waitMs` | Click element, optionally capture results |
+| `hover` | `captureTooltip`, `waitMs` | Hover element, optionally capture tooltip |
+
+### Network Interception
+
+The generic crawler automatically intercepts all API requests during navigation and interactions. Captured data is saved to `dom/<page>/network.json` and includes:
+
+* Request URL, method, status code
+* Request body for mutations (POST/PUT/PATCH/DELETE)
+* Response shape (structural description without actual data values)
+* Timing information
+
+This enables downstream API contract inference without additional tooling.
 
 ---
 
@@ -292,6 +348,7 @@ Skipping steps increases rework and error risk.
 ### Active Modules
 
 * **Scheduling** — fully crawled and promoted
+* **Submittals** — Phase 0 crawl complete (empty-state, rich API data captured)
 * **Commitments** — initialized
 
 ### Explicitly Not Doing Yet
@@ -369,8 +426,6 @@ Those come later, cleanly.
 
 Planned additions include:
 
-* Network request interception
-* API contract inference
 * Multi-role crawl diffing
 * State transition modeling
 * Parity scoring

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 /**
@@ -74,13 +72,13 @@ export function PluginManagerUI() {
 
   const loadPlugins = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("plugins")
         .select("*")
         .order("name");
 
       if (error) throw error;
-      setPlugins(data || []);
+      setPlugins((data as PluginRecord[]) || []);
     } catch (error) {
       toast.error("Failed to load plugins");
     } finally {

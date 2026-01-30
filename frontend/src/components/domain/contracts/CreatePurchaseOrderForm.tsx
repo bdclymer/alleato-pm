@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -81,7 +79,7 @@ export function CreatePurchaseOrderForm({
     watch,
     setValue,
   } = useForm<CreatePurchaseOrderInput>({
-    resolver: zodResolver(CreatePurchaseOrderSchema),
+    resolver: zodResolver(CreatePurchaseOrderSchema) as any,
     defaultValues: {
       contractNumber: "PO-001",
       status: "Draft",
@@ -242,8 +240,12 @@ export function CreatePurchaseOrderForm({
 
   const totals = calculateSOVTotals();
 
+  const handleFormSubmitWrapper = async (data: CreatePurchaseOrderInput) => {
+    await handleFormSubmit(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(handleFormSubmitWrapper)} className="space-y-8">
       {/* General Information Section */}
       <section className="space-y-4">
         <h2 className="text-lg font-semibold border-b pb-2">

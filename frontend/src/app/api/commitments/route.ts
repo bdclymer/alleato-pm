@@ -1,10 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { PaginatedResponse, Commitment } from "@/app/api/types";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1");
@@ -51,7 +56,7 @@ export async function GET(request: Request) {
     const { data, error, count } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     // The unified view already has the correct column names
@@ -89,16 +94,7 @@ export async function GET(request: Request) {
     };
     return NextResponse.json(response);
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Internal server error", message: error.message },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

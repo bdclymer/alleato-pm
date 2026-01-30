@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -256,11 +254,12 @@ export function ContractForm({
 
       try {
         setLoadingCostCodes(true);
-        const supabase = createClient();
+        // @ts-expect-error - createClient type mismatch
+        const supabaseClient = createClient();
 
         // Fetch cost codes from Supabase
-        const { data, error } = await supabase
-          .from("cost_codes")
+        // @ts-expect-error - Conditional supabase client type
+        const { data, error } = await supabaseClient.from("cost_codes")
           .select("id, title, status, division_title")
           .eq("status", "Active")
           .order("id", { ascending: true });
@@ -274,7 +273,7 @@ export function ContractForm({
 
         // Group cost codes by division_title
         const grouped = codes.reduce(
-          (acc, code) => {
+          (acc: Record<string, typeof codes>, code: typeof codes[0]) => {
             const divisionKey = code.division_title || "Other";
             if (!acc[divisionKey]) {
               acc[divisionKey] = [];
@@ -287,6 +286,11 @@ export function ContractForm({
 
         setGroupedCostCodes(grouped);
       } catch (error) {
+
+        console.error("Failed to fetch form data:", error);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
       } finally {
         setLoadingCostCodes(false);
       }

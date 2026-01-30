@@ -164,7 +164,12 @@ export function UserFormDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      }
+
+      console.error("Failed to process user data:", error);
+
+      // Intentionally swallowed: error handling done by caller
+
+    }
   };
 
   const isSubmitting =

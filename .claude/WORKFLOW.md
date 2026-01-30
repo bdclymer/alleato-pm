@@ -366,6 +366,12 @@ npx playwright test frontend/tests/e2e/<feature>.spec.ts \
 
 **If a scaffold exists, you MUST use it.** Do not write the pattern from scratch.
 
+**Verify ALL referenced tables exist in `database.types.ts`:**
+- Read TASKS.mdx / ACTIONPLAN.mdx for this feature
+- For EVERY table name mentioned (primary tables, related tables, join tables, packages, history, etc.), search `database.types.ts` and confirm it exists
+- Record each table as `EXISTS` or `DOES NOT EXIST` — this becomes a fact in the PRP, not a question to resolve during execution
+- For tables that don't exist, decide NOW: create via migration, use a placeholder, or descope. Do NOT defer this decision to PRP execution.
+
 ### 4b. Procore Documentation Review (MANDATORY)
 
 **Before implementing any Procore tool, review the official Procore tutorials for that tool.**
@@ -397,6 +403,15 @@ Search the codebase for domain-specific context not covered by the pattern regis
 
 > **Note:** Generic patterns (hooks, services, API routes, components) are already documented in `.claude/PATTERNS.md`. Do not re-search for these. Only search for feature-specific context.
 
+**READ every file you plan to MODIFY (MANDATORY):**
+For each file listed in the "What EXISTS" inventory, you MUST:
+1. Read the full file (not just grep for keywords)
+2. Document its **current data flow**: Where does it get data? Props from server component? Hook? Direct Supabase query? Inline fetch?
+3. Document its **current interface**: What props does it accept? What does it export? What hooks does it use?
+4. Document its **current imports**: What dependencies does it pull in?
+
+This information goes directly into the PRP as a "Current State" section for each MODIFY file. Without this, the PRP will make wrong assumptions about how to integrate new code into existing files.
+
 ### 4d. Crawl Data Analysis
 
 If crawl data exists from Phase 0:
@@ -406,7 +421,21 @@ If crawl data exists from Phase 0:
 - Identify navigation flows from link graphs
 - Cross-reference COMMANDS.md with existing codebase capabilities
 
-### 4e. External Research (As Needed)
+### 4e. Resolve All Gaps and Ambiguities (MANDATORY)
+
+**Read TASKS.mdx and ACTIONPLAN.mdx for this feature.** For every item that is:
+- Marked as a gap, ambiguity, or open question
+- Listed as "missing" or "not implemented"
+- Flagged with conditional language ("if exists", "check whether", "may need")
+
+**Make a definitive decision NOW and record it as a fact.** Examples:
+- "Does `submittal_packages` table exist?" → Search `database.types.ts` → Record: "DOES NOT EXIST — descoped, show placeholder"
+- "Does soft delete use a flag or status?" → Check schema → Record: "No `deleted_at` column. Status column is nullable string. Decision: use status='Deleted'"
+- "Is detail view in scope?" → Check crawl data + TASKS.mdx → Record: "Detail view IS in scope — add as Task N"
+
+**DO NOT leave conditional logic or unresolved questions for PRP execution.** Every ambiguity resolved here saves 10x the time during implementation.
+
+### 4f. External Research (As Needed)
 
 Research TypeScript/React/Next.js documentation only if the feature requires patterns not already in the codebase:
 - Relevant Next.js App Router patterns
@@ -414,7 +443,7 @@ Research TypeScript/React/Next.js documentation only if the feature requires pat
 - Supabase client usage patterns
 - UI component library (shadcn/ui) patterns
 
-### 4f. Run Tests (TDD Checkpoint)
+### 4g. Run Tests (TDD Checkpoint)
 
 ```bash
 # Quick check - should still be 0 passing (no implementation yet)
@@ -453,6 +482,12 @@ PRPs/<category>/<feature>/
 - **Goal** - Feature goal, deliverable, success definition
 - **Context** - YAML structure with all references, patterns, gotchas
 - **Implementation Tasks** - Dependency-ordered tasks (types → services → components → pages → tests)
+- **File Modification Details** - For every file being MODIFIED: current data flow, current interface, what changes, and why. This prevents wrong assumptions about how existing code works.
+- **Resolved Decisions** - Every gap/ambiguity from Phase 4e with its resolution and evidence. No conditional logic allowed.
+- **Validation Commands** - Actual runnable bash commands (not just checkbox criteria). Must include:
+  - `npm run quality --prefix frontend` for typecheck + lint
+  - Exact Playwright test commands with `--config` flag
+  - Any feature-specific validation commands
 - **Validation Gates** - 4-level progressive validation system
 - **Final Validation Checklist** - Comprehensive completion criteria
 

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -155,7 +153,7 @@ export function CompanyDetailsSheet({
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="website">Website</Label>
-                <Input id="website" type="url" defaultValue={company.website} />
+                <Input id="website" type="url" defaultValue={company.website ?? ""} />
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="title">Title</Label>

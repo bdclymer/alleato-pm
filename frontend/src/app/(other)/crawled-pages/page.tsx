@@ -1,10 +1,9 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useMemo } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -177,7 +176,12 @@ export default function CrawledPagesPage() {
         if (error) throw error;
         setCrawledPages(data || []);
       } catch (error) {
-        } finally {
+
+        console.error("Failed to load crawled pages:", error);
+
+        toast.error("Failed to load crawled pages", { description: "Please try again." });
+
+      } finally {
         setLoading(false);
       }
     };

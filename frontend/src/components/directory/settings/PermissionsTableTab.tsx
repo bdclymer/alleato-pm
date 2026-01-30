@@ -52,7 +52,9 @@ export function PermissionsTableTab({ projectId }: PermissionsTableTabProps) {
     try {
       await updatePermission(personId, level);
     } catch (err) {
-      } finally {
+      console.error("Failed to update permission:", err);
+      // Intentionally swallowed: updatePermission handles error notifications
+    } finally {
       setUpdatingUser(null);
     }
   };

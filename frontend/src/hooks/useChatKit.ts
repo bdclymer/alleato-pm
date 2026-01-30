@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import * as React from "react";
 import { useStableOptions } from "./useStableOptions";
 import {
@@ -83,9 +81,9 @@ export function useChatKit(options: UseChatKitOptions): UseChatKitReturn {
 
     for (const [key, value] of Object.entries(stableOptions)) {
       if (/^on[A-Z]/.test(key) && key !== "onClientTool") {
-        handlers[key] = value;
+        (handlers as any)[key] = value;
       } else {
-        options[key] = value;
+        (options as any)[key] = value;
       }
     }
 

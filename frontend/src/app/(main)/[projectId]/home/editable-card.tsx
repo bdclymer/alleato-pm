@@ -45,7 +45,8 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
       setIsEditing(false);
       setEditedValues({});
     } catch (error) {
-      // Keep edit mode open on error
+      console.error("Failed to save project details:", error);
+      // Keep edit mode open on error - parent component handles toast notification
     } finally {
       setIsSaving(false);
     }

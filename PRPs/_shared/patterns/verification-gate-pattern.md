@@ -56,7 +56,7 @@ COMPLETE: Change Events implementation
 - Tests: 41/42 pass (98%)
 
 **Evidence:**
-- Test output: `frontend/playwright-report/index.html`
+- Test output: `tests/playwright-report/index.html`
 - Screenshots: `frontend/tests/screenshots/change-events/`
 
 **Remaining (non-blocking):**
@@ -84,7 +84,7 @@ Tests should pass once the dev server is running.
 TypeScript: PASS (0 errors)
 ESLint: PASS
 Tests: Executed - 17/17 browser tests pass
-Output: frontend/playwright-report/index.html
+Output: tests/playwright-report/index.html
 ```
 
 ---

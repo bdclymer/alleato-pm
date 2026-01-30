@@ -20,6 +20,10 @@ export async function GET(
   try {
     const { projectId, changeEventId, attachmentId } = await params;
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Verify change event exists and belongs to project
     const { data: changeEvent, error: eventError } = await supabase

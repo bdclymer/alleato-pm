@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * Type Exports - Single Source of Truth
  *
@@ -23,10 +21,13 @@ export type PurchaseOrder =
 export type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
 export type BudgetLine = Database["public"]["Tables"]["budget_lines"]["Row"];
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
-export type User = Database["public"]["Tables"]["users"]["Row"];
+// TODO: These tables don't exist in current schema - need to create or update references
+// export type User = Database["public"]["Tables"]["users"]["Row"];
+export type User = any; // Placeholder until users table is created
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Task = Database["public"]["Tables"]["tasks"]["Row"];
-export type AppUser = Database["public"]["Tables"]["app_users"]["Row"];
+// export type AppUser = Database["public"]["Tables"]["app_users"]["Row"];
+export type AppUser = any; // Placeholder until app_users table is created
 export type OwnerInvoice =
   Database["public"]["Tables"]["owner_invoices"]["Row"];
 export type MeetingSegment =

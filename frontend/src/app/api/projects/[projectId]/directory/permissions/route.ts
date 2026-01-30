@@ -1,7 +1,5 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -13,7 +11,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
-    const supabase = createServiceClient();
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
 
     // Get search query if provided
     const { searchParams } = new URL(request.url);
@@ -140,6 +141,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
     const body = await request.json();
     const { person_id, permission_level } = body;
 
@@ -159,8 +165,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
-
-    const supabase = createServiceClient();
 
     // Upsert the permission
     const { data, error } = await supabase
@@ -197,6 +201,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
     const { searchParams } = new URL(request.url);
     const personId = searchParams.get("person_id");
 
@@ -206,8 +215,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
-
-    const supabase = createServiceClient();
 
     const { error } = await supabase
       .from("user_directory_permissions")

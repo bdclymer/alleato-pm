@@ -192,7 +192,12 @@ export default function ProjectContractDetailPage() {
         const data = await response.json();
         setLineItems(data || []);
       } catch (err) {
-        } finally {
+
+        console.error("Failed to load data:", err);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
+      } finally {
         setLineItemsLoading(false);
       }
     };
@@ -217,7 +222,12 @@ export default function ProjectContractDetailPage() {
         const data = await response.json();
         setChangeOrders(data || []);
       } catch (err) {
-        } finally {
+
+        console.error("Failed to load data:", err);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
+      } finally {
         setChangeOrdersLoading(false);
       }
     };
@@ -244,7 +254,12 @@ export default function ProjectContractDetailPage() {
         const data = await response.json();
         setVerticalMarkups(data.markups || []);
       } catch (err) {
-        } finally {
+
+        console.error("Failed to load data:", err);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
+      } finally {
         setMarkupsLoading(false);
       }
     };
@@ -278,7 +293,12 @@ export default function ProjectContractDetailPage() {
       const data = await response.json();
       setCalculationResult(data);
     } catch (err) {
-      } finally {
+
+      console.error("Failed to load data:", err);
+
+      // Intentionally swallowed: component shows appropriate state on error
+
+    } finally {
       setCalculationLoading(false);
     }
   };

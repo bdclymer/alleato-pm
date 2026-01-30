@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 
@@ -173,7 +171,7 @@ export class DirectoryService {
     if (error) throw error;
 
     // Transform data
-    const transformedData: PersonWithDetails[] = (data || []).map((person) => ({
+    const transformedData: PersonWithDetails[] = (data || []).map((person: any) => ({
       ...person,
       membership: person.project_directory_memberships?.[0],
       permission_template:
@@ -273,21 +271,21 @@ export class DirectoryService {
     if (membershipError) throw membershipError;
 
     // Fetch company if exists
-    let company;
+    let company = undefined;
     if (person.company_id) {
       const { data: companyData } = await this.supabase
         .from("companies")
         .select()
         .eq("id", person.company_id)
         .single();
-      company = companyData;
+      company = companyData ?? undefined;
     }
 
     return {
       ...person,
       company,
       membership,
-      permission_template: membership.permission_template,
+      permission_template: membership.permission_template ?? undefined,
     };
   }
 
@@ -371,12 +369,13 @@ export class DirectoryService {
 
     if (error) throw error;
 
+    const { project_directory_memberships, ...personData } = data;
     return {
-      ...data,
-      membership: data.project_directory_memberships?.[0],
+      ...personData,
+      membership: project_directory_memberships?.[0] ?? undefined,
       permission_template:
-        data.project_directory_memberships?.[0]?.permission_template,
-    };
+        project_directory_memberships?.[0]?.permission_template ?? undefined,
+    } as PersonWithDetails;
   }
 
   async deactivatePerson(projectId: string, personId: string): Promise<void> {

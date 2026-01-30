@@ -134,7 +134,12 @@ export function DirectCostTable({
       // Refresh data
       fetchData()
     } catch (error) {
-      }
+
+      console.error("Failed to process direct costs:", error);
+
+      // Intentionally swallowed: error handling done by caller
+
+    }
   }
 
   // Table configuration

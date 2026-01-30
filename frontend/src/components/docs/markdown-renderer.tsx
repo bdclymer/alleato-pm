@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import React from "react";
@@ -114,19 +112,15 @@ export function MarkdownRenderer({
 
               return !inline && match ? (
                 <SyntaxHighlighter
-                  style={markdownSyntaxHighlighterStyle}
+                  style={markdownSyntaxHighlighterStyle as any}
                   language={match[1]}
                   PreTag="div"
                   className="rounded-lg overflow-hidden mb-4"
-                  {...props}
                 >
                   {String(children).replace(/\n$/, "")}
                 </SyntaxHighlighter>
               ) : (
-                <code
-                  className="bg-muted dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-foreground dark:text-gray-200"
-                  {...props}
-                >
+                <code className="bg-muted dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono text-foreground dark:text-gray-200">
                   {children}
                 </code>
               );

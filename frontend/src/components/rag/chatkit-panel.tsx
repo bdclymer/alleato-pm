@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
@@ -71,11 +69,11 @@ export function ChatKitPanel({
     threadItemActions: {
       feedback: false,
     },
-    onThreadChange: ({ threadId }) => onThreadChange?.(threadId ?? null),
+    onThreadChange: ({ threadId }: { threadId: any }) => onThreadChange?.(threadId ?? null),
     onResponseEnd: () => onResponseEnd?.(),
-    onError: ({ error }) => {
+    onError: ({ error }: { error: any }) => {
       },
-    onEffect: async ({ name }) => {
+    onEffect: async ({ name }: { name: any }) => {
       if (name === "runner_state_update") {
         onRunnerUpdate?.();
       }

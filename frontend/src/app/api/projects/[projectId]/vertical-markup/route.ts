@@ -30,6 +30,10 @@ export async function GET(
     }
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { data, error } = await supabase
       .from("vertical_markup")
@@ -82,6 +86,10 @@ export async function POST(
     }
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Get the next calculation order
     const { data: existingMarkups } = await supabase
@@ -154,6 +162,10 @@ export async function PUT(
     }
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Update each markup in order
     const updates = markups.map((markup: VerticalMarkupItem, index: number) =>
@@ -225,6 +237,10 @@ export async function DELETE(
     }
 
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { error } = await supabase
       .from("vertical_markup")

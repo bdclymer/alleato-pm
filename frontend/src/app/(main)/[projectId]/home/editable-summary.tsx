@@ -30,7 +30,8 @@ export function EditableSummary({ summary, onSave }: EditableSummaryProps) {
       await onSave(editedSummary);
       setIsEditing(false);
     } catch (error) {
-      // Keep edit mode open on error
+      console.error("Failed to save project summary:", error);
+      // Keep edit mode open on error - parent component handles toast notification
     } finally {
       setIsSaving(false);
     }

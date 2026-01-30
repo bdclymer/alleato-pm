@@ -74,24 +74,24 @@ function ContactsTable({ contacts }: { contacts: Contact[] }) {
                   )}
                 </TableCell>
                 <TableCell>
-                  {contact.phone ? (
+                  {(contact.phone_business || contact.phone_mobile) ? (
                     <a
-                      href={`tel:${contact.phone}`}
+                      href={`tel:${contact.phone_business || contact.phone_mobile}`}
                       className="flex items-center gap-1 text-brand hover:underline"
                     >
                       <Phone className="h-3 w-3" />
-                      {contact.phone}
+                      {contact.phone_business || contact.phone_mobile}
                     </a>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell>{contact.role || <span className="text-muted-foreground">—</span>}</TableCell>
+                <TableCell>{contact.job_title || <span className="text-muted-foreground">—</span>}</TableCell>
                 <TableCell>
-                  {contact.department ? (
+                  {contact.business_unit ? (
                     <span className="flex items-center gap-1">
                       <Building2 className="h-3 w-3 text-muted-foreground" />
-                      {contact.department}
+                      {contact.business_unit}
                     </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>

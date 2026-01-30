@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { promises as fs } from "fs";
 import type { Dirent } from "fs";
 import path from "path";
@@ -71,7 +69,7 @@ export async function getDocFiles(): Promise<DocFile[]> {
 
       if (!entry.name.match(/\.md$|\.markdown$/i)) continue;
 
-      const relativePath = path.relative(docsDir, fullPath);
+      const relativePath = docsDir ? path.relative(docsDir, fullPath) : fullPath;
       const slugParts = relativePath
         .replace(/\\/g, "/")
         .replace(/\.md$/i, "")
@@ -114,7 +112,7 @@ export function buildDocTree(files: DocFile[], currentSlug: string): DocNode {
 
 export async function loadDocContent(doc: DocFile): Promise<string> {
   try {
-    return await fs.readFile(doc.relativePath, "utf-8");
+    return await fs.readFile(doc.relativePath ?? '', "utf-8");
   } catch (error) {
     return "## Document unavailable\n\nThe requested document could not be found in the deployment.";
   }

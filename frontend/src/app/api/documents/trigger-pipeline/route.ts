@@ -5,6 +5,12 @@ type PipelinePhase = "parse" | "embed" | "extract";
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { phase, documentIds } = (await request.json()) as {
       phase: PipelinePhase;
       documentIds?: string[];
@@ -13,8 +19,6 @@ export async function POST(request: NextRequest) {
     if (!phase) {
       return NextResponse.json({ error: "Phase is required" }, { status: 400 });
     }
-
-    const supabase = await createClient();
 
     // Map phase to pipeline stage requirements
     const stageMapping = {
@@ -122,6 +126,10 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Count documents in each stage
     const stages = [

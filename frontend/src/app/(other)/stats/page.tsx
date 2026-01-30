@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useMemo } from "react";
@@ -638,7 +636,7 @@ export default function MeetingsPage() {
         .limit(500);
 
       if (error) throw error;
-      return data as Meeting[];
+      return (data || []) as unknown as Meeting[];
     },
   });
 

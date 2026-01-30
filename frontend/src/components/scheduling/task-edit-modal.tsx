@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 /**
@@ -333,7 +331,7 @@ export function TaskEditModal({
         };
 
         if (!isEditing) {
-          (data as ScheduleTaskCreate).project_id = projectId;
+          (data as ScheduleTaskCreate).project_id = Number(projectId);
         }
 
         await onSave(data);

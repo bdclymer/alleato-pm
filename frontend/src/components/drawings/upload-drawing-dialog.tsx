@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 'use client';
 
 import * as React from 'react';
@@ -155,7 +153,7 @@ export function UploadDrawingDialog({
         url: publicUrl,
         category: 'drawings',
         status: 'active',
-        metadata,
+        metadata: metadata as any,
       });
 
       if (insertError) {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -89,18 +87,21 @@ export function CompanyEditDialog({
 
   useEffect(() => {
     if (company) {
+      // Extract additional fields from metadata if they exist
+      const metadata = (company.metadata as Record<string, any>) || {};
+
       form.reset({
         name: company.name || "",
-        display_name: company.display_name || "",
-        tax_id: company.tax_id || "",
+        display_name: metadata.display_name || company.title || "",
+        tax_id: metadata.tax_id || "",
         address: company.address || "",
         city: company.city || "",
-        state_region: company.state_region || "",
-        postal_code: company.postal_code || "",
-        country: company.country || "",
-        phone: company.phone || "",
-        fax: company.fax || "",
-        email: company.email || "",
+        state_region: metadata.state_region || company.state || "",
+        postal_code: metadata.postal_code || "",
+        country: metadata.country || "",
+        phone: metadata.phone || "",
+        fax: metadata.fax || "",
+        email: metadata.email || "",
         website: company.website || "",
         notes: company.notes || "",
       });

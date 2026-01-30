@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -141,7 +139,7 @@ export function ClientFormDialog({
                 <FormItem>
                   <FormLabel>Client Name *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter client name" {...field} />
+                    <Input placeholder="Enter client name" {...field} value={field.value ?? ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +185,7 @@ export function ClientFormDialog({
                   <FormLabel>Status</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    value={field.value || "active"}
+                    value={field.value ?? "active"}
                   >
                     <FormControl>
                       <SelectTrigger>

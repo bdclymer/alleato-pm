@@ -90,7 +90,12 @@ export function InlineTeamMemberForm({
           setContacts(result.data || []);
         }
       } catch (error) {
-        } finally {
+
+        console.error("Failed to fetch team member:", error);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
+      } finally {
         setLoading(false);
       }
     }

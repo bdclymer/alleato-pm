@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
@@ -172,7 +170,7 @@ export function useChangeOrders(
           insertData.executed = changeOrder.executed;
         }
 
-        const { data, error: insertError } = await supabase
+        const { data, error: insertError } = await (supabase as any)
           .from("change_orders")
           .insert(insertData)
           .select()
@@ -194,7 +192,7 @@ export function useChangeOrders(
               status: changeOrder.status || "draft",
             };
 
-            const { data: retryData, error: retryError } = await supabase
+            const { data: retryData, error: retryError } = await (supabase as any)
               .from("change_orders")
               .insert(basicData)
               .select()

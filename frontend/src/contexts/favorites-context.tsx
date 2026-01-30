@@ -34,7 +34,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         setFavorites(Array.isArray(parsed) ? parsed : []);
       }
     } catch (error) {
-      } finally {
+      console.error("Failed to load favorites from localStorage:", error);
+      // Intentionally swallowed: localStorage errors are non-critical
+    } finally {
       setIsLoaded(true);
     }
   }, []);
@@ -45,7 +47,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
       } catch (error) {
-        }
+        console.error("Failed to save favorites to localStorage:", error);
+        // Intentionally swallowed: localStorage errors are non-critical
+      }
     }
   }, [favorites, isLoaded]);
 

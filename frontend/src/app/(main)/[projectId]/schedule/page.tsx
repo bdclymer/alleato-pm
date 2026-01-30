@@ -66,6 +66,8 @@ import {
   Filter,
   Share2,
   ChevronDown,
+  Trash2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -73,6 +75,7 @@ import {
   ScheduleTaskWithHierarchy,
   ScheduleTaskCreate,
   ScheduleTaskUpdate,
+  TaskStatus,
 } from "@/types/scheduling";
 import { toast } from "sonner";
 import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
@@ -107,26 +110,25 @@ function ViewModeTabs({
   onChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 border-b px-4 sm:px-6 lg:px-8">
+    <nav className="flex items-center space-x-6 border-b -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" aria-label="View mode">
       {viewModeConfig.map(({ mode: viewMode, label, icon: Icon }) => (
         <button
+          type="button"
           key={viewMode}
           onClick={() => onChange(viewMode)}
+          aria-label={`Switch to ${label} view`}
           className={cn(
-            "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors relative",
+            "inline-flex items-center gap-2 py-3 px-1 text-sm font-medium transition-all duration-200 border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-sm",
             mode === viewMode
-              ? "text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
           )}
         >
           <Icon className="h-4 w-4" />
           {label}
-          {mode === viewMode && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-          )}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
 
@@ -136,55 +138,85 @@ function ViewModeTabs({
 
 function SummaryCards({ summary }: { summary: { total_tasks: number; completed_tasks: number; in_progress_tasks: number; not_started_tasks: number; milestones_count: number; overdue_tasks: number } }) {
   const cards = [
-    {
-      label: "Total Tasks",
-      value: summary.total_tasks,
-      icon: Calendar,
-      color: "text-blue-600",
-    },
-    {
-      label: "Completed",
-      value: summary.completed_tasks,
-      icon: CheckCircle,
-      color: "text-green-600",
-    },
-    {
-      label: "In Progress",
-      value: summary.in_progress_tasks,
-      icon: Clock,
-      color: "text-amber-600",
-    },
-    {
-      label: "Not Started",
-      value: summary.not_started_tasks,
-      icon: AlertCircle,
-      color: "text-gray-600",
-    },
-    {
-      label: "Milestones",
-      value: summary.milestones_count,
-      icon: Flag,
-      color: "text-purple-600",
-    },
+    { label: "Total Tasks", value: summary.total_tasks, icon: Calendar, color: "text-foreground" },
+    { label: "Completed", value: summary.completed_tasks, icon: CheckCircle, color: "text-[hsl(var(--status-success))]" },
+    { label: "In Progress", value: summary.in_progress_tasks, icon: Clock, color: "text-[hsl(var(--status-info))]" },
+    { label: "Not Started", value: summary.not_started_tasks, icon: AlertCircle, color: "text-muted-foreground" },
+    { label: "Milestones", value: summary.milestones_count, icon: Flag, color: "text-[hsl(var(--status-warning))]" },
   ];
 
   return (
-    <div className="flex flex-wrap gap-4 mb-4">
+    <div className="flex flex-wrap gap-3">
       {cards.map((card) => (
         <div
           key={card.label}
-          className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
         >
-          <card.icon className={cn("h-4 w-4", card.color)} />
-          <span className="text-sm text-muted-foreground">{card.label}:</span>
-          <span className="text-sm font-medium">{card.value}</span>
+          <card.icon className={cn("h-5 w-5", card.color)} />
+          <div>
+            <p className="text-xs text-muted-foreground">{card.label}</p>
+            <p className="text-sm font-semibold tabular-nums">{card.value}</p>
+          </div>
         </div>
       ))}
       {summary.overdue_tasks > 0 && (
-        <Badge variant="destructive" className="self-center">
-          {summary.overdue_tasks} overdue
-        </Badge>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-destructive/30 bg-destructive/5">
+          <AlertCircle className="h-5 w-5 text-destructive" />
+          <div>
+            <p className="text-xs text-destructive/80">Overdue</p>
+            <p className="text-sm font-semibold text-destructive tabular-nums">{summary.overdue_tasks}</p>
+          </div>
+        </div>
       )}
+    </div>
+  );
+}
+
+// =============================================================================
+// BULK ACTION BAR
+// =============================================================================
+
+function BulkActionBar({
+  selectedCount,
+  onUpdateStatus,
+  onDelete,
+  onClear,
+}: {
+  selectedCount: number;
+  onUpdateStatus: (status: TaskStatus) => void;
+  onDelete: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border bg-primary/5 border-primary/20 animate-reveal">
+      <span className="text-sm font-medium">{selectedCount} selected</span>
+      <div className="h-4 w-px bg-border" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            Update Status
+            <ChevronDown className="h-3 w-3 ml-1" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => onUpdateStatus("not_started")}>
+            Not Started
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onUpdateStatus("in_progress")}>
+            In Progress
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onUpdateStatus("complete")}>
+            Complete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button variant="destructive" size="sm" onClick={onDelete}>
+        <Trash2 className="h-4 w-4 mr-1.5" />
+        Delete
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onClear} className="ml-auto">
+        <X className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
@@ -568,15 +600,43 @@ export default function ProjectSchedulePage() {
     refetch();
   }, [refetch]);
 
+  const handleBulkStatusUpdate = useCallback(
+    async (status: TaskStatus) => {
+      const percentComplete = status === "complete" ? 100 : status === "in_progress" ? 50 : 0;
+      const promises = Array.from(selectedIds).map((id) =>
+        handleUpdateTask(id, { status, percent_complete: percentComplete })
+      );
+      try {
+        await Promise.all(promises);
+        toast.success(`Updated ${selectedIds.size} tasks to "${status.replace("_", " ")}"`);
+        setSelectedIds(new Set());
+      } catch {
+        toast.error("Some tasks failed to update");
+      }
+    },
+    [selectedIds, handleUpdateTask]
+  );
+
+  const handleBulkDelete = useCallback(async () => {
+    const promises = Array.from(selectedIds).map((id) => handleDeleteTask(id));
+    try {
+      await Promise.all(promises);
+      toast.success(`Deleted ${selectedIds.size} tasks`);
+      setSelectedIds(new Set());
+    } catch {
+      toast.error("Some tasks failed to delete");
+    }
+  }, [selectedIds, handleDeleteTask]);
+
   // Actions for header
   const headerActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <Button onClick={() => handleAddTask()} size="sm">
         <Plus className="h-4 w-4 mr-2" />
         Add Task
       </Button>
 
-      <Button variant="outline" size="sm">
+      <Button variant="ghost" size="sm">
         <Filter className="h-4 w-4 mr-2" />
         Filters
       </Button>
@@ -619,10 +679,32 @@ export default function ProjectSchedulePage() {
           description="Track project schedule tasks and milestones"
           actions={headerActions}
         />
-        <ViewModeTabs mode={viewMode} onChange={setViewMode} />
-        <PageContainer>
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <PageContainer className="space-y-4">
+          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+          {/* Skeleton summary cards */}
+          <div className="flex flex-wrap gap-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card animate-pulse">
+                <div className="h-5 w-5 rounded-full bg-muted" />
+                <div className="space-y-1.5">
+                  <div className="h-3 w-16 rounded bg-muted" />
+                  <div className="h-4 w-8 rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Skeleton table rows */}
+          <div className="border rounded-lg overflow-hidden">
+            <div className="h-10 bg-muted/50 border-b" />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3 border-b last:border-0 animate-pulse">
+                <div className="h-4 w-4 rounded bg-muted" />
+                <div className="h-4 flex-1 rounded bg-muted" style={{ maxWidth: `${60 + Math.random() * 30}%` }} />
+                <div className="h-4 w-20 rounded bg-muted" />
+                <div className="h-4 w-20 rounded bg-muted" />
+                <div className="h-2 w-24 rounded-full bg-muted" />
+              </div>
+            ))}
           </div>
         </PageContainer>
       </>
@@ -631,6 +713,9 @@ export default function ProjectSchedulePage() {
 
   // Error state
   if (error) {
+    const isAuthError = error.message.includes("session") || error.message.includes("log in");
+    const isPermissionError = error.message.includes("access") || error.message.includes("permission");
+
     return (
       <>
         <ProjectPageHeader
@@ -638,10 +723,46 @@ export default function ProjectSchedulePage() {
           description="Track project schedule tasks and milestones"
           actions={headerActions}
         />
-        <ViewModeTabs mode={viewMode} onChange={setViewMode} />
         <PageContainer>
-          <div data-testid="error-state" className="text-center text-destructive bg-destructive/10 border border-destructive/20 rounded-md p-4 mt-4">
-            Failed to load schedule data. Please try again.
+          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+          <div
+            data-testid="error-state"
+            className="flex flex-col items-center justify-center py-16 px-4 animate-reveal"
+          >
+            <div className="rounded-full bg-destructive/10 p-3 mb-4">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">
+              {isAuthError
+                ? "Session Expired"
+                : isPermissionError
+                  ? "Access Denied"
+                  : "Unable to Load Schedule"}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md text-center">
+              {error.message}
+            </p>
+            <div className="flex gap-2">
+              {isAuthError ? (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Page
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => refetch()}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+                  Try Again
+                </Button>
+              )}
+            </div>
           </div>
         </PageContainer>
       </>
@@ -668,10 +789,50 @@ export default function ProjectSchedulePage() {
         description="Track project schedule tasks and milestones"
         actions={headerActions}
       />
-      <ViewModeTabs mode={viewMode} onChange={setViewMode} />
       <PageContainer className="space-y-4">
+        <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+
+        {/* Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <BulkActionBar
+            selectedCount={selectedIds.size}
+            onUpdateStatus={handleBulkStatusUpdate}
+            onDelete={handleBulkDelete}
+            onClear={() => setSelectedIds(new Set())}
+          />
+        )}
+
+        {/* Summary Cards */}
+        {data?.summary && data.summary.total_tasks > 0 && (
+          <SummaryCards summary={data.summary} />
+        )}
+
+        {/* Empty State */}
+        {data && (!data.tasks || data.tasks.length === 0) && (
+          <div className="flex flex-col items-center justify-center py-20 px-4 animate-reveal">
+            <div className="rounded-full bg-primary/10 p-4 mb-5">
+              <Calendar className="h-7 w-7 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No tasks scheduled</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
+              Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes.
+            </p>
+            <div className="flex gap-3">
+              <Button size="sm" onClick={() => handleAddTask()}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Task
+              </Button>
+              <Button size="sm" variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Import Schedule
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <div className="flex-1 min-h-[600px]">
+        {data && data.tasks && data.tasks.length > 0 && (
+        <div key={viewMode} className="flex-1 min-h-[600px] animate-reveal">
           {viewMode === "grid" && <ScheduleGridView {...viewProps} />}
 
           {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
@@ -714,6 +875,7 @@ export default function ProjectSchedulePage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Task Edit Modal */}
         <TaskEditModal

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -43,10 +41,12 @@ import { StepComponentProps } from "./project-setup-wizard";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
-type ProjectDirectory =
-  Database["public"]["Tables"]["project_directory"]["Row"];
+type Person = Database["public"]["Tables"]["people"]["Row"];
+type ProjectDirectoryMembership =
+  Database["public"]["Tables"]["project_directory_memberships"]["Row"];
 
-interface ProjectDirectoryWithCompany extends ProjectDirectory {
+interface ProjectDirectoryWithDetails extends ProjectDirectoryMembership {
+  person?: Person;
   company?: Company;
 }
 
@@ -68,19 +68,20 @@ export function ProjectDirectorySetup({
   const [error, setError] = useState<string | null>(null);
 
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
   const [projectDirectory, setProjectDirectory] = useState<
-    ProjectDirectoryWithCompany[]
+    ProjectDirectoryWithDetails[]
   >([]);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [selectedPersonId, setSelectedPersonId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<string>("");
-  const [showNewCompanyForm, setShowNewCompanyForm] = useState(false);
-  const [newCompany, setNewCompany] = useState({
-    name: "",
-    address: "",
-    city: "",
-    state: "",
+  const [showNewPersonForm, setShowNewPersonForm] = useState(false);
+  const [newPerson, setNewPerson] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    company_id: "",
   });
 
   const supabase = createClient();
@@ -107,13 +108,21 @@ export function ProjectDirectorySetup({
 
       if (companiesError) throw companiesError;
 
-      // Load project directory with companies
+      // Load people
+      const { data: peopleData, error: peopleError } = await supabase
+        .from("people")
+        .select("*")
+        .order("last_name", { ascending: true });
+
+      if (peopleError) throw peopleError;
+
+      // Load project directory memberships with person and company details
       const { data: directoryData, error: directoryError } = await supabase
-        .from("project_directory")
+        .from("project_directory_memberships")
         .select(
           `
           *,
-          company:companies(*)
+          person:people(*)
         `,
         )
         .eq("project_id", numericProjectId)
@@ -122,7 +131,8 @@ export function ProjectDirectorySetup({
       if (directoryError) throw directoryError;
 
       setCompanies(companiesData || []);
-      setProjectDirectory(directoryData || []);
+      setPeople(peopleData || []);
+      setProjectDirectory(directoryData as any || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -130,40 +140,41 @@ export function ProjectDirectorySetup({
     }
   };
 
-  const createNewCompany = async () => {
+  const createNewPerson = async () => {
     try {
       setSaving(true);
       setError(null);
 
-      if (!newCompany.name) {
-        setError("Company name is required");
+      if (!newPerson.first_name || !newPerson.last_name) {
+        setError("First and last name are required");
         return;
       }
 
       const { data, error } = await supabase
-        .from("companies")
+        .from("people")
         .insert({
-          name: newCompany.name,
-          address: newCompany.address || null,
-          city: newCompany.city || null,
-          state: newCompany.state || null,
+          first_name: newPerson.first_name,
+          last_name: newPerson.last_name,
+          email: newPerson.email || null,
+          company_id: newPerson.company_id || null,
+          person_type: "employee",
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      setCompanies([...companies, data]);
-      setSelectedCompanyId(data.id);
-      setShowNewCompanyForm(false);
-      setNewCompany({
-        name: "",
-        address: "",
-        city: "",
-        state: "",
+      setPeople([...people, data]);
+      setSelectedPersonId(data.id);
+      setShowNewPersonForm(false);
+      setNewPerson({
+        first_name: "",
+        last_name: "",
+        email: "",
+        company_id: "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create company");
+      setError(err instanceof Error ? err.message : "Failed to create person");
     } finally {
       setSaving(false);
     }
@@ -174,8 +185,8 @@ export function ProjectDirectorySetup({
       setSaving(true);
       setError(null);
 
-      if (!selectedCompanyId || !selectedRole) {
-        setError("Please select a company and role");
+      if (!selectedPersonId || !selectedRole) {
+        setError("Please select a person and role");
         return;
       }
 
@@ -186,29 +197,40 @@ export function ProjectDirectorySetup({
 
       // Check if already exists
       const exists = projectDirectory.some(
-        (d) => d.company_id === selectedCompanyId && d.role === selectedRole,
+        (d) => d.person_id === selectedPersonId,
       );
       if (exists) {
-        setError("This company already has this role in the project");
+        setError("This person is already in the project directory");
         return;
       }
 
-      const data = await addToProjectDirectory({
-        project_id: numericProjectId,
-        company_id: selectedCompanyId,
-        role: selectedRole,
-        is_active: true,
-        permissions: {
-          can_view: true,
-          can_edit: false,
-          can_approve: false,
-          can_submit: true,
-        },
-      });
+      const { data, error } = await supabase
+        .from("project_directory_memberships")
+        .insert({
+          project_id: numericProjectId,
+          person_id: selectedPersonId,
+          role: selectedRole,
+          status: "active",
+          metadata: {
+            permissions: {
+              can_view: true,
+              can_edit: false,
+              can_approve: false,
+              can_submit: true,
+            },
+          },
+        })
+        .select(`
+          *,
+          person:people(*)
+        `)
+        .single();
 
-      setProjectDirectory([...projectDirectory, data]);
+      if (error) throw error;
+
+      setProjectDirectory([...projectDirectory, data as any]);
       setShowAddDialog(false);
-      setSelectedCompanyId("");
+      setSelectedPersonId("");
       setSelectedRole("");
     } catch (err) {
       setError(
@@ -221,11 +243,16 @@ export function ProjectDirectorySetup({
 
   const toggleActive = async (entryId: string, isActive: boolean) => {
     try {
-      await updateProjectDirectoryEntry(entryId, { is_active: isActive });
+      const { error } = await supabase
+        .from("project_directory_memberships")
+        .update({ status: isActive ? "active" : "inactive" })
+        .eq("id", entryId);
+
+      if (error) throw error;
 
       setProjectDirectory(
         projectDirectory.map((entry) =>
-          entry.id === entryId ? { ...entry, is_active: isActive } : entry,
+          entry.id === entryId ? { ...entry, status: isActive ? "active" : "inactive" } : entry,
         ),
       );
     } catch (err) {
@@ -235,7 +262,12 @@ export function ProjectDirectorySetup({
 
   const removeFromDirectory = async (entryId: string) => {
     try {
-      await deleteProjectDirectoryEntry(entryId);
+      const { error } = await supabase
+        .from("project_directory_memberships")
+        .delete()
+        .eq("id", entryId);
+
+      if (error) throw error;
 
       setProjectDirectory(
         projectDirectory.filter((entry) => entry.id !== entryId),
@@ -266,7 +298,7 @@ export function ProjectDirectorySetup({
 
       <div className="space-y-4">
         <p className="text-muted-foreground">
-          Add companies and assign their roles in this project. You can always
+          Add people and assign their roles in this project. You can always
           update these assignments later.
         </p>
 
@@ -275,9 +307,9 @@ export function ProjectDirectorySetup({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Company</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead className="w-24">Active</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
@@ -287,8 +319,10 @@ export function ProjectDirectorySetup({
                 <TableRow key={entry.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{entry.company?.name}</span>
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {entry.person?.first_name} {entry.person?.last_name}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -298,20 +332,15 @@ export function ProjectDirectorySetup({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {entry.company?.address && (
+                    {entry.person?.email && (
                       <div className="text-sm text-muted-foreground">
-                        {entry.company.address}
-                        {entry.company.city && entry.company.state && (
-                          <>
-                            , {entry.company.city}, {entry.company.state}
-                          </>
-                        )}
+                        {entry.person.email}
                       </div>
                     )}
                   </TableCell>
                   <TableCell>
                     <Switch
-                      checked={entry.is_active ?? true}
+                      checked={entry.status === "active"}
                       onCheckedChange={(checked) =>
                         toggleActive(entry.id, checked)
                       }
@@ -332,15 +361,15 @@ export function ProjectDirectorySetup({
           </Table>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            No companies added to the project yet
+            No people added to the project yet
           </div>
         )}
 
-        {/* Add Company Button */}
+        {/* Add Person Button */}
         <div className="flex justify-center">
           <Button onClick={() => setShowAddDialog(true)} variant="outline">
             <Plus className="h-4 w-4 mr-2" />
-            Add Company
+            Add Person
           </Button>
         </div>
       </div>
@@ -353,38 +382,39 @@ export function ProjectDirectorySetup({
         <Button
           onClick={onNext}
           disabled={
-            saving || projectDirectory.filter((d) => d.is_active).length === 0
+            saving || projectDirectory.filter((d) => d.status === "active").length === 0
           }
         >
           Continue
         </Button>
       </div>
 
-      {/* Add Company Dialog */}
+      {/* Add Person Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Add Company to Project</DialogTitle>
+            <DialogTitle>Add Person to Project</DialogTitle>
             <DialogDescription>
-              Select a company and assign their role in this project
+              Select a person and assign their role in this project
             </DialogDescription>
           </DialogHeader>
 
-          {!showNewCompanyForm ? (
+          {!showNewPersonForm ? (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="person">Person</Label>
                 <Select
-                  value={selectedCompanyId}
-                  onValueChange={setSelectedCompanyId}
+                  value={selectedPersonId}
+                  onValueChange={setSelectedPersonId}
                 >
-                  <SelectTrigger id="company">
-                    <SelectValue placeholder="Select a company" />
+                  <SelectTrigger id="person">
+                    <SelectValue placeholder="Select a person" />
                   </SelectTrigger>
                   <SelectContent>
-                    {companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
+                    {people.map((person) => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.first_name} {person.last_name}
+                        {person.email && ` (${person.email})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -393,9 +423,9 @@ export function ProjectDirectorySetup({
                   variant="link"
                   size="sm"
                   className="mt-1 h-auto p-0"
-                  onClick={() => setShowNewCompanyForm(true)}
+                  onClick={() => setShowNewPersonForm(true)}
                 >
-                  or create a new company
+                  or create a new person
                 </Button>
               </div>
 
@@ -429,74 +459,83 @@ export function ProjectDirectorySetup({
             </div>
           ) : (
             <div className="space-y-4">
-              <h4 className="font-medium">Create New Company</h4>
+              <h4 className="font-medium">Create New Person</h4>
 
               <div>
-                <Label htmlFor="name">Company Name *</Label>
+                <Label htmlFor="firstName">First Name *</Label>
                 <Input
-                  id="name"
-                  value={newCompany.name}
+                  id="firstName"
+                  value={newPerson.first_name}
                   onChange={(e) =>
-                    setNewCompany({ ...newCompany, name: e.target.value })
+                    setNewPerson({ ...newPerson, first_name: e.target.value })
                   }
-                  placeholder="Enter company name"
+                  placeholder="John"
                 />
               </div>
 
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="lastName">Last Name *</Label>
                 <Input
-                  id="address"
-                  value={newCompany.address}
+                  id="lastName"
+                  value={newPerson.last_name}
                   onChange={(e) =>
-                    setNewCompany({ ...newCompany, address: e.target.value })
+                    setNewPerson({ ...newPerson, last_name: e.target.value })
                   }
-                  placeholder="123 Main St"
+                  placeholder="Doe"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={newCompany.city}
-                    onChange={(e) =>
-                      setNewCompany({ ...newCompany, city: e.target.value })
-                    }
-                    placeholder="New York"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state">State</Label>
-                  <Input
-                    id="state"
-                    value={newCompany.state}
-                    onChange={(e) =>
-                      setNewCompany({ ...newCompany, state: e.target.value })
-                    }
-                    placeholder="NY"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newPerson.email}
+                  onChange={(e) =>
+                    setNewPerson({ ...newPerson, email: e.target.value })
+                  }
+                  placeholder="john.doe@example.com"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="company">Company</Label>
+                <Select
+                  value={newPerson.company_id}
+                  onValueChange={(value) =>
+                    setNewPerson({ ...newPerson, company_id: value })
+                  }
+                >
+                  <SelectTrigger id="company">
+                    <SelectValue placeholder="Select a company (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <DialogFooter>
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setShowNewCompanyForm(false);
-                    setNewCompany({
-                      name: "",
-                      address: "",
-                      city: "",
-                      state: "",
+                    setShowNewPersonForm(false);
+                    setNewPerson({
+                      first_name: "",
+                      last_name: "",
+                      email: "",
+                      company_id: "",
                     });
                   }}
                 >
                   Back
                 </Button>
-                <Button onClick={createNewCompany} disabled={saving}>
-                  {saving ? "Creating..." : "Create Company"}
+                <Button onClick={createNewPerson} disabled={saving}>
+                  {saving ? "Creating..." : "Create Person"}
                 </Button>
               </DialogFooter>
             </div>

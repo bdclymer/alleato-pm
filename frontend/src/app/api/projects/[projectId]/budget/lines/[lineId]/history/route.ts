@@ -66,7 +66,7 @@ export async function GET(
 
     // Fetch user details for all users who made changes
     const { data: usersData, error: usersError } = await supabase
-      .from("users")
+      .from("people")
       .select("id, email, first_name, last_name")
       .in("id", userIds);
 

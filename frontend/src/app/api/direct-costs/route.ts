@@ -30,6 +30,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { PaginatedResponse } from '@/app/api/types'
+import { apiErrorResponse } from '@/lib/api-error'
 
 interface DirectCost {
   id: string
@@ -136,7 +137,7 @@ export async function GET(request: Request) {
     const { data, error, count } = await query
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return apiErrorResponse(error)
     }
 
     // Map the data to consistent format
@@ -177,16 +178,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response)
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: 'Internal server error', message: error.message },
-        { status: 500 }
-      )
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error)
   }
 }
 
@@ -271,7 +263,7 @@ export async function POST(request: Request) {
     // Verify employee if provided
     if (body.employee_id) {
       const { data: employee, error: employeeError } = await supabase
-        .from('employees')
+        .from('people')
         .select('id')
         .eq('id', body.employee_id)
         .single()
@@ -311,26 +303,17 @@ export async function POST(request: Request) {
         `
         *,
         vendor:vendors!vendor_id(id, name),
-        employee:employees!employee_id(id, name)
+        employee:people!employee_id(id, first_name, last_name)
       `
       )
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return apiErrorResponse(error)
     }
 
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: 'Internal server error', message: error.message },
-        { status: 500 }
-      )
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error)
   }
 }

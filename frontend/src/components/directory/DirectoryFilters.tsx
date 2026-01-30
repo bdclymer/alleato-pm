@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -140,7 +138,12 @@ export function DirectoryFilters({
           setPermissionTemplates(templatesData);
         }
       } catch (error) {
-        } finally {
+
+        console.error("Failed to fetch directory filters:", error);
+
+        // Intentionally swallowed: component shows appropriate state on error
+
+      } finally {
         setLoading(false);
       }
     };

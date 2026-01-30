@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DollarSign, Download, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,12 @@ export default function ProjectInvoicesPage() {
           setInvoices(data.data || []);
         }
       } catch (error) {
-        } finally {
+
+        console.error("Failed to load invoices:", error);
+
+        toast.error("Failed to load invoices", { description: "Please try again." });
+
+      } finally {
         setLoading(false);
       }
     };

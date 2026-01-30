@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { createClient } from "@/lib/supabase/server";
 import {
   GenericDataTable,
@@ -30,10 +28,13 @@ export async function SimpleTablePage({
     .select("*")
     .order("created_at", { ascending: false });
 
+  const title: string = config.title || "Data";
+  const description: string = config.description || "";
+
   if (error) {
     return (
       <>
-        <PageHeader title={config.title} description={config.description} />
+        <PageHeader title={title} description={description} />
         <div className="text-center text-destructive p-6">
           Error loading data. Please try again later.
         </div>
@@ -43,7 +44,7 @@ export async function SimpleTablePage({
 
   return (
     <>
-      <PageHeader title={config.title} description={config.description} />
+      <PageHeader title={title} description={description} />
       <GenericDataTable data={data || []} config={config} />
     </>
   );

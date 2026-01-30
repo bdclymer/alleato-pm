@@ -66,7 +66,12 @@ export function JobToDateCostDetailModal({
         setCosts(data.costs || []);
       }
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch job to date cost details:", error);
+
+      // Intentionally swallowed: modal shows empty state on error
+
+    } finally {
       setLoading(false);
     }
   };

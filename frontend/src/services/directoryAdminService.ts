@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { Buffer } from "node:buffer";
 import { read, utils } from "xlsx";
 import type { createClient } from "@supabase/supabase-js";
@@ -273,7 +271,7 @@ export class DirectoryAdminService {
           personId,
           `bulk_${payload.action}`,
           "Bulk directory action performed",
-          payload,
+          payload as unknown as Record<string, unknown>,
           performedBy,
         ),
       ),
@@ -313,7 +311,7 @@ export class DirectoryAdminService {
   ): Promise<DirectoryActivityEntry[]> {
     const projectIdNum = Number.parseInt(projectId, 10);
 
-    let query = this.supabase
+    let query = (this.supabase as any)
       .from("user_activity_log")
       .select("*")
       .eq("project_id", projectIdNum)
@@ -327,10 +325,10 @@ export class DirectoryAdminService {
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map((entry) => ({
+    return (data || []).map((entry: any) => ({
       ...entry,
-      changes: entry.changes as Record<string, unknown> | undefined,
-    }));
+      changes: (entry.changes as Record<string, unknown>) ?? undefined,
+    })) as DirectoryActivityEntry[];
   }
 
   private parseCsv(
@@ -657,8 +655,8 @@ export class DirectoryAdminService {
       ...data,
       membership: data.project_directory_memberships?.[0],
       permission_template:
-        data.project_directory_memberships?.[0]?.permission_template ?? null,
-    };
+        data.project_directory_memberships?.[0]?.permission_template ?? undefined,
+    } as PersonWithDetails;
   }
 
   private getColumnValue(person: any, columnId: string): string | null {

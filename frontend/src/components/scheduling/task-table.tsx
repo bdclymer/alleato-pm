@@ -49,6 +49,9 @@ import {
   Calendar,
   Flag,
   Loader2,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -75,6 +78,67 @@ interface TaskTableProps {
   onUpdateTask: (taskId: string, updates: Partial<ScheduleTask>) => Promise<void>;
   onContextMenu?: (task: ScheduleTask, position: { x: number; y: number }) => void;
   isLoading?: boolean;
+}
+
+// =============================================================================
+// SORT TYPES & HELPERS
+// =============================================================================
+
+type SortField = "name" | "start_date" | "finish_date" | "duration_days" | "percent_complete" | "status";
+type SortDirection = "asc" | "desc";
+interface SortConfig {
+  field: SortField;
+  direction: SortDirection;
+}
+
+function sortTasks(
+  tasks: ScheduleTaskWithHierarchy[],
+  sort: SortConfig | null
+): ScheduleTaskWithHierarchy[] {
+  if (!sort) return tasks;
+  return [...tasks].sort((a, b) => {
+    const dir = sort.direction === "asc" ? 1 : -1;
+    const av = a[sort.field];
+    const bv = b[sort.field];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "string" && typeof bv === "string") return av.localeCompare(bv) * dir;
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+}
+
+function SortableHeader({
+  label,
+  field,
+  sort,
+  onToggle,
+  className,
+}: {
+  label: string;
+  field: SortField;
+  sort: SortConfig | null;
+  onToggle: (field: SortField) => void;
+  className?: string;
+}) {
+  const isActive = sort?.field === field;
+  const Icon = isActive
+    ? sort.direction === "asc" ? ArrowUp : ArrowDown
+    : ArrowUpDown;
+
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        className="flex items-center gap-1 hover:text-foreground transition-colors"
+        onClick={() => onToggle(field)}
+      >
+        {label}
+        <Icon className={cn("h-3 w-3", isActive ? "text-foreground" : "text-muted-foreground/50")} />
+      </button>
+    </TableHead>
+  );
 }
 
 // =============================================================================
@@ -195,8 +259,8 @@ function TaskRow({
     <>
       <TableRow
         className={cn(
-          "group hover:bg-muted/50 cursor-pointer",
-          isSelected && "bg-primary/5",
+          "group hover:bg-accent cursor-pointer transition-colors duration-150",
+          isSelected && "bg-primary/10",
           task.is_milestone && "bg-amber-50/50 dark:bg-amber-950/20"
         )}
         onClick={() => onTaskClick(task)}
@@ -212,7 +276,7 @@ function TaskRow({
         </TableCell>
 
         {/* Task Name with Hierarchy */}
-        <TableCell className="min-w-[300px]">
+        <TableCell className="min-w-[200px]">
           <div
             className="flex items-center gap-1"
             style={{ paddingLeft: `${indentPx}px` }}
@@ -240,7 +304,7 @@ function TaskRow({
 
             {/* Milestone Icon */}
             {task.is_milestone && (
-              <Flag className="h-4 w-4 text-amber-500 mr-1" />
+              <Flag className="h-4 w-4 text-[hsl(var(--status-warning))] mr-1" />
             )}
 
             {/* Task Name (Editable) */}
@@ -319,7 +383,7 @@ function TaskRow({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -398,6 +462,18 @@ export function TaskTable({
   onContextMenu,
   isLoading = false,
 }: TaskTableProps) {
+  const [sort, setSort] = useState<SortConfig | null>(null);
+
+  const toggleSort = useCallback((field: SortField) => {
+    setSort((prev) => {
+      if (!prev || prev.field !== field) return { field, direction: "asc" };
+      if (prev.direction === "asc") return { field, direction: "desc" };
+      return null;
+    });
+  }, []);
+
+  const sortedTasks = useMemo(() => sortTasks(tasks, sort), [tasks, sort]);
+
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
     // Start with all tasks expanded
     const ids = new Set<string>();
@@ -482,17 +558,17 @@ export function TaskTable({
                 }}
               />
             </TableHead>
-            <TableHead className="min-w-[300px]">Task Name</TableHead>
-            <TableHead className="w-[120px]">Start</TableHead>
-            <TableHead className="w-[120px]">Finish</TableHead>
-            <TableHead className="w-[80px]">Duration</TableHead>
-            <TableHead className="w-[140px]">Progress</TableHead>
-            <TableHead className="w-[120px]">Status</TableHead>
+            <SortableHeader label="Task Name" field="name" sort={sort} onToggle={toggleSort} className="min-w-[200px]" />
+            <SortableHeader label="Start" field="start_date" sort={sort} onToggle={toggleSort} className="w-[120px]" />
+            <SortableHeader label="Finish" field="finish_date" sort={sort} onToggle={toggleSort} className="w-[120px]" />
+            <SortableHeader label="Duration" field="duration_days" sort={sort} onToggle={toggleSort} className="w-[80px]" />
+            <SortableHeader label="Progress" field="percent_complete" sort={sort} onToggle={toggleSort} className="w-[140px]" />
+            <SortableHeader label="Status" field="status" sort={sort} onToggle={toggleSort} className="w-[120px]" />
             <TableHead className="w-[60px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.length === 0 ? (
+          {sortedTasks.length === 0 ? (
             <TableRow>
               <TableCell colSpan={8} className="h-24 text-center">
                 <div className="flex flex-col items-center gap-2">
@@ -504,7 +580,7 @@ export function TaskTable({
               </TableCell>
             </TableRow>
           ) : (
-            tasks.map((task) => (
+            sortedTasks.map((task) => (
               <TaskRow
                 key={task.id}
                 task={task}

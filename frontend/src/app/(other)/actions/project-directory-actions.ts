@@ -3,21 +3,22 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
-type ProjectDirectoryInsert =
-  Database["public"]["Tables"]["project_directory"]["Insert"];
-type ProjectDirectoryUpdate =
-  Database["public"]["Tables"]["project_directory"]["Update"];
+type MembershipInsert =
+  Database["public"]["Tables"]["project_directory_memberships"]["Insert"];
+type MembershipUpdate =
+  Database["public"]["Tables"]["project_directory_memberships"]["Update"];
 
-export async function addToProjectDirectory(entry: ProjectDirectoryInsert) {
+export async function addToProjectDirectory(entry: MembershipInsert) {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from("project_directory")
+    .from("project_directory_memberships")
     .insert(entry)
     .select(
       `
       *,
-      company:companies(*)
+      person:people(*),
+      project:projects(*)
     `,
     )
     .single();
@@ -31,18 +32,19 @@ export async function addToProjectDirectory(entry: ProjectDirectoryInsert) {
 
 export async function updateProjectDirectoryEntry(
   id: string,
-  updates: ProjectDirectoryUpdate,
+  updates: MembershipUpdate,
 ) {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from("project_directory")
+    .from("project_directory_memberships")
     .update(updates)
     .eq("id", id)
     .select(
       `
       *,
-      company:companies(*)
+      person:people(*),
+      project:projects(*)
     `,
     )
     .single();
@@ -58,7 +60,7 @@ export async function deleteProjectDirectoryEntry(id: string) {
   const supabase = createServiceClient();
 
   const { error } = await supabase
-    .from("project_directory")
+    .from("project_directory_memberships")
     .delete()
     .eq("id", id);
 
@@ -73,11 +75,12 @@ export async function getProjectDirectory(projectId: number) {
   const supabase = createServiceClient();
 
   const { data, error } = await supabase
-    .from("project_directory")
+    .from("project_directory_memberships")
     .select(
       `
       *,
-      company:companies(*)
+      person:people(*),
+      project:projects(*)
     `,
     )
     .eq("project_id", projectId)

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -269,9 +267,8 @@ export default function ProjectDirectoryCompaniesPage() {
       <PageTabs tabs={tabs} />
       <PageContainer>
         <GenericDataTable
-          data={companies || []}
+          data={(companies || []) as any[]}
           config={config}
-          isLoading={isLoading}
         />
       </PageContainer>
     </>

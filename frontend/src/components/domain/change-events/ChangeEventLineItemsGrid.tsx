@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * =============================================================================
  * CHANGE EVENT LINE ITEMS GRID COMPONENT
@@ -304,6 +302,7 @@ function LineItemRow({
                     step="0.01"
                     min="0"
                     {...field}
+                    value={String(field.value ?? '')}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     className={cn(
                       'h-9 text-right border-none bg-transparent focus-visible:ring-1',
@@ -357,6 +356,7 @@ function LineItemRow({
                     step="0.01"
                     min="0"
                     {...field}
+                    value={String(field.value ?? '')}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     className={cn(
                       'h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1',
@@ -421,6 +421,7 @@ function LineItemRow({
                       step="0.01"
                       min="0"
                       {...field}
+                      value={String(field.value ?? '')}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                       className="h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1"
                       placeholder="0.00"
@@ -451,6 +452,7 @@ function LineItemRow({
                     step="0.01"
                     min="0"
                     {...field}
+                    value={String(field.value ?? '')}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     className="h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1"
                     placeholder="0.00"

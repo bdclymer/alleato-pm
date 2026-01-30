@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -104,7 +102,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
           cost_type:cost_code_types(*)
         `,
         )
-        .eq("project_id", projectId)
+        .eq("project_id", Number(projectId))
         .eq("is_active", true)
         .order("cost_code_id");
 
@@ -122,7 +120,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
 
         return {
           project_id: parseInt(projectId),
-          cost_code_id: pcc.cost_code_id,
+          cost_code_id: String(pcc.cost_code_id),
           cost_code: pcc.cost_code,
           cost_code_type: pcc.cost_type,
           description,
@@ -131,9 +129,9 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
           unit_price: null,
           unit_of_measure: null,
           status: "draft",
-        };
+        } as SimpleBudgetItem;
       });
-      setBudgetItems(initialItems);
+      setBudgetItems(initialItems as unknown as SimpleBudgetItem[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {

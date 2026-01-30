@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useEffect } from "react";
@@ -156,7 +154,7 @@ export function CostCodeSetup({
       const { data: projectCodes, error: projectCodesError } = await supabase
         .from("project_cost_codes")
         .select("*")
-        .eq("project_id", projectId);
+        .eq("project_id", Number(projectId));
 
       if (projectCodesError) throw projectCodesError;
 
@@ -239,7 +237,7 @@ export function CostCodeSetup({
       if (codesToInsert.length > 0) {
         const { error } = await supabase
           .from("cost_codes")
-          .insert(codesToInsert)
+          .insert(codesToInsert as any)
           .select();
 
         if (error && error.code !== "23505") {
@@ -294,9 +292,10 @@ export function CostCodeSetup({
       // Insert the new cost code
       const { error: codeError } = await supabase.from("cost_codes").insert({
         id: newCode.code,
-        description: newCode.description,
+        title: newCode.description,
+        division_id: "general",
         status: "active",
-      });
+      } as any);
 
       if (codeError) throw codeError;
 
@@ -321,7 +320,7 @@ export function CostCodeSetup({
       const { error: deleteError } = await supabase
         .from("project_cost_codes")
         .delete()
-        .eq("project_id", projectId);
+        .eq("project_id", Number(projectId));
 
       if (deleteError) throw deleteError;
 
@@ -355,7 +354,7 @@ export function CostCodeSetup({
       if (projectCostCodes.length > 0) {
         const { error: insertError } = await supabase
           .from("project_cost_codes")
-          .insert(projectCostCodes);
+          .insert(projectCostCodes as any);
 
         if (insertError) throw insertError;
       }

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -58,10 +56,17 @@ import {
   useDeleteGroup,
 } from "@/hooks/use-distribution-groups";
 import type { DistributionGroupWithMembers } from "@/services/distributionGroupService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DistributionGroupsPage() {
   const pathname = usePathname();
-  const [projectId] = React.useState("1"); // TODO: Get from router params
+  const [projectId, setProjectId] = React.useState("1");
 
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [editingGroup, setEditingGroup] =
@@ -287,9 +292,23 @@ export default function DistributionGroupsPage() {
       <PageTabs tabs={tabs} />
       <PageContainer>
         <div className="space-y-6">
-          {/* Actions Bar */}
+          {/* Project Selector and Actions Bar */}
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Text as="span" size="sm" weight="medium">
+                  Project:
+                </Text>
+                <Select value={projectId} onValueChange={setProjectId}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Goodwill Bart</SelectItem>
+                    {/* TODO: Load projects dynamically from API */}
+                  </SelectContent>
+                </Select>
+              </div>
               <Text as="p" size="sm" tone="muted">
                 <Text as="span" weight="medium">
                   {groups.length}

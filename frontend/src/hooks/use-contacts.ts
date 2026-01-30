@@ -1,44 +1,35 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
 
 export interface Contact {
-  id: number;
-  first_name: string | null;
-  last_name: string | null;
+  id: string;
+  first_name: string;
+  last_name: string;
   email: string | null;
-  phone: string | null;
-  role: string | null;
-  department: string | null;
-  birthday: string | null;
+  phone_business: string | null;
+  phone_mobile: string | null;
+  job_title: string | null;
+  company_id: string | null;
+  person_type: string;
+  status: string | null;
   notes: string | null;
-  projects: string[] | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
+  business_unit: string | null;
+  profile_photo_url: string | null;
+  created_at: string | null;
 }
 
 export interface ContactOption {
   value: string;
   label: string;
   email?: string;
-  role?: string;
 }
 
 interface UseContactsOptions {
-  // Filter contacts by project ID
   projectId?: string;
-  // Filter contacts by search term
   search?: string;
-  // Filter by role
-  role?: string;
-  // Filter by department
-  department?: string;
-  // Limit number of results
   limit?: number;
-  // Whether to auto-fetch on mount
   enabled?: boolean;
 }
 
@@ -52,13 +43,13 @@ interface UseContactsReturn {
 }
 
 /**
- * Hook for fetching contacts from Supabase
- * Used in privacy settings, assignee dropdowns, etc.
+ * Hook for fetching contacts from the people table (person_type = 'contact').
+ * Replaces the old contacts table hook.
  */
 export function useContacts(
   options: UseContactsOptions = {},
 ): UseContactsReturn {
-  const { projectId, search, role, department, limit = 100, enabled = true } = options;
+  const { projectId, search, limit = 100, enabled = true } = options;
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -71,38 +62,48 @@ export function useContacts(
 
     try {
       const supabase = createClient();
-      let query = supabase
-        .from("contacts")
-        .select("*")
-        .order("last_name", { ascending: true })
-        .limit(limit);
 
-      // Filter by project if projectId provided
       if (projectId) {
-        query = query.contains("projects", [projectId]);
+        // Fetch contacts for a specific project via memberships
+        let query = supabase
+          .from("people")
+          .select(`
+            *,
+            project_directory_memberships!inner(project_id)
+          `)
+          .eq("person_type", "contact")
+          .eq("project_directory_memberships.project_id", parseInt(projectId, 10))
+          .order("last_name", { ascending: true })
+          .limit(limit);
+
+        if (search) {
+          query = query.or(
+            `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+          );
+        }
+
+        const { data, error: queryError } = await query;
+        if (queryError) throw new Error(queryError.message);
+        setContacts(data || []);
+      } else {
+        // Fetch all contacts globally
+        let query = supabase
+          .from("people")
+          .select("*")
+          .eq("person_type", "contact")
+          .order("last_name", { ascending: true })
+          .limit(limit);
+
+        if (search) {
+          query = query.or(
+            `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+          );
+        }
+
+        const { data, error: queryError } = await query;
+        if (queryError) throw new Error(queryError.message);
+        setContacts(data || []);
       }
-
-      if (search) {
-        query = query.or(
-          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
-        );
-      }
-
-      if (role) {
-        query = query.eq("role", role);
-      }
-
-      if (department) {
-        query = query.eq("department", department);
-      }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw new Error(queryError.message);
-      }
-
-      setContacts(data || []);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch contacts"),
@@ -110,7 +111,7 @@ export function useContacts(
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, search, role, department, limit, enabled]);
+  }, [projectId, search, limit, enabled]);
 
   useEffect(() => {
     fetchContacts();
@@ -121,24 +122,23 @@ export function useContacts(
       try {
         const supabase = createClient();
         const { data, error: insertError } = await supabase
-          .from("contacts")
+          .from("people")
           .insert({
-            first_name: contact.first_name,
-            last_name: contact.last_name,
+            first_name: contact.first_name || "",
+            last_name: contact.last_name || "",
             email: contact.email,
-            phone: contact.phone,
-            role: contact.role,
-            department: contact.department,
+            phone_business: contact.phone_business,
+            phone_mobile: contact.phone_mobile,
+            job_title: contact.job_title,
+            company_id: contact.company_id,
+            person_type: "contact",
+            status: "active",
             notes: contact.notes,
           })
           .select()
           .single();
 
-        if (insertError) {
-          throw new Error(insertError.message);
-        }
-
-        // Refetch to update the list
+        if (insertError) throw new Error(insertError.message);
         await fetchContacts();
         return data;
       } catch (err) {
@@ -151,16 +151,14 @@ export function useContacts(
     [fetchContacts],
   );
 
-  // Transform contacts to options for dropdowns
   const contactOptions: ContactOption[] = contacts.map((contact) => {
     const fullName = [contact.first_name, contact.last_name]
       .filter(Boolean)
       .join(" ");
     return {
-      value: contact.id.toString(),
+      value: contact.id,
       label: fullName || contact.email || "Unnamed Contact",
       email: contact.email || undefined,
-      role: contact.role || undefined,
     };
   });
 

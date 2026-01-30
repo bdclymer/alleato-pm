@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createAuthClient } from "@/lib/supabase/client-auth";
+import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
 
 type LoginFormProps = React.ComponentPropsWithoutRef<"div"> & {
@@ -47,10 +48,9 @@ export function LoginForm({
       });
 
       if (authError) {
-        setError(authError.message || "Invalid email or password");
-        toast.error(
-          authError.message || "Unable to log in with those credentials",
-        );
+        // Always show generic message to prevent email enumeration
+        setError("Invalid email or password");
+        toast.error("Invalid email or password");
         return;
       }
 
@@ -64,8 +64,9 @@ export function LoginForm({
       toast.success("Logged in successfully");
 
       // Add a small delay to ensure session is established
+      const safeRedirect = validateCallbackUrl(redirectTo);
       setTimeout(() => {
-        router.push(redirectTo);
+        router.push(safeRedirect);
         router.refresh();
       }, 100);
     } catch (err: unknown) {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import {
@@ -181,7 +179,7 @@ function MorphingPopoverContent({
     );
 
   const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, context.close);
+  useClickOutside(ref as React.RefObject<HTMLElement>, context.close);
 
   useEffect(() => {
     if (!context.isOpen) return;

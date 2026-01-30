@@ -53,7 +53,10 @@ export async function generateStaticParams() {
         }
       }
     } catch (error) {
-      }
+
+      console.error("Failed to process documentation:", error);
+
+    }
   }
 
   await walkDir(DOCS_ROOT);

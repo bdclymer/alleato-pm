@@ -5,14 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 const MAX_RESULTS = 6;
 
 export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { query } = await request.json().catch(() => ({}));
   const search = typeof query === "string" ? query.trim() : "";
 
   if (!search) {
     return NextResponse.json({ hits: [] });
   }
-
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("document_metadata")
     .select(

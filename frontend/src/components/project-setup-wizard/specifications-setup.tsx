@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useCallback } from "react";
@@ -131,7 +129,7 @@ export function SpecificationsSetup({
             ),
           );
 
-          setUploadedDocuments((prev) => [...prev, document]);
+          setUploadedDocuments((prev) => [...prev, document as unknown as UploadedDocument]);
         } catch (err) {
           let errorMessage = "Upload failed";
 

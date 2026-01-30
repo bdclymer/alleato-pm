@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -58,7 +56,7 @@ export function CreateSubcontractForm({
     watch,
     setValue,
   } = useForm<CreateSubcontractInput>({
-    resolver: zodResolver(CreateSubcontractSchema),
+    resolver: zodResolver(CreateSubcontractSchema) as any,
     defaultValues: {
       contractNumber: "SC-002",
       status: "Draft",
@@ -188,8 +186,12 @@ export function CreateSubcontractForm({
 
   const totals = calculateSOVTotals();
 
+  const handleFormSubmitWrapper = async (data: CreateSubcontractInput) => {
+    await handleFormSubmit(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(handleFormSubmitWrapper)} className="space-y-8">
       {/* Autofill Test Data Button */}
       <div className="flex justify-end">
         <Button
@@ -213,20 +215,22 @@ export function CreateSubcontractForm({
             <p>{submitError}</p>
             {errorDetails &&
               typeof errorDetails === "object" &&
-              "details" in (errorDetails as Record<string, unknown>) && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-sm font-medium">
-                    View Error Details
-                  </summary>
-                  <pre className="mt-2 text-xs bg-destructive/10 p-2 rounded overflow-auto max-h-40">
-                    {JSON.stringify(
-                      (errorDetails as Record<string, unknown>).details,
-                      null,
-                      2,
-                    )}
-                  </pre>
-                </details>
-              )}
+              "details" in (errorDetails as Record<string, unknown>) ? (
+                <div>
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-sm font-medium">
+                      View Error Details
+                    </summary>
+                      <pre className="mt-2 text-xs bg-destructive/10 p-2 rounded overflow-auto max-h-40">
+                      {JSON.stringify(
+                        (errorDetails as Record<string, unknown>).details,
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
+                </div>
+              ) : null}
           </AlertDescription>
         </Alert>
       )}

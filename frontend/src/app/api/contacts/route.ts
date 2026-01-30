@@ -9,6 +9,10 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
@@ -17,13 +21,14 @@ export async function GET(request: NextRequest) {
     const perPage = parseInt(searchParams.get('per_page') || '200', 10);
     const page = parseInt(searchParams.get('page') || '1', 10);
 
-    // Base query with company join
+    // Base query with company join, filtered to contacts
     let query = supabase
-      .from('contacts')
+      .from('people')
       .select(`
         *,
         company:companies(id, name)
-      `, { count: 'exact' });
+      `, { count: 'exact' })
+      .eq('person_type', 'contact');
 
     // Apply search across name and email
     if (search) {
@@ -70,6 +75,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const body = await request.json();
 
     // Validate required fields
@@ -81,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await supabase
-      .from('contacts')
+      .from('people')
       .insert({
         first_name: body.first_name,
         last_name: body.last_name,
@@ -95,6 +104,7 @@ export async function POST(request: NextRequest) {
         state: body.state || undefined,
         zip: body.zip || undefined,
         country: body.country || undefined,
+        person_type: 'contact',
       })
       .select(`
         *,

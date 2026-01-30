@@ -1,0 +1,175 @@
+{
+  "pageName": "Submittals Packages Tab",
+  "category": "submittals",
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954056757/tools/submittals?view=packages&serializer_view=minimal_list&sort%5Battribute%5D=number&sort%5Bdirection%5D=desc&per_page=150&page=1",
+  "pageId": "submittals-tab-packages",
+  "capturedAt": "2026-01-29T03:54:29.152Z",
+  "interactionDriven": false,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "More",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Create",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": "Create",
+      "semanticHint": "create"
+    },
+    {
+      "text": "Export",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": "Export",
+      "semanticHint": "read"
+    },
+    {
+      "text": "Reports",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": "Reports",
+      "semanticHint": null
+    },
+    {
+      "text": "Add Filter",
+      "type": "button",
+      "tag": "button",
+      "ariaLabel": null,
+      "semanticHint": "create"
+    },
+    {
+      "text": "1",
+      "type": "combobox",
+      "tag": "button",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Budget",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Change Events",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": "update"
+    },
+    {
+      "text": "Commitments",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Invoicing",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Help",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": "navigate"
+    },
+    {
+      "text": "Edit",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": "update"
+    },
+    {
+      "text": "View",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": "read"
+    },
+    {
+      "text": "Doors, Frames, Hardware",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Plumbing Fixtures",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Fans",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Diffusers",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Terms of Service",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Privacy Policy",
+      "type": "link",
+      "tag": "a",
+      "ariaLabel": null,
+      "semanticHint": null
+    },
+    {
+      "text": "Bulk Actions",
+      "type": "button",
+      "tag": "div",
+      "ariaLabel": null,
+      "semanticHint": null
+    }
+  ],
+  "dropdownDetails": [
+    {
+      "name": null,
+      "text": "combobox",
+      "type": "combobox",
+      "options": []
+    },
+    {
+      "name": null,
+      "text": "combobox",
+      "type": "combobox",
+      "options": []
+    }
+  ],
+  "tabDetails": [],
+  "tableDetails": [],
+  "forms": [],
+  "systemActions": []
+}

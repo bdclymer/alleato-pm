@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -66,7 +64,7 @@ export function useCompanies(
         throw new Error(queryError.message);
       }
 
-      setCompanies(data || []);
+      setCompanies((data || []) as Company[]);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch companies"),
@@ -103,7 +101,7 @@ export function useCompanies(
 
         // Refetch to update the list
         await fetchCompanies();
-        return data;
+        return data as Company;
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error("Failed to create company"),

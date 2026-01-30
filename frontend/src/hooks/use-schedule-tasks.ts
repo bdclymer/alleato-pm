@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type {
   ScheduleTaskWithHierarchy,
@@ -39,6 +39,7 @@ const defaultSummary: ScheduleSummary = {
 /**
  * Hook for fetching schedule tasks data from API
  * Follows the same pattern as use-companies.ts and use-commitments.ts
+ * Includes race condition protection via cancellation flag
  */
 export function useScheduleTasks(
   options: UseScheduleTasksOptions
@@ -47,10 +48,12 @@ export function useScheduleTasks(
   const [data, setData] = useState<SchedulePageData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const cancelledRef = useRef(false);
 
   const fetchScheduleData = useCallback(async () => {
     if (!enabled || !projectId) return;
 
+    cancelledRef.current = false;
     setIsLoading(true);
     setError(null);
 
@@ -64,14 +67,24 @@ export function useScheduleTasks(
         fetch(`${apiUrl}?view=gantt`, { credentials: "include" }),
       ]);
 
-      // Check for errors
+      if (cancelledRef.current) return;
+
+      // Check for errors - detect auth failures specifically
       if (!hierarchyRes.ok || !summaryRes.ok || !ganttRes.ok) {
-        const status = !hierarchyRes.ok
-          ? hierarchyRes.status
+        const failedRes = !hierarchyRes.ok
+          ? hierarchyRes
           : !summaryRes.ok
-            ? summaryRes.status
-            : ganttRes.status;
-        throw new Error(`Failed to fetch schedule data (status: ${status})`);
+            ? summaryRes
+            : ganttRes;
+
+        if (failedRes.status === 401) {
+          throw new Error("Your session has expired. Please refresh the page or log in again.");
+        }
+        if (failedRes.status === 403) {
+          throw new Error("You don't have access to this project's schedule.");
+        }
+
+        throw new Error(`Failed to fetch schedule data (status: ${failedRes.status})`);
       }
 
       // Parse responses
@@ -81,22 +94,32 @@ export function useScheduleTasks(
         ganttRes.json(),
       ]);
 
+      if (cancelledRef.current) return;
+
       setData({
         tasks: hierarchyData.data || [],
         summary: summaryData.data || defaultSummary,
         ganttData: ganttData.data || [],
       });
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch schedule data")
-      );
+      if (!cancelledRef.current) {
+        setError(
+          err instanceof Error ? err : new Error("Failed to fetch schedule data")
+        );
+      }
     } finally {
-      setIsLoading(false);
+      if (!cancelledRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [projectId, enabled]);
 
   useEffect(() => {
     fetchScheduleData();
+
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [fetchScheduleData]);
 
   return {

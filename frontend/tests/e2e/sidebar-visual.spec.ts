@@ -11,11 +11,11 @@ test.describe('Sidebar Visual Test', () => {
 
     // Take screenshot of EXPANDED state
     await page.screenshot({
-      path: 'sidebar-expanded.png',
+      path: 'tests/screenshots/sidebar-expanded.png',
       fullPage: true
     });
 
-    console.log('✅ Screenshot 1: sidebar-expanded.png captured');
+    console.log('✅ Screenshot 1: tests/screenshots/sidebar-expanded.png captured');
 
     // Find and click the toggle button - try multiple selectors
     const toggleSelectors = [
@@ -43,17 +43,17 @@ test.describe('Sidebar Visual Test', () => {
 
       // Take screenshot of COLLAPSED state
       await page.screenshot({
-        path: 'sidebar-collapsed.png',
+        path: 'tests/screenshots/sidebar-collapsed.png',
         fullPage: true
       });
 
-      console.log('✅ Screenshot 2: sidebar-collapsed.png captured');
+      console.log('✅ Screenshot 2: tests/screenshots/sidebar-collapsed.png captured');
     } else {
       console.log('⚠️  Could not find toggle button');
 
       // Take a screenshot anyway to show current state
       await page.screenshot({
-        path: 'sidebar-current-state.png',
+        path: 'tests/screenshots/sidebar-current-state.png',
         fullPage: true
       });
     }

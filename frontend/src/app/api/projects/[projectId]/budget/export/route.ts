@@ -1,9 +1,7 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
 interface ExportBudgetRow {
   "Cost Code": string;
@@ -40,6 +38,10 @@ export async function GET(
       );
     }
 
+    const authResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get("format") || "excel";
 
@@ -50,8 +52,6 @@ export async function GET(
         { status: 400 },
       );
     }
-
-    const supabase = createServiceClient();
 
     // Fetch budget data using the same logic as the main budget API
     const [
@@ -69,14 +69,14 @@ export async function GET(
           sub_job:sub_jobs(code, name)
         `,
         )
-        .eq("project_id", projectId)
+        .eq("project_id", Number(projectId))
         .order("cost_code_id", { ascending: true }),
 
       // Direct costs for calculations
       supabase
         .from("direct_cost_line_items")
-        .select("cost_code_id, amount, cost_type, approved")
-        .eq("project_id", projectId),
+        .select("budget_code_id, amount, cost_type, approved")
+        .eq("project_id", Number(projectId)),
     ]);
 
     if (budgetLinesRes.error) {
@@ -97,13 +97,13 @@ export async function GET(
     const JTD_COST_TYPES = ["Invoice", "Expense", "Payroll", "Subcontractor Invoice"];
     const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
 
-    for (const cost of (directCostsRes.data || []) as Array<{
-      cost_code_id: string | null;
+    for (const cost of (directCostsRes.data || []) as unknown as Array<{
+      budget_code_id: string | null;
       amount: number;
       cost_type: string | null;
       approved: boolean | null;
     }>) {
-      const codeId = cost.cost_code_id;
+      const codeId = cost.budget_code_id;
       if (!codeId || !cost.approved) continue;
 
       if (!costsByCode[codeId]) {
@@ -182,7 +182,7 @@ export async function GET(
     const { data: project } = await supabase
       .from("projects")
       .select("name")
-      .eq("id", projectId)
+      .eq("id", Number(projectId))
       .single();
 
     const projectName = project?.name || `Project-${projectId}`;

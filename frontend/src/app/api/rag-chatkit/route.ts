@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 // This route proxies requests to the Python backend RAG ChatKit endpoint
 // NOTE: This is NOT a ChatKit-compatible API - it's a generic proxy to /rag-chatkit
@@ -16,6 +17,12 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Log incoming request
     const body = await request.json();
     console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
@@ -173,6 +180,12 @@ export async function POST(request: NextRequest) {
 
 // Also handle GET for bootstrap and state endpoints
 export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const path = url.pathname.replace("/api/rag-chatkit", "");
 

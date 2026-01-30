@@ -77,28 +77,26 @@ export async function POST(
       );
     }
 
-    // Check project access
-    const { data: projectAccess, error: accessError } = await supabase
-      .from("project_users")
-      .select("role")
-      .eq("project_id", parseInt(projectId))
-      .eq("user_id", user.id)
+    // Look up person_id from auth user
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
       .single();
 
-    if (accessError || !projectAccess) {
+    const { data: membership } = await supabase
+      .from("project_directory_memberships")
+      .select("role, status")
+      .eq("project_id", parseInt(projectId))
+      .eq("person_id", authLink?.person_id ?? "")
+      .single();
+
+    if (!membership || membership.status !== "active") {
       return NextResponse.json(
         {
-          error: "Access denied",
-          details: `User is not a member of project ${projectId}`,
+          error: "Forbidden: You do not have permission to access this project",
+          details: `User is not an active member of project ${projectId}`,
         },
-        { status: 403 },
-      );
-    }
-
-    const allowedRoles = ["admin", "project_manager", "editor"];
-    if (!allowedRoles.includes(projectAccess.role)) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
         { status: 403 },
       );
     }

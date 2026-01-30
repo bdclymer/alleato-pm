@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -137,7 +135,9 @@ export default function BudgetV2Page() {
         setLockedBy(data.lockedBy);
       }
     } catch (error) {
-      }
+      console.error("Failed to fetch budget lock status:", error);
+      // Intentionally swallowed: lock status fetch is non-critical
+    }
   }, [projectId]);
 
   // Load active project cost codes and create initial line items
@@ -265,7 +265,9 @@ export default function BudgetV2Page() {
 
         setGroupedCostCodes(grouped);
       } catch (error) {
-        } finally {
+        console.error("Failed to fetch cost codes:", error);
+        // Intentionally swallowed: modal shows empty state on error
+      } finally {
         setLoadingCostCodes(false);
       }
     };

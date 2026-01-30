@@ -188,7 +188,9 @@ function scanDirectory(dir: string, basePath: string = ''): RouteInfo[] {
       }
     }
   } catch (error) {
-    }
+    console.error("Failed to process route file:", error);
+    // Intentionally swallowed: individual file errors should not stop sitemap generation
+  }
 
   return routes
 }

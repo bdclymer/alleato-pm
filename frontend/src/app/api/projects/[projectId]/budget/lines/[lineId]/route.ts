@@ -1,5 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+
+// Zod schema for budget line PATCH updates
+// All fields optional since PATCH allows partial updates
+// OWASP: Input validation to prevent injection and data integrity issues (A03:2021 - Injection)
+const budgetLinePatchSchema = z
+  .object({
+    quantity: z
+      .union([z.number(), z.string()])
+      .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+      .refine((val) => !Number.isNaN(val), "quantity must be a valid number")
+      .optional(),
+    unit_cost: z
+      .union([z.number(), z.string()])
+      .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+      .refine((val) => !Number.isNaN(val), "unit_cost must be a valid number")
+      .optional(),
+    description: z
+      .string()
+      .trim()
+      .max(1000, "Description must be at most 1000 characters")
+      .optional(),
+    original_amount: z
+      .union([z.number(), z.string()])
+      .transform((val) => (typeof val === "string" ? parseFloat(val) : val))
+      .refine(
+        (val) => !Number.isNaN(val),
+        "original_amount must be a valid number",
+      )
+      .optional(),
+  })
+  .refine(
+    (data) =>
+      data.quantity !== undefined ||
+      data.unit_cost !== undefined ||
+      data.description !== undefined ||
+      data.original_amount !== undefined,
+    {
+      message:
+        "At least one field (quantity, unit_cost, description, original_amount) must be provided",
+    },
+  );
 
 // GET /api/projects/[id]/budget/lines/[lineId] - Fetch a single budget line item
 export async function GET(
@@ -157,25 +199,22 @@ export async function PATCH(
       );
     }
 
-    // Parse request body
+    // Parse and validate request body
     const body = await request.json();
-    const { quantity, unit_cost, description, original_amount } = body;
+    const validation = budgetLinePatchSchema.safeParse(body);
 
-    // Validate at least one field is being updated
-    if (
-      quantity === undefined &&
-      unit_cost === undefined &&
-      description === undefined &&
-      original_amount === undefined
-    ) {
+    if (!validation.success) {
       return NextResponse.json(
         {
-          error:
-            "At least one field (quantity, unit_cost, description, original_amount) must be provided",
+          error: "Validation failed",
+          details: validation.error.flatten(),
         },
         { status: 400 },
       );
     }
+
+    const { quantity, unit_cost, description, original_amount } =
+      validation.data;
 
     // TODO: Add project membership validation when project_team_members table exists
     // For now, all authenticated users can edit (will be restricted by RLS on budget_lines)
@@ -238,11 +277,11 @@ export async function PATCH(
     };
 
     if (quantity !== undefined) {
-      updateData.quantity = parseFloat(quantity);
+      updateData.quantity = quantity;
     }
 
     if (unit_cost !== undefined) {
-      updateData.unit_cost = parseFloat(unit_cost);
+      updateData.unit_cost = unit_cost;
     }
 
     if (description !== undefined) {
@@ -253,15 +292,13 @@ export async function PATCH(
     // If original_amount is explicitly provided, use it directly (manual mode)
     // Otherwise, recalculate from quantity * unit_cost if either changed
     if (original_amount !== undefined) {
-      updateData.original_amount = parseFloat(original_amount);
+      updateData.original_amount = original_amount;
     } else if (quantity !== undefined || unit_cost !== undefined) {
       // Recalculate original_amount if quantity or unit_cost changed
       const newQuantity =
-        quantity !== undefined ? parseFloat(quantity) : existingLine.quantity;
+        quantity !== undefined ? quantity : existingLine.quantity;
       const newUnitCost =
-        unit_cost !== undefined
-          ? parseFloat(unit_cost)
-          : existingLine.unit_cost;
+        unit_cost !== undefined ? unit_cost : existingLine.unit_cost;
 
       if (newQuantity !== null && newUnitCost !== null) {
         updateData.original_amount = newQuantity * newUnitCost;

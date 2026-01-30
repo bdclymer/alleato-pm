@@ -65,7 +65,12 @@ export function PendingCostChangesModal({
         setChanges(data.changes || []);
       }
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch pending cost changes:", error);
+
+      // Intentionally swallowed: modal shows empty state on error
+
+    } finally {
       setLoading(false);
     }
   };

@@ -65,8 +65,47 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
   }, [projectId]);
 
   useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
+    let cancelled = false;
+
+    const loadRoles = async () => {
+      if (!projectId || cancelled) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/directory/roles`,
+        );
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to fetch roles");
+        }
+        const { data } = await response.json();
+
+        if (!cancelled) {
+          setRoles(data || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error("Unknown error"));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadRoles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   const updateRoleMembers = useCallback(
     async (roleId: string, memberPersonIds: string[]) => {

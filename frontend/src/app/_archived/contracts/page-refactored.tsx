@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -86,14 +84,16 @@ export default function ContractsPage() {
           project:projects(id, name, project_number)
         `,
         )
-        .eq("project_id", projectId)
+        .eq("project_id", Number(projectId))
         .order("created_at", { ascending: false });
 
       if (!error) {
-        setContracts(data || []);
+        setContracts((data || []) as any);
       }
     } catch (err) {
-      } finally {
+      console.error("Failed to fetch contracts:", err);
+      // Error is handled silently - UI shows empty state
+    } finally {
       setLoading(false);
     }
   };

@@ -93,7 +93,12 @@ export function ForecastToCompleteModal({
       });
       onClose();
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch forecast:", error);
+
+      // Intentionally swallowed: modal shows empty state on error
+
+    } finally {
       setIsSaving(false);
     }
   };

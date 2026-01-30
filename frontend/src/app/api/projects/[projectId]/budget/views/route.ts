@@ -32,6 +32,7 @@ export async function GET(
       );
     }
     // Fetch views with their columns
+    const projectIdNum = parseInt(projectId, 10);
     const { data: views, error: viewsError } = await supabase
       .from("budget_views")
       .select(
@@ -40,7 +41,7 @@ export async function GET(
         columns:budget_view_columns(*)
       `,
       )
-      .eq("project_id", projectId)
+      .eq("project_id", projectIdNum)
       .order("created_at", { ascending: true });
 
     if (viewsError) {

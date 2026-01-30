@@ -103,7 +103,9 @@ export default function PortfolioPage() {
           setProjects([]);
         }
       } catch (error) {
-        } finally {
+        console.error("Failed to fetch projects:", error);
+        // Intentionally swallowed: UI shows empty state on error
+      } finally {
         setLoading(false);
       }
     };

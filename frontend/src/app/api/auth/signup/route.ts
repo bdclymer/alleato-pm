@@ -1,7 +1,25 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { createClient } from "@/lib/supabase/server";
-import { randomUUID } from "crypto";
+import { apiErrorResponse } from "@/lib/api-error";
+import { z } from "zod";
+import { passwordSchema } from "@/lib/validation/password";
+
+// Zod schema for signup request body validation
+// OWASP: Input validation for authentication endpoints (A07:2021 - Identification and Authentication Failures)
+const signupSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .email("Invalid email address")
+    .max(255, "Email must be at most 255 characters"),
+  password: passwordSchema,
+  name: z
+    .string()
+    .trim()
+    .max(255, "Name must be at most 255 characters")
+    .optional(),
+});
 
 function getSiteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {
@@ -18,26 +36,22 @@ function getSiteUrl() {
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name } = await request.json();
+    const body = await request.json();
 
-    if (!email || !password) {
+    // Validate input with Zod schema
+    const result = signupSchema.safeParse(body);
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Validation failed", details: result.error.flatten() },
         { status: 400 },
       );
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 },
-      );
-    }
+    const { email, password, name } = result.data;
 
     const supabase = await createClient();
 
-    const displayName =
-      (name as string | undefined)?.trim() || email.split("@")[0];
+    const displayName = name?.trim() || email.split("@")[0];
 
     // Create user in Supabase Auth to establish a session + OTP flow
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp(
@@ -52,51 +66,60 @@ export async function POST(request: Request) {
     );
 
     if (signUpError) {
-      return NextResponse.json({ error: signUpError.message }, { status: 400 });
+      // Log the real error server-side, but return a generic message to prevent email enumeration
+      console.error("[Signup Error]", signUpError.message);
+      return NextResponse.json(
+        { message: "If this email is available, a confirmation link has been sent." },
+        { status: 200 },
+      );
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Preserve existing role/id if a legacy record exists
-    const { data: existingUser } = await supabase
-      .from("app_users")
-      .select("id, role")
+    // Check if person record exists
+    const { data: existingPerson } = await supabase
+      .from("people")
+      .select("id, first_name, last_name, email")
       .eq("email", email)
       .maybeSingle();
 
-    const appUserId = existingUser?.id ?? signUpData.user?.id ?? randomUUID();
+    let personId = existingPerson?.id;
 
-    const { data: newUser, error: upsertError } = await supabase
-      .from("app_users")
-      .upsert(
-        {
-          id: appUserId,
+    if (!existingPerson) {
+      // Create new person record
+      const nameParts = displayName.split(" ");
+      const { data: newPerson, error: personError } = await supabase
+        .from("people")
+        .insert({
+          first_name: nameParts[0] || displayName,
+          last_name: nameParts.slice(1).join(" ") || "",
           email,
-          password_hash: passwordHash,
-          name: displayName,
-          role: existingUser?.role ?? "user",
-        },
-        { onConflict: "email" },
-      )
-      .select("id, email, name")
-      .single();
+          person_type: "user",
+          status: "active",
+        })
+        .select("id, first_name, last_name, email")
+        .single();
 
-    if (upsertError) {
-      return NextResponse.json(
-        { error: "Failed to store user record" },
-        { status: 500 },
-      );
+      if (personError) {
+        return apiErrorResponse(personError);
+      }
+      personId = newPerson.id;
+    }
+
+    // Link auth user to person record
+    if (signUpData.user?.id && personId) {
+      await supabase
+        .from("users_auth")
+        .upsert({
+          auth_user_id: signUpData.user.id,
+          person_id: personId,
+        }, { onConflict: "auth_user_id" });
     }
 
     return NextResponse.json({
       message: "User created successfully",
-      user: newUser,
+      user: existingPerson || { id: personId, email, first_name: displayName },
       emailConfirmationSent: !signUpData.session,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

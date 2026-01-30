@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryAdminService } from "@/services/directoryAdminService";
-import { createServiceClient } from "@/lib/supabase/service";
 import type { DirectoryTemplateType } from "@/services/directoryAdminService";
 
 interface RouteParams {
@@ -12,11 +12,15 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, templateType } = await params;
+    const projectIdNum = parseInt(projectId, 10);
     const type = (templateType as DirectoryTemplateType) || "users";
 
-    const supabase = await createClient();
-    const serviceSupabase = createServiceClient();
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const serviceSupabase = authResult.serviceClient;
 
+    // Still need regular auth client for permission check
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,

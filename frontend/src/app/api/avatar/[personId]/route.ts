@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { Buffer } from "node:buffer";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await serviceSupabase
+    const { data, error } = await (serviceSupabase as any)
       .from("person_profile_photos")
       .select("*")
       .eq("person_id", personId)
@@ -65,10 +63,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const buffer = Buffer.from(data.data_base64, "base64");
+    const photoData = data as { data_base64: string; content_type: string };
+    const buffer = Buffer.from(photoData.data_base64, "base64");
     return new NextResponse(buffer, {
       headers: {
-        "Content-Type": data.content_type || "image/png",
+        "Content-Type": photoData.content_type || "image/png",
         "Cache-Control": "private, max-age=300",
       },
     });

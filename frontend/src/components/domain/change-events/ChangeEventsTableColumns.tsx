@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
@@ -178,20 +176,20 @@ export const ChangeEventsTableColumns = ({
             </DropdownMenuItem>{" "}
             <DropdownMenuSeparator />{" "}
             {onView && (
-              <DropdownMenuItem onClick={() => onView(changeEvent.id)}>
+              <DropdownMenuItem onClick={() => onView(Number(changeEvent.id))}>
                 {" "}
                 <Eye className="mr-2 h-4 w-4" /> View details{" "}
               </DropdownMenuItem>
             )}{" "}
             {onEdit && (
-              <DropdownMenuItem onClick={() => onEdit(changeEvent.id)}>
+              <DropdownMenuItem onClick={() => onEdit(Number(changeEvent.id))}>
                 {" "}
                 <Edit className="mr-2 h-4 w-4" /> Edit{" "}
               </DropdownMenuItem>
             )}{" "}
             {onDelete && (
               <DropdownMenuItem
-                onClick={() => onDelete(changeEvent.id)}
+                onClick={() => onDelete(Number(changeEvent.id))}
                 className="text-destructive"
                 data-testid={`change-event-delete-${changeEvent.id}`}
               >

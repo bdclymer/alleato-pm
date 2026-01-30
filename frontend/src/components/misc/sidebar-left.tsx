@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -76,27 +74,27 @@ const data = {
     {
       title: "Calendar",
       url: "#",
-      icon: Calendar,
+      icon: Calendar as any,
     },
     {
       title: "Settings",
       url: "#",
-      icon: Settings2,
+      icon: Settings2 as any,
     },
     {
       title: "Templates",
       url: "#",
-      icon: Blocks,
+      icon: Blocks as any,
     },
     {
       title: "Trash",
       url: "#",
-      icon: Trash2,
+      icon: Trash2 as any,
     },
     {
       title: "Help",
       url: "#",
-      icon: MessageCircleQuestion,
+      icon: MessageCircleQuestion as any,
     },
   ],
   favorites: [

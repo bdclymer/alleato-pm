@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
@@ -7,24 +5,21 @@ import { useCallback, useEffect, useState } from "react";
 
 export interface AppUser {
   id: string;
-  email: string;
-  full_name: string | null;
-  name: string | null;
-  role: string;
-  avatar_url: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone_business: string | null;
+  phone_mobile: string | null;
+  job_title: string | null;
+  company_id: string | null;
+  person_type: string;
+  status: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
 
-export interface Employee {
-  id: number;
-  first_name: string | null;
-  last_name: string | null;
-  email: string | null;
-  phone: string | null;
-  title: string | null;
-  department: string | null;
-}
+// Keep Employee as alias for backwards compatibility
+export type Employee = AppUser;
 
 export interface UserOption {
   value: string;
@@ -34,20 +29,17 @@ export interface UserOption {
 }
 
 interface UseUsersOptions {
-  // Filter users by search term
   search?: string;
-  // Filter by role
   role?: string;
-  // Limit number of results
   limit?: number;
-  // Whether to auto-fetch on mount
   enabled?: boolean;
-  // Whether to use app_users or employees table
-  source?: "app_users" | "employees";
+  /** @deprecated source parameter is ignored — all users come from people table */
+  source?: string;
+  personType?: "user" | "contact" | "all";
 }
 
 interface UseUsersReturn {
-  users: (AppUser | Employee)[];
+  users: AppUser[];
   options: UserOption[];
   isLoading: boolean;
   error: Error | null;
@@ -55,18 +47,17 @@ interface UseUsersReturn {
 }
 
 /**
- * Hook for fetching users from Supabase
- * Can query either app_users or employees table
+ * Hook for fetching users from the people table.
+ * Replaces the old app_users/employees split.
  */
 export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
   const {
     search,
-    role,
     limit = 100,
     enabled = true,
-    source = "app_users",
+    personType = "all",
   } = options;
-  const [users, setUsers] = useState<(AppUser | Employee)[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -78,85 +69,49 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
 
     try {
       const supabase = createClient();
+      let query = supabase
+        .from("people")
+        .select("*")
+        .order("last_name", { ascending: true })
+        .limit(limit);
 
-      if (source === "app_users") {
-        let query = supabase
-          .from("app_users")
-          .select("*")
-          .order("full_name", { ascending: true })
-          .limit(limit);
-
-        if (search) {
-          query = query.or(
-            `full_name.ilike.%${search}%,email.ilike.%${search}%`,
-          );
-        }
-
-        if (role) {
-          query = query.eq("role", role);
-        }
-
-        const { data, error: queryError } = await query;
-
-        if (queryError) {
-          throw new Error(queryError.message);
-        }
-
-        setUsers(data || []);
-      } else {
-        // Query employees table
-        let query = supabase
-          .from("employees")
-          .select("*")
-          .order("last_name", { ascending: true })
-          .limit(limit);
-
-        if (search) {
-          query = query.or(
-            `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
-          );
-        }
-
-        const { data, error: queryError } = await query;
-
-        if (queryError) {
-          throw new Error(queryError.message);
-        }
-
-        setUsers(data || []);
+      if (personType !== "all") {
+        query = query.eq("person_type", personType);
       }
+
+      if (search) {
+        query = query.or(
+          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+        );
+      }
+
+      const { data, error: queryError } = await query;
+
+      if (queryError) {
+        throw new Error(queryError.message);
+      }
+
+      setUsers(data || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch users"));
     } finally {
       setIsLoading(false);
     }
-  }, [search, role, limit, enabled, source]);
+  }, [search, limit, enabled, personType]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Transform users to options for dropdowns
   const userOptions: UserOption[] = users.map((user) => {
-    if (source === "app_users") {
-      const appUser = user as AppUser;
-      return {
-        value: appUser.id,
-        label: appUser.full_name || appUser.name || appUser.email,
-        email: appUser.email,
-        role: appUser.role,
-      };
-    } else {
-      const employee = user as Employee;
-      const fullName = [employee.first_name, employee.last_name]
-        .filter(Boolean)
-        .join(" ");
-      return {
-        value: employee.id.toString(),
-        label: fullName || employee.email || "Unnamed Employee",
-        email: employee.email || undefined,
-      };
-    }
+    const fullName = [user.first_name, user.last_name]
+      .filter(Boolean)
+      .join(" ");
+    return {
+      value: user.id,
+      label: fullName || user.email || "Unnamed User",
+      email: user.email || undefined,
+    };
   });
 
   return {
@@ -169,8 +124,8 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
 }
 
 /**
- * Hook specifically for fetching employees (project managers, superintendents, etc.)
+ * Hook specifically for fetching employees (person_type = 'user')
  */
-export function useEmployees(options: Omit<UseUsersOptions, "source"> = {}) {
-  return useUsers({ ...options, source: "employees" });
+export function useEmployees(options: Omit<UseUsersOptions, "source" | "personType"> = {}) {
+  return useUsers({ ...options, personType: "user" });
 }

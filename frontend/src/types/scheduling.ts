@@ -153,9 +153,11 @@ export interface ScheduleTaskListParams {
 }
 
 /**
- * Paginated response wrapper
+ * Paginated response wrapper for scheduling module
+ * Note: This is distinct from the general PaginatedResponse in @/app/api/types
+ * which uses different field names (meta instead of pagination, page instead of current_page, etc.)
  */
-export interface PaginatedResponse<T> {
+export interface SchedulePaginatedResponse<T> {
   data: T[];
   pagination: {
     current_page: number;
@@ -215,30 +217,6 @@ export interface GanttChartItem {
 }
 
 /**
- * Import/Export format options
- */
-export type ScheduleImportFormat = "csv" | "ms_project" | "primavera";
-export type ScheduleExportFormat = "csv" | "pdf" | "excel";
-
-/**
- * Import result
- */
-export interface ScheduleImportResult {
-  success: boolean;
-  tasks_imported: number;
-  dependencies_imported: number;
-  errors: Array<{
-    row: number;
-    field: string;
-    message: string;
-  }>;
-  warnings: Array<{
-    row: number;
-    message: string;
-  }>;
-}
-
-/**
  * Context menu action
  * Represents available actions in the task context menu
  */
@@ -257,15 +235,3 @@ export type ScheduleContextAction =
   | "bulk_edit_tasks"
   | "import_schedule"
   | "export_schedule";
-
-/**
- * Context menu item configuration
- */
-export interface ScheduleContextMenuItem {
-  key: ScheduleContextAction;
-  label: string;
-  icon?: string;
-  shortcut?: string;
-  disabled?: boolean;
-  divider?: boolean;
-}

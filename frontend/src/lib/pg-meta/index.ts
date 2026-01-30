@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
+// @ts-expect-error - common-tags doesn't have type definitions
 import { stripIndent } from "common-tags";
 
 import { columnsSql, extensionsSql, tablesSql } from "./sql";

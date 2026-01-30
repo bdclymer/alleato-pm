@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
@@ -7,7 +5,10 @@ import { useCallback, useEffect, useState } from "react";
 
 export interface CostCode {
   id: string;
+  title: string | null;
   description: string | null;
+  division_id: string;
+  division_title: string | null;
   status: string | null;
   created_at: string;
 }
@@ -118,13 +119,16 @@ export function useCostCodes(
       if ((!data || data.length === 0) && useFallback) {
         const fallbackCodes: CostCode[] = CSI_DIVISIONS.map((div) => ({
           id: `${div.code}-000`,
+          title: div.name,
           description: div.name,
+          division_id: div.code,
+          division_title: div.name,
           status: "active",
           created_at: new Date().toISOString(),
         }));
         setCostCodes(fallbackCodes);
       } else {
-        setCostCodes(data || []);
+        setCostCodes((data || []) as unknown as CostCode[]);
       }
     } catch (err) {
       setError(
@@ -135,7 +139,10 @@ export function useCostCodes(
       if (useFallback) {
         const fallbackCodes: CostCode[] = CSI_DIVISIONS.map((div) => ({
           id: `${div.code}-000`,
+          title: div.name,
           description: div.name,
+          division_id: div.code,
+          division_title: div.name,
           status: "active",
           created_at: new Date().toISOString(),
         }));
@@ -158,7 +165,9 @@ export function useCostCodes(
           .from("cost_codes")
           .insert({
             id: costCode.id || "",
-            description: costCode.description,
+            title: costCode.title || costCode.description,
+            division_id: costCode.division_id || "",
+            division_title: costCode.division_title,
             status: costCode.status || "active",
           })
           .select()
@@ -170,7 +179,7 @@ export function useCostCodes(
 
         // Refetch to update the list
         await fetchCostCodes();
-        return data;
+        return data as unknown as CostCode;
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error("Failed to create cost code"),
@@ -184,9 +193,9 @@ export function useCostCodes(
   // Transform cost codes to options for dropdowns
   const costCodeOptions: CostCodeOption[] = costCodes.map((code) => ({
     value: code.id,
-    label: `${code.id} - ${code.description || "No Description"}`,
+    label: `${code.id} - ${code.title || code.description || "No Description"}`,
     code: code.id,
-    description: code.description || "",
+    description: code.title || code.description || "",
   }));
 
   return {

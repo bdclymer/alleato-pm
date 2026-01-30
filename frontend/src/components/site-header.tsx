@@ -198,7 +198,12 @@ export function SiteHeader() {
           } else if (!response.ok) {
             }
         } catch (error) {
-          }
+
+          console.error("Failed to process header data:", error);
+
+          // Intentionally swallowed: error handling done by caller
+
+        }
       } else {
         setCurrentProject(null);
       }
@@ -218,7 +223,12 @@ export function SiteHeader() {
       } else if (!response.ok) {
         }
     } catch (error) {
-      } finally {
+
+      console.error("Failed to fetch header data:", error);
+
+      // Intentionally swallowed: component shows appropriate state on error
+
+    } finally {
       setLoadingProjects(false);
     }
   };

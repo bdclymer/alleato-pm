@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -51,7 +49,7 @@ import {
 
 export default function DirectoryUsersPage() {
   const pathname = usePathname();
-  const [projectId] = React.useState("1"); // TODO: Get from router params
+  const [projectId, setProjectId] = React.useState("1");
 
   const [statusFilter, setStatusFilter] = React.useState<
     "all" | "active" | "inactive"
@@ -343,23 +341,37 @@ export default function DirectoryUsersPage() {
 
           {/* Actions Bar */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Text weight="medium">Filters:</Text>
-              <Select
-                value={statusFilter}
-                onValueChange={(value) =>
-                  setStatusFilter(value as "all" | "active" | "inactive")
-                }
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Users</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Text weight="medium">Project:</Text>
+                <Select value={projectId} onValueChange={setProjectId}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Goodwill Bart</SelectItem>
+                    {/* TODO: Load projects dynamically from API */}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Text weight="medium">Filters:</Text>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) =>
+                    setStatusFilter(value as "all" | "active" | "inactive")
+                  }
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

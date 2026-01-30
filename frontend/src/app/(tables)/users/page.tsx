@@ -42,24 +42,16 @@ export default function UserDirectoryPage() {
   // Transform database users to the format expected by the table
   const data: User[] = React.useMemo(() => {
     return dbUsers.map((user) => {
-      // Handle both app_users and employees format
-      const appUser = user as {
-        id: string;
-        email: string;
-        full_name: string | null;
-        name: string | null;
-        role: string;
-        created_at: string | null;
-      };
+      const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ");
       return {
-        id: appUser.id,
-        name: appUser.full_name || appUser.name || appUser.email,
-        email: appUser.email,
-        phone: "", // Phone not available in app_users table
-        role: (appUser.role || "viewer") as User["role"],
-        company: "", // Company association not directly available
-        status: "active" as const,
-        lastLogin: appUser.created_at, // Using created_at as proxy for now
+        id: user.id,
+        name: fullName || user.email || "Unknown",
+        email: user.email || "",
+        phone: user.phone_business || user.phone_mobile || "",
+        role: "viewer" as User["role"],
+        company: "",
+        status: (user.status === "active" ? "active" : "inactive") as User["status"],
+        lastLogin: user.created_at,
       };
     });
   }, [dbUsers]);

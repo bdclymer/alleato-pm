@@ -10,6 +10,10 @@ export async function GET(
 ) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { viewId } = await context.params;
 
     const { data: view, error } = await supabase
@@ -61,6 +65,10 @@ export async function PATCH(
 ) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { viewId } = await context.params;
     const body: UpdateBudgetViewRequest = await request.json();
 
@@ -209,6 +217,10 @@ export async function DELETE(
 ) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { viewId } = await context.params;
 
     // Check if view is a system view

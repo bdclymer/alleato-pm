@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { LoginForm } from "@/components/misc/login-form";
+import { validateCallbackUrl } from "@/lib/validation/callback-url";
 
 export default async function LoginPage({
   searchParams,
@@ -10,8 +11,8 @@ export default async function LoginPage({
 }) {
   // Await searchParams as required in Next.js 15
   const params = await searchParams;
-  // Default to home page if no callback URL is provided
-  const redirectTo = params.callbackUrl || "/";
+  // Validate callback URL to prevent open redirect attacks
+  const redirectTo = validateCallbackUrl(params.callbackUrl);
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">

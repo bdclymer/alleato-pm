@@ -8,10 +8,11 @@ const PAGE_DESCRIPTION = "View and manage all your employees";
 export default async function EmployeesPage() {
   const supabase = await createClient();
 
-  // Fetch all employees from employees table
+  // Fetch all employees from people table (filtered by person_type)
   const { data: employees, error } = await supabase
-    .from("employees")
+    .from("people")
     .select("*")
+    .eq("person_type", "user")
     .order("last_name", { ascending: true });
 
   if (error) {

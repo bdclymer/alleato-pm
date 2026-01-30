@@ -19,7 +19,7 @@ import {
   ScheduleDeadline,
   ScheduleDeadlineCreate,
   ScheduleTaskListParams,
-  PaginatedResponse,
+  SchedulePaginatedResponse,
   ScheduleSummary,
   ScheduleTaskWithHierarchy,
   GanttChartItem,
@@ -38,7 +38,7 @@ export class SchedulingService {
   async listTasks(
     projectId: string,
     params: ScheduleTaskListParams = {}
-  ): Promise<PaginatedResponse<ScheduleTask>> {
+  ): Promise<SchedulePaginatedResponse<ScheduleTask>> {
     const {
       page = 1,
       limit = 50,

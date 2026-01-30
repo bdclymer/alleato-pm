@@ -32,3 +32,15 @@ export type {
   OwnerInvoiceLineItem,
   SubcontractorInvoice,
 } from "./invoicing.config";
+
+// Direct Costs table configuration
+export {
+  getDirectCostsColumns,
+  directCostFilterOptions,
+  directCostStatusOptions,
+  directCostTypeOptions,
+  getDirectCostsSummaryCards,
+  directCostsMobileColumns,
+  formatCostType,
+} from "./direct-costs.config";
+export type { DirectCost } from "./direct-costs.config";

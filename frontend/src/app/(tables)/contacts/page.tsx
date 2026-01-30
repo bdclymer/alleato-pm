@@ -10,13 +10,14 @@ export default async function ContactsPage() {
 
   // Fetch contacts with company data
   const { data: contacts, error } = await supabase
-    .from("contacts")
+    .from("people")
     .select(
       `
       *,
       company:companies(*)
     `,
     )
+    .eq("person_type", "contact")
     .order("last_name", { ascending: true });
 
   if (error) {

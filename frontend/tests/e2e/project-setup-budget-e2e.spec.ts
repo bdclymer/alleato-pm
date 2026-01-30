@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Project Setup - Budget Creation E2E', () => {
-  test.use({ storageState: 'playwright/.auth/user.json' })
+test.use({ storageState: '../../../tests/.auth/user.json' })
   test('should complete full budget setup flow in project wizard', async ({ page }) => {
     // Navigate to project setup page
     await page.goto('/118/setup')

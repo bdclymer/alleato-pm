@@ -1,8 +1,6 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -29,7 +27,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = createServiceClient();
+    const authResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
 
     // Verify contract exists and belongs to project
     const { data: contract, error: contractError } = await supabase

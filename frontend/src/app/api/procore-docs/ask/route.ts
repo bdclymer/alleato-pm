@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
@@ -165,6 +166,11 @@ Remember: You're an intelligent assistant with construction expertise, not just 
  */
 export async function POST(request: NextRequest) {
   try {
+    const authSupabase = await createAuthClient();
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const body = await request.json();
     const { query, topK = 5, conversationHistory = [] } = body;
 

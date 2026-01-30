@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -188,19 +186,15 @@ export default function SimpleChatPage() {
                                     const inline = !match;
                                     return !inline && match ? (
                                       <SyntaxHighlighter
-                                        style={syntaxHighlighterStyle}
+                                        style={syntaxHighlighterStyle as any}
                                         language={match[1]}
                                         PreTag="div"
                                         className="rounded-md my-2"
-                                        {...props}
                                       >
                                         {String(children).replace(/\n$/, "")}
                                       </SyntaxHighlighter>
                                     ) : (
-                                      <code
-                                        className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
-                                        {...props}
-                                      >
+                                      <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono">
                                         {children}
                                       </code>
                                     );

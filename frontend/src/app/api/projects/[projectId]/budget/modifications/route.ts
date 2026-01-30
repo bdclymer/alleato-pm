@@ -1,4 +1,7 @@
-import { BudgetModificationPayloadSchema } from "@/lib/schemas/budget";
+import {
+  BudgetModificationPayloadSchema,
+  BudgetModificationActionSchema,
+} from "@/lib/schemas/budget";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -376,22 +379,28 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { modification_id, modificationId, action } = body;
-    const modId = modification_id || modificationId;
 
-    if (!modId) {
+    // Normalize field names for backwards compatibility, then validate with Zod
+    // OWASP: Input validation on state-changing operations (A03:2021 - Injection)
+    const normalizedBody = {
+      modificationId:
+        body.modificationId ?? body.modification_id ?? body.modId,
+      action: body.action,
+    };
+
+    const validation = BudgetModificationActionSchema.safeParse(normalizedBody);
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "modification_id is required" },
+        {
+          error: "Validation failed",
+          details: validation.error.flatten(),
+        },
         { status: 400 },
       );
     }
 
-    if (!action || !["submit", "approve", "reject", "void"].includes(action)) {
-      return NextResponse.json(
-        { error: "action must be one of: submit, approve, reject, void" },
-        { status: 400 },
-      );
-    }
+    const { modificationId: modId, action } = validation.data;
 
     const supabase = await createClient();
 

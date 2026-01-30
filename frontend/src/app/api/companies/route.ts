@@ -1,10 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { Company } from "@/app/api/types";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     const type = searchParams.get("type");
@@ -28,28 +33,23 @@ export async function GET(request: Request) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     const companies: Company[] = data || [];
     return NextResponse.json(companies);
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Internal server error", message: error.message },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const body = await request.json();
 
     const { data, error } = await supabase
@@ -66,20 +66,11 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Internal server error", message: error.message },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

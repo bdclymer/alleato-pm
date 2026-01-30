@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -138,7 +136,7 @@ export function useChangeEvents(
           insertData.estimated_impact = changeEvent.estimated_impact;
         }
 
-        const { data, error: insertError } = await supabase
+        const { data, error: insertError } = await (supabase as any)
           .from("change_events")
           .insert(insertData)
           .select()

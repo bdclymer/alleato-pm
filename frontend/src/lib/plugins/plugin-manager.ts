@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * Plugin Manager for Alleato-Procore
  * Handles plugin lifecycle, loading, and execution
@@ -69,7 +67,7 @@ export class PluginManager extends EventEmitter {
    * Load all enabled plugins from the database
    */
   async loadEnabledPlugins() {
-    const { data: pluginRecords, error } = await this.supabase
+    const { data: pluginRecords, error } = await (this.supabase as any)
       .from("plugins")
       .select("*")
       .eq("status", "enabled");
@@ -78,9 +76,9 @@ export class PluginManager extends EventEmitter {
       return;
     }
 
-    for (const record of pluginRecords || []) {
+    for (const record of (pluginRecords as any[]) || []) {
       try {
-        await this.loadPlugin(record);
+        await this.loadPlugin(record as PluginRecord);
       } catch (error) {
         await this.setPluginError(record.id, error as Error);
       }
@@ -153,30 +151,30 @@ export class PluginManager extends EventEmitter {
     return {
       storage: {
         get: async (key: string) => {
-          const { data } = await this.supabase
+          const { data } = await (this.supabase as any)
             .from("plugin_storage")
             .select("value")
             .eq("plugin_id", pluginId)
             .eq("key", key)
             .single();
-          return data?.value;
+          return (data as any)?.value;
         },
         set: async (key: string, value: any) => {
-          await this.supabase.from("plugin_storage").upsert({
+          await (this.supabase as any).from("plugin_storage").upsert({
             plugin_id: pluginId,
             key,
-            value,
-          });
+            value: value as any,
+          } as any);
         },
         delete: async (key: string) => {
-          await this.supabase
+          await (this.supabase as any)
             .from("plugin_storage")
             .delete()
             .eq("plugin_id", pluginId)
             .eq("key", key);
         },
         clear: async () => {
-          await this.supabase
+          await (this.supabase as any)
             .from("plugin_storage")
             .delete()
             .eq("plugin_id", pluginId);
@@ -215,7 +213,7 @@ export class PluginManager extends EventEmitter {
 
       data: {
         query: async (table: string, query: any) => {
-          const { data } = await this.supabase
+          const { data } = await (this.supabase as any)
             .from(table)
             .select(query.select || "*")
             .match(query.match || {})
@@ -223,7 +221,7 @@ export class PluginManager extends EventEmitter {
           return data || [];
         },
         insert: async (table: string, data: any) => {
-          const { data: result } = await this.supabase
+          const { data: result } = await (this.supabase as any)
             .from(table)
             .insert(data)
             .select()
@@ -231,7 +229,7 @@ export class PluginManager extends EventEmitter {
           return result;
         },
         update: async (table: string, id: string, data: any) => {
-          const { data: result } = await this.supabase
+          const { data: result } = await (this.supabase as any)
             .from(table)
             .update(data)
             .eq("id", id)
@@ -240,7 +238,7 @@ export class PluginManager extends EventEmitter {
           return result;
         },
         delete: async (table: string, id: string) => {
-          await this.supabase.from(table).delete().eq("id", id);
+          await (this.supabase as any).from(table).delete().eq("id", id);
         },
       },
 
@@ -357,7 +355,7 @@ export class PluginManager extends EventEmitter {
     await this.checkPermissions(manifest);
 
     // Create plugin record
-    const { data: record, error } = await this.supabase
+    const { data: record, error } = await (this.supabase as any)
       .from("plugins")
       .insert({
         manifest_url: manifestUrl,
@@ -384,21 +382,23 @@ export class PluginManager extends EventEmitter {
    * Enable a plugin
    */
   async enablePlugin(pluginId: string) {
-    const { error } = await this.supabase.rpc("enable_plugin", {
-      plugin_id: pluginId,
-    });
+    // Update plugin status directly instead of using RPC
+    const { error } = await (this.supabase as any)
+      .from("plugins")
+      .update({ status: "enabled" as PluginStatus })
+      .eq("id", pluginId);
 
     if (error) throw error;
 
     // Reload the plugin
-    const { data: record } = await this.supabase
+    const { data: record } = await (this.supabase as any)
       .from("plugins")
       .select("*")
       .eq("id", pluginId)
       .single();
 
     if (record) {
-      await this.loadPlugin(record);
+      await this.loadPlugin(record as any as PluginRecord);
     }
   }
 
@@ -423,9 +423,11 @@ export class PluginManager extends EventEmitter {
       }
     }
 
-    const { error } = await this.supabase.rpc("disable_plugin", {
-      plugin_id: pluginId,
-    });
+    // Update plugin status directly instead of using RPC
+    const { error } = await (this.supabase as any)
+      .from("plugins")
+      .update({ status: "disabled" as PluginStatus })
+      .eq("id", pluginId);
 
     if (error) throw error;
 
@@ -448,7 +450,7 @@ export class PluginManager extends EventEmitter {
     }
 
     // Delete from database
-    const { error } = await this.supabase
+    const { error } = await (this.supabase as any)
       .from("plugins")
       .delete()
       .eq("id", pluginId);
@@ -530,7 +532,7 @@ export class PluginManager extends EventEmitter {
    * Set plugin error state
    */
   private async setPluginError(pluginId: string, error: Error) {
-    await this.supabase
+    await (this.supabase as any)
       .from("plugins")
       .update({
         status: "error" as PluginStatus,

@@ -20,7 +20,7 @@ import {
 import { Facebook, Instagram, Linkedin, Mail, Phone } from "lucide-react";
 import type { Database } from "@/types/database.types";
 
-type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface ContactWithCompany extends Contact {
@@ -70,15 +70,15 @@ export function ContactDetailsSheet({
                     </a>
                   </div>
                 )}
-                {contact.phone && (
+                {(contact.phone_business || contact.phone_mobile) && (
                   <div className="flex items-center gap-2">
                     <Phone className="size-4 text-muted-foreground" />
                     <a
-                      href={`tel:${contact.phone}`}
+                      href={`tel:${contact.phone_business || contact.phone_mobile}`}
                       className="text-primary hover:underline"
                     >
                       <Text as="span" size="sm">
-                        {contact.phone}
+                        {contact.phone_business || contact.phone_mobile}
                       </Text>
                     </a>
                   </div>
@@ -147,7 +147,7 @@ export function ContactDetailsSheet({
                 <Input
                   id="phone"
                   type="tel"
-                  defaultValue={contact.phone || ""}
+                  defaultValue={contact.phone_business || contact.phone_mobile || ""}
                 />
               </div>
             </form>

@@ -138,7 +138,10 @@ export default function DocumentPipelinePage() {
         setPhaseCounts(data.phaseCounts);
       }
     } catch (error) {
-      }
+
+      console.error("Failed to process pipeline data:", error);
+
+    }
   };
 
   const loadData = async () => {

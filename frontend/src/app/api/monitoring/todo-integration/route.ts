@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * TodoWrite integration endpoint
@@ -31,6 +32,11 @@ interface TodoUpdate {
  */
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     // In a real implementation, this would integrate with your TodoWrite system
     // For now, we'll return mock data based on the monitoring system
     const projectRoot = process.cwd().replace("/frontend", "");
@@ -56,6 +62,11 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const body = await request.json();
 
     if (body.action === "create") {
@@ -210,7 +221,9 @@ async function triggerVerificationProcess(todoId: string, notes?: string) {
     // For demo purposes, we'll just log this
     // exec(`node ${scriptPath} "${JSON.stringify(todoData)}"`);
   } catch (error) {
-    }
+    console.error("Failed to trigger auto-verification:", error);
+    // Intentionally swallowed: auto-verification is optional
+  }
 }
 
 /**
@@ -267,6 +280,8 @@ async function updateMonitoringWithTodo(
     }
 
     await fs.writeFile(monitoringPath, content);
-    } catch (error) {
-    }
+  } catch (error) {
+    console.error("Failed to update monitoring file:", error);
+    // Intentionally swallowed: monitoring file updates are non-critical
+  }
 }

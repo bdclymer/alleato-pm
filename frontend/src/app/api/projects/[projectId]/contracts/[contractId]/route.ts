@@ -112,18 +112,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user has access to this project
-    const { data: projectMember } = await supabase
-      .from("project_members")
-      .select("access")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("user_id", user.id)
+    // Look up person_id from auth user
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
       .single();
 
-    if (
-      !projectMember ||
-      !["editor", "admin", "owner"].includes(projectMember.access)
-    ) {
+    const { data: membership } = await supabase
+      .from("project_directory_memberships")
+      .select("role, status")
+      .eq("project_id", parseInt(projectId, 10))
+      .eq("person_id", authLink?.person_id ?? "")
+      .single();
+
+    if (!membership || membership.status !== "active") {
       return NextResponse.json(
         {
           error:
@@ -231,15 +234,21 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user has admin/owner access to this project
-    const { data: projectMember } = await supabase
-      .from("project_members")
-      .select("access")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("user_id", user.id)
+    // Look up person_id from auth user
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
       .single();
 
-    if (!projectMember || !["admin", "owner"].includes(projectMember.access)) {
+    const { data: membership } = await supabase
+      .from("project_directory_memberships")
+      .select("role, status")
+      .eq("project_id", parseInt(projectId, 10))
+      .eq("person_id", authLink?.person_id ?? "")
+      .single();
+
+    if (!membership || membership.status !== "active") {
       return NextResponse.json(
         {
           error:

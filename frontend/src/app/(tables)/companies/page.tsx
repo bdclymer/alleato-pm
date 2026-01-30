@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -227,8 +225,8 @@ export default function CompanyDirectoryPage() {
           <GenericEditableTable
             data={data}
             columns={columns}
-            onUpdate={updateCompany}
-            onDelete={deleteCompany}
+            onUpdate={updateCompany as any}
+            onDelete={deleteCompany as any}
             onUpdateSuccess={refetch}
             onDeleteSuccess={refetch}
             className="border-0"

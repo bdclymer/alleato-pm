@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -199,14 +197,25 @@ export function CompanyFormDialog({
         notes: data.notes || null,
       };
 
+      const updateData = {
+        name: cleanData.name,
+        website: cleanData.website ?? undefined,
+        title: cleanData.title ?? undefined,
+        address: cleanData.address ?? undefined,
+        city: cleanData.city ?? undefined,
+        state: cleanData.state ?? undefined,
+        currency_code: cleanData.currency_code,
+        currency_symbol: cleanData.currency_symbol,
+      };
+
       const result =
         isEdit && company
           ? onUpdate
-            ? await onUpdate(company.id, cleanData)
-            : await updateCompany(company.id, cleanData)
+            ? await onUpdate(company.id, updateData)
+            : await updateCompany(company.id, updateData)
           : onCreate
-            ? await onCreate(cleanData)
-            : await createCompany(cleanData);
+            ? await onCreate(updateData)
+            : await createCompany(updateData);
 
       if (result && "error" in result && result.error) {
         toast.error(result.error);

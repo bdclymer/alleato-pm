@@ -18,7 +18,7 @@ import {
 } from "@/components/tables/generic-table-factory";
 import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
 
-type Contact = Database["public"]["Tables"]["contacts"]["Row"];
+type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface ContactWithCompany extends Contact {
@@ -36,13 +36,14 @@ export default function DirectoryContactsPage() {
     try {
       const supabase = createClient();
       const { data, error } = await supabase
-        .from("contacts")
+        .from("people")
         .select(
           `
           *,
           company:companies(*)
         `,
         )
+        .eq("person_type", "contact")
         .order("last_name", { ascending: true });
 
       if (error) throw error;
@@ -75,7 +76,7 @@ export default function DirectoryContactsPage() {
       first_name: contact.first_name,
       last_name: contact.last_name,
       email: contact.email || "",
-      phone: contact.phone || "",
+      phone: contact.phone_business || contact.phone_mobile || "",
       company: contact.company?.name || "",
       created_at: contact.created_at,
     }));
@@ -121,8 +122,8 @@ export default function DirectoryContactsPage() {
     defaultViewMode: "table",
     enableRowSelection: true,
     editConfig: {
-      tableName: "contacts",
-      editableFields: ["first_name", "last_name", "email", "phone"],
+      tableName: "people",
+      editableFields: ["first_name", "last_name", "email", "phone_business"],
     },
     onDelete: true,
   };

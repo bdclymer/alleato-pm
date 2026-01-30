@@ -6,9 +6,14 @@ interface RouteParams {
 }
 
 export async function GET(request: Request, { params }: RouteParams) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
-    const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("contracts")
@@ -48,9 +53,14 @@ export async function GET(request: Request, { params }: RouteParams) {
 }
 
 export async function PUT(request: Request, { params }: RouteParams) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
-    const supabase = await createClient();
     const body = await request.json();
 
     const updateData: Record<string, unknown> = {};
@@ -115,9 +125,14 @@ export async function PUT(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(request: Request, { params }: RouteParams) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
-    const supabase = await createClient();
 
     // Check for related records before deletion
     const { data: relatedChangeOrders } = await supabase

@@ -69,7 +69,9 @@ export function ApprovedCOsModal({
         setChangeOrders(data.changeOrders || []);
       }
     } catch (error) {
-      } finally {
+      console.error("Failed to fetch approved change orders:", error);
+      // Intentionally swallowed: modal shows empty state on error
+    } finally {
       setLoading(false);
     }
   };

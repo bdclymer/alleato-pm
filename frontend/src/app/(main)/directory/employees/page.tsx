@@ -16,7 +16,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
 
-type Employee = Database["public"]["Tables"]["employees"]["Row"];
+type Employee = Database["public"]["Tables"]["people"]["Row"];
 
 export default function DirectoryEmployeesPage() {
   const pathname = usePathname();
@@ -29,8 +29,9 @@ export default function DirectoryEmployeesPage() {
       try {
         const supabase = createClient();
         const { data, error } = await supabase
-          .from("employees")
+          .from("people")
           .select("*")
+          .eq("person_type", "user")
           .order("last_name", { ascending: true });
 
         if (error) throw error;
@@ -94,10 +95,10 @@ export default function DirectoryEmployeesPage() {
         },
       },
       {
-        accessorKey: "phone",
+        accessorKey: "phone_business",
         header: "Phone",
         cell: ({ row }) => {
-          const phone = row.getValue("phone") as string | null;
+          const phone = (row.getValue("phone_business") as string | null) || row.original.phone_mobile;
           return phone ? (
             <div className="flex items-center gap-1">
               <Phone className="h-3 w-3 text-muted-foreground" />

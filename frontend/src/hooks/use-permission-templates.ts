@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -9,29 +7,37 @@ export interface PermissionTemplate {
   id: string;
   name: string;
   description: string | null;
-  is_default: boolean;
-  created_at: string;
-  updated_at: string;
+  is_system: boolean | null;
+  scope: string | null;
+  rules_json: any;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
-export function usePermissionTemplates(projectId: string) {
+export function usePermissionTemplates(projectId?: string) {
   const supabase = createClient();
 
   return useQuery({
     queryKey: ["permission-templates", projectId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("permission_templates")
         .select("*")
-        .eq("project_id", parseInt(projectId, 10))
         .order("name");
+
+      // Filter by scope if projectId is provided
+      if (projectId) {
+        query = query.or(`scope.eq.project,scope.eq.global`);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw new Error(error.message);
       }
 
-      return data as PermissionTemplate[];
+      return (data || []) as PermissionTemplate[];
     },
-    enabled: !!projectId,
+    enabled: true,
   });
 }

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +10,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -194,7 +193,12 @@ export default function NewBudgetLineItemPage() {
 
         setGroupedCostCodes(grouped);
       } catch (error) {
-        } finally {
+
+        console.error("Failed to load budget data:", error);
+
+        toast.error("Failed to load budget data", { description: "Please try again." });
+
+      } finally {
         setLoadingCostCodes(false);
       }
     };

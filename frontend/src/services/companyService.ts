@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import type { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 
@@ -153,7 +151,7 @@ export class CompanyService {
 
     // Transform and add user counts
     const companiesWithDetails = await Promise.all(
-      (data || []).map(async (pc: ProjectCompany & { company: Company }) => {
+      (data || []).map(async (pc: any) => {
         // Get user count for this company in this project
         const userCount = await this.getCompanyUserCount(
           projectIdNum,
@@ -175,7 +173,7 @@ export class CompanyService {
           ...pc,
           primary_contact: primaryContact,
           user_count: userCount,
-        };
+        } as ProjectCompany;
       }),
     );
 
@@ -266,8 +264,7 @@ export class CompanyService {
       ...data,
       primary_contact: primaryContact,
       user_count: userCount,
-      users: users.slice(0, 10), // Return first 10 users in summary
-    };
+    } as ProjectCompany;
   }
 
   /**
@@ -319,7 +316,7 @@ export class CompanyService {
     return {
       ...projectCompany,
       user_count: 0,
-    };
+    } as ProjectCompany;
   }
 
   /**

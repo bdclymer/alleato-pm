@@ -14,6 +14,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   getCompanyRiskHeatMap,
   getAllProjectHealthScores,
@@ -48,7 +49,12 @@ export default function ExecutiveDashboard() {
         setHealthScores(scoresData);
         setPatterns(patternsData);
       } catch (error) {
-        } finally {
+
+        console.error("Failed to load dashboard data:", error);
+
+        toast.error("Failed to load dashboard data", { description: "Please try again." });
+
+      } finally {
         setLoading(false);
       }
     }

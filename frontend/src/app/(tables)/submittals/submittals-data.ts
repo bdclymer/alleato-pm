@@ -1,8 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import type { Database } from "@/types/database.types";
 
-export type SubmittalRow =
-  Database["public"]["Views"]["active_submittals"]["Row"];
+export type SubmittalRow = Record<string, unknown>;
 
 const DEFAULT_PROJECT_ID = Number(
   process.env.SUBMITTALS_PROJECT_ID ??
@@ -15,7 +13,7 @@ export async function fetchSubmittals(projectId?: number): Promise<SubmittalRow[
 
   const targetProjectId = projectId ?? DEFAULT_PROJECT_ID;
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("active_submittals")
     .select("*")
     .eq("project_id", targetProjectId)
@@ -25,7 +23,7 @@ export async function fetchSubmittals(projectId?: number): Promise<SubmittalRow[
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []) as SubmittalRow[];
 }
 
 export function resolveSubmittalsProjectId(projectId?: string | number) {

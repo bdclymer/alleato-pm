@@ -502,6 +502,21 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   const renderGridLines = useMemo(() => {
     return (
       <g className="grid-lines" opacity={0.3}>
+        {/* Weekend column highlighting */}
+        {timelineDays.map((day, i) => {
+          if (!isWeekend(day)) return null;
+          return (
+            <rect
+              key={`wknd-${day.toISOString()}`}
+              x={i * dayWidth}
+              y={HEADER_HEIGHT}
+              width={dayWidth}
+              height={totalHeight - HEADER_HEIGHT}
+              fill="hsl(var(--muted))"
+              opacity={0.4}
+            />
+          );
+        })}
         {/* Vertical lines */}
         {timelineDays.map((day, i) => (
           <line
@@ -564,6 +579,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
           <Button
             variant="ghost"
             size="sm"
+            className="transition-colors duration-150"
             onClick={() =>
               setZoomLevel((prev) =>
                 prev === "day" ? "day" : prev === "week" ? "day" : "week"
@@ -586,6 +602,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
           <Button
             variant="ghost"
             size="sm"
+            className="transition-colors duration-150"
             onClick={() =>
               setZoomLevel((prev) =>
                 prev === "month" ? "month" : prev === "week" ? "month" : "week"
@@ -618,7 +635,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             {data.map((task) => (
               <div
                 key={task.id}
-                className="border-b px-3 flex items-center gap-2 hover:bg-muted/50 cursor-pointer"
+                className="border-b px-3 flex items-center gap-2 hover:bg-accent cursor-pointer transition-colors duration-150"
                 style={{
                   height: ROW_HEIGHT,
                   paddingLeft: `${12 + task.level * 16}px`,
@@ -637,7 +654,11 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          <svg width={totalWidth} height={totalHeight}>
+          <svg
+            width={totalWidth}
+            height={totalHeight}
+            style={{ transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)' }}
+          >
             {/* Timeline Header */}
             {renderTimelineHeader}
 

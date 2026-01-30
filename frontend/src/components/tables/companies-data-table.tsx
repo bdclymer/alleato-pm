@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import * as React from "react";
@@ -186,7 +184,7 @@ const columns: ColumnDef<Company>[] = [
       const date = row.original.created_at;
       return (
         <Text as="span" size="sm" tone="muted">
-          {new Date(date).toLocaleDateString()}
+          {date ? new Date(date).toLocaleDateString() : "N/A"}
         </Text>
       );
     },

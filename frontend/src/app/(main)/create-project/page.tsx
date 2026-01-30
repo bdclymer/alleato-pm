@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, type HTMLAttributes } from "react";
@@ -626,7 +624,7 @@ function CreateProjectForm() {
     defaultValues,
   });
 
-  const { DevAutoFillButton } = useDevAutoFill("project", form.setValue);
+  const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as any);
 
   const handleSubmit = async (values: CreateProjectFormValues) => {
     setIsSubmitting(true);

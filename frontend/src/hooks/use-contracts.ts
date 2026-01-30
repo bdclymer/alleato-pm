@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
@@ -135,7 +133,7 @@ export function useContracts(
         throw new Error(queryError.message);
       }
 
-      setContracts(data || []);
+      setContracts((data || []) as unknown as Contract[]);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch contracts"),
@@ -158,7 +156,8 @@ export function useContracts(
           .insert({
             contract_number: contract.contract_number,
             client_id: contract.client_id || 0,
-            project_id: contract.project_id,
+            project_id: contract.project_id || 0,
+            title: contract.contract_number || "Untitled Contract",
             status: contract.status || "draft",
             original_contract_amount: contract.original_contract_amount,
             executed: contract.executed || false,
@@ -179,7 +178,7 @@ export function useContracts(
 
         // Refetch to update the list
         await fetchContracts();
-        return data;
+        return data as unknown as Contract;
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error("Failed to create contract"),

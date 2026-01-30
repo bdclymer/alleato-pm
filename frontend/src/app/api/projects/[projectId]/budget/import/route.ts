@@ -1,10 +1,8 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
 interface BudgetRow {
   "Cost Code": string;
@@ -42,6 +40,10 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    const authResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
 
     // Get the uploaded file
     const formData = await request.formData();
@@ -116,8 +118,6 @@ export async function POST(
         { status: 400 },
       );
     }
-
-    const supabase = createServiceClient();
 
     // Track imported items
     const importedItems: unknown[] = [];

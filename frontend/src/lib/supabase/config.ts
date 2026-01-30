@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 type SupabaseConfig = {
   url: string;
   anonKey: string;
@@ -33,8 +31,8 @@ export function getSupabaseConfig(): SupabaseConfig {
   }
 
   cachedConfig = {
-    url,
-    anonKey,
+    url: url!,
+    anonKey: anonKey!,
   };
 
   return cachedConfig;

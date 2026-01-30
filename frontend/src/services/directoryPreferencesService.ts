@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { randomUUID } from "crypto";
 import type { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
@@ -48,16 +46,16 @@ export class DirectoryPreferencesService {
   private normalizePreferences(
     prefs: PreferencesEnvelope | null,
   ): DirectoryPreferencesState {
-    const directoryPrefs =
-      prefs?.[DIRECTORY_PREF_KEY as keyof PreferencesEnvelope];
+    const directoryPrefs = prefs?.[DIRECTORY_PREF_KEY];
 
     if (directoryPrefs && typeof directoryPrefs === "object") {
+      const typed = directoryPrefs as any;
       return {
-        savedFilters: Array.isArray(directoryPrefs.savedFilters)
-          ? directoryPrefs.savedFilters
+        savedFilters: Array.isArray(typed.savedFilters)
+          ? typed.savedFilters
           : [],
-        lastFilters: directoryPrefs.lastFilters,
-        columnPreferences: directoryPrefs.columnPreferences,
+        lastFilters: typed.lastFilters,
+        columnPreferences: typed.columnPreferences,
       };
     }
 
@@ -104,7 +102,7 @@ export class DirectoryPreferencesService {
       .insert({
         project_id: projectIdNum,
         user_id: userId,
-        preferences: emptyEnvelope,
+        preferences: emptyEnvelope as any,
       })
       .select("*")
       .single();
@@ -126,7 +124,7 @@ export class DirectoryPreferencesService {
   ) {
     const { error } = await this.supabase
       .from("user_project_preferences")
-      .update({ preferences })
+      .update({ preferences: preferences as any })
       .eq("id", recordId);
 
     if (error) {

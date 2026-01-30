@@ -8,7 +8,7 @@ import { join } from 'path';
  * inherit cookies from storageState like browser contexts do.
  */
 export async function applyAuthCookies(request: APIRequestContext): Promise<void> {
-  const storageStatePath = join(__dirname, '../playwright/.auth/user.json');
+  const storageStatePath = join(__dirname, '../../../tests/.auth/user.json');
   const storageState = JSON.parse(readFileSync(storageStatePath, 'utf-8'));
 
   // Extract cookies and create a Cookie header

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useState, useMemo } from "react";
@@ -99,7 +97,7 @@ export function EmployeesDataTable({
     new Set(COLUMNS.filter((col) => col.defaultVisible).map((col) => col.id)),
   );
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [editData, setEditData] = useState<Partial<Employee>>({});
+  const [editData, setEditData] = useState<Record<string, unknown>>({});
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -253,9 +251,9 @@ export function EmployeesDataTable({
     try {
       const supabase = createClient();
       const { error } = await supabase
-        .from("employees")
-        .update(editData)
-        .eq("id", editingEmployee.id);
+        .from("people")
+        .update(editData as Record<string, unknown>)
+        .eq("id", String(editingEmployee.id));
 
       if (error) throw error;
 
@@ -283,9 +281,9 @@ export function EmployeesDataTable({
     try {
       const supabase = createClient();
       const { error } = await supabase
-        .from("employees")
+        .from("people")
         .delete()
-        .eq("id", isDeleting);
+        .eq("id", String(isDeleting));
 
       if (error) throw error;
 
@@ -632,7 +630,7 @@ export function EmployeesDataTable({
                 <div className="grid gap-2">
                   <Label>First Name</Label>
                   <Input
-                    value={editData.first_name || ""}
+                    value={String(editData.first_name || "")}
                     onChange={(e) =>
                       setEditData({ ...editData, first_name: e.target.value })
                     }
@@ -641,7 +639,7 @@ export function EmployeesDataTable({
                 <div className="grid gap-2">
                   <Label>Last Name</Label>
                   <Input
-                    value={editData.last_name || ""}
+                    value={String(editData.last_name || "")}
                     onChange={(e) =>
                       setEditData({ ...editData, last_name: e.target.value })
                     }
@@ -652,7 +650,7 @@ export function EmployeesDataTable({
                 <Label>Email</Label>
                 <Input
                   type="email"
-                  value={editData.email || ""}
+                  value={String(editData.email || "")}
                   onChange={(e) =>
                     setEditData({ ...editData, email: e.target.value })
                   }
@@ -662,7 +660,7 @@ export function EmployeesDataTable({
                 <Label>Phone</Label>
                 <Input
                   type="tel"
-                  value={editData.phone || ""}
+                  value={String(editData.phone || "")}
                   onChange={(e) =>
                     setEditData({ ...editData, phone: e.target.value })
                   }
@@ -671,7 +669,7 @@ export function EmployeesDataTable({
               <div className="grid gap-2">
                 <Label>Job Title</Label>
                 <Input
-                  value={editData.job_title || ""}
+                  value={String(editData.job_title || "")}
                   onChange={(e) =>
                     setEditData({ ...editData, job_title: e.target.value })
                   }
@@ -680,7 +678,7 @@ export function EmployeesDataTable({
               <div className="grid gap-2">
                 <Label>Department</Label>
                 <Input
-                  value={editData.department || ""}
+                  value={String(editData.department || "")}
                   onChange={(e) =>
                     setEditData({ ...editData, department: e.target.value })
                   }
@@ -691,7 +689,7 @@ export function EmployeesDataTable({
                 <Input
                   type="date"
                   value={
-                    editData.start_date
+                    editData.start_date && typeof editData.start_date === 'string'
                       ? new Date(editData.start_date)
                           .toISOString()
                           .split("T")[0]

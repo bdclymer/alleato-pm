@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetLineItemsPayloadSchema } from "@/lib/schemas/budget";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * Cost types that count towards Job to Date Cost Detail (ALL approved types)
@@ -125,10 +126,7 @@ export async function GET(
     ]);
 
     if (budgetLinesRes.error) {
-      return NextResponse.json(
-        { error: "Failed to fetch budget data" },
-        { status: 500 },
-      );
+      return apiErrorResponse(budgetLinesRes.error);
     }
 
     // Build cost aggregation by cost_code_id
@@ -311,10 +309,7 @@ export async function GET(
       grandTotals,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -383,10 +378,7 @@ export async function POST(
       .in("id", costCodes);
 
     if (codeError) {
-      return NextResponse.json(
-        { error: "Failed to look up cost codes", details: codeError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(codeError);
     }
 
     // Create a map of code ID to verify existence
@@ -405,10 +397,7 @@ export async function POST(
         .in("id", costTypeIds);
 
       if (typeError) {
-        return NextResponse.json(
-          { error: "Failed to look up cost types", details: typeError.message },
-          { status: 500 },
-        );
+        return apiErrorResponse(typeError);
       }
       validCostTypeIds = new Set((costTypeData || []).map((ct) => ct.id));
     }
@@ -457,13 +446,7 @@ export async function POST(
           .single();
 
         if (updateError) {
-          return NextResponse.json(
-            {
-              error: "Failed to update budget line",
-              details: updateError.message,
-            },
-            { status: 500 },
-          );
+          return apiErrorResponse(updateError);
         }
         budgetLine = updatedLine;
       } else {
@@ -486,10 +469,7 @@ export async function POST(
           .single();
 
         if (blError) {
-          return NextResponse.json(
-            { error: "Failed to create budget line", details: blError.message },
-            { status: 500 },
-          );
+          return apiErrorResponse(blError);
         }
         budgetLine = newBudgetLine;
       }
@@ -524,8 +504,6 @@ export async function POST(
       message: `Successfully created ${results.length} budget line(s)`,
     });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to create budget items";
-    return NextResponse.json({ error: errorMessage }, { status: 400 });
+    return apiErrorResponse(error);
   }
 }

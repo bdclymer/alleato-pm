@@ -1,10 +1,8 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { Buffer } from "node:buffer";
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
+import { createClient } from "@/lib/supabase/server";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/png",
@@ -19,9 +17,14 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, personId } = await params;
-    const supabase = await createClient();
-    const serviceSupabase = createServiceClient();
+    const projectIdNum = parseInt(projectId, 10);
 
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const serviceSupabase = authResult.serviceClient;
+
+    // Still need regular auth client for permission check
+    const supabase = await createClient();
     const {
       data: { user },
       error: authError,
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const arrayBuffer = await file.arrayBuffer();
     const dataBase64 = Buffer.from(arrayBuffer).toString("base64");
 
-    const { error: upsertError } = await serviceSupabase
+    const { error: upsertError } = await (serviceSupabase as any)
       .from("person_profile_photos")
       .upsert({
         person_id: personId,
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       throw upsertError;
     }
 
-    await serviceSupabase
+    await (serviceSupabase as any)
       .from("people")
       .update({ avatar_updated_at: new Date().toISOString() })
       .eq("id", personId);

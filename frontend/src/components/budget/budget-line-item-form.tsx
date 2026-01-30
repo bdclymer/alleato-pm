@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { useEffect, useState } from "react";
@@ -160,7 +158,9 @@ export function BudgetLineItemForm({
 
         setGroupedCostCodes(grouped);
       } catch (error) {
-        } finally {
+        console.error("Failed to fetch cost codes:", error);
+        // Intentionally swallowed: form shows with empty cost codes dropdown
+      } finally {
         setLoadingCostCodes(false);
       }
     };

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 /**
  * ============================================================================
  * GENERIC DATA TABLE FACTORY
@@ -599,7 +597,7 @@ export interface GenericTableConfig {
  * - onSelectionChange: Callback when selection changes
  * - onDeleteRow: Callback when delete action is triggered
  */
-interface GenericDataTableProps {
+export interface GenericDataTableProps {
   data: Record<string, unknown>[];
   config: GenericTableConfig;
   onSelectionChange?: (selectedIds: (string | number)[]) => void;
@@ -770,9 +768,9 @@ export function GenericDataTable({
     }
 
     // Step 2: Basic filters
-    if (config.filters) {
+    if (config.filters && config.filters.length > 0) {
       result = result.filter((row) => {
-        for (const filter of config.filters) {
+        for (const filter of config.filters!) {
           const filterValue = filters[filter.id];
           if (filterValue && filterValue !== "all") {
             const rowValue = row[filter.field];
@@ -784,9 +782,9 @@ export function GenericDataTable({
     }
 
     // Step 3: Advanced filters
-    if (config.advancedFilters) {
+    if (config.advancedFilters && config.advancedFilters.length > 0) {
       result = result.filter((row) => {
-        for (const filter of config.advancedFilters) {
+        for (const filter of config.advancedFilters!) {
           const filterValue = advancedFilters[filter.id];
           if (!filterValue) continue;
 

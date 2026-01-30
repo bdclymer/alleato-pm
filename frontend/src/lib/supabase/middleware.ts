@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { getSupabaseConfig } from "./config";
+import { validateCallbackUrl } from "@/lib/validation/callback-url";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -39,8 +40,9 @@ export async function updateSession(request: NextRequest) {
   if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    // Preserve the original URL as a callback parameter
-    url.searchParams.set("callbackUrl", request.nextUrl.pathname + request.nextUrl.search);
+    // Preserve the original URL as a callback parameter (validated to prevent open redirects)
+    const rawCallback = request.nextUrl.pathname + request.nextUrl.search;
+    url.searchParams.set("callbackUrl", validateCallbackUrl(rawCallback));
     return NextResponse.redirect(url);
   }
 

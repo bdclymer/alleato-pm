@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { changeOrderSchema } from "@/lib/schemas/financial-schemas";
 import type { PaginatedResponse, ChangeOrder, ZodError } from "@/app/api/types";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   try {
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     const { data, error, count } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     const response: PaginatedResponse<ChangeOrder> = {
@@ -66,16 +67,7 @@ export async function GET(request: Request) {
     };
     return NextResponse.json(response);
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Internal server error", message: error.message },
-        { status: 500 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -142,7 +134,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
@@ -155,16 +147,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: "Internal server error", message: error.message },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

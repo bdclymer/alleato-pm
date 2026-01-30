@@ -1,20 +1,37 @@
+/**
+ * @file generate-procore-module-spec.js
+ * @description Spec artifact generator for any Procore module.
+ *
+ * Pulls system actions from Supabase's app_system_actions table for a given
+ * module, classifies them into commands (button/menu actions), table columns,
+ * and navigation tabs, then generates five spec files:
+ *   - COMMANDS.md   — UI action catalog with derived command keys
+ *   - FORMS.md      — Form definitions derived from create/edit actions
+ *   - MUTATIONS.md  — Write operations grouped by CRUD category
+ *   - schema.sql    — Draft SQL table with columns inferred from UI labels,
+ *                     RLS policies, indexes, and updated_at trigger
+ *   - README.md     — Overview with stats and next steps
+ *
+ * Environment variables:
+ *   SUPABASE_URL              - Supabase project URL
+ *   SUPABASE_SERVICE_ROLE_KEY - Supabase service role key
+ *   PROCORE_MODULE            - Module name (e.g. "drawings", "scheduling")
+ *   CRAWL_ROOT_DIR            - Root directory for crawl data (default: ./procore-crawls)
+ *   CRAWL_DIR                 - Absolute path override for module directory
+ *
+ * Output:
+ *   <MODULE_DIR>/spec/{COMMANDS.md, FORMS.md, MUTATIONS.md, schema.sql, README.md}
+ *
+ * Usage:
+ *   PROCORE_MODULE=drawings node scripts/generate-procore-module-spec.js
+ *   CRAWL_DIR=/abs/path PROCORE_MODULE=drawings node scripts/generate-procore-module-spec.js
+ */
 import fs from "fs-extra";
 import path from "path";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
-
-/**
- * Generate Procore Module Spec
- *
- * Generates module-agnostic spec artifacts from crawl data stored in
- * app_system_actions. Works for ANY module (drawings, scheduling, budget, etc.)
- *
- * Usage:
- *   PROCORE_MODULE=drawings node scripts/generate-procore-module-spec.js
- *   CRAWL_DIR=/abs/path PROCORE_MODULE=drawings node scripts/generate-procore-module-spec.js
- */
 
 const {
   SUPABASE_URL,

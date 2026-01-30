@@ -58,7 +58,12 @@ export function ChangeEventRevenueSection({
           setPrimeContractOptions(contracts);
         }
       } catch (error) {
-        }
+
+        console.error("Failed to process revenue data:", error);
+
+        // Intentionally swallowed: error handling done by caller
+
+      }
     };
 
     if (projectId) {

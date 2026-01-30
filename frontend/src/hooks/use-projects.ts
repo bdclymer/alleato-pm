@@ -86,12 +86,7 @@ export function useProjects(
       const supabase = createClient();
       let query = supabase
         .from("projects")
-        .select(
-          `
-          *,
-          manager:employees!projects_project_manager_fkey(id, first_name, last_name)
-        `,
-        )
+        .select("*")
         .order("name", { ascending: true })
         .limit(limit);
 

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import type { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
 
@@ -325,9 +323,9 @@ export class InviteService {
             firstName: person.first_name,
             projectName: project.name,
             inviteUrl,
-            expiresAt: new Date(
-              membership.invite_expires_at,
-            ).toLocaleDateString(),
+            expiresAt: membership.invite_expires_at
+              ? new Date(membership.invite_expires_at).toLocaleDateString()
+              : '',
           },
         });
       }

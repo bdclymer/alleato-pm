@@ -126,7 +126,9 @@ function BudgetPageContent() {
         setLockedBy(data.lockedBy);
       }
     } catch (error) {
-      }
+      console.error("Failed to fetch budget lock status:", error);
+      // Intentionally swallowed: lock status fetch is non-critical
+    }
   }, [projectId]);
 
   // Fetch budget data
@@ -147,7 +149,9 @@ function BudgetPageContent() {
           setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
         }
       } catch (error) {
-        } finally {
+        console.error("Failed to fetch budget data:", error);
+        toast.error("Failed to load budget", { description: "Please try again." });
+      } finally {
         setLoading(false);
       }
     };
@@ -429,7 +433,9 @@ function BudgetPageContent() {
           setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
         }
       } catch (error) {
-        }
+        console.error("Failed to refresh budget data:", error);
+        toast.error("Failed to refresh budget", { description: "Please reload the page." });
+      }
     };
     fetchData();
   }, [projectId]);

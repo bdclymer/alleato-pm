@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Complete Project Creation and Setup Flow', () => {
-  test.use({ storageState: 'playwright/.auth/user.json' })
+test.use({ storageState: '../../../tests/.auth/user.json' })
 
   test('should create new project and complete full setup wizard', async ({ page }) => {
     // ============================================

@@ -1,7 +1,5 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import type {
   BudgetDetailLineItem,
   DetailType,
@@ -46,7 +44,10 @@ export async function GET(
         { status: 400 },
       );
     }
-    const supabase = createServiceClient();
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
 
     const details: BudgetDetailLineItem[] = [];
 

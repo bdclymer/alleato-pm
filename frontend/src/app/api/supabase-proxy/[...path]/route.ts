@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 async function forwardToSupabaseAPI(
   request: Request,
@@ -10,6 +11,13 @@ async function forwardToSupabaseAPI(
       { message: "Server configuration error." },
       { status: 500 },
     );
+  }
+
+  // Authenticate the request
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { path } = params;
@@ -58,8 +66,9 @@ async function forwardToSupabaseAPI(
           fetchOptions.body = body;
         }
       } catch (error) {
-        // Handle cases where body is not readable
-        }
+        console.error("Failed to read request body:", error);
+        // Intentionally swallowed: body reading is optional
+      }
     }
 
     const response = await fetch(url, fetchOptions);

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
-import path from "path"; // Types for monitoring data
+import path from "path";
+import { createClient } from "@/lib/supabase/server";
+// Types for monitoring data
 interface Initiative {
   id: string;
   name: string;
@@ -345,6 +347,11 @@ function determineEntryType(entryText: string): ActivityLogEntry["type"] {
 }
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const data = await parseMonitoringData();
     return NextResponse.json(data);
   } catch (error) {

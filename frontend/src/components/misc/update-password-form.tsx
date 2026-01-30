@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { createAuthClient } from "@/lib/supabase/client-auth";
+import { getPasswordChecks, isPasswordValid } from "@/lib/validation/password";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +32,11 @@ export function UpdatePasswordForm({
     setError(null);
 
     try {
+      if (!isPasswordValid(password)) {
+        setError("Password does not meet all requirements");
+        setIsLoading(false);
+        return;
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
@@ -65,6 +71,18 @@ export function UpdatePasswordForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {password.length > 0 && (
+                  <ul className="space-y-1 text-xs">
+                    {getPasswordChecks(password).map((check) => (
+                      <li
+                        key={check.label}
+                        className={check.met ? "text-emerald-600" : "text-muted-foreground"}
+                      >
+                        {check.met ? "\u2713" : "\u2022"} {check.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>

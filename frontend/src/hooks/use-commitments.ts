@@ -1,22 +1,22 @@
-// @ts-nocheck
-// TODO: Remove this directive after regenerating Supabase types
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
 
 export interface Commitment {
-  id: number;
+  id: string;
   number: string | null;
   title: string | null;
   contract_company_id: string | null;
   status: string | null;
   type: string | null;
+  commitment_type: string | null;
   original_amount: number | null;
   revised_contract_amount: number | null;
   balance_to_finish: number | null;
   approved_change_orders: number | null;
   executed_date: string | null;
+  executed: boolean | null;
   start_date: string | null;
   substantial_completion_date: string | null;
   created_at: string;
@@ -88,15 +88,28 @@ export function useCommitments(
 
     try {
       const supabase = createClient();
-      let query = supabase
-        .from("commitments")
+      type CommitmentRow = {
+        id: string;
+        number: string | null;
+        title: string | null;
+        contract_company_id: string | null;
+        status: string | null;
+        commitment_type: string | null;
+        executed: boolean | null;
+        contract_date: string | null;
+        created_at: string | null;
+        contract_company: { id: string; name: string | null } | null;
+      };
+
+      let query = (supabase as any)
+        .from("commitments_unified")
         .select(
           `
           *,
           contract_company:companies!contract_company_id(id, name)
         `,
         )
-        .order("number", { ascending: true })
+        .order("contract_number", { ascending: true })
         .limit(limit);
 
       if (search) {
@@ -121,7 +134,28 @@ export function useCommitments(
         throw new Error(queryError.message);
       }
 
-      setCommitments(data || []);
+      // Map the data to match our interface
+      const mappedData: Commitment[] = (data || []).map((row: any) => ({
+        id: row.id || "",
+        number: row.contract_number || null,
+        title: row.title || null,
+        contract_company_id: row.contract_company_id || null,
+        status: row.status || null,
+        type: row.commitment_type || null,
+        commitment_type: row.commitment_type || null,
+        original_amount: null,
+        revised_contract_amount: null,
+        balance_to_finish: null,
+        approved_change_orders: null,
+        executed_date: row.contract_date || null,
+        executed: row.executed || null,
+        start_date: null,
+        substantial_completion_date: null,
+        created_at: row.created_at || new Date().toISOString(),
+        contract_company: row.contract_company || null,
+      }));
+
+      setCommitments(mappedData);
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch commitments"),
@@ -139,18 +173,16 @@ export function useCommitments(
     async (commitment: Partial<Commitment>): Promise<Commitment | null> => {
       try {
         const supabase = createClient();
-        const { data, error: insertError } = await supabase
-          .from("commitments")
+        const { data, error: insertError } = await (supabase as any)
+          .from("commitments_unified")
           .insert({
-            number: commitment.number,
+            contract_number: commitment.number,
             title: commitment.title,
             contract_company_id: commitment.contract_company_id,
             status: commitment.status || "draft",
-            type: commitment.type || "subcontract",
-            original_amount: commitment.original_amount || 0,
-            revised_contract_amount: commitment.original_amount || 0,
-            balance_to_finish: commitment.original_amount || 0,
-            approved_change_orders: 0,
+            commitment_type: commitment.type || commitment.commitment_type || "subcontract",
+            executed: commitment.executed || false,
+            contract_date: commitment.executed_date,
           })
           .select(
             `
@@ -164,9 +196,30 @@ export function useCommitments(
           throw new Error(insertError.message);
         }
 
+        // Map the result
+        const mappedData: Commitment = {
+          id: data.id || "",
+          number: data.contract_number || null,
+          title: data.title || null,
+          contract_company_id: data.contract_company_id || null,
+          status: data.status || null,
+          type: data.commitment_type || null,
+          commitment_type: data.commitment_type || null,
+          original_amount: null,
+          revised_contract_amount: null,
+          balance_to_finish: null,
+          approved_change_orders: null,
+          executed_date: data.contract_date || null,
+          executed: data.executed || null,
+          start_date: null,
+          substantial_completion_date: null,
+          created_at: data.created_at || new Date().toISOString(),
+          contract_company: data.contract_company || null,
+        };
+
         // Refetch to update the list
         await fetchCommitments();
-        return data;
+        return mappedData;
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error("Failed to create commitment"),
@@ -180,17 +233,17 @@ export function useCommitments(
   // Transform commitments to options for dropdowns
   const commitmentOptions: CommitmentOption[] = commitments.map(
     (commitment) => {
-      const typeLabel = commitment.type === "purchase_order" ? "PO" : "SC";
+      const typeLabel = (commitment.type || commitment.commitment_type) === "purchase_order" ? "PO" : "SC";
       const companyName = commitment.contract_company?.name || "";
       const label = commitment.number
         ? `${commitment.number} - ${commitment.title || companyName || "Untitled"}`
         : `${typeLabel} #${commitment.id}`;
 
       return {
-        value: commitment.id.toString(),
+        value: commitment.id,
         label,
         commitmentNumber: commitment.number || undefined,
-        type: commitment.type || undefined,
+        type: commitment.type || commitment.commitment_type || undefined,
         amount:
           commitment.revised_contract_amount ||
           commitment.original_amount ||

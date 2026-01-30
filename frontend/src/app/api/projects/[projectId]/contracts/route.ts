@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { createContractSchema } from "./validation";
 import { ZodError } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -47,10 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { data: contracts, error } = await query;
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch contracts", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Fetch financial summary data for all contracts
@@ -121,10 +119,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(enrichedContracts);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -203,10 +198,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to create contract", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
@@ -225,9 +217,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

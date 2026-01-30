@@ -13,6 +13,10 @@ export async function GET(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Query owner_invoices with line items to calculate amounts
     const { data: invoices, error } = await supabase
@@ -94,6 +98,10 @@ export async function POST(
   try {
     const { id } = await params;
     const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // Parse request body
     const body = await request.json();

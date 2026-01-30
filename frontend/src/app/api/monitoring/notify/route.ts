@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * Dashboard notification endpoint
@@ -26,6 +27,11 @@ interface NotificationWithId extends NotificationData {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const notification: NotificationData = await request.json();
 
     // Validate required fields
@@ -71,6 +77,11 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.json({
       notifications: recentNotifications.slice(0, 20), // Last 20
       count: recentNotifications.length,

@@ -90,7 +90,7 @@ Copy this into your completion claim:
 ### Gate 3: Tests
 - Command: `npx playwright test tests/e2e/{feature}.spec.ts`
 - Results: X/X passing (100%)
-- Report: frontend/playwright-report/index.html
+- Report: tests/playwright-report/index.html
 
 ### Gate 4: Documentation
 - TASKS.mdx: Updated with [x] checkboxes

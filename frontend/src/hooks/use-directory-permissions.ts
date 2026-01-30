@@ -60,8 +60,49 @@ export function useDirectoryPermissions(
   }, [projectId, searchQuery]);
 
   useEffect(() => {
-    fetchPermissions();
-  }, [fetchPermissions]);
+    let cancelled = false;
+
+    const loadPermissions = async () => {
+      if (!projectId || cancelled) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const url = searchQuery
+          ? `/api/projects/${projectId}/directory/permissions?search=${encodeURIComponent(searchQuery)}`
+          : `/api/projects/${projectId}/directory/permissions`;
+
+        const response = await fetch(url);
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || "Failed to fetch permissions");
+        }
+        const { data } = await response.json();
+
+        if (!cancelled) {
+          setUsers(data || []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err : new Error("Unknown error"));
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadPermissions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, searchQuery]);
 
   const updatePermission = useCallback(
     async (personId: string, level: PermissionLevel) => {
