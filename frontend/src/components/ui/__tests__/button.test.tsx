@@ -11,7 +11,7 @@ describe("Button", () => {
     render(<Button>Click me</Button>);
     const button = screen.getByRole("button", { name: "Click me" });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveClass("bg-primary");
+    expect(button).toHaveClass("bg-brand");
   });
 
   it("renders with different variants", () => {
@@ -22,7 +22,7 @@ describe("Button", () => {
     expect(screen.getByRole("button")).toHaveClass("border");
 
     rerender(<Button variant="ghost">Ghost</Button>);
-    expect(screen.getByRole("button")).toHaveClass("hover:bg-accent");
+    expect(screen.getByRole("button")).toHaveClass("hover:bg-neutral-100");
 
     rerender(<Button variant="link">Link</Button>);
     expect(screen.getByRole("button")).toHaveClass("underline-offset-4");

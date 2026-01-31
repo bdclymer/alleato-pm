@@ -6,6 +6,25 @@ jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
 }));
 
+jest.mock("@/lib/supabase/server", () => ({
+  createClient: jest.fn(() => Promise.resolve({
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({
+        data: { user: { id: 'test-user-id', email: 'test@example.com' } },
+        error: null
+      })),
+    },
+  })),
+}));
+
+jest.mock("@/lib/supabase/auth-guard", () => ({
+  verifyProjectAccess: jest.fn((projectId) => ({
+    serviceClient: require("@/lib/supabase/service").createServiceClient(),
+    user: { id: 'test-user-id', email: 'test@example.com' }
+  })),
+  isAuthError: jest.fn((result) => result && result.status >= 400),
+}));
+
 const createServiceClientMock = createServiceClient as jest.Mock;
 
 describe("Directory permissions route", () => {
