@@ -24,6 +24,16 @@
             "date": 1769202702907,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-23.log",
             "hash": "7b8d90c31e2979bd30d3cb852e1754358c4baef1b7ab52888080845a5b304c68"
+        },
+        {
+            "date": 1769819544124,
+            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-30.log",
+            "hash": "bde05cbdc76732c8218b7bb6456ca764e880de26e9d76007244eb52e81cfcdcf"
+        },
+        {
+            "date": 1769838089780,
+            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-31.log",
+            "hash": "d7ee0ef0b552106f6b0f0457ca942a2a81b5377e50bfda6c8b79ac0c0d111b97"
         }
     ],
     "hashType": "sha256"

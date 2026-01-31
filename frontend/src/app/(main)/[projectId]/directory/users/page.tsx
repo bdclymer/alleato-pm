@@ -151,6 +151,9 @@ export default function ProjectDirectoryUsersPage() {
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                   <Users className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">No Users</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    No Authenticated Users
+                  </h3>
                   <p className="text-muted-foreground mb-4 max-w-sm">
                     No users have been added to this project yet.
                     Add users to manage your project team.
@@ -285,6 +288,34 @@ export default function ProjectDirectoryUsersPage() {
         } : null}
         onSuccess={handleDialogSuccess}
       />
+
+      {/* Debug Banner */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 text-zinc-300 text-xs px-4 py-2 font-mono border-t border-zinc-700">
+          <span className="text-zinc-500">Tables:</span>{" "}
+          <span className="text-blue-400">users_auth</span> →
+          <span className="text-green-400">people</span> →
+          <span className="text-yellow-400">project_directory_memberships</span>
+          <span className="mx-3 text-zinc-600">|</span>
+          <span className="text-zinc-500">Project:</span>{" "}
+          <span className="text-white">{projectId}</span>
+          <span className="mx-3 text-zinc-600">|</span>
+          <span className="text-zinc-500">Results:</span>{" "}
+          <span
+            className={users.length > 0 ? "text-green-400" : "text-red-400"}
+          >
+            {isLoading ? "loading..." : `${users.length} users`}
+          </span>
+          {error && (
+            <>
+              <span className="mx-3 text-zinc-600">|</span>
+              <span className="text-red-400">
+                Error: {(error as Error).message}
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </>
   );
 }

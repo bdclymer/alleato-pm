@@ -25,6 +25,7 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { TaskTable } from "@/components/scheduling/task-table";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
+import { ImportExportModal } from "@/components/scheduling/import-export-modal";
 import {
   TaskContextMenu,
   useTaskContextMenu,
@@ -234,6 +235,7 @@ export default function ProjectSchedulePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<ScheduleTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
   const [parentTaskIdForNew, setParentTaskIdForNew] = useState<string | null>(
     null
   );
@@ -313,6 +315,24 @@ export default function ProjectSchedulePage() {
         result.push({ id: task.id, name: task.name });
         if (task.children?.length) {
           flatten(task.children);
+        }
+      }
+    };
+    if (data?.tasks) {
+      flatten(data.tasks);
+    }
+    return result;
+  }, [data?.tasks]);
+
+  // Flatten all tasks for export
+  const allFlatTasks = useMemo(() => {
+    const result: ScheduleTask[] = [];
+    const flatten = (tasks: ScheduleTaskWithHierarchy[]) => {
+      for (const task of tasks) {
+        const { children, ...taskData } = task;
+        result.push(taskData as ScheduleTask);
+        if (children?.length) {
+          flatten(children);
         }
       }
     };
@@ -628,6 +648,50 @@ export default function ProjectSchedulePage() {
     }
   }, [selectedIds, handleDeleteTask]);
 
+  const handleImportTasks = useCallback(
+    async (importedTasks: Partial<ScheduleTask>[]) => {
+      try {
+        // Create tasks one by one
+        const promises = importedTasks.map(async (taskData) => {
+          const res = await fetch(apiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              project_id: Number(projectId),
+              name: taskData.name,
+              start_date: taskData.start_date || null,
+              finish_date: taskData.finish_date || null,
+              duration_days: taskData.duration_days || null,
+              percent_complete: taskData.percent_complete || 0,
+              status: taskData.status || "not_started",
+              is_milestone: taskData.is_milestone || false,
+              wbs_code: taskData.wbs_code || null,
+            }),
+          });
+
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || "Failed to create task");
+          }
+        });
+
+        await Promise.all(promises);
+        toast.success(`Successfully imported ${importedTasks.length} tasks`);
+        refetch();
+        setIsImportExportModalOpen(false);
+      } catch (err) {
+        console.error("Failed to import tasks:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to import tasks";
+        toast.error("Import Failed", {
+          description: errorMessage,
+          duration: 6000,
+        });
+        throw err;
+      }
+    },
+    [apiUrl, projectId, refetch]
+  );
+
   // Actions for header
   const headerActions = (
     <div className="flex items-center gap-3">
@@ -650,11 +714,11 @@ export default function ProjectSchedulePage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsImportExportModalOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Import Schedule
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsImportExportModalOpen(true)}>
             <Download className="h-4 w-4 mr-2" />
             Export Schedule
           </DropdownMenuItem>
@@ -822,7 +886,7 @@ export default function ProjectSchedulePage() {
                 <Plus className="h-4 w-4 mr-2" />
                 Add Task
               </Button>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" onClick={() => setIsImportExportModalOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Import Schedule
               </Button>
@@ -895,6 +959,15 @@ export default function ProjectSchedulePage() {
           onClose={closeContextMenu}
           onAction={handleContextMenuAction}
           hasCopiedTask={!!copiedTask}
+        />
+
+        {/* Import/Export Modal */}
+        <ImportExportModal
+          open={isImportExportModalOpen}
+          onOpenChange={setIsImportExportModalOpen}
+          projectId={projectId}
+          tasks={allFlatTasks}
+          onImport={handleImportTasks}
         />
       </PageContainer>
     </>

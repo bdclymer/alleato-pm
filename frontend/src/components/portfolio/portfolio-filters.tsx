@@ -112,17 +112,17 @@ export function PortfolioFilters({
   ).length;
 
   return (
-    <div className="flex items-center justify-between py-3 gap-2">
+    <div className="flex items-center justify-between py-4 gap-3">
       {/* Mobile: Compact layout with filter sheet */}
       <div className="flex lg:hidden items-center gap-2 flex-1">
         {/* Search */}
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-8 h-9 text-sm"
+            className="pl-10 h-10 text-sm"
           />
         </div>
 
@@ -132,7 +132,7 @@ export function PortfolioFilters({
             <Button
               variant="outline"
               size="sm"
-              className="relative h-9 shrink-0 px-2"
+              className="relative h-10 shrink-0 px-3 border-border hover:border-border/80"
             >
               <SlidersHorizontal className="w-4 h-4" />
               {activeFiltersCount > 0 && (
@@ -350,7 +350,7 @@ export function PortfolioFilters({
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 w-64 h-9"
+            className="pl-10 w-80 h-10 border-border focus:border-brand"
           />
         </div>
 
@@ -362,8 +362,8 @@ export function PortfolioFilters({
               onClientFilterChange(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="h-9 w-[180px] text-sm">
-              <SelectValue placeholder="Client" />
+            <SelectTrigger className="h-10 w-[180px] text-sm border-border focus:border-brand">
+              <SelectValue placeholder="All Clients" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Clients</SelectItem>
@@ -380,7 +380,7 @@ export function PortfolioFilters({
         {onPhaseFilterChange && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 text-sm capitalize">
+              <Button variant="outline" className="h-10 text-sm capitalize border-border hover:border-border/80">
                 {phaseFilter || "All Phases"}
                 <ChevronDown className="w-4 h-4 ml-2 shrink-0" />
               </Button>
@@ -410,8 +410,8 @@ export function PortfolioFilters({
         {onCategoryFilterChange && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 text-sm">
-                {categoryFilter || "Category"}
+              <Button variant="outline" className="h-10 text-sm border-border hover:border-border/80">
+                {categoryFilter || "All Categories"}
                 <ChevronDown className="w-4 h-4 ml-2 shrink-0" />
               </Button>
             </DropdownMenuTrigger>

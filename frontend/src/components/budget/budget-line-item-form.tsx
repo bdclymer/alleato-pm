@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -540,15 +541,15 @@ export function BudgetLineItemForm({
                       </td>
 
                       <td className="px-4 py-3">
-                        <Input
-                          type="number"
+                        <NumberInput
                           step="0.001"
                           value={row.qty}
                           onChange={(e) =>
                             handleRowChange(row.id, "qty", e.target.value)
                           }
-                          placeholder="0"
-                          className="h-9"
+                          placeholder="Quantity"
+                          className="h-9 text-center"
+                          clearZeroOnFocus={true}
                         />
                       </td>
 
@@ -588,28 +589,29 @@ export function BudgetLineItemForm({
                       </td>
 
                       <td className="px-4 py-3">
-                        <Input
-                          type="number"
+                        <NumberInput
                           step="0.01"
                           value={row.unitCost}
                           onChange={(e) =>
                             handleRowChange(row.id, "unitCost", e.target.value)
                           }
-                          placeholder="0.00"
+                          placeholder="Unit cost"
                           className="h-9"
+                          clearZeroOnFocus={true}
                         />
                       </td>
 
                       <td className="px-4 py-3">
-                        <Input
-                          type="number"
+                        <NumberInput
                           step="0.01"
                           value={row.amount}
                           onChange={(e) =>
                             handleRowChange(row.id, "amount", e.target.value)
                           }
-                          placeholder="0.00"
+                          placeholder="Amount *"
                           className="h-9 font-medium"
+                          clearZeroOnFocus={true}
+                          autoSelectOnFocus={true}
                         />
                       </td>
 

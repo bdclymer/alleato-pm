@@ -29,6 +29,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -1075,15 +1076,16 @@ export function BudgetTable({
                   </div>
                 </TableCell>
                 <TableCell className="py-2 px-2 text-right">
-                  <Input
-                    type="number"
-                    placeholder="$0.00"
+                  <NumberInput
+                    placeholder="Amount *"
                     value={newLineItem.originalBudgetAmount}
                     onChange={(e) =>
                       setNewLineItem({ ...newLineItem, originalBudgetAmount: e.target.value })
                     }
                     className="h-8 text-right"
                     disabled={isCreating}
+                    clearZeroOnFocus={true}
+                    autoSelectOnFocus={true}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !isCreating) {
                         handleInlineCreate();
