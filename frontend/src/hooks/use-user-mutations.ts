@@ -22,27 +22,40 @@ export function useAddUser(projectId: string) {
         person_type: "user",
       });
 
+      let inviteSent = false;
       // Auto-send invite if user has an email and send_invite is not explicitly false
       if (person?.id && personData.email && send_invite !== false) {
         try {
-          await fetch(
+          const response = await fetch(
             `/api/projects/${projectId}/directory/people/${person.id}/invite`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
             },
           );
-        } catch {
+
+          if (response.ok) {
+            inviteSent = true;
+          } else {
+            console.warn(
+              `Failed to auto-send invite (HTTP ${response.status}), user can be invited manually`,
+            );
+          }
+        } catch (error) {
           // Invite send failure is non-fatal - user is still created
-          console.warn("Failed to auto-send invite, user can be invited manually");
+          console.warn("Failed to auto-send invite, user can be invited manually", error);
         }
       }
 
-      return person;
+      return { person, inviteSent };
     },
-    onSuccess: () => {
+    onSuccess: ({ inviteSent }) => {
       queryClient.invalidateQueries({ queryKey: ["project-users", projectId] });
-      toast.success("User added and invitation sent");
+      if (inviteSent) {
+        toast.success("User added and invitation sent");
+      } else {
+        toast.success("User added successfully");
+      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to add user: ${error.message}`);
