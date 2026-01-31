@@ -15,8 +15,14 @@ export function classifyError(error: unknown): { message: string; status: number
     return { message: "Referenced record not found.", status: 400 };
   }
 
-  // Not null violations
+  // Not null violations - provide specific field context
   if (msg.includes("violates not-null") || msg.includes("not-null constraint")) {
+    if (msg.includes("cost_type_id")) {
+      return { message: "Cost type is required.", status: 400 };
+    }
+    if (msg.includes("cost_code_id")) {
+      return { message: "Cost code is required.", status: 400 };
+    }
     return { message: "Required fields are missing.", status: 400 };
   }
 
