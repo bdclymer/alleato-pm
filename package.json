@@ -24,12 +24,12 @@
     "seed:project": "npx tsx scripts/seed-project-financial-data.ts",
     "schema:extract": "node scripts/database/generate-schema-from-types.js",
     "schema:docs": "npm run schema:extract && node scripts/database/generate-schema-docs.js",
-    "check:routes": "bash scripts/check-route-conflicts.sh",
-    "prepare": "husky"
+    "check:routes": "bash scripts/check-route-conflicts.sh"
   },
   "devDependencies": {
     "@snaplet/copycat": "^6.0.0",
     "@snaplet/seed": "^0.98.0",
+    "@types/node": "^25.1.0",
     "@types/pg": "^8.16.0",
     "autoprefixer": "^10.4.23",
     "chokidar": "^5.0.0",
@@ -42,13 +42,11 @@
   },
   "dependencies": {
     "lucide-react": "^0.562.0",
-    "motion": "^12.23.26",
-    "puppeteer": "^24.36.0"
+    "motion": "^12.23.26"
   },
   "main": ".lintstagedrc.js",
   "directories": {
-    "doc": "docs",
-    "test": "tests"
+    "doc": "docs"
   },
   "repository": {
     "type": "git",

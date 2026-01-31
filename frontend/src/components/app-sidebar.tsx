@@ -31,7 +31,9 @@ import {
   buildToolUrl,
   isActivePath,
   extractProjectId,
+  type NavigationTool,
 } from "@/lib/navigation-config"
+import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
 
 import { NavUser } from "@/components/nav-user"
 
@@ -43,6 +45,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Extract project ID from URL path
   const projectId = React.useMemo(() => extractProjectId(pathname), [pathname])
+  const { permissions, userType, isAppAdmin, isLoading: permissionsLoading } = useProjectPermissions(projectId)
+
+  // Filter tools by permission
+  const filterTools = React.useCallback(
+    (tools: NavigationTool[]): NavigationTool[] => {
+      return tools.filter((tool) => {
+        // Hide project-scoped tools when no project selected
+        if (tool.requiresProject && !projectId) return false
+        // Admin-only tools: only for app admins or developers
+        if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
+        // Module-gated tools: check user has required permission
+        if (tool.module && projectId) {
+          return hasModulePermission(permissions, tool.module, tool.requiredPermission || "read")
+        }
+        return true
+      })
+    },
+    [projectId, permissions, isAppAdmin, userType]
+  )
 
   // Fetch current user on mount and listen for auth changes
   React.useEffect(() => {
@@ -93,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {/* Core Tools */}
         {(() => {
-          const visibleCoreTools = coreTools.filter((tool) => !tool.requiresProject || projectId)
+          const visibleCoreTools = filterTools(coreTools)
           return visibleCoreTools.length > 0 ? (
             <SidebarGroup>
               <SidebarGroupLabel className="text-primary font-semibold">Core Tools</SidebarGroupLabel>
@@ -121,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Project Management */}
         {(() => {
-          const visibleProjectTools = projectManagementTools.filter((tool) => !tool.requiresProject || projectId)
+          const visibleProjectTools = filterTools(projectManagementTools)
           return visibleProjectTools.length > 0 ? (
             <SidebarGroup>
               <SidebarGroupLabel className="text-primary font-semibold">Project Management</SidebarGroupLabel>
@@ -149,7 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         {/* Financial Management */}
         {(() => {
-          const visibleFinancialTools = financialManagementTools.filter((tool) => !tool.requiresProject || projectId)
+          const visibleFinancialTools = filterTools(financialManagementTools)
           return visibleFinancialTools.length > 0 ? (
             <SidebarGroup>
               <SidebarGroupLabel className="text-primary font-semibold">Financial Management</SidebarGroupLabel>
@@ -176,27 +197,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         })()}
 
         {/* Admin Tools */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-primary font-semibold">Admin Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {adminTools.map((tool) => {
-                const href = tool.path
-                const isActive = pathname === tool.path
+        {(() => {
+          const visibleAdminTools = filterTools(adminTools)
+          return visibleAdminTools.length > 0 ? (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-primary font-semibold">Admin Tools</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {visibleAdminTools.map((tool) => {
+                    const href = tool.path
+                    const isActive = pathname === tool.path
 
-                return (
-                  <SidebarMenuItem key={tool.name}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link href={href}>
-                        {tool.name}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                    return (
+                      <SidebarMenuItem key={tool.name}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link href={href}>
+                            {tool.name}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ) : null
+        })()}
       </SidebarContent>
       {userData && (
         <SidebarFooter>

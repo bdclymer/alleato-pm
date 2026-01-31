@@ -10,6 +10,24 @@ These rules are NON-NEGOTIABLE. Violating them wastes significant time.
 
 **Full rules in:** `.claude/rules/`
 
+### 🧠 CLAUDE CODE LEARNING SYSTEM (MANDATORY)
+**BEFORE ANY ACTION:** Check documented error patterns to prevent repeating mistakes.
+
+**Required Steps:**
+1. Read `.claude/MANDATORY-ERROR-PREVENTION.md`
+2. Check relevant patterns in `docs-ai/contents/docs/patterns/`
+3. Apply documented solutions for known issues
+4. Follow pre-action validation checklist
+
+**Pattern Categories:**
+- `authentication-errors.md` - Permission and login issues
+- `database-issues.md` - Schema and query problems
+- `api-routing-errors.md` - Route and endpoint failures
+
+**Use `/check-patterns [category] [keywords]` to search for relevant patterns.**
+
+**This system is MANDATORY. No exceptions. Every repeated error wastes hours.**
+
 ### 1. Supabase Types Gate
 **BEFORE** writing ANY code that touches the database:
 ```bash

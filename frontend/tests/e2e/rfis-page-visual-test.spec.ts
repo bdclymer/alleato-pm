@@ -34,15 +34,15 @@ test.describe('RFIs Page Visual Test', () => {
     console.log('📋 All headings on page:', headings);
   });
 
-  test('check RFIs page on port 3002', async ({ page }) => {
-    console.log('🔍 Testing http://localhost:3002/rfis');
+  test('check RFIs page on port 3000', async ({ page }) => {
+    console.log('🔍 Testing http://localhost:3000/rfis');
     await page.goto('/rfis');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
     // Take full page screenshot
     await page.screenshot({ 
-      path: '/Users/meganharrison/Documents/github/alleato-procore/tests/screenshots/rfis-port-3002.png', 
+      path: '/Users/meganharrison/Documents/github/alleato-procore/tests/screenshots/rfis-port-3000.png', 
       fullPage: true 
     });
 

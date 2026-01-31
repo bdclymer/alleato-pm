@@ -72,29 +72,7 @@ const communicationPreferences = [
   },
 ];
 
-const securityItems = [
-  {
-    title: "Two-factor authentication",
-    status: "Enabled",
-    statusColor: "text-emerald-600",
-    description: "Authenticator app configured on primary device",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Last login",
-    status: "Today, 8:42 AM",
-    statusColor: "text-slate-600",
-    description: "San Francisco, CA · Chrome on macOS",
-    icon: Clock,
-  },
-  {
-    title: "Active sessions",
-    status: "2 devices",
-    statusColor: "text-slate-600",
-    description: "MacBook Pro · iPhone 15",
-    icon: CheckCircle2,
-  },
-];
+// Removed fake security items - these should come from actual auth data
 
 export default function ProfilePage() {
   const { profile } = useCurrentUserProfile();
@@ -123,12 +101,9 @@ export default function ProfilePage() {
     },
   ];
 
-  const specialties =
-    profile?.specialties && profile.specialties.length > 0
-      ? profile.specialties
-      : ["General contracting", "Field operations"];
+  const specialties = profile?.specialties || [];
 
-  const profileCompleteness = profile?.profileCompleteness ?? 65;
+  const profileCompleteness = profile?.profileCompleteness ?? 0;
 
   return (
     <>
@@ -228,25 +203,28 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   <Progress value={profileCompleteness} className="h-2" />
-                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline">
-                      {profile?.workHours || "Set availability"}
-                    </Badge>
-                    <Badge variant="outline">
-                      {profile?.communicationPreference ||
-                        "Choose communication preference"}
-                    </Badge>
-                  </div>
+                  {(profile?.workHours || profile?.communicationPreference) && (
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {profile?.workHours && (
+                        <Badge variant="outline">{profile.workHours}</Badge>
+                      )}
+                      {profile?.communicationPreference && (
+                        <Badge variant="outline">{profile.communicationPreference}</Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-              {specialties.map((specialty) => (
-                <Badge key={specialty} variant="outline">
-                  {specialty}
-                </Badge>
-              ))}
-            </CardFooter>
+            {specialties.length > 0 && (
+              <CardFooter className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                {specialties.map((specialty) => (
+                  <Badge key={specialty} variant="outline">
+                    {specialty}
+                  </Badge>
+                ))}
+              </CardFooter>
+            )}
           </Card>
 
           <Card>
@@ -266,9 +244,9 @@ export default function ProfilePage() {
                     {profile?.role || "Share your primary role"}
                   </p>
                 </div>
-                <Badge className="shrink-0">
-                  {profile?.role ? "Primary" : "Pending"}
-                </Badge>
+                {profile?.role && (
+                  <Badge className="shrink-0">Primary</Badge>
+                )}
               </div>
               <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
                 <div className="space-y-1 min-w-0 flex-1">
@@ -277,9 +255,9 @@ export default function ProfilePage() {
                     {profile?.workHours || "Add your working hours"}
                   </p>
                 </div>
-                <Badge variant="secondary" className="shrink-0">
-                  Updated
-                </Badge>
+                {profile?.workHours && (
+                  <Badge variant="secondary" className="shrink-0">Set</Badge>
+                )}
               </div>
               <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
                 <div className="space-y-1 min-w-0 flex-1">
@@ -291,9 +269,9 @@ export default function ProfilePage() {
                       "Select how we should reach you"}
                   </p>
                 </div>
-                <Badge variant="secondary" className="shrink-0">
-                  Synced
-                </Badge>
+                {profile?.communicationPreference && (
+                  <Badge variant="secondary" className="shrink-0">Set</Badge>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -365,79 +343,7 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security & access</CardTitle>
-              <CardDescription>
-                Keep your account protected across every project workspace.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {securityItems.map((item) => (
-                <div
-                  key={item.title}
-                  className="flex items-start gap-4 rounded-xl border bg-background p-4"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted shrink-0">
-                    <item.icon className="h-5 w-5 text-foreground" />
-                  </div>
-                  <div className="flex-1 space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-foreground break-words">
-                        {item.title}
-                      </p>
-                      <span
-                        className={`text-xs font-semibold ${item.statusColor} whitespace-nowrap`}
-                      >
-                        {item.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground break-words">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2 text-amber-600">
-                <AlertCircle className="h-4 w-4" />
-                <CardTitle>Account health</CardTitle>
-              </div>
-              <CardDescription>
-                Review outstanding items to keep your profile current.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-amber-50 p-4 text-sm text-amber-900">
-                <p className="font-medium break-words">
-                  Verify company safety training
-                </p>
-                <p className="text-amber-800 break-words">
-                  Upload the latest OSHA 30 certificate to stay compliant.
-                </p>
-              </div>
-              <div className="rounded-lg border bg-background p-4 text-sm text-slate-700">
-                <p className="font-medium break-words">
-                  Add emergency contacts
-                </p>
-                <p className="text-muted-foreground break-words">
-                  Share at least two contacts for site escalations.
-                </p>
-              </div>
-              <div className="rounded-lg border bg-background p-4 text-sm text-slate-700">
-                <p className="font-medium break-words">Review permissions</p>
-                <p className="text-muted-foreground break-words">
-                  Confirm access for current projects and archived work.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Removed fake security and account health sections */}
       </PageContainer>
     </>
   );

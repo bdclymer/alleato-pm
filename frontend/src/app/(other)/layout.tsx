@@ -1,17 +1,29 @@
+"use client";
+
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/site-header";
+import Footer from "@/components/layout/Footer";
+
 /**
- * Layout for all table pages
- * Provides consistent padding and container for all table views
+ * Main layout with sidebar for all primary app routes.
+ * Routes in (main)/ get the full app experience with sidebar, header, and footer.
  */
-export default function TablesLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-[1800px] mx-auto px-6 md:px-10 lg:px-12 py-12">
-        {children}
-      </div>
-    </div>
+    <SidebarProvider defaultOpen={false}>
+      <AppSidebar />
+      <SidebarInset className="overflow-hidden">
+        <SiteHeader />
+        <main className="flex flex-1 flex-col gap-4 pl-4 pt-4 pb-4 overflow-auto min-w-0">
+          {children}
+        </main>
+        <Footer />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

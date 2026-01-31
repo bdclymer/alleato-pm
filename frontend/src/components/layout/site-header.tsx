@@ -62,7 +62,6 @@ const coreTools: Array<{
   { name: "360 Reporting", path: "reporting", requiresProject: true },
   { name: "Documents", path: "documents", requiresProject: true },
   { name: "Directory", path: "directory", requiresProject: true },
-  { name: "Tables Directory", path: "tables-directory", requiresProject: false },
   { name: "Settings", path: "settings/plugins", requiresProject: false },
   { name: "Tasks", path: "tasks", requiresProject: true },
   { name: "Admin", path: "admin", requiresProject: true },
@@ -94,7 +93,6 @@ const financialManagementTools: Array<{
 }> = [
   { name: "Prime Contracts", path: "prime-contracts", requiresProject: true },
   { name: "Budget", path: "budget", requiresProject: true },
-  { name: "Budget V2", path: "budget-v2", requiresProject: true },
   { name: "Commitments", path: "commitments", requiresProject: true },
   { name: "Change Orders", path: "change-orders", requiresProject: true },
   { name: "Change Events", path: "change-events", requiresProject: true },
@@ -367,7 +365,6 @@ export function SiteHeader({
 
           // Special cases for common paths
           const labelMap: Record<string, string> = {
-            "budget-v2": "Budget V2",
             "prime-contracts": "Prime Contracts",
             "change-events": "Change Events",
             "change-orders": "Change Orders",

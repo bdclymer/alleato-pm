@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import type { PaginatedResponse, Commitment } from "@/app/api/types";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -16,9 +17,43 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get("limit") || "100");
     const status = searchParams.get("status");
     const search = searchParams.get("search");
-    const companyId = searchParams.get("companyId");
+    let companyId = searchParams.get("companyId");
     const projectId = searchParams.get("projectId");
     const type = searchParams.get("type"); // 'subcontract' or 'purchase_order'
+
+    // For subcontractors, auto-filter to only their company's commitments
+    if (projectId && !companyId) {
+      const serviceClient = createServiceClient();
+      const { data: authLink } = await serviceClient
+        .from("users_auth")
+        .select("person_id")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+
+      if (authLink) {
+        const projectIdNum = parseInt(projectId, 10);
+        const { data: membership } = await serviceClient
+          .from("project_directory_memberships")
+          .select("user_type")
+          .eq("person_id", authLink.person_id)
+          .eq("project_id", projectIdNum)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (membership?.user_type === "subcontractor") {
+          // Get the subcontractor's company_id from their person record
+          const { data: person } = await serviceClient
+            .from("people")
+            .select("company_id")
+            .eq("id", authLink.person_id)
+            .maybeSingle();
+
+          if (person?.company_id) {
+            companyId = String(person.company_id);
+          }
+        }
+      }
+    }
 
     // Query from commitments_unified view which combines subcontracts and purchase_orders
     let query = supabase

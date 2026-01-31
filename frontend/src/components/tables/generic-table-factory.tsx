@@ -1553,20 +1553,21 @@ export function GenericDataTable({
       config.columns.find((c) => c.isSecondary) || config.columns[1];
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {processedData.map((row, idx) => (
           <Card
             key={(row.id as string) || idx}
             className={cn(
-              "group hover:shadow-sm transition-all cursor-pointer",
+              "group hover:shadow-md hover-lift transition-smooth cursor-pointer",
+              "border border-neutral-200 bg-white",
               selectedIds.has(row.id as string | number) &&
-                "ring-2 ring-primary",
+                "ring-2 ring-primary border-primary/50",
             )}
             onClick={() => handleRowClick(row)}
           >
-            <CardContent className="px-4 py-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
                   {config.enableRowSelection && (
                     <Checkbox
                       checked={selectedIds.has(row.id as string | number)}
@@ -1575,48 +1576,56 @@ export function GenericDataTable({
                       }}
                       onClick={(e) => e.stopPropagation()}
                       aria-label="Select row"
+                      className="mt-1 focus-ring-brand"
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">
+                    <p className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
                       {renderCellContent(primaryColumn, row)}
                     </p>
                     {secondaryColumn && (
-                      <p className="text-sm text-muted-foreground truncate mt-1">
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-tight">
                         {renderCellContent(secondaryColumn, row)}
                       </p>
                     )}
-                    <div className="mt-2 space-y-1">
-                      {config.columns
-                        .filter(
-                          (c) =>
-                            !c.isPrimary &&
-                            !c.isSecondary &&
-                            visibleColumns.has(c.id),
-                        )
-                        .slice(0, 3)
-                        .map((column) => (
-                          <div
-                            key={column.id}
-                            className="text-xs text-muted-foreground"
-                          >
-                            <span className="font-medium">{column.label}:</span>{" "}
-                            {renderCellContent(column, row)}
-                          </div>
-                        ))}
-                    </div>
                   </div>
                 </div>
                 <div onClick={(e) => e.stopPropagation()}>
                   {renderRowActions(row)}
                 </div>
               </div>
+
+              <div className="space-y-2">
+                {config.columns
+                  .filter(
+                    (c) =>
+                      !c.isPrimary &&
+                      !c.isSecondary &&
+                      visibleColumns.has(c.id),
+                  )
+                  .slice(0, 3)
+                  .map((column) => (
+                    <div key={column.id} className="flex justify-between items-start gap-2">
+                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                        {column.label}
+                      </span>
+                      <div className="text-xs sm:text-sm text-gray-900 text-right flex-1 min-w-0">
+                        {renderCellContent(column, row)}
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </CardContent>
           </Card>
         ))}
         {processedData.length === 0 && (
-          <div className="col-span-full text-center py-12 text-muted-foreground">
-            No {config.title?.toLowerCase() || "items"} found.
+          <div className="col-span-full empty-state-premium">
+            <div className="empty-state-premium-title">
+              No {config.title?.toLowerCase() || "items"} found
+            </div>
+            <div className="empty-state-premium-description">
+              Try adjusting your search or filter criteria
+            </div>
           </div>
         )}
       </div>
@@ -1630,63 +1639,77 @@ export function GenericDataTable({
       config.columns.find((c) => c.isSecondary) || config.columns[1];
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 sm:space-y-3">
         {processedData.map((row, idx) => (
           <div
             key={(row.id as string) || idx}
             className={cn(
-              "flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer",
+              "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 hover-lift transition-smooth cursor-pointer",
+              "border border-neutral-200",
               selectedIds.has(row.id as string | number) &&
-                "ring-2 ring-primary",
+                "ring-2 ring-primary border-primary/50",
             )}
             onClick={() => handleRowClick(row)}
           >
-            {config.enableRowSelection && (
-              <Checkbox
-                checked={selectedIds.has(row.id as string | number)}
-                onCheckedChange={(checked) => {
-                  handleSelectRow(row.id as string | number, !!checked);
-                }}
-                onClick={(e) => e.stopPropagation()}
-                aria-label="Select row"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-4">
-                <p className="text-sm font-medium truncate flex-1">
-                  {renderCellContent(primaryColumn, row)}
-                </p>
-                {secondaryColumn && (
-                  <span className="text-xs text-muted-foreground truncate">
-                    {renderCellContent(secondaryColumn, row)}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                {config.columns
-                  .filter(
-                    (c) =>
-                      !c.isPrimary &&
-                      !c.isSecondary &&
-                      visibleColumns.has(c.id),
-                  )
-                  .slice(0, 4)
-                  .map((column) => (
-                    <span key={column.id}>
-                      <span className="font-medium">{column.label}:</span>{" "}
-                      {renderCellContent(column, row)}
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              {config.enableRowSelection && (
+                <Checkbox
+                  checked={selectedIds.has(row.id as string | number)}
+                  onCheckedChange={(checked) => {
+                    handleSelectRow(row.id as string | number, !!checked);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Select row"
+                  className="mt-1 focus-ring-brand"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                {/* Main content row for mobile */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                  <p className="text-sm sm:text-base font-medium text-gray-900 truncate flex-1">
+                    {renderCellContent(primaryColumn, row)}
+                  </p>
+                  {secondaryColumn && (
+                    <span className="text-xs sm:text-sm text-muted-foreground truncate sm:text-right">
+                      {renderCellContent(secondaryColumn, row)}
                     </span>
-                  ))}
+                  )}
+                </div>
+
+                {/* Additional fields - mobile friendly layout */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  {config.columns
+                    .filter(
+                      (c) =>
+                        !c.isPrimary &&
+                        !c.isSecondary &&
+                        visibleColumns.has(c.id),
+                    )
+                    .slice(0, 4)
+                    .map((column) => (
+                      <span key={column.id} className="flex-shrink-0">
+                        <span className="font-medium text-gray-600">{column.label}:</span>{" "}
+                        <span className="text-gray-900">{renderCellContent(column, row)}</span>
+                      </span>
+                    ))}
+                </div>
               </div>
             </div>
-            <div onClick={(e) => e.stopPropagation()}>
+
+            {/* Actions - always on the right */}
+            <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0 self-start sm:self-center">
               {renderRowActions(row)}
             </div>
           </div>
         ))}
         {processedData.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No {config.title?.toLowerCase() || "items"} found.
+          <div className="empty-state-premium">
+            <div className="empty-state-premium-title">
+              No {config.title?.toLowerCase() || "items"} found
+            </div>
+            <div className="empty-state-premium-description">
+              Try adjusting your search or filter criteria
+            </div>
           </div>
         )}
       </div>
@@ -2170,104 +2193,133 @@ export function GenericDataTable({
       {/* ========================================
           FILTERS & CONTROLS
           ======================================== */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1 flex-wrap">
-          {/* Search Input */}
-          <div className="relative">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Top row - Search and filters (mobile-first) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+          {/* Search Input - Full width on mobile */}
+          <div className="relative flex-1 sm:flex-initial sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={`Search ${config.title?.toLowerCase() || "items"}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
 
-          {/* Dynamic Filters (from config) */}
-          {config.filters?.map((filter) => (
-            <Select
-              key={filter.id}
-              value={filters[filter.id] || "all"}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, [filter.id]: value }))
-              }
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={filter.label} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All {filter.label}</SelectItem>
-                {filter.options.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
+          {/* Dynamic Filters - Stack on mobile */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            {config.filters?.map((filter) => (
+              <Select
+                key={filter.id}
+                value={filters[filter.id] || "all"}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({ ...prev, [filter.id]: value }))
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder={filter.label} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All {filter.label}</SelectItem>
+                  {filter.options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ))}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* View Switcher */}
-          {config.enableViewSwitcher && (
-            <Tabs
-              value={viewMode}
-              onValueChange={(v) => setViewMode(v as ViewMode)}
-            >
-              <TabsList>
-                <TabsTrigger value="table" className="gap-1.5">
-                  <Table2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Table</span>
-                </TabsTrigger>
-                <TabsTrigger value="card" className="gap-1.5">
-                  <LayoutGrid className="h-4 w-4" />
-                  <span className="hidden sm:inline">Card</span>
-                </TabsTrigger>
-                <TabsTrigger value="list" className="gap-1.5">
-                  <List className="h-4 w-4" />
-                  <span className="hidden sm:inline">List</span>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
+        {/* Bottom row - View controls */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Result count - Show on mobile */}
+          <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+            {config.enableRowSelection && selectedIds.size > 0 && (
+              <span className="font-medium">{selectedIds.size} selected</span>
+            )}
+            <span>
+              {processedData.length} of {data.length}{" "}
+              {config.title?.toLowerCase() || "items"}
+            </span>
+          </div>
 
-          {/* Export Button */}
-          <Button variant="outline" size="sm" onClick={exportToCSV}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          {/* Controls */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            {/* View Switcher */}
+            {config.enableViewSwitcher && (
+              <Tabs
+                value={viewMode}
+                onValueChange={(v) => setViewMode(v as ViewMode)}
+                className="w-full sm:w-auto"
+              >
+                <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+                  <TabsTrigger value="table" className="gap-1.5 px-2 sm:px-3">
+                    <Table2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Table</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="card" className="gap-1.5 px-2 sm:px-3">
+                    <LayoutGrid className="h-4 w-4" />
+                    <span className="hidden sm:inline">Card</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="list" className="gap-1.5 px-2 sm:px-3">
+                    <List className="h-4 w-4" />
+                    <span className="hidden sm:inline">List</span>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
 
-          {/* Column Visibility Toggle */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Columns3 className="h-4 w-4 mr-2" />
-                Columns
-                <ChevronDown className="h-4 w-4 ml-2" />
+            {/* Action buttons - Stack on mobile */}
+            <div className="flex gap-2">
+              {/* Export Button */}
+              <Button variant="outline" size="sm" onClick={exportToCSV} className="flex-1 sm:flex-initial">
+                <Download className="h-4 w-4 mr-2" />
+                <span className="hidden xs:inline">Export</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {config.columns.map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  checked={visibleColumns.has(column.id)}
-                  onCheckedChange={(checked) => {
-                    const newVisibleColumns = new Set(visibleColumns);
-                    if (checked) {
-                      newVisibleColumns.add(column.id);
-                    } else {
-                      newVisibleColumns.delete(column.id);
-                    }
-                    setVisibleColumns(newVisibleColumns);
-                  }}
-                >
-                  {column.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+              {/* Column Visibility Toggle - Hide on mobile when view is not table */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      "flex-1 sm:flex-initial",
+                      viewMode !== "table" && "hidden sm:flex"
+                    )}
+                  >
+                    <Columns3 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Columns</span>
+                    <ChevronDown className="h-4 w-4 ml-1 sm:ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {config.columns.map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={visibleColumns.has(column.id)}
+                      onCheckedChange={(checked) => {
+                        const newVisibleColumns = new Set(visibleColumns);
+                        if (checked) {
+                          newVisibleColumns.add(column.id);
+                        } else {
+                          newVisibleColumns.delete(column.id);
+                        }
+                        setVisibleColumns(newVisibleColumns);
+                      }}
+                    >
+                      {column.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 

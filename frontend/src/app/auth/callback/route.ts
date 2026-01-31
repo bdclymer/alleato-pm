@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getPostLoginRedirect } from "@/lib/auth/post-login-router";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -13,25 +14,26 @@ export async function GET(request: Request) {
     try {
       const { data } = await supabase.auth.exchangeCodeForSession(code);
 
-      // Check if this is a new user (account created < 30 seconds ago)
       if (data?.user) {
         const createdAt = new Date(data.user.created_at);
         const now = new Date();
         const diffSeconds = (now.getTime() - createdAt.getTime()) / 1000;
 
-        // If user was created in the last 30 seconds, this is a new signup
+        // New signup — send to welcome page
         if (diffSeconds < 30 || isNewUser) {
           return NextResponse.redirect(`${origin}/welcome`);
         }
+
+        // Existing user — smart redirect based on memberships
+        const redirectPath = await getPostLoginRedirect(supabase, data.user.id);
+        return NextResponse.redirect(`${origin}${redirectPath}`);
       }
-    } catch (error) {
-      // Redirect to login with error
+    } catch {
       return NextResponse.redirect(
         `${origin}/auth/login?error=auth_callback_failed`,
       );
     }
   }
 
-  // URL to redirect to after sign in process completes
   return NextResponse.redirect(`${origin}/`);
 }

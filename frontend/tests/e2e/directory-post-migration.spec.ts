@@ -143,7 +143,7 @@ test.describe('Directory - Create Person via API', () => {
 
     // Create via API (same endpoint PersonEditDialog calls)
     const response = await page.request.post(
-      `http://localhost:3002/api/projects/${PROJECT_ID}/directory/people`,
+      `http://localhost:3000/api/projects/${PROJECT_ID}/directory/people`,
       {
         data: {
           first_name: 'E2EContact',
@@ -199,7 +199,7 @@ test.describe('Directory - Create Person via API', () => {
       .single();
 
     const response = await page.request.post(
-      `http://localhost:3002/api/projects/${PROJECT_ID}/directory/people`,
+      `http://localhost:3000/api/projects/${PROJECT_ID}/directory/people`,
       {
         data: {
           first_name: 'E2EPerson',
@@ -245,7 +245,7 @@ test.describe('Directory - Company CRUD via API', () => {
     const companyName = `E2E-${testTimestamp}-TestCorp`;
 
     const response = await page.request.post(
-      `http://localhost:3002/api/projects/${PROJECT_ID}/directory/companies`,
+      `http://localhost:3000/api/projects/${PROJECT_ID}/directory/companies`,
       {
         data: {
           name: companyName,
@@ -282,7 +282,7 @@ test.describe('Directory - Company CRUD via API', () => {
     const updatedName = `E2E-${testTimestamp}-UpdatedCo`;
 
     const createResp = await page.request.post(
-      `http://localhost:3002/api/projects/${PROJECT_ID}/directory/companies`,
+      `http://localhost:3000/api/projects/${PROJECT_ID}/directory/companies`,
       { data: { name: originalName } }
     );
 
@@ -294,7 +294,7 @@ test.describe('Directory - Company CRUD via API', () => {
 
         // Update via PATCH
         const updateResp = await page.request.patch(
-          `http://localhost:3002/api/projects/${PROJECT_ID}/directory/companies/${companyId}`,
+          `http://localhost:3000/api/projects/${PROJECT_ID}/directory/companies/${companyId}`,
           { data: { name: updatedName } }
         );
 

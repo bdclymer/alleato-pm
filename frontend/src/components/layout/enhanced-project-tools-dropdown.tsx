@@ -19,7 +19,6 @@ import {
   TrendingUp,
   Users,
   Settings,
-  Grid,
   Mail,
   CheckCircle,
   Package,
@@ -39,7 +38,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useFavorites } from "@/contexts/favorites-context";
-import { toast } from "sonner";
 
 interface Tool {
   name: string;
@@ -250,13 +248,6 @@ const toolCategories: ToolCategory[] = [
         description: "Document workflow management"
       },
       {
-        name: "Tables Directory",
-        path: "tables-directory",
-        icon: <Grid className="h-4 w-4" />,
-        requiresProject: false,
-        description: "Database table viewer"
-      },
-      {
         name: "Tasks",
         path: "tasks",
         icon: <CheckCircle className="h-4 w-4" />,
@@ -282,7 +273,6 @@ export function EnhancedProjectToolsDropdown({
 }: EnhancedProjectToolsDropdownProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
 
   // Filter tools based on search query
@@ -311,32 +301,12 @@ export function EnhancedProjectToolsDropdown({
     const isDisabled = tool.requiresProject && !projectId;
     if (isDisabled) {
       e.preventDefault();
-      toast.error("Please select a project first");
       return;
     }
     setOpen(false);
     onClose?.();
   };
 
-  const toggleFavorite = (tool: Tool, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const url = buildToolUrl(tool.path, tool.requiresProject);
-    if (isFavorite(url)) {
-      removeFavorite(url);
-      toast.success(`Removed "${tool.name}" from favorites`);
-    } else {
-      addFavorite(tool.name, url);
-      toast.success(`Added "${tool.name}" to favorites`);
-    }
-  };
-
-  // Get recently used tools (mock data - in real app, track from user activity)
-  const recentTools = useMemo(() => {
-    const allTools = toolCategories.flatMap(cat => cat.tools);
-    return allTools.slice(0, 4); // Just show first 4 for demo
-  }, []);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -344,110 +314,57 @@ export function EnhancedProjectToolsDropdown({
         <Button
           variant="outline"
           size="sm"
-          className="hidden md:flex items-center gap-2 px-3 h-9 hover:bg-accent/50 transition-all"
+          className="hidden md:flex items-center gap-2 px-3 h-9"
         >
-          <span className="text-xs text-muted-foreground">Project Tools:</span>
-          <div className="flex items-center gap-1.5 text-sm">
-            {breadcrumbs.slice(1).map((crumb, index) => (
-              <span key={index} className="flex items-center gap-1.5">
-                {index > 0 && <ChevronRight className="h-3 w-3 opacity-50" />}
-                <span className={cn(
-                  "max-w-[150px] truncate",
-                  index === breadcrumbs.slice(1).length - 1 ? "font-medium" : ""
-                )}>
-                  {crumb.label}
-                </span>
-              </span>
-            ))}
-            {breadcrumbs.length <= 1 && (
-              <span className="font-medium">Select Tool</span>
-            )}
-          </div>
-          <ChevronDown className="h-4 w-4 opacity-50 ml-1 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          <span className="text-sm font-medium">
+            {currentToolName}
+          </span>
+          <ChevronDown className="h-4 w-4 opacity-70" />
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align="start"
-        alignOffset={-4}
         sideOffset={8}
-        className="w-[900px] p-0 rounded-lg shadow-xl border"
+        className="w-[500px] p-0"
       >
         {/* Search Header */}
-        <div className="p-4 border-b bg-background/50 backdrop-blur-sm">
+        <div className="p-3 border-b">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search tools..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 h-9 bg-background"
+              className="pl-9 h-8"
               autoFocus
             />
           </div>
         </div>
 
-        {/* Quick Access Bar */}
-        {!searchQuery && (
-          <div className="px-4 py-3 border-b bg-muted/30">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground">Quick Access:</span>
-              <div className="flex items-center gap-1">
-                {recentTools.map((tool) => {
-                  const href = buildToolUrl(tool.path, tool.requiresProject);
-                  const isDisabled = tool.requiresProject && !projectId;
-
-                  return (
-                    <Link
-                      key={tool.name}
-                      href={href}
-                      onClick={(e) => handleToolClick(tool, e)}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all",
-                        isDisabled
-                          ? "opacity-50 cursor-not-allowed bg-muted/50"
-                          : "hover:bg-accent hover:text-accent-foreground bg-background"
-                      )}
-                    >
-                      {tool.icon}
-                      <span>{tool.name}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Main Content */}
-        <div className="p-4 max-h-[500px] overflow-y-auto">
+        <div className="p-2 max-h-[400px] overflow-y-auto">
           {filteredCategories.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <div className="text-center py-6 text-muted-foreground">
+              <Search className="h-6 w-6 mx-auto mb-2 opacity-50" />
               <p className="text-sm">No tools found matching "{searchQuery}"</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-3">
               {filteredCategories.map((category) => (
-                <div
-                  key={category.title}
-                  className="space-y-2"
-                  onMouseEnter={() => setHoveredCategory(category.title)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                >
+                <div key={category.title}>
                   {/* Category Header */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className={cn("p-1.5 rounded-md bg-background", category.color)}>
+                  <div className="flex items-center gap-2 px-2 py-1 mb-1">
+                    <div className={cn("rounded p-1", category.color, "bg-background")}>
                       {category.icon}
                     </div>
-                    <h3 className="text-sm font-semibold">{category.title}</h3>
-                    <Badge variant="secondary" className="ml-auto text-xs">
-                      {category.tools.length}
-                    </Badge>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {category.title}
+                    </h3>
                   </div>
 
                   {/* Tools List */}
-                  <div className="space-y-0.5">
+                  <div className="space-y-0.5 ml-1">
                     {category.tools.map((tool) => {
                       const href = buildToolUrl(tool.path, tool.requiresProject);
                       const isDisabled = tool.requiresProject && !projectId;
@@ -460,63 +377,32 @@ export function EnhancedProjectToolsDropdown({
                           href={href}
                           onClick={(e) => handleToolClick(tool, e)}
                           className={cn(
-                            "group flex items-start gap-3 rounded-md px-2.5 py-2 text-sm transition-all",
+                            "flex items-center gap-2.5 rounded px-2 py-1.5 text-sm transition-colors",
                             isDisabled
                               ? "opacity-50 cursor-not-allowed"
-                              : "hover:bg-accent/50",
-                            isCurrentTool && "bg-accent",
-                            hoveredCategory === category.title && !isDisabled && "hover:translate-x-0.5"
+                              : "hover:bg-accent hover:text-accent-foreground",
+                            isCurrentTool && "bg-accent text-accent-foreground"
                           )}
                         >
-                          <div className="mt-0.5 text-muted-foreground">
+                          <div className="text-muted-foreground shrink-0">
                             {tool.icon || <FileText className="h-4 w-4" />}
                           </div>
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className={cn(
-                                "font-medium",
-                                isCurrentTool && "text-accent-foreground"
-                              )}>
-                                {tool.name}
-                              </span>
+                          <span className="flex-1 font-medium truncate">
+                            {tool.name}
+                          </span>
 
-                              {tool.badge && (
-                                <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                  {tool.badge}
-                                </Badge>
-                              )}
+                          <div className="flex items-center gap-1">
+                            {tool.badge && (
+                              <Badge variant="secondary" className="text-xs px-1.5 py-0.5 h-4">
+                                {tool.badge}
+                              </Badge>
+                            )}
 
-                              {toolIsFavorite && (
-                                <Star className="h-3 w-3 fill-current text-yellow-500" />
-                              )}
-                            </div>
-
-                            {tool.description && (
-                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                                {tool.description}
-                              </p>
+                            {toolIsFavorite && (
+                              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
                             )}
                           </div>
-
-                          {/* Favorite Toggle */}
-                          {!isDisabled && (
-                            <button
-                              onClick={(e) => toggleFavorite(tool, e)}
-                              className={cn(
-                                "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-background",
-                                toolIsFavorite && "opacity-100"
-                              )}
-                              aria-label={toolIsFavorite ? "Remove from favorites" : "Add to favorites"}
-                            >
-                              <Star className={cn(
-                                "h-3.5 w-3.5",
-                                toolIsFavorite
-                                  ? "fill-yellow-500 text-yellow-500"
-                                  : "text-muted-foreground"
-                              )} />
-                            </button>
-                          )}
                         </Link>
                       );
                     })}
@@ -528,18 +414,13 @@ export function EnhancedProjectToolsDropdown({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t bg-muted/30 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <kbd className="px-1.5 py-0.5 rounded border bg-background font-mono">⌘K</kbd>
-            <span>to open search</span>
-          </div>
-
-          {!projectId && (
-            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+        {!projectId && (
+          <div className="px-3 py-2 border-t bg-muted/30">
+            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium text-center">
               Select a project to access all tools
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

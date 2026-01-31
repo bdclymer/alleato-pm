@@ -5,7 +5,7 @@ test.describe('Budget Setup Wizard - Cost Code Type Display', () => {
     // Navigate to dev login first to authenticate
     await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     // Wait for redirect to complete
-    await page.waitForURL('http://localhost:3002/', { timeout: 10000 });
+    await page.waitForURL('http://localhost:3000/', { timeout: 10000 });
   });
 
   test('should display cost code type column and auto-populate description', async ({ page }) => {

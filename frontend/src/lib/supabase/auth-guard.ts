@@ -82,6 +82,83 @@ export async function verifyProjectAccess(
 }
 
 /**
+ * Verifies the user has a specific module-level permission for a project.
+ * Extends verifyProjectAccess with permission template checks.
+ *
+ * App admins bypass all permission checks.
+ */
+export async function verifyProjectPermission(
+  projectId: number,
+  module: string,
+  requiredLevel: "read" | "write" | "admin" = "read",
+): Promise<AuthGuardResult | NextResponse> {
+  const result = await verifyProjectAccess(projectId);
+  if (isAuthError(result)) return result;
+
+  const { membership, serviceClient } = result;
+
+  // Check if user is an app admin (bypass all permission checks)
+  const { data: profile } = await serviceClient
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", membership.authUserId)
+    .maybeSingle();
+
+  if (profile?.is_admin === true) {
+    return result;
+  }
+
+  // No template assigned — deny access
+  if (!membership.permissionTemplateId) {
+    return NextResponse.json(
+      { error: "Insufficient permissions" },
+      { status: 403 },
+    );
+  }
+
+  // Fetch the permission template
+  const { data: template } = await serviceClient
+    .from("permission_templates")
+    .select("rules_json")
+    .eq("id", membership.permissionTemplateId)
+    .maybeSingle();
+
+  if (!template?.rules_json) {
+    return NextResponse.json(
+      { error: "Insufficient permissions" },
+      { status: 403 },
+    );
+  }
+
+  const rules = template.rules_json as Record<string, string[]>;
+  const modulePerms = rules[module] || [];
+
+  // Check hierarchical permissions: admin > write > read
+  let hasPermission = false;
+  if (modulePerms.includes("admin")) {
+    hasPermission = true;
+  } else if (requiredLevel === "write" && modulePerms.includes("write")) {
+    hasPermission = true;
+  } else if (requiredLevel === "read") {
+    hasPermission =
+      modulePerms.includes("read") ||
+      modulePerms.includes("write") ||
+      modulePerms.includes("admin");
+  } else {
+    hasPermission = modulePerms.includes(requiredLevel);
+  }
+
+  if (!hasPermission) {
+    return NextResponse.json(
+      { error: "Insufficient permissions" },
+      { status: 403 },
+    );
+  }
+
+  return result;
+}
+
+/**
  * Type guard to check if verifyProjectAccess returned an error response.
  */
 export function isAuthError(

@@ -9432,6 +9432,7 @@ export type Database = {
           role: string | null
           status: string | null
           updated_at: string | null
+          user_type: string
         }
         Insert: {
           created_at?: string | null
@@ -9451,6 +9452,7 @@ export type Database = {
           role?: string | null
           status?: string | null
           updated_at?: string | null
+          user_type?: string
         }
         Update: {
           created_at?: string | null
@@ -9470,6 +9472,7 @@ export type Database = {
           role?: string | null
           status?: string | null
           updated_at?: string | null
+          user_type?: string
         }
         Relationships: [
           {

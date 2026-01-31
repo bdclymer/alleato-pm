@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { useCompanies } from "@/hooks/use-companies";
+import { Loader2 } from "lucide-react";
 
 interface UserFormDialogProps {
   open: boolean;
@@ -33,6 +35,7 @@ interface UserFormData {
   email: string;
   permissionTemplate: string;
   isInternalEmployee: boolean;
+  companyId: string;
   companyName: string;
 }
 
@@ -48,10 +51,12 @@ export function UserFormDialog({
     email: "",
     permissionTemplate: "",
     isInternalEmployee: false,
+    companyId: "",
     companyName: "",
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const { companies, options, isLoading: isLoadingCompanies } = useCompanies();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +83,7 @@ export function UserFormDialog({
         email: "",
         permissionTemplate: "",
         isInternalEmployee: false,
+        companyId: "",
         companyName: "",
       });
 
@@ -97,6 +103,7 @@ export function UserFormDialog({
       email: "",
       permissionTemplate: "",
       isInternalEmployee: false,
+      companyId: "",
       companyName: "",
     });
     setError(null);
@@ -219,25 +226,39 @@ export function UserFormDialog({
             </div>
           </div>
 
-          {/* Advanced: Company Name Lookup */}
-          <div className="pt-4 border-t">
-            <div className="space-y-2">
-              <Label htmlFor="companyName" className="text-sm font-semibold">
-                Advanced: Locate Existing User by Company
-              </Label>
-              <Input
-                id="companyName"
-                value={formData.companyName}
-                onChange={(e) =>
-                  setFormData({ ...formData, companyName: e.target.value })
-                }
-                placeholder="Start typing company name..."
-              />
-              <p className="text-xs text-muted-foreground">
-                To locate an existing user by their company name, start typing
-                the company name here, and then select the user
-              </p>
-            </div>
+          {/* Company Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="companyId">
+              Company <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formData.companyId}
+              onValueChange={(value) =>
+                setFormData({ ...formData, companyId: value })
+              }
+            >
+              <SelectTrigger id="companyId">
+                <SelectValue placeholder="Select a company" />
+                {isLoadingCompanies && (
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((company) => (
+                  <SelectItem key={company.value} value={company.value}>
+                    {company.label}
+                  </SelectItem>
+                ))}
+                {options.length === 0 && !isLoadingCompanies && (
+                  <SelectItem disabled value="">
+                    No companies found
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select the company this user belongs to
+            </p>
           </div>
 
           {/* Form Actions */}

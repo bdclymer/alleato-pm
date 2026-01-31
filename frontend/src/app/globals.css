@@ -65,14 +65,14 @@
     --radius-lg: 0.75rem;
     --radius-xl: 1rem;
 
-    /* Spacing Scale */
-    --space-xs: 0.25rem;  /* 4px */
-    --space-sm: 0.5rem;   /* 8px */
-    --space-md: 1rem;     /* 16px */
-    --space-lg: 1.5rem;   /* 24px */
-    --space-xl: 2rem;     /* 32px */
-    --space-2xl: 3rem;    /* 48px */
-    --space-3xl: 4rem;    /* 64px */
+    /* Standardized 8px Grid Spacing System */
+    --space-xs: 0.5rem;   /* 8px */
+    --space-sm: 1rem;     /* 16px */
+    --space-md: 1.5rem;   /* 24px */
+    --space-lg: 2rem;     /* 32px */
+    --space-xl: 3rem;     /* 48px */
+    --space-2xl: 4rem;    /* 64px */
+    --space-3xl: 6rem;    /* 96px */
 
     /* Typography */
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -170,6 +170,55 @@
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
+/* Smooth Micro-Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 /* Keyframe animations */
 @keyframes marquee {
   from {
@@ -202,6 +251,62 @@
 @layer utilities {
   .font-serif {
     font-family: var(--font-serif);
+  }
+
+  /* Smooth Transition Utilities */
+  .transition-smooth {
+    @apply transition-all duration-150 ease-out;
+  }
+
+  .transition-colors-smooth {
+    @apply transition-colors duration-150 ease-out;
+  }
+
+  .transition-transform-smooth {
+    @apply transition-transform duration-150 ease-out;
+  }
+
+  /* Consistent Hover States */
+  .hover-lift {
+    @apply transition-transform duration-150 ease-out hover:-translate-y-0.5;
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-150 ease-out hover:shadow-md;
+  }
+
+  .hover-brand {
+    @apply transition-colors duration-150 ease-out hover:text-brand;
+  }
+
+  /* Focus States */
+  .focus-ring-brand {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 focus-visible:ring-offset-2;
+  }
+
+  /* Animation Utilities */
+  .animate-in {
+    animation: fadeIn 200ms ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 250ms ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 250ms ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 200ms ease-out;
+  }
+
+  /* Skeleton Loading Animation */
+  .skeleton {
+    @apply relative overflow-hidden bg-neutral-200;
+    background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
 
   /* Coming Soon Component Animations */

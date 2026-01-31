@@ -45,10 +45,10 @@ import {
 // Tool configurations matching site-header.tsx
 const coreTools = [
   { name: "Home", path: "home", icon: IconHome, requiresProject: true },
+  { name: "Client Dashboard", path: "client-dashboard", icon: IconChartBar, requiresProject: true, clientOnly: true },
   { name: "360 Reporting", path: "reporting", icon: IconChartBar, requiresProject: true },
   { name: "Documents", path: "documents", icon: IconFolders, requiresProject: true },
   { name: "Directory", path: "directory", icon: IconUsers, requiresProject: true },
-  { name: "Tables Directory", path: "tables-directory", icon: IconTable, requiresProject: false },
   { name: "Settings", path: "settings/plugins", icon: IconSettings, requiresProject: false },
   { name: "Tasks", path: "tasks", icon: IconCheckbox, requiresProject: true },
 ];
@@ -70,7 +70,6 @@ const projectManagementTools = [
 const financialManagementTools = [
   { name: "Prime Contracts", path: "contracts", icon: IconFileDescription, requiresProject: true },
   { name: "Budget", path: "budget", icon: IconReportMoney, requiresProject: true },
-  { name: "Budget V2", path: "budget-v2", icon: IconReportMoney, requiresProject: true },
   { name: "Commitments", path: "commitments", icon: IconBriefcase, requiresProject: true },
   { name: "Change Orders", path: "change-orders", icon: IconFileInvoice, requiresProject: true },
   { name: "Change Events", path: "change-events", icon: IconCoin, requiresProject: true },

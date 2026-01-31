@@ -63,12 +63,29 @@ export function LoginForm({
       setSuccessMessage("Login successful! Redirecting you now...");
       toast.success("Logged in successfully");
 
-      // Add a small delay to ensure session is established
-      const safeRedirect = validateCallbackUrl(redirectTo);
-      setTimeout(() => {
-        router.push(safeRedirect);
-        router.refresh();
-      }, 100);
+      // If an explicit redirect was provided, use it; otherwise smart-route
+      if (redirectTo !== "/") {
+        const safeRedirect = validateCallbackUrl(redirectTo);
+        setTimeout(() => {
+          router.push(safeRedirect);
+          router.refresh();
+        }, 100);
+      } else {
+        // Fetch smart redirect based on user's memberships
+        try {
+          const res = await fetch("/api/auth/post-login-redirect");
+          const { redirect } = await res.json();
+          setTimeout(() => {
+            router.push(redirect || "/");
+            router.refresh();
+          }, 100);
+        } catch {
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 100);
+        }
+      }
     } catch (err: unknown) {
       const fallbackMessage =
         "An error occurred during login. Please try again.";

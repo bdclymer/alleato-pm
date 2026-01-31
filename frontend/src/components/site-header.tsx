@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,13 @@ import { IconLogout, IconUserCircle } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,6 +109,7 @@ interface Project {
 export function SiteHeader() {
   const [user, setUser] = useState<User | null>(null);
   const [projectToolsOpen, setProjectToolsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -356,27 +364,178 @@ export function SiteHeader() {
     return crumbs;
   }, [pathname, currentProject]);
 
+  // Component to render navigation tools in a mobile-friendly list
+  const MobileToolsList = ({ closeMenu }: { closeMenu: () => void }) => (
+    <div className="space-y-6 py-4">
+      {/* Core Tools Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3 px-4">
+          Core Tools
+        </h3>
+        <div className="space-y-2">
+          {coreTools.map((tool) => {
+            const href = buildToolUrl(tool.path, tool.requiresProject);
+            const isDisabled = tool.requiresProject && !projectId;
+
+            return (
+              <Link
+                key={tool.name}
+                href={href}
+                onClick={(e) => {
+                  if (isDisabled) {
+                    e.preventDefault();
+                  } else {
+                    closeMenu();
+                  }
+                }}
+                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                  isDisabled
+                    ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                    : "text-foreground hover:bg-muted active:bg-muted/80"
+                }`}
+              >
+                <span>{tool.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Project Management Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3 px-4">
+          Project Management
+        </h3>
+        <div className="space-y-2">
+          {projectManagementTools.map((tool) => {
+            const href = buildToolUrl(tool.path, tool.requiresProject);
+            const isDisabled = tool.requiresProject && !projectId;
+
+            return (
+              <Link
+                key={tool.name}
+                href={href}
+                onClick={(e) => {
+                  if (isDisabled) {
+                    e.preventDefault();
+                  } else {
+                    closeMenu();
+                  }
+                }}
+                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                  isDisabled
+                    ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                    : "text-foreground hover:bg-muted active:bg-muted/80"
+                }`}
+              >
+                <span>{tool.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Financial Management Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3 px-4">
+          Financial Management
+        </h3>
+        <div className="space-y-2">
+          {financialManagementTools.map((tool) => {
+            const href = buildToolUrl(tool.path, tool.requiresProject);
+            const isDisabled = tool.requiresProject && !projectId;
+
+            return (
+              <Link
+                key={tool.name}
+                href={href}
+                onClick={(e) => {
+                  if (isDisabled) {
+                    e.preventDefault();
+                  } else {
+                    closeMenu();
+                  }
+                }}
+                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors ${
+                  isDisabled
+                    ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                    : "text-foreground hover:bg-muted active:bg-muted/80"
+                }`}
+              >
+                <span>{tool.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Admin Tools Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-foreground mb-3 px-4">
+          Admin Tools
+        </h3>
+        <div className="space-y-2">
+          {adminTools.map((tool) => (
+            <Link
+              key={tool.name}
+              href={tool.path}
+              onClick={closeMenu}
+              className="flex items-center px-4 py-3 text-sm font-medium text-foreground hover:bg-muted active:bg-muted/80 transition-colors"
+            >
+              <span>{tool.name}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 pt-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6 min-w-0">
-        <SidebarTrigger className="-ml-1" />
+      <div className="flex w-full items-center gap-1 px-2 sm:px-4 lg:gap-2 lg:px-6 min-w-0">
+        {/* Desktop: Show sidebar trigger */}
+        <SidebarTrigger className="-ml-1 hidden md:flex" />
+
+        {/* Mobile: Show hamburger menu */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden p-2 h-8 w-8 hover:bg-muted"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+            <SheetHeader className="px-4 py-6 border-b">
+              <SheetTitle className="text-left">Navigation</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto h-[calc(100vh-120px)]">
+              <MobileToolsList closeMenu={() => setMobileMenuOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+
         <Separator
           orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4"
+          className="mx-2 data-[orientation=vertical]:h-4 hidden md:block"
         />
-        {/* Dynamic Breadcrumbs */}
-        <div className="flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
+
+        {/* Breadcrumbs - Hidden on small screens */}
+        <div className="hidden lg:flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
           {breadcrumbs.map((crumb, index) => (
             <span key={`${crumb.href}-${index}`} className="flex items-center gap-1">
               {index > 0 && (
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               )}
               {index === breadcrumbs.length - 1 ? (
-                <span className="text-foreground">{crumb.label}</span>
+                <span className="text-foreground truncate">{crumb.label}</span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-muted-foreground hover:text-foreground transition-colors truncate"
                 >
                   {crumb.label}
                 </Link>
@@ -384,8 +543,16 @@ export function SiteHeader() {
             </span>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {/* Company/Project Selector */}
+
+        {/* Current page title for mobile */}
+        <div className="lg:hidden flex-1 min-w-0">
+          <h1 className="text-sm font-semibold truncate">
+            {activeToolName}
+          </h1>
+        </div>
+
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Project Selector - Responsive width */}
           <Select
             value={projectId?.toString() || ""}
             onValueChange={(value) => {
@@ -397,19 +564,21 @@ export function SiteHeader() {
             }}
             onOpenChange={(open) => open && fetchProjects()}
           >
-            <SelectTrigger className="h-8 w-[180px] lg:w-[280px]">
-              <SelectValue placeholder="Select Project">
+            <SelectTrigger className="h-8 w-[120px] sm:w-[160px] lg:w-[240px]">
+              <SelectValue placeholder="Project">
                 {currentProject ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 min-w-0">
                     {currentProject["job number"] && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
                         #{currentProject["job number"]}
                       </span>
                     )}
-                    <span className="font-medium truncate">{currentProject.name}</span>
+                    <span className="font-medium truncate text-xs sm:text-sm">
+                      {currentProject.name}
+                    </span>
                   </div>
                 ) : (
-                  "Select Project"
+                  "Project"
                 )}
               </SelectValue>
             </SelectTrigger>
@@ -418,7 +587,7 @@ export function SiteHeader() {
                 <SelectLabel>Recent Projects</SelectLabel>
                 {loadingProjects ? (
                   <div className="py-2 px-2 text-center text-sm text-muted-foreground">
-                    Loading projects...
+                    Loading...
                   </div>
                 ) : projects.length > 0 ? (
                   projects.slice(0, 10).map((project) => (
@@ -427,13 +596,13 @@ export function SiteHeader() {
                       value={project.id.toString()}
                       className="h-auto py-2"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         {project["job number"] && (
                           <span className="text-xs text-muted-foreground">
                             #{project["job number"]}
                           </span>
                         )}
-                        <span className="font-medium">{project.name}</span>
+                        <span className="font-medium truncate">{project.name}</span>
                       </div>
                     </SelectItem>
                   ))
@@ -451,7 +620,7 @@ export function SiteHeader() {
             </SelectContent>
           </Select>
 
-          {/* Project Tools */}
+          {/* Desktop Project Tools Dropdown */}
           <DropdownMenu
             open={projectToolsOpen}
             onOpenChange={setProjectToolsOpen}
@@ -459,9 +628,11 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 min-h-[2rem] flex items-center gap-2 px-3 py-0 text-sm"
+                className="h-8 min-h-[2rem] hidden md:flex items-center gap-2 px-3 py-0 text-sm"
               >
-                <span className="text-xs text-muted-foreground">Project Tools</span>
+                <span className="text-xs text-muted-foreground hidden lg:inline">
+                  Project Tools
+                </span>
                 <span className="text-sm font-medium">
                   {activeToolName}
                 </span>
@@ -470,10 +641,10 @@ export function SiteHeader() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-screen p-6 rounded-none border-x-0"
+              className="w-screen max-w-4xl p-6 rounded-none border-x-0"
             >
               <div className="container mx-auto">
-                <div className="grid grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                   {/* Core Tools Column */}
                   <div>
                     <h3 className="mb-3 text-sm font-semibold text-foreground">
@@ -481,10 +652,7 @@ export function SiteHeader() {
                     </h3>
                     <div className="space-y-1">
                       {coreTools.map((tool) => {
-                        const href = buildToolUrl(
-                          tool.path,
-                          tool.requiresProject,
-                        );
+                        const href = buildToolUrl(tool.path, tool.requiresProject);
                         const isDisabled = tool.requiresProject && !projectId;
 
                         return (
@@ -498,7 +666,7 @@ export function SiteHeader() {
                                 setProjectToolsOpen(false);
                               }
                             }}
-                            className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm ${
+                            className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm transition-smooth ${
                               isDisabled
                                 ? "opacity-50 cursor-not-allowed hover:bg-transparent"
                                 : "hover:bg-muted"
@@ -519,10 +687,7 @@ export function SiteHeader() {
                     </h3>
                     <div className="space-y-1">
                       {projectManagementTools.map((tool) => {
-                        const href = buildToolUrl(
-                          tool.path,
-                          tool.requiresProject,
-                        );
+                        const href = buildToolUrl(tool.path, tool.requiresProject);
                         const isDisabled = tool.requiresProject && !projectId;
 
                         return (
@@ -536,16 +701,14 @@ export function SiteHeader() {
                                 setProjectToolsOpen(false);
                               }
                             }}
-                            className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm ${
+                            className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm transition-smooth ${
                               isDisabled
                                 ? "opacity-50 cursor-not-allowed hover:bg-transparent"
                                 : "hover:bg-muted"
                             }`}
                             aria-disabled={isDisabled}
                           >
-                            <span className="flex items-center gap-2">
-                              {tool.name}
-                            </span>
+                            <span>{tool.name}</span>
                           </Link>
                         );
                       })}
@@ -559,10 +722,7 @@ export function SiteHeader() {
                     </h3>
                     <div className="space-y-1">
                       {financialManagementTools.map((tool) => {
-                        const href = buildToolUrl(
-                          tool.path,
-                          tool.requiresProject,
-                        );
+                        const href = buildToolUrl(tool.path, tool.requiresProject);
                         const isDisabled = tool.requiresProject && !projectId;
 
                         return (
@@ -576,7 +736,7 @@ export function SiteHeader() {
                                 setProjectToolsOpen(false);
                               }
                             }}
-                            className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm ${
+                            className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm transition-smooth ${
                               isDisabled
                                 ? "opacity-50 cursor-not-allowed hover:bg-transparent"
                                 : "hover:bg-muted"
@@ -596,20 +756,16 @@ export function SiteHeader() {
                       Admin Tools
                     </h3>
                     <div className="space-y-1">
-                      {adminTools.map((tool) => {
-                        const href = tool.path;
-
-                        return (
-                          <Link
-                            key={tool.name}
-                            href={href}
-                            onClick={() => setProjectToolsOpen(false)}
-                            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
-                          >
-                            <span>{tool.name}</span>
-                          </Link>
-                        );
-                      })}
+                      {adminTools.map((tool) => (
+                        <Link
+                          key={tool.name}
+                          href={tool.path}
+                          onClick={() => setProjectToolsOpen(false)}
+                          className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-muted transition-smooth"
+                        >
+                          <span>{tool.name}</span>
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -622,16 +778,16 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center rounded-full border-2 border-border p-0.5 transition-all hover:border-primary hover:scale-105"
+                className="flex items-center rounded-full border-2 border-border p-0.5 transition-smooth hover:border-primary hover:scale-105 focus-ring-brand"
                 aria-label="Open user menu"
               >
-                <Avatar className="h-8 w-8 rounded-full">
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8 rounded-full">
                   <AvatarImage
                     src={avatarSrc}
                     alt="User avatar"
                     className="rounded-full"
                   />
-                  <AvatarFallback className="rounded-full bg-primary/10 font-medium text-sm">
+                  <AvatarFallback className="rounded-full bg-primary/10 font-medium text-xs sm:text-sm">
                     {fallbackInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -648,14 +804,14 @@ export function SiteHeader() {
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/profile" className="cursor-pointer">
+                <Link href="/profile" className="cursor-pointer transition-smooth">
                   <IconUserCircle className="mr-2 h-4 w-4" />
                   Profile
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer text-destructive focus:text-destructive"
+                className="cursor-pointer text-destructive focus:text-destructive transition-smooth"
                 onClick={async () => {
                   try {
                     await supabase.auth.signOut();

@@ -21,7 +21,7 @@ export default defineConfig({
     baseURL:
       process.env.PLAYWRIGHT_BASE_URL ||
       process.env.BASE_URL ||
-      'http://localhost:3002',
+      'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',  // Record video but only keep on failure

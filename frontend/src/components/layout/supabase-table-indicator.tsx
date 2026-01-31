@@ -25,7 +25,6 @@ const routeTableMap: Record<string, string[]> = {
 
   // Financial Management
   "budget": ["budget_line_items", "budget_codes", "cost_codes", "budget_snapshots"],
-  "budget-v2": ["budget_line_items", "budget_codes", "cost_codes"],
   "prime-contracts": ["prime_contracts", "contract_line_items"],
   "commitments": ["commitments", "commitment_line_items", "companies"],
   "change-orders": ["change_orders", "change_order_line_items"],
@@ -51,7 +50,6 @@ const routeTableMap: Record<string, string[]> = {
   // Settings & Admin
   "settings": ["project_settings", "user_preferences"],
   "admin": ["audit_logs", "permissions", "roles"],
-  "tables-directory": ["*"], // Special indicator for all tables
 };
 
 // Additional table relationships (foreign keys)

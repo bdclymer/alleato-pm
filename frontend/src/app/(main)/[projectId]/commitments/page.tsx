@@ -247,24 +247,37 @@ export default function ProjectCommitmentsPage() {
 
   return (
     <TableLayout>
-      {/* Header with Actions */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold tracking-tight">Commitments</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/commitments/recycle-bin`)}
-          >
-            Recycle Bin
-          </Button>
+      {/* Header with Actions - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Commitments</h1>
+
+        {/* Action buttons - Stack on mobile, responsive gap */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
+          {/* Secondary actions - Hide some on mobile */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              className="flex-1 sm:flex-initial"
+            >
+              <Download className="h-4 w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Export</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/${projectId}/commitments/recycle-bin`)}
+              className="flex-1 sm:flex-initial hidden sm:flex"
+            >
+              Recycle Bin
+            </Button>
+          </div>
+
+          {/* Primary action - Prominent on mobile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" className="flex-1 sm:flex-initial">
                 <Plus className="h-4 w-4 mr-2" />
                 Create
                 <ChevronDown className="h-4 w-4 ml-2" />
@@ -282,21 +295,22 @@ export default function ProjectCommitmentsPage() {
         </div>
       </div>
 
-      {/* Underline Tabs */}
-      <nav className="-mb-px flex space-x-8 border-b" aria-label="Tabs">
-        {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
-          return (
-            <button
-              key={tab.href}
-              type="button"
-              onClick={() => router.push(tab.href)}
-              className={cn(
-                "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-colors whitespace-nowrap",
-                isActive
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-              )}
+      {/* Underline Tabs - Mobile Scrollable */}
+      <div className="overflow-x-auto -mb-px">
+        <nav className="flex space-x-6 sm:space-x-8 border-b min-w-max px-1" aria-label="Tabs">
+          {tabs.map((tab) => {
+            const isActive = pathname === tab.href;
+            return (
+              <button
+                key={tab.href}
+                type="button"
+                onClick={() => router.push(tab.href)}
+                className={cn(
+                  "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-smooth whitespace-nowrap touch-target",
+                  isActive
+                    ? "border-brand text-brand"
+                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                )}
               aria-current={isActive ? "page" : undefined}
             >
               <span>{tab.label}</span>
@@ -315,7 +329,8 @@ export default function ProjectCommitmentsPage() {
             </button>
           );
         })}
-      </nav>
+        </nav>
+      </div>
 
       {/* Table */}
       <div className="mt-6">
