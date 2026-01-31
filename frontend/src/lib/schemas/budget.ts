@@ -19,7 +19,7 @@ const optionalString = z
 
 export const BudgetLineItemSchema = z.object({
   costCodeId: z.string().min(1, "Budget code required"),
-  costType: optionalString,
+  costType: z.string().min(1, "Cost type is required"),
   qty: numericString.optional(),
   uom: optionalString,
   unitCost: numericString.optional(),
