@@ -16,7 +16,7 @@ export function useProjectUsers(projectId: string, filters?: DirectoryFilters) {
     queryFn: async () => {
       const response = await directoryService.getPeople(projectId, {
         ...filters,
-        type: "user", // Force to user type
+        type: filters?.type || "user",
       });
       return response;
     },

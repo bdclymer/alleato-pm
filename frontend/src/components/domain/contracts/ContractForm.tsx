@@ -52,7 +52,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useClients } from "@/hooks/use-clients";
-import { useUsers } from "@/hooks/use-users";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -211,7 +211,11 @@ export function ContractForm({
     isLoading: clientsLoading,
     createClient,
   } = useClients();
-  const { options: userOptions } = useUsers();
+  const { users: projectUsers } = useProjectUsers(projectId);
+  const userOptions = projectUsers.map((u) => ({
+    value: u.id,
+    label: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email || "Unnamed",
+  }));
 
   // State for "Add New Client" dialog
   const [showAddClient, setShowAddClient] = React.useState(false);

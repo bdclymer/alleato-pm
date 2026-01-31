@@ -46,10 +46,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useProjects } from "@/hooks/use-projects";
 
 export default function DirectoryUsersPage() {
   const pathname = usePathname();
-  const [projectId, setProjectId] = React.useState("1");
+  const { projects, isLoading: projectsLoading } = useProjects();
+  const [projectId, setProjectId] = React.useState("");
 
   const [statusFilter, setStatusFilter] = React.useState<
     "all" | "active" | "inactive"
@@ -63,6 +65,13 @@ export default function DirectoryUsersPage() {
   >(null);
   const [permissionsUserName, setPermissionsUserName] =
     React.useState<string>("");
+
+  // Set initial projectId when projects load
+  React.useEffect(() => {
+    if (projects.length > 0 && !projectId) {
+      setProjectId(projects[0].id.toString());
+    }
+  }, [projects, projectId]);
 
   const filters = React.useMemo(() => {
     if (statusFilter === "all") return undefined;
@@ -344,13 +353,16 @@ export default function DirectoryUsersPage() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Text weight="medium">Project:</Text>
-                <Select value={projectId} onValueChange={setProjectId}>
+                <Select value={projectId} onValueChange={setProjectId} disabled={projectsLoading}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select project" />
+                    <SelectValue placeholder={projectsLoading ? "Loading..." : "Select project"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Goodwill Bart</SelectItem>
-                    {/* TODO: Load projects dynamically from API */}
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.project_number ? `${p.project_number} - ` : ""}{p.name || "Unnamed Project"}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

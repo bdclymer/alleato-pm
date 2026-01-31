@@ -23,11 +23,6 @@ export function getDirectoryTabs(currentPath: string): TabConfig[] {
       isActive: currentPath === "/directory/users",
     },
     {
-      label: "Employees",
-      href: "/directory/employees",
-      isActive: currentPath === "/directory/employees",
-    },
-    {
       label: "Distribution Groups",
       href: "/directory/groups",
       isActive: currentPath === "/directory/groups",
@@ -59,11 +54,6 @@ export function getProjectDirectoryTabs(
       label: "Distribution Groups",
       href: `/${projectId}/directory/groups`,
       isActive: currentPath === `/${projectId}/directory/groups`,
-    },
-    {
-      label: "Employees",
-      href: `/${projectId}/directory/employees`,
-      isActive: currentPath === `/${projectId}/directory/employees`,
     },
   ];
 }
