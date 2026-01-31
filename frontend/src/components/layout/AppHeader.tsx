@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   IconSearch,
   IconBell,
@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/supabase/logout";
 
 interface AppHeaderProps {
   className?: string;
@@ -54,6 +55,7 @@ export function AppHeader({
   onProjectChange,
 }: AppHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <header
@@ -131,10 +133,15 @@ export function AppHeader({
               <Link href="/help">Help & Support</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/auth/logout" className="text-red-600">
-                Log out
-              </Link>
+            <DropdownMenuItem
+              className="text-red-600"
+              onSelect={async (event) => {
+                event.preventDefault();
+                await logout();
+                router.push("/auth/login");
+              }}
+            >
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
