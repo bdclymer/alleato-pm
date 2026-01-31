@@ -48,20 +48,21 @@ function BudgetFormField({
 
       {/* Input Field */}
       <div className="relative">
-        {React.cloneElement(children as React.ReactElement, {
-          id: fieldId,
-          'aria-describedby': cn(
-            error && `${fieldId}-error`,
-            success && `${fieldId}-success`,
-            hint && `${fieldId}-hint`
-          ).trim() || undefined,
-          'aria-invalid': !!error,
-          className: cn(
-            (children as React.ReactElement).props.className,
-            error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-            success && "border-green-500 focus:border-green-500 focus:ring-green-500/20"
-          )
-        })}
+        {React.isValidElement(children) ?
+          React.cloneElement(children as React.ReactElement<any>, {
+            'aria-describedby': cn(
+              error && `${fieldId}-error`,
+              success && `${fieldId}-success`,
+              hint && `${fieldId}-hint`
+            ).trim() || undefined,
+            'aria-invalid': !!error,
+            className: cn(
+              (children as React.ReactElement<any>).props.className,
+              error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+              success && "border-green-500 focus:border-green-500 focus:ring-green-500/20"
+            )
+          }) : children
+        }
       </div>
 
       {/* Feedback Messages */}

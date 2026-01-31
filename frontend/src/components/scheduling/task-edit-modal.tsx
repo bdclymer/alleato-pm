@@ -121,10 +121,10 @@ const CONSTRAINT_OPTIONS: Array<{ value: string; label: string }> = [
 ];
 
 const DEPENDENCY_TYPE_OPTIONS: Array<{ value: DependencyType; label: string }> = [
-  { value: "FS", label: "Finish-to-Start (FS)" },
-  { value: "SS", label: "Start-to-Start (SS)" },
-  { value: "FF", label: "Finish-to-Finish (FF)" },
-  { value: "SF", label: "Start-to-Finish (SF)" },
+  { value: "finish_to_start", label: "Finish-to-Start (FS)" },
+  { value: "start_to_start", label: "Start-to-Start (SS)" },
+  { value: "finish_to_finish", label: "Finish-to-Finish (FF)" },
+  { value: "start_to_finish", label: "Start-to-Finish (SF)" },
 ];
 
 // =============================================================================
@@ -161,7 +161,7 @@ export function TaskEditModal({
   const [isParentOpen, setIsParentOpen] = useState(false);
   const [newDependency, setNewDependency] = useState<NewDependency>({
     predecessorId: "",
-    type: "FS",
+    type: "finish_to_start",
     lag: 0,
   });
 
@@ -197,7 +197,7 @@ export function TaskEditModal({
         constraint_type: null,
         constraint_date: "",
         wbs_code: "",
-        parent_task_id: parentTaskId,
+        parent_task_id: parentTaskId || null,
       });
     }
     setErrors({});
@@ -289,7 +289,7 @@ export function TaskEditModal({
         newDependency.type,
         newDependency.lag
       );
-      setNewDependency({ predecessorId: "", type: "FS", lag: 0 });
+      setNewDependency({ predecessorId: "", type: "finish_to_start", lag: 0 });
     } catch (error) {
       // Error handled by parent
     }

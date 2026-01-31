@@ -431,7 +431,6 @@ export function EnhancedBudgetLineItemModal({
                         className="font-medium"
                         clearZeroOnFocus={true}
                         autoSelectOnFocus={true}
-                        error={!!row.errors?.amount}
                       />
                     </BudgetFormField>
                   </div>
