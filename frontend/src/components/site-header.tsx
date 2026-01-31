@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 import { toast } from "sonner";
 import { IconLogout, IconUserCircle } from "@tabler/icons-react";
+import { logout } from "@/lib/supabase/logout";
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -814,7 +815,7 @@ export function SiteHeader() {
                 className="cursor-pointer text-destructive focus:text-destructive transition-smooth"
                 onClick={async () => {
                   try {
-                    await supabase.auth.signOut();
+                    await logout();
                     toast.success("Logged out successfully");
                     router.push("/auth/login");
                     router.refresh();

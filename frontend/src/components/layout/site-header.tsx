@@ -18,6 +18,7 @@ import { getBestAvatarUrl } from "@/lib/gravatar";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useFavorites } from "@/contexts/favorites-context";
+import { logout } from "@/lib/supabase/logout";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -137,8 +138,8 @@ export function SiteHeader({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const supabase = createClient();
   const { favorites, addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const supabase = createClient();
 
   // Fetch current user on mount and listen for auth changes
   useEffect(() => {
@@ -456,7 +457,7 @@ export function SiteHeader({
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={async () => {
                     try {
-                      await supabase.auth.signOut();
+                      await logout();
                       toast.success("Logged out successfully");
                       router.push("/auth/login");
                       router.refresh();
@@ -822,7 +823,7 @@ export function SiteHeader({
                   className="cursor-pointer text-destructive focus:text-destructive"
                   onClick={async () => {
                     try {
-                      await supabase.auth.signOut();
+                      await logout();
                       toast.success("Logged out successfully");
                       router.push("/auth/login");
                       router.refresh();
@@ -1003,7 +1004,7 @@ export function SiteHeader({
                     type="button"
                     onClick={async () => {
                       try {
-                        await supabase.auth.signOut();
+                        await logout();
                         toast.success("Logged out successfully");
                         setMobileMenuOpen(false);
                         router.push("/auth/login");

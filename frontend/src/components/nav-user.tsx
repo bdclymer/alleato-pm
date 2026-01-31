@@ -1,9 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import Link from "next/link"
+import { logout } from "@/lib/supabase/logout"
 
 import {
   IconCreditCard,
@@ -45,7 +45,6 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
-  const supabase = createClient()
 
   // Generate user initials for avatar fallback
   const userInitials = user.name
@@ -119,7 +118,7 @@ export function NavUser({
               className="cursor-pointer text-destructive focus:text-destructive"
               onClick={async () => {
                 try {
-                  await supabase.auth.signOut()
+                  await logout()
                   toast.success("Logged out successfully")
                   router.push("/auth/login")
                   router.refresh()
