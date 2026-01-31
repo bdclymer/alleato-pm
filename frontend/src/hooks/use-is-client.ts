@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
+import { User } from "@supabase/supabase-js";
 
 interface ClientStatus {
   isClient: boolean;
@@ -19,12 +19,11 @@ export function useIsClient(): ClientStatus {
   });
 
   const params = useParams();
-  const { user } = useAuth();
   const projectId = params?.projectId as string | undefined;
 
   useEffect(() => {
     async function checkClientStatus() {
-      if (!user?.id || !projectId) {
+      if (!projectId) {
         setStatus({
           isClient: false,
           isLoading: false,
@@ -35,10 +34,23 @@ export function useIsClient(): ClientStatus {
 
       try {
         const supabase = createClient();
+
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          setStatus({
+            isClient: false,
+            isLoading: false,
+            error: null,
+          });
+          return;
+        }
+
         const { data, error } = await supabase
-          .from("project_users")
-          .select("is_client, client_company_id, role")
-          .eq("project_id", projectId)
+          .from("project_directory_memberships")
+          .select("*")
+          .eq("project_id", parseInt(projectId))
           .eq("user_id", user.id)
           .eq("is_active", true)
           .single();
@@ -55,101 +67,30 @@ export function useIsClient(): ClientStatus {
             setStatus({
               isClient: false,
               isLoading: false,
-              error: error as Error,
+              error,
             });
           }
           return;
         }
 
         setStatus({
-          isClient: data?.is_client || false,
+          isClient: (data as any)?.user_type === 'Client' || false,
           isLoading: false,
           error: null,
-          clientCompanyId: data?.client_company_id,
-          role: data?.role,
+          clientCompanyId: (data as any)?.company_id,
+          role: (data as any)?.permission_template_id,
         });
       } catch (err) {
         setStatus({
           isClient: false,
           isLoading: false,
-          error: err as Error,
+          error: err instanceof Error ? err : new Error("Unknown error"),
         });
       }
     }
 
     checkClientStatus();
-  }, [user?.id, projectId]);
-
-  return status;
-}
-
-/**
- * Hook to check if a specific user is a client for a specific project
- * Useful for admin views where you need to check other users' status
- */
-export function useIsUserClient(userId?: string, projectId?: string): ClientStatus {
-  const [status, setStatus] = useState<ClientStatus>({
-    isClient: false,
-    isLoading: true,
-    error: null,
-  });
-
-  useEffect(() => {
-    async function checkClientStatus() {
-      if (!userId || !projectId) {
-        setStatus({
-          isClient: false,
-          isLoading: false,
-          error: null,
-        });
-        return;
-      }
-
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("project_users")
-          .select("is_client, client_company_id, role")
-          .eq("project_id", projectId)
-          .eq("user_id", userId)
-          .eq("is_active", true)
-          .single();
-
-        if (error) {
-          if (error.code === "PGRST116") {
-            setStatus({
-              isClient: false,
-              isLoading: false,
-              error: null,
-            });
-          } else {
-            setStatus({
-              isClient: false,
-              isLoading: false,
-              error: error as Error,
-            });
-          }
-          return;
-        }
-
-        setStatus({
-          isClient: data?.is_client || false,
-          isLoading: false,
-          error: null,
-          clientCompanyId: data?.client_company_id,
-          role: data?.role,
-        });
-      } catch (err) {
-        setStatus({
-          isClient: false,
-          isLoading: false,
-          error: err as Error,
-        });
-      }
-    }
-
-    checkClientStatus();
-  }, [userId, projectId]);
+  }, [projectId]);
 
   return status;
 }

@@ -44,13 +44,12 @@ export function ClientStatusToggle({
 
     try {
       const { error } = await supabase
-        .from("project_users")
+        .from("project_directory_memberships")
         .update({
-          is_client: checked,
-          client_company_id: checked ? clientCompanyId : null,
+          user_type: checked ? 'Client' : 'Team',
           updated_at: new Date().toISOString(),
         })
-        .eq("project_id", projectId)
+        .eq("project_id", parseInt(projectId))
         .eq("user_id", userId);
 
       if (error) throw error;
@@ -80,12 +79,12 @@ export function ClientStatusToggle({
 
     try {
       const { error } = await supabase
-        .from("project_users")
+        .from("project_directory_memberships")
         .update({
-          client_company_id: companyId,
+          company_id: companyId,
           updated_at: new Date().toISOString(),
         })
-        .eq("project_id", projectId)
+        .eq("project_id", parseInt(projectId))
         .eq("user_id", userId);
 
       if (error) throw error;
@@ -106,16 +105,19 @@ export function ClientStatusToggle({
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <User className="h-4 w-4" />
-          Client Access
+          Client Access Settings
         </CardTitle>
-        <CardDescription>
-          Mark this user as an external client for restricted access
+        <CardDescription className="text-sm">
+          Configure whether this user has client-level access to the project
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label htmlFor={`client-toggle-${userId}`} className="text-sm">
-            Is Client User
+          <Label
+            htmlFor={`client-toggle-${userId}`}
+            className="text-sm font-medium flex items-center gap-2"
+          >
+            Mark as Client
           </Label>
           <Switch
             id={`client-toggle-${userId}`}
@@ -127,8 +129,8 @@ export function ClientStatusToggle({
 
         {isClient && companies.length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor={`client-company-${userId}`} className="text-sm flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
               Client Company
             </Label>
             <Select
@@ -136,8 +138,8 @@ export function ClientStatusToggle({
               onValueChange={handleCompanyChange}
               disabled={isUpdating}
             >
-              <SelectTrigger id={`client-company-${userId}`}>
-                <SelectValue placeholder="Select client company" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a company" />
               </SelectTrigger>
               <SelectContent>
                 {companies.map((company) => (
@@ -151,13 +153,13 @@ export function ClientStatusToggle({
         )}
 
         {isClient && (
-          <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md">
-            <p className="font-medium mb-1">Client users have:</p>
-            <ul className="space-y-1 ml-4 list-disc">
-              <li>Access to Client Dashboard</li>
-              <li>Read-only access to project information</li>
-              <li>Cannot view private documents/photos</li>
-              <li>Limited access to financial details</li>
+          <div className="text-xs text-muted-foreground bg-muted rounded-md p-3">
+            <p className="font-medium mb-1">Client Access Restrictions:</p>
+            <ul className="space-y-1">
+              <li>• Limited to client dashboard view</li>
+              <li>• No access to financial data</li>
+              <li>• Read-only permissions on shared documents</li>
+              <li>• Cannot modify project settings</li>
             </ul>
           </div>
         )}
