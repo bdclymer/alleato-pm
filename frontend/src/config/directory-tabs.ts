@@ -18,14 +18,34 @@ export function getDirectoryTabs(currentPath: string): TabConfig[] {
       isActive: currentPath === "/directory/contacts",
     },
     {
-      label: "Users",
-      href: "/directory/users",
-      isActive: currentPath === "/directory/users",
+      label: "Access",
+      href: "/directory/access",
+      isActive: currentPath === "/directory/access",
     },
     {
       label: "Distribution Groups",
       href: "/directory/groups",
       isActive: currentPath === "/directory/groups",
+    },
+  ];
+}
+
+export function getAccessControlTabs(currentPath: string): TabConfig[] {
+  return [
+    {
+      label: "Users",
+      href: "/directory/users",
+      isActive: currentPath === "/directory/users",
+    },
+    {
+      label: "Permissions",
+      href: "/directory/permissions",
+      isActive: currentPath === "/directory/permissions",
+    },
+    {
+      label: "Templates",
+      href: "/directory/templates",
+      isActive: currentPath === "/directory/templates",
     },
   ];
 }
@@ -36,14 +56,9 @@ export function getProjectDirectoryTabs(
 ): TabConfig[] {
   return [
     {
-      label: "Users",
-      href: `/${projectId}/directory/users`,
-      isActive: currentPath === `/${projectId}/directory/users`,
-    },
-    {
-      label: "Contacts",
-      href: `/${projectId}/directory/contacts`,
-      isActive: currentPath === `/${projectId}/directory/contacts`,
+      label: "All",
+      href: `/${projectId}/directory/all`,
+      isActive: currentPath === `/${projectId}/directory/all`,
     },
     {
       label: "Companies",

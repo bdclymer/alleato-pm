@@ -458,12 +458,13 @@ export function SiteHeader({
                   onClick={async () => {
                     try {
                       await logout();
-                      toast.success("Logged out successfully");
-                      router.push("/auth/login");
-                      router.refresh();
+                      // Use window.location for hard navigation to clear all state
+                      window.location.href = "/auth/login";
                     } catch (error) {
                       console.error("Logout error:", error);
                       toast.error("Failed to log out");
+                      // Still redirect even on error
+                      window.location.href = "/auth/login";
                     }
                   }}
                 >
@@ -580,17 +581,12 @@ export function SiteHeader({
               }}
               onOpenChange={(open) => open && fetchProjects()}
             >
-              <SelectTrigger className="hidden md:flex w-[280px]" size="sm">
+              <SelectTrigger className="hidden md:flex w-[280px] max-w-[280px]" size="sm">
                 <SelectValue placeholder="Select Project">
                   {currentProject ? (
-                    <div className="flex items-center gap-2">
-                      {currentProject["job number"] && (
-                        <span className="text-xs text-muted-foreground">
-                          #{currentProject["job number"]}
-                        </span>
-                      )}
-                      <span className="font-medium truncate">{currentProject.name}</span>
-                    </div>
+                    <span className="block truncate font-medium max-w-[240px]" title={currentProject.name}>
+                      {currentProject.name}
+                    </span>
                   ) : (
                     "Select Project"
                   )}
@@ -610,14 +606,7 @@ export function SiteHeader({
                         value={project.id.toString()}
                         className="h-auto py-2"
                       >
-                        <div className="flex items-center gap-2">
-                          {project["job number"] && (
-                            <span className="text-xs text-muted-foreground">
-                              #{project["job number"]}
-                            </span>
-                          )}
-                          <span className="font-medium">{project.name}</span>
-                        </div>
+                        <span className="font-medium">{project.name}</span>
                       </SelectItem>
                     ))
                   ) : (
@@ -824,12 +813,13 @@ export function SiteHeader({
                   onClick={async () => {
                     try {
                       await logout();
-                      toast.success("Logged out successfully");
-                      router.push("/auth/login");
-                      router.refresh();
+                      // Use window.location for hard navigation to clear all state
+                      window.location.href = "/auth/login";
                     } catch (error) {
                       console.error("Logout error:", error);
                       toast.error("Failed to log out");
+                      // Still redirect even on error
+                      window.location.href = "/auth/login";
                     }
                   }}
                 >
@@ -858,8 +848,6 @@ export function SiteHeader({
                     Current Project
                   </div>
                   <div className="text-sm font-medium">
-                    {currentProject["job number"] &&
-                      `${currentProject["job number"]} - `}
                     {currentProject.name}
                   </div>
                 </div>
@@ -1005,13 +993,14 @@ export function SiteHeader({
                     onClick={async () => {
                       try {
                         await logout();
-                        toast.success("Logged out successfully");
                         setMobileMenuOpen(false);
-                        router.push("/auth/login");
-                        router.refresh();
+                        // Use window.location for hard navigation to clear all state
+                        window.location.href = "/auth/login";
                       } catch (error) {
                         console.error("Logout error:", error);
                         toast.error("Failed to log out");
+                        // Still redirect even on error
+                        window.location.href = "/auth/login";
                       }
                     }}
                     className="flex w-full items-center gap-2 px-3 py-2 rounded text-sm text-destructive hover:bg-accent"

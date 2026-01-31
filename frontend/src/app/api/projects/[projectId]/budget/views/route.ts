@@ -31,8 +31,16 @@ export async function GET(
         { status: 401 },
       );
     }
-    // Fetch views with their columns
+    // Validate project ID
     const projectIdNum = parseInt(projectId, 10);
+    if (isNaN(projectIdNum)) {
+      return NextResponse.json(
+        { error: "Invalid project ID", details: `Project ID must be a number, got: ${projectId}` },
+        { status: 400 },
+      );
+    }
+
+    // Fetch views with their columns
     const { data: views, error: viewsError } = await supabase
       .from("budget_views")
       .select(
@@ -45,8 +53,18 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (viewsError) {
+      console.error("Budget views fetch error:", {
+        error: viewsError,
+        projectId: projectIdNum,
+        userId: user.id
+      });
       return NextResponse.json(
-        { error: "Failed to fetch budget views", details: viewsError.message },
+        {
+          error: "Failed to fetch budget views",
+          details: viewsError.message,
+          code: viewsError.code,
+          hint: viewsError.hint
+        },
         { status: 500 },
       );
     }
@@ -60,8 +78,12 @@ export async function GET(
 
     return NextResponse.json({ views: viewsWithSortedColumns });
   } catch (error) {
+    console.error("Budget views API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 },
     );
   }
@@ -100,11 +122,20 @@ export async function POST(
       );
     }
 
+    // Validate project ID
+    const projectIdNum = parseInt(projectId, 10);
+    if (isNaN(projectIdNum)) {
+      return NextResponse.json(
+        { error: "Invalid project ID", details: `Project ID must be a number, got: ${projectId}` },
+        { status: 400 },
+      );
+    }
+
     // Create the view
     const { data: view, error: viewError } = await supabase
       .from("budget_views")
       .insert({
-        project_id: parseInt(projectId),
+        project_id: projectIdNum,
         name,
         description: description || null,
         is_default,
@@ -115,8 +146,19 @@ export async function POST(
       .single();
 
     if (viewError) {
+      console.error("Budget view creation error:", {
+        error: viewError,
+        projectId: projectIdNum,
+        userId: user.id,
+        viewName: name
+      });
       return NextResponse.json(
-        { error: "Failed to create budget view", details: viewError.message },
+        {
+          error: "Failed to create budget view",
+          details: viewError.message,
+          code: viewError.code,
+          hint: viewError.hint
+        },
         { status: 500 },
       );
     }
@@ -138,12 +180,19 @@ export async function POST(
       .select();
 
     if (columnsError) {
+      console.error("Budget view columns creation error:", {
+        error: columnsError,
+        viewId: view.id,
+        columns: columnsToInsert
+      });
       // Rollback: delete the view
       await supabase.from("budget_views").delete().eq("id", view.id);
       return NextResponse.json(
         {
           error: "Failed to create budget view columns",
           details: columnsError.message,
+          code: columnsError.code,
+          hint: columnsError.hint
         },
         { status: 500 },
       );
@@ -161,8 +210,12 @@ export async function POST(
       { status: 201 },
     );
   } catch (error) {
+    console.error("Budget views POST API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 },
     );
   }

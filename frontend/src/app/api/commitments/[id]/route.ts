@@ -4,23 +4,40 @@ import { commitmentSchema } from "@/lib/schemas/financial-schemas";
 import type { ZodError } from "@/app/api/types";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const supabase = await createClient();
 
+    // First, determine the commitment type from the unified view
+    const { data: unifiedData, error: unifiedError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
+      .eq("id", id)
+      .single();
+
+    if (unifiedError || !unifiedData) {
+      return NextResponse.json(
+        { error: "Commitment not found" },
+        { status: 404 },
+      );
+    }
+
+    // Query the appropriate table based on type
+    const tableName =
+      unifiedData.commitment_type === "subcontract"
+        ? "subcontracts"
+        : "purchase_orders";
+
     const { data, error } = await supabase
-      .from("commitments")
+      .from(tableName)
       .select(
         `
         *,
         contract_company:companies!contract_company_id(*),
-        assignee:users!assignee_id(*),
-        line_items:commitment_line_items(*),
-        change_orders:change_orders(*),
-        invoices(*)
+        assignee:users!assignee_id(*)
       `,
       )
       .eq("id", id)
@@ -36,7 +53,13 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json(data);
+    // Add the commitment type to the response
+    const responseData = {
+      ...data,
+      type: unifiedData.commitment_type,
+    };
+
+    return NextResponse.json({ data: responseData });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json(
@@ -71,23 +94,29 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if commitment exists
-    const { data: existing, error: fetchError } = await supabase
-      .from("commitments")
-      .select("id")
+    // Determine the commitment type from the unified view
+    const { data: unifiedData, error: unifiedError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
       .eq("id", id)
       .single();
 
-    if (fetchError || !existing) {
+    if (unifiedError || !unifiedData) {
       return NextResponse.json(
         { error: "Commitment not found" },
         { status: 404 },
       );
     }
 
+    // Query the appropriate table based on type
+    const tableName =
+      unifiedData.commitment_type === "subcontract"
+        ? "subcontracts"
+        : "purchase_orders";
+
     // Update commitment
     const { data, error } = await supabase
-      .from("commitments")
+      .from(tableName)
       .update({
         ...validatedData,
         updated_at: new Date().toISOString(),
@@ -131,7 +160,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
@@ -146,44 +175,31 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if commitment exists and has dependencies
-    const { data: commitment, error: fetchError } = await supabase
-      .from("commitments")
-      .select(
-        `
-        id,
-        change_orders(id),
-        invoices(id)
-      `,
-      )
+    // Determine the commitment type from the unified view
+    const { data: unifiedData, error: unifiedError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
       .eq("id", id)
       .single();
 
-    if (fetchError || !commitment) {
+    if (unifiedError || !unifiedData) {
       return NextResponse.json(
         { error: "Commitment not found" },
         { status: 404 },
       );
     }
 
-    // Check for dependencies
-    const hasChangeOrders =
-      commitment.change_orders && commitment.change_orders.length > 0;
-    const hasInvoices = commitment.invoices && commitment.invoices.length > 0;
+    // Query the appropriate table based on type
+    const tableName =
+      unifiedData.commitment_type === "subcontract"
+        ? "subcontracts"
+        : "purchase_orders";
 
-    if (hasChangeOrders || hasInvoices) {
-      return NextResponse.json(
-        {
-          error: "Cannot delete commitment",
-          message:
-            "This commitment has associated change orders or invoices. Please delete those first.",
-        },
-        { status: 400 },
-      );
-    }
-
-    // Delete commitment
-    const { error } = await supabase.from("commitments").delete().eq("id", id);
+    // Soft delete commitment (set deleted_at)
+    const { error } = await supabase
+      .from(tableName)
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

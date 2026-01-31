@@ -28,8 +28,27 @@ export async function GET(
       .single();
 
     if (error) {
+      console.error("Budget view fetch error:", {
+        error,
+        viewId,
+        userId: user.id
+      });
+
+      // Handle specific error cases
+      if (error.code === 'PGRST116') {
+        return NextResponse.json(
+          { error: "Budget view not found" },
+          { status: 404 },
+        );
+      }
+
       return NextResponse.json(
-        { error: "Failed to fetch budget view", details: error.message },
+        {
+          error: "Failed to fetch budget view",
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
         { status: 500 },
       );
     }
@@ -50,8 +69,12 @@ export async function GET(
 
     return NextResponse.json({ view: viewWithSortedColumns });
   } catch (error) {
+    console.error("Budget view GET API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 },
     );
   }
@@ -202,8 +225,12 @@ export async function PATCH(
 
     return NextResponse.json({ view: viewWithSortedColumns });
   } catch (error) {
+    console.error("Budget view GET API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 },
     );
   }
@@ -266,8 +293,12 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Budget view GET API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 },
     );
   }

@@ -57,7 +57,7 @@ export function BudgetLineItemRow({
     ? `the line item "${item.costCodeLabel}"`
     : "this line item";
   return (
-    <div className="px-4 py-3 hover:bg-muted">
+    <div className="px-4 py-4 hover:bg-muted">
       <Inline gap="md" align="center">
         {/* Budget Code Selector */}
         <div className="flex-1">

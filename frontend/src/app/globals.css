@@ -1087,14 +1087,15 @@
 }
 
 /* ============================================================================
-   RESPONSIVE TYPOGRAPHY & COMPONENTS (2025 BEST PRACTICES)
+   RESPONSIVE TYPOGRAPHY & COMPONENTS (2025 BEST PRACTICES) - COMMENTED OUT
    ============================================================================
-   Global responsive typography and component styles following modern UX standards.
-   Based on 8px grid system with mobile-first approach.
+   DISABLED: These global HTML element overrides conflict with shadcn/ui components
+   Use component-specific classes instead of global element styling
    ============================================================================ */
 
+/* COMMENTED OUT - These global overrides conflict with shadcn/ui
 @layer components {
-  /* Headings with responsive sizing */
+  // Headings with responsive sizing
   h1 {
     @apply text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight text-gray-800;
   }
@@ -1111,17 +1112,17 @@
     @apply text-base sm:text-lg md:text-xl font-semibold text-gray-800;
   }
 
-  /* Page subtitle/description text */
+  // Page subtitle/description text
   .text-subtitle {
     @apply text-sm sm:text-base text-gray-600;
   }
 
-  /* Standard paragraph */
+  // Standard paragraph
   p {
     @apply text-sm sm:text-base text-gray-700 leading-relaxed;
   }
 
-  /* Table styling */
+  // Table styling
   table {
     @apply w-full border-collapse;
   }
@@ -1142,37 +1143,37 @@
     @apply px-3 py-2 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm text-gray-600;
   }
 
-  /* Primary button */
+  // Primary button
   .btn-primary {
     @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-brand text-white rounded-lg hover:bg-blue-700 active:bg-blue-800;
   }
 
-  /* Secondary button */
+  // Secondary button
   .btn-secondary {
     @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 active:bg-gray-400;
   }
 
-  /* Danger button */
+  // Danger button
   .btn-danger {
     @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800;
   }
 
-  /* Button group with responsive gaps */
+  // Button group with responsive gaps
   .button-group {
     @apply flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4;
   }
 
-  /* Responsive container */
+  // Responsive container
   .responsive-container {
     @apply max-w-7xl mx-auto;
   }
 
-  /* Back button styling */
+  // Back button styling
   .btn-back {
     @apply inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors;
   }
 
-  /* Form inputs */
+  // Form inputs - THESE WERE OVERRIDING SHADCN
   input[type="text"],
   input[type="number"],
   input[type="email"],
@@ -1181,16 +1182,17 @@
     @apply w-full px-3 py-2 sm:px-4 sm:py-2.5 md:px-4 md:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
   }
 
-  /* Card styling */
+  // Card styling
   .card {
     @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 sm:p-6 md:p-8;
   }
 
-  /* Section spacing */
+  // Section spacing
   .section {
     @apply my-6 sm:my-8 md:my-10 lg:my-12;
   }
 }
+*/
 
 /* Responsive text utilities */
 @layer utilities {

@@ -63,7 +63,7 @@ export function BudgetLineItemTable({
   );
 
   return (
-    <Card>
+    <Card className="border-0 py-0 shadow-none sm:border sm:py-6 sm:shadow-sm">
       <Stack gap="sm">
         {/* Summary Bar */}
         <div className="border-b bg-muted px-4 sm:px-6 py-3">
@@ -162,7 +162,7 @@ export function BudgetLineItemTable({
               />
             </div>
           ) : (
-            <Stack gap="md" className="p-4">
+            <Stack gap="md">
               {lineItems.map((row, index) => (
                 <BudgetLineItemCard
                   key={row.id}

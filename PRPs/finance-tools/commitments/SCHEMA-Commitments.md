@@ -19,7 +19,7 @@ purchase_orders (1) ←→ (M) purchase_order_sov_items
 subcontracts (1) ←→ (M) subcontract_attachments
 companies (1) ←→ (M) subcontracts
 companies (1) ←→ (M) purchase_orders
-budget_codes (1) ←→ (M) sov_items
+project_budget_codes (1) ←→ (M) sov_items
 ```
 
 ## Table Definitions
@@ -182,7 +182,7 @@ CREATE TABLE subcontract_sov_items (
 
     -- Relationships
     subcontract_id UUID NOT NULL REFERENCES subcontracts(id) ON DELETE CASCADE,
-    budget_code_id UUID REFERENCES budget_codes(id),
+    budget_code_id UUID REFERENCES project_budget_codes(id),
     change_event_line_item_id UUID, -- Optional link to change events
 
     -- Line Item Data
@@ -220,7 +220,7 @@ CREATE TABLE purchase_order_sov_items (
 
     -- Relationships
     purchase_order_id UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
-    budget_code_id UUID REFERENCES budget_codes(id),
+    budget_code_id UUID REFERENCES project_budget_codes(id),
     change_event_line_item_id UUID, -- Optional link to change events
 
     -- Line Item Data

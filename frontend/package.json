@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:introspect": "drizzle-kit introspect",
+    "set-admin": "node scripts/set-admin.mjs",
     "typecheck": "tsc --noEmit",
     "test": "playwright test --config=config/playwright/playwright.config.ts",
     "test:ui": "playwright test --config=config/playwright/playwright.config.ts --ui",

@@ -3,57 +3,71 @@ import path from "path";
 import fs from "fs";
 
 const authFile = path.join(__dirname, ".auth/user.json");
-const baseUrl = process.env.PLAYWRIGHT_BASE_URL ??
-  process.env.BASE_URL ??
-  "http://localhost:3000";
 
-setup("authenticate", async ({ page }) => {
-  // First, check if we already have a valid auth file with cookies
+// Use env vars with fallback to hardcoded test creds
+const TEST_EMAIL = process.env.TEST_USER_1 ?? "test1@mail.com";
+const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
+
+setup("authenticate", async ({ page, baseURL }) => {
+  const url = baseURL ?? "http://localhost:3000";
+
+  // Reuse existing auth state if cookie is still valid
   try {
-    const existingAuth = JSON.parse(fs.readFileSync(authFile, "utf-8"));
-    const authCookie = existingAuth.cookies?.find((c: { name: string }) =>
+    const existing = JSON.parse(fs.readFileSync(authFile, "utf-8"));
+    const cookie = existing.cookies?.find((c: { name: string }) =>
       c.name.includes("auth-token")
     );
-
-    if (authCookie) {
-      // Check if cookie hasn't expired (expires is in seconds since epoch)
-      const now = Date.now() / 1000;
-      if (authCookie.expires > now) {
-        console.log("Using existing valid auth state");
-        return; // Skip re-authentication
-      }
+    if (cookie && cookie.expires > Date.now() / 1000) {
+      console.log("Reusing valid auth state (cookie not expired)");
+      return;
     }
   } catch {
-    // No existing auth file or invalid JSON, proceed with login
+    // No valid auth file, proceed with fresh login
   }
 
-  // Need to authenticate - use dev-login
-  try {
-    const response = await page.goto(
-      `${baseUrl}/dev-login?email=test@example.com&password=testpassword123`,
-      { waitUntil: "commit", timeout: 30000 }
-    );
+  // Use the real login page
+  console.log(`Logging in via ${url}/auth/login as ${TEST_EMAIL}`);
+  await page.goto(`${url}/auth/login`);
 
-    if (response && response.status() >= 500) {
-      throw new Error(`Server error: ${response.status()}`);
-    }
+  // Wait for React to hydrate (Login button becomes visible)
+  const loginButton = page.getByRole("button", { name: /^login$/i });
+  await loginButton.waitFor({ state: "visible", timeout: 15000 });
 
-    // Wait for redirects
-    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  // Fill the login form
+  await page.getByLabel("Email").fill(TEST_EMAIL);
+  await page.getByLabel("Password").fill(TEST_PASSWORD);
 
+  // Submit
+  await loginButton.click();
+
+  // Wait for the auth cookie to appear (don't depend on redirect)
+  // The login form calls signInWithPassword which sets the cookie
+  // even if the post-login redirect fails
+  let authCookie = null;
+  for (let i = 0; i < 20; i++) {
+    await page.waitForTimeout(500);
     const cookies = await page.context().cookies();
-    const authCookie = cookies.find((cookie) =>
-      cookie.name.includes("auth-token"),
-    );
-
-    if (!authCookie) {
-      throw new Error("Authentication failed - no auth cookie received");
-    }
-
-    console.log("Auth setup successful");
-    await page.context().storageState({ path: authFile });
-  } catch (error) {
-    console.error("Auth setup failed:", error);
-    throw error;
+    authCookie = cookies.find((c) => c.name.includes("auth-token"));
+    if (authCookie) break;
   }
+
+  if (!authCookie) {
+    // Grab any error text from the page for diagnostics
+    const errorText = await page
+      .locator("text=Invalid email")
+      .textContent()
+      .catch(() => null);
+    const successText = await page
+      .locator("text=Login successful")
+      .textContent()
+      .catch(() => null);
+    throw new Error(
+      `Auth failed - no auth cookie after 10s. ` +
+        `Page text: ${errorText ?? successText ?? "unknown state"}`
+    );
+  }
+
+  // Save auth state for all subsequent tests
+  await page.context().storageState({ path: authFile });
+  console.log("Auth setup complete - cookie saved");
 });

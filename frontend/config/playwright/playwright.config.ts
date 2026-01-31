@@ -2,9 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load env for Playwright runs (prefer .env.local, then fallback to .env)
-dotenv.config({ path: path.join(__dirname, '../.env.local') });
-dotenv.config({ path: path.join(__dirname, '../.env') });
+// Load env from frontend root (two levels up from config/playwright/)
+dotenv.config({ path: path.join(__dirname, '../../.env.local') });
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 export default defineConfig({
   testDir: '../../tests',

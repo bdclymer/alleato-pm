@@ -7,7 +7,7 @@
 - [x] Design change order schema with package support
 - [ ] Create database migration for change_orders table
 - [ ] Create database migration for change_order_packages table
-- [ ] Create database migration for change_order_line_items table
+- [ ] Create database migration for change_order_lines table
 - [ ] Create database migration for change_order_reviews table
 - [ ] Create database migration for change_order_attachments table
 - [ ] Set up proper indexes and foreign key constraints

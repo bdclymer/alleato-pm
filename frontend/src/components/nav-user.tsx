@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Link from "next/link"
 import { logout } from "@/lib/supabase/logout"
@@ -44,7 +43,6 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const router = useRouter()
 
   // Generate user initials for avatar fallback
   const userInitials = user.name
@@ -119,12 +117,13 @@ export function NavUser({
               onClick={async () => {
                 try {
                   await logout()
-                  toast.success("Logged out successfully")
-                  router.push("/auth/login")
-                  router.refresh()
+                  // Use window.location for hard navigation to clear all state
+                  window.location.href = "/auth/login"
                 } catch (error) {
                   console.error("Logout error:", error)
                   toast.error("Failed to log out")
+                  // Still redirect even on error
+                  window.location.href = "/auth/login"
                 }
               }}
             >

@@ -29,6 +29,14 @@ interface DirectorySummaryProps {
   projectId: string;
 }
 
+interface DirectoryItem {
+  id: string;
+  name: string;
+  type: 'user' | 'contact' | 'company';
+  initials: string;
+  avatarColor: string;
+}
+
 export function DirectorySummary({ projectId }: DirectorySummaryProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(true);
@@ -37,16 +45,84 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
   const { users, isLoading: usersLoading } = useAuthUsers(projectId);
   const { contacts, isLoading: contactsLoading } = useContacts({
     projectId,
-    limit: 5
+    limit: 10
   });
   const { companies, isLoading: companiesLoading } = useProjectCompanies(projectId, {
     page: 1,
-    per_page: 5,
+    per_page: 10,
     status: "ACTIVE",
   });
 
-  const totalItems = users.length + contacts.length + companies.length;
   const isLoading = usersLoading || contactsLoading || companiesLoading;
+
+  // Combine all directory items into a single list
+  const directoryItems: DirectoryItem[] = React.useMemo(() => {
+    const items: DirectoryItem[] = [];
+
+    // Add users
+    users.forEach((user) => {
+      const fullName = [user.first_name, user.last_name]
+        .filter(Boolean)
+        .join(" ") || user.email;
+      const initials = fullName
+        .split(" ")
+        .map(n => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+
+      items.push({
+        id: `user-${user.id}`,
+        name: fullName,
+        type: 'user',
+        initials,
+        avatarColor: 'bg-neutral-100 text-neutral-600'
+      });
+    });
+
+    // Add contacts
+    contacts.forEach((contact) => {
+      const fullName = [contact.first_name, contact.last_name]
+        .filter(Boolean)
+        .join(" ") || contact.email || "Contact";
+      const initials = fullName
+        .split(" ")
+        .map(n => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+
+      items.push({
+        id: `contact-${contact.id}`,
+        name: fullName,
+        type: 'contact',
+        initials,
+        avatarColor: 'bg-orange-50 text-orange-600'
+      });
+    });
+
+    // Add companies
+    companies.forEach((company) => {
+      const companyName = company.company?.name || "Company";
+      const initials = companyName
+        .split(" ")
+        .map(n => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+
+      items.push({
+        id: `company-${company.id}`,
+        name: companyName,
+        type: 'company',
+        initials,
+        avatarColor: 'bg-green-50 text-green-600'
+      });
+    });
+
+    // Sort alphabetically by name
+    return items.sort((a, b) => a.name.localeCompare(b.name));
+  }, [users, contacts, companies]);
 
   const handleAddUser = () => {
     router.push(`/${projectId}/directory/users`);
@@ -58,6 +134,17 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
 
   const handleAddCompany = () => {
     router.push(`/${projectId}/directory/companies`);
+  };
+
+  const getTypeLabel = (type: DirectoryItem['type']) => {
+    switch (type) {
+      case 'user':
+        return 'User';
+      case 'contact':
+        return 'Contact';
+      case 'company':
+        return 'Company';
+    }
   };
 
   return (
@@ -104,7 +191,7 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
             </div>
           ))}
         </div>
-      ) : totalItems === 0 ? (
+      ) : directoryItems.length === 0 ? (
         <SectionCard.Empty
           message="No directory entries"
           description="Add users, contacts, and companies to get started"
@@ -112,162 +199,37 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
           onAction={handleAddUser}
         />
       ) : (
-        <div className="space-y-4">
-          {/* Users Section */}
-          {users.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-neutral-400" />
-                <h4 className="text-sm font-medium text-neutral-700">
-                  Users ({users.length})
-                </h4>
-              </div>
-              <div className="space-y-0">
-                {users.slice(0, 3).map((user) => {
-                  const fullName = [user.first_name, user.last_name]
-                    .filter(Boolean)
-                    .join(" ") || user.email;
-                  const initials = fullName
-                    .split(" ")
-                    .map(n => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-
-                  return (
-                    <div
-                      key={user.id}
-                      className="flex items-center gap-3 py-1.5 pl-6 border-b border-neutral-100/60 last:border-0"
-                    >
-                      <Avatar className="h-7 w-7 border border-neutral-200/80">
-                        <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">
-                          {fullName}
-                        </p>
-                        <p className="text-xs text-neutral-500 truncate">
-                          {user.job_title || user.company_name || "User"}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {users.length > 3 && (
-                  <div className="pl-6 py-1">
-                    <p className="text-xs text-neutral-400">
-                      +{users.length - 3} more users
-                    </p>
-                  </div>
-                )}
+        <div className="space-y-0">
+          {directoryItems.slice(0, 8).map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-3 py-2 border-b border-neutral-100/60 last:border-0"
+            >
+              <Avatar className="h-7 w-7 border border-neutral-200/80">
+                <AvatarFallback className={`${item.avatarColor} text-xs font-medium`}>
+                  {item.initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 flex items-center justify-between min-w-0 gap-2">
+                <p className="text-sm font-medium text-neutral-900 truncate">
+                  {item.name}
+                </p>
+                <span className="text-xs text-neutral-500 shrink-0">
+                  {getTypeLabel(item.type)}
+                </span>
               </div>
             </div>
-          )}
-
-          {/* Contacts Section */}
-          {contacts.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-neutral-400" />
-                <h4 className="text-sm font-medium text-neutral-700">
-                  Contacts ({contacts.length})
-                </h4>
-              </div>
-              <div className="space-y-0">
-                {contacts.slice(0, 3).map((contact) => {
-                  const fullName = [contact.first_name, contact.last_name]
-                    .filter(Boolean)
-                    .join(" ") || contact.email || "Contact";
-                  const initials = fullName
-                    .split(" ")
-                    .map(n => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-
-                  return (
-                    <div
-                      key={contact.id}
-                      className="flex items-center gap-3 py-1.5 pl-6 border-b border-neutral-100/60 last:border-0"
-                    >
-                      <Avatar className="h-7 w-7 border border-neutral-200/80">
-                        <AvatarFallback className="bg-blue-50 text-blue-600 text-xs font-medium">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">
-                          {fullName}
-                        </p>
-                        <p className="text-xs text-neutral-500 truncate">
-                          {contact.job_title || contact.email || "Contact"}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {contacts.length > 3 && (
-                  <div className="pl-6 py-1">
-                    <p className="text-xs text-neutral-400">
-                      +{contacts.length - 3} more contacts
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Companies Section */}
-          {companies.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-neutral-400" />
-                <h4 className="text-sm font-medium text-neutral-700">
-                  Companies ({companies.length})
-                </h4>
-              </div>
-              <div className="space-y-0">
-                {companies.slice(0, 3).map((company) => {
-                  const companyName = company.company?.name || "Company";
-                  const initials = companyName
-                    .split(" ")
-                    .map(n => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-
-                  return (
-                    <div
-                      key={company.id}
-                      className="flex items-center gap-3 py-1.5 pl-6 border-b border-neutral-100/60 last:border-0"
-                    >
-                      <Avatar className="h-7 w-7 border border-neutral-200/80">
-                        <AvatarFallback className="bg-green-50 text-green-600 text-xs font-medium">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-900 truncate">
-                          {companyName}
-                        </p>
-                        <p className="text-xs text-neutral-500 truncate">
-                          {company.company_type?.replace('_', ' ').toLowerCase() || 'Company'}
-                          {company.user_count && ` • ${company.user_count} users`}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {companies.length > 3 && (
-                  <div className="pl-6 py-1">
-                    <p className="text-xs text-neutral-400">
-                      +{companies.length - 3} more companies
-                    </p>
-                  </div>
-                )}
-              </div>
+          ))}
+          {directoryItems.length > 8 && (
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-7 text-xs text-neutral-500 hover:text-neutral-700"
+                onClick={() => router.push(`/${projectId}/directory`)}
+              >
+                View all {directoryItems.length} entries
+              </Button>
             </div>
           )}
         </div>

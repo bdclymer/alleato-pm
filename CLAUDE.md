@@ -241,3 +241,8 @@ Before claiming tests pass:
 1. Actually run Playwright
 2. Observe the browser DOM/output
 3. Only then diagnose or fix issues
+
+
+### Save all documentation in the docs-ai folder.
+
+- file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs

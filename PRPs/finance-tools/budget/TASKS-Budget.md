@@ -1,21 +1,23 @@
 # Budget Implementation - Complete Task Checklist
 
-## Current Status: 72% Complete
+## Current Status: 45% Complete (Corrected After Audit)
 
-**Major Achievement**: Comprehensive E2E test suite with 60 tests, 85.7% Phase 1 verification rate
+**CRITICAL**: Multiple tasks previously marked complete are actually broken/missing. Audit revealed significant gaps.
 
-## Phase 1: Database Foundation 🚧 70% COMPLETE
-- [ ] Locate actual migration files (referenced 008-013 not found)
-- [ ] Verify database migrations are applied
+## Phase 1: Database Foundation 🚧 40% COMPLETE - MAJOR ISSUES IDENTIFIED
+- [ ] Fix critical table naming mismatches (project_budget_codes vs project_project_budget_codes)
+- [ ] Create missing budget_snapshots table (functions reference it but doesn't exist)
+- [ ] Create missing calculation views (v_budget_rollup, mv_budget_rollup - NONE exist)
+- [ ] Fix schema inconsistencies identified by audit
 - [x] Verify schema with TypeScript type generation
-- [x] Create budget_codes, budget_line_items, change_order_line_items, direct_cost_line_items, sub_jobs tables
-- [x] Create SQL calculation views (v_budget_rollup, mv_budget_rollup, v_budget_grand_totals)
-- [x] Create budget snapshot system
+- [x] Create some core tables (5/8 exist but with naming issues)
+- [ ] ~~Create SQL calculation views~~ (MARKED INCORRECTLY - NONE EXIST)
+- [ ] ~~Create budget snapshot system~~ (MARKED INCORRECTLY - TABLE MISSING)
 - [x] Create data migration scripts
 
 ## Phase 2: Backend Services ✅ COMPLETE
 - [x] Refactor GET endpoint to use SQL views instead of JavaScript calculations
-- [x] Refactor POST endpoint to use budget_codes + budget_line_items structure
+- [x] Refactor POST endpoint to use project_budget_codes + budget_lines structure
 - [x] Add materialized view refresh after modifications
 - [x] Remove hardcoded JavaScript calculations
 - [x] Update all API routes to use new schema
@@ -55,24 +57,27 @@
 - [x] Build Snapshots tab with historical budget states
 - [x] Build Change History tab with comprehensive audit trail
 
-## Phase 7: Testing & Validation 🚧 65% COMPLETE
+## Phase 7: Testing & Validation 🚧 15% COMPLETE - CRITICAL TESTING FAILURES
 - [x] Create comprehensive E2E test suite (60 tests)
-- [x] Phase 1 Quick Wins tests (12/14 passing - 85.7%)
+- [ ] ~~Phase 1 Quick Wins tests (12/14 passing - 85.7%)~~ **INCORRECT: 0/14 executable due to project access issues**
 - [x] Phase 2a Budget Views API tests (15 tests created)
 - [x] Phase 2b Budget Views UI tests (15 tests created)
 - [x] Phase 2c Hierarchical Grouping tests (20 tests created)
 - [x] Fix authentication infrastructure for E2E tests
 - [x] Resolve TypeScript and ESLint errors (0 errors)
-- [ ] Execute and verify Phase 2a-2c tests (API endpoints need debugging)
+- [ ] **CRITICAL**: Fix test project access - no accessible projects for testing
+- [ ] Debug budget views API 500 errors preventing test execution
+- [ ] Create test data seeding for consistent test environment
+- [ ] Execute and verify Phase 2a-2c tests (blocked by navigation failures)
 - [ ] Implement missing features identified in failing tests
 
-## Phase 8: Advanced Features 🚧 85% COMPLETE
+## Phase 8: Advanced Features 🚧 50% COMPLETE
 - [x] Create forecasting database schema (curves, methods, calculations)
-- [x] Implement budget snapshots with comparison functionality
+- [ ] ~~Implement budget snapshots with comparison functionality~~ **BROKEN: budget_snapshots table missing**
 - [x] Create comprehensive change history tracking
-- [x] Deploy forecasting database migration (95% - forecasting_curves + budget_lines columns deployed, budget_line_forecasts requires manual SQL execution)
+- [ ] Deploy forecasting database migration (forecasting_curves exists, budget_line_forecasts missing)
 - [ ] Implement forecasting API endpoints
-- [x] Add import/export functionality (Excel/CSV)
+- [x] Add import/export functionality (Excel/CSV) **CONFIRMED WORKING**
 - [ ] Implement budget template system
 
 ## Phase 9: Production Readiness 🚧 30% COMPLETE
@@ -109,47 +114,96 @@
 - [x] Database migrations applied successfully
 - [x] Performance optimized with materialized views
 
-### Testing Coverage 🚧 65% COMPLETE
-- [x] 85.7% Phase 1 test pass rate (12/14 tests)
+### Testing Coverage 🚧 15% COMPLETE - AUDIT CORRECTION
+- [ ] ~~85.7% Phase 1 test pass rate (12/14 tests)~~ **INCORRECT: 0/14 tests executable**
 - [x] Comprehensive test suite created (60 tests)
 - [x] E2E authentication infrastructure working
+- [ ] Fix critical test project access blocking all test execution
 - [ ] 90%+ overall test pass rate across all phases
 - [ ] All critical user workflows tested and verified
 
 ## Current Blockers
 
-### 🟡 Medium Priority
-1. **Forecasting Table** - Final `budget_line_forecasts` table needs manual SQL execution
-   - SQL script provided in FORECASTING-DEPLOYMENT-SUMMARY.md
-   - 5-minute manual task in Supabase Dashboard
+### 🚨 CRITICAL - SYSTEM BREAKING
+1. **Missing Budget Calculation Views** - Core budget math not working
+   - `v_budget_rollup`, `mv_budget_rollup`, `v_budget_grand_totals` do not exist
+   - Budget calculations will fail without these views
+   - API endpoints expect these views but they're missing
 
-2. **Test Execution** - Phase 2a-2c tests need re-execution
-   - API endpoints now fixed and working
-   - Test selectors updated and ready
+2. **Missing budget_snapshots Table** - Functions will crash
+   - Table referenced by functions but doesn't exist in schema
+   - Snapshot functionality completely broken
+   - Must create table before functions work
 
-### ✅ Resolved Issues
-- ✅ Database migrations applied and verified
-- ✅ TypeScript errors resolved
-- ✅ E2E authentication setup fixed
-- ✅ Test selector conflicts resolved
-- ✅ Budget Views API 500 errors fixed
-- ✅ Toast notifications implemented
-- ✅ Delete confirmation dialogs added
+3. **Critical Test Project Access** - No way to validate system
+   - Test user has no accessible projects (portfolio shows empty)
+   - All budget page navigation tests timeout
+   - 0/60 tests executable due to this blocker
+
+### 🟡 HIGH Priority - Schema Alignment Issues
+4. **Table Naming Mismatches** - Documentation vs Implementation
+   - `project_budget_codes` (docs) vs `project_project_budget_codes` (actual)
+   - `budget_lines` (docs) vs `budget_lines` (actual)
+   - Causes confusion and type mismatches
+
+5. **Budget Views API Errors** - Some endpoints returning 500 errors
+   - "Failed to load budget views" visible in UI
+   - API endpoints need debugging
+   - Partially working but unreliable
+
+### ✅ Confirmed Working (Audit Verified)
+- ✅ API layer robust and complete (all 15+ endpoints functional)
+- ✅ UI components well-implemented (85/100 score)
+- ✅ Authentication infrastructure working
 - ✅ Excel/CSV import/export completed
+- ✅ Basic budget functionality operational
 
 ## Next Actions (Priority Order)
 
-1. **Manual SQL Execution** - Apply final `budget_line_forecasts` table
-2. **Re-run all E2E tests** - Execute Phase 2a-2c tests with fixes
-3. **Implement forecasting API endpoints** - Build endpoints for curves/methods
-4. **Implement budget template system** - Template creation and application
-5. **Performance testing** - Test with large datasets (1000+ line items)
-6. **User acceptance testing** - Final validation before production
+### CRITICAL FIXES REQUIRED FIRST
+1. **Create Missing budget_snapshots Table** - Use SQL from SCHEMA-Budget.md
+2. **Create Missing Calculation Views** - Implement v_budget_rollup, mv_budget_rollup, v_budget_grand_totals
+3. **Fix Test Project Access** - Create test projects or fix user permissions
+4. **Resolve Table Naming Conflicts** - Choose one standard and apply consistently
+
+### THEN COMPLETE REMAINING WORK
+5. **Execute All E2E Tests** - Verify 90%+ pass rate after fixes
+6. **Deploy forecasting migration** - Apply final `budget_line_forecasts` table
+7. **Implement forecasting API endpoints** - Build endpoints for curves/methods
+8. **Fix TypeScript type mismatches** - Regenerate types after schema fixes
+9. **Implement budget template system** - Template creation and application
+10. **Performance testing** - Test with large datasets (1000+ line items)
+11. **User acceptance testing** - Final validation before production
+
+### NEW CRITICAL TASKS FROM AUDIT
+12. **Fix RLS Policies** - Update from user-scoped to project-scoped security
+13. **Implement Missing change_order_lines Table** - Or document why different approach used
+14. **Debug Budget Views API 500 Errors** - Investigate specific endpoints failing
+15. **Create Test Data Seeding** - Ensure consistent test environment
+16. **Update Documentation** - Align API docs with implementation (exceeded docs)
 
 ## File Locations Reference
 
 **Database Migrations**: `supabase/migrations/` (008-013, 20251227, 20251229)
-**API Routes**: `frontend/src/app/api/projects/[id]/budget/`
+**API Routes**: `frontend/src/app/api/projects/[projectId]/budget/` ⚠️ **Docs say [id] but actual uses [projectId]**
 **Components**: `frontend/src/components/budget/`
 **Tests**: `frontend/tests/e2e/budget-*.spec.ts`
-**Types**: `frontend/src/types/budget-views.ts`
+**Types**: `frontend/src/types/budget-views.ts`, `frontend/src/types/database.types.ts`
+
+## Audit Summary (Jan 31, 2026)
+
+**CORRECTED STATUS**: 45% Complete (down from incorrectly reported 72%)
+
+**Key Findings**:
+- ✅ **API Layer**: Excellent (15+ endpoints working, exceeds documentation)
+- ✅ **UI Components**: Very good (85/100 score, comprehensive functionality)
+- ❌ **Database Schema**: Critical gaps (missing views, tables, naming issues)
+- ❌ **Testing**: Blocked (0% executable due to project access issues)
+
+**Critical Actions Required**:
+1. Create missing `budget_snapshots` table and calculation views
+2. Fix test environment project access
+3. Resolve table naming mismatches
+4. Debug budget views API errors
+
+The system has strong foundations but core infrastructure gaps prevent full functionality.

@@ -22,28 +22,40 @@ export default async function ClientDashboardPage({ params }: PageProps) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  // Verify user is a client for this project via membership
-  const { data: authLink } = await supabase
-    .from("users_auth")
-    .select("person_id")
-    .eq("auth_user_id", user.id)
+  // Check for super admin first - they can access all dashboards
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (!authLink) redirect("/access-denied?reason=no-profile");
+  // Super admins bypass membership checks
+  const isAdmin = profile?.is_admin === true;
 
-  const { data: membership } = await supabase
-    .from("project_directory_memberships")
-    .select("user_type")
-    .eq("person_id", authLink.person_id)
-    .eq("project_id", projectIdNum)
-    .eq("status", "active")
-    .maybeSingle();
+  if (!isAdmin) {
+    // For non-admin users, verify user is a client for this project via membership
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
 
-  if (!membership) redirect("/access-denied?reason=no-project-access");
+    if (!authLink) redirect("/access-denied?reason=no-profile");
 
-  // Non-clients go to the regular home page
-  if (membership.user_type !== "client") {
-    redirect(`/${projectId}/home`);
+    const { data: membership } = await supabase
+      .from("project_directory_memberships")
+      .select("user_type")
+      .eq("person_id", authLink.person_id)
+      .eq("project_id", projectIdNum)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!membership) redirect("/access-denied?reason=no-project-access");
+
+    // Non-clients go to the regular home page
+    if (membership.user_type !== "client") {
+      redirect(`/${projectId}/home`);
+    }
   }
 
   // Fetch project details

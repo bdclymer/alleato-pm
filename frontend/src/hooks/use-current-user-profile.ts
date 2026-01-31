@@ -38,6 +38,7 @@ export type CurrentUserProfile = {
   workHours?: string;
   communicationPreference?: string;
   profileCompleteness: number;
+  isAdmin?: boolean;
 };
 
 const calculateProfileCompleteness = (profile: CurrentUserProfile) => {
@@ -119,7 +120,19 @@ export const useCurrentUserProfile = () => {
       }
 
       if (data.user && isMounted) {
-        setProfile(buildProfile(data.user));
+        const baseProfile = buildProfile(data.user);
+
+        // Fetch admin status from user_profiles table
+        const { data: profileData } = await supabase
+          .from("user_profiles")
+          .select("is_admin")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        setProfile({
+          ...baseProfile,
+          isAdmin: profileData?.is_admin === true,
+        });
       }
 
       if (isMounted) {

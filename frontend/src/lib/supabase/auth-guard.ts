@@ -53,6 +53,25 @@ export async function verifyProjectAccess(
     );
   }
 
+  const { data: profile } = await serviceClient
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.is_admin === true) {
+    return {
+      membership: {
+        membershipId: `super-admin:${user.id}:${projectId}`,
+        personId: authLink.person_id,
+        authUserId: user.id,
+        projectId,
+        permissionTemplateId: null,
+      },
+      serviceClient,
+    };
+  }
+
   // Step 3: Verify active membership in the project
   const { data: membership, error: membershipError } = await serviceClient
     .from("project_directory_memberships")

@@ -224,7 +224,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
         return;
       }
 
-      // Use the budget API endpoint which properly creates budget_codes and budget_line_items
+      // Use the budget API endpoint which properly creates project_budget_codes and budget_lines
       // This ensures data is in the correct tables for the mv_budget_rollup view
       const response = await fetch(`/api/projects/${projectId}/budget`, {
         method: "POST",

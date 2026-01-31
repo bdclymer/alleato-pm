@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   IconSearch,
   IconBell,
@@ -55,7 +55,6 @@ export function AppHeader({
   onProjectChange,
 }: AppHeaderProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   return (
     <header
@@ -137,8 +136,15 @@ export function AppHeader({
               className="text-red-600"
               onSelect={async (event) => {
                 event.preventDefault();
-                await logout();
-                router.push("/auth/login");
+                try {
+                  await logout();
+                  // Use window.location for hard navigation to clear all state
+                  window.location.href = "/auth/login";
+                } catch (error) {
+                  console.error("Logout error:", error);
+                  // Still redirect even on error
+                  window.location.href = "/auth/login";
+                }
               }}
             >
               Log out

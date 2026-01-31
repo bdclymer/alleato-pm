@@ -53,7 +53,24 @@ export function BudgetViewsManager({
       const response = await fetch(`/api/projects/${projectId}/budget/views`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error("Failed to fetch views");
+        console.error("Budget views fetch error:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          projectId
+        });
+
+        // Show more specific error message based on status
+        let errorMessage = "Failed to load budget views";
+        if (response.status === 401) {
+          errorMessage = "You don't have permission to access these budget views";
+        } else if (response.status === 404) {
+          errorMessage = "Budget views not found for this project";
+        } else if (response.status >= 500) {
+          errorMessage = "Server error while loading budget views. Please check console for details.";
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -69,7 +86,9 @@ export function BudgetViewsManager({
         }
       }
     } catch (error) {
-      toast.error("Failed to load budget views");
+      const message = error instanceof Error ? error.message : "Failed to load budget views";
+      toast.error(message);
+      console.error("Budget views error:", error);
     } finally {
       setLoading(false);
     }

@@ -242,7 +242,7 @@ function SectionCardRoot({
     )}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         {/* Header */}
-        <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-neutral-100/80 bg-gradient-to-r from-neutral-50/30 to-transparent">
+        <div className="px-4 py-3 sm:px-5 sm:py-4 bg-gradient-to-r from-neutral-50/30 to-transparent">
           <div className="flex items-center justify-between gap-4">
             {/* Title */}
             <h3 className={cn(
@@ -267,7 +267,6 @@ function SectionCardRoot({
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-brand transition-colors"
                         >
                           <Plus className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">{addLabel}</span>
                         </Link>
                       ) : (
                         <button
@@ -276,7 +275,6 @@ function SectionCardRoot({
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 hover:text-brand transition-colors"
                         >
                           <Plus className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">{addLabel}</span>
                         </button>
                       )}
                     </>
@@ -321,7 +319,7 @@ function SectionCardRoot({
 
         {/* Content */}
         <CollapsibleContent>
-          <div className="px-5 py-4 sm:px-6 sm:py-5">
+          <div className="px-4 py-3 sm:px-5 sm:py-4">
             {children}
           </div>
         </CollapsibleContent>

@@ -24,10 +24,10 @@ const routeTableMap: Record<string, string[]> = {
   "employees": ["employees", "users"],
 
   // Financial Management
-  "budget": ["budget_line_items", "budget_codes", "cost_codes", "budget_snapshots"],
+  "budget": ["budget_lines", "project_budget_codes", "cost_codes", "budget_snapshots"],
   "prime-contracts": ["prime_contracts", "contract_line_items"],
   "commitments": ["commitments", "commitment_line_items", "companies"],
-  "change-orders": ["change_orders", "change_order_line_items"],
+  "change-orders": ["change_orders", "change_order_lines"],
   "change-events": ["change_events", "change_event_line_items"],
   "direct-costs": ["direct_costs", "cost_codes", "employees"],
   "invoices": ["invoices", "invoice_line_items", "companies"],
@@ -54,7 +54,7 @@ const routeTableMap: Record<string, string[]> = {
 
 // Additional table relationships (foreign keys)
 const tableRelationships: Record<string, string[]> = {
-  "budget_line_items": ["projects", "cost_codes"],
+  "budget_lines": ["projects", "cost_codes"],
   "commitments": ["projects", "companies"],
   "change_orders": ["projects", "commitments"],
   "rfis": ["projects", "users"],

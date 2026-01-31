@@ -6,7 +6,7 @@ The Change Orders system uses 6 core tables to manage the complete lifecycle fro
 
 1. **change_orders** - Main entity with polymorphic support for different contract types
 2. **change_order_packages** - Package-based organization grouping related change orders
-3. **change_order_line_items** - Financial breakdown with budget code linkage
+3. **change_order_lines** - Financial breakdown with budget code linkage
 4. **change_order_reviews** - Multi-tier approval workflow tracking
 5. **change_order_attachments** - Document and file management
 6. **change_order_audit_log** - Complete audit trail for compliance
@@ -14,7 +14,7 @@ The Change Orders system uses 6 core tables to manage the complete lifecycle fro
 ### Relationship Diagram
 ```
 change_order_packages (1:many) → change_orders
-change_orders (1:many) → change_order_line_items
+change_orders (1:many) → change_order_lines
 change_orders (1:many) → change_order_reviews
 change_orders (1:many) → change_order_attachments
 change_orders (1:many) → change_order_audit_log
@@ -130,9 +130,9 @@ CREATE TABLE change_order_packages (
 );
 ```
 
-### 3. change_order_line_items (Financial Breakdown)
+### 3. change_order_lines (Financial Breakdown)
 ```sql
-CREATE TABLE change_order_line_items (
+CREATE TABLE change_order_lines (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
   change_order_id BIGINT NOT NULL REFERENCES change_orders(id) ON DELETE CASCADE,
 
@@ -362,7 +362,7 @@ SELECT
   co.status,
   co.change_order_type
 FROM change_orders co
-LEFT JOIN change_order_line_items li ON co.id = li.change_order_id
+LEFT JOIN change_order_lines li ON co.id = li.change_order_id
 WHERE co.is_deleted = FALSE
 GROUP BY co.id, co.number, co.title, co.status, co.change_order_type;
 ```
@@ -432,7 +432,7 @@ CREATE INDEX idx_co_due_date_status ON change_orders(due_date, status);
 CREATE INDEX idx_package_project_type ON change_order_packages(project_id, change_order_type);
 
 -- Line items performance
-CREATE INDEX idx_li_co_order ON change_order_line_items(change_order_id, line_order);
+CREATE INDEX idx_li_co_order ON change_order_lines(change_order_id, line_order);
 
 -- Audit log partitioning (for high-volume environments)
 -- Partition by created_at monthly for better performance

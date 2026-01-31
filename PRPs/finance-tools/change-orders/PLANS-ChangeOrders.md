@@ -52,7 +52,7 @@ frontend/src/app/(main)/[projectId]/change-orders/
 **Key Tables:**
 - `change_orders` (main entity)
 - `change_order_packages` (package grouping)
-- `change_order_line_items` (financial details)
+- `change_order_lines` (financial details)
 - `change_order_reviews` (approval workflow)
 - `change_order_attachments` (file management)
 - `change_order_audit_log` (change tracking)
@@ -179,7 +179,7 @@ GET    /api/projects/{id}/change-order-packages
 /supabase/migrations/
 ├── [timestamp]_change_orders_schema.sql ❌
 ├── [timestamp]_change_order_packages.sql ❌
-├── [timestamp]_change_order_line_items.sql ❌
+├── [timestamp]_change_order_lines.sql ❌
 ├── [timestamp]_change_order_reviews.sql ❌
 └── [timestamp]_change_order_attachments.sql ❌
 

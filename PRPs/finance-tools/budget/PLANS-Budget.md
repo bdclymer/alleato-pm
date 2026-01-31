@@ -49,7 +49,7 @@ Transform the Alleato budget system from JavaScript-based calculations to SQL-dr
 
 **What's Complete**:
 - GET endpoint queries mv_budget_rollup and v_budget_grand_totals (no JavaScript calculations)
-- POST endpoint creates budget_codes + budget_line_items with proper foreign keys
+- POST endpoint creates project_budget_codes + budget_lines with proper foreign keys
 - Materialized view refresh after all modifications
 - All TODO comments removed, ESLint/TypeScript errors resolved
 

@@ -81,7 +81,6 @@ const financialManagementTools: Array<{
 }> = [
   { name: "Prime Contracts", path: "prime-contracts", requiresProject: true },
   { name: "Budget", path: "budget", requiresProject: true },
-  { name: "Budget V2", path: "budget-v2", requiresProject: true },
   { name: "Commitments", path: "commitments", requiresProject: true },
   { name: "Change Orders", path: "change-orders", requiresProject: true },
   { name: "Change Events", path: "change-events", requiresProject: true },
@@ -339,7 +338,6 @@ export function SiteHeader() {
 
           // Special cases for common paths
           const labelMap: Record<string, string> = {
-            "budget-v2": "Budget V2",
             "prime-contracts": "Prime Contracts",
             "change-events": "Change Events",
             "change-orders": "Change Orders",
@@ -568,16 +566,9 @@ export function SiteHeader() {
             <SelectTrigger className="h-8 w-[120px] sm:w-[160px] lg:w-[240px]">
               <SelectValue placeholder="Project">
                 {currentProject ? (
-                  <div className="flex items-center gap-1 min-w-0">
-                    {currentProject["job number"] && (
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        #{currentProject["job number"]}
-                      </span>
-                    )}
-                    <span className="font-medium truncate text-xs sm:text-sm">
-                      {currentProject.name}
-                    </span>
-                  </div>
+                  <span className="font-medium truncate text-xs sm:text-sm">
+                    {currentProject.name}
+                  </span>
                 ) : (
                   "Project"
                 )}
@@ -597,14 +588,7 @@ export function SiteHeader() {
                       value={project.id.toString()}
                       className="h-auto py-2"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {project["job number"] && (
-                          <span className="text-xs text-muted-foreground">
-                            #{project["job number"]}
-                          </span>
-                        )}
-                        <span className="font-medium truncate">{project.name}</span>
-                      </div>
+                      <span className="font-medium truncate">{project.name}</span>
                     </SelectItem>
                   ))
                 ) : (

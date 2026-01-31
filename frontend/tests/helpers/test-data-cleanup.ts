@@ -74,8 +74,8 @@ function getTableName(formType: string): string {
     'UserFormDialog': 'users',
     'BulkAddUsersDialog': 'users',
     'DistributionGroupFormDialog': 'distribution_groups',
-    'BudgetLineItemModal': 'budget_line_items',
-    'BudgetLineItemModalAnimated': 'budget_line_items',
+    'BudgetLineItemModal': 'budget_lines',
+    'BudgetLineItemModalAnimated': 'budget_lines',
     'BudgetModificationModal': 'budget_modifications',
     'OriginalBudgetEditModal': 'budgets',
     'DocumentMetadataModal': 'documents',
@@ -83,7 +83,7 @@ function getTableName(formType: string): string {
     'ChangeEventForm': 'change_events',
     'EditProjectDialog': 'projects',
     'InlineTeamMemberForm': 'project_members',
-    'BudgetLineItemForm': 'budget_line_items'
+    'BudgetLineItemForm': 'budget_lines'
   };
 
   return tableMap[formType] || 'unknown';
@@ -213,7 +213,7 @@ export async function cleanupOrphanedTestData(maxAgeHours: number = 24): Promise
     'companies',
     'users',
     'distribution_groups',
-    'budget_line_items',
+    'budget_lines',
     'budget_modifications',
     'documents',
     'meetings',
@@ -297,7 +297,7 @@ export async function cleanupTestDataByPattern(pattern: string = 'E2E_TEST_%'): 
     'companies',
     'users',
     'distribution_groups',
-    'budget_line_items',
+    'budget_lines',
     'budget_modifications',
     'documents',
     'meetings',

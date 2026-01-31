@@ -225,7 +225,7 @@ export async function POST(request: Request) {
     for (const costCode of projectTemplate.costCodes) {
       // Create budget_code
       const { data: budgetCode, error: bcError } = await supabase
-        .from("budget_codes")
+        .from("project_budget_codes")
         .insert({
           project_id: project.id,
           cost_code_id: costCode.id,
@@ -245,9 +245,9 @@ export async function POST(request: Request) {
 
       // Create budget_line_item
       const { data: lineItem, error: liError } = await supabase
-        .from("budget_line_items")
+        .from("budget_lines")
         .insert({
-          budget_code_id: budgetCode.id,
+          project_budget_code_id: budgetCode.id,
           description: costCode.description,
           original_amount: costCode.amount,
           calculation_method: "lump_sum",

@@ -2,87 +2,150 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { ColumnDef } from "@tanstack/react-table";
-import { useClients, type Client } from "@/hooks/use-clients";
+import { createClient } from "@/lib/supabase/client";
 import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/components/tables/DataTable";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import { getDirectoryTabs } from "@/config/directory-tabs";
+import type { Database } from "@/types/database.types";
+import {
+  GenericDataTable,
+  type GenericTableConfig,
+} from "@/components/tables/generic-table-factory";
+
+type Company = Database["public"]["Tables"]["companies"]["Row"];
+type ProjectCompany = Database["public"]["Tables"]["project_companies"]["Row"];
+type Person = Database["public"]["Tables"]["people"]["Row"];
+
+interface ClientWithDetails extends ProjectCompany {
+  company: Company | null;
+  primary_contact: Person | null;
+}
 
 export default function DirectoryClientsPage() {
   const pathname = usePathname();
-  const { clients, isLoading, error } = useClients({});
+  const [clients, setClients] = React.useState<ClientWithDetails[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
 
-  const columns: ColumnDef<Client>[] = React.useMemo(
-    () => [
+  const fetchClients = React.useCallback(async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("project_companies")
+        .select(
+          `
+          *,
+          company:companies(*),
+          primary_contact:people!project_companies_primary_contact_id_fkey(*)
+        `,
+        )
+        .eq("company_type", "client")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
+
+  const handleAddClient = () => {
+    // TODO: Open add client dialog
+    // Add client functionality pending implementation
+  };
+
+  const tableData = React.useMemo(() => {
+    return clients.map((client) => ({
+      id: client.id,
+      name: client.company?.name || "Unnamed Client",
+      email: client.email_address || "",
+      phone: client.business_phone || "",
+      address: client.company?.address || "",
+      city: client.company?.city || "",
+      state: client.company?.state || "",
+      primary_contact: client.primary_contact
+        ? `${client.primary_contact.first_name || ""} ${client.primary_contact.last_name || ""}`.trim()
+        : "",
+      primary_contact_email: client.primary_contact?.email || "",
+      status: client.status || "active",
+      created_at: client.created_at,
+    }));
+  }, [clients]);
+
+  const tableConfig: GenericTableConfig = {
+    columns: [
       {
-        accessorKey: "id",
-        header: "ID",
-        cell: ({ row }) => (
-          <Text as="div" weight="medium" className="text-primary">
-            #{row.getValue("id")}
-          </Text>
-        ),
+        id: "name",
+        label: "Client Name",
+        defaultVisible: true,
+        isPrimary: true,
+        type: "text",
       },
       {
-        accessorKey: "name",
-        header: "Client Name",
-        cell: ({ row }) => (
-          <Text as="div" weight="semibold">
-            {row.getValue("name") || "Unnamed Client"}
-          </Text>
-        ),
+        id: "primary_contact",
+        label: "Primary Contact",
+        defaultVisible: true,
+        type: "text",
       },
       {
-        accessorKey: "company",
-        header: "Company",
-        cell: ({ row }) => {
-          const company = row.getValue("company") as Client["company"];
-          return (
-            <div>
-              <Text as="div" weight="medium">
-                {company?.name || "N/A"}
-              </Text>
-              {company?.city && company?.state && (
-                <Text as="div" size="sm" tone="muted">
-                  {company.city}, {company.state}
-                </Text>
-              )}
-            </div>
-          );
-        },
+        id: "email",
+        label: "Email",
+        defaultVisible: true,
+        type: "email",
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-          const status = row.getValue("status") as string;
-          return (
-            <Badge variant={status === "active" ? "active" : "inactive"}>
-              {status || "Active"}
-            </Badge>
-          );
-        },
+        id: "phone",
+        label: "Phone",
+        defaultVisible: true,
+        type: "text",
       },
       {
-        accessorKey: "created_at",
-        header: "Created",
-        cell: ({ row }) => {
-          const date = new Date(row.getValue("created_at"));
-          return (
-            <Text as="div" size="sm" tone="muted">
-              {date.toLocaleDateString()}
-            </Text>
-          );
-        },
+        id: "city",
+        label: "City",
+        defaultVisible: true,
+        type: "text",
+      },
+      {
+        id: "state",
+        label: "State",
+        defaultVisible: true,
+        type: "text",
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        type: "badge",
+      },
+      {
+        id: "created_at",
+        label: "Created",
+        defaultVisible: true,
+        type: "date",
       },
     ],
-    [],
-  );
+    searchFields: ["name", "primary_contact", "email", "city"],
+    exportFilename: "clients.csv",
+    enableViewSwitcher: false,
+    defaultViewMode: "table",
+    enableRowSelection: true,
+    editConfig: {
+      tableName: "project_companies",
+      editableFields: ["email_address", "business_phone", "status"],
+    },
+    onDelete: true,
+  };
 
   const tabs = getDirectoryTabs(pathname);
 
@@ -130,18 +193,22 @@ export default function DirectoryClientsPage() {
   return (
     <>
       <ProjectPageHeader
-        title="Directory"
+        title="Company Directory: Clients"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}
+        actions={
+          <Button
+            onClick={handleAddClient}
+            className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Client
+          </Button>
+        }
       />
       <PageTabs tabs={tabs} />
       <PageContainer>
-        <DataTable
-          columns={columns}
-          data={clients}
-          searchKey="name"
-          searchPlaceholder="Search clients..."
-        />
+        <GenericDataTable data={tableData} config={tableConfig} />
       </PageContainer>
     </>
   );

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Server-side layout guard for project-scoped pages.
  * Verifies the current user has an active membership in the requested project.
+ * Super admins bypass all checks and get access to all projects.
  * Redirects to access-denied if not authorized.
  */
 export default async function ProjectLayout({
@@ -30,6 +31,19 @@ export default async function ProjectLayout({
     redirect("/auth/login");
   }
 
+  // CHECK FOR SUPER ADMIN FIRST - they bypass all other checks
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // If user is a super admin, grant access immediately
+  if (profile?.is_admin === true) {
+    return <div className="flex flex-1 flex-col">{children}</div>;
+  }
+
+  // For non-admin users, verify profile and project membership
   // Look up person_id from auth user
   const { data: authLink } = await supabase
     .from("users_auth")

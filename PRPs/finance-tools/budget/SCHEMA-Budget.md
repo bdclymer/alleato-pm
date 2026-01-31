@@ -6,9 +6,9 @@ The budget system uses a normalized schema with 8 core tables and 5 calculation 
 
 **Core Tables**:
 1. `sub_jobs` - Project phases and sub-divisions
-2. `budget_codes` - Grouping level (project + cost code + sub-job + cost type)
-3. `budget_line_items` - Detail level within budget codes
-4. `change_order_line_items` - Change order line details
+2. `project_project_budget_codes` - Grouping level (project + cost code + sub-job + cost type)
+3. `budget_lines` - Detail level within budget codes
+4. `change_order_lines` - Change order line details
 5. `direct_cost_line_items` - Direct cost tracking
 6. `budget_views` - Custom budget view configurations
 7. `budget_view_columns` - Column configuration for views
@@ -48,10 +48,10 @@ CREATE POLICY sub_jobs_policy ON sub_jobs FOR ALL USING (
 );
 ```
 
-### 2. budget_codes
+### 2. project_project_budget_codes
 **Purpose**: Grouping level combining project, cost code, sub-job, and cost type
 ```sql
-CREATE TABLE budget_codes (
+CREATE TABLE project_project_budget_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     sub_job_id UUID REFERENCES sub_jobs(id) ON DELETE SET NULL,
@@ -65,7 +65,7 @@ CREATE TABLE budget_codes (
 );
 
 -- Unique constraint with nullable columns
-CREATE UNIQUE INDEX idx_budget_codes_unique ON budget_codes(
+CREATE UNIQUE INDEX idx_project_project_budget_codes_unique ON project_project_budget_codes(
     project_id,
     cost_code_id,
     COALESCE(sub_job_id::text, ''),
@@ -73,23 +73,23 @@ CREATE UNIQUE INDEX idx_budget_codes_unique ON budget_codes(
 );
 
 -- Performance indexes
-CREATE INDEX idx_budget_codes_project ON budget_codes(project_id);
-CREATE INDEX idx_budget_codes_cost_code ON budget_codes(cost_code_id);
-CREATE INDEX idx_budget_codes_cost_type ON budget_codes(cost_type_id);
-CREATE INDEX idx_budget_codes_subjob ON budget_codes(sub_job_id);
+CREATE INDEX idx_project_project_budget_codes_project ON project_project_budget_codes(project_id);
+CREATE INDEX idx_project_project_budget_codes_cost_code ON project_project_budget_codes(cost_code_id);
+CREATE INDEX idx_project_project_budget_codes_cost_type ON project_project_budget_codes(cost_type_id);
+CREATE INDEX idx_project_project_budget_codes_subjob ON project_project_budget_codes(sub_job_id);
 
 -- RLS Policy
-CREATE POLICY budget_codes_policy ON budget_codes FOR ALL USING (
+CREATE POLICY project_project_budget_codes_policy ON project_project_budget_codes FOR ALL USING (
     project_id IN (SELECT project_id FROM project_users WHERE user_id = auth.uid())
 );
 ```
 
-### 3. budget_line_items
+### 3. budget_lines
 **Purpose**: Individual budget line details within a budget code
 ```sql
-CREATE TABLE budget_line_items (
+CREATE TABLE budget_lines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    budget_code_id UUID NOT NULL REFERENCES budget_codes(id) ON DELETE CASCADE,
+    project_budget_code_id UUID NOT NULL REFERENCES project_project_budget_codes(id) ON DELETE CASCADE,
     description TEXT,
     line_number INTEGER,
     original_amount DECIMAL(15,2) DEFAULT 0,
@@ -108,24 +108,24 @@ CREATE TABLE budget_line_items (
 );
 
 -- Indexes
-CREATE INDEX idx_budget_line_items_budget_code ON budget_line_items(budget_code_id);
+CREATE INDEX idx_budget_lines_project_budget_code ON budget_lines(project_budget_code_id);
 
--- RLS Policy (inherits from budget_codes)
-CREATE POLICY budget_line_items_policy ON budget_line_items FOR ALL USING (
-    budget_code_id IN (
-        SELECT id FROM budget_codes
+-- RLS Policy (inherits from project_project_budget_codes)
+CREATE POLICY budget_lines_policy ON budget_lines FOR ALL USING (
+    project_budget_code_id IN (
+        SELECT id FROM project_project_budget_codes
         WHERE project_id IN (SELECT project_id FROM project_users WHERE user_id = auth.uid())
     )
 );
 ```
 
-### 4. change_order_line_items
+### 4. change_order_lines
 **Purpose**: Change order line item tracking
 ```sql
-CREATE TABLE change_order_line_items (
+CREATE TABLE change_order_lines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     change_order_id BIGINT NOT NULL REFERENCES change_orders(id) ON DELETE CASCADE,
-    budget_code_id UUID REFERENCES budget_codes(id) ON DELETE SET NULL,
+    project_budget_code_id UUID REFERENCES project_project_budget_codes(id) ON DELETE SET NULL,
     cost_code_id TEXT REFERENCES cost_codes(id),
     description TEXT NOT NULL,
     line_number INTEGER,
@@ -138,9 +138,9 @@ CREATE TABLE change_order_line_items (
 );
 
 -- Indexes
-CREATE INDEX idx_change_order_line_items_co ON change_order_line_items(change_order_id);
-CREATE INDEX idx_change_order_line_items_budget ON change_order_line_items(budget_code_id);
-CREATE INDEX idx_change_order_line_items_cost_code ON change_order_line_items(cost_code_id);
+CREATE INDEX idx_change_order_lines_co ON change_order_lines(change_order_id);
+CREATE INDEX idx_change_order_lines_budget ON change_order_lines(project_budget_code_id);
+CREATE INDEX idx_change_order_lines_cost_code ON change_order_lines(cost_code_id);
 ```
 
 ### 5. direct_cost_line_items
@@ -149,7 +149,7 @@ CREATE INDEX idx_change_order_line_items_cost_code ON change_order_line_items(co
 CREATE TABLE direct_cost_line_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    budget_code_id UUID REFERENCES budget_codes(id) ON DELETE SET NULL,
+    project_budget_code_id UUID REFERENCES project_project_budget_codes(id) ON DELETE SET NULL,
     cost_code_id TEXT REFERENCES cost_codes(id),
     description TEXT NOT NULL,
     transaction_date DATE NOT NULL,
@@ -261,7 +261,7 @@ INSERT INTO forecasting_curves (id, name, description, curve_type, is_system) VA
 ```sql
 CREATE TABLE budget_line_forecasts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    budget_line_id UUID NOT NULL REFERENCES budget_line_items(id) ON DELETE CASCADE,
+    budget_line_id UUID NOT NULL REFERENCES budget_lines(id) ON DELETE CASCADE,
     forecast_date DATE NOT NULL,
     forecasted_cost DECIMAL(15,2) NOT NULL,
     forecast_to_complete DECIMAL(15,2) NOT NULL,
@@ -288,7 +288,7 @@ UNIQUE (budget_line_id, forecast_date);
 ```sql
 -- Add reference columns to existing budget_items
 ALTER TABLE budget_items
-    ADD COLUMN IF NOT EXISTS budget_code_id UUID REFERENCES budget_codes(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS budget_code_id UUID REFERENCES project_budget_codes(id) ON DELETE SET NULL,
     ADD COLUMN IF NOT EXISTS sub_job_id UUID REFERENCES sub_jobs(id) ON DELETE SET NULL;
 
 -- Migration procedure (executed in 011_migrate_existing_budget_data.sql)
@@ -306,14 +306,14 @@ BEGIN
         ORDER BY project_id, cost_code_id
     LOOP
         -- Create or get budget_code
-        INSERT INTO budget_codes (project_id, sub_job_id, cost_code_id, cost_type_id)
+        INSERT INTO project_budget_codes (project_id, sub_job_id, cost_code_id, cost_type_id)
         VALUES (budget_item.project_id, budget_item.sub_job_id, budget_item.cost_code_id, budget_item.cost_type_id)
-        ON CONFLICT ON CONSTRAINT idx_budget_codes_unique DO NOTHING
+        ON CONFLICT ON CONSTRAINT idx_project_budget_codes_unique DO NOTHING
         RETURNING id INTO budget_code_uuid;
 
         -- Get existing budget_code if conflict
         IF budget_code_uuid IS NULL THEN
-            SELECT id INTO budget_code_uuid FROM budget_codes
+            SELECT id INTO budget_code_uuid FROM project_budget_codes
             WHERE project_id = budget_item.project_id
               AND cost_code_id = budget_item.cost_code_id
               AND COALESCE(sub_job_id::text, '') = COALESCE(budget_item.sub_job_id::text, '')
@@ -321,7 +321,7 @@ BEGIN
         END IF;
 
         -- Create budget_line_item
-        INSERT INTO budget_line_items (
+        INSERT INTO budget_lines (
             budget_code_id, description, original_amount,
             unit_qty, uom, unit_cost, created_at, created_by
         ) VALUES (
@@ -407,8 +407,8 @@ SELECT
      COALESCE(committed.total_committed, 0) +
      COALESCE(pending_costs.total_pending, 0)) as projected_over_under
 
-FROM budget_codes bc
-LEFT JOIN budget_line_items bli ON bc.id = bli.budget_code_id
+FROM project_budget_codes bc
+LEFT JOIN budget_lines bli ON bc.id = bli.budget_code_id
 -- Additional JOINs for modifications, change orders, commitments, direct costs
 GROUP BY bc.id, [all other columns];
 ```
@@ -504,17 +504,17 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ### Foreign Key Relationships
 ```
 projects(id) ←→ sub_jobs(project_id)
-projects(id) ←→ budget_codes(project_id)
+projects(id) ←→ project_budget_codes(project_id)
 projects(id) ←→ direct_cost_line_items(project_id)
 
-cost_codes(id) ←→ budget_codes(cost_code_id)
-cost_code_types(id) ←→ budget_codes(cost_type_id)
+cost_codes(id) ←→ project_budget_codes(cost_code_id)
+cost_code_types(id) ←→ project_budget_codes(cost_type_id)
 
-budget_codes(id) ←→ budget_line_items(budget_code_id)
-budget_codes(id) ←→ change_order_line_items(budget_code_id)
-budget_codes(id) ←→ direct_cost_line_items(budget_code_id)
+project_budget_codes(id) ←→ budget_lines(budget_code_id)
+project_budget_codes(id) ←→ change_order_lines(budget_code_id)
+project_budget_codes(id) ←→ direct_cost_line_items(budget_code_id)
 
-change_orders(id) ←→ change_order_line_items(change_order_id)
+change_orders(id) ←→ change_order_lines(change_order_id)
 
 auth.users(id) ←→ [created_by, updated_by, approved_by columns]
 ```

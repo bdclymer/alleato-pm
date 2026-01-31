@@ -7,6 +7,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Shield,
   ShieldCheck,
 } from "lucide-react";
 import { useMemo } from "react";
@@ -151,6 +152,12 @@ export default function ProfilePage() {
                     <Badge variant="secondary">
                       {profile?.role || "Team member"}
                     </Badge>
+                    {profile?.isAdmin && (
+                      <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                        <Shield className="mr-1 h-3 w-3" />
+                        Super Admin
+                      </Badge>
+                    )}
                   </div>
                   <CardDescription className="break-words">
                     {[profile?.title, profile?.company]
@@ -235,6 +242,28 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+                <div className="space-y-1 min-w-0 flex-1">
+                  <p className="text-sm font-medium break-words flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    Access level
+                  </p>
+                  <p className="text-sm text-muted-foreground break-words">
+                    {profile?.isAdmin
+                      ? "Super Admin - Full access to all projects and features"
+                      : "Standard User - Access based on project memberships"}
+                  </p>
+                </div>
+                {profile?.isAdmin ? (
+                  <Badge className="shrink-0 bg-green-600 hover:bg-green-700">
+                    Super Admin
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="shrink-0">
+                    Standard
+                  </Badge>
+                )}
+              </div>
               <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium break-words">

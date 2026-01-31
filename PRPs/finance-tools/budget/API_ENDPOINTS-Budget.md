@@ -175,8 +175,8 @@ interface CreateBudgetLineItemsResponse {
 
 #### Implementation Details
 ```sql
--- 1. Upsert to budget_codes table with conflict handling
--- 2. Insert to budget_line_items table
+-- 1. Upsert to project_budget_codes table with conflict handling
+-- 2. Insert to budget_lines table
 -- 3. Refresh materialized view: SELECT refresh_budget_rollup(project_id)
 -- 4. Return updated totals
 ```

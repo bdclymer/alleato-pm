@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { Plus, Download, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 import {
   GenericDataTable,
   type GenericTableConfig,
@@ -23,6 +24,20 @@ const config: GenericTableConfig = {
   description: "Manage purchase orders and subcontracts",
   searchFields: ["number", "title", "description"],
   exportFilename: "commitments-export.csv",
+  rowClickPath: "/{projectId}/commitments/{id}",
+  rowActions: [
+    {
+      id: "edit",
+      label: "Edit",
+      icon: "pencil" as const,
+    },
+    {
+      id: "delete",
+      label: "Delete",
+      icon: "trash" as const,
+      variant: "destructive" as const,
+    },
+  ],
   columns: [
     {
       id: "number",
@@ -195,7 +210,7 @@ export default function ProjectCommitmentsPage() {
         const { data, error: fetchError } = await supabase
           .from("commitments_unified")
           .select("*")
-          .eq("project_id", parseInt(projectId))
+          .eq("project_id", parseInt(projectId, 10))
           .is("deleted_at", null)
           .order("created_at", { ascending: false });
 
@@ -234,6 +249,43 @@ export default function ProjectCommitmentsPage() {
   const handleCreatePurchaseOrder = () => {
     router.push(`/${projectId}/commitments/new?type=purchase_order`);
   };
+
+  const handleDeleteCommitment = useCallback(
+    async (id: string | number) => {
+      try {
+        const response = await fetch(`/api/commitments/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to delete commitment");
+        }
+
+        toast.success("Commitment deleted successfully");
+
+        // Refresh the commitments list
+        const supabase = createClient();
+        const { data, error: fetchError } = await supabase
+          .from("commitments_unified")
+          .select("*")
+          .eq("project_id", parseInt(projectId, 10))
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (fetchError) throw fetchError;
+        setCommitments(data || []);
+
+        return {};
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to delete commitment";
+        toast.error(message);
+        return { error: message };
+      }
+    },
+    [projectId]
+  );
 
   if (error) {
     return (
@@ -342,6 +394,7 @@ export default function ProjectCommitmentsPage() {
           <GenericDataTable
             data={commitments}
             config={{ ...config, title: undefined, description: undefined }}
+            onDeleteRow={handleDeleteCommitment}
           />
         )}
       </div>
