@@ -19,6 +19,7 @@ const createMockQuery = (resolveValue: {
     not: jest.fn(),
     or: jest.fn(),
     eq: jest.fn(),
+    in: jest.fn(),
     single: jest.fn(),
     maybeSingle: jest.fn(),
     // Make the object thenable so it can be awaited
@@ -87,6 +88,13 @@ describe("/api/projects", () => {
               count: null,
             });
           }
+          if (table === "project_directory_memberships") {
+            return createMockQuery({
+              data: [{ project_id: 1 }],
+              error: null,
+              count: null,
+            });
+          }
           if (table === "projects") {
             return createMockQuery({
               data: [mockProject],
@@ -107,8 +115,8 @@ describe("/api/projects", () => {
         data: [mockProject],
         meta: {
           page: 1,
-          pageSize: 10,
-          totalCount: 1,
+          limit: 100,
+          total: 1,
           totalPages: 1,
         },
       });
@@ -133,6 +141,13 @@ describe("/api/projects", () => {
               count: null,
             });
           }
+          if (table === "project_directory_memberships") {
+            return createMockQuery({
+              data: [{ project_id: 1 }],
+              error: null,
+              count: null,
+            });
+          }
           if (table === "projects") {
             return createMockQuery({
               data: [mockProject],
@@ -145,7 +160,7 @@ describe("/api/projects", () => {
       };
 
       const request = new NextRequest(
-        "http://localhost:3000/api/projects?page=2&pageSize=20"
+        "http://localhost:3000/api/projects?page=2&limit=20"
       );
       const response = await GET(request);
       const data = await response.json();
@@ -153,8 +168,8 @@ describe("/api/projects", () => {
       expect(response.status).toBe(200);
       expect(data.meta).toEqual({
         page: 2,
-        pageSize: 20,
-        totalCount: 50,
+        limit: 20,
+        total: 50,
         totalPages: 3,
       });
     });
@@ -198,11 +213,37 @@ describe("/api/projects", () => {
 
     it("handles database errors", async () => {
       mockServiceClient = {
-        from: jest.fn(() => createMockQuery({
-          data: null,
-          error: { message: "Database error" },
-          count: null,
-        }))
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: { person_id: "person-123" },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: false },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "project_directory_memberships") {
+            return createMockQuery({
+              data: [{ project_id: 1 }],
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            return createMockQuery({
+              data: null,
+              error: { message: "Database error" },
+              count: null,
+            });
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        })
       };
 
       const request = new NextRequest("http://localhost:3000/api/projects");
