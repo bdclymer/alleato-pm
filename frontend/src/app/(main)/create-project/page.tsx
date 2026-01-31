@@ -683,13 +683,13 @@ function CreateProjectForm() {
 
       const project = await response.json();
       toast.success("Project created", {
-        description: `${values.name} has been created. Redirecting to setup wizard...`,
+        description: `${values.name} has been created. Redirecting to project home...`,
       });
       form.reset(defaultValues);
       setFileResetKey((key) => key + 1);
       if (project?.id) {
-        // Redirect to the project setup wizard instead of home page
-        router.push(`/${project.id}/setup`);
+        // Redirect to the project homepage
+        router.push(`/${project.id}/home`);
       } else {
         router.push("/");
       }
