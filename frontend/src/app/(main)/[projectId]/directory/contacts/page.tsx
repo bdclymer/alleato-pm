@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
-import { UserPlus, Users, Mail, Phone, Building2 } from "lucide-react";
+import { UserPlus, Users, Mail, Phone, Building2, MoreHorizontal, UserX, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
 import { getProjectDirectoryTabs } from "@/config/directory-tabs";
-import { useContacts, type Contact } from "@/hooks/use-contacts";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,7 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProjectContactFormDialog } from "@/components/domain/contacts/ProjectContactFormDialog";
+import type { DirectoryFilters } from "@/services/directoryService";
 
 function ContactsTableSkeleton() {
   return (
@@ -38,83 +47,21 @@ function ContactsTableSkeleton() {
   );
 }
 
-function ContactsTable({ contacts }: { contacts: Contact[] }) {
-  return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Department</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contacts.map((contact) => {
-            const fullName = [contact.first_name, contact.last_name]
-              .filter(Boolean)
-              .join(" ") || "Unnamed";
-
-            return (
-              <TableRow key={contact.id}>
-                <TableCell className="font-medium">{fullName}</TableCell>
-                <TableCell>
-                  {contact.email ? (
-                    <a
-                      href={`mailto:${contact.email}`}
-                      className="flex items-center gap-1 text-brand hover:underline"
-                    >
-                      <Mail className="h-3 w-3" />
-                      {contact.email}
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {(contact.phone_business || contact.phone_mobile) ? (
-                    <a
-                      href={`tel:${contact.phone_business || contact.phone_mobile}`}
-                      className="flex items-center gap-1 text-brand hover:underline"
-                    >
-                      <Phone className="h-3 w-3" />
-                      {contact.phone_business || contact.phone_mobile}
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-                <TableCell>{contact.job_title || <span className="text-muted-foreground">—</span>}</TableCell>
-                <TableCell>
-                  {contact.business_unit ? (
-                    <span className="flex items-center gap-1">
-                      <Building2 className="h-3 w-3 text-muted-foreground" />
-                      {contact.business_unit}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
-  );
-}
-
 export default function ProjectDirectoryContactsPage() {
   const params = useParams();
   const pathname = usePathname();
   const projectId = params.projectId as string;
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
-  const { contacts, isLoading, error, refetch } = useContacts({ projectId });
+  const filters: DirectoryFilters = React.useMemo(() => ({ type: "contact" as const }), []);
+  const { users: contacts, isLoading, error, refetch } = useProjectUsers(projectId, filters);
 
   const handleAddContact = () => {
-    // TODO: Open add contact modal
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    refetch();
   };
 
   const tabs = getProjectDirectoryTabs(projectId, pathname);
@@ -191,11 +138,104 @@ export default function ProjectDirectoryContactsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <ContactsTable contacts={contacts} />
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead className="hidden md:table-cell">Phone</TableHead>
+                      <TableHead className="hidden lg:table-cell">Company</TableHead>
+                      <TableHead className="hidden lg:table-cell">Role</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contacts.map((contact) => {
+                      const fullName = [contact.first_name, contact.last_name]
+                        .filter(Boolean)
+                        .join(" ") || "Unnamed";
+                      const phone = contact.phone_business || contact.phone_mobile;
+
+                      return (
+                        <TableRow key={contact.id}>
+                          <TableCell className="font-medium">{fullName}</TableCell>
+                          <TableCell>
+                            {contact.email ? (
+                              <a
+                                href={`mailto:${contact.email}`}
+                                className="flex items-center gap-1 text-brand hover:underline"
+                              >
+                                <Mail className="h-3 w-3" />
+                                {contact.email}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {phone ? (
+                              <a
+                                href={`tel:${phone}`}
+                                className="flex items-center gap-1 text-brand hover:underline"
+                              >
+                                <Phone className="h-3 w-3" />
+                                {phone}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {contact.company?.name ? (
+                              <span className="flex items-center gap-1">
+                                <Building2 className="h-3 w-3 text-muted-foreground" />
+                                {contact.company.name}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {contact.job_title || <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive">
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Remove from Project
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </div>
         </div>
       </PageContainer>
+
+      <ProjectContactFormDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        projectId={projectId}
+        onSuccess={handleDialogSuccess}
+      />
     </>
   );
 }
