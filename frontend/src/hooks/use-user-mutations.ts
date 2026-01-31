@@ -23,8 +23,7 @@ export function useAddUser(projectId: string) {
       });
 
       let inviteSent = false;
-      // Auto-send invite if user has an email and send_invite is not explicitly false
-      if (person?.id && personData.email && send_invite !== false) {
+      if (person?.id && personData.email && send_invite === true) {
         try {
           const response = await fetch(
             `/api/projects/${projectId}/directory/people/${person.id}/invite`,
