@@ -21,7 +21,7 @@ async function grantPermissions() {
     console.log('Creating/updating Project Admin permission template...');
 
     // First, check if template exists
-    let { data: existingTemplate } = await supabase
+    const { data: existingTemplate } = await supabase
       .from('permission_templates')
       .select('*')
       .eq('name', 'Project Admin')
