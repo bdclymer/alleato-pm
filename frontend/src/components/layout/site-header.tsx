@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { EnhancedProjectToolsDropdown } from "./enhanced-project-tools-dropdown";
 import {
   Sheet,
   SheetContent,
@@ -477,8 +478,7 @@ export function SiteHeader({
             {/* Notifications Icon */}
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               onClick={() => setNotificationsOpen(true)}
               aria-label="Notifications"
             >
@@ -488,8 +488,7 @@ export function SiteHeader({
             {/* Hamburger Menu */}
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              size="icon-sm"
               onClick={() => setMobileMenuOpen(true)}
               aria-label="Menu"
             >
@@ -583,7 +582,7 @@ export function SiteHeader({
               }}
               onOpenChange={(open) => open && fetchProjects()}
             >
-              <SelectTrigger className="hidden md:flex h-8 w-[280px]">
+              <SelectTrigger className="hidden md:flex w-[280px]" size="sm">
                 <SelectValue placeholder="Select Project">
                   {currentProject ? (
                     <div className="flex items-center gap-2">
@@ -637,191 +636,20 @@ export function SiteHeader({
               </SelectContent>
             </Select>
 
-            {/* Project Tools - hidden on mobile */}
-            <DropdownMenu
-              open={projectToolsOpen}
-              onOpenChange={setProjectToolsOpen}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="hidden md:flex h-8 items-center gap-1 px-3"
-                >
-                  <span className="text-xs text-muted-foreground">Tools:</span>
-                  <div className="flex items-center gap-1 text-sm">
-                    {breadcrumbs.slice(1).map((crumb, index) => (
-                      <span key={index} className="flex items-center gap-1">
-                        {index > 0 && <ChevronRight className="h-3 w-3 opacity-50" />}
-                        <span className={index === breadcrumbs.slice(1).length - 1 ? "font-medium" : ""}>
-                          {crumb.label}
-                        </span>
-                      </span>
-                    ))}
-                    {breadcrumbs.length <= 1 && (
-                      <span className="font-medium">Select Tool</span>
-                    )}
-                  </div>
-                  <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                className="w-screen p-6 rounded-none border-x-0"
-              >
-                <div className="container mx-auto">
-                  <div className="grid grid-cols-4 gap-8">
-                    {/* Core Tools Column */}
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-foreground">
-                        Core Tools
-                      </h3>
-                      <div className="space-y-1">
-                        {coreTools.map((tool) => {
-                          const href = buildToolUrl(
-                            tool.path,
-                            tool.requiresProject,
-                          );
-                          const isDisabled = tool.requiresProject && !projectId;
-
-                          return (
-                            <Link
-                              key={tool.name}
-                              href={href}
-                              onClick={(e) => {
-                                if (isDisabled) {
-                                  e.preventDefault();
-                                } else {
-                                  setProjectToolsOpen(false);
-                                }
-                              }}
-                              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm ${
-                                isDisabled
-                                  ? "opacity-50 cursor-not-allowed hover:bg-transparent"
-                                  : "hover:bg-muted"
-                              }`}
-                              aria-disabled={isDisabled}
-                            >
-                              <span>{tool.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Project Management Column */}
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-foreground">
-                        Project Management
-                      </h3>
-                      <div className="space-y-1">
-                        {projectManagementTools.map((tool) => {
-                          const href = buildToolUrl(
-                            tool.path,
-                            tool.requiresProject,
-                          );
-                          const isDisabled = tool.requiresProject && !projectId;
-
-                          return (
-                            <Link
-                              key={tool.name}
-                              href={href}
-                              onClick={(e) => {
-                                if (isDisabled) {
-                                  e.preventDefault();
-                                } else {
-                                  setProjectToolsOpen(false);
-                                }
-                              }}
-                              className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm ${
-                                isDisabled
-                                  ? "opacity-50 cursor-not-allowed hover:bg-transparent"
-                                  : "hover:bg-muted"
-                              }`}
-                              aria-disabled={isDisabled}
-                            >
-                              <span className="flex items-center gap-2">
-                                {tool.isFavorite && (
-                                  <Star className="h-3.5 w-3.5 text-muted-foreground" />
-                                )}
-                                {tool.name}
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Financial Management Column */}
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-foreground">
-                        Financial Management
-                      </h3>
-                      <div className="space-y-1">
-                        {financialManagementTools.map((tool) => {
-                          const href = buildToolUrl(
-                            tool.path,
-                            tool.requiresProject,
-                          );
-                          const isDisabled = tool.requiresProject && !projectId;
-
-                          return (
-                            <Link
-                              key={tool.name}
-                              href={href}
-                              onClick={(e) => {
-                                if (isDisabled) {
-                                  e.preventDefault();
-                                } else {
-                                  setProjectToolsOpen(false);
-                                }
-                              }}
-                              className={`flex w-full items-center rounded px-2 py-1.5 text-left text-sm ${
-                                isDisabled
-                                  ? "opacity-50 cursor-not-allowed hover:bg-transparent"
-                                  : "hover:bg-muted"
-                              }`}
-                              aria-disabled={isDisabled}
-                            >
-                              <span>{tool.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Admin Tools Column */}
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-foreground">
-                        Admin Tools
-                      </h3>
-                      <div className="space-y-1">
-                        {adminTools.map((tool) => {
-                          const href = tool.path;
-
-                          return (
-                            <Link
-                              key={tool.name}
-                              href={href}
-                              onClick={() => setProjectToolsOpen(false)}
-                              className="flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
-                            >
-                              <span>{tool.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Enhanced Project Tools Dropdown */}
+            <EnhancedProjectToolsDropdown
+              projectId={projectId}
+              currentToolName={activeToolName}
+              breadcrumbs={breadcrumbs}
+              onClose={() => setProjectToolsOpen(false)}
+            />
 
             {/* Team Chat - hidden on mobile */}
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-sm"
               asChild
-              className="hidden md:flex h-8 w-8"
+              className="hidden md:flex"
             >
               <Link href="/team-chat" aria-label="Team chat">
                 <MessageSquare className="h-4 w-4" />
@@ -833,8 +661,8 @@ export function SiteHeader({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="hidden md:flex h-8 w-8 relative"
+                  size="icon-sm"
+                  className="hidden md:flex relative"
                   aria-label="Favorites"
                 >
                   <Star className="h-4 w-4" />
@@ -927,8 +755,8 @@ export function SiteHeader({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="hidden md:flex h-8 w-8"
+                  size="icon-sm"
+                  className="hidden md:flex"
                   aria-label="Open search"
                 >
                   <Search className="h-4 w-4" />
@@ -948,8 +776,8 @@ export function SiteHeader({
             {/* Notifications - hidden on mobile */}
             <Button
               variant="ghost"
-              size="icon"
-              className="hidden md:flex h-8 w-8"
+              size="icon-sm"
+              className="hidden md:flex"
               onClick={() => setNotificationsOpen((prev) => !prev)}
               aria-label="Toggle notifications sidebar"
             >

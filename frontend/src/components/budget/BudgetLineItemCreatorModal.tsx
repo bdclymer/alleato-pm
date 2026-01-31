@@ -5,6 +5,7 @@ import { Plus, X, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
   SelectContent,
@@ -555,14 +556,14 @@ export function BudgetLineItemCreatorModal({
                           <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                             Qty
                           </Label>
-                          <Input
-                            type="number"
+                          <NumberInput
                             step="0.001"
                             value={row.qty}
                             onChange={(e) => handleRowChange(index, "qty", e.target.value)}
-                            placeholder="0"
-                            className="h-10 bg-background"
+                            placeholder="Quantity"
+                            className="h-10 bg-background text-center"
                             disabled={isCreating}
+                            clearZeroOnFocus={true}
                           />
                         </div>
 
@@ -596,14 +597,14 @@ export function BudgetLineItemCreatorModal({
                           <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
                             Unit Cost
                           </Label>
-                          <Input
-                            type="number"
+                          <NumberInput
                             step="0.01"
                             value={row.unitCost}
                             onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
-                            placeholder="0.00"
+                            placeholder="Unit cost"
                             className="h-10 bg-background"
                             disabled={isCreating}
+                            clearZeroOnFocus={true}
                           />
                         </div>
 
@@ -613,14 +614,15 @@ export function BudgetLineItemCreatorModal({
                             Amount <span className="text-red-500">*</span>
                           </Label>
                           <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
+                            <NumberInput
                               step="0.01"
                               value={row.amount}
                               onChange={(e) => handleRowChange(index, "amount", e.target.value)}
-                              placeholder="0.00"
+                              placeholder="Amount *"
                               className="h-10 font-medium bg-background flex-1"
                               disabled={isCreating}
+                              clearZeroOnFocus={true}
+                              autoSelectOnFocus={true}
                             />
                             {rows.length > 1 && (
                               <Button

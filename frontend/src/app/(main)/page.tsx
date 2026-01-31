@@ -9,6 +9,7 @@ import {
 import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
 import { portfolioViews, financialViews } from "@/config/portfolio";
 import { useRouter } from "next/navigation";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -288,7 +289,7 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div className="px-12 sm:px-12 pt-6 pb-12 flex flex-col flex-1 min-h-0 overflow-hidden">
+    <div className="px-6 sm:px-8 lg:px-12 pt-6 pb-8 flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Portfolio Header with tabs */}
       <PortfolioHeader
         views={portfolioViews}
@@ -322,11 +323,9 @@ export default function PortfolioPage() {
         />
 
         {/* Projects Table */}
-        <div className="flex-1 overflow-hidden bg-background">
+        <div className="flex-1 overflow-hidden bg-background rounded-lg border border-border shadow-sm">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-muted-foreground">Loading projects...</div>
-            </div>
+            <LoadingSkeleton />
           ) : (
             <ProjectsTable
               data={filteredProjects}

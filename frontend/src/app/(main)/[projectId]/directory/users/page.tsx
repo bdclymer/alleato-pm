@@ -14,7 +14,13 @@ import { getProjectDirectoryTabs } from "@/config/directory-tabs";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
 import { UserFormDialog } from "@/components/directory/UserFormDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function ProjectDirectoryUsersPage() {
   const params = useParams();
@@ -86,21 +92,6 @@ export default function ProjectDirectoryUsersPage() {
       <PageTabs tabs={tabs} />
       <PageContainer>
         <div className="space-y-6">
-          {/* Info card about this page */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Authenticated Users
-              </CardTitle>
-              <CardDescription>
-                This page shows users who have authenticated accounts in the system and are
-                members of this project. These are actual Supabase auth users linked to people
-                in the project directory.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
           <div className="flex items-center justify-between">
             <div>
               {users.length > 0 && (
@@ -121,7 +112,9 @@ export default function ProjectDirectoryUsersPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                   <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Authenticated Users</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    No Authenticated Users
+                  </h3>
                   <p className="text-muted-foreground mb-4 max-w-sm">
                     No users with authenticated accounts found for this project.
                     Users need to sign up and be added to the project directory.
@@ -163,13 +156,17 @@ export default function ProjectDirectoryUsersPage() {
           <span className="text-white">{projectId}</span>
           <span className="mx-3 text-zinc-600">|</span>
           <span className="text-zinc-500">Results:</span>{" "}
-          <span className={users.length > 0 ? "text-green-400" : "text-red-400"}>
+          <span
+            className={users.length > 0 ? "text-green-400" : "text-red-400"}
+          >
             {isLoading ? "loading..." : `${users.length} users`}
           </span>
           {error && (
             <>
               <span className="mx-3 text-zinc-600">|</span>
-              <span className="text-red-400">Error: {(error as Error).message}</span>
+              <span className="text-red-400">
+                Error: {(error as Error).message}
+              </span>
             </>
           )}
         </div>

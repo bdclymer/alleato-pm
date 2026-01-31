@@ -22,12 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: true
 
       - name: Setup git identity
         run: |
@@ -60,72 +59,39 @@ jobs:
 
             const failedJobs = jobs.data.jobs.filter(job => job.conclusion === 'failure');
 
-            // Get list of artifacts from the failed run
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }}
-            });
+            let errorLogs = [];
+            for (const job of failedJobs) {
+              const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                job_id: job.id
+              });
+              errorLogs.push({
+                jobName: job.name,
+                logs: logs.data
+              });
+            }
 
             return {
               runUrl: run.data.html_url,
               failedJobs: failedJobs.map(j => j.name),
-              artifacts: artifacts.data.artifacts.map(a => ({name: a.name, id: a.id}))
+              errorLogs: errorLogs
             };
-
-      - name: Download failure artifacts
-        continue-on-error: true
-        run: |
-          mkdir -p ./failure-artifacts
-
-          # Write artifacts to temporary file to avoid argument list issues
-          cat > /tmp/artifacts.json << 'ARTIFACT_EOF'
-          ${{ toJSON(fromJSON(steps.failure_details.outputs.result).artifacts) }}
-          ARTIFACT_EOF
-
-          # Download each failure artifact
-          jq -r '.[] | select(.name | contains("failures")) | .name' /tmp/artifacts.json | while IFS= read -r artifact_name; do
-            if [ -n "$artifact_name" ]; then
-              echo "Downloading artifact: $artifact_name"
-              gh run download ${{ github.event.workflow_run.id }} -n "$artifact_name" -D "./failure-artifacts/${artifact_name}" 2>&1 || echo "Warning: Failed to download $artifact_name"
-            fi
-          done
-
-          # List downloaded artifacts
-          echo "Downloaded artifacts:"
-          find ./failure-artifacts -type f -ls 2>/dev/null || echo "No artifacts downloaded"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fix CI failures with Claude
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
           prompt: |
-            You are fixing CI failures for this repository. Follow the guidelines in .github/prompts/autofix.txt.
+            /fix-ci 
+            Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
+            Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
+            PR Number: ${{ github.event.workflow_run.pull_requests[0].number }}
+            Branch Name: ${{ steps.branch.outputs.branch_name }}
+            Base Branch: ${{ github.event.workflow_run.head_branch }}
+            Repository: ${{ github.repository }}
 
-            **CI Failure Context:**
-            - Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
-            - Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs, ', ') }}
-            - Branch: ${{ github.event.workflow_run.head_branch }}
-            - Repository: ${{ github.repository }}
-
-            **Failure Artifacts Available:**
-            All failure artifacts have been downloaded to: ./failure-artifacts/
-
-            Available artifacts:
-            ${{ toJSON(fromJSON(steps.failure_details.outputs.result).artifacts) }}
-
-            **Your Tasks:**
-            1. Read the autofix guidelines: .github/prompts/autofix.txt
-            2. Examine all artifacts in ./failure-artifacts/ for error details:
-               - code-quality-failures-*/: TypeScript and ESLint errors
-               - build-failures-*/: Build error logs
-               - playwright-failures-*/: Test failures, screenshots, traces
-            3. Determine if failures are fixable (see autofix.txt for rules)
-            4. If fixable: Fix the code and validate with `npm run quality` in frontend/
-            5. If unfixable: Add appropriate comments explaining why (external/flaky/infra)
-
-            Fix ALL errors. Do not commit until all quality checks pass.
+            Error logs:
+            ${{ toJSON(fromJSON(steps.failure_details.outputs.result).errorLogs) }}
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_args: "--allowedTools 'Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(bun:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)'"

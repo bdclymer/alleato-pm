@@ -147,7 +147,7 @@ export function ProjectsTable({
             e.stopPropagation();
             onProjectClick?.(row.original);
           }}
-          className="font-medium text-[hsl(var(--procore-orange))] hover:underline text-left"
+          className="font-medium text-[hsl(var(--procore-orange))] hover:text-[hsl(var(--procore-orange-hover))] transition-colors duration-200 text-left group-hover:underline"
         >
           {row.getValue("name")}
         </button>
@@ -263,16 +263,16 @@ export function ProjectsTable({
       cell: ({ row }) => {
         const phase = row.getValue("phase") as string;
         const phaseColors: Record<string, string> = {
-          current: "bg-blue-100 text-blue-700",
-          bid: "bg-purple-100 text-purple-700",
-          preconstruction: "bg-yellow-100 text-yellow-700",
-          complete: "bg-green-100 text-green-700",
+          current: "bg-blue-50 text-blue-700 border border-blue-200",
+          bid: "bg-purple-50 text-purple-700 border border-purple-200",
+          preconstruction: "bg-amber-50 text-amber-700 border border-amber-200",
+          complete: "bg-green-50 text-green-700 border border-green-200",
         };
         return phase ? (
           <span
             className={cn(
-              "px-2 py-1 text-xs font-medium rounded",
-              phaseColors[phase.toLowerCase()] || "bg-muted text-foreground",
+              "px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-200",
+              phaseColors[phase.toLowerCase()] || "bg-muted text-foreground border border-border",
             )}
           >
             {phase}
@@ -314,7 +314,7 @@ export function ProjectsTable({
             setEditingProject(row.original);
             setIsEditDialogOpen(true);
           }}
-          className="p-2 hover:bg-muted rounded transition-colors"
+          className="p-2 hover:bg-muted rounded-md transition-colors duration-200 hover:scale-105"
           aria-label="Edit project"
         >
           <Pencil className="w-4 h-4 text-foreground" />
@@ -362,8 +362,8 @@ export function ProjectsTable({
   if (viewType === "grid") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
                 const project = row.original;
@@ -372,33 +372,53 @@ export function ProjectsTable({
                   <Link
                     key={row.id}
                     href={projectHref}
-                    className="group block bg-background border border-border rounded-lg p-4 hover:shadow-md hover:border-[hsl(var(--procore-orange))] transition-all text-left"
+                    className="group block bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:border-[hsl(var(--procore-orange))] hover:-translate-y-1 transition-all duration-300 text-left"
                     onClick={() => onProjectClick?.(project)}
                   >
-                    <div className="mb-2">
-                      <h3 className="text-sm font-semibold text-foreground group-hover:text-[hsl(var(--procore-orange))] transition-colors line-clamp-1">
+                    <div className="mb-3">
+                      <h3 className="text-base font-semibold text-foreground group-hover:text-[hsl(var(--procore-orange))] transition-colors duration-300 line-clamp-2 leading-tight">
                         {project.name}
                       </h3>
                     </div>
 
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[0.65rem] text-muted-foreground">
-                          Job #:
-                        </span>
-                        <span className="font-medium text-foreground text-[0.75rem]">
-                          {project.jobNumber}
-                        </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-muted-foreground font-medium">
+                          Job #{project.jobNumber}
+                        </div>
+                        {project.phase && (
+                          <span className={cn(
+                            "px-2 py-0.5 text-[10px] font-medium rounded-full",
+                            {
+                              "bg-blue-50 text-blue-700 border border-blue-200": project.phase.toLowerCase() === "current",
+                              "bg-purple-50 text-purple-700 border border-purple-200": project.phase.toLowerCase() === "bid",
+                              "bg-amber-50 text-amber-700 border border-amber-200": project.phase.toLowerCase() === "preconstruction",
+                              "bg-green-50 text-green-700 border border-green-200": project.phase.toLowerCase() === "complete",
+                            }
+                          )}>
+                            {project.phase}
+                          </span>
+                        )}
                       </div>
 
                       {project.client && (
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[0.65rem] text-muted-foreground">
-                            Client:
-                          </span>
-                          <span className="text-foreground text-[0.75rem] truncate">
-                            {project.client}
-                          </span>
+                        <div className="text-sm text-foreground/80 truncate">
+                          {project.client}
+                        </div>
+                      )}
+
+                      {(project.estRevenue || project.state) && (
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
+                          {project.estRevenue && (
+                            <div>
+                              ${Number(project.estRevenue).toLocaleString()}
+                            </div>
+                          )}
+                          {project.state && (
+                            <div className="capitalize">
+                              {project.state}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -406,16 +426,24 @@ export function ProjectsTable({
                 );
               })
             ) : (
-              <div className="col-span-full text-center py-12 text-muted-foreground">
-                No projects found.
+              <div className="col-span-full flex flex-col items-center justify-center py-16">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  Start by creating your first project or adjust your filters to see more results.
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* Pagination Controls for Grid View */}
-        <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-background border-t border-border gap-3">
-          <div className="flex items-center gap-2 text-xs text-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-background border-t border-border gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="hidden sm:inline">Showing</span>
             <select
               value={pagination.pageSize}
@@ -423,7 +451,7 @@ export function ProjectsTable({
                 table.setPageSize(Number(e.target.value));
               }}
               aria-label="Items per page"
-              className="px-2 py-1 text-xs border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--procore-orange))] focus:border-transparent"
+              className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--procore-orange))] focus:border-transparent bg-background"
             >
               {[12, 24, 48, 96].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>
@@ -431,11 +459,11 @@ export function ProjectsTable({
                 </option>
               ))}
             </select>
-            <span className="text-xs">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
               <span className="hidden sm:inline">of </span>
               <span className="sm:hidden">/ </span>
               {data.length}
-              <span className="hidden sm:inline"> total cards</span>
+              <span className="hidden sm:inline"> projects</span>
             </span>
           </div>
 
@@ -443,11 +471,11 @@ export function ProjectsTable({
             <button
               type="button"
               aria-label="Go to first page"
-              className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-md hover:bg-muted transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronsLeft className="w-3.5 h-3.5" />
+              <ChevronsLeft className="w-4 h-4" />
             </button>
             <button
               type="button"
@@ -458,8 +486,8 @@ export function ProjectsTable({
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs text-foreground px-2">
-              {table.getState().pagination.pageIndex + 1} /{" "}
+            <span className="text-sm text-foreground px-3 py-1">
+              {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </span>
             <button
@@ -491,19 +519,19 @@ export function ProjectsTable({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-x-auto overflow-y-auto">
         <Table>
-          <TableHeader className="sticky top-0 bg-muted z-10">
+          <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
-                className="border-b border-border"
+                className="border-b border-border/60"
               >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-xs font-semibold text-foreground py-3 px-4 bg-muted"
+                    className="text-xs font-semibold text-foreground/90 py-4 px-4 bg-muted/80 backdrop-blur-sm"
                     style={{
                       width: header.getSize(),
-                      ...getStickyStyles(header.column, "rgb(249 250 251)"),
+                      ...getStickyStyles(header.column, "rgb(249 250 251 / 0.8)"),
                     }}
                   >
                     {header.isPlaceholder
@@ -522,13 +550,13 @@ export function ProjectsTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="group border-b border-border hover:bg-muted/60 transition-all duration-200 cursor-pointer hover:shadow-sm"
                   onClick={() => onProjectClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="py-3 px-4 text-sm"
+                      className="py-4 px-4 text-sm transition-colors duration-200"
                       style={{
                         width: cell.column.getSize(),
                         ...getStickyStyles(cell.column, "#fff"),
@@ -546,9 +574,17 @@ export function ProjectsTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className="h-32 text-center"
                 >
-                  No projects found.
+                  <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div className="text-base font-medium text-foreground">No projects found</div>
+                    <div className="text-sm text-muted-foreground">Start by creating your first project or adjusting your filters</div>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

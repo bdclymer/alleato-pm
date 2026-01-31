@@ -28,6 +28,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { SectionCard } from "@/components/ui/section-card";
 import { MetricCard, MetricGrid, MetricSummary } from "@/components/ui/metric-card";
 import { InlineTeamMemberForm } from "@/components/project-home/inline-team-member-form";
+import { DirectorySummary } from "@/components/project-home/directory-summary";
 import type { Database } from "@/types/database.types";
 
 /* =============================================================================
@@ -365,6 +366,11 @@ export function ProjectHomeClient({
             />
           )}
         </SectionCard>
+
+        {/* -------------------------------------------------------------------
+            Project Directory Summary
+            ----------------------------------------------------------------- */}
+        <DirectorySummary projectId={String(project.id)} />
 
         {/* -------------------------------------------------------------------
             Financial Overview

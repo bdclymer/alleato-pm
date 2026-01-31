@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -457,7 +458,7 @@ export function BudgetLineItemModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[1200px] max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-[1400px] max-h-[90vh] flex flex-col">
           <div className="mb-6">
             <h2 className="text-2xl font-semibold text-foreground dark:text-white">
               Create Budget Line Items
@@ -576,15 +577,15 @@ export function BudgetLineItemModal({
                           </td>
 
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
+                            <NumberInput
                               step="0.001"
                               value={row.qty}
                               onChange={(e) =>
                                 handleRowChange(row.id, "qty", e.target.value)
                               }
-                              placeholder="0"
-                              className="h-9"
+                              placeholder="Quantity"
+                              className="h-9 text-center"
+                              clearZeroOnFocus={true}
                             />
                           </td>
 
@@ -642,8 +643,7 @@ export function BudgetLineItemModal({
                           </td>
 
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
+                            <NumberInput
                               step="0.01"
                               value={row.unitCost}
                               onChange={(e) =>
@@ -653,14 +653,14 @@ export function BudgetLineItemModal({
                                   e.target.value,
                                 )
                               }
-                              placeholder="0.00"
+                              placeholder="Unit cost"
                               className="h-9"
+                              clearZeroOnFocus={true}
                             />
                           </td>
 
                           <td className="px-4 py-3">
-                            <Input
-                              type="number"
+                            <NumberInput
                               step="0.01"
                               value={row.amount}
                               onChange={(e) =>
@@ -670,8 +670,10 @@ export function BudgetLineItemModal({
                                   e.target.value,
                                 )
                               }
-                              placeholder="0.00"
+                              placeholder="Amount *"
                               className="h-9 font-medium"
+                              clearZeroOnFocus={true}
+                              autoSelectOnFocus={true}
                             />
                           </td>
 
