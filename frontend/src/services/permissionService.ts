@@ -28,8 +28,34 @@ export interface UserPermissions {
 
 export class PermissionService {
   private cache: Map<string, UserPermissions> = new Map();
+  private adminCache: Map<string, boolean> = new Map();
 
   constructor(private supabase: ReturnType<typeof createClient<Database>>) {}
+
+  /**
+   * Check if the user is an app-level admin (bypasses all permission checks).
+   * Reads from user_profiles.is_admin.
+   */
+  async isAppAdmin(userId: string): Promise<boolean> {
+    if (this.adminCache.has(userId)) {
+      return this.adminCache.get(userId)!;
+    }
+
+    try {
+      const { data } = await this.supabase
+        .from("user_profiles")
+        .select("is_admin")
+        .eq("id", userId)
+        .single();
+
+      const isAdmin = data?.is_admin === true;
+      this.adminCache.set(userId, isAdmin);
+      setTimeout(() => this.adminCache.delete(userId), 5 * 60 * 1000);
+      return isAdmin;
+    } catch {
+      return false;
+    }
+  }
 
   async getUserPermissions(
     userId: string,
@@ -101,6 +127,11 @@ export class PermissionService {
     module: Module,
     permission: Permission,
   ): Promise<boolean> {
+    // App admins bypass all permission checks
+    if (await this.isAppAdmin(userId)) {
+      return true;
+    }
+
     const userPermissions = await this.getUserPermissions(userId, projectId);
     const modulePermissions = userPermissions.rules[module] || [];
 
