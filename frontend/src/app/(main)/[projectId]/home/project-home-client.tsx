@@ -17,6 +17,11 @@ import {
   Users,
   Building2,
   ClipboardList,
+  ExternalLink,
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  PieChart,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,21 +34,16 @@ import { SectionCard } from "@/components/ui/section-card";
 import { MetricCard, MetricGrid, MetricSummary } from "@/components/ui/metric-card";
 import { InlineTeamMemberForm } from "@/components/project-home/inline-team-member-form";
 import { DirectorySummary } from "@/components/project-home/directory-summary";
+import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import type { Database } from "@/types/database.types";
+import { cn } from "@/lib/utils";
 
 /* =============================================================================
-   PROJECT HOME - SOURCE OF TRUTH
+   PROJECT HOME - REDESIGNED FOR CLARITY
    =============================================================================
-   This is the canonical implementation of a project homepage.
-   All design patterns here should be replicated across other pages.
-
-   Key principles:
-   - Use PageShell for consistent layout wrapper
-   - Use SectionCard for collapsible content sections
-   - Use MetricCard/MetricGrid for KPI displays
-   - Consistent typography using design system classes
-   - Mobile-first responsive design
-   - Premium, luxury aesthetic with subtle refinement
+   Redesigned based on design inspiration to prioritize key metrics and
+   reduce visual clutter. Features a dashboard-style layout with enhanced
+   financial overview and clean secondary actions.
    ============================================================================= */
 
 /* -----------------------------------------------------------------------------
@@ -116,12 +116,12 @@ const toolCategories = [
     tools: [
       { name: "Dashboard", href: "/dashboard", icon: Building2 },
       { name: "Directory", href: "/directory", icon: Users },
-      { name: "Meetings", href: "/meetings", icon: Calendar },
     ],
   },
   {
     title: "Project Management",
     tools: [
+      { name: "Meetings", href: "/meetings", icon: Calendar },
       { name: "Tasks", href: "/tasks", icon: CheckSquare },
       { name: "Schedule", href: "/schedule", icon: Calendar },
       { name: "Daily Logs", href: "/daily-logs", icon: ClipboardList },
@@ -138,7 +138,7 @@ const toolCategories = [
 ];
 
 /* -----------------------------------------------------------------------------
-   Currency Formatter Utility
+   Utility Functions
    ----------------------------------------------------------------------------- */
 
 function formatCurrency(amount: number): string {
@@ -148,6 +148,16 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+function formatCompactCurrency(amount: number): string {
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  }
+  if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(0)}K`;
+  }
+  return formatCurrency(amount);
 }
 
 /* -----------------------------------------------------------------------------
@@ -170,16 +180,10 @@ export function ProjectHomeClient({
 }: ProjectHomeClientProps) {
   const router = useRouter();
 
-  // Section open states
+  // Section open states - minimal for cleaner design
   const [isTeamOpen, setIsTeamOpen] = React.useState(true);
-  const [isContractsOpen, setIsContractsOpen] = React.useState(true);
   const [isCommitmentsOpen, setIsCommitmentsOpen] = React.useState(true);
-  const [isChangeEventsOpen, setIsChangeEventsOpen] = React.useState(true);
-  const [isMeetingsOpen, setIsMeetingsOpen] = React.useState(true);
-  const [isTasksOpen, setIsTasksOpen] = React.useState(true);
-  const [isRFIsOpen, setIsRFIsOpen] = React.useState(true);
-  const [isSubmittalsOpen, setIsSubmittalsOpen] = React.useState(true);
-  const [isDocumentsOpen, setIsDocumentsOpen] = React.useState(true);
+  const [isScheduleOpen, setIsScheduleOpen] = React.useState(true);
   const [showAddTeamMemberForm, setShowAddTeamMemberForm] = React.useState(false);
 
   /* ---------------------------------------------------------------------------
@@ -191,7 +195,6 @@ export function ProjectHomeClient({
       return [];
     }
     return project.team_members.map((member) => {
-      // Parse the member if it's a string (JSON)
       const parsedMember = typeof member === "string"
         ? (() => {
             try {
@@ -232,501 +235,398 @@ export function ProjectHomeClient({
   const totalBudget = budget.reduce((sum, item) => sum + (item.original_amount || 0), 0);
   const committed = commitments.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   const approvedChangeOrders = changeOrders.filter((co) => co.status === "approved").length;
+  const remaining = Math.max(totalBudget - committed, 0);
+  const commitmentPercentage = totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
+
+  // Active items counts
+  const activeTasks = tasks.filter(t => t.status !== "completed").length;
+  const activeRFIs = rfis.filter(r => r.status !== "closed").length;
+  const pendingMeetings = meetings.length;
+  const activeChangeOrders = changeOrders.filter(co => co.status === "pending" || co.status === "approved").length;
 
   /* ---------------------------------------------------------------------------
      Render
      ------------------------------------------------------------------------- */
 
   return (
-    <PageShell>
-      {/* =====================================================================
-          Page Header
-          ===================================================================== */}
-      <PageShell.Header
-        eyebrow={project.client || undefined}
-        title={project.name || project["job number"] || "Untitled Project"}
-        size="hero"
-        actions={
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="h-9 sm:h-10 px-4 sm:px-5 bg-brand text-white hover:bg-brand/90 transition-all rounded-sm shadow-sm">
-                <span className="text-sm font-medium">Tools</span>
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-[calc(100vw-2rem)] sm:w-[540px] p-0 rounded-sm shadow-lg border-neutral-200"
-            >
-              <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-                  {toolCategories.map((category) => (
-                    <div key={category.title}>
-                      <h4 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-400 mb-3">
-                        {category.title}
-                      </h4>
-                      <div className="space-y-0.5">
-                        {category.tools.map((tool) => (
-                          <Link
-                            key={tool.name}
-                            href={`/${project.id}${tool.href}`}
-                            className="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-sm text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
-                          >
-                            <tool.icon className="h-4 w-4 text-neutral-400" />
-                            {tool.name}
-                          </Link>
+    <div className="min-h-screen bg-neutral-50">
+      <div className="px-6 lg:px-8">
+        {/* =====================================================================
+            Page Header
+            ===================================================================== */}
+        <div className="py-6 sm:py-8">
+          <PageShell.Header
+            eyebrow={project.client || undefined}
+            title={project.name || project["job number"] || "Untitled Project"}
+            size="hero"
+            actions={
+              <div className="flex items-center gap-3">
+                <ProjectChecklistSidebar
+                  projectId={String(project.id)}
+                  projectName={project.name || project["job number"] || "Project"}
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>
+                      Tools
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-[calc(100vw-2rem)] sm:w-[720px] lg:w-[800px] p-0 rounded-sm shadow-lg border-neutral-200"
+                  >
+                    <div className="p-6 sm:p-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
+                        {toolCategories.map((category) => (
+                          <div key={category.title}>
+                            <h4 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-400 mb-3">
+                              {category.title}
+                            </h4>
+                            <div className="space-y-0.5">
+                              {category.tools.map((tool) => (
+                                <Link
+                                  key={tool.name}
+                                  href={`/${project.id}${tool.href}`}
+                                  className="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-sm text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                                >
+                                  <tool.icon className="h-4 w-4 text-neutral-400" />
+                                  {tool.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        }
-      />
+            }
+          />
+        </div>
 
-      {/* =====================================================================
-          Main Content Grid
-          ===================================================================== */}
-      <div className="space-y-6 sm:space-y-8">
-
-        {/* -------------------------------------------------------------------
-            Project Team
-            ----------------------------------------------------------------- */}
-        <SectionCard
-          title="Project Team"
-          onAdd={() => setShowAddTeamMemberForm(true)}
-          viewAllHref={`/${project.id}/directory/users`}
-          open={isTeamOpen}
-          onOpenChange={setIsTeamOpen}
-        >
-          {project.team_members && Array.isArray(project.team_members) && project.team_members.length > 0 ? (
-            <div className="space-y-0">
-              {project.team_members.map((member, index) => {
-                // Parse the member if it's a string (JSON)
-                const parsedMember = typeof member === "string"
-                  ? (() => {
-                      try {
-                        return JSON.parse(member);
-                      } catch {
-                        return { name: member, role: "Role not specified" };
-                      }
-                    })()
-                  : member;
-
-                const memberName = parsedMember?.name || "Team Member";
-                const memberRole = parsedMember?.role || "Role not specified";
-                const initials = String(memberName).substring(0, 2).toUpperCase();
-
-                return (
-                  <div
-                    key={`team-${project.id}-${index}`}
-                    className="flex items-center gap-3 py-3 border-b border-neutral-100/80 last:border-0"
-                  >
-                    <Avatar className="h-9 w-9 border border-neutral-200/80">
-                      <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-neutral-900 truncate">
-                        {String(memberName)}
-                      </p>
-                      <p className="text-xs text-neutral-500 truncate">
-                        {String(memberRole)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              {showAddTeamMemberForm && (
-                <div className="mt-4 pt-4 border-t border-neutral-100">
-                  <InlineTeamMemberForm
-                    projectId={project.id}
-                    existingMembers={parseTeamMembers()}
-                    onSave={handleSaveTeamMembers}
-                    onCancel={() => setShowAddTeamMemberForm(false)}
-                  />
-                </div>
-              )}
-            </div>
-          ) : showAddTeamMemberForm ? (
-            <InlineTeamMemberForm
-              projectId={project.id}
-              existingMembers={parseTeamMembers()}
-              onSave={handleSaveTeamMembers}
-              onCancel={() => setShowAddTeamMemberForm(false)}
-            />
-          ) : (
-            <SectionCard.Empty
-              message="No team members assigned"
-              actionLabel="Add team member"
-              onAction={() => setShowAddTeamMemberForm(true)}
-            />
-          )}
-        </SectionCard>
-
-        {/* -------------------------------------------------------------------
-            Project Directory Summary
-            ----------------------------------------------------------------- */}
-        <DirectorySummary projectId={String(project.id)} />
-
-        {/* -------------------------------------------------------------------
-            Financial Overview
-            ----------------------------------------------------------------- */}
-        <PageShell.Section spacing="lg">
-          <h2 className="text-lg sm:text-xl font-light tracking-tight text-neutral-800 mb-4 sm:mb-6">
-            Financial Overview
-          </h2>
-          <MetricGrid cols={2}>
-            <MetricCard
-              label="Total Budget"
-              value={totalBudget}
-              format="currency"
+        {/* =====================================================================
+            Quick Navigation Links
+            ===================================================================== */}
+        <div className="mb-6">
+          <div className="flex items-center gap-6 overflow-x-auto pb-2">
+            <Link
               href={`/${project.id}/budget`}
-              size="sm"
-              action={
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2 text-xs"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    router.push(`/${project.id}/budget`);
-                  }}
-                >
-                  {budget.length > 0 ? "View" : "Create"}
-                </Button>
-              }
-            />
-            <MetricCard
-              label="Committed"
-              value={committed}
-              format="currency"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-orange-600 hover:bg-orange-50 rounded-sm transition-colors whitespace-nowrap"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Budget
+            </Link>
+            <Link
               href={`/${project.id}/commitments`}
-              size="sm"
-            />
-          </MetricGrid>
-        </PageShell.Section>
-
-        {/* -------------------------------------------------------------------
-            Prime Contracts
-            ----------------------------------------------------------------- */}
-        <SectionCard
-          title="Prime Contracts"
-          addHref={`/${project.id}/prime-contracts/new`}
-          viewAllHref={`/${project.id}/prime-contracts`}
-          open={isContractsOpen}
-          onOpenChange={setIsContractsOpen}
-        >
-          {contracts.length > 0 ? (
-            <div className="space-y-0">
-              {contracts.map((contract) => (
-                <SectionCard.Item
-                  key={contract.id}
-                  title={contract.title || `Contract #${contract.contract_number}`}
-                  subtitle={contract.contract_number || undefined}
-                  meta={contract.contract_amount ? formatCurrency(contract.contract_amount) : undefined}
-                  status={contract.status || undefined}
-                  href={`/${project.id}/contracts/${contract.id}`}
-                />
-              ))}
-            </div>
-          ) : (
-            <SectionCard.Empty
-              message="No prime contracts"
-              description="Create a contract to get started"
-              actionLabel="Add contract"
-              actionHref={`/${project.id}/prime-contracts/new`}
-            />
-          )}
-        </SectionCard>
-
-        {/* -------------------------------------------------------------------
-            Commitments
-            ----------------------------------------------------------------- */}
-        <SectionCard
-          title="Commitments"
-          addHref={`/${project.id}/commitments/new`}
-          viewAllHref={`/${project.id}/commitments`}
-          open={isCommitmentsOpen}
-          onOpenChange={setIsCommitmentsOpen}
-        >
-          {commitments.length > 0 ? (
-            <div className="space-y-0">
-              {commitments.slice(0, 5).map((commitment) => (
-                <SectionCard.Item
-                  key={commitment.id}
-                  title={commitment.title || `${commitment.type === "subcontract" ? "Subcontract" : "PO"} #${commitment.number}`}
-                  subtitle={commitment.number}
-                  badge={
-                    <SectionCard.Badge variant={commitment.type === "subcontract" ? "default" : "brand"}>
-                      {commitment.type === "subcontract" ? "SC" : "PO"}
-                    </SectionCard.Badge>
-                  }
-                  meta={commitment.contract_amount ? formatCurrency(commitment.contract_amount) : undefined}
-                  status={commitment.status}
-                  href={`/${project.id}/commitments/${commitment.id}`}
-                />
-              ))}
-            </div>
-          ) : (
-            <SectionCard.Empty
-              message="No commitments"
-              description="Create a subcontract or purchase order"
-              actionLabel="Add commitment"
-              actionHref={`/${project.id}/commitments/new`}
-            />
-          )}
-        </SectionCard>
-
-        {/* -------------------------------------------------------------------
-            Change Events
-            ----------------------------------------------------------------- */}
-        <SectionCard
-          title="Change Events"
-          addHref={`/${project.id}/change-events/new`}
-          viewAllHref={`/${project.id}/change-events`}
-          open={isChangeEventsOpen}
-          onOpenChange={setIsChangeEventsOpen}
-        >
-          {_changeEvents.length > 0 ? (
-            <div className="space-y-0">
-              {_changeEvents.slice(0, 5).map((event) => (
-                <SectionCard.Item
-                  key={event.id}
-                  title={event.title || `Change Event #${event.number}`}
-                  subtitle={event.number || undefined}
-                  badge={
-                    event.type && (
-                      <SectionCard.Badge variant={event.type === "client_change" ? "brand" : "default"}>
-                        {event.type === "client_change" ? "Client" :
-                         event.type === "field_change" ? "Field" :
-                         event.type === "design_change" ? "Design" :
-                         event.type}
-                      </SectionCard.Badge>
-                    )
-                  }
-                  meta={undefined}
-                  status={event.status || undefined}
-                  href={`/${project.id}/change-events/${event.id}`}
-                />
-              ))}
-            </div>
-          ) : (
-            <SectionCard.Empty
-              message="No change events"
-              description="Track project changes and their impacts"
-              actionLabel="Add change event"
-              actionHref={`/${project.id}/change-events/new`}
-            />
-          )}
-        </SectionCard>
-
-        {/* -------------------------------------------------------------------
-            Change Orders
-            ----------------------------------------------------------------- */}
-        <SectionCard
-              title="Change Orders"
-              viewAllHref={`/${project.id}/change-orders`}
-              hideCollapse
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-orange-600 hover:bg-orange-50 rounded-sm transition-colors whitespace-nowrap"
             >
-              {changeOrders.length > 0 ? (
-                <div className="space-y-0">
-                  {changeOrders.slice(0, 4).map((co) => (
-                    <SectionCard.Item
-                      key={co.id}
-                      title={`CO #${co.co_number || co.id}`}
-                      subtitle={co.title || undefined}
-                      href={`/${project.id}/change-orders/${co.id}`}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <SectionCard.Empty message="No change orders" />
-              )}
-            </SectionCard>
+              <ClipboardList className="h-4 w-4" />
+              Commitments
+            </Link>
+            <Link
+              href={`/${project.id}/schedule`}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-neutral-700 hover:text-orange-600 hover:bg-orange-50 rounded-sm transition-colors whitespace-nowrap"
+            >
+              <Calendar className="h-4 w-4" />
+              Schedule
+            </Link>
+          </div>
+        </div>
 
+        {/* =====================================================================
+            Primary Content Grid
+            ===================================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
 
-        {/* -------------------------------------------------------------------
-            Project Management - Accordion Style Sections
-            ----------------------------------------------------------------- */}
-        <PageShell.Section spacing="lg">
-          <h2 className="text-lg sm:text-xl font-light tracking-tight text-neutral-800 mb-4 sm:mb-6">
-            Project Management
-          </h2>
-          <div className="space-y-6 sm:space-y-8">
-            {/* Meetings */}
+          {/* =================================================================
+              LEFT COLUMN - Core Business Content (2/3 width)
+              ================================================================= */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* -------------------------------------------------------------------
+                Financial Overview
+                ----------------------------------------------------------------- */}
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Financial Overview</h2>
+              <MetricGrid>
+                <MetricCard
+                  label="Total Budget"
+                  value={totalBudget}
+                  format="currency"
+                />
+                <MetricCard
+                  label="Committed"
+                  value={committed}
+                  format="currency"
+                  subtitle={`${Math.round(commitmentPercentage)}% of budget`}
+                />
+                <MetricCard
+                  label="Remaining"
+                  value={remaining}
+                  format="currency"
+                />
+              </MetricGrid>
+            </div>
+
+            {/* -------------------------------------------------------------------
+                Commitments
+                ----------------------------------------------------------------- */}
             <SectionCard
-              title="Meetings"
-              addHref={`/${project.id}/meetings/new`}
-              viewAllHref={`/${project.id}/meetings`}
-              open={isMeetingsOpen}
-              onOpenChange={setIsMeetingsOpen}
+              title="Commitments"
+              addHref={`/${project.id}/commitments/new`}
+              viewAllHref={`/${project.id}/commitments`}
+              open={isCommitmentsOpen}
+              onOpenChange={setIsCommitmentsOpen}
             >
-              {meetings.length > 0 ? (
+              {commitments.length > 0 ? (
                 <div className="space-y-0">
-                  {meetings.slice(0, 5).map((meeting) => (
+                  {commitments.slice(0, 5).map((commitment) => (
                     <SectionCard.Item
-                      key={meeting.id}
-                      title={meeting.title || "Untitled Meeting"}
-                      subtitle={meeting.date ? format(new Date(meeting.date), "MMM d, yyyy") : undefined}
-                      href={`/${project.id}/meetings/${meeting.id}`}
+                      key={commitment.id}
+                      title={commitment.title || `${commitment.type === "subcontract" ? "Subcontract" : "PO"} #${commitment.number}`}
+                      subtitle={commitment.number}
+                      badge={
+                        <SectionCard.Badge variant={commitment.type === "subcontract" ? "default" : "brand"}>
+                          {commitment.type === "subcontract" ? "SC" : "PO"}
+                        </SectionCard.Badge>
+                      }
+                      meta={commitment.contract_amount ? formatCurrency(commitment.contract_amount) : undefined}
+                      status={commitment.status}
+                      href={`/${project.id}/commitments/${commitment.id}`}
                     />
                   ))}
                 </div>
               ) : (
                 <SectionCard.Empty
-                  message="No meetings scheduled"
-                  description="Schedule project meetings"
-                  actionLabel="Add meeting"
-                  actionHref={`/${project.id}/meetings/new`}
+                  message="No commitments"
+                  description="Create a subcontract or purchase order"
+                  actionLabel="Add commitment"
+                  actionHref={`/${project.id}/commitments/new`}
                 />
               )}
             </SectionCard>
 
-            {/* Tasks */}
+            {/* -------------------------------------------------------------------
+                Schedule
+                ----------------------------------------------------------------- */}
             <SectionCard
-              title="Tasks"
-              addHref={`/${project.id}/tasks/new`}
-              viewAllHref={`/${project.id}/tasks`}
-              open={isTasksOpen}
-              onOpenChange={setIsTasksOpen}
+              title="Schedule"
+              addHref={`/${project.id}/schedule/new`}
+              viewAllHref={`/${project.id}/schedule`}
+              open={isScheduleOpen}
+              onOpenChange={setIsScheduleOpen}
             >
               {tasks.length > 0 ? (
                 <div className="space-y-0">
                   {tasks.slice(0, 5).map((task) => (
                     <SectionCard.Item
                       key={task.id}
-                      title={task.task_description || "Untitled Task"}
-                      subtitle={task.due_date ? `Due ${format(new Date(task.due_date), "MMM d")}` : undefined}
-                      badge={
-                        task.status && (
-                          <SectionCard.Badge variant={task.status === "completed" ? "success" : "default"}>
-                            {task.status}
-                          </SectionCard.Badge>
-                        )
-                      }
+                      title={task.task_description || `Task #${task.id}`}
+                      subtitle={task.due_date ? format(new Date(task.due_date), "MMM d, yyyy") : undefined}
+                      meta={task.assigned_to ? String(task.assigned_to) : undefined}
+                      status={task.status || undefined}
                       href={`/${project.id}/tasks/${task.id}`}
                     />
                   ))}
                 </div>
               ) : (
                 <SectionCard.Empty
-                  message="No active tasks"
-                  description="Create and track project tasks"
+                  message="No scheduled tasks"
+                  description="Create a task to get started"
                   actionLabel="Add task"
-                  actionHref={`/${project.id}/tasks/new`}
+                  actionHref={`/${project.id}/schedule/new`}
                 />
               )}
-            </SectionCard>
-
-            {/* RFIs */}
-            <SectionCard
-              title="RFIs"
-              addHref={`/${project.id}/rfis/new`}
-              viewAllHref={`/${project.id}/rfis`}
-              open={isRFIsOpen}
-              onOpenChange={setIsRFIsOpen}
-            >
-              {rfis.length > 0 ? (
-                <div className="space-y-0">
-                  {rfis.slice(0, 5).map((rfi) => (
-                    <SectionCard.Item
-                      key={rfi.id}
-                      title={`RFI #${rfi.number || rfi.id}`}
-                      subtitle={rfi.subject || undefined}
-                      badge={
-                        rfi.status && (
-                          <SectionCard.Badge variant={rfi.status === "closed" ? "success" : "warning"}>
-                            {rfi.status}
-                          </SectionCard.Badge>
-                        )
-                      }
-                      href={`/${project.id}/rfis/${rfi.id}`}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <SectionCard.Empty
-                  message="No active RFIs"
-                  description="Submit requests for information"
-                  actionLabel="Add RFI"
-                  actionHref={`/${project.id}/rfis/new`}
-                />
-              )}
-            </SectionCard>
-
-            {/* Submittals */}
-            <SectionCard
-              title="Submittals"
-              addHref={`/${project.id}/submittals/new`}
-              viewAllHref={`/${project.id}/submittals`}
-              open={isSubmittalsOpen}
-              onOpenChange={setIsSubmittalsOpen}
-            >
-              <SectionCard.Empty
-                message="No submittals"
-                description="Track project submittals and approvals"
-                actionLabel="Add submittal"
-                actionHref={`/${project.id}/submittals/new`}
-              />
-            </SectionCard>
-
-            {/* Documents */}
-            <SectionCard
-              title="Documents"
-              addHref={`/${project.id}/documents/new`}
-              viewAllHref={`/${project.id}/documents`}
-              open={isDocumentsOpen}
-              onOpenChange={setIsDocumentsOpen}
-            >
-              <SectionCard.Empty
-                message="No recent documents"
-                description="Upload and manage project documents"
-                actionLabel="Upload document"
-                actionHref={`/${project.id}/documents/new`}
-              />
             </SectionCard>
           </div>
-        </PageShell.Section>
 
-        {/* -------------------------------------------------------------------
-            Additional Sections - Drawings, Photos
-            ----------------------------------------------------------------- */}
-        <PageShell.Section spacing="xl">
-          <PageShell.Grid cols={2} gap="lg">
-            {/* Drawings */}
-            <div>
-              <h2 className="text-lg sm:text-xl font-light tracking-tight text-neutral-800 mb-4">
-                Drawings
-              </h2>
-              <div className="bg-white border border-neutral-200/80 shadow-[0_1px_2px_0_rgb(0_0_0/0.03)] p-8 sm:p-12">
-                <div className="flex flex-col items-center justify-center text-center">
-                  <FileText className="h-10 w-10 text-neutral-300 mb-3" />
-                  <p className="text-sm text-neutral-400">No drawings uploaded</p>
+          {/* =================================================================
+              RIGHT COLUMN - Team & Quick Links (1/3 width)
+              ================================================================= */}
+          <div className="space-y-6">
+
+            {/* -------------------------------------------------------------------
+                Project Team
+                ----------------------------------------------------------------- */}
+            <SectionCard
+              title="Project Team"
+              onAdd={() => setShowAddTeamMemberForm(true)}
+              viewAllHref={`/${project.id}/directory/users`}
+              open={isTeamOpen}
+              onOpenChange={setIsTeamOpen}
+            >
+              {project.team_members && Array.isArray(project.team_members) && project.team_members.length > 0 ? (
+                <div className="space-y-0">
+                  {project.team_members.map((member, index) => {
+                    const parsedMember = typeof member === "string"
+                      ? (() => {
+                          try {
+                            return JSON.parse(member);
+                          } catch {
+                            return { name: member, role: "Role not specified" };
+                          }
+                        })()
+                      : member;
+
+                    const memberName = parsedMember?.name || "Team Member";
+                    const memberRole = parsedMember?.role || "Role not specified";
+                    const initials = String(memberName).substring(0, 2).toUpperCase();
+
+                    return (
+                      <div
+                        key={`team-${project.id}-${index}`}
+                        className="flex items-center gap-3 py-3 border-b border-neutral-100/80 last:border-0"
+                      >
+                        <Avatar className="h-9 w-9 border border-neutral-200/80">
+                          <AvatarFallback className="bg-orange-50 text-orange-600 text-xs font-medium">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-neutral-900 truncate">
+                            {String(memberName)}
+                          </p>
+                          <p className="text-xs text-neutral-500 truncate">
+                            {String(memberRole)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {showAddTeamMemberForm && (
+                    <div className="mt-4 pt-4 border-t border-neutral-100">
+                      <InlineTeamMemberForm
+                        projectId={project.id}
+                        existingMembers={parseTeamMembers()}
+                        onSave={handleSaveTeamMembers}
+                        onCancel={() => setShowAddTeamMemberForm(false)}
+                      />
+                    </div>
+                  )}
                 </div>
+              ) : showAddTeamMemberForm ? (
+                <InlineTeamMemberForm
+                  projectId={project.id}
+                  existingMembers={parseTeamMembers()}
+                  onSave={handleSaveTeamMembers}
+                  onCancel={() => setShowAddTeamMemberForm(false)}
+                />
+              ) : (
+                <SectionCard.Empty
+                  message="No team members assigned"
+                  actionLabel="Add team member"
+                  onAction={() => setShowAddTeamMemberForm(true)}
+                />
+              )}
+            </SectionCard>
+
+            {/* -------------------------------------------------------------------
+                Directory Summary
+                ----------------------------------------------------------------- */}
+            <DirectorySummary projectId={String(project.id)} />
+
+            {/* -------------------------------------------------------------------
+                Quick Links - Clean, minimal design inspired by design inspiration
+                ----------------------------------------------------------------- */}
+            <div className="bg-white rounded-lg border border-neutral-200/80 shadow-sm p-4">
+              <h3 className="text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-brand mb-4">Quick Links</h3>
+              <div className="space-y-1">
+                <Link
+                  href={`/${project.id}/meetings`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Meetings</span>
+                  {meetings.length > 0 && (
+                    <span className="text-xs bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                      {meetings.length}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href={`/${project.id}/tasks`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Tasks</span>
+                  {activeTasks > 0 && (
+                    <span className="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">
+                      {activeTasks}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href={`/${project.id}/rfis`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>RFIs</span>
+                  {activeRFIs > 0 && (
+                    <span className="text-xs bg-yellow-100 text-yellow-600 px-1.5 py-0.5 rounded">
+                      {activeRFIs}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href={`/${project.id}/change-orders`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Change Orders</span>
+                  {changeOrders.length > 0 && (
+                    <span className="text-xs bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                      {changeOrders.length}
+                    </span>
+                  )}
+                </Link>
+
+                <Link
+                  href={`/${project.id}/change-events`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Change Events</span>
+                  {_changeEvents.length > 0 && (
+                    <span className="text-xs bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                      {_changeEvents.length}
+                    </span>
+                  )}
+                </Link>
+
+                <div className="border-t border-neutral-100 my-2"></div>
+
+                <Link
+                  href={`/${project.id}/submittals`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Submittals</span>
+                </Link>
+
+                <Link
+                  href={`/${project.id}/documents`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Documents</span>
+                </Link>
+
+                <Link
+                  href={`/${project.id}/drawings`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Drawings</span>
+                </Link>
+
+                <Link
+                  href={`/${project.id}/photos`}
+                  className="flex items-center justify-between py-2 px-3 rounded text-sm text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900 transition-colors"
+                >
+                  <span>Photos</span>
+                </Link>
               </div>
             </div>
-
-            {/* Photos */}
-            <div>
-              <h2 className="text-lg sm:text-xl font-light tracking-tight text-neutral-800 mb-4">
-                Photos
-              </h2>
-              <div className="bg-white border border-neutral-200/80 shadow-[0_1px_2px_0_rgb(0_0_0/0.03)] p-8 sm:p-12">
-                <div className="flex flex-col items-center justify-center text-center">
-                  <Upload className="h-10 w-10 text-neutral-300 mb-3" />
-                  <p className="text-sm text-neutral-400">No photos uploaded</p>
-                </div>
-              </div>
-            </div>
-          </PageShell.Grid>
-        </PageShell.Section>
-
+          </div>
+        </div>
       </div>
-    </PageShell>
+    </div>
   );
 }

@@ -23,6 +23,8 @@ type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface ContactWithCompany extends Contact {
   company?: Company | null;
+  auth_user_id?: string | null;
+  is_admin?: boolean | null;
 }
 
 export default function DirectoryContactsPage() {
@@ -35,19 +37,50 @@ export default function DirectoryContactsPage() {
   const fetchContacts = React.useCallback(async () => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
+
+      // Fetch people with their auth user and admin status
+      const { data: peopleData, error: peopleError } = await supabase
         .from("people")
         .select(
           `
           *,
           company:companies(*)
-        `,
+        `
         )
-        .eq("person_type", "contact")
         .order("last_name", { ascending: true });
 
-      if (error) throw error;
-      setContacts(data || []);
+      if (peopleError) throw peopleError;
+
+      // For each person, try to get their auth_user_id and admin status
+      const contactsWithAuth = await Promise.all(
+        (peopleData || []).map(async (person) => {
+          // Get auth link
+          const { data: authLink } = await supabase
+            .from("users_auth")
+            .select("auth_user_id")
+            .eq("person_id", person.id)
+            .maybeSingle();
+
+          // Get admin status if they have an auth account
+          let isAdmin = null;
+          if (authLink?.auth_user_id) {
+            const { data: profile } = await supabase
+              .from("user_profiles")
+              .select("is_admin")
+              .eq("id", authLink.auth_user_id)
+              .maybeSingle();
+            isAdmin = profile?.is_admin || false;
+          }
+
+          return {
+            ...person,
+            auth_user_id: authLink?.auth_user_id || null,
+            is_admin: isAdmin,
+          };
+        })
+      );
+
+      setContacts(contactsWithAuth);
     } catch (err) {
       setError(err as Error);
     } finally {
@@ -77,8 +110,11 @@ export default function DirectoryContactsPage() {
       last_name: contact.last_name,
       email: contact.email || "",
       phone: contact.phone_business || contact.phone_mobile || "",
+      type: contact.person_type || "",
       company: contact.company?.name || "",
       created_at: contact.created_at,
+      auth_user_id: contact.auth_user_id,
+      is_admin: contact.is_admin,
     }));
   }, [contacts]);
 
@@ -98,6 +134,12 @@ export default function DirectoryContactsPage() {
         type: "email",
       },
       {
+        id: "type",
+        label: "Type",
+        defaultVisible: true,
+        type: "text",
+      },
+      {
         id: "company",
         label: "Company",
         defaultVisible: true,
@@ -108,6 +150,12 @@ export default function DirectoryContactsPage() {
         label: "Phone",
         defaultVisible: true,
         type: "text",
+      },
+      {
+        id: "is_admin",
+        label: "Admin Access",
+        defaultVisible: true,
+        type: "boolean",
       },
       {
         id: "created_at",
