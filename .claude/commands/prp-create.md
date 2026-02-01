@@ -24,7 +24,122 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 > During the research process, create clear tasks and spawn as many agents and subagents as needed using the batch tools. The deeper research we do here the better the PRP will be. we optminize for chance of success and not for speed.
 
-### 0. Procore Crawl Data & Spec Artifacts (CRITICAL for Procore features)
+### 0. MANDATORY: Supabase Types Generation & Review (CRITICAL - DO THIS FIRST)
+
+**BEFORE ANY CODE ANALYSIS OR WRITING**, you MUST generate and review current Supabase types:
+
+```bash
+# Generate fresh Supabase types
+npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
+```
+
+**Then READ the generated types file:**
+```
+frontend/src/types/database.types.ts
+```
+
+**Required Analysis:**
+- [ ] Identify ALL tables that exist in the database
+- [ ] For tables related to this feature, document:
+  - Column names and their TypeScript types
+  - Which columns are nullable (type | null)
+  - Primary key type (number = INTEGER, string = UUID)
+  - Foreign key relationships and their types
+- [ ] **CRITICAL**: Verify FK column types match PK types:
+  - `projects.id` is `number` → any `project_id` FK must be `INTEGER`
+  - `users.id` is `string` → any `user_id` FK must be `UUID`
+  - `people.id` is `string` → any `person_id` FK must be `UUID`
+
+**Add to PRP Context:**
+Include a "Database Schema" section in the PRP with:
+- Current table structures from database.types.ts
+- FK type requirements (INTEGER vs UUID)
+- Any schema changes needed for this feature
+
+**Why This Matters:**
+- Prevents UUID/INTEGER type mismatches (caused 3+ bugs)
+- Ensures code matches actual database schema
+- Catches missing tables/columns before coding starts
+
+### 1. Pattern Review & Historical Error Prevention (MANDATORY)
+
+**BEFORE writing any PRP content**, review historical errors and patterns to avoid repeating mistakes:
+
+**Step 1: Read Incident Log**
+```
+docs-ai-linked/contents/docs/patterns/INCIDENT-LOG.md
+```
+- Identify all 🔴 CRITICAL and 🟡 WARNING incidents
+- Note any incidents related to this feature domain
+- Document prevention systems that must be followed
+
+**Step 2: Review Relevant Pattern Files**
+
+Based on the feature type, read relevant pattern documentation:
+
+| Feature Type | Required Pattern Files |
+|-------------|----------------------|
+| Database/API changes | `database-issues.md`, `api-routing-errors.md` |
+| Authentication/Auth | `authentication-errors.md` |
+| Testing/E2E | `testing-errors.md`, `PLAYWRIGHT-PATTERNS.mdx` |
+| UI Components | `ui-errors.md` |
+| TypeScript changes | `typescript-errors.md` |
+
+**Pattern File Locations:**
+```
+docs-ai-linked/contents/docs/patterns/
+├── INCIDENT-LOG.md                    # Comprehensive incident history
+├── database-issues.md                 # Schema and query problems
+├── api-routing-errors.md              # Route and endpoint failures
+├── authentication-errors.md           # Permission and login issues
+├── testing-errors.md                  # Test failures and patterns
+├── typescript-errors.md               # Type errors and solutions
+├── ui-errors.md                       # UI/UX issues
+└── PLAYWRIGHT-PATTERNS.mdx            # E2E testing best practices
+```
+
+**Step 3: Extract Applicable Patterns**
+
+For each pattern file reviewed, extract:
+- **Common Mistakes**: What errors happened repeatedly?
+- **Root Causes**: Why did they happen?
+- **Prevention Rules**: What must be done to avoid them?
+- **Validation Commands**: How to verify the fix?
+
+**Step 4: Add to PRP**
+
+Create a "Known Pitfalls & Prevention" section in the PRP that includes:
+- All relevant historical errors that apply to this feature
+- Specific prevention rules from pattern files
+- Validation commands to avoid these errors
+- Links to pattern documentation for reference
+
+**Example Format:**
+```markdown
+## Known Pitfalls & Prevention
+
+### From Pattern Analysis (Mandatory Review)
+
+#### Database Type Mismatches (INCIDENT-LOG.md - CRITICAL)
+**Historical Error:** Used UUID for project_id when projects.id is INTEGER
+**Prevention:** Always verify FK types match PK types in database.types.ts before creating migrations
+**Validation:** `grep "project_id" migration.sql` and verify type is INTEGER
+
+#### Next.js Route Caching (INCIDENT-LOG.md - CRITICAL)
+**Historical Error:** New page.tsx files showing 404 due to .next cache
+**Prevention:** Clear .next cache after creating new route files
+**Validation:** `rm -rf .next && npm run dev`
+
+[Additional patterns specific to this feature...]
+```
+
+**Why This Matters:**
+- Prevents repeating the same mistakes (saved hours of debugging)
+- Ensures PRP includes prevention rules from past incidents
+- Makes executing agent aware of common pitfalls upfront
+- Reduces implementation failures from known issues
+
+### 2. Procore Crawl Data & Spec Artifacts (CRITICAL for Procore features)
 
 Before starting codebase analysis, check for existing Procore crawl data and spec artifacts:
 
@@ -125,7 +240,7 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 
 If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
 
-1. **TypeScript/React Codebase Analysis in depth**
+### 3. TypeScript/React Codebase Analysis in depth
    - Create clear todos and spawn subagents to search the codebase for similar features/patterns Think hard and plan your approach
    - Identify all the necessary TypeScript files to reference in the PRP
    - Note all existing TypeScript/React conventions to follow
@@ -134,7 +249,7 @@ If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
    - Check existing test patterns for React components and TypeScript code validation approach
    - Use the batch tools to spawn subagents to search the codebase for similar features/patterns
 
-2. **TypeScript/React External Research at scale**
+### 4. TypeScript/React External Research at scale
    - Create clear todos and spawn with instructions subagents to do deep research for similar features/patterns online and include urls to documentation and examples
    - TypeScript documentation (include specific URLs with version compatibility)
    - React/Next.js documentation (include specific URLs for App Router, Server Components, etc.)
@@ -143,7 +258,7 @@ If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
    - Best practices and common pitfalls found during research (TypeScript compilation issues, React hydration, Next.js gotchas)
    - Use the batch tools to spawn subagents to search for similar features/patterns online and include urls to documentation and examples
 
-3. **User Clarification**
+### 5. User Clarification
    - Ask for clarification if you need it
 
 ## PRP Generation Process
@@ -227,6 +342,20 @@ Generate `prp-{feature-name}.html` for browser viewing:
 
 ## TypeScript PRP Quality Gates
 
+### Mandatory Prerequisites (MUST BE COMPLETED FIRST)
+
+- [ ] **Supabase types generated and reviewed** (Step 0 completed)
+  - [ ] database.types.ts read and analyzed
+  - [ ] All relevant table structures documented in PRP
+  - [ ] FK type requirements identified (INTEGER vs UUID)
+  - [ ] "Database Schema" section added to PRP context
+- [ ] **Pattern review completed** (Step 1 completed)
+  - [ ] INCIDENT-LOG.md reviewed for critical/warning incidents
+  - [ ] Relevant pattern files read based on feature type
+  - [ ] Common mistakes and prevention rules extracted
+  - [ ] "Known Pitfalls & Prevention" section added to PRP
+  - [ ] Historical errors specific to this feature domain documented
+
 ### Context Completeness Check
 
 - [ ] Passes "No Prior Knowledge" test from TypeScript template
@@ -234,6 +363,8 @@ Generate `prp-{feature-name}.html` for browser viewing:
 - [ ] Implementation tasks include exact TypeScript naming and placement guidance
 - [ ] Validation commands are TypeScript/React-specific and verified working
 - [ ] TypeScript interface definitions and component prop types are specified
+- [ ] Database schema section includes FK type requirements from database.types.ts
+- [ ] Known pitfalls section includes prevention rules from pattern analysis
 
 ### Template Structure Compliance
 
@@ -263,9 +394,24 @@ Generate `prp-{feature-name}.html` for browser viewing:
 
 Before marking PRP creation complete, verify:
 
+### Mandatory Prerequisites Completed
+- [ ] **Step 0: Supabase types generated and reviewed**
+  - [ ] `npx supabase gen types...` command executed
+  - [ ] `database.types.ts` file read and analyzed
+  - [ ] Database Schema section added to PRP
+  - [ ] FK type requirements (INTEGER vs UUID) documented
+- [ ] **Step 1: Pattern review completed**
+  - [ ] INCIDENT-LOG.md reviewed
+  - [ ] Relevant pattern files (database-issues.md, api-routing-errors.md, etc.) reviewed
+  - [ ] Known Pitfalls & Prevention section added to PRP
+  - [ ] Historical errors documented with prevention rules
+
+### PRP Content Completeness
 - [ ] `prp-{feature-name}.md` created with all template sections
 - [ ] `TASKS.md` generated with all implementation tasks as checkboxes
 - [ ] `prp-{feature-name}.html` generated for browser viewing
 - [ ] Crawl data integrated (if available): commands, screenshots, schema
+- [ ] Database Schema section includes current table structures and FK requirements
+- [ ] Known Pitfalls & Prevention section includes applicable historical errors
 - [ ] Confidence score documented (minimum 8/10)
 - [ ] Ready for `/prp-quality` validation

@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/github/alleato-pm
 export type Json =
   | string
   | number

@@ -197,7 +197,12 @@ export function DirectCostForm({
           setEmployees(await employeesRes.json())
         }
         if (budgetCodesRes.ok) {
-          setBudgetCodes(await budgetCodesRes.json())
+          const budgetCodesData = await budgetCodesRes.json()
+          setBudgetCodes(
+            Array.isArray(budgetCodesData)
+              ? budgetCodesData
+              : budgetCodesData.budgetCodes || []
+          )
         }
       } catch (error) {
         toast.error('Failed to load form options')
