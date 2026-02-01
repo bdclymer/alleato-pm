@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { getGravatarUrlClient } from "@/lib/gravatar";
 
 interface ProfileImageUploadProps {
   currentImage?: string;
@@ -158,14 +159,8 @@ export function ProfileImageUpload({
     }
   };
 
-  // Generate Gravatar URL as fallback
-  const getGravatarUrl = (email: string) => {
-    // Simple MD5 hash for Gravatar (in production, use a proper crypto library)
-    const hash = email.trim().toLowerCase();
-    return `https://www.gravatar.com/avatar/${hash}?d=mp&s=200`;
-  };
-
-  const displayImage = previewUrl || currentImage || getGravatarUrl(userEmail);
+  const displayImage =
+    previewUrl || currentImage || getGravatarUrlClient(userEmail);
 
   return (
     <>

@@ -42,27 +42,14 @@ export type UnitType = (typeof UnitTypes)[number];
 // HELPER SCHEMAS
 // =============================================================================
 
-// Numeric string validation following budget.ts pattern
-const numericString = z
-  .string()
-  .trim()
-  .refine((val) => val === '' || !Number.isNaN(Number(val)), 'Must be numeric');
+// Numeric validation - accepts both strings and numbers from form inputs
+const positiveNumber = z.coerce
+  .number({ invalid_type_error: 'Must be a number' })
+  .positive('Must be a positive number');
 
-const positiveNumericString = z
-  .string()
-  .trim()
-  .refine(
-    (val) => val !== '' && !Number.isNaN(Number(val)) && Number(val) > 0,
-    'Must be a positive number'
-  );
-
-const nonNegativeNumericString = z
-  .string()
-  .trim()
-  .refine(
-    (val) => val !== '' && !Number.isNaN(Number(val)) && Number(val) >= 0,
-    'Must be zero or positive'
-  );
+const nonNegativeNumber = z.coerce
+  .number({ invalid_type_error: 'Must be a number' })
+  .min(0, 'Must be zero or positive');
 
 // Optional string transformation following existing pattern
 const optionalString = z
@@ -88,9 +75,9 @@ export const DirectCostLineItemSchema = z.object({
   id: uuidSchema.optional(), // Optional for new items
   budget_code_id: uuidSchema,
   description: optionalString,
-  quantity: positiveNumericString.transform(Number),
+  quantity: positiveNumber,
   uom: z.enum(UnitTypes).default('LOT'),
-  unit_cost: nonNegativeNumericString.transform(Number),
+  unit_cost: nonNegativeNumber,
   line_order: z.number().int().positive().optional(),
 });
 

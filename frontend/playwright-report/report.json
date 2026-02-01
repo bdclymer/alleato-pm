@@ -10,14 +10,18 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 1
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "setup",
         "name": "setup",
         "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
@@ -25,13 +29,15 @@
         "testMatch": [
           "/.*\\.setup\\.ts/"
         ],
-        "timeout": 60000
+        "timeout": 90000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
@@ -39,13 +45,15 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 60000
+        "timeout": 90000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "debug",
         "name": "debug",
         "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
@@ -53,13 +61,15 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 60000
+        "timeout": 90000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 1
+        },
         "id": "no-auth",
         "name": "no-auth",
         "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
@@ -67,7 +77,7 @@
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
         ],
-        "timeout": 60000
+        "timeout": 90000
       }
     ],
     "quiet": false,
@@ -107,19 +117,879 @@
       "reuseExistingServer": true
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Timed out waiting 60000ms from config.webServer.",
-      "stack": "Error: Timed out waiting 60000ms from config.webServer."
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 131,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "Reusing valid auth state (cookie not expired)\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-02-01T11:58:38.730Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
+          "file": "auth.setup.ts",
+          "line": 11,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "e2e/change-events-e2e.spec.ts",
+      "file": "e2e/change-events-e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Change Events - E2E Test Suite",
+          "file": "e2e/change-events-e2e.spec.ts",
+          "line": 25,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "1. List Page",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 30,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should load list page without errors",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1810,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:39.654Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-7c40d-ad-list-page-without-errors-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-66f1ef48560e59285281",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 31,
+                  "column": 9
+                },
+                {
+                  "title": "should show empty state OR data table",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1758,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:41.583Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-ac3b8-w-empty-state-OR-data-table-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-df85ad9657c3978c8123",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 50,
+                  "column": 9
+                },
+                {
+                  "title": "should have working filter tabs",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 7030,
+                          "errors": [],
+                          "stdout": [
+                            {
+                              "text": "Filter tabs not found, likely no data or filters\n"
+                            }
+                          ],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:43.345Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-fe6fd-ld-have-working-filter-tabs-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-189914c70c987beef6e6",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 63,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "2. Create Form",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 85,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should navigate to create form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3057,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:50.381Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-dd7fc-uld-navigate-to-create-form-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-bde97835e29b8eecb6ef",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 86,
+                  "column": 9
+                },
+                {
+                  "title": "should show form validation for required fields",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4060,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:53.443Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-18301-idation-for-required-fields-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-cb6f5f399ab59e588b33",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 104,
+                  "column": 9
+                },
+                {
+                  "title": "should successfully create a change event",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 5888,
+                          "errors": [],
+                          "stdout": [
+                            {
+                              "text": "✅ Created change event with ID: new\n"
+                            }
+                          ],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:58:57.509Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-eb1cc-fully-create-a-change-event-chromium/test-finished-1.png"
+                            }
+                          ]
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-0622ca67caef1381a702",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 131,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "3. Detail View",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 210,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should display change event details",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 2834,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/change-events-e2e.spec.ts:230:24",
+                            "location": {
+                              "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/change-events-e2e.spec.ts",
+                              "column": 24,
+                              "line": 230
+                            },
+                            "snippet": "  228 |       });\n  229 |\n> 230 |       expect(hasTitle).toBe(true);\n      |                        ^\n  231 |     });\n  232 |\n  233 |     test('should have tabs for different sections', async ({ page }) => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/change-events-e2e.spec.ts",
+                                "column": 24,
+                                "line": 230
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  228 |       });\n  229 |\n> 230 |       expect(hasTitle).toBe(true);\n      |                        ^\n  231 |     });\n  232 |\n  233 |     test('should have tabs for different sections', async ({ page }) => {\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/change-events-e2e.spec.ts:230:24"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:03.402Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-e7808-isplay-change-event-details-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-e7808-isplay-change-event-details-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-events-e2e-Chan-e7808-isplay-change-event-details-chromium/error-context.md"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/change-events-e2e.spec.ts",
+                            "column": 24,
+                            "line": 230
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-ec4a32897b5877b2124e",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 211,
+                  "column": 9
+                },
+                {
+                  "title": "should have tabs for different sections",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-40e45ac3c300a7a98960",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 233,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "4. Update/Edit",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 253,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should navigate to edit form",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-a05e548f8051776e0601",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 254,
+                  "column": 9
+                },
+                {
+                  "title": "should update change event successfully",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-abcbd1343649c7332f4b",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 280,
+                  "column": 9
+                },
+                {
+                  "title": "should persist updated values",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-626d6212bc104d2db33b",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 312,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "5. Line Items",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 333,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should show line items section",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-413f3324943f5e951f9d",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 334,
+                  "column": 9
+                },
+                {
+                  "title": "should have option to add line items",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-8af5ef55f0f4d6281bf8",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 357,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "6. Delete",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 385,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should soft delete change event",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-4a597e734e68f7caf751",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 386,
+                  "column": 9
+                },
+                {
+                  "title": "should not show deleted item in list",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-25927cb26ece93898925",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 428,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "7. Error Handling",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 450,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "should handle invalid project ID",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-45f4e79ac40b512aa05d",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 451,
+                  "column": 9
+                },
+                {
+                  "title": "should handle non-existent change event ID",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-67f1d5a940cf3506fe8b",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 464,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "8. Performance",
+              "file": "e2e/change-events-e2e.spec.ts",
+              "line": 476,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "list page should load within 5 seconds",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-0950c35d49bfa228638c",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 477,
+                  "column": 9
+                },
+                {
+                  "title": "create form should load within 5 seconds",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 90000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": -1,
+                          "parallelIndex": -1,
+                          "status": "skipped",
+                          "duration": 0,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-02-01T11:59:06.262Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "54ea6af2237dfc6fab8c-bb529919905b9710fe5c",
+                  "file": "e2e/change-events-e2e.spec.ts",
+                  "line": 489,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2026-02-01T11:38:38.488Z",
-    "duration": 63398.638,
-    "expected": 0,
-    "skipped": 0,
-    "unexpected": 0,
+    "startTime": "2026-02-01T11:58:37.802Z",
+    "duration": 28474.116,
+    "expected": 7,
+    "skipped": 12,
+    "unexpected": 1,
     "flaky": 0
   }
 }

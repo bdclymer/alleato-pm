@@ -10,6 +10,20 @@ const nextConfig: NextConfig = {
     // Skip ESLint during build (for faster deployments)
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lgveqfnpkxvzbnnwuled.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.gravatar.com",
+        pathname: "/avatar/**",
+      },
+    ],
+  },
   // Set the workspace root to silence Next.js warning about multiple lockfiles
   outputFileTracingRoot: path.join(__dirname, "../"),
   // Security headers (OWASP best practices)
