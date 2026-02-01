@@ -30,7 +30,7 @@ export async function GET(
       .from('change_events')
       .select('id')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .single();
 
     if (eventError || !changeEvent) {
@@ -56,7 +56,7 @@ export async function GET(
         `,
         { count: 'exact' }
       )
-      .eq('change_event_id', parseInt(changeEventId, 10))
+      .eq('change_event_id', changeEventId)
       .order('changed_at', { ascending: false })
       .range(from, to);
 

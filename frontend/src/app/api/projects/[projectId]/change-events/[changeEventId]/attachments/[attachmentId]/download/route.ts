@@ -30,7 +30,7 @@ export async function GET(
       .from('change_events')
       .select('id')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -45,8 +45,8 @@ export async function GET(
     const { data: attachment, error: fetchError } = await supabase
       .from('change_event_attachments')
       .select('file_path, file_name, mime_type')
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(attachmentId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', attachmentId)
       .single();
 
     if (fetchError || !attachment) {
