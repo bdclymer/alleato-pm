@@ -95,6 +95,7 @@ export function InlineBudgetLineItemCreator({
   const [openPopoverId, setOpenPopoverId] = React.useState<number | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
+  const [currentRowIndex, setCurrentRowIndex] = React.useState<number | null>(null);
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
@@ -216,6 +217,14 @@ export function InlineBudgetLineItemCreator({
     return (qtyNum * costNum).toFixed(2);
   };
 
+  const formatCurrency = (value: string): string => {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   const handleRowChange = (
     index: number,
     field: keyof InlineLineItemData,
@@ -297,9 +306,22 @@ export function InlineBudgetLineItemCreator({
       const { budgetCode: createdCode } = await response.json();
 
       setBudgetCodes([...budgetCodes, createdCode]);
+
+      // Auto-populate the newly created budget code on the row that triggered the modal
+      if (currentRowIndex !== null) {
+        setRows(
+          rows.map((row, i) =>
+            i === currentRowIndex
+              ? { ...row, budgetCodeId: createdCode.id, budgetCodeLabel: createdCode.fullLabel }
+              : row
+          )
+        );
+      }
+
       setShowCreateCodeModal(false);
       setNewCodeData({ costCodeId: "", costType: "L" });
-      toast.success("Budget code created successfully");
+      setCurrentRowIndex(null);
+      toast.success("Budget code created and applied successfully");
     } catch (error) {
       toast.error(
         `Failed to create budget code: ${
@@ -437,6 +459,7 @@ export function InlineBudgetLineItemCreator({
                           <CommandGroup>
                             <CommandItem
                               onSelect={() => {
+                                setCurrentRowIndex(index);
                                 setOpenPopoverId(null);
                                 setShowCreateCodeModal(true);
                               }}
@@ -460,9 +483,16 @@ export function InlineBudgetLineItemCreator({
                     step="0.001"
                     value={row.qty}
                     onChange={(e) => handleRowChange(index, "qty", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        addRow();
+                      }
+                    }}
                     placeholder="0"
                     className="h-9"
                     disabled={isCreating}
+                    tabIndex={index * 5 + 1}
                   />
                 </div>
 
@@ -497,9 +527,16 @@ export function InlineBudgetLineItemCreator({
                     step="0.01"
                     value={row.unitCost}
                     onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        addRow();
+                      }
+                    }}
                     placeholder="0.00"
                     className="h-9"
                     disabled={isCreating}
+                    tabIndex={index * 5 + 3}
                   />
                 </div>
 
@@ -507,15 +544,29 @@ export function InlineBudgetLineItemCreator({
                 <div className="col-span-2">
                   <Label className="text-xs">Amount*</Label>
                   <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={row.amount}
-                      onChange={(e) => handleRowChange(index, "amount", e.target.value)}
-                      placeholder="0.00"
-                      className="h-9 font-medium"
-                      disabled={isCreating}
-                    />
+                    <div className="relative w-full">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        $
+                      </span>
+                      <Input
+                        type="text"
+                        value={formatCurrency(row.amount)}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, '');
+                          handleRowChange(index, "amount", value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            addRow();
+                          }
+                        }}
+                        placeholder="0.00"
+                        className="h-9 font-medium pl-6"
+                        disabled={isCreating}
+                        tabIndex={index * 5 + 4}
+                      />
+                    </div>
                     {rows.length > 1 && (
                       <Button
                         type="button"

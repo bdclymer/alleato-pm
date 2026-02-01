@@ -25,6 +25,8 @@ import {
   Briefcase,
   Target,
   Zap,
+  Video,
+  ArrowRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -450,6 +452,72 @@ export function ProjectHomeClient({
               emptyMessage="No tasks scheduled"
               maxItems={5}
             />
+
+            {/* Meetings Summary Cards */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  Meetings
+                </h3>
+                <Link
+                  href={`/${project.id}/meetings`}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                >
+                  View all
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  {
+                    label: "Total Meetings",
+                    value: meetings.length,
+                    icon: Video,
+                    color: "text-foreground",
+                  },
+                  {
+                    label: "This Month",
+                    value: meetings.filter((m) => {
+                      if (!m.date) return false;
+                      const d = new Date(m.date);
+                      const now = new Date();
+                      return (
+                        d.getMonth() === now.getMonth() &&
+                        d.getFullYear() === now.getFullYear()
+                      );
+                    }).length,
+                    icon: Calendar,
+                    color: "text-[hsl(var(--status-info))]",
+                  },
+                  {
+                    label: "Upcoming",
+                    value: meetings.filter((m) => {
+                      if (!m.date) return false;
+                      return new Date(m.date) > new Date();
+                    }).length,
+                    icon: Clock,
+                    color: "text-[hsl(var(--status-warning))]",
+                  },
+                ].map((card) => (
+                  <Link
+                    key={card.label}
+                    href={`/${project.id}/meetings`}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
+                  >
+                    <card.icon className={cn("h-5 w-5", card.color)} />
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        {card.label}
+                      </p>
+                      <p className="text-sm font-semibold tabular-nums">
+                        {card.value}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Right Column */}

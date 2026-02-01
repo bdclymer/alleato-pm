@@ -19,11 +19,9 @@
  * - Context menu actions
  */
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { createClient } from "@/lib/supabase/client";
 import { TaskTable } from "@/components/scheduling/task-table";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
@@ -71,9 +69,6 @@ import {
   ChevronDown,
   Trash2,
   X,
-  Users,
-  Video,
-  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -174,132 +169,6 @@ function SummaryCards({ summary }: { summary: { total_tasks: number; completed_t
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// =============================================================================
-// MEETINGS SUMMARY CARDS
-// =============================================================================
-
-function MeetingsSummaryCards({ projectId }: { projectId: string }) {
-  const [meetings, setMeetings] = useState<{
-    total: number;
-    thisMonth: number;
-    upcoming: number;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("document_metadata")
-        .select("id, date")
-        .eq("project_id", Number(projectId))
-        .eq("type", "meeting");
-
-      if (error || !data) {
-        setIsLoading(false);
-        return;
-      }
-
-      const now = new Date();
-      const thisMonth = data.filter((m) => {
-        if (!m.date) return false;
-        const d = new Date(m.date);
-        return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      }).length;
-
-      const upcoming = data.filter((m) => {
-        if (!m.date) return false;
-        return new Date(m.date) > now;
-      }).length;
-
-      setMeetings({ total: data.length, thisMonth, upcoming });
-      setIsLoading(false);
-    };
-
-    fetchMeetings();
-  }, [projectId]);
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-wrap gap-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card animate-pulse"
-          >
-            <div className="h-5 w-5 rounded-full bg-muted" />
-            <div className="space-y-1.5">
-              <div className="h-3 w-16 rounded bg-muted" />
-              <div className="h-4 w-8 rounded bg-muted" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!meetings) return null;
-
-  const cards = [
-    {
-      label: "Total Meetings",
-      value: meetings.total,
-      icon: Video,
-      color: "text-foreground",
-    },
-    {
-      label: "This Month",
-      value: meetings.thisMonth,
-      icon: Calendar,
-      color: "text-[hsl(var(--status-info))]",
-    },
-    {
-      label: "Upcoming",
-      value: meetings.upcoming,
-      icon: Clock,
-      color: "text-[hsl(var(--status-warning))]",
-    },
-  ];
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Meetings
-        </h3>
-        <Link
-          href={`/${projectId}/meetings`}
-          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-        >
-          View all
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        {cards.map((card) => (
-          <Link
-            key={card.label}
-            href={`/${projectId}/meetings`}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-          >
-            <card.icon className={cn("h-5 w-5", card.color)} />
-            <div>
-              <p className="text-xs text-muted-foreground">{card.label}</p>
-              <p className="text-sm font-semibold tabular-nums">
-                {card.value}
-              </p>
-            </div>
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
@@ -1001,9 +870,6 @@ export default function ProjectSchedulePage() {
         {data?.summary && data.summary.total_tasks > 0 && (
           <SummaryCards summary={data.summary} />
         )}
-
-        {/* Meetings Summary */}
-        <MeetingsSummaryCards projectId={projectId} />
 
         {/* Empty State */}
         {data && (!data.tasks || data.tasks.length === 0) && (

@@ -47,8 +47,7 @@ export default async function ProjectHomePage({
       .from("document_metadata")
       .select("*")
       .eq("project_id", numericProjectId)
-      .order("date", { ascending: false })
-      .limit(5),
+      .order("date", { ascending: false }),
 
     // Fetch change orders
     supabase
