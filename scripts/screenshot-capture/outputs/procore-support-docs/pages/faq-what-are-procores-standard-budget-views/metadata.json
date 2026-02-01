@@ -1,0 +1,244 @@
+{
+  "url": "https://v2.support.procore.com/faq-what-are-procores-standard-budget-views/",
+  "pageName": "faq-what-are-procores-standard-budget-views",
+  "category": "faq",
+  "pageId": "faq-what-are-procores-standard-budget-views",
+  "timestamp": "2025-12-29T16:42:59.043Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 6,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 12,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 39,
+      "headings": {
+        "h1": 1,
+        "h2": 3,
+        "h3": 7,
+        "h4": 6
+      },
+      "codeBlocks": 0,
+      "images": 6,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "What are Procore's standard budget views?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Procore Standard Budget View",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Procore Standard Budget (Custom Reporting View)",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Blank Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "(Multi-Level) Procore Standard Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Non-Budgeted Source View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Procore Labor Productivity Cost View",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 453,
+      "sections": 7
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 17,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 17,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 9,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 14,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 5,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 14,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 6,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Column Description",
+          "Column Configuration"
+        ],
+        "rows": 17,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "What are Procore's standard budget views?",
+        "href": "https://v2.support.procore.com/faq-what-are-procores-standard-budget-views/"
+      }
+    ],
+    "title": "What are Procore's standard budget views?",
+    "h1": "What are Procore's standard budget views?",
+    "metaDescription": "Provides a summary of the data columns in the 'Standard' budget views provided to Procore customers in the Company Admin tool."
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "budget modification",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/migrating-to-budget-changes-from-budget-modifications",
+      "text": "Migrating to Budget Changes from Budget Modifications",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-budget-view-for-custom-reporting",
+      "text": "Set Up a Budget View for Custom Reporting",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-a-real-time-labor-productivity-budget-view",
+      "text": "Real-Time Labor Costing",
+      "classes": "",
+      "id": null,
+      "index": 88,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-can-we-import-our-third-party-timecard-entries-to-work-with-the-timesheet-hours-column-in-the-budget",
+      "text": "Can we import our third-party timecard entries to work with the 'Timesheet Hours' column in Procore's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 89,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-add-the-timesheet-hours-column-to-a-budget-view",
+      "text": "How do I add the 'Timesheet Hours' column to a budget view?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 90,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 91,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-what-are-procores-standard-budget-views/screenshot.png"
+}

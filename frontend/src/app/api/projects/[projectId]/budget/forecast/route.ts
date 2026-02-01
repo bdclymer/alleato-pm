@@ -49,7 +49,7 @@ export async function GET(request: NextRequest, { params }: ForecastParams) {
         )
       `,
       )
-      .eq("project_id", projectId);
+      .eq("project_id", parseInt(projectId, 10));
 
     if (budgetError) {
       return NextResponse.json(

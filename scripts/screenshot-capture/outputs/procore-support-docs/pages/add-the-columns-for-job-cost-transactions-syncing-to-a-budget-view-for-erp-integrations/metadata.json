@@ -1,0 +1,129 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations/",
+  "pageName": "add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations",
+  "category": "tutorial",
+  "pageId": "add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations",
+  "timestamp": "2025-12-29T16:38:04.069Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 27,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 5,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 3,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 1: Add an 'ERP JTD Cost Details' Source Column",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 2: Add a 'Direct Costs' Source Column",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 3: Add a 'Commitment Invoices' Source Column",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 69,
+      "sections": 7
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations/"
+      }
+    ],
+    "title": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+    "h1": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+    "metaDescription": "How to add the recommended source columns for the ERP job cost transaction syncing feature to a budget view."
+  },
+  "links": 3,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations",
+      "text": "Add the 'ERP Direct Costs' Column to a Procore Budget View for ERP Integrations",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my projects?",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations/screenshot.png"
+}

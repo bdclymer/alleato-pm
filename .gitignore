@@ -68,3 +68,9 @@ user-data/
 !/docs/development/
 !/docs/screenshots/
 openai-cs-agents-demo/
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

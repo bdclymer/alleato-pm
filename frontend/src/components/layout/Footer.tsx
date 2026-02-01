@@ -16,12 +16,12 @@ const footerLinks = [
     href: "docs-ai-nine.vercel.app",
   },
   {
-    title: "Features",
-    href: "#",
+    title: "Tables",
+    href: "/tables-directory",
   },
   {
-    title: "Pricing",
-    href: "#",
+    title: "Playwright Crawl",
+    href: "/crawled-pages",
   },
   {
     title: "Careers",

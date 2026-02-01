@@ -82,6 +82,7 @@ function BudgetPageContent() {
   const [loading, setLoading] = React.useState(true);
   const [detailsLoading, setDetailsLoading] = React.useState(false);
   const [detailsRequested, setDetailsRequested] = React.useState(false);
+  const [detailsFetchError, setDetailsFetchError] = React.useState(false);
   const [showLineItemModal, setShowLineItemModal] = React.useState(false);
   const [showModificationModal, setShowModificationModal] =
     React.useState(false);
@@ -364,8 +365,8 @@ function BudgetPageContent() {
     // Fetch budget details when switching to budget-details tab
     if (
       tabId === "budget-details" &&
-      budgetDetailsData.length === 0 &&
-      !detailsRequested
+      !detailsLoading &&
+      (budgetDetailsData.length === 0 || detailsFetchError)
     ) {
       fetchBudgetDetails();
     }
@@ -376,15 +377,22 @@ function BudgetPageContent() {
     try {
       setDetailsRequested(true);
       setDetailsLoading(true);
+      setDetailsFetchError(false);
       const response = await fetch(`/api/projects/${projectId}/budget/details`);
       if (response.ok) {
         const data = await response.json();
         setBudgetDetailsData(data.details || []);
       } else {
-        toast.error("Failed to load budget details");
+        const errorBody = await response.json().catch(() => null);
+        const errorMessage =
+          errorBody?.error || "Failed to load budget details";
+        toast.error(errorMessage);
+        setDetailsFetchError(true);
       }
     } catch (error) {
+      console.error("Failed to load budget details:", error);
       toast.error("Failed to load budget details");
+      setDetailsFetchError(true);
     } finally {
       setDetailsLoading(false);
     }
@@ -525,41 +533,37 @@ function BudgetPageContent() {
 
   const handleInlineCreateMultipleLineItems = React.useCallback(async (lineItems: InlineLineItemData[]) => {
     try {
-      // Map the inline data to API format
       const payload = {
-        lineItems: lineItems.map((item) => {
-          const budgetCode = budgetData.find(b => b.id === item.budgetCodeId);
-          return {
-            costCodeId: budgetCode?.costCode || item.budgetCodeId,
-            costType: null,
-            qty: item.qty,
-            uom: item.uom,
-            unitCost: item.unitCost,
-            amount: item.amount,
-          };
-        })
+        lineItems: lineItems.map((item) => ({
+          costCodeId: item.costCodeId,
+          costType: item.costTypeId ?? null,
+          qty: item.qty,
+          uom: item.uom,
+          unitCost: item.unitCost,
+          amount: item.amount,
+        })),
       };
 
       const response = await fetch(`/api/projects/${projectId}/budget`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create budget line items');
+        throw new Error(error.error || "Failed to create budget line items");
       }
 
       // Refresh the budget data
       await handleLineItemSuccess();
-      toast.success(`Created ${lineItems.length} budget line item${lineItems.length > 1 ? 's' : ''}`);
+      toast.success(`Created ${lineItems.length} budget line item${lineItems.length > 1 ? "s" : ""}`);
     } catch (error) {
       throw error;
     }
-  }, [projectId, budgetData, handleLineItemSuccess]);
+  }, [projectId, handleLineItemSuccess]);
 
   // Keyboard shortcuts
   React.useEffect(() => {

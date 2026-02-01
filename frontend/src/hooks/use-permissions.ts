@@ -1,0 +1,255 @@
+/**
+ * React Hooks for Permission Management
+ *
+ * This module provides React hooks for checking and managing permissions.
+ */
+
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  type UserPermissions,
+  type PermissionModule,
+  type PermissionLevel,
+  type PermissionTemplate,
+  hasPermission,
+  getPermissionLevel
+} from "@/lib/permissions";
+
+/**
+ * Hook to load and manage user permissions for a project
+ */
+export function useUserPermissions(projectId: string | number) {
+  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const loadPermissions = useCallback(async () => {
+    if (!projectId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/permissions`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to load permissions");
+      }
+
+      const { data } = await response.json();
+      setPermissions(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setPermissions(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    loadPermissions();
+  }, [loadPermissions]);
+
+  return {
+    permissions,
+    isLoading,
+    error,
+    refetch: loadPermissions,
+    hasPermission: useCallback(
+      (module: PermissionModule, level: PermissionLevel) => {
+        return permissions ? hasPermission(permissions, module, level) : false;
+      },
+      [permissions]
+    ),
+    getLevel: useCallback(
+      (module: PermissionModule) => {
+        return permissions ? getPermissionLevel(permissions, module) : "none";
+      },
+      [permissions]
+    ),
+  };
+}
+
+/**
+ * Hook to load available permission templates
+ */
+export function usePermissionTemplates() {
+  const [templates, setTemplates] = useState<PermissionTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const loadTemplates = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/permissions/templates");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to load templates");
+      }
+
+      const { data } = await response.json();
+      setTemplates(data);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setTemplates([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates]);
+
+  const assignTemplate = useCallback(
+    async (projectId: string | number, personId: string, templateId: string) => {
+      const response = await fetch(`/api/projects/${projectId}/permissions/assign`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          person_id: personId,
+          template_id: templateId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to assign template");
+      }
+
+      return await response.json();
+    },
+    []
+  );
+
+  return {
+    templates,
+    isLoading,
+    error,
+    refetch: loadTemplates,
+    assignTemplate,
+  };
+}
+
+/**
+ * Hook to manage permission overrides
+ */
+export function usePermissionOverrides(projectId: string | number) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const setOverride = useCallback(
+    async (
+      personId: string,
+      module: PermissionModule,
+      level: PermissionLevel
+    ) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/permissions/override`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              person_id: personId,
+              module,
+              level,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to set override");
+        }
+
+        return await response.json();
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Unknown error");
+        setError(error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [projectId]
+  );
+
+  const removeOverride = useCallback(
+    async (personId: string, module: PermissionModule) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/permissions/override?person_id=${personId}&module=${module}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to remove override");
+        }
+
+        return await response.json();
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Unknown error");
+        setError(error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [projectId]
+  );
+
+  return {
+    isLoading,
+    error,
+    setOverride,
+    removeOverride,
+  };
+}
+
+/**
+ * Convenience hook to check a specific permission
+ */
+export function useHasPermission(
+  projectId: string | number,
+  module: PermissionModule,
+  level: PermissionLevel
+) {
+  const { permissions, isLoading } = useUserPermissions(projectId);
+
+  return {
+    hasPermission: permissions ? hasPermission(permissions, module, level) : false,
+    isLoading,
+  };
+}
+
+/**
+ * Hook to get permission level for a module
+ */
+export function usePermissionLevel(
+  projectId: string | number,
+  module: PermissionModule
+) {
+  const { permissions, isLoading } = useUserPermissions(projectId);
+
+  return {
+    level: permissions ? getPermissionLevel(permissions, module) : "none",
+    isLoading,
+  };
+}

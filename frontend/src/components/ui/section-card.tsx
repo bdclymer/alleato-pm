@@ -236,7 +236,7 @@ function SectionCardRoot({
 
   return (
     <div className={cn(
-      "bg-white border border-neutral-200/80 overflow-hidden",
+      "bg-white border border-neutral-200/80 rounded-md overflow-hidden",
       "shadow-[0_1px_2px_0_rgb(0_0_0/0.03)]",
       className
     )}>

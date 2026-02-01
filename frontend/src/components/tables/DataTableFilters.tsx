@@ -81,7 +81,7 @@ export function DataTableFilters<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent className="w-[200px] p-0" align="start" sideOffset={0}>
         <Command>
           <CommandInput placeholder={title} />
           <CommandList>

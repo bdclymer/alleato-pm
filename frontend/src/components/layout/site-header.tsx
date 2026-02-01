@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { EnhancedProjectToolsDropdown } from "./enhanced-project-tools-dropdown";
+import { EnhancedDevPanel } from "@/components/dev-tools/enhanced-dev-panel";
 import {
   Sheet,
   SheetContent,
@@ -334,7 +335,7 @@ export function SiteHeader({
     const crumbs: Array<{ label: string; href: string; isLogo?: boolean }> = [];
 
     // Always start with home/projects
-    crumbs.push({ label: "Home", href: "/" });
+    crumbs.push({ label: "Projects", href: "/" });
 
     segments.forEach((segment, index) => {
       const href = `/${segments.slice(0, index + 1).join("/")}`;
@@ -770,6 +771,9 @@ export function SiteHeader({
             >
               <Bell className="h-4 w-4" />
             </Button>
+
+            {/* Dev Tools Panel - only in development */}
+            <EnhancedDevPanel />
 
             {/* User Avatar */}
             <DropdownMenu>

@@ -63,7 +63,7 @@ export async function GET(
         )
       `,
       )
-      .eq("project_id", projectId)
+      .eq("project_id", projectIdNum)
       .order("created_at", { ascending: false });
 
     // Filter by status if provided
@@ -248,7 +248,7 @@ export async function POST(
         "id, project_id, cost_code_id, cost_type_id, sub_job_id, original_amount",
       )
       .eq("id", budgetItemId)
-      .eq("project_id", projectId)
+      .eq("project_id", projectIdNum)
       .single();
 
     if (lineError || !budgetLine) {
@@ -262,7 +262,7 @@ export async function POST(
     const { data: project } = await supabase
       .from("projects")
       .select("budget_locked")
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .single();
 
     if (project?.budget_locked) {
@@ -276,7 +276,7 @@ export async function POST(
     const { data: lastMod } = await supabase
       .from("budget_modifications")
       .select("number")
-      .eq("project_id", projectId)
+      .eq("project_id", projectIdNum)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();

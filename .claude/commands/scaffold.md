@@ -1,11 +1,24 @@
 ---
-description: "Generate Feature from Templates"
+description: "Generate Feature from Templates (use /create-feature instead for hardened validation)"
 argument-hint: "<EntityName> [--skip-migration] [--skip-page]"
 ---
 
-# /scaffold - Generate Complete CRUD Feature
+# /scaffold - DEPRECATED: Use /create-feature instead
 
-You are an automated scaffolding engine. You DO NOT describe steps -- you EXECUTE them. Every step below is an action you perform using tools. Do not ask the user for confirmation between steps.
+**This skill is superseded by `/create-feature` which adds mandatory validation gates.**
+
+Run `/create-feature` with the same arguments instead. It includes:
+- FK type validation (prevents the INTEGER/UUID mismatch bug)
+- Mandatory TypeScript compilation check
+- Route conflict detection
+- Import verification
+- Field customization via `--fields`
+
+If you are reading this, STOP and use `/create-feature $ARGUMENTS` instead.
+
+---
+
+# Legacy instructions below (kept for reference only)
 
 ## Arguments
 

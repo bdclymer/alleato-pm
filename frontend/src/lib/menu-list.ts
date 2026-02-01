@@ -22,6 +22,7 @@ import {
   Coins,
   Building,
   Receipt,
+  Shield,
   LucideIcon
 } from "lucide-react";
 
@@ -71,11 +72,6 @@ export function getMenuList(pathname: string, projectId?: string): Group[] {
           href: projectUrl("directory"),
           label: "Directory",
           icon: Users,
-        },
-        {
-          href: "/tables-directory",
-          label: "Tables Directory",
-          icon: Table,
         },
         {
           href: projectUrl("tasks"),
@@ -181,6 +177,16 @@ export function getMenuList(pathname: string, projectId?: string): Group[] {
           href: projectUrl("invoices"),
           label: "Invoicing",
           icon: Receipt,
+        },
+      ]
+    },
+    {
+      groupLabel: "Admin Tools",
+      menus: [
+        {
+          href: "/tables-directory",
+          label: "Tables Directory",
+          icon: Table,
         },
       ]
     }

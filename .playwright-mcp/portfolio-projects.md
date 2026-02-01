@@ -1,0 +1,169 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - link "Alleato Alleato" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img "Alleato" [ref=e7]
+        - generic [ref=e8]: Alleato
+      - generic [ref=e10]:
+        - generic [ref=e11]: Core Tools
+        - list [ref=e13]:
+          - listitem [ref=e14]:
+            - link "Projects" [ref=e15] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e16]:
+            - link "Company Directory" [ref=e17] [cursor=pointer]:
+              - /url: /directory/companies
+      - list [ref=e214]:
+        - listitem [ref=e215]:
+          - button "test1 test1 test1@mail.com" [ref=e216] [cursor=pointer]:
+            - img "test1" [ref=e218]
+            - generic [ref=e219]:
+              - generic [ref=e220]: test1
+              - generic [ref=e221]: test1@mail.com
+            - img [ref=e222]
+      - button "Toggle Sidebar" [ref=e18]
+    - main [ref=e19]:
+      - generic [ref=e21]:
+        - button "Toggle Sidebar" [ref=e22] [cursor=pointer]:
+          - img
+          - generic [ref=e23]: Toggle Sidebar
+        - generic [ref=e26]: Projects
+        - generic [ref=e27]:
+          - combobox [ref=e28] [cursor=pointer]:
+            - generic: Project
+            - img
+          - button "Project Tools Home" [ref=e30] [cursor=pointer]:
+            - generic [ref=e31]: Project Tools
+            - generic [ref=e32]: Home
+            - img
+          - button "Open user menu" [ref=e33] [cursor=pointer]:
+            - img "User avatar" [ref=e226]
+      - main [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e40]:
+              - heading "Portfolio" [level=1] [ref=e41]
+              - paragraph [ref=e42]: Manage all your construction projects
+            - generic [ref=e43]:
+              - navigation "Portfolio tabs" [ref=e44]:
+                - button "Projects" [ref=e45] [cursor=pointer]:
+                  - generic [ref=e46]: Projects
+                - button "Executive Dashboard" [ref=e47] [cursor=pointer]:
+                  - generic [ref=e48]: Executive Dashboard
+                - button "Health Dashboard" [ref=e49] [cursor=pointer]:
+                  - generic [ref=e50]: Health Dashboard
+                - button "My Open Items" [ref=e51] [cursor=pointer]:
+                  - generic [ref=e52]: My Open Items
+                - button "Financial Views" [ref=e53] [cursor=pointer]:
+                  - generic [ref=e54]: Financial Views
+                  - img [ref=e55]
+              - generic [ref=e57]:
+                - button "Export" [ref=e58] [cursor=pointer]:
+                  - img [ref=e59]
+                - button "Create Project" [ref=e61] [cursor=pointer]:
+                  - img
+                  - text: Create Project
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - generic [ref=e64]:
+                - generic [ref=e65]:
+                  - img [ref=e66]
+                  - textbox "Search projects..." [ref=e69]
+                - combobox [ref=e70] [cursor=pointer]:
+                  - generic: All Clients
+                  - img
+                - button "current" [ref=e72] [cursor=pointer]:
+                  - text: current
+                  - img
+                - button "All Categories" [ref=e73] [cursor=pointer]:
+                  - text: All Categories
+                  - img
+                - button "Clear All" [ref=e74] [cursor=pointer]:
+                  - img [ref=e75]
+                  - text: Clear All
+              - generic [ref=e78]:
+                - button "List View" [ref=e79] [cursor=pointer]:
+                  - img [ref=e80]
+                - button "Thumbnails View" [ref=e81] [cursor=pointer]:
+                  - img [ref=e82]
+                - button "Overview" [ref=e87] [cursor=pointer]:
+                  - img [ref=e88]
+                - button "Map View" [ref=e90] [cursor=pointer]:
+                  - img [ref=e91]
+            - generic [ref=e227]:
+              - generic [ref=e229]:
+                - 'link "Alleato Finance Job #60 Current Alleato Group" [ref=e230] [cursor=pointer]':
+                  - /url: /60/home
+                  - heading "Alleato Finance" [level=3] [ref=e232]
+                  - generic [ref=e233]:
+                    - generic [ref=e234]:
+                      - generic [ref=e235]: "Job #60"
+                      - generic [ref=e236]: Current
+                    - generic [ref=e237]: Alleato Group
+                - 'link "MKH Test Job #26-123 Current $10,000,000 FL" [ref=e238] [cursor=pointer]':
+                  - /url: /118/home
+                  - heading "MKH Test" [level=3] [ref=e240]
+                  - generic [ref=e241]:
+                    - generic [ref=e242]:
+                      - generic [ref=e243]: "Job #26-123"
+                      - generic [ref=e244]: Current
+                    - generic [ref=e245]:
+                      - generic [ref=e246]: $10,000,000
+                      - generic [ref=e247]: FL
+                - 'link "Vermillion Rise Warehouse Job #25-126 Current Indiana" [ref=e248] [cursor=pointer]':
+                  - /url: /67/home
+                  - heading "Vermillion Rise Warehouse" [level=3] [ref=e250]
+                  - generic [ref=e251]:
+                    - generic [ref=e252]:
+                      - generic [ref=e253]: "Job #25-126"
+                      - generic [ref=e254]: Current
+                    - generic [ref=e256]: Indiana
+              - generic [ref=e257]:
+                - generic [ref=e258]:
+                  - generic [ref=e259]: Showing
+                  - combobox "Items per page" [ref=e260]:
+                    - option "12"
+                    - option "24" [selected]
+                    - option "48"
+                    - option "96"
+                  - generic [ref=e261]: of 3 projects
+                - generic [ref=e262]:
+                  - button "Go to first page" [disabled] [ref=e263]:
+                    - img [ref=e264]
+                  - button "Go to previous page" [disabled] [ref=e267]:
+                    - img [ref=e268]
+                  - generic [ref=e270]: 1 of 1
+                  - button "Go to next page" [disabled] [ref=e271]:
+                    - img [ref=e272]
+                  - button "Go to last page" [disabled] [ref=e274]:
+                    - img [ref=e275]
+      - generic [ref=e184]:
+        - list [ref=e185]:
+          - listitem [ref=e186]:
+            - link "Docs" [ref=e187] [cursor=pointer]:
+              - /url: docs-ai-nine.vercel.app
+          - listitem [ref=e188]:
+            - link "Features" [ref=e189] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e190]:
+            - link "Pricing" [ref=e191] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e192]:
+            - link "Careers" [ref=e193] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e194]:
+            - link "Help" [ref=e195] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e196]:
+            - link "Privacy" [ref=e197] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e198]: © 2026 Alleato Group. All rights reserved.
+  - region "Notifications alt+T"
+  - button "Open chat" [ref=e199] [cursor=pointer]:
+    - img [ref=e200]
+  - button "Ask Procore Docs" [ref=e202] [cursor=pointer]:
+    - img
+  - button "Open Next.js Dev Tools" [ref=e208] [cursor=pointer]:
+    - img [ref=e209]
+  - alert [ref=e212]

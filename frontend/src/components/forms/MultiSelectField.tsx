@@ -98,7 +98,7 @@ export function MultiSelectField({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-full p-0" sideOffset={0}>
           <Command>
             <CommandInput placeholder="Search options..." />
             <CommandEmpty>No option found.</CommandEmpty>

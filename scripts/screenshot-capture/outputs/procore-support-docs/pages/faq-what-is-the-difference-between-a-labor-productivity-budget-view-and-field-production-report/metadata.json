@@ -1,0 +1,84 @@
+{
+  "url": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report/",
+  "pageName": "faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report",
+  "category": "faq",
+  "pageId": "faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report",
+  "timestamp": "2025-12-29T16:43:28.147Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 11,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 2,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "What is the difference between a labor productivity budget view and field production report?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 18,
+      "sections": 4
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "What is the difference between a labor productivity budget view and field production report?",
+        "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report/"
+      }
+    ],
+    "title": "What is the difference between a labor productivity budget view and field production report?",
+    "h1": "What is the difference between a labor productivity budget view and field production report?",
+    "metaDescription": "Explains the difference between real-time labor productivity budget view and field production report"
+  },
+  "links": 1,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/faq-why-isnt-the-projects-budget-view-reflecting-labor-costs-and-production-quantities-from-timecard-entries",
+      "text": "Why isn't the project's budget view reflecting labor costs and production quantities from timecard entries?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 58,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report/screenshot.png"
+}

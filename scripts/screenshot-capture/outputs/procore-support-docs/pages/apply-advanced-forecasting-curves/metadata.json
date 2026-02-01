@@ -1,0 +1,135 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-advanced-forecasting-curves",
+  "pageName": "apply-advanced-forecasting-curves",
+  "category": "tutorial",
+  "pageId": "apply-advanced-forecasting-curves",
+  "timestamp": "2025-12-29T16:44:29.096Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 18,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 40,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 3,
+        "h4": 7
+      },
+      "codeBlocks": 0,
+      "images": 14,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Apply Advanced Forecasting Curves",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Examples",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 62,
+      "sections": 6
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Apply Advanced Forecasting Curves",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-advanced-forecasting-curves/"
+      }
+    ],
+    "title": "Apply Advanced Forecasting Curves",
+    "h1": "Apply Advanced Forecasting Curves",
+    "metaDescription": "How to apply advanced forecasting curves to the Forecasting tab on your project's budget."
+  },
+  "links": 5,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-advanced-forecasting-curves/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/import-advanced-forecasting-for-a-budget",
+      "text": "Import Advanced Forecasting for a Budget",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 55,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/about-the-procore-standard-forecast-view",
+      "text": "About the Procore Standard Forecast View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-the-view-snapshot-group-and-filter-options-on-a-budget-view",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 57,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/apply-advanced-forecasting-curves/screenshot.png"
+}

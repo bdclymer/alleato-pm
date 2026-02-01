@@ -57,7 +57,7 @@ To start a new feature:
 
 **2b. Check for crawl data:**
 ```
-documentation/*project-mgmt/in-progress/{feature}/crawl-{feature}/
+docs-ai/contents/docs/PRPs/{feature}/crawl-{feature}/
 ```
 
 If missing, suggest:

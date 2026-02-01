@@ -26,7 +26,7 @@ export async function GET(
     const { data, error } = await supabase
       .from("purchase_orders_with_totals")
       .select("*")
-      .eq("project_id", projectId)
+      .eq("project_id", parseInt(projectId, 10))
       .order("created_at", { ascending: false });
 
     if (error) {

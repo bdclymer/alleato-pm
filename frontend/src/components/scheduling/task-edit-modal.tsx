@@ -410,16 +410,16 @@ export function TaskEditModal({
               <div className="space-y-2">
                 <Label>Parent Task</Label>
                 <Select
-                  value={formData.parent_task_id || ""}
+                  value={formData.parent_task_id || "none"}
                   onValueChange={(value) =>
-                    handleChange("parent_task_id", value || null)
+                    handleChange("parent_task_id", value === "none" ? null : value)
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select parent task" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No parent (root task)</SelectItem>
+                    <SelectItem value="none">No parent (root task)</SelectItem>
                     {availableTasks
                       .filter((t) => t.id !== task?.id)
                       .map((availableTask) => (

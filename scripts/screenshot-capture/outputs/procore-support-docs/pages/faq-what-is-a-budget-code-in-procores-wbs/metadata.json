@@ -1,0 +1,170 @@
+{
+  "url": "https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs/",
+  "pageName": "faq-what-is-a-budget-code-in-procores-wbs",
+  "category": "faq",
+  "pageId": "faq-what-is-a-budget-code-in-procores-wbs",
+  "timestamp": "2025-12-29T16:43:09.569Z",
+  "analysis": {
+    "components": {
+      "buttons": 15,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 2,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 11,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 1,
+        "h2": 2,
+        "h3": 10,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 3,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "What is a budget code in Procore's WBS?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "What are the components of a budget code in Procore's WBS?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "What do budget codes look like?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "How are segments delimited in WBS?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "How do I create budget codes?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "When can I start creating budget codes in Project Financials?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Which Procore tools have a 'Create Budget Code' button?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Do I need any additional permissions to create budget codes in Project Financials?",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Why can't I import new budget codes into Procore?",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 65,
+      "sections": 4
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Example Budget Code In Project Financials Tools",
+          "Cost Code Tiered Segment",
+          "Cost Type Flat Segment"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Procore Project Financials Tools",
+          "Tutorials"
+        ],
+        "rows": 8,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "What is a budget code in Procore's WBS?",
+        "href": "https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs/"
+      }
+    ],
+    "title": "What is a budget code in Procore's WBS?",
+    "h1": "What is a budget code in Procore's WBS?",
+    "metaDescription": "Provides information about budget codes in Procore's Work Breakdown Structure (WBS)."
+  },
+  "links": 4,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-budget-code-structure-in-procores-wbs",
+      "text": "budget code structure",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/create-your-projects-wbs",
+      "text": "Create Your Project's Work Breakdown Structure",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/work-breakdown-structure/tutorials/create-budget-codes-in-procores-project-financials-tools",
+      "text": "Create Budget Codes for WBS in Procore's Project Financials Tools",
+      "classes": "",
+      "id": null,
+      "index": 59,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item",
+      "text": "Add a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/faq-what-is-a-budget-code-in-procores-wbs/screenshot.png"
+}

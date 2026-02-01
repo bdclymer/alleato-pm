@@ -16,9 +16,11 @@ import {
   Plus,
   Settings,
   X,
+  AlertTriangle,
 } from "lucide-react";
 
 import { ProjectPageHeader } from "@/components/layout";
+import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,8 +42,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -51,7 +62,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import type { ContractChangeOrder } from "@/types/contract-change-orders";
 import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
@@ -143,6 +153,16 @@ export default function ProjectContractDetailPage() {
   const [previewBaseAmount, setPreviewBaseAmount] = useState<string>("10000");
   const [calculationResult, setCalculationResult] = useState<MarkupCalculationResponse | null>(null);
   const [calculationLoading, setCalculationLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showAddLineItemDialog, setShowAddLineItemDialog] = useState(false);
+  const [lineItemForm, setLineItemForm] = useState({
+    lineNumber: "",
+    description: "",
+    quantity: "1",
+    unitCost: "0",
+    unitOfMeasure: "",
+  });
+  const [isSubmittingLineItem, setIsSubmittingLineItem] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -311,6 +331,60 @@ export default function ProjectContractDetailPage() {
     router.push(`/${projectId}/prime-contracts/${contractId}/edit`);
   };
 
+  const handleAddLineItem = async () => {
+    if (!lineItemForm.lineNumber || !lineItemForm.description) {
+      alert("Line number and description are required");
+      return;
+    }
+
+    setIsSubmittingLineItem(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            line_number: parseInt(lineItemForm.lineNumber, 10),
+            description: lineItemForm.description,
+            quantity: parseFloat(lineItemForm.quantity) || 0,
+            unit_cost: parseFloat(lineItemForm.unitCost) || 0,
+            unit_of_measure: lineItemForm.unitOfMeasure || null,
+            cost_code_id: null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create line item");
+      }
+
+      // Refresh line items list
+      const lineItemsResponse = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items`
+      );
+      if (lineItemsResponse.ok) {
+        const data = await lineItemsResponse.json();
+        setLineItems(data || []);
+      }
+
+      // Reset form and close dialog
+      setLineItemForm({
+        lineNumber: "",
+        description: "",
+        quantity: "1",
+        unitCost: "0",
+        unitOfMeasure: "",
+      });
+      setShowAddLineItemDialog(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create line item");
+    } finally {
+      setIsSubmittingLineItem(false);
+    }
+  };
+
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined) return "$0.00";
 
@@ -425,7 +499,16 @@ export default function ProjectContractDetailPage() {
     <>
       <ProjectPageHeader
         title={contract.title}
-        description={contract.vendor?.name || "No vendor assigned"}
+        description={
+          contract.vendor ? (
+            `Contractor: ${contract.vendor.name}`
+          ) : (
+            <span className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-4 w-4" />
+              No vendor assigned
+            </span>
+          )
+        }
         breadcrumbs={[
           { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
           { label: `Contract #${contract.contract_number || contract.id}` },
@@ -484,53 +567,160 @@ export default function ProjectContractDetailPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button variant="outline" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <Button variant="default" size="sm" onClick={handleEdit}>
+            <Button variant="outline" size="sm" onClick={handleEdit}>
               Edit Contract
             </Button>
           </div>
         }
       />
 
-      <TableLayout>
-        <Tabs defaultValue="overview">
-          <TabsList className="mb-[var(--card-gap)]">
-            <TabsTrigger value="overview">General</TabsTrigger>
-            <TabsTrigger value="change-orders">
-              Change Orders {changeOrdersCount > 0 && `(${changeOrdersCount})`}
-            </TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="payments">Payments Received</TabsTrigger>
-            <TabsTrigger value="emails">Emails</TabsTrigger>
-            <TabsTrigger value="history">Change History</TabsTrigger>
-            <TabsTrigger value="financial-markup">Financial Markup</TabsTrigger>
-            <TabsTrigger value="advanced-settings">Advanced Settings</TabsTrigger>
-          </TabsList>
+      {/* Site-standard tabs with border-bottom and brand orange */}
+      <div className="px-4 sm:px-6 lg:px-8 mb-[var(--card-gap)]">
+        <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Contract tabs">
+          <div className="flex min-w-max space-x-6 md:space-x-8">
+            <button
+              type="button"
+              onClick={() => setActiveTab("overview")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "overview"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "overview" ? "page" : undefined}
+            >
+              General
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("change-orders")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "change-orders"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "change-orders" ? "page" : undefined}
+            >
+              <span>Change Orders</span>
+              {changeOrdersCount > 0 && (
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    activeTab === "change-orders"
+                      ? "bg-brand/10 text-brand"
+                      : "bg-muted text-foreground",
+                  )}
+                >
+                  {changeOrdersCount}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("invoices")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "invoices"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "invoices" ? "page" : undefined}
+            >
+              Invoices
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("payments")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "payments"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "payments" ? "page" : undefined}
+            >
+              Payments Received
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("emails")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "emails"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "emails" ? "page" : undefined}
+            >
+              Emails
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("history")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "history"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "history" ? "page" : undefined}
+            >
+              Change History
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("financial-markup")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "financial-markup"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "financial-markup" ? "page" : undefined}
+            >
+              Financial Markup
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("advanced-settings")}
+              className={cn(
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                activeTab === "advanced-settings"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+              aria-current={activeTab === "advanced-settings" ? "page" : undefined}
+            >
+              Advanced Settings
+            </button>
+          </div>
+        </nav>
+      </div>
 
-          <TabsContent value="overview" className="mt-0 space-y-[var(--card-gap)]">
-            <div className="grid gap-[var(--card-gap)] lg:grid-cols-3">
-              <Card className="lg:col-span-2">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>General Info</CardTitle>
-                    <CardDescription>Prime contract details</CardDescription>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() => setGeneralInfoOpen((prev) => !prev)}
-                  >
-                    {generalInfoOpen ? "Hide" : "Show"}
-                    <ChevronRight
-                      className={`h-4 w-4 transition-transform ${generalInfoOpen ? "rotate-90" : "rotate-0"}`}
-                    />
-                  </Button>
-                </CardHeader>
-                <CardContent>
+      <TableLayout>
+        {activeTab === "overview" && (
+          <div className="space-y-6">
+            {/* General Info */}
+            <div className="bg-background">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">General Info</h3>
+                  <p className="text-sm text-muted-foreground">Prime contract details</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setGeneralInfoOpen((prev) => !prev)}
+                >
+                  {generalInfoOpen ? "Hide" : "Show"}
+                  <ChevronRight
+                    className={`h-4 w-4 transition-transform ${generalInfoOpen ? "rotate-90" : "rotate-0"}`}
+                  />
+                </Button>
+              </div>
+              <div>
                   <Collapsible open={generalInfoOpen}>
                     <CollapsibleContent>
                       <div className="grid grid-cols-3 gap-[var(--group-gap)]">
@@ -603,15 +793,16 @@ export default function ProjectContractDetailPage() {
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contract Summary</CardTitle>
-                  <CardDescription>Financial overview</CardDescription>
-                </CardHeader>
-                <CardContent>
+            {/* Contract Summary */}
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Contract Summary</h3>
+                <p className="text-sm text-muted-foreground">Financial overview</p>
+              </div>
+              <div>
                   <Collapsible open={contractSummaryOpen}>
                     <CollapsibleTrigger className="sr-only">
                       Toggle contract summary
@@ -677,24 +868,29 @@ export default function ProjectContractDetailPage() {
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </div>
 
-            <div className="grid gap-[var(--card-gap)] lg:grid-cols-3">
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Line Items</CardTitle>
-                      <CardDescription>
-                        {lineItems.length} line item
-                        {lineItems.length === 1 ? "" : "s"} on this contract
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+            {/* Line Items */}
+            <div className="bg-background">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Line Items</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {lineItems.length} line item
+                    {lineItems.length === 1 ? "" : "s"} on this contract
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddLineItemDialog(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Line Item
+                </Button>
+              </div>
+              <div>
                   {lineItemsLoading ? (
                     <div className="text-center py-8 text-muted-foreground">
                       Loading line items...
@@ -743,14 +939,15 @@ export default function ProjectContractDetailPage() {
                       </TableBody>
                     </Table>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contract Dates</CardTitle>
-                </CardHeader>
-                <CardContent>
+            {/* Contract Dates */}
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Contract Dates</h3>
+              </div>
+              <div>
                   <div className="space-y-[var(--group-gap)]">
                     <div>
                       <p className="text-xs text-muted-foreground">Start Date</p>
@@ -793,31 +990,30 @@ export default function ProjectContractDetailPage() {
                       <p className="text-sm">{formatDate(contract.created_at)}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="change-orders" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Change Orders</CardTitle>
-                    <CardDescription>
-                      {changeOrdersCount} change order
-                      {changeOrdersCount === 1 ? "" : "s"} • {approvedChangeOrders.length} approved •
-                      {" "}
-                      {pendingChangeOrders.length} pending • {rejectedChangeOrders.length} rejected
-                    </CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Change Order
-                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+            </div>
+        )}
+
+        {activeTab === "change-orders" && (
+          <div>
+            <div className="bg-background">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Change Orders</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {changeOrdersCount} change order
+                    {changeOrdersCount === 1 ? "" : "s"} • {approvedChangeOrders.length} approved •
+                    {" "}
+                    {pendingChangeOrders.length} pending • {rejectedChangeOrders.length} rejected
+                  </p>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Change Order
+                </Button>
+              </div>
+              <div>
                 {changeOrdersLoading ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>Loading change orders...</p>
@@ -891,85 +1087,83 @@ export default function ProjectContractDetailPage() {
                     </tfoot>
                   </Table>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          </div>
+        )}
 
-          <TabsContent value="invoices" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Invoices</CardTitle>
-                <CardDescription>Invoices for this contract</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                  <p>Invoices will be displayed here</p>
+        {activeTab === "invoices" && (
+          <div>
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Invoices</h3>
+                <p className="text-sm text-muted-foreground">Invoices for this contract</p>
+              </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
+                <p>Invoices will be displayed here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "payments" && (
+          <div>
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Payments Received</h3>
+                <p className="text-sm text-muted-foreground">Payment history for this contract</p>
+              </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <DollarSign className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
+                <p>Payment history will be displayed here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "emails" && (
+          <div>
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Emails</h3>
+                <p className="text-sm text-muted-foreground">Email correspondence related to this contract</p>
+              </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <Mail className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
+                <p>Email history will be displayed here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "history" && (
+          <div>
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Change History</h3>
+                <p className="text-sm text-muted-foreground">Track all changes made to this contract</p>
+              </div>
+              <div className="text-center py-8 text-muted-foreground">
+                <History className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
+                <p>Change history will be displayed here</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "financial-markup" && (
+          <div>
+            <div className="space-y-6">
+              {/* Markup Overview */}
+              <div className="bg-background">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Financial Markup</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure markup percentages applied to change orders on this contract
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="payments" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payments Received</CardTitle>
-                <CardDescription>Payment history for this contract</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                  <p>Payment history will be displayed here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="emails" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Emails</CardTitle>
-                <CardDescription>Email correspondence related to this contract</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <Mail className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                  <p>Email history will be displayed here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Change History</CardTitle>
-                <CardDescription>Track all changes made to this contract</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                  <p>Change history will be displayed here</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="financial-markup" className="mt-0 p-[var(--card-padding)]">
-            <div className="space-y-[var(--card-gap)]">
-              {/* Markup Overview Card */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Financial Markup</CardTitle>
-                      <CardDescription>
-                        Configure markup percentages applied to change orders on this contract
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                <div>
                   <div className="space-y-6">
                     {/* Explanation */}
                     <div className="bg-muted/50 p-4 rounded-lg">
@@ -1002,26 +1196,24 @@ export default function ProjectContractDetailPage() {
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Vertical Markup Configuration */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>Vertical Markup Configuration</CardTitle>
-                      <CardDescription>
-                        Project-level markup settings applied to change orders
-                      </CardDescription>
-                    </div>
-                    <Button variant="outline" size="sm" disabled>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Markup
-                    </Button>
+              <div className="bg-background">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">Vertical Markup Configuration</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Project-level markup settings applied to change orders
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
+                  <Button variant="outline" size="sm" disabled>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Markup
+                  </Button>
+                </div>
+                <div>
                   {markupsLoading ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <p>Loading markup settings...</p>
@@ -1068,19 +1260,19 @@ export default function ProjectContractDetailPage() {
                       </TableBody>
                     </Table>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Markup Calculation Preview */}
               {verticalMarkups.length > 0 && (
-                <Card data-testid="markup-calculation-preview">
-                  <CardHeader>
-                    <CardTitle>Calculation Preview</CardTitle>
-                    <CardDescription>
+                <div className="bg-background" data-testid="markup-calculation-preview">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold">Calculation Preview</h3>
+                    <p className="text-sm text-muted-foreground">
                       Test how markups will be applied to a change order amount
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                    </p>
+                  </div>
+                  <div>
                     <div className="space-y-6">
                       {/* Input Section */}
                       <div className="flex items-end gap-4">
@@ -1182,19 +1374,19 @@ export default function ProjectContractDetailPage() {
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               )}
 
               {/* Common Markup Categories Reference */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Common Markup Categories</CardTitle>
-                  <CardDescription>
+              <div className="bg-background">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Common Markup Categories</h3>
+                  <p className="text-sm text-muted-foreground">
                     Typical markup items used in construction contracts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                  </p>
+                </div>
+                <div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="border rounded-lg p-3">
                       <p className="text-sm font-medium">GC Fee / Contractor&apos;s Fee</p>
@@ -1213,18 +1405,20 @@ export default function ProjectContractDetailPage() {
                       <p className="text-xs text-muted-foreground">Typically 5-15%</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="advanced-settings" className="mt-0 p-[var(--card-padding)]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-                <CardDescription>Contract configuration and permissions</CardDescription>
-              </CardHeader>
-              <CardContent>
+        {activeTab === "advanced-settings" && (
+          <div>
+            <div className="bg-background">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Advanced Settings</h3>
+                <p className="text-sm text-muted-foreground">Contract configuration and permissions</p>
+              </div>
+              <div>
                 <div className="space-y-6">
                   {/* Inclusions & Exclusions */}
                   <div className="space-y-4">
@@ -1252,11 +1446,124 @@ export default function ProjectContractDetailPage() {
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </div>
+            </div>
+          </div>
+        )}
       </TableLayout>
+
+      {/* Add Line Item Dialog */}
+      <Dialog open={showAddLineItemDialog} onOpenChange={setShowAddLineItemDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add Line Item</DialogTitle>
+            <DialogDescription>
+              Add a new line item to the Schedule of Values for this contract.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="line-number">
+                Line Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="line-number"
+                type="number"
+                min="1"
+                step="1"
+                value={lineItemForm.lineNumber}
+                onChange={(e) =>
+                  setLineItemForm({ ...lineItemForm, lineNumber: e.target.value })
+                }
+                placeholder="1"
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                value={lineItemForm.description}
+                onChange={(e) =>
+                  setLineItemForm({ ...lineItemForm, description: e.target.value })
+                }
+                placeholder="Enter line item description"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="quantity">Quantity</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={lineItemForm.quantity}
+                  onChange={(e) =>
+                    setLineItemForm({ ...lineItemForm, quantity: e.target.value })
+                  }
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="unit-cost">Unit Cost</Label>
+                <Input
+                  id="unit-cost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={lineItemForm.unitCost}
+                  onChange={(e) =>
+                    setLineItemForm({ ...lineItemForm, unitCost: e.target.value })
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="unit-of-measure">Unit of Measure</Label>
+              <Input
+                id="unit-of-measure"
+                value={lineItemForm.unitOfMeasure}
+                onChange={(e) =>
+                  setLineItemForm({ ...lineItemForm, unitOfMeasure: e.target.value })
+                }
+                placeholder="e.g., SF, LF, EA"
+              />
+            </div>
+
+            <div className="rounded-lg bg-muted p-3 text-sm">
+              <p className="font-medium mb-1">Total Cost</p>
+              <p className="text-lg">
+                {formatCurrency(
+                  parseFloat(lineItemForm.quantity || "0") *
+                    parseFloat(lineItemForm.unitCost || "0")
+                )}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowAddLineItemDialog(false)}
+              disabled={isSubmittingLineItem}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddLineItem} disabled={isSubmittingLineItem}>
+              {isSubmittingLineItem ? "Adding..." : "Add Line Item"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

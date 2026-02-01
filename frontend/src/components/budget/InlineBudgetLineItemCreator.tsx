@@ -647,9 +647,9 @@ export function InlineBudgetLineItemCreator({
                 <SelectContent>
                   <SelectItem value="L">L - Labor</SelectItem>
                   <SelectItem value="M">M - Material</SelectItem>
-                  <SelectItem value="E">E - Equipment</SelectItem>
                   <SelectItem value="S">S - Subcontract</SelectItem>
-                  <SelectItem value="O">O - Other</SelectItem>
+                  <SelectItem value="X">X - Expense</SelectItem>
+                  <SelectItem value="E">E - Equipment</SelectItem>
                 </SelectContent>
               </Select>
             </div>

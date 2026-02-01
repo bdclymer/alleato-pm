@@ -1,0 +1,140 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-custom-budget-report",
+  "pageName": "create-a-custom-budget-report",
+  "category": "tutorial",
+  "pageId": "create-a-custom-budget-report",
+  "timestamp": "2025-12-29T16:45:00.130Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 18,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 36,
+      "headings": {
+        "h1": 1,
+        "h2": 6,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Create a Custom Budget Report",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Next Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 34,
+      "sections": 9
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Create a Custom Budget Report",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-custom-budget-report/"
+      }
+    ],
+    "title": "Create a Custom Budget Report",
+    "h1": "Create a Custom Budget Report",
+    "metaDescription": "How to create a custom report that provides a more optimized, real-time view of relevant information specific to a project's budget."
+  },
+  "links": 5,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-custom-budget-report/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget in a New Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-differences-between-budget-reports-in-procore-analytics",
+      "text": "What are the differences between the various budget reports in Procore Analytics?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 57,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-why-and-how-do-i-create-a-custom-budget-code-description-for-procores-project-financials-tools",
+      "text": "Why and how do I create a custom budget code description for Procore's Project Financials tools?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 59,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/create-a-custom-budget-report/screenshot.png"
+}

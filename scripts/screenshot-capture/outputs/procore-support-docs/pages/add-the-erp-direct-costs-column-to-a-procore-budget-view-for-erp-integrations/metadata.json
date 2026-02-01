@@ -1,0 +1,122 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations/",
+  "pageName": "add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations",
+  "category": "tutorial",
+  "pageId": "add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations",
+  "timestamp": "2025-12-29T16:37:59.381Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 20,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 36,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 3,
+      "images": 6,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add the 'ERP Direct Costs' Column to a Procore Budget View for ERP Integrations",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 60,
+      "sections": 6
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Add the 'ERP Direct Costs' Column to a Procore Budget View for ERP Integrations",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations/"
+      }
+    ],
+    "title": "Add the 'ERP Direct Costs' Column to a Procore Budget View for ERP Integrations",
+    "h1": "Add the 'ERP Direct Costs' Column to a Procore Budget View for ERP Integrations",
+    "metaDescription": "How to add ERP Direct Costs column to a Procore Budget View for ERP Integrations"
+  },
+  "links": 4,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-new-budget-view",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-unit-based-columns-to-a-budget-view",
+      "text": "Configure",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/add-columns-to-a-budget-view-for-erp-job-cost-transaction-detail",
+      "text": "Add Columns for ERP Job Cost Transaction Detail",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my projects?",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/add-the-erp-direct-costs-column-to-a-procore-budget-view-for-erp-integrations/screenshot.png"
+}

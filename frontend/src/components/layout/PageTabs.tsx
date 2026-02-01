@@ -17,6 +17,10 @@ interface PageTabsProps {
   className?: string;
 }
 
+/**
+ * PageTabs - Site-standard tab navigation with border-bottom style
+ * Matches PageHeader alignment: px-4 sm:px-6 lg:px-8
+ */
 export function PageTabs({ tabs, className }: PageTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -28,7 +32,7 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
   const hasExactHrefMatch = tabs.some((tab) => tab.href === currentPath);
 
   return (
-    <div className={cn("px-4 sm:px-6 lg:px-12", className)}>
+    <div className={cn("px-4 sm:px-6 lg:px-8", className)}>
       <nav
         className="-mb-px flex overflow-x-auto border-b border-border"
         aria-label="Tabs"

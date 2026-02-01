@@ -173,7 +173,7 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
             className={cn(
               "min-h-[38px] border rounded-md px-2 py-1 flex flex-wrap items-center gap-1 cursor-pointer",
               isOpen
-                ? "border-orange-500 ring-1 ring-orange-500"
+                ? "border-ring ring-1 ring-ring"
                 : "border-border",
               isUpdating && "opacity-50",
             )}
@@ -223,7 +223,7 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
                 <input
                   type="text"
                   placeholder="Search people..."
-                  className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:border-orange-500"
+                  className="w-full px-2 py-1 text-sm border border-border rounded focus:outline-none focus:border-ring"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   autoFocus

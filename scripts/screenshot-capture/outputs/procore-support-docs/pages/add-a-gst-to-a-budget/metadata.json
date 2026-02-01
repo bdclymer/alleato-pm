@@ -1,0 +1,158 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-gst-to-a-budget",
+  "pageName": "add-a-gst-to-a-budget",
+  "category": "tutorial",
+  "pageId": "add-a-gst-to-a-budget",
+  "timestamp": "2025-12-29T16:44:20.541Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 21,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 40,
+      "headings": {
+        "h1": 1,
+        "h2": 8,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 3,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add a Goods & Services Tax (GST) to a Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Add a Budget Line Item for Your GST Cost Code",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Enable the Financial Markup Feature on a Contract or Funding",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Add Financial Markup for the GST Cost Code to a Contract or Funding",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 72,
+      "sections": 11
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Add a Goods & Services Tax (GST) to a Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-gst-to-a-budget/"
+      }
+    ],
+    "title": "Add a Goods & Services Tax (GST) to a Budget",
+    "h1": "Add a Goods & Services Tax (GST) to a Budget",
+    "metaDescription": "How to add a Goods & Services Tax (GST) as a budget line item and to make it visible in a custom PDF."
+  },
+  "links": 6,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-gst-to-a-budget/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item",
+      "text": "Add a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/import-a-budget",
+      "text": "Import a Budget",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs",
+      "text": "What is a budget code in Procore's WBS?",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions",
+      "text": "Budget - Permissions",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 68,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/add-a-gst-to-a-budget/screenshot.png"
+}

@@ -12,7 +12,7 @@
  * - id: uuid (PK)
  * - project_id: number (FK to projects)
  * - vendor_id: uuid (FK to vendors)
- * - employee_id: number (FK to employees)
+ * - employee_id: UUID (FK to people)
  * - cost_type: string (material, labor, equipment, etc.)
  * - status: string (draft, approved, paid)
  * - description: string
@@ -36,7 +36,7 @@ interface DirectCost {
   id: string
   project_id: number
   vendor_id?: string
-  employee_id?: number
+  employee_id?: string
   cost_type: string
   status: string
   description?: string
@@ -192,7 +192,7 @@ export async function GET(request: Request) {
  * - date (required): string (ISO date)
  * - total_amount (required): number
  * - vendor_id: string (uuid)
- * - employee_id: number
+ * - employee_id: UUID (FK to people)
  * - description: string
  * - invoice_number: string
  * - received_date: string (ISO date)

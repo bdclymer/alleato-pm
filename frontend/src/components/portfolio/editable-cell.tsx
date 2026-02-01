@@ -79,8 +79,8 @@ export function EditableCell({
           onBlur={handleSave}
           disabled={isSaving}
           className={cn(
-            "flex-1 px-2 py-1 text-sm border border-[hsl(var(--procore-orange))] rounded",
-            "focus:outline-none focus:ring-1 focus:ring-[hsl(var(--procore-orange))]",
+            "flex-1 px-2 py-1 text-sm border border-border rounded",
+            "focus:outline-none focus:ring-1 focus:ring-ring",
             "disabled:opacity-50",
             className,
           )}

@@ -354,7 +354,7 @@ export function OriginalBudgetEditModal({
                           className={cn(
                             "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all",
                             calculationMethod === method
-                              ? "border-orange-400 bg-orange-50 ring-1 ring-orange-400"
+                              ? "border-brand bg-brand/5 ring-1 ring-brand"
                               : "border-slate-200 bg-background hover:border-slate-300",
                           )}
                         >
@@ -364,7 +364,7 @@ export function OriginalBudgetEditModal({
                             value={method}
                             checked={calculationMethod === method}
                             onChange={() => setCalculationMethod(method)}
-                            className="mt-0.5 h-4 w-4 text-orange-500 focus:ring-orange-500"
+                            className="mt-0.5 h-4 w-4 text-brand focus:ring-brand"
                           />
                           <div>
                             <div className="font-medium text-slate-900 capitalize">

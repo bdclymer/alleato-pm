@@ -119,7 +119,7 @@ npm run db:types
 - Focus: Generic parameter conflicts and missing permission checks
 
 **For Any Bug:**
-- Read: `/docs-ai/contents/docs/patterns/CLAUDE-CODE-LEARNING-SYSTEM.md`
+- Read: `/docs-ai/contents/docs/patterns/claude-code-learning-system/index.mdx`
 - Apply: Mandatory documentation process
 
 ---

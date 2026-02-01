@@ -1,0 +1,120 @@
+{
+  "url": "https://v2.support.procore.com/faq-how-does-the-actual-date-filter-work-on-a-budget-view/",
+  "pageName": "faq-how-does-the-actual-date-filter-work-on-a-budget-view",
+  "category": "faq",
+  "pageId": "faq-how-does-the-actual-date-filter-work-on-a-budget-view",
+  "timestamp": "2025-12-29T16:42:44.552Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 12,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 3,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 1,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "How does the 'Actuals By Date' filter work on a budget view?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 59,
+      "sections": 5
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Name",
+          "Column Format",
+          "Column Type",
+          "Column Description",
+          "Project Tool",
+          "Notes"
+        ],
+        "rows": 4,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "How does the 'Actuals By Date' filter work on a budget view?",
+        "href": "https://v2.support.procore.com/faq-how-does-the-actual-date-filter-work-on-a-budget-view/"
+      }
+    ],
+    "title": "How does the 'Actuals By Date' filter work on a budget view?",
+    "h1": "How does the 'Actuals By Date' filter work on a budget view?",
+    "metaDescription": "Describes how the 'Actuals By Date' filter works with a budget view."
+  },
+  "links": 3,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 54,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget",
+      "text": "Should I update my Budget View to add RFQ values to the budget?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-how-does-the-actual-date-filter-work-on-a-budget-view/screenshot.png"
+}

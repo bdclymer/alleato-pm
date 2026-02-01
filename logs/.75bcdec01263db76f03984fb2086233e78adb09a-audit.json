@@ -34,6 +34,11 @@
             "date": 1769874850100,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-31.log",
             "hash": "2e7cc325848627fba02013ac68bb119072c7577739da2989df82e77a610aee68"
+        },
+        {
+            "date": 1769923400620,
+            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-02-01.log",
+            "hash": "f9a5508fa92b3a053247952a09968b963cfac7069afac97affd28e01e08069de"
         }
     ],
     "hashType": "sha256"

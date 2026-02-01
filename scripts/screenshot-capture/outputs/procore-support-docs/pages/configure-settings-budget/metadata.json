@@ -1,0 +1,234 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/configure-settings-budget",
+  "pageName": "configure-settings-budget",
+  "category": "tutorial",
+  "pageId": "configure-settings-budget",
+  "timestamp": "2025-12-29T16:44:42.793Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 6,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 17,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 36,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 3,
+        "h4": 6
+      },
+      "codeBlocks": 0,
+      "images": 5,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Configure Settings: Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Set User Permissions for the Budget Tool",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 94,
+      "sections": 6
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Setting",
+          "Element",
+          "Description"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Setting",
+          "Element",
+          "Description"
+        ],
+        "rows": 2,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "Setting",
+          "",
+          "Description"
+        ],
+        "rows": 3,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "Setting",
+          "Element",
+          "Description"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 5,
+        "headers": [
+          "Setting",
+          "",
+          "Description"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 6,
+        "headers": [
+          "Icon",
+          "Color",
+          "Definition"
+        ],
+        "rows": 3,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Configure Settings: Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/configure-settings-budget/"
+      }
+    ],
+    "title": "Configure Settings: Budget",
+    "h1": "Configure Settings: Budget",
+    "metaDescription": "How to configure advanced settings for the project's Budget tool."
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/configure-settings-budget/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set Up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-an-internal-budget-change",
+      "text": "Create Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "documentation"
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/budget/tutorials/about-budget-changes",
+      "text": "About Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/migrating-to-budget-changes-from-budget-modifications",
+      "text": "Migrating to Budget Changes from Budget Modifications",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-budget-modification",
+      "text": "Create a Budget Modification",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-are-financial-line-items-and-budget-codes-updated-across-change-objects",
+      "text": "How are financial line items and budget codes updated across change objects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 62,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-budget-code-and-a-task-code",
+      "text": "What is the difference between a budget code and a task code?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 63,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/configure-settings-budget/screenshot.png"
+}

@@ -1,0 +1,185 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-partial-budget-line-item",
+  "pageName": "add-a-partial-budget-line-item",
+  "category": "tutorial",
+  "pageId": "add-a-partial-budget-line-item",
+  "timestamp": "2025-12-29T16:44:24.901Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 19,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 1,
+        "h2": 5,
+        "h3": 4,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 2,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add a Partial Budget Line Item",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add Line Items Individually",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add Line Items in Bulk",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 39,
+      "sections": 8
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Add a Partial Budget Line Item",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-partial-budget-line-item/"
+      }
+    ],
+    "title": "Add a Partial Budget Line Item",
+    "h1": "Add a Partial Budget Line Item",
+    "metaDescription": "How to add new line items to the budget that are associated with financial line items with a cost code/cost type/sub job combination that's currently not represented in the budget."
+  },
+  "links": 10,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-partial-budget-line-item/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "budget code",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-partial-budget-line-item",
+      "text": "What is a partial budget line item?",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-budget-to-an-integrated-erp-system",
+      "text": "Export a Budget to an Integrated ERP System",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/create-your-projects-wbs",
+      "text": "Create Your Project's Work Breakdown Structure",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/unlock-a-budget",
+      "text": "Unlock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-an-internal-budget-change",
+      "text": "Create Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 62,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/delete-a-budget-line-item",
+      "text": "Delete a Budget Line Item",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 65,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-budget-modification",
+      "text": "Create a Budget Modification",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 66,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/add-a-partial-budget-line-item/screenshot.png"
+}

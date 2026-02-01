@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Alleato AI - Project Management",
   description: "Modern construction management platform powered by AI.",
+  icons: {
+    icon: "/Alleato Favicon.png",
+    shortcut: "/Alleato Favicon.png",
+    apple: "/Alleato Favicon.png",
+  },
 };
 
 export const viewport: Viewport = {

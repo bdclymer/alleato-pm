@@ -9,6 +9,7 @@ type BudgetCodeResponse = {
     code: string;
     description: string;
     costType: string | null;
+    costTypeId: string | null;
     fullLabel: string;
   }>;
 };
@@ -16,11 +17,13 @@ type BudgetCodeResponse = {
 type ProjectBudgetCodeRow = {
   id: string;
   cost_code_id: string;
+  cost_type_id: string | null;
   description: string;
   cost_codes: {
     title: string | null;
   } | null;
   cost_code_types: {
+    id: string | null;
     code: string | null;
     description: string | null;
   } | null;
@@ -67,9 +70,10 @@ export async function GET(
           `
           id,
           cost_code_id,
+          cost_type_id,
           description,
           cost_codes ( title ),
-          cost_code_types ( code, description )
+          cost_code_types ( id, code, description )
         `,
         )
         .eq("project_id", projectIdNum)
@@ -93,6 +97,7 @@ export async function GET(
       const row = item as ProjectBudgetCodeRow;
       const costType = row.cost_code_types?.code || null;
       const costTypeDescription = row.cost_code_types?.description || null;
+      const costTypeId = row.cost_type_id || null;
       const costCodeTitle = Array.isArray(row.cost_codes)
         ? row.cost_codes[0]?.title
         : row.cost_codes?.title;
@@ -103,6 +108,7 @@ export async function GET(
         code: row.cost_code_id,
         description,
         costType,
+        costTypeId,
         fullLabel: formatBudgetCode({
           code: row.cost_code_id,
           description,
@@ -201,6 +207,7 @@ export async function POST(
         `
           id,
           cost_code_id,
+          cost_type_id,
           description,
           cost_codes ( title ),
           cost_code_types ( code, description )
@@ -239,6 +246,7 @@ export async function POST(
       code: newProjectBudgetCode.cost_code_id,
       description: finalDescription,
       costType,
+      costTypeId: newProjectBudgetCode.cost_type_id,
       fullLabel: formatBudgetCode({
         code: newProjectBudgetCode.cost_code_id,
         description: finalDescription,

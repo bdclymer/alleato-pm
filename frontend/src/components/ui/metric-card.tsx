@@ -140,7 +140,7 @@ export function MetricCard({
   const content = (
     <div
       className={cn(
-        "bg-white border border-neutral-200/80 transition-all relative",
+        "bg-white border border-neutral-200/80 rounded-md transition-all relative",
         "shadow-[0_1px_2px_0_rgb(0_0_0/0.03)]",
         href && "cursor-pointer hover:shadow-[0_1px_3px_0_rgb(0_0_0/0.04),0_1px_2px_-1px_rgb(0_0_0/0.04)] hover:border-neutral-300/80",
         styles.container,
@@ -162,33 +162,36 @@ export function MetricCard({
         {label}
       </p>
 
-      {/* Value */}
-      <p className={cn(
-        "font-light tabular-nums tracking-tight text-neutral-900",
-        styles.value
-      )}>
-        {formatValue(value, format)}
-      </p>
-
-      {/* Change indicator */}
-      {change && (
-        <div className={cn(
-          "flex items-center gap-1 font-medium",
-          changeColors[change.type],
-          styles.change
+      {/* Value and Change indicator */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Value */}
+        <p className={cn(
+          "font-light tabular-nums tracking-tight text-neutral-900",
+          styles.value
         )}>
-          {React.createElement(ChangeIcon[change.type], {
-            className: "h-3 w-3 sm:h-3.5 sm:w-3.5",
-          })}
-          <span>
-            {change.type === "positive" ? "+" : change.type === "negative" ? "-" : ""}
-            {Math.abs(change.value).toFixed(1)}%
-          </span>
-          {change.label && (
-            <span className="text-neutral-400 ml-1">{change.label}</span>
-          )}
-        </div>
-      )}
+          {formatValue(value, format)}
+        </p>
+
+        {/* Change indicator */}
+        {change && (
+          <div className={cn(
+            "flex items-center gap-1 font-medium shrink-0",
+            changeColors[change.type],
+            styles.change
+          )}>
+            {React.createElement(ChangeIcon[change.type], {
+              className: "h-3 w-3 sm:h-3.5 sm:w-3.5",
+            })}
+            <span>
+              {change.type === "positive" ? "+" : change.type === "negative" ? "-" : ""}
+              {Math.abs(change.value).toFixed(1)}%
+            </span>
+            {change.label && (
+              <span className="text-neutral-400 ml-1">{change.label}</span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Subtitle */}
       {subtitle && (
@@ -264,7 +267,7 @@ interface MetricSummaryProps {
 export function MetricSummary({ items, className }: MetricSummaryProps) {
   return (
     <div className={cn(
-      "flex flex-wrap gap-x-6 gap-y-3 p-4 sm:p-5 bg-neutral-50/80 border border-neutral-200/60",
+      "flex flex-wrap gap-x-6 gap-y-3 p-4 sm:p-5 bg-neutral-50/80 border border-neutral-200/60 rounded-md",
       className
     )}>
       {items.map((item, index) => (

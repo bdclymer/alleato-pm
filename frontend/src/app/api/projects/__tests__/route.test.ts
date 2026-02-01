@@ -294,7 +294,7 @@ describe("/api/projects", () => {
 
       mockServiceClient = {
         from: jest.fn(() => createMockQuery({
-          data: { ...newProject, id: 2 },
+          data: { ...newProject, id: 2, phase: "Current" },
           error: null,
           count: null,
         }))
@@ -309,9 +309,74 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(201);
-      expect(data).toEqual({ ...newProject, id: 2 });
+      expect(data).toEqual({ ...newProject, id: 2, phase: "Current" });
 
       expect(mockServiceClient.from).toHaveBeenCalledWith("projects");
+    });
+
+    it("sets phase to 'Current' by default when not provided", async () => {
+      const newProject = {
+        name: "New Project",
+        client: "New Client",
+      };
+
+      let insertedData: Record<string, unknown> | null = null;
+      mockServiceClient = {
+        from: jest.fn(() => {
+          const mockQuery = createMockQuery({
+            data: { ...newProject, id: 3, phase: "Current" },
+            error: null,
+            count: null,
+          });
+          // Capture what was passed to insert
+          mockQuery.insert = jest.fn((data) => {
+            insertedData = data;
+            return mockQuery;
+          });
+          return mockQuery;
+        })
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects", {
+        method: "POST",
+        body: JSON.stringify(newProject),
+      });
+
+      await POST(request);
+
+      expect(insertedData).toHaveProperty("phase", "Current");
+    });
+
+    it("allows overriding the default phase", async () => {
+      const newProject = {
+        name: "New Project",
+        phase: "planning",
+      };
+
+      let insertedData: Record<string, unknown> | null = null;
+      mockServiceClient = {
+        from: jest.fn(() => {
+          const mockQuery = createMockQuery({
+            data: { ...newProject, id: 4 },
+            error: null,
+            count: null,
+          });
+          mockQuery.insert = jest.fn((data) => {
+            insertedData = data;
+            return mockQuery;
+          });
+          return mockQuery;
+        })
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects", {
+        method: "POST",
+        body: JSON.stringify(newProject),
+      });
+
+      await POST(request);
+
+      expect(insertedData).toHaveProperty("phase", "planning");
     });
 
     it("handles creation errors", async () => {

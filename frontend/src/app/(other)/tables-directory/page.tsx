@@ -1,24 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Database,
   FileText,
   Calendar,
   Brain,
   AlertCircle,
-  Target,
   Users,
   Building2,
-  Mail,
   ClipboardList,
   MessageSquare,
   DollarSign,
@@ -29,189 +28,47 @@ import {
   ListTodo,
   Lightbulb,
   TrendingUp,
+  ExternalLink,
+  LucideIcon,
 } from "lucide-react";
 
-interface TableInfo {
-  title: string;
-  description: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  category:
-    | "Core Data"
-    | "Project Management"
-    | "Financial"
-    | "Directory"
-    | "AI Insights";
-  recordType: string;
+// Map icon names to Lucide icon components
+const iconMap: Record<string, LucideIcon> = {
+  CalendarDays,
+  FileText,
+  MessageSquare,
+  ListTodo,
+  ClipboardList,
+  FileCheck,
+  Calendar,
+  AlertCircle,
+  DollarSign,
+  Briefcase,
+  Building2,
+  Users,
+  UserCheck,
+  Brain,
+  Lightbulb,
+  TrendingUp,
+  Database,
+};
+
+interface TableMetadata {
+  id: string;
+  table_name: string;
+  display_name: string;
+  description: string | null;
+  category: string;
+  icon_name: string;
+  is_visible: boolean | null;
+  sort_order: number | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
 }
 
-const tables: TableInfo[] = [
-  // Core Data Tables
-  {
-    title: "Daily Logs",
-    description:
-      "Track daily activities, weather conditions, and workforce on site",
-    href: "/daily-logs",
-    icon: CalendarDays,
-    category: "Core Data",
-    recordType: "Log Entries",
-  },
-  {
-    title: "Daily Reports",
-    description:
-      "Comprehensive daily construction reports with photos and notes",
-    href: "/daily-reports",
-    icon: FileText,
-    category: "Core Data",
-    recordType: "Reports",
-  },
-  {
-    title: "Meeting Segments",
-    description: "Parsed and searchable meeting transcripts with timestamps",
-    href: "/meeting-segments",
-    icon: MessageSquare,
-    category: "Core Data",
-    recordType: "Segments",
-  },
-  {
-    title: "Notes",
-    description: "Project notes, observations, and important reminders",
-    href: "/notes",
-    icon: FileText,
-    category: "Core Data",
-    recordType: "Notes",
-  },
-
-  // Project Management Tables
-  {
-    title: "Tasks",
-    description: "Project tasks, assignments, and completion tracking",
-    href: "/tasks",
-    icon: ListTodo,
-    category: "Project Management",
-    recordType: "Tasks",
-  },
-  {
-    title: "RFIs",
-    description: "Requests for Information and their responses",
-    href: "/rfis",
-    icon: ClipboardList,
-    category: "Project Management",
-    recordType: "RFIs",
-  },
-  {
-    title: "Punch List",
-    description: "Track punch list items and completion status",
-    href: "/punch-list",
-    icon: FileCheck,
-    category: "Project Management",
-    recordType: "Items",
-  },
-  {
-    title: "Meetings",
-    description: "Meeting records, attendees, and action items",
-    href: "/meetings",
-    icon: Calendar,
-    category: "Project Management",
-    recordType: "Meetings",
-  },
-  {
-    title: "Risks",
-    description: "Identified project risks and mitigation strategies",
-    href: "/risks",
-    icon: AlertCircle,
-    category: "Project Management",
-    recordType: "Risks",
-  },
-
-  // Financial Tables
-  {
-    title: "Commitments",
-    description: "Purchase orders and subcontracts commitments",
-    href: "/commitments",
-    icon: DollarSign,
-    category: "Financial",
-    recordType: "Commitments",
-  },
-
-  // Directory Tables
-  {
-    title: "Clients",
-    description: "Client information and contact details",
-    href: "/clients",
-    icon: Briefcase,
-    category: "Directory",
-    recordType: "Clients",
-  },
-  {
-    title: "Companies",
-    description: "Vendor, subcontractor, and partner companies",
-    href: "/directory/companies",
-    icon: Building2,
-    category: "Directory",
-    recordType: "Companies",
-  },
-  {
-    title: "Contacts",
-    description: "Individual contacts across all companies",
-    href: "/directory/contacts",
-    icon: Users,
-    category: "Directory",
-    recordType: "Contacts",
-  },
-  {
-    title: "Employees",
-    description: "Company employees and team members",
-    href: "/employees",
-    icon: UserCheck,
-    category: "Directory",
-    recordType: "Employees",
-  },
-  {
-    title: "Users",
-    description: "System users and their permissions",
-    href: "/directory/users",
-    icon: Users,
-    category: "Directory",
-    recordType: "Users",
-  },
-
-  // AI Insights Tables
-  {
-    title: "Decisions",
-    description: "AI-extracted decisions from meetings and documents",
-    href: "/decisions",
-    icon: Brain,
-    category: "AI Insights",
-    recordType: "Decisions",
-  },
-  {
-    title: "Insights",
-    description: "AI-generated insights and recommendations",
-    href: "/insights",
-    icon: Lightbulb,
-    category: "AI Insights",
-    recordType: "Insights",
-  },
-  {
-    title: "Opportunities",
-    description: "Identified business opportunities and growth areas",
-    href: "/opportunities",
-    icon: TrendingUp,
-    category: "AI Insights",
-    recordType: "Opportunities",
-  },
-  {
-    title: "Issues",
-    description: "Tracked issues and their resolution status",
-    href: "/issues",
-    icon: AlertCircle,
-    category: "AI Insights",
-    recordType: "Issues",
-  },
-];
-
-const categoryColors = {
+const categoryColors: Record<string, string> = {
   "Core Data": "bg-blue-100 text-blue-800",
   "Project Management": "bg-green-100 text-green-800",
   Financial: "bg-purple-100 text-purple-800",
@@ -219,76 +76,154 @@ const categoryColors = {
   "AI Insights": "bg-pink-100 text-pink-800",
 };
 
-export default function TablesDirectoryPage() {
-  const categories = [
-    "Core Data",
-    "Project Management",
-    "Financial",
-    "Directory",
-    "AI Insights",
-  ] as const;
+// Map table names to their URLs
+const getTableHref = (tableName: string): string => {
+  const hrefMap: Record<string, string> = {
+    daily_logs: "/daily-logs",
+    daily_reports: "/daily-reports",
+    meeting_segments: "/meeting-segments",
+    notes: "/notes",
+    project_tasks: "/tasks",
+    rfis: "/rfis",
+    punch_list: "/punch-list",
+    document_metadata: "/meetings",
+    risks: "/risks",
+    commitments_unified: "/commitments",
+    clients: "/clients",
+    companies: "/directory/companies",
+    people: "/directory/contacts",
+    employees: "/employees",
+    users: "/directory/users",
+    ai_decisions: "/decisions",
+    ai_insights: "/insights",
+    opportunities: "/opportunities",
+    issues: "/issues",
+  };
 
-  return (
-    <div>
-      <div>
-        <div>
-          <h1>
+  return hrefMap[tableName] || `/${tableName}`;
+};
+
+export default function TablesDirectoryPage() {
+  const [tables, setTables] = useState<TableMetadata[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTables = async () => {
+      try {
+        const response = await fetch("/api/table-metadata");
+        if (!response.ok) {
+          throw new Error("Failed to fetch table metadata");
+        }
+        const data = await response.json();
+        setTables(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTables();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
             Data Tables Directory
           </h1>
-          <p>
-            Browse and access all data tables in the system. Click on any card
-            to view the table.
-          </p>
+          <p className="text-sm text-neutral-600">Loading tables...</p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Tables by Category */}
-        {categories.map((category) => {
-          const categoryTables = tables.filter((t) => t.category === category);
-          if (categoryTables.length === 0) return null;
+  if (error) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
+            Data Tables Directory
+          </h1>
+          <p className="text-sm text-red-600">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
-          return (
-            <div key={category} className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h4>{category}</h4>
-                <Badge className={categoryColors[category]}>
-                  {categoryTables.length} tables
-                </Badge>
-              </div>
+  return (
+    <div className="px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
+          Data Tables Directory
+        </h1>
+        <p className="text-sm text-neutral-600">
+          Browse and access all data tables in the system. Click on any row to view the table.
+        </p>
+      </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {categoryTables.map((table) => {
-                  const Icon = table.icon;
-                  return (
-                    <Link key={table.href} href={table.href}>
-                      <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <Icon className="h-6 w-6 text-foreground" />
-                          </div>
-                          <CardTitle className="mt-2">
-                            {table.title}
-                          </CardTitle>
-                          <CardDescription className="text-sm">
-                            {table.description}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-blue-600 hover:underline">
-                              View Table →
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
+      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12"></TableHead>
+              <TableHead>Table Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead className="w-40">Category</TableHead>
+              <TableHead className="w-24 text-right"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tables.map((table) => {
+              const Icon = iconMap[table.icon_name] || Database;
+              const href = getTableHref(table.table_name);
+
+              return (
+                <TableRow
+                  key={table.id}
+                  className="cursor-pointer hover:bg-neutral-50"
+                  onClick={() => window.location.href = href}
+                >
+                  <TableCell>
+                    <Icon className="h-5 w-5 text-neutral-400" />
+                  </TableCell>
+                  <TableCell className="font-medium text-neutral-900">
+                    {table.display_name}
+                  </TableCell>
+                  <TableCell className="text-sm text-neutral-600">
+                    {table.description || "No description available"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={categoryColors[table.category] || "bg-gray-100 text-gray-800"}
+                    >
+                      {table.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <ExternalLink className="h-4 w-4 text-neutral-400 inline" />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="mt-6 flex items-center gap-4 text-sm text-neutral-500">
+        <span className="font-medium">{tables.length} total tables</span>
+        <span>•</span>
+        <div className="flex items-center gap-3">
+          {Object.entries(categoryColors).map(([category, color]) => (
+            <div key={category} className="flex items-center gap-1.5">
+              <div className={`w-2 h-2 rounded-full ${color.split(' ')[0]}`} />
+              <span className="text-xs">{category}</span>
             </div>
-          );
-        })}
-
-
+          ))}
+        </div>
       </div>
     </div>
   );

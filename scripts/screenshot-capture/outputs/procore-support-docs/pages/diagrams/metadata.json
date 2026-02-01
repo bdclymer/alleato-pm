@@ -1,0 +1,136 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/diagrams/",
+  "pageName": "diagrams",
+  "category": "documentation",
+  "pageId": "diagrams",
+  "timestamp": "2025-12-29T16:46:50.918Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 10,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 3,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 3,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Diagrams",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "Budget",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 10,
+      "sections": 3
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Diagrams",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/diagrams/"
+      }
+    ],
+    "title": "Diagrams",
+    "h1": "Budget",
+    "metaDescription": "This page includes the standard workflow diagrams for actions in or related to the project's Budget tool."
+  },
+  "links": 7,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project",
+      "text": "Overview",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials",
+      "text": "Tutorials",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting",
+      "text": "FAQ/Troubleshooting",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/videos",
+      "text": "Videos",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions",
+      "text": "Permissions",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/diagrams",
+      "text": "Diagrams",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/diagrams/screenshot.png"
+}

@@ -63,7 +63,7 @@ export async function GET(request: Request) {
 
     // Filter by project if projectId is provided
     if (projectId) {
-      query = query.eq("project_id", projectId);
+      query = query.eq("project_id", parseInt(projectId, 10));
     }
 
     // Filter by type (subcontract or purchase_order)

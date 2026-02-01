@@ -1,0 +1,171 @@
+{
+  "url": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item",
+  "pageName": "add-a-budget-line-item",
+  "category": "documentation",
+  "pageId": "add-a-budget-line-item",
+  "timestamp": "2025-12-29T16:44:06.787Z",
+  "analysis": {
+    "components": {
+      "buttons": 15,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 29,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 46,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Resource Tracking And Project Financials Setup Guide",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Add a Budget Line Item",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 30,
+      "sections": 3
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Resource Tracking And Project Financials Setup Guide",
+        "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/"
+      },
+      {
+        "text": "Add a Budget Line Item",
+        "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item/"
+      }
+    ],
+    "title": "Resource Tracking And Project Financials Setup Guide - Add a Budget Line Item",
+    "h1": "Resource Tracking And Project Financials Setup Guide",
+    "metaDescription": "How to set up your project and budget to leverage Procore's unit-based columns and Resource Tracking tools to track real-time labor costs on a project's budget line items. | Add a Budget Line Item"
+  },
+  "links": 12,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/create-a-new-budget-view",
+      "text": "Create a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 63,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/hide-unused-budget-columns-optional",
+      "text": "Hide Unused Budget Columns (Optional)",
+      "classes": "",
+      "id": null,
+      "index": 65,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/assign-the-budget-view-to-your-project",
+      "text": "Assign the Budget View to your Project",
+      "classes": "",
+      "id": null,
+      "index": 66,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/customize-the-budget-view-optional",
+      "text": "Customize the Budget View (Optional)",
+      "classes": "",
+      "id": null,
+      "index": 69,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/preview-the-budget-view",
+      "text": "Preview the Budget View",
+      "classes": "",
+      "id": null,
+      "index": 70,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/import-a-budget",
+      "text": "Import a Budget",
+      "classes": "",
+      "id": null,
+      "index": 74,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-budgeted-production-quantities",
+      "text": "Add Budgeted Production Quantities",
+      "classes": "",
+      "id": null,
+      "index": 76,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/apply-budget-view-to-your-budget",
+      "text": "Apply Budget View to your Budget",
+      "classes": "",
+      "id": null,
+      "index": 77,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-an-internal-budget-change",
+      "text": "Record Changes on an Internal Budget Change",
+      "classes": "",
+      "id": null,
+      "index": 82,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/import-a-budget/",
+      "text": "Import a Budget",
+      "classes": "link-with-icon",
+      "id": null,
+      "index": 119,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-budgeted-production-quantities/",
+      "text": "Add Budgeted Production Quantities",
+      "classes": "link-with-icon",
+      "id": null,
+      "index": 120,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/add-a-budget-line-item/screenshot.png"
+}

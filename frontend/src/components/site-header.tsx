@@ -307,7 +307,7 @@ export function SiteHeader() {
     const crumbs: Array<{ label: string; href: string }> = [];
 
     // Always start with home/projects
-    crumbs.push({ label: "Home", href: "/" });
+    crumbs.push({ label: "Projects", href: "/" });
 
     segments.forEach((segment, index) => {
       const href = `/${segments.slice(0, index + 1).join("/")}`;

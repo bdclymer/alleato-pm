@@ -67,9 +67,63 @@ Schema mismatches cause:
 
 Reading types first catches all of this in seconds.
 
-## Verification Checklist for New Tables
+## MANDATORY: Test Query Before Claiming "Fixed"
+
+**INCIDENT (2026-02-01):** Agent claimed direct costs page was "fixed" without testing the query. User reported: "I'm still getting this fucking error." Agent then tested and found FK type mismatch.
+
+**BEFORE claiming a Supabase query works, you MUST test it:**
+
+```bash
+node -e '
+require("dotenv").config({ path: ".env.local" });
+const { createClient } = require("@supabase/supabase-js");
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+(async () => {
+  const { data, error } = await supabase
+    .from("your_table")
+    .select(`
+      *,
+      relation:other_table(column1, column2)
+    `)
+    .limit(1);
+
+  if (error) {
+    console.error("❌ QUERY FAILED:");
+    console.error(JSON.stringify(error, null, 2));
+    process.exit(1);
+  }
+
+  console.log("✅ QUERY WORKS");
+  console.log("Returned:", data.length, "rows");
+})();
+'
+```
+
+**ONLY claim "fixed" if you see "✅ QUERY WORKS".**
+
+**DO NOT claim "fixed" based on:**
+- ❌ Page loads without crashing
+- ❌ TypeScript compiles
+- ❌ No syntax errors
+- ❌ Looks correct
+
+**ONLY claim "fixed" based on:**
+- ✅ Actual query test shows SUCCESS
+- ✅ Query returns data or empty array (not error)
+
+## Verification Checklist for Supabase Queries
 
 - [ ] Read existing `database.types.ts`
-- [ ] For each FK, check the referenced table's PK type
-- [ ] Use matching types (INTEGER to INTEGER, UUID to UUID)
-- [ ] After creating table, regenerate types and verify
+- [ ] For each FK join, verify:
+  - [ ] FK column exists in source table
+  - [ ] Referenced table exists
+  - [ ] FK column type MATCHES PK type (INTEGER to INTEGER, UUID to UUID)
+  - [ ] FK constraint exists in schema (check `foreignKeyName` in types)
+- [ ] Test query with `node -e` script
+- [ ] Query succeeds with ✅ QUERY WORKS
+- [ ] **ONLY THEN** claim it works

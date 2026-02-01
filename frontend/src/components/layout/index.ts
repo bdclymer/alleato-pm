@@ -8,4 +8,5 @@ export { PageHeader } from "./PageHeader";
 export { ProjectPageHeader } from "./ProjectPageHeader";
 export { PageToolbar } from "./PageToolbar";
 export { PageTabs } from "./PageTabs";
+export { PageTabsV2 } from "./PageTabsV2";
 export { default as Footer } from "./Footer";

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
         created_at
       `,
       )
-      .eq("project_id", projectId)
+      .eq("project_id", parseInt(projectId, 10))
       .order("snapshot_date", { ascending: false });
 
     if (snapshotsError) {
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
     const { data: budgetLines, error: budgetError } = await supabase
       .from("budget_lines")
       .select("original_amount, revised_budget, direct_costs, committed_costs")
-      .eq("project_id", projectId);
+      .eq("project_id", parseInt(projectId, 10));
 
     let currentTotalBudget = 0;
     let currentTotalCosts = 0;
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     const { data: budgetLines, error: budgetError } = await supabase
       .from("budget_lines")
       .select("original_amount, revised_budget, direct_costs, committed_costs")
-      .eq("project_id", projectId);
+      .eq("project_id", parseInt(projectId, 10));
 
     if (budgetError) {
       return NextResponse.json(

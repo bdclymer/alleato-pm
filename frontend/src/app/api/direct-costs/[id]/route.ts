@@ -21,7 +21,7 @@ export async function GET(
         `
         *,
         vendor:vendors!vendor_id(id, name),
-        employee:employees!employee_id(id, first_name, last_name),
+        employee:people!employee_id(id, first_name, last_name),
         line_items:direct_cost_line_items(
           *,
           budget_code:budget_lines!budget_code_id(code, description)
@@ -119,7 +119,7 @@ export async function PATCH(
         `
         *,
         vendor:vendors!vendor_id(id, name),
-        employee:employees!employee_id(id, first_name, last_name),
+        employee:people!employee_id(id, first_name, last_name),
         line_items:direct_cost_line_items(
           *,
           budget_code:budget_lines!budget_code_id(code, description)

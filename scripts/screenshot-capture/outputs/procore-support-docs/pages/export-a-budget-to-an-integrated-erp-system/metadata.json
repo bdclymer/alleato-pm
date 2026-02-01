@@ -1,0 +1,180 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-budget-to-an-integrated-erp-system",
+  "pageName": "export-a-budget-to-an-integrated-erp-system",
+  "category": "tutorial",
+  "pageId": "export-a-budget-to-an-integrated-erp-system",
+  "timestamp": "2025-12-29T16:45:24.498Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 17,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 2,
+        "h2": 6,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Export a Budget to an Integrated ERP System",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Objective",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 36,
+      "sections": 5
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Export a Budget to an Integrated ERP System",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-budget-to-an-integrated-erp-system/"
+      }
+    ],
+    "title": "Export a Budget to an Integrated ERP System",
+    "h1": "Export a Budget to an Integrated ERP System",
+    "metaDescription": "How to export a budget in Procore to an integrated ERP system."
+  },
+  "links": 10,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-budget-to-an-integrated-erp-system/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/lock-a-budget",
+      "text": "Lock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget in a New Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance",
+      "text": "Send a Budget to ERP for Accounting Acceptance",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/accept-or-reject-a-budget-for-export-to-erp",
+      "text": "Accept or Reject a Budget for Export to ERP",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item",
+      "text": "Create a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 63,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/delete-a-budget-line-item",
+      "text": "Delete a Budget Line Item",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 64,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-budget-modification",
+      "text": "Create a Budget Modification",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 65,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-partial-budget-line-item",
+      "text": "Add a Partial Budget Line Item",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 66,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/export-a-budget-to-an-integrated-erp-system/screenshot.png"
+}

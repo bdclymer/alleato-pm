@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SectionHeader } from "@/components/ui/section-header";
 import { Info, Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown } from "lucide-react";
 import {
   Dialog,
@@ -51,7 +52,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useClients } from "@/hooks/use-clients";
+import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
 import { createClient } from "@/lib/supabase/client";
@@ -86,7 +87,7 @@ export interface ContractFormData {
   // General Info
   number: string; // Contract #
   title: string;
-  ownerClientId?: string; // Owner/Client
+  ownerCompanyId?: string; // Owner/Client Company
   contractorId?: string; // Contractor
   architectEngineerId?: string; // Architect/Engineer
   contractCompanyId?: string; // Contract Company ID
@@ -207,19 +208,19 @@ export function ContractForm({
 
   // Data hooks
   const {
-    options: clientOptions,
-    isLoading: clientsLoading,
-    createClient,
-  } = useClients();
+    options: companyOptions,
+    isLoading: companiesLoading,
+    createCompany,
+  } = useCompanies();
   const { users: projectUsers } = useProjectUsers(projectId);
   const userOptions = projectUsers.map((u) => ({
     value: u.id,
     label: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email || "Unnamed",
   }));
 
-  // State for "Add New Client" dialog
-  const [showAddClient, setShowAddClient] = React.useState(false);
-  const [newClientName, setNewClientName] = React.useState("");
+  // State for "Add New Company" dialog
+  const [showAddCompany, setShowAddCompany] = React.useState(false);
+  const [newCompanyName, setNewCompanyName] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
 
   // Fetch budget codes for the project
@@ -345,21 +346,49 @@ export function ContractForm({
     });
   };
 
-  const handleCreateClient = async () => {
-    if (!newClientName.trim()) return;
+  const handleCreateCompany = async () => {
+    if (!newCompanyName.trim()) return;
 
     setIsCreating(true);
-    const newClient = await createClient({
-      name: newClientName.trim(),
-      status: "active",
-    });
+    try {
+      // Create the company
+      const newCompany = await createCompany({
+        name: newCompanyName.trim(),
+      });
 
-    if (newClient) {
-      updateFormData({ ownerClientId: newClient.id.toString() });
-      setNewClientName("");
-      setShowAddClient(false);
+      if (newCompany) {
+        // Add the company to the project directory
+        // @ts-expect-error - createClient type mismatch
+        const supabaseClient = createClient();
+
+        // @ts-expect-error - Conditional supabase client type
+        const { error: projectCompanyError } = await supabaseClient
+          .from("project_companies")
+          .insert({
+            company_id: newCompany.id,
+            project_id: parseInt(projectId),
+            company_type: "owner",
+            status: "active",
+          });
+
+        if (projectCompanyError) {
+          console.error("Failed to add company to project directory:", projectCompanyError);
+          toast.error("Company created but failed to add to project directory");
+        } else {
+          toast.success("Company created and added to project directory");
+        }
+
+        // Set as owner/client in the form
+        updateFormData({ ownerCompanyId: newCompany.id });
+        setNewCompanyName("");
+        setShowAddCompany(false);
+      }
+    } catch (error) {
+      console.error("Error creating company:", error);
+      toast.error("Failed to create company");
+    } finally {
+      setIsCreating(false);
     }
-    setIsCreating(false);
   };
 
   // SOV handlers
@@ -631,7 +660,7 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* GENERAL INFORMATION */}
       {/* ================================================================ */}
-      <h4 className="text-lg font-semibold">General Information</h4>
+      <SectionHeader>General Information</SectionHeader>
       <div className="space-y-4">
         {/* Row 1: Contract #, Owner/Client, Title */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -649,56 +678,53 @@ export function ContractForm({
 
           <SearchableSelect
             label="Owner/Client"
-            options={clientOptions}
-            value={formData.ownerClientId}
-            onValueChange={(value) => updateFormData({ ownerClientId: value })}
+            options={companyOptions}
+            value={formData.ownerCompanyId}
+            onValueChange={(value) => updateFormData({ ownerCompanyId: value })}
             placeholder="Select company"
             searchPlaceholder="Search"
-            disabled={clientsLoading}
+            disabled={companiesLoading}
             triggerTestId="owner-client-select"
             optionTestIdPrefix="owner-client-option"
-            addButton={
-              <Dialog open={showAddClient} onOpenChange={setShowAddClient}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="icon" title="Add new client">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Client</DialogTitle>
-                    <DialogDescription>
-                      Create a new client/owner for contracts.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <Label htmlFor="client-name">Client Name *</Label>
-                    <Input
-                      id="client-name"
-                      value={newClientName}
-                      onChange={(e) => setNewClientName(e.target.value)}
-                      placeholder="Enter client name"
-                      className="mt-2"
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAddClient(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleCreateClient}
-                      disabled={!newClientName.trim() || isCreating}
-                    >
-                      {isCreating ? "Creating..." : "Create"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            }
+            onCreateNew={() => setShowAddCompany(true)}
+            createNewLabel="+ Create New Company"
           />
+
+          {/* Add New Company Dialog */}
+          <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Company</DialogTitle>
+                <DialogDescription>
+                  Create a new company for the owner/client. It will be automatically added to the project directory.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="company-name">Company Name *</Label>
+                <Input
+                  id="company-name"
+                  value={newCompanyName}
+                  onChange={(e) => setNewCompanyName(e.target.value)}
+                  placeholder="Enter company name"
+                  className="mt-2"
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAddCompany(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateCompany}
+                  disabled={!newCompanyName.trim() || isCreating}
+                >
+                  {isCreating ? "Creating..." : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <TextField
             label="Title"
@@ -763,24 +789,24 @@ export function ContractForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SearchableSelect
             label="Contractor"
-            options={clientOptions}
+            options={companyOptions}
             value={formData.contractorId}
             onValueChange={(value) => updateFormData({ contractorId: value })}
             placeholder="Select contractor"
             searchPlaceholder="Search"
-            disabled={clientsLoading}
+            disabled={companiesLoading}
           />
 
           <SearchableSelect
             label="Architect/Engineer"
-            options={clientOptions}
+            options={companyOptions}
             value={formData.architectEngineerId}
             onValueChange={(value) =>
               updateFormData({ architectEngineerId: value })
             }
             placeholder="Select architect/engineer"
             searchPlaceholder="Search"
-            disabled={clientsLoading}
+            disabled={companiesLoading}
           />
         </div>
 
@@ -839,17 +865,20 @@ export function ContractForm({
           </Button>
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Schedule of Values</h3>
-          <Select defaultValue="add_group">
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Add Group" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="add_group">Add Group</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <SectionHeader
+          actions={
+            <Select defaultValue="add_group">
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Add Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="add_group">Add Group</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        >
+          Schedule of Values
+        </SectionHeader>
 
         {/* SOV Table */}
         <div
@@ -919,9 +948,10 @@ export function ContractForm({
                     </p>
                     <Button
                       onClick={addSOVLine}
-                      className="bg-orange-500 hover:bg-orange-600"
+                      variant="default"
                       data-testid="sov-add-line-empty"
                     >
+                      <Plus className="mr-2 h-4 w-4" />
                       Add Line
                     </Button>
                   </div>
@@ -1103,9 +1133,9 @@ export function ContractForm({
                     variant="outline"
                     size="sm"
                     onClick={addSOVLine}
-                    className="bg-orange-500 hover:bg-orange-600 text-white border-0"
                     data-testid="sov-add-line-footer"
                   >
+                    <Plus className="mr-2 h-4 w-4" />
                     Add Line
                   </Button>
                 </td>
@@ -1159,7 +1189,7 @@ export function ContractForm({
       {/* INCLUSIONS & EXCLUSIONS */}
       {/* ================================================================ */}
       <div className="pt-8">
-        <h4 className="text-lg font-semibold">Inclusions & Exclusions</h4>
+        <SectionHeader>Inclusions & Exclusions</SectionHeader>
       </div>
       <div className="space-y-4">
         <RichTextField
@@ -1184,7 +1214,7 @@ export function ContractForm({
       {/* ================================================================ */}
 
       <div className="pt-8">
-        <h4 className="text-lg font-semibold">Contract Dates</h4>
+        <SectionHeader>Contract Dates</SectionHeader>
       </div>
       <div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1262,8 +1292,8 @@ export function ContractForm({
       {/* CONTRACT PRIVACY */}
       {/* ================================================================ */}
 
-      <div className="pt-8 text-lg font-semibold">
-        <h4 className="text-lg font-semibold">Contract Privacy</h4>
+      <div className="pt-8">
+        <SectionHeader>Contract Privacy</SectionHeader>
       </div>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -1343,7 +1373,7 @@ export function ContractForm({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="bg-orange-500 hover:bg-orange-600"
+            variant="default"
           >
             {isSubmitting
               ? "Creating..."

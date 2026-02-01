@@ -53,7 +53,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
         )
       `,
       )
-      .eq("project_id", projectId)
+      .eq("project_id", parseInt(projectId, 10))
       .order("changed_at", { ascending: false })
       .limit(100);
 

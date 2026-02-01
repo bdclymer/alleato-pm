@@ -93,7 +93,7 @@ export async function GET(
     let query = supabase
       .from("direct_cost_line_items")
       .select("*")
-      .eq("project_id", projectId)
+      .eq("project_id", parseInt(projectId, 10))
       .order("transaction_date", { ascending: false });
 
     // Filter by cost_code_id if budgetLineId was provided

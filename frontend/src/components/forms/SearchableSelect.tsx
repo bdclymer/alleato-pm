@@ -31,6 +31,8 @@ interface SearchableSelectProps {
   className?: string;
   triggerClassName?: string;
   addButton?: React.ReactNode;
+  onCreateNew?: () => void;
+  createNewLabel?: string;
   triggerTestId?: string;
   optionTestIdPrefix?: string;
   searchInputTestId?: string;
@@ -49,6 +51,8 @@ export function SearchableSelect({
   className,
   triggerClassName,
   addButton,
+  onCreateNew,
+  createNewLabel = "+ Create New",
   triggerTestId,
   optionTestIdPrefix,
   searchInputTestId,
@@ -152,6 +156,23 @@ export function SearchableSelect({
                   ))
                 )}
               </div>
+
+              {/* Create New Button */}
+              {onCreateNew && (
+                <div className="border-t p-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-sm font-normal text-primary hover:text-primary hover:bg-primary/10"
+                    onClick={() => {
+                      setOpen(false);
+                      onCreateNew();
+                    }}
+                  >
+                    {createNewLabel}
+                  </Button>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>

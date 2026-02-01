@@ -1,0 +1,212 @@
+{
+  "url": "https://v2.support.procore.com/process-guides/financials-budget-report/",
+  "pageName": "financials-budget-report",
+  "category": "documentation",
+  "pageId": "financials-budget-report",
+  "timestamp": "2025-12-29T16:36:52.624Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 11,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 3,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Financials Budget Report",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Overview",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "Procore Tools Used in the Financials Budget Report",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 12,
+      "sections": 3
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Financials Budget Report",
+        "href": "https://v2.support.procore.com/process-guides/financials-budget-report/"
+      }
+    ],
+    "title": "Financials Budget Report - Overview",
+    "h1": "Financials Budget Report",
+    "metaDescription": " | Overview"
+  },
+  "links": 17,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report",
+      "text": "Overview",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-changes",
+      "text": "Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-insights",
+      "text": "Budget Insights",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/key-influencers",
+      "text": "Key Influencers",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/root-cause-analysis",
+      "text": "Root Cause Analysis",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-detail",
+      "text": "Budget Detail",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-benchmarking",
+      "text": "Budget Benchmarking",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-snapshot-insights",
+      "text": "Budget Snapshot Insights",
+      "classes": "",
+      "id": null,
+      "index": 59,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-snapshots-over-time",
+      "text": "Budget Snapshots Over Time",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-snapshot-forecast",
+      "text": "Budget Snapshot Forecast",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-snapshot-comparison",
+      "text": "Budget Snapshot Comparison",
+      "classes": "",
+      "id": null,
+      "index": 62,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-modifications",
+      "text": "Budget Modifications",
+      "classes": "",
+      "id": null,
+      "index": 63,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/advanced-forecasting",
+      "text": "Advanced Forecasting",
+      "classes": "",
+      "id": null,
+      "index": 64,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/advanced-forecasting-over-time",
+      "text": "Advanced Forecasting Over Time",
+      "classes": "",
+      "id": null,
+      "index": 65,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/cost-vs-schedule",
+      "text": "Cost vs Schedule",
+      "classes": "",
+      "id": null,
+      "index": 66,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/change-events",
+      "text": "Change Events",
+      "classes": "",
+      "id": null,
+      "index": 67,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/financials-budget-report/budget-changes/",
+      "text": "Budget Changes",
+      "classes": "link-with-icon",
+      "id": null,
+      "index": 84,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/financials-budget-report/screenshot.png"
+}

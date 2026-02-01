@@ -4,7 +4,11 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProjectPageHeader, PageContainer, FormContainer } from "@/components/layout";
+import {
+  ProjectPageHeader,
+  PageContainer,
+  FormContainer,
+} from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
@@ -35,7 +39,7 @@ export default function NewContractPage() {
         body: JSON.stringify({
           contract_number: data.number,
           title: data.title,
-          client_id: data.ownerClientId ? Number(data.ownerClientId) : null,
+          owner_company_id: data.ownerCompanyId || null,
           contractor_id: data.contractorId || null,
           architect_engineer_id: data.architectEngineerId || null,
           contract_company_id: data.contractCompanyId || null,
@@ -44,8 +48,7 @@ export default function NewContractPage() {
           executed: data.executed || false,
           executed_at: data.executed ? new Date().toISOString() : null,
           original_contract_value: sovTotal,
-          revised_contract_value:
-            data.revisedAmount || sovTotal,
+          revised_contract_value: data.revisedAmount || sovTotal,
           start_date: data.startDate?.toISOString() || null,
           end_date: data.estimatedCompletionDate?.toISOString() || null,
           substantial_completion_date:
@@ -67,7 +70,7 @@ export default function NewContractPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Contract creation failed:', errorData);
+        console.error("Contract creation failed:", errorData);
         throw new Error(errorData.error || "Failed to create contract");
       }
 
@@ -106,9 +109,7 @@ export default function NewContractPage() {
 
         for (const lineItemResponse of lineItemResponses) {
           if (!lineItemResponse.ok) {
-            const errorData = await lineItemResponse
-              .json()
-              .catch(() => ({}));
+            const errorData = await lineItemResponse.json().catch(() => ({}));
             throw new Error(
               errorData.error || "Failed to create SOV line items",
             );
@@ -117,11 +118,16 @@ export default function NewContractPage() {
       }
 
       if (data.attachmentFiles && data.attachmentFiles.length > 0) {
-        console.log('Uploading attachments:', data.attachmentFiles.length);
+        console.log("Uploading attachments:", data.attachmentFiles.length);
         for (const file of data.attachmentFiles) {
           const formData = new FormData();
           formData.append("file", file);
-          console.log('Uploading attachment:', file.name, 'to contract:', newContract.id);
+          console.log(
+            "Uploading attachment:",
+            file.name,
+            "to contract:",
+            newContract.id,
+          );
           const attachmentResponse = await fetch(
             `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
             {
@@ -132,13 +138,11 @@ export default function NewContractPage() {
 
           if (!attachmentResponse.ok) {
             const errorData = await attachmentResponse.json().catch(() => ({}));
-            console.error('Attachment upload failed:', errorData);
-            throw new Error(
-              errorData.error || "Failed to upload attachment",
-            );
+            console.error("Attachment upload failed:", errorData);
+            throw new Error(errorData.error || "Failed to upload attachment");
           } else {
             const result = await attachmentResponse.json();
-            console.log('Attachment uploaded successfully:', result);
+            console.log("Attachment uploaded successfully:", result);
           }
         }
       }
@@ -165,22 +169,28 @@ export default function NewContractPage() {
   };
 
   return (
-    <PageContainer>
+    <>
       <ProjectPageHeader
         title="New Prime Contract"
-      actions={undefined}
+        breadcrumbs={[
+          { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
+          { label: "New Contract" },
+        ]}
+        actions={undefined}
       />
 
-      <FormContainer maxWidth="lg" className="max-w-[960px]">
-        <ContractForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isSubmitting={isSaving}
-          mode="create"
-          projectId={projectId}
-        />
-      </FormContainer>
-    </PageContainer>
+      <PageContainer className="bg-gray-50">
+        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-white rounded-lg border border-gray-200 p-8">
+          <ContractForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            isSubmitting={isSaving}
+            mode="create"
+            projectId={projectId}
+          />
+        </FormContainer>
+      </PageContainer>
+    </>
   );
 }

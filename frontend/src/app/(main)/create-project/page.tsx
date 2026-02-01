@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProjectCreatedModal } from "@/components/project/ProjectCreatedModal";
 
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
 const ACCEPTED_IMAGE_TYPES = ".jpg,.jpeg,.png,.tif,.tiff,.bmp";
@@ -52,12 +53,21 @@ const PROJECT_TEMPLATE_OPTIONS = [
 ];
 
 const STAGE_OPTIONS = [
-  "Planning",
-  "Pre-Construction",
+  "Bidding",
   "Course of Construction",
-  "Closeout",
+  "Post-Construction",
+  "Pre-Construction",
+  "Speculative",
   "Warranty",
-  "Archived",
+];
+
+const PHASE_OPTIONS = [
+  "Planning",
+  "Estimating",
+  "Current",
+  "Complete",
+  "Loss",
+  "Archive",
 ];
 
 const WORK_SCOPE_OPTIONS = [
@@ -197,6 +207,7 @@ const requiredCurrency = z.preprocess(
 const createProjectSchema = z.object({
   project_template: z.string().optional(),
   stage: z.string().optional(),
+  phase: z.string().optional(),
   name: z.string().min(1, { message: "Project name is required" }),
   project_number: z.string().optional(),
   description: z.string().optional(),
@@ -282,6 +293,14 @@ const formSections: FormSection[] = [
         options: STAGE_OPTIONS.map((value) => ({ value, label: value })),
         allowEmptyOption: true,
         placeholder: "Select stage",
+      },
+      {
+        name: "phase",
+        label: "Phase",
+        control: "select",
+        options: PHASE_OPTIONS.map((value) => ({ value, label: value })),
+        allowEmptyOption: true,
+        placeholder: "Select phase",
       },
       {
         name: "name",
@@ -536,6 +555,7 @@ const formSections: FormSection[] = [
 const defaultValues: DefaultValues<CreateProjectFormValues> = {
   project_template: "standard",
   stage: undefined,
+  phase: "Current",
   name: "",
   project_number: "",
   description: "",
@@ -618,6 +638,11 @@ function CreateProjectForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileResetKey, setFileResetKey] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdProject, setCreatedProject] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema) as any,
@@ -632,8 +657,8 @@ function CreateProjectForm() {
       const payload = {
         name: values.name,
         "job number": values.project_number || null,
-        phase: values.stage || "Current", // Default to "Current" if no stage selected
-        current_phase: values.stage || "Current", // Default to "Current" if no stage selected
+        current_phase: values.stage || null,
+        phase: values.phase || null,
         category: values.project_type || null,
         type: values.project_type || null, // Also set 'type' column
         summary: values.description || null,
@@ -682,17 +707,16 @@ function CreateProjectForm() {
       }
 
       const project = await response.json();
-      toast.success("Project created", {
-        description: `${values.name} has been created. Redirecting to project home...`,
+
+      // Store project info and show success modal
+      setCreatedProject({
+        id: String(project.id),
+        name: values.name,
       });
+      setShowSuccessModal(true);
+
       form.reset(defaultValues);
       setFileResetKey((key) => key + 1);
-      if (project?.id) {
-        // Redirect to the project homepage
-        router.push(`/${project.id}/home`);
-      } else {
-        router.push("/");
-      }
     } catch (error) {
       toast.error("Failed to create project", {
         description:
@@ -910,8 +934,21 @@ function CreateProjectForm() {
   );
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <>
+      <ProjectCreatedModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          if (createdProject?.id) {
+            router.push(`/${createdProject.id}/home`);
+          }
+        }}
+        projectId={createdProject?.id ?? ""}
+        projectName={createdProject?.name ?? ""}
+      />
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {formSections.map((section) => (
           <Card key={section.id}>
             <CardHeader>
@@ -964,5 +1001,6 @@ function CreateProjectForm() {
         </div>
       </form>
     </Form>
+    </>
   );
 }

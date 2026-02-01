@@ -132,9 +132,15 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const body = await request.json();
 
+    // Set default phase to "Current" if not provided
+    const projectData = {
+      phase: "Current",
+      ...body,
+    };
+
     const { data, error } = await supabase
       .from("projects")
-      .insert(body)
+      .insert(projectData)
       .select()
       .single();
 

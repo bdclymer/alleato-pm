@@ -1,0 +1,188 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/read-a-budget",
+  "pageName": "read-a-budget",
+  "category": "tutorial",
+  "pageId": "read-a-budget",
+  "timestamp": "2025-12-29T16:45:47.219Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 14,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 5,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 1,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Read a Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 104,
+      "sections": 7
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 18,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Read a Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/read-a-budget/"
+      }
+    ],
+    "title": "Read a Budget",
+    "h1": "Read a Budget",
+    "metaDescription": "How to read and interpret each column of information on a project's budget being managed in a Procore."
+  },
+  "links": 10,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/read-a-budget/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my projects?",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set Up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget in a New Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "budget change",
+      "classes": "",
+      "id": null,
+      "index": 62,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/migrating-to-budget-changes-from-budget-modifications",
+      "text": "Migrating to Budget Changes from Budget Modifications",
+      "classes": "",
+      "id": null,
+      "index": 63,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/import-advanced-forecasting-for-a-budget",
+      "text": "Import Advanced Forecasting for a Budget",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 65,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-the-view-snapshot-group-and-filter-options-on-a-budget-view",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 66,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-snapshot-from-the-budget-tool",
+      "text": "Export a Snapshot from the Budget Tool",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 67,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/read-a-budget/screenshot.png"
+}

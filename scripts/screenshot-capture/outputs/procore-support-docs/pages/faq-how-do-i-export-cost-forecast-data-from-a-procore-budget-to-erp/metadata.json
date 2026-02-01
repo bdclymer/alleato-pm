@@ -1,0 +1,159 @@
+{
+  "url": "https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp/",
+  "pageName": "faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp",
+  "category": "faq",
+  "pageId": "faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp",
+  "timestamp": "2025-12-29T16:42:39.829Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 4,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 19,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 10
+      },
+      "codeBlocks": 0,
+      "images": 20,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "How do I export cost forecast data from a Procore budget to ERP",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 154,
+      "sections": 4
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Procore Budget",
+          "Exports data from Procore to Sage 300 CRE®",
+          "Sage 300 CRE® Field"
+        ],
+        "rows": 2,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "PROCORE",
+          "Exports data from Procore to Vista®",
+          "Imports data from  Vista® to Procore",
+          "Vista®"
+        ],
+        "rows": 4,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "PROCORE",
+          "Exports data from Procore to CMiC",
+          "Imports data from CMiC to Procore",
+          "CMiC"
+        ],
+        "rows": 6,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "PROCORE",
+          "Exports data from Procore to Viewpoint® Spectrum®",
+          "Imports data from Viewpoint® Spectrum® to Procore",
+          "Viewpoint® Spectrum®"
+        ],
+        "rows": 4,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "How do I export cost forecast data from a Procore budget to ERP",
+        "href": "https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp/"
+      }
+    ],
+    "title": "How do I export cost forecast data from a Procore budget to ERP",
+    "h1": "How do I export cost forecast data from a Procore budget to ERP",
+    "metaDescription": "How to export cost forecast data into ERP"
+  },
+  "links": 5,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/accept-or-reject-a-budget-for-export-to-erp",
+      "text": "Accept or Reject a Budget for Export to ERP",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-new-budget-view",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/use-the-forecast-to-complete-feature",
+      "text": "Use the 'Forecast to Complete' Feature",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 57,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-cmic",
+      "text": "How do I export cost forecast data from a Procore budget to CMiC",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 58,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp/screenshot.png"
+}

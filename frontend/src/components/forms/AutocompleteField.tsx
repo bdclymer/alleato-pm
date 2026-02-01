@@ -123,6 +123,7 @@ export function AutocompleteField({
         <PopoverContent
           className="w-[--radix-popover-trigger-width] p-0"
           align="start"
+          sideOffset={0}
         >
           <Command>
             <CommandInput

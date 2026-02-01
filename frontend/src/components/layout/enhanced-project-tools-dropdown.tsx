@@ -24,6 +24,7 @@ import {
   Package,
   ClipboardList,
   ChevronRight,
+  Table,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -246,6 +247,13 @@ const toolCategories: ToolCategory[] = [
         icon: <FolderOpen className="h-4 w-4" />,
         requiresProject: false,
         description: "Document workflow management"
+      },
+      {
+        name: "Tables Directory",
+        path: "/tables-directory",
+        icon: <Table className="h-4 w-4" />,
+        requiresProject: false,
+        description: "Database tables administration"
       },
       {
         name: "Tasks",

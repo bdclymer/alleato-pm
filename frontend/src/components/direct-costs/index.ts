@@ -1,4 +1,8 @@
-/** * ============================================================================= * DIRECT COSTS COMPONENTS - BARREL EXPORTS * ============================================================================= */ export { DirectCostTable } from "./DirectCostTable";
+/**
+ * =============================================================================
+ * DIRECT COSTS COMPONENTS - BARREL EXPORTS
+ * =============================================================================
+ */
 export { DirectCostForm } from "./DirectCostForm";
 export { CreateDirectCostForm } from "./CreateDirectCostForm";
 export { DirectCostSummaryCards } from "./DirectCostSummaryCards";

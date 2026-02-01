@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { SpecificationRevisionService } from "@/services/SpecificationRevisionService";
+
+/**
+ * GET /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
+ * Get a specific revision
+ */
+export async function GET(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
+  },
+) {
+  const { revisionId } = await params;
+  const supabase = await createClient();
+
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = new SpecificationRevisionService(supabase);
+  const result = await service.getRevision(revisionId);
+
+  if (result.error) {
+    return NextResponse.json(
+      { error: result.error.message },
+      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
+    );
+  }
+
+  return NextResponse.json(result.data);
+}
+
+/**
+ * DELETE /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
+ * Delete a revision (except current revision)
+ */
+export async function DELETE(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
+  },
+) {
+  const { projectId, sectionId, revisionId } = await params;
+  const supabase = await createClient();
+
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = new SpecificationRevisionService(supabase);
+  const result = await service.deleteRevision(projectId, sectionId, revisionId);
+
+  if (result.error) {
+    const statusCode =
+      result.error.type === "NOT_FOUND"
+        ? 404
+        : result.error.type === "REVISION_CONFLICT"
+          ? 409
+          : 500;
+
+    return NextResponse.json({ error: result.error.message }, { status: statusCode });
+  }
+
+  return NextResponse.json({ success: true }, { status: 200 });
+}
+
+/**
+ * PATCH /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
+ * Set as current revision
+ */
+export async function PATCH(
+  request: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
+  },
+) {
+  const { projectId, sectionId, revisionId } = await params;
+  const supabase = await createClient();
+
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const service = new SpecificationRevisionService(supabase);
+  const result = await service.setCurrentRevision(projectId, sectionId, revisionId);
+
+  if (result.error) {
+    const statusCode =
+      result.error.type === "NOT_FOUND"
+        ? 404
+        : result.error.type === "REVISION_CONFLICT"
+          ? 409
+          : 500;
+
+    return NextResponse.json({ error: result.error.message }, { status: statusCode });
+  }
+
+  return NextResponse.json({ success: true }, { status: 200 });
+}

@@ -92,14 +92,14 @@ export async function GET(
           sub_job:sub_jobs(code, name)
         `,
         )
-        .eq("project_id", projectId)
+        .eq("project_id", projectIdNum)
         .order("cost_code_id", { ascending: true }),
 
       // Direct costs for JTD and Direct Cost calculations
       supabase
         .from("direct_cost_line_items")
         .select("cost_code_id, amount, cost_type, approved")
-        .eq("project_id", projectId),
+        .eq("project_id", projectIdNum),
 
       // Subcontract SOV items with pending status for Pending Cost Changes
       supabase
@@ -419,7 +419,7 @@ export async function POST(
       let query = supabase
         .from("budget_lines")
         .select("id, original_amount")
-        .eq("project_id", projectId)
+        .eq("project_id", projectIdNum)
         .eq("cost_code_id", item.costCodeId)
         .is("sub_job_id", null);
 

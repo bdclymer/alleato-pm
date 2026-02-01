@@ -44,6 +44,7 @@ interface BudgetCode {
   id: string;
   code: string;
   costType: string | null;
+  costTypeId: string | null;
   description: string;
   fullLabel: string;
 }
@@ -60,6 +61,8 @@ interface CostCodeOption {
 export interface InlineLineItemData {
   budgetCodeId: string;
   budgetCodeLabel: string;
+  costCodeId: string;
+  costTypeId: string | null;
   qty: string;
   uom: string;
   unitCost: string;
@@ -85,6 +88,8 @@ export function BudgetLineItemCreatorModal({
     {
       budgetCodeId: "",
       budgetCodeLabel: "",
+      costCodeId: "",
+      costTypeId: null,
       qty: "",
       uom: "",
       unitCost: "",
@@ -124,6 +129,8 @@ export function BudgetLineItemCreatorModal({
         {
           budgetCodeId: "",
           budgetCodeLabel: "",
+          costCodeId: "",
+          costTypeId: null,
           qty: "",
           uom: "",
           unitCost: "",
@@ -275,7 +282,13 @@ export function BudgetLineItemCreatorModal({
     setRows(
       rows.map((row, i) =>
         i === index
-          ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
+          ? {
+              ...row,
+              budgetCodeId: code.id,
+              budgetCodeLabel: code.fullLabel,
+              costCodeId: code.code,
+              costTypeId: code.costTypeId,
+            }
           : row
       )
     );
@@ -288,6 +301,8 @@ export function BudgetLineItemCreatorModal({
       {
         budgetCodeId: "",
         budgetCodeLabel: "",
+        costCodeId: "",
+        costTypeId: null,
         qty: "",
         uom: "",
         unitCost: "",
@@ -346,11 +361,16 @@ export function BudgetLineItemCreatorModal({
   const handleCreate = async () => {
     // Validate all rows
     const invalidRows = rows.filter(
-      (row) => !row.budgetCodeId || parseFloat(row.amount) === 0
+      (row) =>
+        !row.costCodeId ||
+        !row.costTypeId ||
+        parseFloat(row.amount) === 0
     );
 
     if (invalidRows.length > 0) {
-      toast.error("All rows must have a budget code and a non-zero amount");
+      toast.error(
+        "All rows must have a budget code, an associated cost type, and a non-zero amount",
+      );
       return;
     }
 
@@ -362,6 +382,8 @@ export function BudgetLineItemCreatorModal({
         {
           budgetCodeId: "",
           budgetCodeLabel: "",
+          costCodeId: "",
+          costTypeId: null,
           qty: "",
           uom: "",
           unitCost: "",
@@ -371,7 +393,11 @@ export function BudgetLineItemCreatorModal({
       onClose();
       toast.success(`Successfully created ${rows.length} budget line item${rows.length > 1 ? "s" : ""}`);
     } catch (error) {
-      toast.error("Failed to create budget line items");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to create budget line items";
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }
@@ -673,7 +699,7 @@ export function BudgetLineItemCreatorModal({
                   </Button>
                   <Button
                     onClick={handleCreate}
-                    disabled={isCreating || rows.every((r) => !r.budgetCodeId)}
+                    disabled={isCreating || rows.every((r) => !r.costCodeId)}
                     className="bg-brand hover:bg-brand/90 min-w-[140px]"
                   >
                     {isCreating ? (
@@ -775,9 +801,9 @@ export function BudgetLineItemCreatorModal({
                 <SelectContent>
                   <SelectItem value="L">L - Labor</SelectItem>
                   <SelectItem value="M">M - Material</SelectItem>
-                  <SelectItem value="E">E - Equipment</SelectItem>
                   <SelectItem value="S">S - Subcontract</SelectItem>
-                  <SelectItem value="O">O - Other</SelectItem>
+                  <SelectItem value="X">X - Expense</SelectItem>
+                  <SelectItem value="E">E - Equipment</SelectItem>
                 </SelectContent>
               </Select>
             </div>

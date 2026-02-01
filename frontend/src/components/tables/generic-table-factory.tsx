@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * ============================================================================
  * GENERIC DATA TABLE FACTORY
@@ -57,8 +59,6 @@
  *
  * LOCATED AT: [frontend/src/components/tables/generic-table-factory.tsx](frontend/src/components/tables/generic-table-factory.tsx)
  */
-
-"use client";
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";

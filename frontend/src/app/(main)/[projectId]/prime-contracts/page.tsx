@@ -176,7 +176,7 @@ export default function ProjectContractsPage() {
       <ProjectPageHeader
         title="Prime Contracts"
         description="Manage prime contracts and owner agreements"
-        showExportButton={false} // Export handled by GenericDataTable
+        showExportButton={false}
         actions={
           <Button
             size="sm"

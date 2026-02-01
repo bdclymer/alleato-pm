@@ -113,7 +113,7 @@ const DirectCostBaseSchema = z.object({
 
   // Optional fields
   vendor_id: optionalUuidSchema,
-  employee_id: z.coerce.number().nullable().optional(),
+  employee_id: optionalUuidSchema,
   invoice_number: z.string().trim().max(255).optional().nullable(),
   status: z.enum(CostStatuses).default('Draft'),
   description: z.string().trim().max(1000).optional().nullable(),
@@ -123,7 +123,7 @@ const DirectCostBaseSchema = z.object({
 });
 
 // Refinement for vendor/employee requirement
-const vendorOrEmployeeRefinement = <T extends { vendor_id?: string | null; employee_id?: number | null }>(
+const vendorOrEmployeeRefinement = <T extends { vendor_id?: string | null; employee_id?: string | null }>(
   schema: z.ZodType<T>
 ) =>
   schema.refine(

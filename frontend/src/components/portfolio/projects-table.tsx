@@ -372,53 +372,28 @@ export function ProjectsTable({
                   <Link
                     key={row.id}
                     href={projectHref}
-                    className="group block bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:border-[hsl(var(--procore-orange))] hover:-translate-y-1 transition-all duration-300 text-left"
+                    className="group block bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 text-left"
                     onClick={() => onProjectClick?.(project)}
                   >
-                    <div className="mb-3">
-                      <h3 className="text-base font-semibold text-foreground group-hover:text-[hsl(var(--procore-orange))] transition-colors duration-300 line-clamp-2 leading-tight">
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <h3 className="text-base font-semibold text-foreground transition-colors duration-300 line-clamp-2 leading-tight">
                         {project.name}
                       </h3>
+                      {project.phase && (
+                        <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
+                          {project.phase}
+                        </span>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-muted-foreground font-medium">
-                          Job #{project.jobNumber}
-                        </div>
-                        {project.phase && (
-                          <span className={cn(
-                            "px-2 py-0.5 text-[10px] font-medium rounded-full",
-                            {
-                              "bg-blue-50 text-blue-700 border border-blue-200": project.phase.toLowerCase() === "current",
-                              "bg-purple-50 text-purple-700 border border-purple-200": project.phase.toLowerCase() === "bid",
-                              "bg-amber-50 text-amber-700 border border-amber-200": project.phase.toLowerCase() === "preconstruction",
-                              "bg-green-50 text-green-700 border border-green-200": project.phase.toLowerCase() === "complete",
-                            }
-                          )}>
-                            {project.phase}
-                          </span>
-                        )}
+                      <div className="text-xs text-muted-foreground font-medium">
+                        Job #{project.jobNumber}
                       </div>
 
                       {project.client && (
                         <div className="text-sm text-foreground/80 truncate">
                           {project.client}
-                        </div>
-                      )}
-
-                      {(project.estRevenue || project.state) && (
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-                          {project.estRevenue && (
-                            <div>
-                              ${Number(project.estRevenue).toLocaleString()}
-                            </div>
-                          )}
-                          {project.state && (
-                            <div className="capitalize">
-                              {project.state}
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
@@ -451,7 +426,7 @@ export function ProjectsTable({
                 table.setPageSize(Number(e.target.value));
               }}
               aria-label="Items per page"
-              className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[hsl(var(--procore-orange))] focus:border-transparent bg-background"
+              className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background"
             >
               {[12, 24, 48, 96].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>

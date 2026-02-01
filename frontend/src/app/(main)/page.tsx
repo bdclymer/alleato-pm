@@ -2,25 +2,22 @@
 
 import * as React from "react";
 import {
-  PortfolioHeader,
   PortfolioFilters,
   ProjectsTable,
 } from "@/components/portfolio";
 import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
-import { portfolioViews, financialViews } from "@/config/portfolio";
 import { useRouter } from "next/navigation";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 
 export default function PortfolioPage() {
   const router = useRouter();
-  const [activeView, setActiveView] = React.useState("projects");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] =
     React.useState<StatusFilter>("active");
   const [viewType, setViewType] =
     React.useState<PortfolioViewType>("thumbnails");
   const [phaseFilter, setPhaseFilter] = React.useState<string | null>(
-    "current",
+    "Current",
   );
   const [categoryFilter, setCategoryFilter] = React.useState<string | null>(
     null,
@@ -157,10 +154,6 @@ export default function PortfolioPage() {
     });
   }, [projects, phaseFilter, categoryFilter, clientFilter]);
 
-  const handleViewChange = (viewId: string) => {
-    setActiveView(viewId);
-  };
-
   const handleExport = (format: "pdf" | "csv") => {
     // Export to CSV
     if (format === "csv") {
@@ -275,7 +268,7 @@ export default function PortfolioPage() {
   const handleClearFilters = () => {
     setSearchQuery("");
     setStatusFilter("active");
-    setPhaseFilter("current");
+    setPhaseFilter("Current");
     setCategoryFilter(null);
     setClientFilter(null);
   };
@@ -289,19 +282,9 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div className="px-6 sm:px-8 lg:px-12 pt-6 pb-8 flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Portfolio Header with tabs */}
-      <PortfolioHeader
-        views={portfolioViews}
-        financialViews={financialViews}
-        activeView={activeView}
-        onViewChange={handleViewChange}
-        onExport={handleExport}
-        onCreateProject={handleCreateProject}
-      />
-
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden px-6 sm:px-8 lg:px-12 pt-6 pb-8">
         {/* Filters */}
         <PortfolioFilters
           searchQuery={searchQuery}
@@ -323,7 +306,7 @@ export default function PortfolioPage() {
         />
 
         {/* Projects Table */}
-        <div className="flex-1 overflow-hidden bg-background rounded-lg border border-border shadow-sm">
+        <div className="flex-1 overflow-hidden bg-background rounded-lg shadow-sm">
           {loading ? (
             <LoadingSkeleton />
           ) : (

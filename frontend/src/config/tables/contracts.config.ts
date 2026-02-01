@@ -11,8 +11,6 @@ import type { GenericTableConfig } from "@/components/tables/generic-table-facto
  * Prime contracts table configuration
  */
 export const contractsTableConfig: GenericTableConfig = {
-  title: "Prime Contracts",
-  description: "Manage prime contracts and owner agreements",
   searchFields: ["contract_number", "title", "client_name"],
   exportFilename: "prime-contracts.csv",
   enableSorting: true,

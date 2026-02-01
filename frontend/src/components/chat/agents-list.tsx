@@ -31,7 +31,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
                 : "opacity-50 filter grayscale cursor-not-allowed pointer-events-none"
             } ${
               agent.name === currentAgent
-                ? "ring-1 ring-orange-500 shadow-md"
+                ? "ring-1 ring-brand shadow-md"
                 : ""
             }`}
           >

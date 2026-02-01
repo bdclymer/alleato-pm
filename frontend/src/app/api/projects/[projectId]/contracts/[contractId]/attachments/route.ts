@@ -89,7 +89,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId } = await params;
-    console.log('Attachment POST - projectId:', projectId, 'contractId:', contractId);
     const supabase = await createClient();
 
     const {
@@ -117,7 +116,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    console.log('File received:', file ? file.name : 'no file');
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -177,8 +175,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
-
-    console.log('Attachment created successfully:', attachment.id, attachment.file_name);
 
     return NextResponse.json(
       {

@@ -1,0 +1,291 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting/",
+  "pageName": "faq-or-troubleshooting",
+  "category": "faq",
+  "pageId": "faq-or-troubleshooting",
+  "timestamp": "2025-12-29T16:42:14.924Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 2,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 11,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 36,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "FAQ/Troubleshooting",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 9,
+      "sections": 3
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "FAQ/Troubleshooting",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting/"
+      }
+    ],
+    "title": "FAQ/Troubleshooting",
+    "h1": "Budget",
+    "metaDescription": "This page includes links to frequently asked questions about the project's Budget tool."
+  },
+  "links": 27,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project",
+      "text": "Overview",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials",
+      "text": "Tutorials",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting",
+      "text": "FAQ/Troubleshooting",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/videos",
+      "text": "Videos",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions",
+      "text": "Permissions",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/diagrams",
+      "text": "Diagrams",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system/",
+      "text": "Can I export Procore budget modifications to an integrated ERP system?",
+      "classes": "",
+      "id": null,
+      "index": 65,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-can-we-import-our-third-party-timecard-entries-to-work-with-the-timesheet-hours-column-in-the-budget/",
+      "text": "Can we import our third-party timecard entries to work with the 'Timesheet Hours' column in Procore's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 66,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-add-the-timesheet-hours-column-to-a-budget-view/",
+      "text": "How do I add the 'Timesheet Hours' column to a budget view?",
+      "classes": "",
+      "id": null,
+      "index": 70,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-cmic/",
+      "text": "How do I export cost forecast data from a Procore budget to CMiC",
+      "classes": "",
+      "id": null,
+      "index": 72,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp/",
+      "text": "How do I export cost forecast data from a Procore budget to ERP",
+      "classes": "",
+      "id": null,
+      "index": 73,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-does-the-actual-date-filter-work-on-a-budget-view/",
+      "text": "How does the 'Actuals By Date' filter work on a budget view?",
+      "classes": "",
+      "id": null,
+      "index": 76,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget/",
+      "text": "Should I update my Budget View to add RFQ values to the budget?",
+      "classes": "",
+      "id": null,
+      "index": 77,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-best-practices-for-using-multiple-phased-budget-uploads/",
+      "text": "What are best practices for using multiple (phased) budget uploads?",
+      "classes": "",
+      "id": null,
+      "index": 79,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-procores-standard-budget-views/",
+      "text": "What are Procore's standard budget views?",
+      "classes": "",
+      "id": null,
+      "index": 82,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-granular-permissions-are-available-for-the-projects-budget-tool/",
+      "text": "What granular permissions are available for the project's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 86,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs/",
+      "text": "What is a budget code in Procore's WBS?",
+      "classes": "",
+      "id": null,
+      "index": 87,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-partial-budget-line-item/",
+      "text": "What is a partial budget line item?",
+      "classes": "",
+      "id": null,
+      "index": 88,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-budget-rom-column-in-procores-budget-tool/",
+      "text": "What is the 'Budget ROM' column in Procore's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 89,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-does-the-budget-forecast-report/",
+      "text": "What is the Budget Forecast Report?",
+      "classes": "",
+      "id": null,
+      "index": 90,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report/",
+      "text": "What is the difference between a labor productivity budget view and field production report?",
+      "classes": "",
+      "id": null,
+      "index": 91,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-source-columns-are-available-in-custom-budget-views/",
+      "text": "What source columns are available in Procore's budget views?",
+      "classes": "",
+      "id": null,
+      "index": 92,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects/",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "",
+      "id": null,
+      "index": 93,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-procore-tools-can-i-use-to-add-production-quantities-to-my-projects-budget/",
+      "text": "Which Procore tools can I use to add production quantities to my project's budget?",
+      "classes": "",
+      "id": null,
+      "index": 98,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-why-isnt-the-job-to-date-costs-column-in-the-budget-matching-our-subcontractor-invoice-amounts/",
+      "text": "Why isn't the 'Job to Date Costs' column in the budget matching our subcontractor invoice amounts?",
+      "classes": "",
+      "id": null,
+      "index": 103,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-why-isnt-the-projects-budget-view-reflecting-labor-costs-and-production-quantities-from-timecard-entries/",
+      "text": "Why isn't the project's budget view reflecting labor costs and production quantities from timecard entries?",
+      "classes": "",
+      "id": null,
+      "index": 104,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-or-troubleshooting/screenshot.png"
+}

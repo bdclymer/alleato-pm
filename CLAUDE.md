@@ -4,6 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 🚨 STOP REPEATING MISTAKES - READ THIS FIRST
+
+**Before starting ANY task, check:** `.claude/PREVENTION-CHECKLIST.md`
+
+**Quick Reference - Top 4 Time Wasters:**
+
+1. **NEXT.JS CACHE** (Wasted: 90+ min across 3 incidents)
+   - Creating new route? → Clear `.next` cache FIRST, test SECOND, debug LAST
+   - See 404? → `rm -rf .next` before debugging code
+   - Protocol: `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md`
+
+2. **SUPABASE TYPES** (Wasted: 40+ min)
+   - Database code? → Run `npm run db:types` FIRST
+   - Read `database.types.ts` to verify tables/columns/FK types
+   - NEVER assume schema from memory
+
+3. **ROUTE NAMING** (3 incidents, blocks dev server)
+   - Use `[projectId]`, `[companyId]`, `[contractId]`
+   - NEVER use generic `[id]` (causes conflicts)
+   - Run `npm run check:routes` after creating routes
+
+4. **ROOT CAUSE ANALYSIS** (Wasted: 60+ min)
+   - Gather runtime evidence FIRST (errors, console, query results)
+   - State root cause with evidence
+   - ONLY THEN modify code (not before)
+
+**Full prevention system:** `.claude/PREVENTION-CHECKLIST.md`
+**Incident tracking:** `docs-ai/contents/docs/patterns/INCIDENT-LOG.md`
+
+---
+
 ## MANDATORY GATES (READ FIRST)
 
 These rules are NON-NEGOTIABLE. Violating them wastes significant time.
@@ -65,13 +96,67 @@ Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 - Don't use `cd X && command` chains (fails in zsh)
 - Use single quotes for `node -e` with special chars
 
-### 7. Scaffolding Gate (NEW)
+### 7. Scaffolding Gate (MANDATORY)
 **BEFORE** writing new CRUD features from scratch:
-1. Check if `.claude/scaffolds/` has a template for this pattern
-2. Use `/scaffold <EntityName>` command to generate validated code
-3. Customize the generated code for domain-specific needs
+1. Use **`/create-feature <EntityName>`** to generate validated code with all gates enforced
+2. Customize the generated code for domain-specific needs
+3. For custom fields: `/create-feature <EntityName> --fields 'field1:type,field2:type'`
 
-**NEVER**: Write hooks, services, or migrations from scratch when scaffolds exist.
+**NEVER**: Write hooks, services, API routes, or migrations from scratch when `/create-feature` exists.
+**FK types reference**: `.claude/FK-TYPES-REFERENCE.md`
+
+### 8. Next.js Cache Gate (CRITICAL - PREVENTS WASTED TIME)
+**BEFORE** debugging ANY 404 or routing issue with new/modified Next.js files:
+```bash
+cd frontend && rm -rf .next && pkill -f "next dev" && npm run dev > /tmp/nextjs-dev.log 2>&1 &
+sleep 10
+tail -20 /tmp/nextjs-dev.log  # Verify server shows "Ready"
+```
+
+**THEN** test with Playwright. **NEVER** debug code before clearing cache.
+
+**Why:** Next.js caches compiled routes in `.next/` directory. New files aren't recognized until cache is cleared.
+
+See `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md` for full protocol.
+
+### 9. Authentication Gate (CRITICAL - READ THIS)
+**NEVER** ask the user to manually log in for Playwright tests or web crawlers.
+
+**Credentials are ALWAYS in `.env` file:**
+```bash
+PROCORE_USER=bclymer@alleatogroup.com
+PROCORE_PASSWORD=Clymer926!
+```
+
+**How to use automatic authentication in Node.js scripts:**
+```javascript
+import dotenv from 'dotenv';
+dotenv.config({ path: join(__dirname, '../../.env') }); // Adjust path to project root
+
+const PROCORE_EMAIL = process.env.PROCORE_USER;
+const PROCORE_PASSWORD = process.env.PROCORE_PASSWORD;
+
+// Then use in Playwright:
+await page.fill('input[name="session[email]"]', PROCORE_EMAIL);
+await page.fill('input[name="session[password]"]', PROCORE_PASSWORD);
+await page.click('button[type="submit"]');
+```
+
+**For Playwright tests in `frontend/tests/`:**
+- Auth state is ALREADY saved in `tests/.auth/user.json`
+- Tests automatically use this saved session
+- NO manual login required
+
+**NEVER:**
+- Ask user to log in manually
+- Create interactive auth prompts
+- Wait for user input when credentials exist in .env
+- Assume auth is unavailable
+
+**ALWAYS:**
+- Load credentials from .env automatically
+- Use saved auth state for Playwright tests
+- Provide automatic authentication in crawlers/scripts
 
 ---
 
@@ -79,15 +164,22 @@ Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 
 **Stop writing code from scratch. Use validated templates.**
 
-| Need | Command/File |
-|------|-------------|
-| New CRUD feature | `/scaffold <EntityName>` |
-| Pattern reference | `.claude/PATTERNS.md` |
-| Hook template | `.claude/scaffolds/crud-resource/hook.ts` |
-| Service template | `.claude/scaffolds/crud-resource/service.ts` |
-| Migration template | `.claude/scaffolds/crud-resource/migration.sql` |
+| Need | Command |
+|------|---------|
+| **New CRUD feature** | **`/create-feature <EntityName>`** (preferred, enforces all gates) |
+| New feature with custom fields | `/create-feature DrawingArea --fields 'name:text,area_number:text,status:text'` |
+| Add endpoint to existing entity | `/api-endpoint GET contracts export-csv --hook` |
+| Schema change only | `/supabase-migration add column due_date to schedule_tasks` |
+| FK types lookup | `.claude/FK-TYPES-REFERENCE.md` |
 
-**Why this exists:** Every new feature written from scratch makes the same mistakes (wrong FK types, missing RLS, inconsistent patterns). Scaffolds eliminate this by providing copy-paste starting points that already work.
+**`/create-feature` enforces these gates automatically:**
+1. FK type validation (prevents INTEGER/UUID mismatch -- the #1 recurring bug)
+2. Route conflict check (prevents `[id]` vs `[projectId]` errors)
+3. TypeScript compilation (catches type errors before you see them)
+4. Import verification (ensures all files reference each other correctly)
+5. Types regeneration (always reads real schema, never assumes)
+
+**Why this exists:** Every new feature written from scratch makes the same mistakes (wrong FK types, missing RLS, inconsistent patterns, TypeScript errors). `/create-feature` eliminates this by generating validated code from templates AND verifying the result compiles.
 
 ---
 
@@ -115,14 +207,19 @@ npm run typecheck              # TypeScript type checking
 
 ## Testing Commands
 
+**CRITICAL:** All Playwright tests use AUTOMATIC authentication. Auth state is saved in `tests/.auth/user.json`. You NEVER need to manually log in.
+
 ```bash
 # From frontend directory
-npm run test                   # Run Playwright tests
+npm run test                   # Run Playwright tests (headless)
 npm run test:headed            # Run tests with browser visible
-npm run test:ui                # Open Playwright UI mode
+npm run test:ui                # Open Playwright UI mode (best for debugging)
 npm run test:report            # View test report
 
-# Run specific test file
+# Run specific test file (RECOMMENDED for debugging)
+npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
+
+# Run with specific config
 npx playwright test tests/e2e/schedule-page.spec.ts --config=config/playwright/playwright.config.ts
 
 # Unit tests (Jest)
@@ -131,7 +228,104 @@ npm run test:unit:watch
 npm run test:unit:coverage
 ```
 
-Playwright config is at `frontend/config/playwright/playwright.config.ts`. Tests use port 3002 by default. Auth state is saved in `tests/.auth/user.json`.
+### Playwright Authentication (READ THIS)
+
+**How authentication works:**
+1. Auth state is PRE-SAVED in `tests/.auth/user.json`
+2. All tests automatically load this saved session
+3. NO login required in individual tests
+4. Session persists across test runs
+
+**If tests fail with "not logged in":**
+```bash
+# Re-authenticate (run ONCE, not before every test)
+cd frontend
+npx playwright test tests/auth.setup.ts
+```
+
+**Config location:** `frontend/config/playwright/playwright.config.ts`
+**Default port:** 3002 (dev server runs on 3000)
+**Auth file:** `frontend/tests/.auth/user.json`
+
+**Common mistakes to AVOID:**
+- ❌ Adding login code to every test
+- ❌ Asking user to log in manually
+- ❌ Thinking auth is missing when it's already configured
+- ❌ Running auth.setup.ts before every test run
+
+## Web Crawlers & Screenshot Capture
+
+**Location:** `scripts/screenshot-capture/`
+
+**CRITICAL:** All crawlers use AUTOMATIC authentication from `.env`. NEVER ask user to log in manually.
+
+### Running Feature Crawlers
+
+```bash
+cd scripts/screenshot-capture
+
+# Run existing crawler (they ALL use automatic auth)
+node scripts/crawl-specifications-comprehensive.js
+node scripts/crawl-commitments-comprehensive.js
+node scripts/crawl-direct-costs-comprehensive.js
+
+# Crawlers automatically:
+# 1. Load PROCORE_USER and PROCORE_PASSWORD from .env
+# 2. Log in to Procore
+# 3. Capture screenshots and metadata
+# 4. Generate reports
+```
+
+### Creating New Crawlers
+
+**Use the `/feature-crawl` command:**
+```bash
+/feature-crawl <feature-name> <app-url>
+```
+
+**Or copy an existing crawler and modify:**
+1. Copy `scripts/crawl-specifications-comprehensive.js`
+2. Update `START_URL` to your feature URL
+3. Update `OUTPUT_DIR` to your feature name
+4. Run it - authentication is already handled!
+
+### Authentication Pattern (MANDATORY)
+
+Every crawler MUST use this pattern at the top:
+
+```javascript
+import dotenv from 'dotenv';
+dotenv.config({ path: join(__dirname, '../../.env') });
+
+const PROCORE_EMAIL = process.env.PROCORE_USER;
+const PROCORE_PASSWORD = process.env.PROCORE_PASSWORD;
+```
+
+Then in the authentication section:
+
+```javascript
+// Navigate to login if needed
+if (currentUrl.includes('login.procore.com')) {
+  await page.fill('input[name="session[email]"]', PROCORE_EMAIL);
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(1000);
+
+  await page.fill('input[name="session[password]"]', PROCORE_PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForTimeout(5000);
+}
+```
+
+**NEVER:**
+- ❌ Ask user to log in manually
+- ❌ Create interactive prompts waiting for Enter key
+- ❌ Assume credentials are unavailable
+- ❌ Hardcode passwords (use .env)
+
+**ALWAYS:**
+- ✅ Load from .env automatically
+- ✅ Auto-login without user interaction
+- ✅ Handle MFA gracefully (persistent session)
 
 ## Database Commands
 

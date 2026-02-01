@@ -133,8 +133,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient();
     const body = await request.json();
 
-    console.log('Contract creation request:', JSON.stringify(body, null, 2));
-
     // Validate request body
     const validatedData = createContractSchema.parse({
       ...body,

@@ -4,11 +4,13 @@
 
 **When implementing a new feature that involves database tables, hooks, services, or API routes:**
 
-1. **FIRST** check if `.claude/scaffolds/` has a template
-2. **USE** the scaffold to generate boilerplate
-3. **THEN** customize for domain-specific needs
+1. **USE `/create-feature <EntityName>`** -- this is the preferred command (replaces `/scaffold`)
+2. Add `--fields` for custom columns: `/create-feature Entity --fields 'amount:numeric,status:text'`
+3. **THEN** customize the generated code for domain-specific needs
 
 **DO NOT** write these from scratch. The same bugs occur every time.
+
+**`/create-feature` enforces all gates:** FK type validation, route conflict checks, TypeScript compilation, import verification, and pattern compliance. `/scaffold` is deprecated.
 
 ---
 
