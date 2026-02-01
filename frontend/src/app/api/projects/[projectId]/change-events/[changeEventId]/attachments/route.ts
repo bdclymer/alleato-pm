@@ -21,7 +21,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .from("change_events")
       .select("id")
       .eq("project_id", parseInt(projectId, 10))
-      .eq("id", parseInt(changeEventId, 10))
+      .eq("id", changeEventId)
       .is("deleted_at", null)
       .single();
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         uploader:users(id, email)
       `,
       )
-      .eq("change_event_id", parseInt(changeEventId, 10))
+      .eq("change_event_id", changeEventId)
       .order("uploaded_at", { ascending: false });
 
     if (error) {
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from("change_events")
       .select("id, number")
       .eq("project_id", parseInt(projectId, 10))
-      .eq("id", parseInt(changeEventId, 10))
+      .eq("id", changeEventId)
       .is("deleted_at", null)
       .single();
 
@@ -120,7 +120,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Parse multipart form data
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    // Accept both 'file' and 'files' field names for compatibility
+    const file = (formData.get("file") || formData.get("files")) as File;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data: attachment, error: dbError } = await supabase
       .from("change_event_attachments")
       .insert({
-        change_event_id: parseInt(changeEventId, 10),
+        change_event_id: changeEventId,
         file_name: attachmentData.fileName,
         file_path: storagePath,
         file_size: attachmentData.fileSize,
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
-      .eq("id", parseInt(changeEventId, 10));
+      .eq("id", changeEventId);
 
     // Create audit log entry
     await supabase.from("change_event_history").insert({
@@ -273,7 +274,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .from("change_events")
       .select("id")
       .eq("project_id", parseInt(projectId, 10))
-      .eq("id", parseInt(changeEventId, 10))
+      .eq("id", changeEventId)
       .is("deleted_at", null)
       .single();
 
@@ -297,7 +298,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .from("change_event_attachments")
       .select("id, file_path, file_name")
       .in("id", body.attachmentIds)
-      .eq("change_event_id", parseInt(changeEventId, 10));
+      .eq("change_event_id", changeEventId);
 
     if (fetchError) {
       return NextResponse.json(
@@ -322,7 +323,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .from("change_event_attachments")
       .delete()
       .in("id", body.attachmentIds)
-      .eq("change_event_id", parseInt(changeEventId, 10));
+      .eq("change_event_id", changeEventId);
 
     if (deleteError) {
       return NextResponse.json(
@@ -338,7 +339,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
-      .eq("id", parseInt(changeEventId, 10));
+      .eq("id", changeEventId);
 
     // Create audit log entries
     const auditEntries = (attachments || []).map((attachment) => ({

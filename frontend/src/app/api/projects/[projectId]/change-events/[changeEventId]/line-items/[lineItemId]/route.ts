@@ -28,7 +28,7 @@ export async function GET(
       .from('change_events')
       .select('id')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -43,8 +43,8 @@ export async function GET(
     const { data: lineItem, error } = await supabase
       .from('change_event_line_items')
       .select('*')
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(lineItemId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', lineItemId)
       .single();
 
     if (error || !lineItem) {
@@ -114,7 +114,7 @@ export async function PATCH(
       .from('change_events')
       .select('id, status')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -136,8 +136,8 @@ export async function PATCH(
     const { data: existingItem, error: fetchError } = await supabase
       .from('change_event_line_items')
       .select('*')
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(lineItemId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', lineItemId)
       .single();
 
     if (fetchError || !existingItem) {
@@ -196,7 +196,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('change_event_line_items')
       .update(updates)
-      .eq('id', parseInt(lineItemId, 10))
+      .eq('id', lineItemId)
       .select()
       .single();
 
@@ -214,13 +214,13 @@ export async function PATCH(
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
-      .eq('id', parseInt(changeEventId, 10));
+      .eq('id', changeEventId);
 
     // Create audit log entry
     await supabase
       .from('change_event_history')
       .insert({
-        change_event_id: parseInt(changeEventId, 10),
+        change_event_id: changeEventId,
         field_name: 'line_item_updated',
         old_value: existingItem.description,
         new_value: data.description,
@@ -296,7 +296,7 @@ export async function DELETE(
       .from('change_events')
       .select('id, status')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -318,8 +318,8 @@ export async function DELETE(
     const { data: lineItem, error: fetchError } = await supabase
       .from('change_event_line_items')
       .select('description')
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(lineItemId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', lineItemId)
       .single();
 
     if (fetchError || !lineItem) {
@@ -333,7 +333,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('change_event_line_items')
       .delete()
-      .eq('id', parseInt(lineItemId, 10));
+      .eq('id', lineItemId);
 
     if (error) {
       return NextResponse.json(
@@ -349,13 +349,13 @@ export async function DELETE(
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
-      .eq('id', parseInt(changeEventId, 10));
+      .eq('id', changeEventId);
 
     // Create audit log entry
     await supabase
       .from('change_event_history')
       .insert({
-        change_event_id: parseInt(changeEventId, 10),
+        change_event_id: changeEventId,
         field_name: 'line_item_removed',
         old_value: lineItem.description,
         changed_by: user.id,

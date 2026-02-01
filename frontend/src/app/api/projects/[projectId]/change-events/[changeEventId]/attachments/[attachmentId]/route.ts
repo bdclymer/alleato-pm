@@ -26,7 +26,7 @@ export async function GET(
       .from('change_events')
       .select('id')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -44,8 +44,8 @@ export async function GET(
         *,
         uploader:users(id, email)
       `)
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(attachmentId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', attachmentId)
       .single();
 
     if (error || !attachment) {
@@ -115,7 +115,7 @@ export async function DELETE(
       .from('change_events')
       .select('id')
       .eq('project_id', parseInt(projectId, 10))
-      .eq('id', parseInt(changeEventId, 10))
+      .eq('id', changeEventId)
       .is('deleted_at', null)
       .single();
 
@@ -130,8 +130,8 @@ export async function DELETE(
     const { data: attachment, error: fetchError } = await supabase
       .from('change_event_attachments')
       .select('file_path, file_name')
-      .eq('change_event_id', parseInt(changeEventId, 10))
-      .eq('id', parseInt(attachmentId, 10))
+      .eq('change_event_id', changeEventId)
+      .eq('id', attachmentId)
       .single();
 
     if (fetchError || !attachment) {
@@ -153,7 +153,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from('change_event_attachments')
       .delete()
-      .eq('id', parseInt(attachmentId, 10));
+      .eq('id', attachmentId);
 
     if (deleteError) {
       return NextResponse.json(
@@ -169,11 +169,11 @@ export async function DELETE(
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
-      .eq('id', parseInt(changeEventId, 10));
+      .eq('id', changeEventId);
 
     // Create audit log entry
     await supabase.from('change_event_history').insert({
-      change_event_id: parseInt(changeEventId, 10),
+      change_event_id: changeEventId,
       field_name: 'attachment_removed',
       old_value: attachment.file_name,
       changed_by: user.id,
