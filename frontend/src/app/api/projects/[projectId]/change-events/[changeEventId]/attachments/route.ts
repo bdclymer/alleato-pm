@@ -193,7 +193,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Create audit log entry
     await supabase.from("change_event_history").insert({
-      change_event_id: parseInt(changeEventId, 10),
+      change_event_id: changeEventId,
       field_name: "attachment_added",
       new_value: attachmentData.fileName,
       changed_by: user.id,
@@ -343,7 +343,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Create audit log entries
     const auditEntries = (attachments || []).map((attachment) => ({
-      change_event_id: parseInt(changeEventId, 10),
+      change_event_id: changeEventId,
       field_name: "attachment_removed",
       old_value: attachment.file_name,
       changed_by: user.id,

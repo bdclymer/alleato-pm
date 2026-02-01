@@ -15,7 +15,7 @@ export default function EditChangeEventPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = parseInt(params.projectId as string, 10);
-  const changeEventId = parseInt(params.changeEventId as string, 10);
+  const changeEventId = params.id as string; // UUID string, not a number
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [changeEvent, setChangeEvent] = useState<ChangeEvent | null>(null);

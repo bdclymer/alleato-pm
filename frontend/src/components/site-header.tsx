@@ -15,6 +15,7 @@ import { logout } from "@/lib/supabase/logout";
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { EnhancedDevPanel } from "@/components/dev-tools/enhanced-dev-panel"
 import {
   Sheet,
   SheetContent,
@@ -757,6 +758,9 @@ export function SiteHeader() {
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Dev Tools Panel - only in development */}
+          <EnhancedDevPanel />
 
           {/* User Avatar */}
           <DropdownMenu>

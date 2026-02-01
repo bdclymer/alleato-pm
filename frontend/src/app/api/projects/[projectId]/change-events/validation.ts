@@ -15,7 +15,14 @@ export const ChangeEventScope = z.enum([
   "Out of Scope",
   "Allowance",
 ]);
-export const ChangeEventStatus = z.enum(["Open", "Closed", "Void"]);
+export const ChangeEventStatus = z.enum([
+  "Open",
+  "Pending Approval",
+  "Approved",
+  "Rejected",
+  "Closed",
+  "Converted",
+]);
 export const ChangeEventOrigin = z.enum(["Internal", "RFI", "Field"]);
 export const LineItemRevenueSource = z.enum([
   "Match Latest Cost",
@@ -78,4 +85,21 @@ export const createAttachmentSchema = z.object({
   filePath: z.string(),
   fileSize: z.number().positive(),
   mimeType: z.string().max(100),
+});
+
+// Approval Status Enum (matches DB CHECK constraint)
+export const ApprovalStatus = z.enum(["pending", "approved", "rejected"]);
+
+// Change Event Approval Schema
+export const changeEventApprovalSchema = z.object({
+  approver_id: z.string().uuid(),
+  approval_status: ApprovalStatus.default("pending"),
+  comments: z.string().optional(),
+});
+
+// Update Approval Schema
+export const updateApprovalSchema = z.object({
+  approval_id: z.string().uuid(),
+  approval_status: ApprovalStatus,
+  comments: z.string().optional(),
 });

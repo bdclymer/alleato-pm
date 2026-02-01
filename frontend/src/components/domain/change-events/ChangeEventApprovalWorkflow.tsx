@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,13 +17,14 @@ import {
   Clock,
   Send,
   FileCheck2,
+  Construction,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
 interface ApprovalRecord {
-  id: number;
-  approver_id: number;
+  id: string;
+  approver_id: string;
   approver_name: string;
   approval_status: "pending" | "approved" | "rejected";
   comments?: string;
@@ -32,11 +33,11 @@ interface ApprovalRecord {
 }
 
 interface ChangeEventApprovalWorkflowProps {
-  changeEventId: number;
+  changeEventId: string;
   projectId: number;
   currentStatus: string;
   onStatusChange: (newStatus: string) => Promise<void>;
-  currentUserId?: number;
+  currentUserId?: string;
 }
 
 export function ChangeEventApprovalWorkflow({
@@ -47,9 +48,35 @@ export function ChangeEventApprovalWorkflow({
   currentUserId,
 }: ChangeEventApprovalWorkflowProps) {
   const [approvals, setApprovals] = useState<ApprovalRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [approvalComment, setApprovalComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
+
+  // Load approvals on mount to check if feature is available
+  useEffect(() => {
+    const checkApprovalEndpoint = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/change-events/${changeEventId}/approvals`
+        );
+
+        if (response.status === 404) {
+          setIsAvailable(false);
+        } else if (response.ok) {
+          const data = await response.json();
+          setApprovals(data.data || data || []);
+          setIsAvailable(true);
+        }
+      } catch (error) {
+        setIsAvailable(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkApprovalEndpoint();
+  }, [changeEventId, projectId]);
 
   // Check if current user can approve
   const canApprove =
@@ -73,7 +100,8 @@ export function ChangeEventApprovalWorkflow({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            approver_ids: [1, 2], // In real app, this would come from project settings
+            // In real app, this would come from project settings
+            approver_ids: [],
           }),
         },
       );
@@ -155,6 +183,46 @@ export function ChangeEventApprovalWorkflow({
         return <Badge variant="secondary">Pending</Badge>;
     }
   };
+
+  // Show "Coming Soon" if approval endpoints don't exist
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Approval Workflow</CardTitle>
+          <CardDescription>Loading approval workflow...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Clock className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!isAvailable) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Approval Workflow</CardTitle>
+          <CardDescription>
+            Approval workflow feature coming soon
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Construction className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium mb-2">Coming Soon</p>
+            <p className="text-sm text-muted-foreground max-w-md">
+              The approval workflow feature is currently under development.
+              You'll be able to submit change events for approval and track approval status here.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

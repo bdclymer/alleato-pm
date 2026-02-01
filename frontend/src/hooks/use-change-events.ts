@@ -115,36 +115,39 @@ export function useChangeEvents(
   const createChangeEvent = useCallback(
     async (changeEvent: Partial<ChangeEvent>): Promise<ChangeEvent | null> => {
       try {
-        const supabase = createClient();
-
-        // Prepare the insert data
-        const insertData: Record<string, unknown> = {
-          project_id: changeEvent.project_id,
-          number: changeEvent.number,
-          title: changeEvent.title,
-          reason: changeEvent.reason,
-          scope: changeEvent.scope,
-          status: changeEvent.status || "draft",
-          notes: changeEvent.notes,
-        };
-
-        // Add optional fields
-        if (changeEvent.description) {
-          insertData.description = changeEvent.description;
-        }
-        if (changeEvent.estimated_impact !== undefined) {
-          insertData.estimated_impact = changeEvent.estimated_impact;
+        if (!changeEvent.project_id) {
+          throw new Error("Project ID is required");
         }
 
-        const { data, error: insertError } = await (supabase as any)
-          .from("change_events")
-          .insert(insertData)
-          .select()
-          .single();
+        const response = await fetch(
+          `/api/projects/${changeEvent.project_id}/change-events`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              project_id: changeEvent.project_id,
+              number: changeEvent.number,
+              title: changeEvent.title,
+              reason: changeEvent.reason || null,
+              scope: changeEvent.scope || "TBD",
+              status: changeEvent.status || "draft",
+              notes: changeEvent.notes || null,
+              description: changeEvent.description || null,
+              estimated_impact: changeEvent.estimated_impact || null,
+            }),
+          },
+        );
 
-        if (insertError) {
-          throw new Error(insertError.message);
+        if (!response.ok) {
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
+          throw new Error(errorData.error || "Failed to create change event");
         }
+
+        const data = await response.json();
 
         // Refetch to update the list
         await fetchChangeEvents();

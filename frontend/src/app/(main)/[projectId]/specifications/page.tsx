@@ -82,7 +82,7 @@ export default function ProjectSpecificationsPage() {
               {/* Status Filter */}
               <Select
                 value={statusFilter}
-                onValueChange={(value) => {
+                onValueChange={(value: "all" | "active" | "archived" | "superseded") => {
                   setStatusFilter(value);
                   setPage(1);
                 }}

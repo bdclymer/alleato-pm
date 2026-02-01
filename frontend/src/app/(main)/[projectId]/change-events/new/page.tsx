@@ -10,7 +10,6 @@ import { FormLayout, DashboardFormLayout } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
-import { useProjectChangeEvents } from "@/hooks/use-change-events";
 
 export default function NewChangeEventPage() {
   const router = useRouter();
@@ -18,27 +17,37 @@ export default function NewChangeEventPage() {
   const projectId = parseInt(params.projectId as string, 10);
 
   const [isSaving, setIsSaving] = useState(false);
-  const { createChangeEvent } = useProjectChangeEvents(projectId);
 
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
     try {
-      const result = await createChangeEvent({
-        project_id: projectId,
-        number: data.number,
-        title: data.title,
-        status: data.status,
-        reason: data.changeReason ?? undefined,
-        scope: data.scope || "TBD",
-        notes: data.notes ?? undefined,
+      const response = await fetch(`/api/projects/${projectId}/change-events`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          project_id: projectId,
+          number: data.number,
+          title: data.title,
+          status: data.status || "open",
+          reason: data.changeReason || null,
+          scope: data.scope || "TBD",
+          notes: data.notes || null,
+          description: data.description || null,
+          estimated_impact: data.estimatedImpact || null,
+        }),
       });
 
-      if (!result) {
-        throw new Error("Failed to create change event");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || "Failed to create change event");
       }
 
+      const newEvent = await response.json();
+
       toast.success("Change event created successfully");
-      router.push(`/${projectId}/change-events/${result.id}`);
+      router.push(`/${projectId}/change-events/${newEvent.id}`);
     } catch (error) {
       toast.error(
         error instanceof Error

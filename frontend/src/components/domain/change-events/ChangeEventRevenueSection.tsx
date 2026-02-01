@@ -12,6 +12,21 @@ interface ChangeEventRevenueSectionProps {
   projectId: number;
 }
 
+// Map UI slug values to display values for database storage
+const REVENUE_SOURCE_SLUG_TO_DISPLAY: Record<string, string> = {
+  match_latest_cost: "Match Latest Cost",
+  manual_entry: "Manual Entry",
+  percentage_markup: "Percentage Markup",
+  fixed_amount: "Fixed Amount",
+};
+
+const REVENUE_SOURCE_DISPLAY_TO_SLUG: Record<string, string> = {
+  "Match Latest Cost": "match_latest_cost",
+  "Manual Entry": "manual_entry",
+  "Percentage Markup": "percentage_markup",
+  "Fixed Amount": "fixed_amount",
+};
+
 export function ChangeEventRevenueSection({
   data,
   onChange,
@@ -73,6 +88,11 @@ export function ChangeEventRevenueSection({
 
   const expectingRevenue = data.expectingRevenue || false;
 
+  // Convert DB display value back to slug for the select component
+  const currentSlug = data.lineItemRevenueSource
+    ? REVENUE_SOURCE_DISPLAY_TO_SLUG[data.lineItemRevenueSource] || data.lineItemRevenueSource
+    : undefined;
+
   return (
     <FormSection
       title="Revenue Configuration"
@@ -89,17 +109,19 @@ export function ChangeEventRevenueSection({
           <SelectField
             label="Line Item Revenue Source"
             options={revenueSourceOptions}
-            value={data.lineItemRevenueSource}
+            value={currentSlug}
             onValueChange={(value) =>
-              onChange({ lineItemRevenueSource: value })
+              onChange({
+                lineItemRevenueSource: REVENUE_SOURCE_SLUG_TO_DISPLAY[value] || value
+              })
             }
             placeholder="Select how revenue will be calculated"
             hint="This determines how revenue amounts are calculated for line items"
             required
           />
 
-          {(data.lineItemRevenueSource === "match_latest_cost" ||
-            data.lineItemRevenueSource === "percentage_markup") && (
+          {(currentSlug === "match_latest_cost" ||
+            currentSlug === "percentage_markup") && (
             <SelectField
               label="Prime Contract for Markup Estimates"
               options={primeContractOptions}

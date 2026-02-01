@@ -21,7 +21,7 @@ import { Text } from "@/components/ui/text";
 interface ChangeEventConvertDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  changeEventId: number;
+  changeEventId: string;
   projectId: number;
   lineItems: Array<{
     id: number;

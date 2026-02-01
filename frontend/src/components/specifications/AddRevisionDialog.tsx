@@ -57,7 +57,7 @@ export function AddRevisionDialog({
     defaultValues: {
       notes: "",
       notify_subscribers: true,
-    },
+    } as Partial<AddRevisionFormData>,
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

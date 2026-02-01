@@ -189,7 +189,7 @@ export default function SpecificationDetailPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Areas</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {(specification as any).areas.map((area) => (
+                  {(specification as any).areas.map((area: any) => (
                     <Badge key={area.id} variant="secondary">
                       {area.name}
                     </Badge>

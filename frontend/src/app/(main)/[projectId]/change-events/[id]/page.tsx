@@ -59,7 +59,7 @@ export default function ChangeEventDetailPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = parseInt(params.projectId as string, 10);
-  const changeEventId = parseInt(params.id as string, 10);
+  const changeEventId = params.id as string; // UUID string, not a number
 
   const [changeEvent, setChangeEvent] = useState<ChangeEvent | null>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
@@ -453,7 +453,7 @@ export default function ChangeEventDetailPage() {
               projectId={projectId}
               currentStatus={changeEvent.status || "open"}
               onStatusChange={handleStatusChange}
-              currentUserId={1}
+              currentUserId={"1"}
             />
           </Stack>
         </TabsContent>
