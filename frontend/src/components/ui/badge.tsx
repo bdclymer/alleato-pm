@@ -18,25 +18,25 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         success:
-          "border-transparent bg-green-600 text-white [a&]:hover:bg-green-600/90",
+          "border-transparent bg-success text-success-foreground [a&]:hover:bg-success/90",
         warning:
-          "border-transparent bg-orange-600 text-white [a&]:hover:bg-orange-600/90",
+          "border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90",
         // Semantic status variants
         active:
-          "border-transparent bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400 [a&]:hover:bg-green-100",
+          "border-transparent bg-success/10 text-success dark:bg-success/20 [a&]:hover:bg-success/15",
         inactive:
-          "border-transparent bg-muted text-foreground dark:bg-gray-800 dark:text-muted-foreground [a&]:hover:bg-muted",
+          "border-transparent bg-muted text-muted-foreground [a&]:hover:bg-muted/80",
         // Role-based variants
         admin:
-          "border-transparent bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400 [a&]:hover:bg-red-100",
+          "border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20 [a&]:hover:bg-destructive/15",
         "project-manager":
-          "border-transparent bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400 [a&]:hover:bg-blue-100",
+          "border-transparent bg-info/10 text-info dark:bg-info/20 [a&]:hover:bg-info/15",
         superintendent:
-          "border-transparent bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400 [a&]:hover:bg-green-100",
+          "border-transparent bg-success/10 text-success dark:bg-success/20 [a&]:hover:bg-success/15",
         foreman:
-          "border-transparent bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400 [a&]:hover:bg-yellow-100",
+          "border-transparent bg-warning/10 text-warning dark:bg-warning/20 [a&]:hover:bg-warning/15",
         viewer:
-          "border-transparent bg-muted text-foreground dark:bg-gray-800 dark:text-muted-foreground [a&]:hover:bg-muted",
+          "border-transparent bg-muted text-muted-foreground [a&]:hover:bg-muted/80",
       },
     },
     defaultVariants: {

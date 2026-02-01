@@ -124,7 +124,7 @@ export function SignUpForm({
                     {getPasswordChecks(password).map((check) => (
                       <li
                         key={check.label}
-                        className={check.met ? "text-emerald-600" : "text-muted-foreground"}
+                        className={check.met ? "text-success" : "text-muted-foreground"}
                       >
                         {check.met ? "\u2713" : "\u2022"} {check.label}
                       </li>
@@ -146,7 +146,7 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>

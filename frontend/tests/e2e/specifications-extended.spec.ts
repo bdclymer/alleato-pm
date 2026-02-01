@@ -31,7 +31,7 @@ test.describe("Specifications - File Upload Validation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
-    await expect(page.getByRole("heading", { name: "Specifications" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Specifications" }).first()).toBeVisible();
   });
 
   test("should reject non-PDF files (.docx)", async ({ page }) => {

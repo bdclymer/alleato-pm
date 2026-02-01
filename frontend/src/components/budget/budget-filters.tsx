@@ -190,7 +190,7 @@ export function BudgetFilters({
                     activeQuickFilter === "over-budget" ? "bg-accent" : ""
                   }
                 >
-                  <span className="text-red-600 mr-2">●</span>
+                  <span className="text-destructive mr-2">●</span>
                   Over Budget
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -199,7 +199,7 @@ export function BudgetFilters({
                     activeQuickFilter === "under-budget" ? "bg-accent" : ""
                   }
                 >
-                  <span className="text-green-600 mr-2">●</span>
+                  <span className="text-success mr-2">●</span>
                   Under Budget
                 </DropdownMenuItem>
                 <DropdownMenuItem

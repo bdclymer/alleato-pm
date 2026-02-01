@@ -24,7 +24,7 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
     executed: {
       label: "Executed",
       variant: "success",
-      className: "bg-green-500",
+      className: "bg-success/80",
     },
     closed: { label: "Closed", variant: "default" },
     void: { label: "Void", variant: "destructive" },
@@ -42,7 +42,7 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
     executed: {
       label: "Executed",
       variant: "success",
-      className: "bg-green-500",
+      className: "bg-success/80",
     },
     void: { label: "Void", variant: "destructive" },
   },
@@ -54,7 +54,7 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
     executed: {
       label: "Executed",
       variant: "success",
-      className: "bg-green-500",
+      className: "bg-success/80",
     },
     closed: { label: "Closed", variant: "default" },
   },
@@ -62,14 +62,14 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
     draft: { label: "Draft", variant: "secondary" },
     submitted: { label: "Submitted", variant: "default" },
     approved: { label: "Approved", variant: "success" },
-    paid: { label: "Paid", variant: "success", className: "bg-green-500" },
+    paid: { label: "Paid", variant: "success", className: "bg-success/80" },
     void: { label: "Void", variant: "destructive" },
   },
   "direct-cost": {
     draft: { label: "Draft", variant: "secondary" },
     pending_approval: { label: "Pending Approval", variant: "warning" },
     approved: { label: "Approved", variant: "success" },
-    paid: { label: "Paid", variant: "success", className: "bg-green-500" },
+    paid: { label: "Paid", variant: "success", className: "bg-success/80" },
     void: { label: "Void", variant: "destructive" },
   },
 };

@@ -52,14 +52,14 @@ export function ProjectAccordions({
       case "completed":
       case "approved":
       case "closed":
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-success" />;
       case "pending":
       case "in-progress":
       case "open":
-        return <Clock className="h-4 w-4 text-orange-600" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       case "rejected":
       case "overdue":
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
         return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }

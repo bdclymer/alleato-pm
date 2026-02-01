@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Select,
   SelectContent,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/schemas/create-subcontract-schema";
 import { generateAutofillData } from "@/lib/utils/autofill-subcontract";
 import { FileUploadField } from "@/components/forms/FileUploadField";
+import { RichTextField } from "@/components/forms/RichTextField";
 import { CostCodeSelector } from "./CostCodeSelector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCompanies } from "@/hooks/use-companies";
@@ -31,16 +32,24 @@ interface CreateSubcontractFormProps {
   projectId: number;
   onSubmit: (data: CreateSubcontractInput) => Promise<void>;
   onCancel: () => void;
+  initialData?: Partial<CreateSubcontractInput> & {
+    sovLines?: SovLineItem[];
+  };
+  mode?: "create" | "edit";
 }
 
 export function CreateSubcontractForm({
   onSubmit,
   onCancel,
+  initialData,
+  mode = "create",
 }: CreateSubcontractFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [errorDetails, setErrorDetails] = React.useState<unknown>(null);
-  const [sovLines, setSovLines] = React.useState<SovLineItem[]>([]);
+  const [sovLines, setSovLines] = React.useState<SovLineItem[]>(
+    initialData?.sovLines || [],
+  );
   const [attachments, setAttachments] = React.useState<
     Array<{ name: string; size: number; type: string }>
   >([]);
@@ -58,14 +67,21 @@ export function CreateSubcontractForm({
   } = useForm<CreateSubcontractInput>({
     resolver: zodResolver(CreateSubcontractSchema) as any,
     defaultValues: {
-      contractNumber: "SC-002",
-      status: "Draft",
-      executed: false,
-      sov: [],
-      privacy: {
+      contractNumber: initialData?.contractNumber || "SC-002",
+      status: initialData?.status || "Draft",
+      executed: initialData?.executed || false,
+      sov: initialData?.sov || [],
+      privacy: initialData?.privacy || {
         isPrivate: true,
         allowNonAdminViewSovItems: false,
       },
+      title: initialData?.title || "",
+      contractCompanyId: initialData?.contractCompanyId || "",
+      description: initialData?.description || "",
+      inclusions: initialData?.inclusions || "",
+      exclusions: initialData?.exclusions || "",
+      defaultRetainagePercent: initialData?.defaultRetainagePercent,
+      dates: initialData?.dates,
     },
   });
 
@@ -365,64 +381,13 @@ export function CreateSubcontractForm({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <div className="border rounded-md">
-            {/* Rich text toolbar placeholder */}
-            <div className="border-b bg-muted p-2 flex gap-1 text-xs text-foreground">
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Bold"
-              >
-                B
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Italic"
-              >
-                I
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Underline"
-              >
-                U
-              </button>
-              <span className="text-muted-foreground">|</span>
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Align Left"
-              >
-                ≡
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Align Center"
-              >
-                ≣
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 hover:bg-muted rounded"
-                title="Align Right"
-              >
-                ≡
-              </button>
-            </div>
-            <Textarea
-              id="description"
-              {...register("description")}
-              disabled={isSubmitting}
-              className="min-h-[100px] border-0 rounded-t-none"
-              placeholder="To open the popup, press Shift+Enter"
-            />
-          </div>
-        </div>
+        <RichTextField
+          label="Description"
+          value={watch("description")}
+          onChange={(val) => setValue("description", val, { shouldDirty: true })}
+          disabled={isSubmitting}
+          placeholder="Enter description..."
+        />
       </section>
 
       {/* Attachments Section */}
@@ -663,77 +628,21 @@ export function CreateSubcontractForm({
         </h2>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="inclusions">Inclusions</Label>
-            <div className="border rounded-md">
-              <div className="border-b bg-muted p-2 flex gap-1 text-xs text-foreground">
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Bold"
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Italic"
-                >
-                  I
-                </button>
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Underline"
-                >
-                  U
-                </button>
-              </div>
-              <Textarea
-                id="inclusions"
-                {...register("inclusions")}
-                disabled={isSubmitting}
-                className="min-h-[100px] border-0 rounded-t-none"
-                placeholder="To open the popup, press Shift+Enter"
-              />
-            </div>
-          </div>
+          <RichTextField
+            label="Inclusions"
+            value={watch("inclusions")}
+            onChange={(val) => setValue("inclusions", val, { shouldDirty: true })}
+            disabled={isSubmitting}
+            placeholder="Enter inclusions..."
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="exclusions">Exclusions</Label>
-            <div className="border rounded-md">
-              <div className="border-b bg-muted p-2 flex gap-1 text-xs text-foreground">
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Bold"
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Italic"
-                >
-                  I
-                </button>
-                <button
-                  type="button"
-                  className="px-2 py-1 hover:bg-muted rounded"
-                  title="Underline"
-                >
-                  U
-                </button>
-              </div>
-              <Textarea
-                id="exclusions"
-                {...register("exclusions")}
-                disabled={isSubmitting}
-                className="min-h-[100px] border-0 rounded-t-none"
-                placeholder="To open the popup, press Shift+Enter"
-              />
-            </div>
-          </div>
+          <RichTextField
+            label="Exclusions"
+            value={watch("exclusions")}
+            onChange={(val) => setValue("exclusions", val, { shouldDirty: true })}
+            disabled={isSubmitting}
+            placeholder="Enter exclusions..."
+          />
         </div>
       </section>
 

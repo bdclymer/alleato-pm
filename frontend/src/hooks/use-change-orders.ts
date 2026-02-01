@@ -2,28 +2,12 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
+import type { Database } from "@/types/database.types";
 
-export interface ChangeOrder {
-  id: number;
-  project_id: number;
-  contract_id?: number | null; // Will be added via migration
-  commitment_id?: string | null; // Will be added via migration
-  co_number: string | null;
-  change_order_number?: string | null;
-  title: string | null;
-  description: string | null;
-  status: string | null;
-  amount?: number | null;
-  executed?: boolean | null;
-  execution_date?: string | null;
-  approval_date?: string | null;
-  submitted_by: string | null;
-  submitted_at: string | null;
-  approved_by: string | null;
-  approved_at: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
+type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
+type ChangeOrderInsert = Database["public"]["Tables"]["change_orders"]["Insert"];
+
+export type ChangeOrder = ChangeOrderRow;
 
 export interface ChangeOrderOption {
   value: string;
@@ -33,17 +17,10 @@ export interface ChangeOrderOption {
 }
 
 interface UseChangeOrdersOptions {
-  // Filter by contract ID (when contract_id column exists)
   contractId?: number;
-  // Filter by project ID (fallback)
   projectId?: number;
-  // Filter by commitment ID
-  commitmentId?: string;
-  // Filter by status
   status?: string;
-  // Limit results
   limit?: number;
-  // Whether to auto-fetch
   enabled?: boolean;
 }
 
@@ -54,25 +31,21 @@ interface UseChangeOrdersReturn {
   error: Error | null;
   refetch: () => Promise<void>;
   createChangeOrder: (
-    changeOrder: Partial<ChangeOrder>,
+    changeOrder: Partial<ChangeOrderInsert>,
   ) => Promise<ChangeOrder | null>;
+  updateChangeOrder: (
+    id: number,
+    updates: Partial<ChangeOrderInsert>,
+  ) => Promise<ChangeOrder | null>;
+  deleteChangeOrder: (id: number) => Promise<boolean>;
 }
 
-/**
- * Hook for fetching and managing change orders from Supabase
- * Used in contract detail pages, change order forms, etc.
- *
- * Note: Currently links to contracts via project_id.
- * When migration 006_change_orders_contract_link.sql is applied,
- * this hook will support direct contract_id linking.
- */
 export function useChangeOrders(
   options: UseChangeOrdersOptions = {},
 ): UseChangeOrdersReturn {
   const {
     contractId,
     projectId,
-    commitmentId,
     status,
     limit = 100,
     enabled = true,
@@ -95,25 +68,14 @@ export function useChangeOrders(
         .order("created_at", { ascending: false })
         .limit(limit);
 
-      // Filter by contract_id if the column exists and is provided
-      // For now, this will be a no-op until migration is applied
       if (contractId) {
-        // Try to filter by contract_id (will work after migration)
-        // If column doesn't exist, Supabase returns all records
         query = query.eq("contract_id", contractId);
       }
 
-      // Filter by project_id (current fallback)
       if (projectId) {
         query = query.eq("project_id", projectId);
       }
 
-      // Filter by commitment_id if provided
-      if (commitmentId) {
-        query = query.eq("commitment_id", commitmentId);
-      }
-
-      // Filter by status if provided
       if (status) {
         query = query.eq("status", status);
       }
@@ -132,84 +94,42 @@ export function useChangeOrders(
     } finally {
       setIsLoading(false);
     }
-  }, [contractId, projectId, commitmentId, status, limit, enabled]);
+  }, [contractId, projectId, status, limit, enabled]);
 
   useEffect(() => {
     fetchChangeOrders();
   }, [fetchChangeOrders]);
 
   const createChangeOrder = useCallback(
-    async (changeOrder: Partial<ChangeOrder>): Promise<ChangeOrder | null> => {
+    async (
+      changeOrder: Partial<ChangeOrderInsert>,
+    ): Promise<ChangeOrder | null> => {
       try {
         const supabase = createClient();
 
-        // Prepare the insert data
-        const insertData: Record<string, unknown> = {
-          project_id: changeOrder.project_id,
-          co_number: changeOrder.co_number || changeOrder.change_order_number,
+        const insertData: ChangeOrderInsert = {
+          project_id: changeOrder.project_id!,
+          co_number: changeOrder.co_number,
           title: changeOrder.title,
           description: changeOrder.description,
           status: changeOrder.status || "draft",
+          contract_id: changeOrder.contract_id,
+          change_event_id: changeOrder.change_event_id,
+          amount: changeOrder.amount ?? 0,
+          is_private: changeOrder.is_private ?? false,
+          due_date: changeOrder.due_date,
         };
 
-        // Add contract_id if provided (will work after migration)
-        if (changeOrder.contract_id) {
-          insertData.contract_id = changeOrder.contract_id;
-        }
-
-        // Add commitment_id if provided
-        if (changeOrder.commitment_id) {
-          insertData.commitment_id = changeOrder.commitment_id;
-        }
-
-        // Add financial fields if migration has been applied
-        if (changeOrder.amount !== undefined) {
-          insertData.amount = changeOrder.amount;
-        }
-        if (changeOrder.executed !== undefined) {
-          insertData.executed = changeOrder.executed;
-        }
-
-        const { data, error: insertError } = await (supabase as any)
+        const { data, error: insertError } = await supabase
           .from("change_orders")
           .insert(insertData)
           .select()
           .single();
 
         if (insertError) {
-          // If error is about unknown column, the migration hasn't been applied yet
-          // Retry without the new columns
-          if (
-            insertError.message.includes("column") &&
-            insertError.message.includes("does not exist")
-          ) {
-            const basicData = {
-              project_id: changeOrder.project_id,
-              co_number:
-                changeOrder.co_number || changeOrder.change_order_number,
-              title: changeOrder.title,
-              description: changeOrder.description,
-              status: changeOrder.status || "draft",
-            };
-
-            const { data: retryData, error: retryError } = await (supabase as any)
-              .from("change_orders")
-              .insert(basicData)
-              .select()
-              .single();
-
-            if (retryError) {
-              throw new Error(retryError.message);
-            }
-
-            await fetchChangeOrders();
-            return retryData;
-          }
-
           throw new Error(insertError.message);
         }
 
-        // Refetch to update the list
         await fetchChangeOrders();
         return data;
       } catch (err) {
@@ -224,16 +144,79 @@ export function useChangeOrders(
     [fetchChangeOrders],
   );
 
-  // Transform change orders to options for dropdowns
+  const updateChangeOrder = useCallback(
+    async (
+      id: number,
+      updates: Partial<ChangeOrderInsert>,
+    ): Promise<ChangeOrder | null> => {
+      try {
+        const supabase = createClient();
+
+        const { data, error: updateError } = await supabase
+          .from("change_orders")
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+
+        await fetchChangeOrders();
+        return data;
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err
+            : new Error("Failed to update change order"),
+        );
+        return null;
+      }
+    },
+    [fetchChangeOrders],
+  );
+
+  const deleteChangeOrder = useCallback(
+    async (id: number): Promise<boolean> => {
+      try {
+        const supabase = createClient();
+
+        const { error: deleteError } = await supabase
+          .from("change_orders")
+          .delete()
+          .eq("id", id);
+
+        if (deleteError) {
+          throw new Error(deleteError.message);
+        }
+
+        await fetchChangeOrders();
+        return true;
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err
+            : new Error("Failed to delete change order"),
+        );
+        return false;
+      }
+    },
+    [fetchChangeOrders],
+  );
+
   const changeOrderOptions: ChangeOrderOption[] = changeOrders.map((co) => {
-    const number = co.co_number || co.change_order_number || `CO-${co.id}`;
+    const number = co.co_number || `CO-${co.id}`;
     const label = co.title ? `${number}: ${co.title}` : number;
 
     return {
       value: co.id.toString(),
       label,
-      amount: co.amount || undefined,
-      status: co.status || undefined,
+      amount: co.amount ?? undefined,
+      status: co.status ?? undefined,
     };
   });
 
@@ -244,12 +227,13 @@ export function useChangeOrders(
     error,
     refetch: fetchChangeOrders,
     createChangeOrder,
+    updateChangeOrder,
+    deleteChangeOrder,
   };
 }
 
 /**
  * Helper hook to get change orders for a specific contract
- * Uses project_id relationship until contract_id migration is applied
  */
 export function useContractChangeOrders(
   contractId: number,

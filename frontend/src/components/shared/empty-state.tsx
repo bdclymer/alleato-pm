@@ -43,7 +43,7 @@ export function EmptyState({
             onClick={onAction}
             variant="default"
             size={variant === "compact" ? "sm" : "default"}
-            className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange-hover))]"
+            className="bg-primary hover:bg-primary/90"
           >
             {actionLabel}
           </Button>

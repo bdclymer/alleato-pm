@@ -655,7 +655,7 @@ export function SiteHeader({
                 >
                   <Star className="h-4 w-4" />
                   {favorites.length > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-semibold text-primary-foreground flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-2xs font-semibold text-primary-foreground flex items-center justify-center">
                       {favorites.length}
                     </span>
                   )}

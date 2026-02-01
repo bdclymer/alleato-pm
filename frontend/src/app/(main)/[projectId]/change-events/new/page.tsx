@@ -21,21 +21,37 @@ export default function NewChangeEventPage() {
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
     try {
+      // Map form field values to API schema enum values
+      const SCOPE_MAP: Record<string, string> = {
+        in_scope: "In Scope",
+        out_of_scope: "Out of Scope",
+        tbd: "TBD",
+        allowance: "Allowance",
+      };
+      const TYPE_MAP: Record<string, string> = {
+        allowance: "Allowance",
+        owner_change: "Owner Change",
+        design_error: "Design Change",
+        unforeseen_conditions: "Unforeseen Condition",
+        code_requirement: "Scope Gap",
+        constructability: "Constructability Issue",
+        value_engineering: "Value Engineering",
+        schedule_impact: "Owner Requested",
+        other: "Owner Change",
+      };
+
       const response = await fetch(`/api/projects/${projectId}/change-events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          project_id: projectId,
-          number: data.number,
           title: data.title,
-          status: data.status || "open",
-          reason: data.changeReason || null,
-          scope: data.scope || "TBD",
-          notes: data.notes || null,
-          description: data.description || null,
-          estimated_impact: data.estimatedImpact || null,
+          type: TYPE_MAP[data.type || ""] || "Owner Change",
+          scope: SCOPE_MAP[data.scope || ""] || "TBD",
+          reason: data.changeReason || undefined,
+          origin: undefined,
+          description: data.description || undefined,
         }),
       });
 

@@ -127,15 +127,11 @@ export function useChangeEvents(
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              project_id: changeEvent.project_id,
-              number: changeEvent.number,
               title: changeEvent.title,
-              reason: changeEvent.reason || null,
+              type: changeEvent.type || "Owner Change",
               scope: changeEvent.scope || "TBD",
-              status: changeEvent.status || "draft",
-              notes: changeEvent.notes || null,
-              description: changeEvent.description || null,
-              estimated_impact: changeEvent.estimated_impact || null,
+              reason: changeEvent.reason || undefined,
+              description: changeEvent.description || undefined,
             }),
           },
         );

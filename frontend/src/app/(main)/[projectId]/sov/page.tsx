@@ -391,7 +391,7 @@ export default function ProjectSOVPage() {
                     <TableCell>
                       <Link
                         href={`/${projectId}/contracts/${item.contract.id}`}
-                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                        className="text-link hover:text-link-hover hover:underline"
                       >
                         {item.contract.contract_number}
                       </Link>

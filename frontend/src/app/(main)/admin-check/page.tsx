@@ -82,9 +82,9 @@ export default function AdminCheckPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               {data?.authenticated ? (
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-success" />
               ) : (
-                <XCircle className="h-5 w-5 text-red-600" />
+                <XCircle className="h-5 w-5 text-destructive" />
               )}
               Authentication Status
             </CardTitle>
@@ -122,7 +122,7 @@ export default function AdminCheckPage() {
           <Card className={data.isAdmin ? "border-green-600" : ""}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className={`h-5 w-5 ${data.isAdmin ? "text-green-600" : "text-gray-400"}`} />
+                <Shield className={`h-5 w-5 ${data.isAdmin ? "text-success" : "text-muted-foreground"}`} />
                 Super Admin Status
               </CardTitle>
               <CardDescription>
@@ -137,8 +137,8 @@ export default function AdminCheckPage() {
                 </Badge>
               </div>
               {data.isAdmin && (
-                <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950">
-                  <Text size="sm" className="font-medium text-green-900 dark:text-green-100">
+                <div className="rounded-lg bg-success/10 p-4 dark:bg-success/20">
+                  <Text size="sm" className="font-medium text-success">
                     🎉 You have super admin access!
                   </Text>
                   <Text size="sm" tone="muted" className="mt-2">
@@ -201,15 +201,15 @@ export default function AdminCheckPage() {
 
         {/* Error Display */}
         {error && (
-          <Card className="border-red-600">
+          <Card className="border-destructive">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-destructive">
                 <XCircle className="h-5 w-5" />
                 Error
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Text className="text-red-900 dark:text-red-100">{error}</Text>
+              <Text className="text-destructive">{error}</Text>
               {data?.details && (
                 <Text size="sm" tone="muted" className="mt-2">
                   Details: {data.details}

@@ -166,7 +166,7 @@ export default function GlobalCompanyDirectoryPage() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="default"
-                className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90"
+                className="bg-primary hover:bg-primary/90"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add

@@ -267,7 +267,7 @@ export default function BillingPeriodsPage() {
             Manage invoice billing periods and cycles
           </p>
         </div>
-        <Button className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90">
+        <Button className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Create Billing Period
         </Button>

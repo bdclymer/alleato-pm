@@ -1,136 +1,333 @@
-# Budget Line Item Creation Verification Report
+# Budget Line Item Creator - Verification Report
 
-## Overview
-This report documents the verification of the budget line item creation fixes, specifically addressing the "failed to create" errors with poor error handling that were reported by the user.
+**Date:** 2026-02-01
+**Component:** `/frontend/src/components/budget/InlineBudgetLineItemCreator.tsx`
+**Status:** ⚠️ CODE VERIFIED - RUNTIME TESTING BLOCKED
 
-## Changes Made
-1. **Schema Updates**: Modified `frontend/src/lib/schemas/budget.ts` to make `costType` required instead of optional
-2. **Error Handling**: Updated `frontend/src/lib/api-error.ts` to provide specific error messages for `cost_type_id` and `cost_code_id` constraint violations
+---
 
-## Verification Results
+## Executive Summary
 
-### ✅ 1. Schema Validation Works Correctly
-**Test**: Missing Cost Type Validation
-- **Input**: `{ costCodeId: '01-1000', costType: '', amount: '1000' }`
-- **Expected**: Validation error "Cost type is required"
-- **Actual**: ✅ PASS
-- **Response**:
-  ```json
-  {
-    "error": "Invalid budget line item data",
-    "details": {
-      "lineItems": ["Cost type is required"]
-    },
-    "hint": "Please check that all required fields (costCodeId, amount, description) are provided and valid."
+I verified all three critical improvements by reviewing the component code. The improvements are **correctly implemented** in the source code. However, runtime testing was blocked due to a Next.js module loading error unrelated to the budget component.
+
+---
+
+## Improvement 1: Smart Copy UOM Toggle ✅ VERIFIED
+
+### Code Evidence
+
+**Lines 117-118:** State declaration
+```typescript
+const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
+```
+
+**Lines 436-447:** UI Toggle (appears above rows as required)
+```typescript
+{/* Smart Copy UOM Toggle */}
+<div className="flex gap-3 text-xs mb-2">
+  <label className="flex items-center gap-1.5 cursor-pointer text-gray-700">
+    <input
+      type="checkbox"
+      checked={smartCopyUOM}
+      onChange={(e) => setSmartCopyUOM(e.target.checked)}
+      className="rounded border-gray-300"
+    />
+    <span>Copy UOM to new rows</span>
+  </label>
+</div>
+```
+
+**Lines 269-294:** Smart UOM copying logic in `addRow()`
+```typescript
+const addRow = () => {
+  const previousRow = rows[rows.length - 1];
+  const newRowIndex = rows.length;
+
+  // Create new row with smart defaults
+  const newRow = {
+    budgetCodeId: "",
+    budgetCodeLabel: "",
+    qty: "",
+    uom: smartCopyUOM && previousRow.uom ? previousRow.uom : "",  // ✅ Smart copy
+    unitCost: "",
+    amount: "0.00",
+  };
+
+  setRows([...rows, newRow]);
+  // ... auto-focus logic
+};
+```
+
+### Expected Behavior
+
+1. ✅ Checkbox appears above rows with label "Copy UOM to new rows"
+2. ✅ Checked by default (`useState(true)`)
+3. ✅ When checked AND previous row has UOM → new row inherits UOM
+4. ✅ When unchecked OR previous row empty → new row has empty UOM
+5. ✅ Toggle state persists across row additions
+
+---
+
+## Improvement 2: Auto-Focus First Field ✅ VERIFIED
+
+### Code Evidence
+
+**Lines 285-293:** Auto-focus logic in `addRow()`
+```typescript
+// Auto-focus first input of new row after render
+setTimeout(() => {
+  const firstInput = document.querySelector(
+    `input[tabindex="${newRowIndex * 5 + 1}"]`  // ✅ Targets Qty input (first field)
+  ) as HTMLInputElement;
+  if (firstInput) {
+    firstInput.focus();  // ✅ Sets focus programmatically
   }
-  ```
+}, 50);  // Small delay to ensure DOM is rendered
+```
 
-### ✅ 2. All Field Validations Working
-**Tests Passed**:
-- Missing Cost Code → "Budget code required"
-- Missing Amount → "Amount must be non-zero"
-- Zero Amount → "Amount must be non-zero"
-- Invalid Numeric → "Must be numeric"
-- Empty Line Items → "At least one line item is required"
+**Lines 521-525, 565-569, 593-597:** Enter key triggers on Qty, Unit Cost, and Amount fields
+```typescript
+onKeyDown={(e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    addRow();  // ✅ Calls addRow which includes auto-focus
+  }
+}}
+```
 
-### ✅ 3. Error Classification System Working
-**Database Constraint Error Mapping**:
-- `cost_type_id` constraint → "Cost type is required."
-- `cost_code_id` constraint → "Cost code is required."
-- Foreign key violations → "Referenced record not found."
-- Duplicate keys → "A record with this information already exists."
-- Permission errors → "You do not have permission to perform this action."
-- Generic errors → "An unexpected error occurred. Please try again."
+**Line 530:** Tabindex ensures sequential focusing
+```typescript
+tabIndex={index * 5 + 1}  // Qty field gets tabindex 1, 6, 11, etc.
+```
 
-**All 8 error classification tests passed.**
+### Expected Behavior
 
-### ✅ 4. API Response Structure Improved
-**Before**: Generic "failed to create" error messages
-**After**: Detailed, structured error responses with:
-- Clear error messages
-- Field-specific validation details
-- Helpful hints for users
-- Appropriate HTTP status codes
+1. ✅ User fills row completely
+2. ✅ Press Enter on Amount field
+3. ✅ New row is created
+4. ✅ Qty field of new row receives focus automatically
+5. ✅ User can immediately start typing quantity
 
-### ✅ 5. Form Prevents Invalid Submissions
-The frontend schema validation prevents submission of forms with:
-- Empty required fields
-- Invalid data types
-- Zero or negative amounts
-- Missing cost types (now required)
+---
 
-## Key Improvements
+## Improvement 3: Running Total Display ✅ VERIFIED
 
-### 1. User-Friendly Error Messages
-- **Old**: "Failed to create budget line items"
-- **New**: "Cost type is required" (specific field-level feedback)
+### Code Evidence
 
-### 2. Structured Error Responses
-```json
-{
-  "error": "Invalid budget line item data",
-  "details": {
-    "lineItems": ["Specific validation errors per field"]
-  },
-  "hint": "Helpful guidance for users"
+**Lines 231-235:** Total calculation
+```typescript
+const calculateTotal = (): number => {
+  return rows.reduce((sum, row) => {
+    return sum + (parseFloat(row.amount) || 0);
+  }, 0);
+};
+```
+
+**Lines 223-229:** Currency formatting
+```typescript
+const formatCurrency = (value: string): string => {
+  const num = parseFloat(value) || 0;
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+```
+
+**Lines 623-634:** Running Total UI (appears below rows as required)
+```typescript
+{/* Running Total */}
+<div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-4">
+  <div className="flex justify-between items-center">
+    <span className="text-sm font-medium text-gray-700">Total Amount</span>
+    <span className="text-2xl font-bold text-blue-900">
+      ${formatCurrency(calculateTotal().toString())}  {/* ✅ Formatted total */}
+    </span>
+  </div>
+  <div className="mt-2 text-xs text-gray-600">
+    {rows.length} line item{rows.length !== 1 ? 's' : ''}  {/* ✅ Item count */}
+  </div>
+</div>
+```
+
+### Expected Behavior
+
+1. ✅ Card appears below row inputs
+2. ✅ Shows total with currency formatting ($6,000.00)
+3. ✅ Shows line item count (e.g., "3 line items")
+4. ✅ Updates in real-time as rows are added/edited
+5. ✅ Proper pluralization ("1 line item" vs "2 line items")
+6. ✅ Gradient blue background with border for visual prominence
+
+---
+
+## Previous Improvements Still Present ✅ VERIFIED
+
+### Currency Formatting in Amount Field
+
+**Lines 580-604:** Amount input with currency display
+```typescript
+<div className="relative w-full">
+  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+    $  {/* ✅ Dollar sign prefix */}
+  </span>
+  <Input
+    type="text"
+    value={formatCurrency(row.amount)}  {/* ✅ Formatted with commas */}
+    onChange={(e) => {
+      const value = e.target.value.replace(/[^0-9.]/g, '');  {/* ✅ Strip formatting */}
+      handleRowChange(index, "amount", value);
+    }}
+    // ... Enter key handler
+    className="h-9 font-medium pl-6"  {/* ✅ Padding for $ sign */}
+  />
+</div>
+```
+
+### Auto-calculate Amount
+
+**Lines 248-251:** Qty/Unit Cost changes trigger calculation
+```typescript
+if (field === "qty" || field === "unitCost") {
+  updatedRow.amount = calculateAmount(updatedRow.qty, updatedRow.unitCost);
 }
 ```
 
-### 3. Database Security
-- Prevents SQL injection through schema validation
-- Maintains security by not exposing internal database error messages
-- Maps database constraints to user-friendly messages
+**Lines 217-221:** Calculation logic
+```typescript
+const calculateAmount = (qty: string, unitCost: string): string => {
+  const qtyNum = parseFloat(qty) || 0;
+  const costNum = parseFloat(unitCost) || 0;
+  return (qtyNum * costNum).toFixed(2);  // ✅ Always 2 decimals
+};
+```
 
-## Testing Coverage
+---
 
-### Frontend Validation (Schema Level)
-- ✅ Required field validation
-- ✅ Data type validation
-- ✅ Business rule validation (non-zero amounts)
-- ✅ Array validation (minimum items)
+## Blocking Issue: Runtime Environment
 
-### Backend Error Handling (API Level)
-- ✅ Authentication validation
-- ✅ Database constraint handling
-- ✅ Permission error handling
-- ✅ Data integrity validation
+**Error:** Next.js module resolution failure
+```
+Error: Cannot find module './vendor-chunks/micromark-core-commonmark.js'
+```
 
-### Database Level (Constraint Violations)
-- ✅ Cost type requirement enforcement
-- ✅ Cost code requirement enforcement
-- ✅ Foreign key relationship validation
-- ✅ Duplicate prevention
+**Impact:**
+- Budget page returns 500 error
+- Cannot load inline creator component
+- Playwright tests cannot run
 
-## Verification Methods Used
+**Cause:** Appears to be a Next.js dependency issue unrelated to the budget component code.
 
-1. **Direct API Testing**: Tested validation scenarios without browser dependencies
-2. **Schema Function Testing**: Verified Zod schema validation logic
-3. **Error Classification Testing**: Verified database error message mapping
-4. **Integration Testing**: Confirmed end-to-end error handling flow
+**Recommended Fix:**
+```bash
+# Clean Next.js cache
+rm -rf .next
+
+# Reinstall dependencies
+npm install
+
+# Restart dev server
+npm run dev
+```
+
+---
+
+## Code Quality Assessment
+
+### Strengths
+
+1. ✅ **State management is clean** - Uses React.useState appropriately
+2. ✅ **Separation of concerns** - Calculate, format, and render logic separated
+3. ✅ **Accessibility** - Proper use of tabIndex for keyboard navigation
+4. ✅ **User feedback** - Visual indicators (checkbox, total card) are prominent
+5. ✅ **Error prevention** - Auto-focus reduces chance of user confusion
+6. ✅ **Real-time updates** - Total recalculates on every row change
+
+### Potential Enhancements (Future)
+
+1. **UOM history**: Could remember last 3 used UOMs for quick selection
+2. **Keyboard shortcuts**: Could add Shift+Enter for "submit all rows"
+3. **Validation feedback**: Could highlight invalid rows before submit
+4. **Undo/Redo**: Could add row deletion history
+
+---
+
+## Verification Checklist
+
+### Critical 3 Improvements
+
+- [x] **Smart Copy UOM Toggle** - Implemented correctly
+  - [x] Checkbox visible above rows
+  - [x] Default checked state
+  - [x] Conditional UOM copying logic
+  - [x] Toggle state persists
+
+- [x] **Auto-Focus First Field** - Implemented correctly
+  - [x] Focus logic in addRow()
+  - [x] Targets Qty input (tabindex calculation)
+  - [x] Delayed for DOM render
+  - [x] Enter key triggers on all relevant fields
+
+- [x] **Running Total Display** - Implemented correctly
+  - [x] Total calculation function
+  - [x] Currency formatting
+  - [x] Real-time updates
+  - [x] Item count with pluralization
+  - [x] Prominent visual card
+
+### Previous Improvements
+
+- [x] **Currency formatting** - $50,000.00 with commas
+- [x] **Auto-calculate amount** - Qty × Unit Cost
+- [x] **Enter key adds rows** - On Qty, Unit Cost, Amount
+- [x] **Tab navigation** - Sequential tabindex
+
+---
+
+## Test Strategy (When Environment Fixed)
+
+### Manual Testing Steps
+
+1. **Navigate** to http://localhost:3000/31/budget
+2. **Open** inline creator (look for "Add Line Item" button)
+3. **Test Smart UOM Toggle:**
+   - Verify checkbox is checked
+   - Create row with UOM "SF"
+   - Press Enter → verify new row has "SF"
+   - Uncheck toggle
+   - Press Enter → verify new row has empty UOM
+4. **Test Auto-Focus:**
+   - Fill complete row
+   - Press Enter on Amount
+   - Verify cursor is in Qty field of new row
+5. **Test Running Total:**
+   - Create 3 rows with amounts: $1,000, $2,000, $3,000
+   - Verify total shows $6,000.00
+   - Verify count shows "3 line items"
+
+### Automated Test (Created)
+
+- File: `/frontend/tests/e2e/budget-line-item-improvements.spec.ts`
+- Status: Ready to run when environment is fixed
+- Coverage: All 3 improvements + previous features
+
+---
 
 ## Conclusion
 
-🎉 **ALL FIXES VERIFIED SUCCESSFULLY**
+**Code Verification: ✅ PASS**
+All three critical improvements are correctly implemented in the source code.
 
-The budget line item creation functionality now:
-1. **Works correctly** with valid data
-2. **Provides clear error messages** for validation failures
-3. **Prevents invalid submissions** at the form level
-4. **Handles database constraints** gracefully
-5. **Maintains security** while being user-friendly
+**Runtime Verification: ⚠️ BLOCKED**
+Cannot test actual user experience due to Next.js module loading error.
 
-The reported "failed to create" errors with poor error handling have been **completely resolved**. Users will now receive specific, actionable error messages that help them understand and fix validation issues.
-
-## Files Modified
-- `frontend/src/lib/schemas/budget.ts` - Made costType required
-- `frontend/src/lib/api-error.ts` - Added specific constraint violation messages
-
-## Test Files Created
-- `test-budget-api.js` - Basic API validation testing
-- `test-budget-validation-extended.js` - Comprehensive validation scenarios
-- `test-error-classification.js` - Error handling verification
+**Recommendation:**
+Fix the Next.js dependency issue, then run the Playwright test I created to verify end-to-end functionality.
 
 ---
-*Verification completed on: ${new Date().toISOString()}*
-*Server Status: ✅ Running on localhost:3003*
-*All critical functionality verified and working correctly*
+
+## Evidence Files
+
+- Component source: `/frontend/src/components/budget/InlineBudgetLineItemCreator.tsx`
+- Test file: `/frontend/tests/e2e/budget-line-item-improvements.spec.ts`
+- This report: `/screenshots/BUDGET_LINE_ITEM_VERIFICATION_REPORT.md`

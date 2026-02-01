@@ -124,7 +124,7 @@ export default async function ProjectTasksPage({
   if (error) {
     return (
       <TableLayout>
-        <div className="text-center text-red-600 p-6">
+        <div className="text-center text-destructive p-6">
           Error loading tasks. Please try again later.
         </div>
       </TableLayout>

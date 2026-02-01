@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
     const supabase = await createClient();
 
-    // First, determine the commitment type from the unified view
+    // Determine type from unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
       .select("commitment_type")
@@ -25,19 +25,25 @@ export async function GET(
       );
     }
 
-    // Query the appropriate table based on type
-    const tableName =
-      unifiedData.commitment_type === "subcontract"
-        ? "subcontracts"
-        : "purchase_orders";
+    const isSubcontract = unifiedData.commitment_type === "subcontract";
+    const tableName = isSubcontract ? "subcontracts" : "purchase_orders";
+    const sovTableName = isSubcontract
+      ? "subcontract_sov_items"
+      : "purchase_order_sov_items";
+    const sovFkColumn = isSubcontract
+      ? "subcontract_id"
+      : "purchase_order_id";
+    const totalsViewName = isSubcontract
+      ? "subcontracts_with_totals"
+      : "purchase_orders_with_totals";
 
+    // Fetch base record with company join
     const { data, error } = await supabase
       .from(tableName)
       .select(
         `
         *,
-        contract_company:companies!contract_company_id(*),
-        assignee:users!assignee_id(*)
+        contract_company:companies!contract_company_id(*)
       `,
       )
       .eq("id", id)
@@ -53,10 +59,36 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // Add the commitment type to the response
+    // Fetch financial totals from _with_totals view
+    const { data: totalsData } = await (supabase as any)
+      .from(totalsViewName)
+      .select(
+        "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
+      )
+      .eq("id", id)
+      .single();
+
+    // Fetch SOV line items
+    const { data: sovItems } = await (supabase as any)
+      .from(sovTableName)
+      .select("*")
+      .eq(sovFkColumn, id)
+      .order("line_number", { ascending: true });
+
+    const originalAmount = Number(totalsData?.total_sov_amount) || 0;
+    const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
+    const balanceToFinish = Number(totalsData?.total_amount_remaining) || 0;
+
     const responseData = {
       ...data,
       type: unifiedData.commitment_type,
+      original_amount: originalAmount,
+      approved_change_orders: 0,
+      revised_contract_amount: originalAmount,
+      billed_to_date: billedToDate,
+      balance_to_finish: balanceToFinish,
+      sov_line_count: Number(totalsData?.sov_line_count) || 0,
+      line_items: sovItems || [],
     };
 
     return NextResponse.json({ data: responseData });

@@ -19,7 +19,7 @@ function RiskBar({ count, total }: { count: number; total: number }) {
   return (
     <div className="flex-1 bg-neutral-100 rounded-full h-2 relative overflow-hidden">
       <div
-        className="bg-gradient-to-r from-red-500 to-red-600 h-2 rounded-full transition-all duration-500"
+        className="bg-gradient-to-r from-destructive to-destructive/80 h-2 rounded-full transition-all duration-500"
         style={{ width: `${percentage}%` }}
       />
     </div>
@@ -77,7 +77,7 @@ export default function ExecutiveDashboard() {
         {/* Company Health Score */}
         <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/4 md:p-6">
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Company Health
             </p>
             <div className="space-y-1">
@@ -90,20 +90,20 @@ export default function ExecutiveDashboard() {
         </div>
 
         {/* Critical Risks */}
-        <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-red-500 hover:shadow-sm md:w-1/4 md:p-6">
+        <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-destructive hover:shadow-sm md:w-1/4 md:p-6">
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Critical Risks
             </p>
             <div className="space-y-2">
-              <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-red-700">
+              <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-destructive">
                 {heatMap?.critical || 0}
               </p>
               <div className="flex items-center gap-1.5">
                 {heatMap?.trending === "increasing" ? (
                   <>
-                    <TrendingUp className="h-3.5 w-3.5 text-red-700" />
-                    <span className="text-xs font-medium text-red-700 tabular-nums">
+                    <TrendingUp className="h-3.5 w-3.5 text-destructive" />
+                    <span className="text-xs font-medium text-destructive tabular-nums">
                       {heatMap?.trend_percentage && heatMap.trend_percentage > 0
                         ? "+"
                         : ""}
@@ -123,11 +123,11 @@ export default function ExecutiveDashboard() {
         {/* Projects at Risk */}
         <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/4 md:p-6">
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Projects at Risk
             </p>
             <div className="space-y-1">
-              <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-orange-700">
+              <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-warning">
                 {summary?.projects_at_risk || 0}
               </p>
               <p className="text-xs text-neutral-500">
@@ -140,7 +140,7 @@ export default function ExecutiveDashboard() {
         {/* Patterns Detected */}
         <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/4 md:p-6">
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Pattern Insights
             </p>
             <div className="space-y-1">
@@ -160,7 +160,7 @@ export default function ExecutiveDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Top Priorities */}
             <div className="border border-neutral-200 bg-background p-5">
-              <h3 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
+              <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
                 Top Priorities
               </h3>
               {summary?.top_priorities && summary.top_priorities.length > 0 ? (
@@ -170,7 +170,7 @@ export default function ExecutiveDashboard() {
                       key={priority}
                       className="flex items-start gap-3 text-sm text-neutral-700"
                     >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-100 text-[10px] font-semibold text-red-700">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-2xs font-semibold text-destructive">
                         {summary.top_priorities.indexOf(priority) + 1}
                       </span>
                       <span className="leading-relaxed">{priority}</span>
@@ -186,7 +186,7 @@ export default function ExecutiveDashboard() {
 
             {/* Quick Wins */}
             <div className="border border-neutral-200 bg-background p-5">
-              <h3 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
+              <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
                 Quick Wins Available
               </h3>
               {summary?.quick_wins && summary.quick_wins.length > 0 ? (
@@ -196,7 +196,7 @@ export default function ExecutiveDashboard() {
                       key={win}
                       className="flex items-start gap-3 text-sm text-neutral-700"
                     >
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-success mt-0.5" />
                       <span className="leading-relaxed">{win}</span>
                     </li>
                   ))}
@@ -212,7 +212,7 @@ export default function ExecutiveDashboard() {
           {/* Strategic Patterns */}
           {patterns.length > 0 && (
             <div className="border border-neutral-200 bg-background p-5">
-              <h3 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
+              <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
                 Strategic Pattern Analysis
               </h3>
               <div className="space-y-4">
@@ -221,10 +221,10 @@ export default function ExecutiveDashboard() {
                     key={`${pattern.description}-${pattern.frequency}`}
                     className={`border-l-2 pl-4 ${
                       pattern.severity === "high"
-                        ? "border-red-500"
+                        ? "border-destructive"
                         : pattern.severity === "medium"
-                          ? "border-yellow-500"
-                          : "border-blue-500"
+                          ? "border-warning"
+                          : "border-info"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -243,12 +243,12 @@ export default function ExecutiveDashboard() {
                         </div>
                       </div>
                       <span
-                        className={`shrink-0 px-2 py-1 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                        className={`shrink-0 px-2 py-1 rounded text-2xs font-semibold uppercase tracking-wider ${
                           pattern.severity === "high"
-                            ? "bg-red-100 text-red-700"
+                            ? "bg-destructive/10 text-destructive"
                             : pattern.severity === "medium"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-info/10 text-info"
                         }`}
                       >
                         {pattern.severity}
@@ -262,7 +262,7 @@ export default function ExecutiveDashboard() {
 
           {/* Risk Distribution */}
           <div className="border border-neutral-200 bg-background p-5">
-            <h3 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
+            <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
               Risk Distribution by Category
             </h3>
             <div className="space-y-3">
@@ -285,12 +285,12 @@ export default function ExecutiveDashboard() {
 
           {/* Projects Needing Attention */}
           <div className="border border-neutral-200 bg-background p-5">
-            <h3 className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
+            <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-4">
               Projects Requiring Attention
             </h3>
             {projectsNeedingAttention.length === 0 ? (
               <div className="text-center py-8">
-                <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <CheckCircle2 className="h-8 w-8 text-success mx-auto mb-2" />
                 <p className="text-sm text-neutral-500">
                   All projects are healthy
                 </p>
@@ -303,8 +303,8 @@ export default function ExecutiveDashboard() {
                     href={`/${project.project_id}/home`}
                     className={`block border-l-2 pl-4 pr-4 py-3 transition-all duration-200 hover:bg-neutral-50 ${
                       project.status === "critical"
-                        ? "border-red-500"
-                        : "border-yellow-500"
+                        ? "border-destructive"
+                        : "border-warning"
                     }`}
                   >
                     <div className="flex justify-between items-start gap-4">
@@ -330,13 +330,13 @@ export default function ExecutiveDashboard() {
                         <div
                           className={`text-2xl font-light tabular-nums ${
                             project.status === "critical"
-                              ? "text-red-700"
-                              : "text-yellow-700"
+                              ? "text-destructive"
+                              : "text-warning"
                           }`}
                         >
                           {project.health_score}
                         </div>
-                        <div className="text-[10px] text-neutral-500 uppercase tracking-wider">
+                        <div className="text-2xs text-neutral-500 uppercase tracking-wider">
                           {project.status}
                         </div>
                       </div>

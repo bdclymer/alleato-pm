@@ -57,7 +57,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
             className={cn(
               "px-2 py-1 text-xs font-medium rounded",
               project.status === "Active"
-                ? "bg-green-100 text-green-700"
+                ? "bg-success/10 text-success"
                 : "bg-muted text-foreground",
             )}
           >

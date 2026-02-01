@@ -81,7 +81,7 @@ export default async function DailyLogsPage() {
 
   if (error) {
     return (
-      <div className="text-center text-red-600">
+      <div className="text-center text-destructive">
         Error loading daily logs. Please try again later.
       </div>
     );

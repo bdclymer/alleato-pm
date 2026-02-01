@@ -117,8 +117,9 @@ export async function POST(
       .single();
 
     if (error) {
+      console.error("Vertical markup insert error:", error);
       return NextResponse.json(
-        { error: "Failed to create vertical markup" },
+        { error: error.message || "Failed to create vertical markup" },
         { status: 500 },
       );
     }

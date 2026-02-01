@@ -94,7 +94,7 @@ export default function PhotosPage() {
               <List className="h-4 w-4" />
             </Button>
           </div>
-          <Button className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90">
+          <Button className="bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Upload Photos
           </Button>

@@ -48,7 +48,7 @@ export function ContentCard({
           </div>
 
           {badge && (
-            <span className="flex-shrink-0 px-3 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200">
+            <span className="flex-shrink-0 px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200">
               {badge}
             </span>
           )}

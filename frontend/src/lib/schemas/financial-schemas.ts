@@ -63,14 +63,16 @@ export const changeEventSchema = z.object({
 });
 
 export const changeOrderSchema = z.object({
-  change_event_id: z.string().uuid("Valid change event ID required"),
-  number: z.string().min(1, "Change order number is required"),
+  co_number: z.string().min(1, "Change order number is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  status: z.enum(["draft", "pending", "approved", "executed", "void"]),
-  commitment_id: z.string().uuid("Valid commitment ID required"),
-  amount: z.number(),
-  executed_date: z.string().optional(),
+  status: z.enum(["draft", "pending", "approved", "executed", "rejected", "void"]),
+  contract_id: z.number().int().positive().optional().nullable(),
+  change_event_id: z.string().uuid().optional().nullable(),
+  amount: z.number().default(0),
+  is_private: z.boolean().default(false),
+  due_date: z.string().optional().nullable(),
+  rejection_reason: z.string().optional().nullable(),
 });
 
 export const primeContractSchema = z.object({

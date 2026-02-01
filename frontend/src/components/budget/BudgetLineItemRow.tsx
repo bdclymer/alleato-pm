@@ -127,7 +127,7 @@ export function BudgetLineItemRow({
             onClick={handleDeleteClick}
             disabled={!canRemove}
           >
-            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-600" />
+            <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
           </Button>
         </div>
       </Inline>

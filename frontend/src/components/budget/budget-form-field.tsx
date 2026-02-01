@@ -35,12 +35,12 @@ function BudgetFormField({
         htmlFor={fieldId}
         className={cn(
           "text-sm font-medium flex items-center gap-1",
-          error ? "text-red-700" : success ? "text-green-700" : "text-foreground"
+          error ? "text-destructive" : success ? "text-success" : "text-foreground"
         )}
       >
         {label}
         {required && (
-          <span className="text-red-500 text-xs" aria-label="required">
+          <span className="text-destructive text-xs" aria-label="required">
             *
           </span>
         )}
@@ -58,8 +58,8 @@ function BudgetFormField({
             'aria-invalid': !!error,
             className: cn(
               (children as React.ReactElement<any>).props.className,
-              error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-              success && "border-green-500 focus:border-green-500 focus:ring-green-500/20"
+              error && "border-destructive focus:border-destructive focus:ring-destructive/20",
+              success && "border-success focus:border-success focus:ring-success/20"
             )
           }) : children
         }
@@ -71,7 +71,7 @@ function BudgetFormField({
         {error && (
           <div
             id={`${fieldId}-error`}
-            className="flex items-center gap-1.5 text-xs text-red-700"
+            className="flex items-center gap-1.5 text-xs text-destructive"
             role="alert"
           >
             <AlertCircle className="h-3 w-3 shrink-0" />
@@ -83,7 +83,7 @@ function BudgetFormField({
         {success && !error && (
           <div
             id={`${fieldId}-success`}
-            className="flex items-center gap-1.5 text-xs text-green-700"
+            className="flex items-center gap-1.5 text-xs text-success"
           >
             <CheckCircle2 className="h-3 w-3 shrink-0" />
             <span>{success}</span>

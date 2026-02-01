@@ -83,7 +83,7 @@ export function SearchableSelect({
       {label && (
         <Label>
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-destructive ml-1">*</span>}
         </Label>
       )}
       <div className="flex gap-2 min-w-0">

@@ -564,7 +564,7 @@ export function BudgetLineItemModal({
                                           setOpenPopoverId(null);
                                           setShowCreateCodeModal(true);
                                         }}
-                                        className="text-blue-600"
+                                        className="text-link"
                                       >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Create New Budget Code
@@ -684,7 +684,7 @@ export function BudgetLineItemModal({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeRow(row.id)}
-                                className="h-9 w-9 p-0 text-muted-foreground hover:text-red-600"
+                                className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -781,7 +781,7 @@ export function BudgetLineItemModal({
                                 }
                                 className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
                                   newCodeData.costCodeId === costCode.id
-                                    ? "bg-blue-50 text-blue-700 font-medium"
+                                    ? "bg-info/10 text-info font-medium"
                                     : "text-foreground"
                                 }`}
                               >

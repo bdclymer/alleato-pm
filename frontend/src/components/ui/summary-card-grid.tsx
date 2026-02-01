@@ -113,8 +113,8 @@ function SummaryCardItem({
   const isPositiveChange = change?.direction === "up";
   const changeColor =
     (isPositiveChange && upIsGood) || (!isPositiveChange && !upIsGood)
-      ? "text-green-600"
-      : "text-red-600";
+      ? "text-success"
+      : "text-destructive";
 
   return (
     <Card

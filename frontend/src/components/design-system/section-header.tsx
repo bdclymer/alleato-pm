@@ -19,7 +19,7 @@ export function SectionHeader({
   return (
     <h3
       className={cn(
-        "text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500",
+        "text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500",
         className,
       )}
     >

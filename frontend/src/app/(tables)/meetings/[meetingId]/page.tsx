@@ -177,7 +177,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                 href={meeting.fireflies_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500"
+                className="inline-flex items-center gap-2 text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500"
               >
                 <ExternalLink className="h-4 w-4 text-brand" />
                 View in Fireflies
@@ -330,7 +330,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                     <h3 className="text-xl font-sans font-light text-neutral-900 flex-1">
                       {segment.title || `Topic ${index + 1}`}
                     </h3>
-                    <span className="px-3 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200">
+                    <span className="px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200">
                       {segment.segment_index + 1}
                     </span>
                   </div>

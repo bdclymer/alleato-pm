@@ -63,7 +63,7 @@ const statusConfig = {
   },
   segmented: {
     label: "Segmented",
-    color: "bg-blue-100 text-blue-800",
+    color: "bg-info/10 text-info",
     icon: Database,
   },
   embedded: {
@@ -73,17 +73,17 @@ const statusConfig = {
   },
   complete: {
     label: "Complete",
-    color: "bg-green-100 text-green-800",
+    color: "bg-success/10 text-success",
     icon: CheckCircle,
   },
   error: {
     label: "Error",
-    color: "bg-red-100 text-red-800",
+    color: "bg-destructive/10 text-destructive",
     icon: AlertCircle,
   },
   pending: {
     label: "Pending",
-    color: "bg-yellow-100 text-yellow-800",
+    color: "bg-warning/10 text-warning",
     icon: Clock,
   },
 };
@@ -357,7 +357,7 @@ export default function DocumentPipelinePage() {
                     <TableCell>
                       {doc.error_message && (
                         <div
-                          className="flex items-center gap-1 text-red-600"
+                          className="flex items-center gap-1 text-destructive"
                           title={doc.error_message}
                         >
                           <AlertCircle className="h-4 w-4" />

@@ -44,8 +44,8 @@ test.describe("Specifications Feature", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Wait for page to load
-    await expect(page.getByRole("heading", { name: "Specifications" })).toBeVisible();
+    // Wait for page to load (use .first() to avoid strict mode violation)
+    await expect(page.getByRole("heading", { name: "Specifications" }).first()).toBeVisible();
 
     // Click upload button
     await page.getByRole("button", { name: /upload specification/i }).click();
@@ -112,8 +112,8 @@ test.describe("Specifications Feature", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Wait for table to load
-    await expect(page.getByRole("heading", { name: "Specifications" })).toBeVisible();
+    // Wait for table to load (use .first() to avoid strict mode violation)
+    await expect(page.getByRole("heading", { name: "Specifications" }).first()).toBeVisible();
 
     // Search for the test specification
     const searchInput = page.getByPlaceholder(/search by section number or title/i);
@@ -163,8 +163,8 @@ test.describe("Specifications Feature", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Wait for table to load
-    await expect(page.getByRole("heading", { name: "Specifications" })).toBeVisible();
+    // Wait for table to load (use .first() to avoid strict mode violation)
+    await expect(page.getByRole("heading", { name: "Specifications" }).first()).toBeVisible();
 
     // Click on the test specification row
     await page.getByRole("row").filter({ hasText: TEST_TITLE }).click();

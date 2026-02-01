@@ -16,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const config: GenericTableConfig = {
@@ -105,6 +104,16 @@ const config: GenericTableConfig = {
       },
     },
     {
+      id: "billed_to_date",
+      label: "Billed to Date",
+      defaultVisible: true,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    {
       id: "balance_to_finish",
       label: "Balance to Finish",
       defaultVisible: true,
@@ -171,26 +180,25 @@ const config: GenericTableConfig = {
         { value: "false", label: "No" },
       ],
     },
-    {
-      id: "erp_status",
-      label: "ERP Status",
-      field: "erp_status",
-      options: [
-        { value: "synced", label: "Synced" },
-        { value: "not_synced", label: "Not Synced" },
-      ],
-    },
-    {
-      id: "ssov_status",
-      label: "SSOV Status",
-      field: "ssov_status",
-      options: [
-        { value: "ready", label: "Ready" },
-        { value: "not_ready", label: "Not Ready" },
-      ],
-    },
   ],
 };
+
+interface CommitmentRow {
+  id: string;
+  number: string;
+  title: string | null;
+  type: string;
+  status: string;
+  executed: boolean;
+  original_amount: number;
+  revised_contract_amount: number;
+  billed_to_date: number;
+  balance_to_finish: number;
+  contract_company_id: string | null;
+  contract_company_name?: string | null;
+  created_at: string;
+  [key: string]: unknown;
+}
 
 export default function ProjectCommitmentsPage() {
   const params = useParams();
@@ -198,33 +206,64 @@ export default function ProjectCommitmentsPage() {
   const pathname = usePathname();
   const projectId = params.projectId as string;
 
-  const [commitments, setCommitments] = useState<Record<string, unknown>[]>([]);
+  const [commitments, setCommitments] = useState<CommitmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchCommitments() {
-      try {
-        setIsLoading(true);
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from("commitments_unified")
-          .select("*")
-          .eq("project_id", parseInt(projectId, 10))
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false });
-
-        if (fetchError) throw fetchError;
-        setCommitments(data || []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load commitments");
-      } finally {
-        setIsLoading(false);
+  const fetchCommitments = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        `/api/commitments?projectId=${projectId}&limit=500`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch commitments");
       }
+      const result = await response.json();
+      const rows: CommitmentRow[] = (result.data || []).map((c: any) => ({
+        ...c,
+        contract_company_name: c.contract_company?.name || null,
+      }));
+      setCommitments(rows);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load commitments",
+      );
+    } finally {
+      setIsLoading(false);
     }
-
-    fetchCommitments();
   }, [projectId]);
+
+  useEffect(() => {
+    fetchCommitments();
+  }, [fetchCommitments]);
+
+  // Compute summary totals
+  const totalOriginal = commitments.reduce(
+    (sum, c) => sum + (c.original_amount || 0),
+    0,
+  );
+  const totalRevised = commitments.reduce(
+    (sum, c) => sum + (c.revised_contract_amount || 0),
+    0,
+  );
+  const totalBilled = commitments.reduce(
+    (sum, c) => sum + (c.billed_to_date || 0),
+    0,
+  );
+  const totalBalance = commitments.reduce(
+    (sum, c) => sum + (c.balance_to_finish || 0),
+    0,
+  );
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   const tabs = [
     {
@@ -258,33 +297,25 @@ export default function ProjectCommitmentsPage() {
         });
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to delete commitment");
+          const errorData = await response.json();
+          throw new Error(
+            errorData.message || "Failed to delete commitment",
+          );
         }
 
         toast.success("Commitment deleted successfully");
-
-        // Refresh the commitments list
-        const supabase = createClient();
-        const { data, error: fetchError } = await supabase
-          .from("commitments_unified")
-          .select("*")
-          .eq("project_id", parseInt(projectId, 10))
-          .is("deleted_at", null)
-          .order("created_at", { ascending: false });
-
-        if (fetchError) throw fetchError;
-        setCommitments(data || []);
-
+        await fetchCommitments();
         return {};
-      } catch (error) {
+      } catch (err) {
         const message =
-          error instanceof Error ? error.message : "Failed to delete commitment";
+          err instanceof Error
+            ? err.message
+            : "Failed to delete commitment";
         toast.error(message);
         return { error: message };
       }
     },
-    [projectId]
+    [fetchCommitments],
   );
 
   if (error) {
@@ -299,13 +330,13 @@ export default function ProjectCommitmentsPage() {
 
   return (
     <TableLayout>
-      {/* Header with Actions - Mobile Responsive */}
+      {/* Header with Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">Commitments</h1>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          Commitments
+        </h1>
 
-        {/* Action buttons - Stack on mobile, responsive gap */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
-          {/* Secondary actions - Hide some on mobile */}
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -319,14 +350,15 @@ export default function ProjectCommitmentsPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/${projectId}/commitments/recycle-bin`)}
+              onClick={() =>
+                router.push(`/${projectId}/commitments/recycle-bin`)
+              }
               className="flex-1 sm:flex-initial hidden sm:flex"
             >
               Recycle Bin
             </Button>
           </div>
 
-          {/* Primary action - Prominent on mobile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="flex-1 sm:flex-initial">
@@ -347,9 +379,40 @@ export default function ProjectCommitmentsPage() {
         </div>
       </div>
 
-      {/* Underline Tabs - Mobile Scrollable */}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Original Amount</p>
+          <p className="text-xl font-semibold mt-1">
+            {formatCurrency(totalOriginal)}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Revised Amount</p>
+          <p className="text-xl font-semibold mt-1">
+            {formatCurrency(totalRevised)}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Billed to Date</p>
+          <p className="text-xl font-semibold mt-1">
+            {formatCurrency(totalBilled)}
+          </p>
+        </div>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">Balance to Finish</p>
+          <p className="text-xl font-semibold mt-1">
+            {formatCurrency(totalBalance)}
+          </p>
+        </div>
+      </div>
+
+      {/* Underline Tabs */}
       <div className="overflow-x-auto -mb-px">
-        <nav className="flex space-x-6 sm:space-x-8 border-b min-w-max px-1" aria-label="Tabs">
+        <nav
+          className="flex space-x-6 sm:space-x-8 border-b min-w-max px-1"
+          aria-label="Tabs"
+        >
           {tabs.map((tab) => {
             const isActive = pathname === tab.href;
             return (
@@ -361,26 +424,26 @@ export default function ProjectCommitmentsPage() {
                   "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-smooth whitespace-nowrap touch-target",
                   isActive
                     ? "border-brand text-brand"
-                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                 )}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <span>{tab.label}</span>
-              {tab.count !== undefined && tab.count > 0 && (
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium",
-                    isActive
-                      ? "bg-brand/10 text-brand"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <span>{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      isActive
+                        ? "bg-brand/10 text-brand"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
       </div>
 
@@ -388,7 +451,9 @@ export default function ProjectCommitmentsPage() {
       <div className="mt-6">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Loading commitments...</div>
+            <div className="text-muted-foreground">
+              Loading commitments...
+            </div>
           </div>
         ) : (
           <GenericDataTable

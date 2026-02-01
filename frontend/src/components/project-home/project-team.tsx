@@ -25,7 +25,7 @@ export function ProjectTeam({ team, projectId }: ProjectTeamProps) {
         <h2 className="text-base font-semibold text-foreground">Project Team</h2>
         <Link
           href={`/${projectId}/directory/settings`}
-          className="text-sm text-muted-foreground hover:text-orange-600 flex items-center gap-1"
+          className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
         >
           Edit <Edit2 className="w-3 h-3" />
         </Link>
@@ -50,7 +50,7 @@ export function ProjectTeam({ team, projectId }: ProjectTeamProps) {
               <TableCell>
                 <a
                   href={`mailto:${member.email}`}
-                  className="text-blue-600 hover:underline"
+                  className="text-link hover:text-link-hover hover:underline"
                 >
                   {member.email}
                 </a>

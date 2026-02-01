@@ -91,7 +91,7 @@ export function DivisionTree<T extends DivisionItem>({
                   className={cn(
                     "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
                     selectedId === item.id
-                      ? "bg-blue-50 text-blue-700 font-medium"
+                      ? "bg-info/10 text-info font-medium"
                       : "text-foreground",
                   )}
                 >

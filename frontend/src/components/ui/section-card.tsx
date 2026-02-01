@@ -192,16 +192,16 @@ interface SectionCardBadgeProps {
 
 function SectionCardBadge({ children, variant = "default" }: SectionCardBadgeProps) {
   const variants = {
-    default: "bg-neutral-100 text-neutral-600",
+    default: "bg-muted text-muted-foreground",
     brand: "bg-brand/10 text-brand",
-    success: "bg-emerald-100 text-emerald-700",
-    warning: "bg-amber-100 text-amber-700",
-    error: "bg-red-100 text-red-700",
+    success: "bg-success/10 text-success",
+    warning: "bg-warning/10 text-warning",
+    error: "bg-destructive/10 text-destructive",
   };
 
   return (
     <span className={cn(
-      "text-[10px] px-2 py-0.5 uppercase tracking-wider font-medium shrink-0",
+      "text-2xs px-2 py-0.5 uppercase tracking-wider font-medium shrink-0",
       variants[variant]
     )}>
       {children}
@@ -246,7 +246,7 @@ function SectionCardRoot({
           <div className="flex items-center justify-between gap-4">
             {/* Title */}
             <h3 className={cn(
-              "text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase",
+              "text-2xs sm:text-[11px] font-semibold tracking-[0.15em] uppercase",
               brandTitle ? "text-brand" : "text-neutral-500"
             )}>
               {title}

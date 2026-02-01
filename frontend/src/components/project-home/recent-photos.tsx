@@ -259,7 +259,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
       <div className="text-center pt-2">
         <Link
           href={`/${projectId}/photos`}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-link hover:text-link-hover hover:underline"
         >
           View all photos →
         </Link>

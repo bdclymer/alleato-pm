@@ -6,39 +6,14 @@
     "auditLog": "/Users/meganharrison/Documents/github/alleato-pm/logs/.75bcdec01263db76f03984fb2086233e78adb09a-audit.json",
     "files": [
         {
-            "date": 1768714850089,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-18.log",
-            "hash": "811e7fb953cc7659fa1e98875e2e5ca3db0469eed91a0d89e9d4c9237243b17c"
-        },
-        {
-            "date": 1768799043745,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-19.log",
-            "hash": "1af3b83b1843bd66bebd2b380404edc02260f30bb009477bad9ed5a240669a04"
-        },
-        {
-            "date": 1769014961442,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-21.log",
-            "hash": "a9ae9398a1b3d17976ea4ab45f21939a60ed9d32acf3ae646fdca40837bc694c"
-        },
-        {
-            "date": 1769202702907,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-23.log",
-            "hash": "7b8d90c31e2979bd30d3cb852e1754358c4baef1b7ab52888080845a5b304c68"
-        },
-        {
-            "date": 1769819544124,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-30.log",
-            "hash": "bde05cbdc76732c8218b7bb6456ca764e880de26e9d76007244eb52e81cfcdcf"
-        },
-        {
-            "date": 1769874850100,
+            "date": 1769900073099,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-01-31.log",
-            "hash": "2e7cc325848627fba02013ac68bb119072c7577739da2989df82e77a610aee68"
+            "hash": "6873b8da51a5ab4fbe906a06ce286ad517282c292fef2175b4ffc66e9058a747"
         },
         {
-            "date": 1769923400620,
+            "date": 1769978176174,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-02-01.log",
-            "hash": "f9a5508fa92b3a053247952a09968b963cfac7069afac97affd28e01e08069de"
+            "hash": "e0b0def525c7d326a6db9b577733f53c5cbf1d34507c37ee9c61799cb5e0e32d"
         }
     ],
     "hashType": "sha256"

@@ -24,7 +24,7 @@ export function PortfolioSidebar({
       <div className="p-4 border-b border-border">
         <Button
           onClick={onCreateProject}
-          className="w-full bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange-hover))] text-white"
+          className="w-full bg-primary hover:bg-primary/90 text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Create Project

@@ -1095,7 +1095,7 @@ function BudgetPageContent() {
             <AlertDialogAction
               onClick={confirmDeleteSelected}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
             >
               {deleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>

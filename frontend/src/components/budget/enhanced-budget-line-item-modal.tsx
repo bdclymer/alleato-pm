@@ -312,7 +312,7 @@ export function EnhancedBudgetLineItemModal({
                 className={cn(
                   "border rounded-lg p-4 space-y-4",
                   row.errors && Object.keys(row.errors).length > 0
-                    ? "border-red-200 bg-red-50/50"
+                    ? "border-destructive/20 bg-destructive/5"
                     : "border-border bg-background"
                 )}
               >
@@ -327,7 +327,7 @@ export function EnhancedBudgetLineItemModal({
                       size="icon"
                       onClick={() => removeRow(row.id)}
                       type="button"
-                      className="h-8 w-8 text-red-600 hover:bg-red-50"
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
                     >
                       <X className="h-4 w-4" />
                     </BudgetButton>

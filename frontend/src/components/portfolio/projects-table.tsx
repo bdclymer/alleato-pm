@@ -147,7 +147,7 @@ export function ProjectsTable({
             e.stopPropagation();
             onProjectClick?.(row.original);
           }}
-          className="font-medium text-[hsl(var(--procore-orange))] hover:text-[hsl(var(--procore-orange-hover))] transition-colors duration-200 text-left group-hover:underline"
+          className="font-medium text-primary hover:text-primary/90 transition-colors duration-200 text-left group-hover:underline"
         >
           {row.getValue("name")}
         </button>

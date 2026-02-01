@@ -321,8 +321,8 @@ export default function StyleGuidePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-2 mb-3">
-                <CheckCircle className="h-5 w-5 text-green-700" />
-                <h3 className="text-sm font-semibold text-green-700">
+                <CheckCircle className="h-5 w-5 text-success" />
+                <h3 className="text-sm font-semibold text-success">
                   DECISIONS
                 </h3>
               </div>
@@ -333,8 +333,8 @@ export default function StyleGuidePage() {
 
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-2 mb-3">
-                <FileText className="h-5 w-5 text-blue-700" />
-                <h3 className="text-sm font-semibold text-blue-700">
+                <FileText className="h-5 w-5 text-info" />
+                <h3 className="text-sm font-semibold text-info">
                   ACTION ITEMS
                 </h3>
               </div>

@@ -82,7 +82,7 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
                 onClick={handleSave}
                 disabled={isSaving}
               >
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-success" />
                 <span className="sr-only">Save changes</span>
               </Button>
               <Button
@@ -92,7 +92,7 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
                 onClick={handleCancel}
                 disabled={isSaving}
               >
-                <X className="h-4 w-4 text-red-600" />
+                <X className="h-4 w-4 text-destructive" />
                 <span className="sr-only">Cancel editing</span>
               </Button>
             </div>

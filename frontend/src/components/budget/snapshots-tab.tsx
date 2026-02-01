@@ -107,8 +107,8 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
   };
 
   const getVarianceColor = (variance: number) => {
-    if (variance > 0) return "text-green-600";
-    if (variance < 0) return "text-red-600";
+    if (variance > 0) return "text-success";
+    if (variance < 0) return "text-destructive";
     return "text-foreground";
   };
 
@@ -151,7 +151,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Current Budget</CardTitle>
-              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+              <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
                 Active
               </span>
             </div>

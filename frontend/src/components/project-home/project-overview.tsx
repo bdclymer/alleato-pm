@@ -29,7 +29,7 @@ function OverviewBar({ item }: { item: ProjectOverviewItem }) {
     <div className="flex h-6 rounded overflow-hidden text-xs font-medium">
       {item.overdue > 0 && (
         <div
-          className="bg-red-500 text-white flex items-center justify-center"
+          className="bg-destructive text-white flex items-center justify-center"
           style={{
             width: `${overduePercent}%`,
             minWidth: item.overdue > 0 ? "24px" : 0,
@@ -40,7 +40,7 @@ function OverviewBar({ item }: { item: ProjectOverviewItem }) {
       )}
       {item.nextSevenDays > 0 && (
         <div
-          className="bg-yellow-500 text-white flex items-center justify-center"
+          className="bg-warning text-white flex items-center justify-center"
           style={{
             width: `${nextSevenPercent}%`,
             minWidth: item.nextSevenDays > 0 ? "24px" : 0,
@@ -51,7 +51,7 @@ function OverviewBar({ item }: { item: ProjectOverviewItem }) {
       )}
       {item.moreThanSevenDays > 0 && (
         <div
-          className="bg-green-500 text-white flex items-center justify-center"
+          className="bg-success text-white flex items-center justify-center"
           style={{
             width: `${openPercent}%`,
             minWidth: item.moreThanSevenDays > 0 ? "24px" : 0,
@@ -89,15 +89,15 @@ export function ProjectOverview({ items, projectId }: ProjectOverviewProps) {
               <TableHead>
                 <div className="flex items-center gap-4 text-xs">
                   <div className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-red-500"></span>
+                    <span className="w-3 h-3 rounded-sm bg-destructive"></span>
                     <span>Overdue</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-yellow-500"></span>
+                    <span className="w-3 h-3 rounded-sm bg-warning"></span>
                     <span>Next 7 Days</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-sm bg-green-500"></span>
+                    <span className="w-3 h-3 rounded-sm bg-success"></span>
                     <span>&gt; 7 Days</span>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export function ProjectOverview({ items, projectId }: ProjectOverviewProps) {
                 <TableCell>
                   <button
                     onClick={() => handleItemClick(item)}
-                    className="text-blue-600 hover:underline font-medium text-left"
+                    className="text-link hover:text-link-hover hover:underline font-medium text-left"
                   >
                     {item.name}
                   </button>

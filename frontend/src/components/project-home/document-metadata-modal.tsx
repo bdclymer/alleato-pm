@@ -116,14 +116,14 @@ export function DocumentMetadataModal({
           {isLoading && (
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-2">
-                <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm text-muted-foreground">Loading documents...</p>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive">
               <p>{error}</p>
             </div>
           )}
@@ -171,7 +171,7 @@ export function DocumentMetadataModal({
                           href={doc.url || doc.fireflies_link || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-link hover:text-link-hover"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>

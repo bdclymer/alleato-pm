@@ -57,19 +57,10 @@ export class SpecificationRevisionService {
         };
       }
 
-      // Get revisions with uploader info
+      // Get revisions (uploaded_by is UUID, not a relation in generated types)
       const { data: revisions, error: revisionsError } = await this.supabase
         .from("specification_section_revisions")
-        .select(
-          `
-          *,
-          uploader:uploaded_by(
-            id,
-            email,
-            full_name
-          )
-        `,
-        )
+        .select("*")
         .eq("section_id", sectionIdNum)
         .order("revision_number", { ascending: false });
 
@@ -80,22 +71,16 @@ export class SpecificationRevisionService {
         };
       }
 
-      // Transform to include uploader details
+      // Transform to include uploader details (uploaded_by is just UUID)
       const revisionsWithUploader: RevisionWithUploader[] = (
         revisions || []
-      ).map((rev: any) => ({
+      ).map((rev) => ({
         ...rev,
-        uploader: rev.uploader
-          ? {
-              id: rev.uploader.id,
-              email: rev.uploader.email || "",
-              full_name: rev.uploader.full_name || "",
-            }
-          : {
-              id: rev.uploaded_by,
-              email: "Unknown",
-              full_name: "Unknown User",
-            },
+        uploader: {
+          id: rev.uploaded_by,
+          email: "Unknown", // Future: fetch from auth.users if needed
+          full_name: "Unknown User",
+        },
       }));
 
       return {
@@ -128,16 +113,7 @@ export class SpecificationRevisionService {
     try {
       const { data, error } = await this.supabase
         .from("specification_section_revisions")
-        .select(
-          `
-          *,
-          uploader:uploaded_by(
-            id,
-            email,
-            full_name
-          )
-        `,
-        )
+        .select("*")
         .eq("id", revisionIdNum)
         .single();
 
@@ -159,17 +135,11 @@ export class SpecificationRevisionService {
 
       const revision: RevisionWithUploader = {
         ...data,
-        uploader: data.uploader
-          ? {
-              id: data.uploader.id,
-              email: data.uploader.email || "",
-              full_name: data.uploader.full_name || "",
-            }
-          : {
-              id: data.uploaded_by,
-              email: "Unknown",
-              full_name: "Unknown User",
-            },
+        uploader: {
+          id: data.uploaded_by,
+          email: "Unknown", // Future: fetch from auth.users if needed
+          full_name: "Unknown User",
+        },
       };
 
       return { data: revision, error: null };

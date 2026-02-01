@@ -95,7 +95,7 @@ export function AppHeader({
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative">
           <IconBell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500" />
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive" />
         </Button>
 
         {/* User Menu */}
@@ -133,7 +133,7 @@ export function AppHeader({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-red-600"
+              className="text-destructive"
               onSelect={async (event) => {
                 event.preventDefault();
                 try {

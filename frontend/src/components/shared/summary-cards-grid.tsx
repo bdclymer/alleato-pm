@@ -50,13 +50,13 @@ export function SummaryCardsGrid({
   const getColorClasses = (color?: string) => {
     switch (color) {
       case "green":
-        return "text-green-600";
+        return "text-success";
       case "yellow":
-        return "text-yellow-600";
+        return "text-warning";
       case "orange":
-        return "text-orange-600";
+        return "text-warning";
       case "red":
-        return "text-red-600";
+        return "text-destructive";
       default:
         return "";
     }
@@ -89,7 +89,7 @@ export function SummaryCardsGrid({
                 <p
                   className={cn(
                     "text-xs",
-                    card.trend.isPositive ? "text-green-600" : "text-red-600",
+                    card.trend.isPositive ? "text-success" : "text-destructive",
                   )}
                 >
                   {card.trend.isPositive ? "↑" : "↓"}{" "}

@@ -84,7 +84,7 @@ export function useDevAutoFill<T extends Record<string, any>>(
         onClick={autoFill}
         className={
           buttonClassName ||
-          "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-md transition-colors border border-purple-300"
+          "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30"
         }
         title="Development only: Fill form with test data"
       >
@@ -131,7 +131,7 @@ export function DevAutoFillButton({
       onClick={handleClick}
       className={
         className ||
-        "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-md transition-colors border border-purple-300"
+        "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30"
       }
       title="Development only: Fill form with test data"
     >

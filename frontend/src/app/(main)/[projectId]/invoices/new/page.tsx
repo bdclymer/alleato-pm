@@ -701,7 +701,7 @@ export default function NewInvoicePage() {
                                 size="sm"
                                 onClick={() => removeLineItem(item.id)}
                               >
-                                <Trash2 className="h-4 w-4 text-red-500" />
+                                <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                             )}
                           </TableCell>
@@ -777,7 +777,7 @@ export default function NewInvoicePage() {
                           <span className="text-foreground">
                             Less Retention ({retentionPercentage}%):
                           </span>
-                          <span className="font-medium text-red-600">
+                          <span className="font-medium text-destructive">
                             -${invoiceData.retentionAmount}
                           </span>
                         </div>

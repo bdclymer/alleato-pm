@@ -180,7 +180,7 @@ export default function EmailsPage() {
           <h1 className="text-3xl font-bold text-foreground">Emails</h1>
           <p className="text-sm text-muted-foreground mt-1">Project correspondence</p>
         </div>
-        <Button className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90">
+        <Button className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Compose Email
         </Button>

@@ -232,7 +232,7 @@ export function SupabaseTableIndicator() {
                         <TooltipTrigger>
                           <Badge
                             variant="default"
-                            className="text-xs bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+                            className="text-xs bg-success hover:bg-success/90 dark:bg-success/80 dark:hover:bg-success"
                           >
                             <Table className="h-3 w-3 mr-1" />
                             {table}
@@ -279,7 +279,7 @@ export function SupabaseTableIndicator() {
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
                     <span className="text-xs text-muted-foreground">Connected</span>
                   </div>
                 </TooltipTrigger>

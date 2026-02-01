@@ -47,13 +47,13 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
         <div className="flex items-center lg:gap-12 gap-4 mb-6">
           <div className="flex items-center lg:gap-3 gap-2">
             <Calendar className="h-4 w-4 text-brand" />
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               {totalMeetings} Total Meetings
             </p>
           </div>
           <div className="flex items-center gap-2 lg:gap-3">
             <Clock className="h-4 w-4 text-brand" />
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               {thisMonth} This Month
             </p>
           </div>

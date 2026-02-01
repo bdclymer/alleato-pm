@@ -278,7 +278,7 @@ export function EnhancedDevPanel() {
         <Button variant="ghost" size="icon" className="h-8 w-8 relative">
           <Code className="h-4 w-4" />
           {consoleErrors.filter(e => e.type === "error").length > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-semibold text-white flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-2xs font-semibold text-white flex items-center justify-center">
               {consoleErrors.filter(e => e.type === "error").length}
             </span>
           )}
@@ -390,10 +390,10 @@ export function EnhancedDevPanel() {
                             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                           )}
                           {check.status === "success" && (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <CheckCircle2 className="h-4 w-4 text-success" />
                           )}
                           {check.status === "error" && (
-                            <XCircle className="h-4 w-4 text-red-500" />
+                            <XCircle className="h-4 w-4 text-destructive" />
                           )}
                           <div>
                             <div className="text-sm font-medium">{check.name}</div>
@@ -534,7 +534,7 @@ export function EnhancedDevPanel() {
                         <span className="text-foreground font-semibold">{ref.table}</span>
                         <span className="text-muted-foreground">{ref.pk}</span>
                       </div>
-                      <div className="text-green-600 dark:text-green-400">
+                      <div className="text-success">
                         ✓ Use: {ref.fk}
                       </div>
                     </div>
@@ -617,8 +617,8 @@ const supabase = createClient(url, key);
                       key={idx}
                       className={`p-2 rounded-lg text-xs ${
                         error.type === "error"
-                          ? "bg-red-500/10 border border-red-500/20"
-                          : "bg-yellow-500/10 border border-yellow-500/20"
+                          ? "bg-destructive/10 border border-destructive/20"
+                          : "bg-warning/10 border border-warning/20"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">

@@ -447,7 +447,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
                     y={50}
                     textAnchor="middle"
                     className={cn(
-                      "text-[10px] fill-muted-foreground",
+                      "text-2xs fill-muted-foreground",
                       isWknd && "fill-muted-foreground/50"
                     )}
                   >

@@ -79,7 +79,7 @@ export default function ModalDemoPage() {
                 </p>
                 <Button
                   onClick={() => setOpenModal("original-budget")}
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   Open Modal
                 </Button>
@@ -93,7 +93,7 @@ export default function ModalDemoPage() {
                 </p>
                 <Button
                   onClick={() => setOpenModal("unlock-budget")}
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   Open Modal
                 </Button>
@@ -107,7 +107,7 @@ export default function ModalDemoPage() {
                 </p>
                 <Button
                   onClick={() => setOpenModal("create-line-items")}
-                  className="w-full bg-orange-500 hover:bg-orange-600"
+                  className="w-full bg-primary hover:bg-primary/90"
                 >
                   Open Modal
                 </Button>
@@ -121,53 +121,53 @@ export default function ModalDemoPage() {
             </h2>
             <ul className="space-y-2 text-sm text-foreground">
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Wider modals:</strong> Default max-w-4xl for better
                   content display
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Mobile responsive:</strong> Adapts layout for small
                   screens
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Procore design:</strong> Dark header with white text
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Keyboard navigation:</strong> ESC to close, TAB to
                   navigate
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Real-time calculations:</strong> Original Budget = Qty
                   × Cost
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Validation:</strong> Form validation before submission
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Loading states:</strong> Disabled buttons during save
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
+                <span className="text-success mt-1">✓</span>
                 <span>
                   <strong>Unsaved changes warning:</strong> Confirmation before
                   closing

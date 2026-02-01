@@ -222,10 +222,10 @@ export function DevPanel() {
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         )}
                         {check.status === "success" && (
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          <CheckCircle2 className="h-4 w-4 text-success" />
                         )}
                         {check.status === "error" && (
-                          <XCircle className="h-4 w-4 text-red-500" />
+                          <XCircle className="h-4 w-4 text-destructive" />
                         )}
                         <div>
                           <div className="text-sm font-medium">{check.name}</div>

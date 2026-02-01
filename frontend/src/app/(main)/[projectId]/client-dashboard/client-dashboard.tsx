@@ -174,7 +174,7 @@ export default function ClientDashboard({
                       : "TBD"}
                   </p>
                 </div>
-                <Calendar className="h-8 w-8 text-blue-500" />
+                <Calendar className="h-8 w-8 text-info" />
               </div>
             </CardContent>
           </Card>
@@ -195,7 +195,7 @@ export default function ClientDashboard({
                       : "TBD"}
                   </p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-8 w-8 text-success" />
               </div>
             </CardContent>
           </Card>
@@ -207,7 +207,7 @@ export default function ClientDashboard({
                   <p className="text-sm text-gray-500">Open RFIs</p>
                   <p className="text-xl font-semibold">{rfis.length}</p>
                 </div>
-                <AlertCircle className="h-8 w-8 text-orange-500" />
+                <AlertCircle className="h-8 w-8 text-warning" />
               </div>
             </CardContent>
           </Card>

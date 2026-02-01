@@ -88,72 +88,81 @@ export function useCommitments(
 
     try {
       const supabase = createClient();
-      type CommitmentRow = {
-        id: string;
-        number: string | null;
-        title: string | null;
-        contract_company_id: string | null;
-        status: string | null;
-        commitment_type: string | null;
-        executed: boolean | null;
-        contract_date: string | null;
-        created_at: string | null;
-        contract_company: { id: string; name: string | null } | null;
-      };
 
-      let query = (supabase as any)
-        .from("commitments_unified")
-        .select(
-          `
-          *,
-          contract_company:companies!contract_company_id(id, name)
-        `,
-        )
-        .order("contract_number", { ascending: true })
-        .limit(limit);
+      // Fetch from both _with_totals views that include SOV financial aggregation
+      const allRows: any[] = [];
 
-      if (search) {
-        query = query.or(`number.ilike.%${search}%,title.ilike.%${search}%`);
+      if (!type || type === "subcontract") {
+        let scQuery = (supabase as any)
+          .from("subcontracts_with_totals")
+          .select("*")
+          .order("contract_number", { ascending: true })
+          .limit(limit);
+
+        if (search) {
+          scQuery = scQuery.or(
+            `contract_number.ilike.%${search}%,title.ilike.%${search}%`,
+          );
+        }
+        if (status) scQuery = scQuery.eq("status", status);
+        if (companyId) scQuery = scQuery.eq("contract_company_id", companyId);
+
+        const { data: scData, error: scError } = await scQuery;
+        if (scError) throw new Error(scError.message);
+
+        (scData || []).forEach((row: any) => {
+          allRows.push({ ...row, _type: "subcontract" });
+        });
       }
 
-      if (status) {
-        query = query.eq("status", status);
+      if (!type || type === "purchase_order") {
+        let poQuery = (supabase as any)
+          .from("purchase_orders_with_totals")
+          .select("*")
+          .order("contract_number", { ascending: true })
+          .limit(limit);
+
+        if (search) {
+          poQuery = poQuery.or(
+            `contract_number.ilike.%${search}%,title.ilike.%${search}%`,
+          );
+        }
+        if (status) poQuery = poQuery.eq("status", status);
+        if (companyId) poQuery = poQuery.eq("contract_company_id", companyId);
+
+        const { data: poData, error: poError } = await poQuery;
+        if (poError) throw new Error(poError.message);
+
+        (poData || []).forEach((row: any) => {
+          allRows.push({ ...row, _type: "purchase_order" });
+        });
       }
 
-      if (type) {
-        query = query.eq("type", type);
-      }
-
-      if (companyId) {
-        query = query.eq("contract_company_id", companyId);
-      }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw new Error(queryError.message);
-      }
-
-      // Map the data to match our interface
-      const mappedData: Commitment[] = (data || []).map((row: any) => ({
-        id: row.id || "",
-        number: row.contract_number || null,
-        title: row.title || null,
-        contract_company_id: row.contract_company_id || null,
-        status: row.status || null,
-        type: row.commitment_type || null,
-        commitment_type: row.commitment_type || null,
-        original_amount: null,
-        revised_contract_amount: null,
-        balance_to_finish: null,
-        approved_change_orders: null,
-        executed_date: row.contract_date || null,
-        executed: row.executed || null,
-        start_date: null,
-        substantial_completion_date: null,
-        created_at: row.created_at || new Date().toISOString(),
-        contract_company: row.contract_company || null,
-      }));
+      // Map to Commitment interface with real financial data
+      const mappedData: Commitment[] = allRows.map((row: any) => {
+        const originalAmount = Number(row.total_sov_amount) || null;
+        return {
+          id: row.id || "",
+          number: row.contract_number || null,
+          title: row.title || null,
+          contract_company_id: row.contract_company_id || null,
+          status: row.status || null,
+          type: row._type || null,
+          commitment_type: row._type || null,
+          original_amount: originalAmount,
+          revised_contract_amount: originalAmount,
+          balance_to_finish: Number(row.total_amount_remaining) || null,
+          approved_change_orders: null,
+          executed_date: row.contract_date || null,
+          executed: row.executed || null,
+          start_date: row.start_date || null,
+          substantial_completion_date: null,
+          created_at: row.created_at || new Date().toISOString(),
+          contract_company: row.company_name
+            ? { id: row.contract_company_id || "", name: row.company_name }
+            : null,
+        };
+      });
 
       setCommitments(mappedData);
     } catch (err) {
@@ -205,9 +214,9 @@ export function useCommitments(
           status: data.status || null,
           type: data.commitment_type || null,
           commitment_type: data.commitment_type || null,
-          original_amount: null,
-          revised_contract_amount: null,
-          balance_to_finish: null,
+          original_amount: 0,
+          revised_contract_amount: 0,
+          balance_to_finish: 0,
           approved_change_orders: null,
           executed_date: data.contract_date || null,
           executed: data.executed || null,

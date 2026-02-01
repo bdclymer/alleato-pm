@@ -501,7 +501,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
           {visibleFields.has("labels") && label && (
             <Badge
               variant="secondary"
-              className={cn("h-5 px-1.5 text-[10px] text-white", labelColors[label])}
+              className={cn("h-5 px-1.5 text-2xs text-white", labelColors[label])}
             >
               {label.charAt(0).toUpperCase() + label.slice(1)}
             </Badge>
@@ -510,12 +510,12 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
           {visibleFields.has("status") && (
             <div className="flex items-center gap-1">
               <statusInfo.icon className={cn("h-3 w-3", statusInfo.color)} />
-              <span className="text-[10px] text-muted-foreground">{statusInfo.label}</span>
+              <span className="text-2xs text-muted-foreground">{statusInfo.label}</span>
             </div>
           )}
 
           {visibleFields.has("dates") && (task.start_date || task.finish_date) && (
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-2xs text-muted-foreground">
               {formatDate(task.start_date)} — {formatDate(task.finish_date)}
             </span>
           )}
@@ -523,7 +523,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
           {visibleFields.has("progress") && (
             <div className="flex items-center gap-1 min-w-[60px]">
               <Progress value={task.percent_complete} className="h-1.5 flex-1" />
-              <span className="text-[10px] text-muted-foreground">{task.percent_complete}%</span>
+              <span className="text-2xs text-muted-foreground">{task.percent_complete}%</span>
             </div>
           )}
 
@@ -532,7 +532,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
           )}
 
           {visibleFields.has("subtask_count") && task.children && task.children.length > 0 && (
-            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-0.5 text-2xs text-muted-foreground">
               <CheckCircle2 className="h-3 w-3" />
               {task.children.filter(c => c.status === "complete").length}/{task.children.length}
             </div>

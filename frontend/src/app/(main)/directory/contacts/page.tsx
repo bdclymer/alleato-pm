@@ -228,7 +228,7 @@ export default function DirectoryContactsPage() {
         actions={
           <Button
             onClick={handleAddContact}
-            className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90"
+            className="bg-primary hover:bg-primary/90"
           >
             <Plus className="mr-2 h-4 w-4" />
             New Contact

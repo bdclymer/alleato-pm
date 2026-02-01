@@ -74,14 +74,14 @@ export function BudgetLineItemCard({
             disabled={!canRemove}
             className="touch-target -mr-2 -mt-2"
           >
-            <Trash2 className="h-5 w-5 text-muted-foreground hover:text-red-600" />
+            <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
           </Button>
         </Inline>
 
         {/* Budget Code Selector */}
         <div>
           <Label>
-            Budget Code <span className="text-red-500">*</span>
+            Budget Code <span className="text-destructive">*</span>
           </Label>
           <BudgetCodeSelector
             projectCostCodes={projectCostCodes}

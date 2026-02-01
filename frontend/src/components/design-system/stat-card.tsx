@@ -43,7 +43,7 @@ export function StatCard({
       <div className="text-xl md:text-2xl font-light tabular-nums tracking-tight text-neutral-900 mb-1">
         {value}
       </div>
-      <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+      <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
         {label}
       </p>
     </>

@@ -25,8 +25,8 @@ const toneMap = {
   muted: "text-muted-foreground",
   accent: "text-accent-foreground",
   destructive: "text-destructive",
-  success: "text-green-600 dark:text-green-400",
-  warning: "text-amber-600 dark:text-amber-400",
+  success: "text-success",
+  warning: "text-warning",
 } as const;
 
 const weightMap = {

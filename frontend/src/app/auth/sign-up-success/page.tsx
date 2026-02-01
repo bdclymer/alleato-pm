@@ -14,28 +14,28 @@ export default function Page() {
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-md">
         <div className="flex flex-col gap-6">
-          <Card className="border-green-200 bg-green-50/50">
+          <Card className="border-success/20 bg-success/10">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/20">
+                <CheckCircle className="h-8 w-8 text-success" />
               </div>
-              <CardTitle className="text-2xl text-green-900">
+              <CardTitle className="text-2xl text-success">
                 Account Created Successfully!
               </CardTitle>
-              <CardDescription className="text-green-700">
+              <CardDescription className="text-success">
                 Welcome to Alleato PM
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <p className="text-sm text-green-800 leading-relaxed">
+                <p className="text-sm text-success leading-relaxed">
                   Your account has been created and is ready to use. You can now
                   sign in to start managing your construction projects.
                 </p>
               </div>
 
               <div className="pt-4">
-                <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+                <Button asChild className="w-full bg-success hover:bg-success/90">
                   <Link href="/auth/login">
                     Continue to Login
                   </Link>
@@ -45,7 +45,7 @@ export default function Page() {
               <div className="text-center pt-2">
                 <Link
                   href="/"
-                  className="text-xs text-green-600 hover:text-green-700 hover:underline"
+                  className="text-xs text-link hover:text-link-hover hover:underline"
                 >
                   Return to Home
                 </Link>

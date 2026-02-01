@@ -161,7 +161,7 @@ export default function RFIsPage() {
           <h1 className="text-3xl font-bold text-foreground">RFIs</h1>
           <p className="text-sm text-muted-foreground mt-1">Requests for Information</p>
         </div>
-        <Button className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90">
+        <Button className="bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4 mr-2" />
           Create RFI
         </Button>

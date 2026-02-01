@@ -106,13 +106,13 @@ export function ProjectStatsCards({ projectId }: ProjectStatsCardsProps) {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "success":
-        return "text-green-600 bg-green-50";
+        return "text-success bg-success/10";
       case "warning":
-        return "text-yellow-600 bg-yellow-50";
+        return "text-warning bg-warning/10";
       case "error":
-        return "text-red-600 bg-red-50";
+        return "text-destructive bg-destructive/10";
       default:
-        return "text-blue-600 bg-blue-50";
+        return "text-info bg-info/10";
     }
   };
 
@@ -147,8 +147,8 @@ export function ProjectStatsCards({ projectId }: ProjectStatsCardsProps) {
                     <span
                       className={`text-xs font-medium ${
                         stat.change.isPositive
-                          ? "text-green-600"
-                          : "text-red-600"
+                          ? "text-success"
+                          : "text-destructive"
                       }`}
                     >
                       {stat.change.isPositive ? "+" : ""}

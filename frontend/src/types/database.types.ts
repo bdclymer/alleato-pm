@@ -3041,14 +3041,21 @@ export type Database = {
       }
       change_orders: {
         Row: {
+          amount: number | null
           apply_vertical_markup: boolean | null
           approved_at: string | null
           approved_by: string | null
+          change_event_id: string | null
           co_number: string | null
+          contract_id: number | null
           created_at: string | null
           description: string | null
+          designated_reviewer_id: string | null
+          due_date: string | null
           id: number
+          is_private: boolean | null
           project_id: number
+          rejection_reason: string | null
           status: string | null
           submitted_at: string | null
           submitted_by: string | null
@@ -3056,14 +3063,21 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          amount?: number | null
           apply_vertical_markup?: boolean | null
           approved_at?: string | null
           approved_by?: string | null
+          change_event_id?: string | null
           co_number?: string | null
+          contract_id?: number | null
           created_at?: string | null
           description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
           id?: number
+          is_private?: boolean | null
           project_id: number
+          rejection_reason?: string | null
           status?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
@@ -3071,14 +3085,21 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          amount?: number | null
           apply_vertical_markup?: boolean | null
           approved_at?: string | null
           approved_by?: string | null
+          change_event_id?: string | null
           co_number?: string | null
+          contract_id?: number | null
           created_at?: string | null
           description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
           id?: number
+          is_private?: boolean | null
           project_id?: number
+          rejection_reason?: string | null
           status?: string | null
           submitted_at?: string | null
           submitted_by?: string | null
@@ -3086,6 +3107,27 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "change_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "change_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "change_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "change_orders_project_id_fkey"
             columns: ["project_id"]

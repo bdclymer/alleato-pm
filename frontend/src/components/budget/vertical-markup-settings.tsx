@@ -67,16 +67,14 @@ interface VerticalMarkupSettingsProps {
   onClose?: () => void;
 }
 
-const COMMON_MARKUP_TYPES = [
-  "Overhead",
-  "Profit",
-  "General Liability Insurance",
-  "Workers Comp Insurance",
-  "Bond",
-  "Contingency",
-  "Fee",
-  "Sales Tax",
-  "Other",
+// Database CHECK constraint allows: insurance, bond, fee, overhead, custom
+// Map display labels to database values
+const MARKUP_TYPE_OPTIONS = [
+  { label: "Overhead", value: "overhead" },
+  { label: "Insurance", value: "insurance" },
+  { label: "Bond", value: "bond" },
+  { label: "Fee", value: "fee" },
+  { label: "Custom", value: "custom" },
 ];
 
 export function VerticalMarkupSettings({
@@ -91,7 +89,7 @@ export function VerticalMarkupSettings({
 
   // New markup form state
   const [newMarkupType, setNewMarkupType] = React.useState("");
-  const [newPercentage, setNewPercentage] = React.useState("");
+  const [newPercentage, setNewPercentage] = React.useState("10");
   const [newCompound, setNewCompound] = React.useState(true);
 
   // Calculator state
@@ -157,7 +155,7 @@ export function VerticalMarkupSettings({
         toast.success("Markup added successfully");
         setShowAddDialog(false);
         setNewMarkupType("");
-        setNewPercentage("");
+        setNewPercentage("10");
         setNewCompound(true);
         fetchMarkups();
       } else {
@@ -437,12 +435,12 @@ export function VerticalMarkupSettings({
               <Label>Markup Type</Label>
               <Select value={newMarkupType} onValueChange={setNewMarkupType}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select or type a markup type" />
+                  <SelectValue placeholder="Select a markup type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {COMMON_MARKUP_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  {MARKUP_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -563,7 +561,7 @@ export function VerticalMarkupSettings({
                           <td className="p-3 text-sm text-right">
                             {calc.percentage}%
                           </td>
-                          <td className="p-3 text-sm text-right text-green-600">
+                          <td className="p-3 text-sm text-right text-success">
                             +{formatCurrency(calc.markupAmount)}
                           </td>
                           <td className="p-3 text-sm text-right font-medium">
@@ -577,7 +575,7 @@ export function VerticalMarkupSettings({
                         <td colSpan={2} className="p-3 font-semibold">
                           Total Markup
                         </td>
-                        <td className="p-3 text-right font-semibold text-green-600">
+                        <td className="p-3 text-right font-semibold text-success">
                           +{formatCurrency(calculationResults.totalMarkup)}
                         </td>
                         <td className="p-3 text-right font-bold">

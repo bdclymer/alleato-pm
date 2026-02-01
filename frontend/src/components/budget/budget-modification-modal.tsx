@@ -299,27 +299,27 @@ export function BudgetModificationModal({
               </div>
 
               {/* Workflow Info */}
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="rounded-lg border border-border bg-muted p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge variant="outline" className="bg-background">
                     Draft
                   </Badge>
-                  <span className="text-sm text-slate-500">→</span>
+                  <span className="text-sm text-muted-foreground">→</span>
                   <Badge
                     variant="outline"
-                    className="bg-yellow-50 text-yellow-700 border-yellow-200"
+                    className="bg-warning/10 text-warning border-warning/20"
                   >
                     Pending
                   </Badge>
-                  <span className="text-sm text-slate-500">→</span>
+                  <span className="text-sm text-muted-foreground">→</span>
                   <Badge
                     variant="outline"
-                    className="bg-green-50 text-green-700 border-green-200"
+                    className="bg-success/10 text-success border-success/20"
                   >
                     Approved
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-muted-foreground">
                   Modifications are created as drafts. Submit for approval, then
                   approve to update budget totals.
                 </p>

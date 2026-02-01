@@ -490,9 +490,9 @@ export default function CrawledPagesPage() {
                               className={cn(
                                 "text-xs",
                                 url.embeddingPercentage === 100 &&
-                                  "text-green-600",
+                                  "text-success",
                                 url.embeddingPercentage < 100 &&
-                                  "text-amber-600",
+                                  "text-warning",
                               )}
                             >
                               {url.embeddingPercentage}%

@@ -198,17 +198,17 @@ export default function MonitoringPage() {
   };
 
   const getStatusColor = (percentage: number) => {
-    if (percentage === 100) return 'text-green-600';
-    if (percentage >= 70) return 'text-blue-600';
-    if (percentage >= 40) return 'text-yellow-600';
-    return 'text-red-600';
+    if (percentage === 100) return 'text-success';
+    if (percentage >= 70) return 'text-info';
+    if (percentage >= 40) return 'text-warning';
+    return 'text-destructive';
   };
 
   const getStatusIcon = (percentage: number) => {
-    if (percentage === 100) return <CheckCircle2 className="w-4 h-4 text-green-600" />;
-    if (percentage >= 70) return <Activity className="w-4 h-4 text-blue-600" />;
-    if (percentage >= 40) return <Clock className="w-4 h-4 text-yellow-600" />;
-    return <AlertCircle className="w-4 h-4 text-red-600" />;
+    if (percentage === 100) return <CheckCircle2 className="w-4 h-4 text-success" />;
+    if (percentage >= 70) return <Activity className="w-4 h-4 text-info" />;
+    if (percentage >= 40) return <Clock className="w-4 h-4 text-warning" />;
+    return <AlertCircle className="w-4 h-4 text-destructive" />;
   };
 
   return (
@@ -257,10 +257,10 @@ export default function MonitoringPage() {
                           <div
                             className={cn(
                               "h-2 rounded-full transition-all duration-300",
-                              stats.percentage === 100 ? "bg-green-600" :
-                              stats.percentage >= 70 ? "bg-blue-600" :
-                              stats.percentage >= 40 ? "bg-yellow-600" :
-                              "bg-red-600"
+                              stats.percentage === 100 ? "bg-success" :
+                              stats.percentage >= 70 ? "bg-info" :
+                              stats.percentage >= 40 ? "bg-warning" :
+                              "bg-destructive"
                             )}
                             style={{ width: `${stats.percentage}%` }}
                             role="progressbar"

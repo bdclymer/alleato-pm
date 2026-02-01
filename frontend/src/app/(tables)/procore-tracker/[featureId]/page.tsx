@@ -173,7 +173,7 @@ export default async function FeatureDetailPage({ params }: PageProps) {
 
   if (featureError || !feature) {
     return (
-      <div className="text-center text-red-600">
+      <div className="text-center text-destructive">
         Feature not found.
       </div>
     );
@@ -212,19 +212,19 @@ export default async function FeatureDetailPage({ params }: PageProps) {
           <div className="flex gap-2">
             {feature.priority && (
               <span className={`px-2 py-1 rounded text-xs font-medium ${
-                feature.priority === 'critical' ? 'bg-red-100 text-red-800' :
-                feature.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                feature.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-gray-100 text-gray-800'
+                feature.priority === 'critical' ? 'bg-destructive/10 text-destructive' :
+                feature.priority === 'high' ? 'bg-warning/10 text-warning' :
+                feature.priority === 'medium' ? 'bg-warning/10 text-warning' :
+                'bg-muted text-muted-foreground'
               }`}>
                 {feature.priority}
               </span>
             )}
             {feature.status && (
               <span className={`px-2 py-1 rounded text-xs font-medium ${
-                feature.status === 'complete' ? 'bg-green-100 text-green-800' :
-                feature.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
+                feature.status === 'complete' ? 'bg-success/10 text-success' :
+                feature.status === 'in_progress' ? 'bg-info/10 text-info' :
+                'bg-muted text-muted-foreground'
               }`}>
                 {feature.status?.replace('_', ' ')}
               </span>

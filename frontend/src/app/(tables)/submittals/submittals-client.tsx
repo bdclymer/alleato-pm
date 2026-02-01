@@ -253,7 +253,7 @@ export function SubmittalsClient({ submittals, projectId }: SubmittalsClientProp
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild data-testid="submittals-dropdown-create">
-                <Button className="bg-[hsl(var(--procore-orange))] hover:bg-[hsl(var(--procore-orange))]/90">
+                <Button className="bg-primary hover:bg-primary/90">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Submittal
                 </Button>

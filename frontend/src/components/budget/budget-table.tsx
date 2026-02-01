@@ -189,7 +189,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
         <div>
           <p className="font-semibold text-xs text-white">{tooltip.title}</p>
           {tooltip.type && (
-            <p className="text-[10px] text-white/70 mt-0.5">{tooltip.type}</p>
+            <p className="text-2xs text-white/70 mt-0.5">{tooltip.type}</p>
           )}
           <p className="text-xs mt-1 text-white">{tooltip.formula}</p>
         </div>
@@ -249,7 +249,7 @@ function formatCurrency(value: number): string {
 function CurrencyCell({ value }: { value: number }) {
   const isNegative = value < 0;
   return (
-    <span className={cn("tabular-nums", isNegative && "text-red-600")}>
+    <span className={cn("tabular-nums", isNegative && "text-destructive")}>
       {formatCurrency(value)}
     </span>
   );
@@ -925,7 +925,7 @@ export function BudgetTable({
           <div className="flex flex-col items-center justify-center gap-3">
             <div className="text-muted-foreground mb-2">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-12 w-12 text-muted-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -939,8 +939,8 @@ export function BudgetTable({
                 />
               </svg>
             </div>
-            <h3 className="text-sm font-medium text-gray-900">No budget line items</h3>
-            <p className="text-sm text-gray-500">Get started by adding your first budget line item.</p>
+            <h3 className="text-sm font-medium text-foreground">No budget line items</h3>
+            <p className="text-sm text-muted-foreground">Get started by adding your first budget line item.</p>
             <Button
               onClick={() => {
                 if (onAddLineItemClick) {
@@ -1118,7 +1118,7 @@ export function BudgetTable({
                       disabled={isCreating || !newLineItem.description.trim()}
                       title="Save (Enter)"
                     >
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4 text-success" />
                     </Button>
                     <Button
                       size="icon"
@@ -1128,7 +1128,7 @@ export function BudgetTable({
                       disabled={isCreating}
                       title="Cancel (Escape)"
                     >
-                      <X className="h-4 w-4 text-red-600" />
+                      <X className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </TableCell>

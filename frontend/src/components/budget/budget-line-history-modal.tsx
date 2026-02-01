@@ -98,14 +98,14 @@ export function BudgetLineHistoryModal({
   return (
     <BaseModal isOpen={open} onClose={onClose} title="Change History" size="md">
       <ModalBody className="space-y-4 bg-background">
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
-          <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+        <div className="rounded-lg border border-border bg-muted px-4 py-3 shadow-sm">
+          <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Line Item
           </div>
-          <div className="mt-1 font-semibold text-slate-900">
+          <div className="mt-1 font-semibold text-foreground">
             {lineItem.costCode}
           </div>
-          <div className="text-sm text-slate-600">{lineItem.description}</div>
+          <div className="text-sm text-muted-foreground">{lineItem.description}</div>
         </div>
 
         {loading && (
@@ -115,7 +115,7 @@ export function BudgetLineHistoryModal({
         )}
 
         {error && (
-          <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
+          <div className="rounded-md bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -133,20 +133,20 @@ export function BudgetLineHistoryModal({
                 key={entry.id}
                 className={`border-l-4 ${
                   entry.change_type === "create"
-                    ? "border-green-500/70"
+                    ? "border-success/70"
                     : entry.change_type === "delete"
-                      ? "border-red-500/70"
-                      : "border-blue-500/70"
+                      ? "border-destructive/70"
+                      : "border-info/70"
                 } pl-4 pb-4 ${index < history.length - 1 ? "mb-1" : ""} rounded-lg bg-background shadow-[0_10px_30px_-24px_rgba(0,0,0,0.45)]`}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
                       entry.change_type === "create"
-                        ? "bg-green-100 text-green-600"
+                        ? "bg-success/10 text-success"
                         : entry.change_type === "delete"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-blue-100 text-blue-600"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-info/10 text-info"
                     }`}
                   >
                     {entry.change_type === "create" && (
@@ -196,7 +196,7 @@ export function BudgetLineHistoryModal({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-sm font-semibold text-foreground">
                       {entry.changed_by.name}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -208,7 +208,7 @@ export function BudgetLineHistoryModal({
                       {entry.change_type === "create" && (
                         <span className="text-foreground">
                           Created {formatFieldName(entry.field_name)}:{" "}
-                          <span className="font-medium text-green-700">
+                          <span className="font-medium text-success">
                             {formatValue(entry.field_name, entry.new_value)}
                           </span>
                         </span>
@@ -221,11 +221,11 @@ export function BudgetLineHistoryModal({
                       {entry.change_type === "update" && (
                         <span className="text-foreground">
                           Changed {formatFieldName(entry.field_name)} from{" "}
-                          <span className="line-through text-red-600">
+                          <span className="line-through text-destructive">
                             {formatValue(entry.field_name, entry.old_value)}
                           </span>{" "}
                           to{" "}
-                          <span className="font-medium text-green-700">
+                          <span className="font-medium text-success">
                             {formatValue(entry.field_name, entry.new_value)}
                           </span>
                         </span>

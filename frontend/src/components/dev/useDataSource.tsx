@@ -107,7 +107,7 @@ export function DataSourceBadge({
   return (
     <span className={`relative group ${className}`}>
       {children}
-      <span className="absolute -top-5 left-0 hidden group-hover:block text-[10px] bg-yellow-200 text-yellow-800 px-1 py-0.5 rounded whitespace-nowrap z-50 shadow">
+      <span className="absolute -top-5 left-0 hidden group-hover:block text-2xs bg-yellow-200 text-yellow-800 px-1 py-0.5 rounded whitespace-nowrap z-50 shadow">
         {label}
       </span>
     </span>

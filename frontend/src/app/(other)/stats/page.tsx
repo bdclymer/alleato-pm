@@ -274,7 +274,7 @@ function UpcomingMeetings({ meetings }: { meetings: Meeting[] }) {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <div className="rounded-full bg-blue-500/10 p-1.5">
-          <Sunrise className="h-4 w-4 text-blue-500" />
+          <Sunrise className="h-4 w-4 text-info" />
         </div>
         <h2 className="font-semibold">Upcoming This Week</h2>
         <Badge variant="secondary" className="ml-1">

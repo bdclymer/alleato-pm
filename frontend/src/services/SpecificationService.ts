@@ -70,13 +70,30 @@ export class SpecificationService {
 
       if (area_id) {
         // Filter by specifications linked to this area
-        query = query.in(
-          "id",
-          this.supabase
-            .from("specification_area_sections")
-            .select("section_id")
-            .eq("area_id", area_id),
-        );
+        // First get section IDs for this area
+        const { data: areaSections } = await this.supabase
+          .from("specification_area_sections")
+          .select("section_id")
+          .eq("area_id", area_id);
+
+        const sectionIds = (areaSections || []).map((as) => as.section_id);
+
+        if (sectionIds.length > 0) {
+          query = query.in("id", sectionIds);
+        } else {
+          // No sections in this area, return empty result
+          return {
+            data: {
+              specifications: [],
+              total_count: 0,
+              page,
+              page_size,
+              has_next_page: false,
+              has_previous_page: false,
+            },
+            error: null,
+          };
+        }
       }
 
       if (uploaded_after) {
@@ -183,9 +200,14 @@ export class SpecificationService {
       }
 
       // Transform joined areas data
+      const transformedAreas = (data.areas || [])
+        .map((a: any) => a.area)
+        .filter(Boolean) as SpecificationArea[];
+
       const specification: SpecificationWithAreas = {
         ...data,
-        areas: (data.areas || []).map((a: any) => a.area).filter(Boolean),
+        areas: transformedAreas,
+        current_revision: data.current_revision || null,
       };
 
       return { data: specification, error: null };

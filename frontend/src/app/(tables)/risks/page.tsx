@@ -149,7 +149,7 @@ export default async function RisksPage() {
 
   if (error) {
     return (
-      <div className="text-center text-red-600">
+      <div className="text-center text-destructive">
         Error loading risks. Please try again later.
       </div>
     );

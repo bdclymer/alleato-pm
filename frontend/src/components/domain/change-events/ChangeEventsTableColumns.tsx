@@ -150,54 +150,46 @@ export const ChangeEventsTableColumns = ({
       const changeEvent = row.original;
       return (
         <DropdownMenu>
-          {" "}
           <DropdownMenuTrigger asChild>
-            {" "}
             <Button
               variant="ghost"
               className="h-8 w-8 p-0"
               data-testid={`change-event-actions-${changeEvent.id}`}
             >
-              {" "}
-              <span className="sr-only">Open menu</span>{" "}
-              <MoreHorizontal className="h-4 w-4" />{" "}
-            </Button>{" "}
-          </DropdownMenuTrigger>{" "}
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {" "}
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>{" "}
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() =>
                 navigator.clipboard.writeText(changeEvent.id.toString())
               }
             >
-              {" "}
-              Copy change event ID{" "}
-            </DropdownMenuItem>{" "}
-            <DropdownMenuSeparator />{" "}
+              Copy change event ID
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {onView && (
               <DropdownMenuItem onClick={() => onView(Number(changeEvent.id))}>
-                {" "}
-                <Eye className="mr-2 h-4 w-4" /> View details{" "}
+                <Eye className="mr-2 h-4 w-4" /> View details
               </DropdownMenuItem>
-            )}{" "}
+            )}
             {onEdit && (
               <DropdownMenuItem onClick={() => onEdit(Number(changeEvent.id))}>
-                {" "}
-                <Edit className="mr-2 h-4 w-4" /> Edit{" "}
+                <Edit className="mr-2 h-4 w-4" /> Edit
               </DropdownMenuItem>
-            )}{" "}
+            )}
             {onDelete && (
               <DropdownMenuItem
                 onClick={() => onDelete(Number(changeEvent.id))}
                 className="text-destructive"
                 data-testid={`change-event-delete-${changeEvent.id}`}
               >
-                {" "}
-                <Trash2 className="mr-2 h-4 w-4" /> Delete{" "}
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
               </DropdownMenuItem>
-            )}{" "}
-          </DropdownMenuContent>{" "}
+            )}
+          </DropdownMenuContent>
         </DropdownMenu>
       );
     },

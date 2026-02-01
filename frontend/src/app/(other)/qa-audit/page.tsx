@@ -430,7 +430,7 @@ export default function QAAuditPage() {
                 Clear
               </Button>
             )}
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-2xs text-muted-foreground">
               {filteredAndSortedPages?.length}/{stats?.total}
             </span>
           </div>
@@ -536,12 +536,12 @@ export default function QAAuditPage() {
                       <span className="font-medium text-sm">{page.page_name}</span>
                     </TableCell>
                     <TableCell className="py-1.5">
-                      <code className="text-[10px] text-muted-foreground font-mono truncate block max-w-[170px]">
+                      <code className="text-2xs text-muted-foreground font-mono truncate block max-w-[170px]">
                         {page.page_path}
                       </code>
                     </TableCell>
                     <TableCell className="py-1.5">
-                      <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${TYPE_COLORS[page.page_type] || ""}`}>
+                      <Badge variant="secondary" className={`text-2xs px-1.5 py-0 ${TYPE_COLORS[page.page_type] || ""}`}>
                         {page.page_type}
                       </Badge>
                     </TableCell>
@@ -551,7 +551,7 @@ export default function QAAuditPage() {
                           value={page.layout_type && page.layout_type !== "" ? page.layout_type : "none"}
                           onValueChange={(value) => handleUpdate(page.id!, "layout_type", value === "none" ? null : value)}
                         >
-                          <SelectTrigger className={`h-5 w-[60px] text-[10px] px-1.5 border-0 ${page.layout_type ? LAYOUT_TYPE_CONFIG[page.layout_type]?.color || "" : "text-muted-foreground"}`}>
+                          <SelectTrigger className={`h-5 w-[60px] text-2xs px-1.5 border-0 ${page.layout_type ? LAYOUT_TYPE_CONFIG[page.layout_type]?.color || "" : "text-muted-foreground"}`}>
                             <SelectValue placeholder="—" />
                           </SelectTrigger>
                           <SelectContent>
@@ -564,7 +564,7 @@ export default function QAAuditPage() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-2xs text-muted-foreground">
                           {page.layout_type ? LAYOUT_TYPE_CONFIG[page.layout_type]?.label : "—"}
                         </span>
                       )}
@@ -572,7 +572,7 @@ export default function QAAuditPage() {
                     <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                       {data?.usingDatabase && page.id ? (
                         <Input
-                          className="h-5 text-[10px] px-1.5 py-0 border-0 bg-transparent hover:bg-muted/50 focus:bg-muted truncate"
+                          className="h-5 text-2xs px-1.5 py-0 border-0 bg-transparent hover:bg-muted/50 focus:bg-muted truncate"
                           placeholder="—"
                           value={page.action_buttons || ""}
                           onChange={(e) => {
@@ -588,7 +588,7 @@ export default function QAAuditPage() {
                           onBlur={(e) => handleUpdate(page.id!, "action_buttons", e.target.value || null)}
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground truncate block max-w-[90px]">
+                        <span className="text-2xs text-muted-foreground truncate block max-w-[90px]">
                           {page.action_buttons || "—"}
                         </span>
                       )}
@@ -596,7 +596,7 @@ export default function QAAuditPage() {
                     <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                       {data?.usingDatabase && page.id ? (
                         <Input
-                          className="h-5 text-[10px] px-1.5 py-0 border-0 bg-transparent hover:bg-muted/50 focus:bg-muted truncate"
+                          className="h-5 text-2xs px-1.5 py-0 border-0 bg-transparent hover:bg-muted/50 focus:bg-muted truncate"
                           placeholder="—"
                           value={page.tabs || ""}
                           onChange={(e) => {
@@ -612,13 +612,13 @@ export default function QAAuditPage() {
                           onBlur={(e) => handleUpdate(page.id!, "tabs", e.target.value || null)}
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground truncate block max-w-[90px]">
+                        <span className="text-2xs text-muted-foreground truncate block max-w-[90px]">
                           {page.tabs || "—"}
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="py-1.5">
-                      <code className="text-[10px] bg-muted px-1 py-0.5 rounded truncate block max-w-[90px]">
+                      <code className="text-2xs bg-muted px-1 py-0.5 rounded truncate block max-w-[90px]">
                         {page.header_component || "NONE"}
                       </code>
                     </TableCell>
@@ -631,7 +631,7 @@ export default function QAAuditPage() {
                           value={page.stage && page.stage !== "" ? page.stage : "to_do"}
                           onValueChange={(value) => handleUpdate(page.id!, "stage", value)}
                         >
-                          <SelectTrigger className={`h-5 w-[80px] text-[10px] px-1.5 border-0 ${stageConfig.color}`}>
+                          <SelectTrigger className={`h-5 w-[80px] text-2xs px-1.5 border-0 ${stageConfig.color}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -643,7 +643,7 @@ export default function QAAuditPage() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <Badge className={`text-[10px] px-1.5 py-0 ${stageConfig.color}`}>
+                        <Badge className={`text-2xs px-1.5 py-0 ${stageConfig.color}`}>
                           {stageConfig.label}
                         </Badge>
                       )}
@@ -661,7 +661,7 @@ export default function QAAuditPage() {
                           value={String(page.priority || 3)}
                           onValueChange={(value) => handleUpdate(page.id!, "priority", parseInt(value))}
                         >
-                          <SelectTrigger className="h-5 w-10 text-[10px] px-1">
+                          <SelectTrigger className="h-5 w-10 text-2xs px-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -671,23 +671,23 @@ export default function QAAuditPage() {
                           </SelectContent>
                         </Select>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">-</span>
+                        <span className="text-2xs text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="py-1.5" onClick={(e) => e.stopPropagation()}>
                       {data?.usingDatabase && page.id ? (
                         <Input
-                          className="h-5 text-[10px] px-1.5 w-[70px]"
+                          className="h-5 text-2xs px-1.5 w-[70px]"
                           placeholder="—"
                           defaultValue={page.assigned_to || ""}
                           onBlur={(e) => handleUpdate(page.id!, "assigned_to", e.target.value || null)}
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">-</span>
+                        <span className="text-2xs text-muted-foreground">-</span>
                       )}
                     </TableCell>
                     <TableCell className="py-1.5">
-                      <span className="text-[10px] text-muted-foreground truncate block max-w-[120px]">
+                      <span className="text-2xs text-muted-foreground truncate block max-w-[120px]">
                         {page.notes || "—"}
                       </span>
                     </TableCell>
@@ -709,7 +709,7 @@ export default function QAAuditPage() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-between mt-2 text-2xs text-muted-foreground">
           <span>Last scanned: {data?.scannedAt ? new Date(data.scannedAt).toLocaleString() : "Never"}</span>
           <span>{data?.usingDatabase ? "Connected to database" : "Live scan only"}</span>
         </div>
@@ -832,7 +832,7 @@ export default function QAAuditPage() {
                         <Badge variant="secondary" className={`${TYPE_COLORS[selectedPage.page_type] || ""}`}>
                           {selectedPage.page_type}
                         </Badge>
-                        <p className="text-[10px] text-muted-foreground mt-1">Auto-detected</p>
+                        <p className="text-2xs text-muted-foreground mt-1">Auto-detected</p>
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground block mb-2">Type</label>
@@ -866,7 +866,7 @@ export default function QAAuditPage() {
                         <code className="text-sm bg-muted px-2 py-1.5 rounded block">
                           {selectedPage.header_component || "NONE"}
                         </code>
-                        <p className="text-[10px] text-muted-foreground mt-1">Auto-detected</p>
+                        <p className="text-2xs text-muted-foreground mt-1">Auto-detected</p>
                       </div>
                     </div>
                   </div>
@@ -888,7 +888,7 @@ export default function QAAuditPage() {
                         ) : (
                           <span className="text-sm">{selectedPage.action_buttons || "—"}</span>
                         )}
-                        <p className="text-[10px] text-muted-foreground mt-1">Buttons shown on this page</p>
+                        <p className="text-2xs text-muted-foreground mt-1">Buttons shown on this page</p>
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground block mb-2">Tabs</label>
@@ -903,7 +903,7 @@ export default function QAAuditPage() {
                         ) : (
                           <span className="text-sm">{selectedPage.tabs || "—"}</span>
                         )}
-                        <p className="text-[10px] text-muted-foreground mt-1">Tab navigation on this page</p>
+                        <p className="text-2xs text-muted-foreground mt-1">Tab navigation on this page</p>
                       </div>
                     </div>
                   </div>

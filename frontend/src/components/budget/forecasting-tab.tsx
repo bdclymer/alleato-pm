@@ -72,8 +72,8 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
   };
 
   const getVarianceColor = (variance: number) => {
-    if (variance > 0) return "text-green-600";
-    if (variance < 0) return "text-red-600";
+    if (variance > 0) return "text-success";
+    if (variance < 0) return "text-destructive";
     return "text-foreground";
   };
 

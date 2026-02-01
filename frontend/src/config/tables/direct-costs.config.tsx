@@ -83,7 +83,7 @@ export function getDirectCostsColumns(
       header: "Invoice #",
       cell: ({ row }) => (
         <div
-          className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+          className="font-medium text-link hover:text-link-hover cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onView?.(row.original);

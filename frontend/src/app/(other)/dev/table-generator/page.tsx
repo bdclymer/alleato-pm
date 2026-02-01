@@ -311,7 +311,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
 
   if (error) {
     return (
-      <div className="text-center text-red-600">
+      <div className="text-center text-destructive">
         Error loading ${tableName.toLowerCase()}. Please try again later.
       </div>
     )

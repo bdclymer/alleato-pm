@@ -135,7 +135,7 @@ function PageHeader({
       {/* Eyebrow - Small uppercase label */}
       {eyebrow && (
         <p className={cn(
-          "text-[10px] sm:text-[11px] font-semibold tracking-[0.2em] uppercase text-neutral-500",
+          "text-2xs sm:text-[11px] font-semibold tracking-[0.2em] uppercase text-neutral-500",
           styles.eyebrow
         )}>
           {eyebrow}

@@ -986,7 +986,7 @@ export function GenericDataTable({
               <ChevronDown className="h-3.5 w-3.5" />
             )}
             {sortConfigs.length > 1 && (
-              <span className="text-[10px] font-medium">{sortIndex + 1}</span>
+              <span className="text-2xs font-medium">{sortIndex + 1}</span>
             )}
           </div>
         );

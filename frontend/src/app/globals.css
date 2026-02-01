@@ -145,6 +145,12 @@
     --brand: 29 71% 58%;
     --brand-hover: 29 71% 65%;
     --brand-light: 29 71% 15%;
+
+    /* Status colors - adjusted for dark mode */
+    --status-success: 142 71% 45%;
+    --status-warning: 38 92% 55%;
+    --status-error: 0 84% 55%;
+    --status-info: 214 80% 60%;
   }
 }
 
@@ -382,7 +388,7 @@
 
   /* Section Label - Smaller uppercase tracking */
   .text-section-label {
-    @apply text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500;
+    @apply text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500;
   }
 
   /* Body text - Standard readable text */
@@ -682,37 +688,37 @@
 
   /* Success/Green badge */
   .badge-success {
-    @apply rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700;
+    @apply rounded bg-success/10 px-2 py-0.5 text-xs font-medium text-success;
   }
 
   /* Warning/Yellow badge */
   .badge-warning {
-    @apply rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700;
+    @apply rounded bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning;
   }
 
   /* Error/Red badge */
   .badge-error {
-    @apply rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700;
+    @apply rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive;
   }
 
   /* Info/Blue badge */
   .badge-info {
-    @apply rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700;
+    @apply rounded bg-info/10 px-2 py-0.5 text-xs font-medium text-info;
   }
 
   /* Neutral badge */
   .badge-neutral {
-    @apply flex-shrink-0 px-3 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200;
+    @apply flex-shrink-0 px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-muted text-muted-foreground border border-border;
   }
 
   /* Status indicator - positive */
   .status-positive {
-    @apply text-green-700;
+    @apply text-success;
   }
 
   /* Status indicator - negative */
   .status-negative {
-    @apply text-red-700;
+    @apply text-destructive;
   }
 
   /* Status icon small */
@@ -1301,7 +1307,7 @@
 
   /* Premium Overline - Refined uppercase label */
   .text-overline {
-    @apply text-[10px] sm:text-[11px] font-semibold tracking-[0.2em] uppercase;
+    @apply text-2xs sm:text-[11px] font-semibold tracking-[0.2em] uppercase;
     color: hsl(var(--brand));
   }
 
@@ -1502,7 +1508,7 @@
   }
 
   .metric-card-premium-label {
-    @apply text-[10px] sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-2;
+    @apply text-2xs sm:text-[11px] font-semibold tracking-[0.15em] uppercase text-neutral-500 mb-2;
   }
 
   .metric-card-premium-value {

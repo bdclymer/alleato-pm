@@ -114,6 +114,9 @@ export function InlineBudgetLineItemCreator({
     Record<string, CostCodeOption[]>
   >({});
 
+  // Smart defaults toggle
+  const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
+
   // Fetch budget codes
   React.useEffect(() => {
     const fetchBudgetCodes = async () => {
@@ -225,6 +228,12 @@ export function InlineBudgetLineItemCreator({
     });
   };
 
+  const calculateTotal = (): number => {
+    return rows.reduce((sum, row) => {
+      return sum + (parseFloat(row.amount) || 0);
+    }, 0);
+  };
+
   const handleRowChange = (
     index: number,
     field: keyof InlineLineItemData,
@@ -258,17 +267,30 @@ export function InlineBudgetLineItemCreator({
   };
 
   const addRow = () => {
-    setRows([
-      ...rows,
-      {
-        budgetCodeId: "",
-        budgetCodeLabel: "",
-        qty: "",
-        uom: "",
-        unitCost: "",
-        amount: "0.00",
-      },
-    ]);
+    const previousRow = rows[rows.length - 1];
+    const newRowIndex = rows.length;
+
+    // Create new row with smart defaults
+    const newRow = {
+      budgetCodeId: "",
+      budgetCodeLabel: "",
+      qty: "",
+      uom: smartCopyUOM && previousRow.uom ? previousRow.uom : "",
+      unitCost: "",
+      amount: "0.00",
+    };
+
+    setRows([...rows, newRow]);
+
+    // Auto-focus first input of new row after render
+    setTimeout(() => {
+      const firstInput = document.querySelector(
+        `input[tabindex="${newRowIndex * 5 + 1}"]`
+      ) as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 50);
   };
 
   const removeRow = (index: number) => {
@@ -409,6 +431,19 @@ export function InlineBudgetLineItemCreator({
             >
               <X className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Smart Copy UOM Toggle */}
+          <div className="flex gap-3 text-xs mb-2">
+            <label className="flex items-center gap-1.5 cursor-pointer text-gray-700">
+              <input
+                type="checkbox"
+                checked={smartCopyUOM}
+                onChange={(e) => setSmartCopyUOM(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span>Copy UOM to new rows</span>
+            </label>
           </div>
 
           {rows.map((row, index) => (
@@ -584,6 +619,19 @@ export function InlineBudgetLineItemCreator({
               </div>
             </div>
           ))}
+
+          {/* Running Total */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-700">Total Amount</span>
+              <span className="text-2xl font-bold text-blue-900">
+                ${formatCurrency(calculateTotal().toString())}
+              </span>
+            </div>
+            <div className="mt-2 text-xs text-gray-600">
+              {rows.length} line item{rows.length !== 1 ? 's' : ''}
+            </div>
+          </div>
 
           <div className="flex items-center justify-between">
             <Button

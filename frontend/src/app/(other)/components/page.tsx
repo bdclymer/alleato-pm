@@ -270,10 +270,10 @@ function MorphingDialogBasicTwo() {
             }}
           />
           <div className="flex flex-col items-start justify-center space-y-0">
-            <MorphingDialogTitle className="text-[10px] font-medium text-black sm:text-xs">
+            <MorphingDialogTitle className="text-2xs font-medium text-black sm:text-xs">
               What I Talk About When I Talk About Running
             </MorphingDialogTitle>
-            <MorphingDialogSubtitle className="text-[10px] text-foreground sm:text-xs">
+            <MorphingDialogSubtitle className="text-2xs text-foreground sm:text-xs">
               Haruki Murakami
             </MorphingDialogSubtitle>
           </div>

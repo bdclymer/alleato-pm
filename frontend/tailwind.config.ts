@@ -88,6 +88,24 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
 
+        /* Semantic Status Colors (use instead of raw color classes) */
+        success: {
+          DEFAULT: "hsl(var(--status-success))",
+          foreground: "hsl(0 0% 100%)",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--status-warning))",
+          foreground: "hsl(0 0% 100%)",
+        },
+        info: {
+          DEFAULT: "hsl(var(--status-info))",
+          foreground: "hsl(0 0% 100%)",
+        },
+        link: {
+          DEFAULT: "hsl(var(--status-info))",
+          hover: "hsl(214 80% 42%)",
+        },
+
         /* Form Colors */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

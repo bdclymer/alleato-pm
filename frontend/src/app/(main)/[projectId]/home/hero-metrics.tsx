@@ -46,7 +46,7 @@ export function HeroMetrics({
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Budget Remaining
             </p>
             <div className="flex items-center gap-1 text-xs text-brand opacity-0 group-hover:opacity-100 transition-opacity">
@@ -74,13 +74,13 @@ export function HeroMetrics({
       {/* Forecast Variance */}
       <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
             Forecast Variance
           </p>
           <div className="space-y-2">
             <p
               className={`text-3xl md:text-4xl font-light tabular-nums tracking-tight ${
-                variance >= 0 ? "text-green-700" : "text-red-700"
+                variance >= 0 ? "text-success" : "text-destructive"
               }`}
             >
               {variance >= 0 ? "+" : ""}
@@ -89,15 +89,15 @@ export function HeroMetrics({
             <div className="flex items-center gap-1.5">
               {variance >= 0 ? (
                 <>
-                  <TrendingUp className="h-3.5 w-3.5 text-green-700" />
-                  <span className="text-xs font-medium text-green-700 tabular-nums">
+                  <TrendingUp className="h-3.5 w-3.5 text-success" />
+                  <span className="text-xs font-medium text-success tabular-nums">
                     {variancePercent.toFixed(1)}% under
                   </span>
                 </>
               ) : (
                 <>
-                  <TrendingDown className="h-3.5 w-3.5 text-red-700" />
-                  <span className="text-xs font-medium text-red-700 tabular-nums">
+                  <TrendingDown className="h-3.5 w-3.5 text-destructive" />
+                  <span className="text-xs font-medium text-destructive tabular-nums">
                     {Math.abs(variancePercent).toFixed(1)}% over
                   </span>
                 </>
@@ -110,7 +110,7 @@ export function HeroMetrics({
       {/* Change Orders */}
       <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
         <div className="space-y-3">
-          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-neutral-500">
+          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
             Change Orders
           </p>
           <div className="space-y-1">

@@ -129,7 +129,7 @@ export default async function DecisionsPage() {
   } catch (error) {
     return (
       <div className="container mx-auto py-10">
-        <div className="text-center text-red-600">
+        <div className="text-center text-destructive">
           Error loading decisions. Please try again later.
         </div>
       </div>

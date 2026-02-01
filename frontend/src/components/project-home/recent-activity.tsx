@@ -83,7 +83,7 @@ export function RecentActivity({ activities, projectId }: RecentActivityProps) {
                 <Icon className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground group-hover:text-[hsl(var(--procore-orange))] truncate">
+                <p className="text-sm font-medium text-foreground group-hover:text-primary truncate">
                   {activity.title}
                 </p>
                 <p className="text-xs text-muted-foreground">{activity.description}</p>
@@ -104,7 +104,7 @@ export function RecentActivity({ activities, projectId }: RecentActivityProps) {
 
       <Link
         href={`/projects/${projectId}/activity`}
-        className="mt-4 block text-center text-sm text-[hsl(var(--procore-orange))] hover:underline"
+        className="mt-4 block text-center text-sm text-primary hover:underline"
       >
         View all activity
       </Link>

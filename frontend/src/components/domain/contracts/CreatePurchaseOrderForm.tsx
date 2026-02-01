@@ -23,11 +23,16 @@ import {
 } from "@/lib/schemas/create-purchase-order-schema";
 import { useCompanies } from "@/hooks/use-companies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RichTextField } from "@/components/forms/RichTextField";
 
 interface CreatePurchaseOrderFormProps {
   projectId: number;
   onSubmit: (data: CreatePurchaseOrderInput) => Promise<void>;
   onCancel: () => void;
+  initialData?: Partial<CreatePurchaseOrderInput> & {
+    sovLines?: PurchaseOrderSovLineItem[];
+  };
+  mode?: "create" | "edit";
 }
 
 interface BudgetCodeSummary {
@@ -52,14 +57,16 @@ export function CreatePurchaseOrderForm({
   projectId,
   onSubmit,
   onCancel,
+  initialData,
+  mode = "create",
 }: CreatePurchaseOrderFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [sovLines, setSovLines] = React.useState<PurchaseOrderSovLineItem[]>(
-    [],
+    initialData?.sovLines || [],
   );
   const [accountingMethod, setAccountingMethod] = React.useState<
     "unit-quantity" | "amount"
-  >("unit-quantity");
+  >((initialData?.accountingMethod as any) || "unit-quantity");
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [budgetCodes, setBudgetCodes] = React.useState<string[]>([]);
@@ -81,15 +88,24 @@ export function CreatePurchaseOrderForm({
   } = useForm<CreatePurchaseOrderInput>({
     resolver: zodResolver(CreatePurchaseOrderSchema) as any,
     defaultValues: {
-      contractNumber: "PO-001",
-      status: "Draft",
-      executed: false,
-      accountingMethod: "unit-quantity",
-      sov: [],
-      privacy: {
+      contractNumber: initialData?.contractNumber || "PO-001",
+      status: initialData?.status || "Draft",
+      executed: initialData?.executed || false,
+      accountingMethod: initialData?.accountingMethod || "unit-quantity",
+      sov: initialData?.sov || [],
+      privacy: initialData?.privacy || {
         isPrivate: true,
         allowNonAdminViewSovItems: false,
       },
+      title: initialData?.title || "",
+      contractCompanyId: initialData?.contractCompanyId || "",
+      description: initialData?.description || "",
+      assignedTo: initialData?.assignedTo || "",
+      billTo: initialData?.billTo || "",
+      shipTo: initialData?.shipTo || "",
+      shipVia: initialData?.shipVia || "",
+      paymentTerms: initialData?.paymentTerms || "",
+      dates: initialData?.dates || {},
     },
   });
 
@@ -427,16 +443,13 @@ export function CreatePurchaseOrderForm({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            {...register("description")}
-            disabled={isSubmitting}
-            className="min-h-[100px]"
-            placeholder="Purchase order description..."
-          />
-        </div>
+        <RichTextField
+          label="Description"
+          value={watch("description")}
+          onChange={(val) => setValue("description", val, { shouldDirty: true })}
+          disabled={isSubmitting}
+          placeholder="Purchase order description..."
+        />
       </section>
 
       {/* Attachments Section */}

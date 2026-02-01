@@ -66,15 +66,15 @@ export function ProjectToolsGrid({
               href={href}
               className={cn(
                 "flex flex-col items-center gap-2 p-4 rounded-md border border-border",
-                "hover:border-[hsl(var(--procore-orange))] hover:bg-orange-50/50 transition-colors",
+                "hover:border-primary hover:bg-orange-50/50 transition-colors",
                 "group",
               )}
             >
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-[hsl(var(--procore-orange))]/10">
-                <Icon className="w-5 h-5 text-foreground group-hover:text-[hsl(var(--procore-orange))]" />
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary/10">
+                <Icon className="w-5 h-5 text-foreground group-hover:text-primary" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-foreground group-hover:text-[hsl(var(--procore-orange))]">
+                <p className="text-sm font-medium text-foreground group-hover:text-primary">
                   {tool.name}
                 </p>
                 {tool.itemCount !== undefined && (

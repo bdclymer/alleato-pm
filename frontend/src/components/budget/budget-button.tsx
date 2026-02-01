@@ -29,8 +29,8 @@ function BudgetButton({
       "focus:ring-brand/30 disabled:bg-muted/50 disabled:text-muted-foreground"
     ),
     danger: cn(
-      "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/50",
-      "disabled:bg-red-600/50 disabled:text-white/70"
+      "bg-destructive text-white hover:bg-destructive/90 focus:ring-destructive/50",
+      "disabled:bg-destructive/50 disabled:text-white/70"
     ),
     ghost: cn(
       "bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground",

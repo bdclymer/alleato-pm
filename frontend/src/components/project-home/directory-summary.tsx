@@ -97,7 +97,7 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
         name: fullName,
         type: 'contact',
         initials,
-        avatarColor: 'bg-orange-50 text-orange-600'
+        avatarColor: 'bg-primary/10 text-primary'
       });
     });
 
@@ -116,7 +116,7 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
         name: companyName,
         type: 'company',
         initials,
-        avatarColor: 'bg-green-50 text-green-600'
+        avatarColor: 'bg-success/10 text-success'
       });
     });
 

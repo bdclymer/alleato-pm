@@ -69,7 +69,7 @@ export function MyOpenItems({ items, projectId }: MyOpenItemsProps) {
                   {item.itemType}
                 </TableCell>
                 <TableCell>
-                  <Link href={href} className="text-blue-600 hover:underline">
+                  <Link href={href} className="text-link hover:text-link-hover hover:underline">
                     {item.details}
                   </Link>
                 </TableCell>

@@ -52,9 +52,9 @@ export function BackendStatusIndicator() {
         {health.status === "loading" ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : health.backend ? (
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircle className="h-4 w-4 text-success" />
         ) : (
-          <XCircle className="h-4 w-4 text-red-500" />
+          <XCircle className="h-4 w-4 text-destructive" />
         )}
         <span className="text-sm text-muted-foreground">
           {health.status === "loading"
@@ -70,11 +70,11 @@ export function BackendStatusIndicator() {
         {health.status === "loading" ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : health.openai_configured ? (
-          <CheckCircle className="h-4 w-4 text-green-500" />
+          <CheckCircle className="h-4 w-4 text-success" />
         ) : health.backend ? (
-          <AlertCircle className="h-4 w-4 text-yellow-500" />
+          <AlertCircle className="h-4 w-4 text-warning" />
         ) : (
-          <XCircle className="h-4 w-4 text-red-500" />
+          <XCircle className="h-4 w-4 text-destructive" />
         )}
         <span className="text-sm text-muted-foreground">
           {health.status === "loading"
@@ -88,7 +88,7 @@ export function BackendStatusIndicator() {
       </div>
 
       {health.error && (
-        <div className="text-xs text-red-500 ml-auto">{health.error}</div>
+        <div className="text-xs text-destructive ml-auto">{health.error}</div>
       )}
     </div>
   );

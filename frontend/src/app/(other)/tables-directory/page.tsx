@@ -147,7 +147,7 @@ export default function TablesDirectoryPage() {
           <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
             Data Tables Directory
           </h1>
-          <p className="text-sm text-red-600">Error: {error}</p>
+          <p className="text-sm text-destructive">Error: {error}</p>
         </div>
       </div>
     );

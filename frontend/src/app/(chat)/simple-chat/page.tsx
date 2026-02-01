@@ -106,7 +106,7 @@ export default function SimpleChatPage() {
       <div className="border-b px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-600" />
+            <Sparkles className="h-5 w-5 text-info" />
             <h1 className="text-lg font-semibold">Alleato AI Assistant</h1>
           </div>
           <Button variant="ghost" size="sm" onClick={clearChat}>
@@ -161,7 +161,7 @@ export default function SimpleChatPage() {
                               <User className="h-5 w-5 text-white" />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 bg-purple-600 rounded-sm flex items-center justify-center">
+                            <div className="w-8 h-8 bg-info rounded-sm flex items-center justify-center">
                               <Bot className="h-5 w-5 text-white" />
                             </div>
                           )}
@@ -253,7 +253,7 @@ export default function SimpleChatPage() {
             {isLoading && (
               <div className="px-4 pb-4">
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-purple-600 rounded-sm flex items-center justify-center">
+                  <div className="w-8 h-8 bg-info rounded-sm flex items-center justify-center">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">

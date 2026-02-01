@@ -105,13 +105,13 @@ export function MetricCard({
   const sizeStyles = {
     sm: {
       container: compact ? "p-3 sm:p-4" : "p-4 sm:p-5",
-      label: "text-[9px] sm:text-[10px] mb-1.5",
+      label: "text-[9px] sm:text-2xs mb-1.5",
       value: "text-xl sm:text-2xl",
-      change: "text-[10px] mt-1.5",
+      change: "text-2xs mt-1.5",
     },
     md: {
       container: compact ? "p-4 sm:p-5" : "p-5 sm:p-6",
-      label: "text-[10px] sm:text-[11px] mb-2",
+      label: "text-2xs sm:text-[11px] mb-2",
       value: "text-2xl sm:text-3xl",
       change: "text-xs mt-2",
     },
@@ -126,9 +126,9 @@ export function MetricCard({
   const styles = sizeStyles[size];
 
   const changeColors = {
-    positive: "text-emerald-600",
-    negative: "text-red-600",
-    neutral: "text-neutral-500",
+    positive: "text-success",
+    negative: "text-destructive",
+    neutral: "text-muted-foreground",
   };
 
   const ChangeIcon = {
@@ -197,7 +197,7 @@ export function MetricCard({
       {subtitle && (
         <p className={cn(
           "text-neutral-500 mt-2",
-          size === "sm" ? "text-[10px] sm:text-xs" : "text-xs sm:text-sm"
+          size === "sm" ? "text-2xs sm:text-xs" : "text-xs sm:text-sm"
         )}>
           {subtitle}
         </p>
@@ -272,7 +272,7 @@ export function MetricSummary({ items, className }: MetricSummaryProps) {
     )}>
       {items.map((item, index) => (
         <div key={index} className="min-w-0">
-          <p className="text-[10px] font-semibold tracking-wider uppercase text-neutral-500 mb-0.5">
+          <p className="text-2xs font-semibold tracking-wider uppercase text-neutral-500 mb-0.5">
             {item.label}
           </p>
           <p className="text-base sm:text-lg font-medium tabular-nums text-neutral-900">

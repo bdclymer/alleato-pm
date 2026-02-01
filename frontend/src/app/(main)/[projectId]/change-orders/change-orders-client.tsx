@@ -6,18 +6,9 @@ import {
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
 import { toast } from "sonner";
+import type { Database } from "@/types/database.types";
 
-type ChangeOrderRow = {
-  id: string;
-  co_number: string | null;
-  title: string | null;
-  description: string | null;
-  status: string | null;
-  submitted_at: string | null;
-  approved_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
 
 interface ChangeOrdersClientProps {
   projectId: string;
@@ -37,7 +28,13 @@ export function ChangeOrdersClient({
     exportFilename: "change-orders-export.csv",
     editConfig: {
       tableName: "change_orders",
-      editableFields: ["co_number", "title", "description", "status"],
+      editableFields: [
+        "co_number",
+        "title",
+        "description",
+        "status",
+        "amount",
+      ],
     },
     rowClickPath: `/${projectId}/change-orders/{id}`,
     requireDeleteConfirmation: true,
@@ -77,9 +74,22 @@ export function ChangeOrdersClient({
             draft: "outline",
             executed: "default",
             rejected: "destructive",
+            void: "destructive",
           },
           defaultVariant: "outline",
         },
+      },
+      {
+        id: "amount",
+        label: "Amount",
+        defaultVisible: true,
+        type: "number",
+      },
+      {
+        id: "due_date",
+        label: "Due Date",
+        defaultVisible: false,
+        type: "date",
       },
       {
         id: "submitted_at",
@@ -99,12 +109,6 @@ export function ChangeOrdersClient({
         defaultVisible: false,
         type: "date",
       },
-      {
-        id: "updated_at",
-        label: "Updated",
-        defaultVisible: false,
-        type: "date",
-      },
     ],
     filters: [
       {
@@ -117,14 +121,15 @@ export function ChangeOrdersClient({
           { value: "approved", label: "Approved" },
           { value: "executed", label: "Executed" },
           { value: "rejected", label: "Rejected" },
+          { value: "void", label: "Void" },
         ],
       },
     ],
   };
 
-  const handleDeleteRow = async (id: string) => {
+  const handleDeleteRow = async (id: string | number) => {
     try {
-      const response = await fetch(`/api/change-orders/${id}`, {
+      const response = await fetch(`/api/projects/${projectId}/change-orders/${id}`, {
         method: "DELETE",
       });
 

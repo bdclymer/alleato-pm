@@ -105,7 +105,7 @@ export default function ExecutiveDashboard() {
         {/* Key Metrics Row */}
         <div className="grid grid-cols-4 gap-4">
           {/* Critical Risks */}
-          <div className="bg-background rounded-lg border-2 border-red-500 p-6">
+          <div className="bg-background rounded-lg border-2 border-destructive p-6">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-red-900">
                 Critical Risks
@@ -114,14 +114,14 @@ export default function ExecutiveDashboard() {
                 <span className="text-red-600">↑</span>
               )}
             </div>
-            <div className="text-4xl font-bold text-red-700 mt-2">
+            <div className="text-4xl font-bold text-destructive mt-2">
               {heatMap?.critical || 0}
             </div>
-            <p className="text-xs text-red-800 mt-1">
+            <p className="text-xs text-destructive mt-1">
               Require immediate attention
             </p>
             {heatMap?.trend_percentage !== 0 && (
-              <div className="mt-2 text-xs text-red-700">
+              <div className="mt-2 text-xs text-destructive">
                 {heatMap?.trend_percentage && heatMap.trend_percentage > 0
                   ? "+"
                   : ""}
@@ -183,7 +183,7 @@ export default function ExecutiveDashboard() {
                   </div>
                   <div className="flex-1 bg-muted rounded-full h-3 relative">
                     <div
-                      className="bg-gradient-to-r from-red-500 to-red-600 h-3 rounded-full transition-all"
+                      className="bg-gradient-to-r from-destructive to-destructive/80 h-3 rounded-full transition-all"
                       style={{
                         width: `${Math.min(100, (count / (heatMap?.total || 1)) * 100)}%`,
                       }}
@@ -209,7 +209,7 @@ export default function ExecutiveDashboard() {
                   key={idx}
                   className={`p-4 rounded-lg border-l-4 ${
                     pattern.severity === "high"
-                      ? "border-red-500 bg-red-50"
+                      ? "border-destructive bg-destructive/10"
                       : pattern.severity === "medium"
                         ? "border-yellow-500 bg-yellow-50"
                         : "border-blue-500 bg-blue-50"
@@ -250,7 +250,7 @@ export default function ExecutiveDashboard() {
                     <span
                       className={`px-3 py-1 rounded text-xs font-semibold whitespace-nowrap ${
                         pattern.severity === "high"
-                          ? "bg-red-100 text-red-800"
+                          ? "bg-destructive/10 text-destructive"
                           : pattern.severity === "medium"
                             ? "bg-yellow-100 text-yellow-800"
                             : "bg-blue-100 text-blue-800"
@@ -282,10 +282,10 @@ export default function ExecutiveDashboard() {
                   href={`/projects/${project.project_id}`}
                   className={`block p-4 rounded-lg border-l-4 hover:shadow-md transition ${
                     project.status === "critical"
-                      ? "border-red-500 bg-red-50 hover:bg-red-100"
+                      ? "border-destructive bg-destructive/10 hover:bg-destructive/20"
                       : project.status === "at_risk"
-                        ? "border-yellow-500 bg-yellow-50 hover:bg-yellow-100"
-                        : "border-green-500 bg-green-50 hover:bg-green-100"
+                        ? "border-warning bg-warning/10 hover:bg-warning/20"
+                        : "border-success bg-success/10 hover:bg-success/20"
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -308,10 +308,10 @@ export default function ExecutiveDashboard() {
                       <div
                         className={`text-3xl font-bold ${
                           project.status === "critical"
-                            ? "text-red-700"
+                            ? "text-destructive"
                             : project.status === "at_risk"
-                              ? "text-yellow-700"
-                              : "text-green-700"
+                              ? "text-warning"
+                              : "text-success"
                         }`}
                       >
                         {project.health_score}
@@ -330,8 +330,8 @@ export default function ExecutiveDashboard() {
         {/* Top Priorities & Quick Wins */}
         <div className="grid grid-cols-2 gap-6">
           {/* Top Priorities */}
-          <div className="bg-red-50 rounded-lg border border-red-200 p-6">
-            <h3 className="text-lg font-semibold text-red-900 mb-3">
+          <div className="bg-destructive/10 rounded-lg border border-destructive/20 p-6">
+            <h3 className="text-lg font-semibold text-destructive mb-3">
               🔥 Top Priorities
             </h3>
             {summary?.top_priorities && summary.top_priorities.length > 0 ? (
@@ -339,7 +339,7 @@ export default function ExecutiveDashboard() {
                 {summary.top_priorities.map((priority, idx) => (
                   <li
                     key={idx}
-                    className="text-sm text-red-800 flex items-start gap-2"
+                    className="text-sm text-destructive flex items-start gap-2"
                   >
                     <span className="font-bold">{idx + 1}.</span>
                     <span>{priority}</span>
@@ -347,13 +347,13 @@ export default function ExecutiveDashboard() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-red-700">No critical priorities</p>
+              <p className="text-sm text-destructive">No critical priorities</p>
             )}
           </div>
 
           {/* Quick Wins */}
-          <div className="bg-green-50 rounded-lg border border-green-200 p-6">
-            <h3 className="text-lg font-semibold text-green-900 mb-3">
+          <div className="bg-success/10 rounded-lg border border-success/20 p-6">
+            <h3 className="text-lg font-semibold text-success mb-3">
               ✨ Quick Wins Available
             </h3>
             {summary?.quick_wins && summary.quick_wins.length > 0 ? (
@@ -361,7 +361,7 @@ export default function ExecutiveDashboard() {
                 {summary.quick_wins.map((win, idx) => (
                   <li
                     key={idx}
-                    className="text-sm text-green-800 flex items-start gap-2"
+                    className="text-sm text-success flex items-start gap-2"
                   >
                     <span className="font-bold">•</span>
                     <span>{win}</span>
@@ -369,7 +369,7 @@ export default function ExecutiveDashboard() {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-green-700">
+              <p className="text-sm text-success">
                 Focus on top priorities first
               </p>
             )}

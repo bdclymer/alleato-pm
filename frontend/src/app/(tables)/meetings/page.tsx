@@ -18,7 +18,7 @@ export default async function MeetingsPage() {
   if (error) {
     return (
       <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
-        <div className="text-center text-red-600 p-6">
+        <div className="text-center text-destructive p-6">
           Error loading meetings. Please try again later.
         </div>
       </TablePageWrapper>

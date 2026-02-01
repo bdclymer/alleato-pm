@@ -162,7 +162,7 @@ export default async function SubcontractorsPage() {
           ]}
         />
         <TableLayout>
-          <div className="text-center text-red-600">
+          <div className="text-center text-destructive">
             Error loading subcontractors. Please try again later.
           </div>
         </TableLayout>

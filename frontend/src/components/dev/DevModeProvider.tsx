@@ -114,7 +114,7 @@ function DevModePanel() {
                 <span className="font-medium">Columns:</span> {source.columns.join(', ')}
               </div>
               {source.query && (
-                <div className="mt-1 text-yellow-600 font-mono text-[10px] bg-yellow-100 p-1 rounded overflow-x-auto">
+                <div className="mt-1 text-yellow-600 font-mono text-2xs bg-yellow-100 p-1 rounded overflow-x-auto">
                   {source.query}
                 </div>
               )}
@@ -124,7 +124,7 @@ function DevModePanel() {
                   <ul className="ml-2 text-orange-600">
                     {Object.entries(source.calculatedFields).map(([field, formula]) => (
                       <li key={field}>
-                        {field}: <code className="text-[10px]">{formula}</code>
+                        {field}: <code className="text-2xs">{formula}</code>
                       </li>
                     ))}
                   </ul>
@@ -140,7 +140,7 @@ function DevModePanel() {
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-yellow-100 px-3 py-2 text-[10px] text-yellow-700">
+      <div className="sticky bottom-0 bg-yellow-100 px-3 py-2 text-2xs text-yellow-700">
         Press <kbd className="bg-yellow-200 px-1 rounded">Ctrl+Shift+D</kbd> to toggle
       </div>
     </div>

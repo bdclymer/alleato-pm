@@ -91,8 +91,8 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
 
   const getStatusColor = (status: string) => {
     return status === "published"
-      ? "bg-green-100 text-green-700"
-      : "bg-yellow-100 text-yellow-700";
+      ? "bg-success/10 text-success"
+      : "bg-warning/10 text-warning";
   };
 
   return (
@@ -148,7 +148,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                   {/* Progress Bar */}
                   <div className="w-full bg-muted rounded-full h-2 mb-3">
                     <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      className="bg-info h-2 rounded-full transition-all"
                       style={{ width: `${report.completionPercentage}%` }}
                     />
                   </div>
@@ -175,7 +175,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                 <div className="flex items-center gap-2 ml-4">
                   <Link
                     href={`/${projectId}/reports/${report.id}`}
-                    className="text-blue-600 hover:text-blue-800 text-sm"
+                    className="text-link hover:text-link-hover text-sm"
                   >
                     View
                   </Link>
@@ -196,7 +196,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
       <div className="text-center pt-2">
         <Link
           href={`/${projectId}/reports`}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-link hover:text-link-hover hover:underline"
         >
           View all reports →
         </Link>

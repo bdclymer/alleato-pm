@@ -112,7 +112,7 @@ export function FinancialToggles({
       {/* Budget Toggle */}
       <ToggleSection
         title="Budget"
-        icon={<DollarSign className="h-5 w-5 text-green-600" />}
+        icon={<DollarSign className="h-5 w-5 text-success" />}
         defaultOpen={true}
       >
         <div className="space-y-4 pt-4">
@@ -131,7 +131,7 @@ export function FinancialToggles({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Remaining</p>
-              <p className="text-xl font-semibold text-green-600">
+              <p className="text-xl font-semibold text-success">
                 ${(budgetRemaining / 1000000).toFixed(2)}M
               </p>
             </div>
@@ -147,7 +147,7 @@ export function FinancialToggles({
           <div className="space-y-2">
             <div className="w-full bg-muted rounded-full h-2">
               <div
-                className="bg-green-600 h-2 rounded-full transition-all"
+                className="bg-success h-2 rounded-full transition-all"
                 style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
               />
             </div>
@@ -162,7 +162,7 @@ export function FinancialToggles({
           <div className="flex items-center justify-between pt-2">
             <a
               href={`/${project.id}/budget`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-link hover:text-link-hover hover:underline"
             >
               View Budget Details →
             </a>
@@ -179,7 +179,7 @@ export function FinancialToggles({
       {/* Prime Contract Toggle */}
       <ToggleSection
         title="Prime Contract"
-        icon={<FileText className="h-5 w-5 text-blue-600" />}
+        icon={<FileText className="h-5 w-5 text-info" />}
       >
         <div className="space-y-4 pt-4">
           <div className="grid grid-cols-2 gap-4">
@@ -229,7 +229,7 @@ export function FinancialToggles({
           <div className="flex items-center justify-between pt-2">
             <a
               href={`/${project.id}/contracts`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-link hover:text-link-hover hover:underline"
             >
               Manage Prime Contracts →
             </a>
@@ -246,7 +246,7 @@ export function FinancialToggles({
       {/* Commitments Toggle */}
       <ToggleSection
         title="Commitments"
-        icon={<Layers className="h-5 w-5 text-orange-600" />}
+        icon={<Layers className="h-5 w-5 text-warning" />}
       >
         <div className="space-y-4 pt-4">
           <div className="grid grid-cols-3 gap-4">
@@ -258,7 +258,7 @@ export function FinancialToggles({
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Approved</p>
-              <p className="text-xl font-semibold text-green-600">
+              <p className="text-xl font-semibold text-success">
                 ${(commitmentsApproved / 1000000).toFixed(2)}M
               </p>
             </div>
@@ -300,7 +300,7 @@ export function FinancialToggles({
           <div className="flex items-center justify-between pt-2">
             <a
               href={`/${project.id}/commitments`}
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-link hover:text-link-hover hover:underline"
             >
               View All Commitments →
             </a>

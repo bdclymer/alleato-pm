@@ -102,6 +102,7 @@ export function BudgetLineItemCreatorModal({
   const [openPopoverId, setOpenPopoverId] = React.useState<number | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
+  const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
@@ -295,20 +296,48 @@ export function BudgetLineItemCreatorModal({
     setOpenPopoverId(null);
   };
 
+  // Helper function for currency formatting
+  const formatCurrency = (value: string): string => {
+    const num = parseFloat(value) || 0;
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  // Calculate total amount across all rows
+  const calculateTotal = (): number => {
+    return rows.reduce((sum, row) => {
+      return sum + (parseFloat(row.amount) || 0);
+    }, 0);
+  };
+
   const addRow = () => {
-    setRows([
-      ...rows,
-      {
-        budgetCodeId: "",
-        budgetCodeLabel: "",
-        costCodeId: "",
-        costTypeId: null,
-        qty: "",
-        uom: "",
-        unitCost: "",
-        amount: "0.00",
-      },
-    ]);
+    const previousRow = rows[rows.length - 1];
+    const newRowIndex = rows.length;
+
+    const newRow = {
+      budgetCodeId: "",
+      budgetCodeLabel: "",
+      costCodeId: "",
+      costTypeId: null,
+      qty: "",
+      uom: smartCopyUOM && previousRow.uom ? previousRow.uom : "",
+      unitCost: "",
+      amount: "0.00",
+    };
+
+    setRows([...rows, newRow]);
+
+    // Auto-focus first input of new row
+    setTimeout(() => {
+      const firstInput = document.querySelector(
+        `input[tabindex="${newRowIndex * 5 + 1}"]`
+      ) as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 50);
   };
 
   const removeRow = (index: number) => {
@@ -504,6 +533,19 @@ export function BudgetLineItemCreatorModal({
 
               {/* Body */}
               <div className="p-6 max-h-[75vh] overflow-y-auto">
+                {/* Smart Copy UOM Toggle */}
+                <div className="flex gap-3 text-xs mb-4">
+                  <label className="flex items-center gap-1.5 cursor-pointer text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={smartCopyUOM}
+                      onChange={(e) => setSmartCopyUOM(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    <span>Copy UOM to new rows</span>
+                  </label>
+                </div>
+
                 <div className="space-y-4">
                   {rows.map((row, index) => (
                     <motion.div
@@ -683,11 +725,19 @@ export function BudgetLineItemCreatorModal({
                 </Button>
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
-                <div className="text-sm text-muted-foreground">
-                  {rows.length} line item{rows.length > 1 ? "s" : ""} •{" "}
-                  Total: ${rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0).toFixed(2)}
+              {/* Footer with Running Total */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-gray-700">
+                    {rows.length} line item{rows.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Total Amount</span>
+                    <span className="text-2xl font-bold text-blue-900">
+                      ${formatCurrency(calculateTotal().toString())}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex gap-3">
                   <Button

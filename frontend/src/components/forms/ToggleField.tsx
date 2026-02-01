@@ -28,13 +28,13 @@ export function ToggleField({
       <div className="flex-1">
         <label className="text-sm font-medium text-foreground">{label}</label>
         {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
       <Switch
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
-        className={cn(error && "border-red-300")}
+        className={cn(error && "border-destructive/50")}
         aria-invalid={!!error}
       />
     </div>
