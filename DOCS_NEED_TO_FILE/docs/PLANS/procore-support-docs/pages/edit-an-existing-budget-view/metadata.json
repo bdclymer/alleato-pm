@@ -1,0 +1,109 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/edit-an-existing-budget-view/",
+  "pageName": "edit-an-existing-budget-view",
+  "category": "tutorial",
+  "pageId": "edit-an-existing-budget-view",
+  "timestamp": "2025-12-29T16:40:11.171Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 12,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 3,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Edit an Existing Budget View",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 19,
+      "sections": 6
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Edit an Existing Budget View",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/edit-an-existing-budget-view/"
+      }
+    ],
+    "title": "Edit an Existing Budget View",
+    "h1": "Edit an Existing Budget View",
+    "metaDescription": "How to edit an existing budget view"
+  },
+  "links": 3,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Configure the Columns for a Budget View.",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations",
+      "text": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-the-procore-labor-productivity-cost-budget-view",
+      "text": "Set Up the Procore Labor Productivity Cost Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/edit-an-existing-budget-view/screenshot.png"
+}

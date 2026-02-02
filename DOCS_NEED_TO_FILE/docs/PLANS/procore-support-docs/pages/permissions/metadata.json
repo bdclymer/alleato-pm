@@ -1,0 +1,433 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/permissions/",
+  "pageName": "permissions",
+  "category": "documentation",
+  "pageId": "permissions",
+  "timestamp": "2025-12-29T16:44:02.948Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 10,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 76,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Permissions",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 234,
+      "sections": 3
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Task",
+          "None",
+          "Read Only",
+          "Standard",
+          "Admin"
+        ],
+        "rows": 38,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Permissions",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions/"
+      }
+    ],
+    "title": "Permissions",
+    "h1": "Budget",
+    "metaDescription": "This page lists the user permissions that are required to perform actions in or related to the project's Budget tool."
+  },
+  "links": 43,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project",
+      "text": "Overview",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials",
+      "text": "Tutorials",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting",
+      "text": "FAQ/Troubleshooting",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/videos",
+      "text": "Videos",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions",
+      "text": "Permissions",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/diagrams",
+      "text": "Diagrams",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-a-budget-line-item",
+      "text": "Add a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 66,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/add-budgeted-production-quantities",
+      "text": "Add Budgeted Production Quantities to a Project's Budget",
+      "classes": "",
+      "id": null,
+      "index": 67,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-the-budget-changes-feature-to-a-budget-view",
+      "text": "Add the Columns for the 'Budget Changes' Feature to a Budget View",
+      "classes": "",
+      "id": null,
+      "index": 68,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-gst-to-a-budget",
+      "text": "Add a Goods & Services Tax (GST) to a Budget",
+      "classes": "",
+      "id": null,
+      "index": 69,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-partial-budget-line-item",
+      "text": "Add a Partial Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 70,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-advanced-forecasting-curves",
+      "text": "Apply Advanced Forecasting Curves",
+      "classes": "",
+      "id": null,
+      "index": 71,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "",
+      "id": null,
+      "index": 72,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/approve-budget-changes",
+      "text": "Approve Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 73,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/configure-settings-budget",
+      "text": "Configure Settings: Budget",
+      "classes": "",
+      "id": null,
+      "index": 74,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-budget-modification",
+      "text": "Create a Budget Modification",
+      "classes": "",
+      "id": null,
+      "index": 75,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-an-internal-budget-change",
+      "text": "Create Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 76,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/create-a-snapshot",
+      "text": "Create a Budget Snapshot",
+      "classes": "",
+      "id": null,
+      "index": 77,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-a-custom-budget-report",
+      "text": "Create a Custom Budget Report",
+      "classes": "",
+      "id": null,
+      "index": 78,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/reports-project/tutorials/create-a-custom-financial-line-items-report-to-compare-budget-snapshots",
+      "text": "Create a Custom Financial Line Items Report to Compare Budget Snapshots",
+      "classes": "",
+      "id": null,
+      "index": 79,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/delete-a-budget-line-item",
+      "text": "Delete a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 80,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/delete-budget-changes",
+      "text": "Delete Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 81,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/edit-a-budget",
+      "text": "Edit a Budget",
+      "classes": "",
+      "id": null,
+      "index": 82,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/edit-budget-changes",
+      "text": "Edit Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 83,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-a-budget-to-an-integrated-erp-system",
+      "text": "Export a Budget to an Integrated ERP System",
+      "classes": "",
+      "id": null,
+      "index": 84,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/export-budget-changes",
+      "text": "Export Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 85,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/import-a-budget",
+      "text": "Import a Budget",
+      "classes": "",
+      "id": null,
+      "index": 86,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/import-installed-quantities",
+      "text": "Import Installed Production Quantities for the Labor Productivity Cost Budget View",
+      "classes": "",
+      "id": null,
+      "index": 87,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/lock-a-budget",
+      "text": "Lock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 88,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/read-a-budget",
+      "text": "Read a Budget",
+      "classes": "",
+      "id": null,
+      "index": 89,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/retrieve-a-budget-from-erp-integrations-before-acceptance",
+      "text": "Retrieve a Budget from ERP Integrations Before Acceptance",
+      "classes": "",
+      "id": null,
+      "index": 90,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget in a New Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 91,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance",
+      "text": "Send a Budget to ERP Integrations for Accounting Acceptance",
+      "classes": "",
+      "id": null,
+      "index": 92,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-budget-view-for-custom-reporting",
+      "text": "Set Up a Budget View for Custom Reporting",
+      "classes": "",
+      "id": null,
+      "index": 93,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set Up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 94,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/unlock-a-budget",
+      "text": "Unlock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 96,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/unlock-a-budget-with-budget-modifications",
+      "text": "Unlock a Budget with Budget Modifications",
+      "classes": "",
+      "id": null,
+      "index": 97,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-changes",
+      "text": "View Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 98,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-change-detail-for-a-budget-line-item",
+      "text": "View Budget Change Detail for a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 99,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-reports",
+      "text": "View Budget Reports",
+      "classes": "",
+      "id": null,
+      "index": 100,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-the-change-history-of-the-budget",
+      "text": "View and Filter the Change History of the Budget",
+      "classes": "",
+      "id": null,
+      "index": 101,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/void-budget-changes",
+      "text": "Void Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 102,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/permissions/screenshot.png"
+}

@@ -1,0 +1,857 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/configure-settings-prime-contracts/",
+  "pageName": "configure-settings-prime-contracts",
+  "category": "tutorial",
+  "pageId": "configure-settings-prime-contracts",
+  "timestamp": "2025-12-28T20:48:24.311Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 22,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 38,
+      "headings": {
+        "h1": 1,
+        "h2": 6,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 6,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Configure Settings: Prime Contracts",
+      "headings": [
+        {
+          "level": "h4",
+          "text": "Resources",
+          "id": null
+        },
+        {
+          "level": "h4",
+          "text": "United States",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Next Step",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 53,
+      "sections": 10
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Prime Contracts",
+        "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/"
+      },
+      {
+        "text": "Configure Settings: Prime Contracts",
+        "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/configure-settings-prime-contracts/"
+      }
+    ],
+    "title": "Configure Settings: Prime Contracts",
+    "h1": "Configure Settings: Prime Contracts",
+    "metaDescription": "How to configure the advanced settings for the project's Prime Contracts tool."
+  },
+  "links": 61,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": "icon",
+      "index": 0,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": "mobile-icon",
+      "index": 1,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/",
+      "text": "Product Manuals",
+      "classes": "",
+      "id": null,
+      "index": 2,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/",
+      "text": "Process Guides",
+      "classes": "",
+      "id": null,
+      "index": 3,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/video-library/",
+      "text": "Training Video Library   Search our library of training videos",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 5,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/permissions-matrix/",
+      "text": "Permissions Matrix",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 6,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms/",
+      "text": "Glossary of Terms",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 7,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/release-notes/",
+      "text": "Release Notes",
+      "classes": "",
+      "id": null,
+      "index": 12,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/",
+      "text": "Product Manuals",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "index": 13,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/",
+      "text": "Process Guides",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "index": 14,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/https://learn.procore.com/",
+      "text": "Certifications",
+      "classes": "",
+      "id": null,
+      "index": 15,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/video-library/",
+      "text": "Training Video Library",
+      "classes": "",
+      "id": null,
+      "index": 16,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/permissions-matrix/",
+      "text": "Permissions Matrix",
+      "classes": "",
+      "id": null,
+      "index": 17,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms/",
+      "text": "Glossary of Terms",
+      "classes": "",
+      "id": null,
+      "index": 18,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/https://status.procore.com/",
+      "text": "System Status",
+      "classes": "",
+      "id": null,
+      "index": 19,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/https://community.procore.com/s/",
+      "text": "Community",
+      "classes": "",
+      "id": null,
+      "index": 20,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/https://www.procore.com/whats-new/en/",
+      "text": "Product Updates",
+      "classes": "",
+      "id": null,
+      "index": 21,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/https://developers.procore.com%20/",
+      "text": "Developers",
+      "classes": "",
+      "id": null,
+      "index": 22,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/release-notes/",
+      "text": "Release Notes",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "index": 23,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-au.support.procore.com/",
+      "text": "Australia (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 24,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://pt-br.support.procore.com/",
+      "text": "Brasil (Português)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 25,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-ca.support.procore.com/",
+      "text": "Canada (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 26,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://fr-ca.support.procore.com/",
+      "text": "Canada (Français)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 27,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://de.support.procore.com/",
+      "text": "Deutschland (Deutsch)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 28,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://es-es.support.procore.com/",
+      "text": "España (Español)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 29,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://fr.support.procore.com/",
+      "text": "France (Français)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 30,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://es.support.procore.com/",
+      "text": "Latinoamérica (Español)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 31,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://pl-pl.support.procore.com/",
+      "text": "Polska (Polski)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 32,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-gb.support.procore.com/",
+      "text": "United Kingdom (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 33,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://zh-sg.support.procore.com/",
+      "text": "新加坡 (中文)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 35,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://ja-jp.support.procore.com/",
+      "text": "日本 (日本語)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 36,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-au.support.procore.com/",
+      "text": "Australia (English)",
+      "classes": "",
+      "id": null,
+      "index": 37,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://pt-br.support.procore.com/",
+      "text": "Brasil (Português)",
+      "classes": "",
+      "id": null,
+      "index": 38,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-ca.support.procore.com/",
+      "text": "Canada (English)",
+      "classes": "",
+      "id": null,
+      "index": 39,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://fr-ca.support.procore.com/",
+      "text": "Canada (Français)",
+      "classes": "",
+      "id": null,
+      "index": 40,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://de.support.procore.com/",
+      "text": "Deutschland (Deutsch)",
+      "classes": "",
+      "id": null,
+      "index": 41,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://es-es.support.procore.com/",
+      "text": "España (Español)",
+      "classes": "",
+      "id": null,
+      "index": 42,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://fr.support.procore.com/",
+      "text": "France (Français)",
+      "classes": "",
+      "id": null,
+      "index": 43,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://es.support.procore.com/",
+      "text": "Latinoamérica (Español)",
+      "classes": "",
+      "id": null,
+      "index": 44,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://pl-pl.support.procore.com/",
+      "text": "Polska (Polski)",
+      "classes": "",
+      "id": null,
+      "index": 45,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://en-gb.support.procore.com/",
+      "text": "United Kingdom (English)",
+      "classes": "",
+      "id": null,
+      "index": 46,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://zh-sg.support.procore.com/",
+      "text": "新加坡 (中文)",
+      "classes": "",
+      "id": null,
+      "index": 48,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://ja-jp.support.procore.com/",
+      "text": "日本 (日本語)",
+      "classes": "",
+      "id": null,
+      "index": 49,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "Support Home",
+      "classes": "",
+      "id": null,
+      "index": 50,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/",
+      "text": "Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-prime-contracts",
+      "text": "Create Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/edit-the-advanced-settings-on-a-prime-contract",
+      "text": "Edit the Advanced Settings on a Prime Contract",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/edit-the-advanced-settings-on-a-prime-contract",
+      "text": "Edit the Advanced Settings on a Prime Contract",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-the-different-change-order-tier-settings-in-project-financials",
+      "text": "What are the different change order tier settings in Project Financials?",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-a-prime-contract-change-order",
+      "text": "Create a Prime Contract Change Order",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-a-potential-change-order-for-a-prime-contract",
+      "text": "Create a Potential Change Order for a Prime Contract",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-the-different-change-order-tier-settings-in-project-financials",
+      "text": "What are the different change order tier settings in Project Financials?",
+      "classes": "",
+      "id": null,
+      "index": 59,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-enable-always-editable-schedule-of-values-setting",
+      "text": "What is the 'Enable Always Editable Schedule of Values' setting?",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "integrated ERP systems",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "isPrimeContracts": false,
+      "category": "general"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/create-new-configurable-fieldsets",
+      "text": "Create New Configurable Fieldsets",
+      "classes": "",
+      "id": null,
+      "index": 62,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-prime-contracts",
+      "text": "Create Multiple Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 63,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-prime-contracts",
+      "text": "Create Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 64,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/configure-a-prime-contracts-advanced-settings",
+      "text": "Configure a Prime Contract's Advanced Settings (Beta)",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 65,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/edit-the-advanced-settings-on-a-prime-contract",
+      "text": "Edit the Advanced Settings on a Prime Contract",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 66,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/about-the-prime-contracts-tool",
+      "text": "About the Prime Contracts Tool",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 67,
+      "isPrimeContracts": true,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/contact-support",
+      "text": "Contact Support",
+      "classes": "",
+      "id": null,
+      "index": 76,
+      "isPrimeContracts": false,
+      "category": "general"
+    }
+  ],
+  "clickables": 10,
+  "clickableDetails": [
+    {
+      "text": "",
+      "id": "banner-close-button",
+      "type": "button",
+      "classes": "banner-close-button",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "Menu",
+      "id": "mobile-nav-toggle",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "What do you need help with?",
+      "id": "autocomplete-0-label",
+      "type": "button",
+      "classes": "aa-DetachedSearchButton",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Resources",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": true,
+      "index": 3
+    },
+    {
+      "text": "Resources",
+      "id": "mobile-nav-accordion-button",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "United States",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": true,
+      "index": 5
+    },
+    {
+      "text": "United States",
+      "id": "mobile-nav-accordion-button",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "back-to-top-button",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "About Procore",
+      "id": "footer-accordion-button",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Downloads",
+      "id": "footer-accordion-button",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "hasDropdown": false,
+      "index": 9
+    }
+  ],
+  "expandables": 14,
+  "expandableDetails": [
+    {
+      "text": "Product Manuals",
+      "type": "a",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 0
+    },
+    {
+      "text": "Product Manuals",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 1
+    },
+    {
+      "text": "Process Guides",
+      "type": "a",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 2
+    },
+    {
+      "text": "Process Guides",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 3
+    },
+    {
+      "text": "Resources",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "id": null,
+      "isExpanded": false,
+      "index": 4
+    },
+    {
+      "text": "Resources",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 5
+    },
+    {
+      "text": "Release Notes",
+      "type": "a",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 6
+    },
+    {
+      "text": "Release Notes",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 7
+    },
+    {
+      "text": "United States",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "id": null,
+      "isExpanded": false,
+      "index": 8
+    },
+    {
+      "text": "United States",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 9
+    },
+    {
+      "text": "About Procore",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "id": null,
+      "isExpanded": false,
+      "index": 10
+    },
+    {
+      "text": "About Procore",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 11
+    },
+    {
+      "text": "Downloads",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "id": null,
+      "isExpanded": false,
+      "index": 12
+    },
+    {
+      "text": "Downloads",
+      "type": "span",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isExpanded": false,
+      "index": 13
+    }
+  ],
+  "screenshotPath": "pages/configure-settings-prime-contracts/screenshot.png"
+}

@@ -1,0 +1,4 @@
+
+> alleato-procore@0.1.0 typecheck
+> tsc --noEmit
+

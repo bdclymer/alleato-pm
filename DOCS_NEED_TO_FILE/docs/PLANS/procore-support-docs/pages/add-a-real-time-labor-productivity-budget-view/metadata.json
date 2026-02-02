@@ -1,0 +1,380 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-a-real-time-labor-productivity-budget-view/",
+  "pageName": "add-a-real-time-labor-productivity-budget-view",
+  "category": "tutorial",
+  "pageId": "add-a-real-time-labor-productivity-budget-view",
+  "timestamp": "2025-12-29T16:37:44.137Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 18,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 64,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 57,
+      "headings": {
+        "h1": 1,
+        "h2": 7,
+        "h3": 6,
+        "h4": 18
+      },
+      "codeBlocks": 0,
+      "images": 35,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add a Real-Time Labor Productivity Budget View",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Workflow",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Create a New Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add the Recommended Columns",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Hide the Unused Blank Budget View Columns",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Assign a Budget View to a Procore Project",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 382,
+      "sections": 9
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 16,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 5,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 6,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 7,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 8,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 9,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 10,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 11,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 12,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 13,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 14,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 15,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 16,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 17,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 18,
+        "headers": [
+          "Steps from the Configure Columns window…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Add a Real-Time Labor Productivity Budget View",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-a-real-time-labor-productivity-budget-view/"
+      }
+    ],
+    "title": "Add a Real-Time Labor Productivity Budget View",
+    "h1": "Add a Real-Time Labor Productivity Budget View",
+    "metaDescription": null
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://support.procore.com/products/online/user-guide/company-level/admin/tutorials/resource-tracking-and-project-financials-setup-guide",
+      "text": "Step 1: Create a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 64,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore project?",
+      "classes": "",
+      "id": null,
+      "index": 69,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-job-cost-transactions-syncing-to-a-budget-view-for-erp-integrations",
+      "text": "Add the Columns for Job Cost Transaction Syncing to a Budget View for ERP Integrations",
+      "classes": "",
+      "id": null,
+      "index": 71,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-can-we-import-our-third-party-timecard-entries-to-work-with-the-timesheet-hours-column-in-the-budget",
+      "text": "Can we import our third-party timecard entries to work with the 'Timesheet Hours' column in Procore's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 73,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 78,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "",
+      "id": null,
+      "index": 79,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report",
+      "text": "What is the difference between a labor-productivity budget view and field production report?",
+      "classes": "",
+      "id": null,
+      "index": 80,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-the-procore-labor-productivity-cost-budget-view",
+      "text": "Set Up the Procore Labor Productivity Cost Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 81,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-add-the-timesheet-hours-column-to-a-budget-view",
+      "text": "How do I add the 'Timesheet Hours' column to a budget view?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 82,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/add-a-real-time-labor-productivity-budget-view/screenshot.png"
+}

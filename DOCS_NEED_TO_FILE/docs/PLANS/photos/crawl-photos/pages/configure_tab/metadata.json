@@ -1,0 +1,326 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/images/configure_tab",
+  "pageName": "configure_tab",
+  "category": "photos",
+  "pageId": "configure_tab",
+  "timestamp": "2026-01-12T16:03:04.055Z",
+  "analysis": {
+    "components": {
+      "buttons": 5,
+      "forms": 1,
+      "inputs": 15,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 4,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 20,
+      "imageElements": 2,
+      "thumbnails": 0,
+      "galleries": 0,
+      "albums": 0,
+      "uploadButtons": 0,
+      "lightboxes": 0,
+      "mediaPlayers": 0
+    },
+    "tables": [],
+    "forms": [
+      {
+        "index": 1,
+        "action": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+        "method": "get",
+        "fields": [
+          {
+            "name": "",
+            "type": "text",
+            "placeholder": "Select",
+            "required": false
+          },
+          {
+            "name": "root_image_category_add_new_at_top",
+            "type": "radio",
+            "placeholder": null,
+            "required": true
+          },
+          {
+            "name": "root_image_category_add_new_at_top",
+            "type": "radio",
+            "placeholder": null,
+            "required": true
+          },
+          {
+            "name": "root_uploaded_images_private__checkbox",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "root_inbound_email_options",
+            "type": "radio",
+            "placeholder": null,
+            "required": true
+          },
+          {
+            "name": "root_inbound_email_options",
+            "type": "radio",
+            "placeholder": null,
+            "required": true
+          },
+          {
+            "name": "root_inbound_email_options",
+            "type": "radio",
+            "placeholder": null,
+            "required": true
+          },
+          {
+            "name": "root_email_private_by_default__checkbox",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r2t:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r35:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r3d:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r3l:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r3t:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r45:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "name": "react-aria7623200599-:r48:",
+            "type": "checkbox",
+            "placeholder": null,
+            "required": false
+          }
+        ],
+        "classes": "rjsf"
+      }
+    ],
+    "photosSections": [],
+    "imageCount": 2,
+    "backgroundImages": 0,
+    "title": "Photos • Goodwill Bart",
+    "h1": "Photos Settings",
+    "h2s": [
+      "General",
+      "Inbound Emails",
+      "Photos from Other Tools"
+    ]
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+      "text": "Photos",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+      "text": "Photos Settings",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings/permissions",
+      "text": "Permissions Table",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 8
+    }
+  ],
+  "clickables": 11,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Photos Settings",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "type": "a",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Permissions Table",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "a",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Unclassified",
+      "id": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Photos from Drawings",
+      "id": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Photos From Daily Log",
+      "id": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Photos from Defect List",
+      "id": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 flQUlJ",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Save Changes",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 jFezsx",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 jFezsx",
+      "hasDropdown": false,
+      "index": 10
+    }
+  ],
+  "dropdowns": 3,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 iTKdkq",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "photoItems": 0,
+  "photoItemDetails": [],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

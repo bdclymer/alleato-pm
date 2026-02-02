@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drawings Feature - PRP</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-green: #3fb950;
+    --accent-red: #f85149;
+    --accent-yellow: #d29922;
+    --accent-purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  h1 { font-size: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  h2 { font-size: 1.5rem; color: var(--accent); margin: 2rem 0 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+  h3 { font-size: 1.2rem; color: var(--accent-purple); margin: 1.5rem 0 0.5rem; }
+  h4 { font-size: 1rem; color: var(--text-muted); margin: 1rem 0 0.3rem; }
+  p, li { color: var(--text); margin-bottom: 0.5rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    background: var(--surface);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--accent-green);
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-size: 0.85em;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+  th { background: var(--surface); color: var(--accent); font-weight: 600; }
+  tr:nth-child(even) { background: rgba(22, 27, 34, 0.5); }
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+  .badge-red { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+  .badge-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+  .badge-yellow { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+  .badge-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent); }
+  .badge-purple { background: rgba(188, 140, 255, 0.2); color: var(--accent-purple); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+  .warn {
+    background: rgba(210, 153, 34, 0.1);
+    border-left: 4px solid var(--accent-yellow);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .critical {
+    background: rgba(248, 81, 73, 0.1);
+    border-left: 4px solid var(--accent-red);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .success {
+    background: rgba(63, 185, 80, 0.1);
+    border-left: 4px solid var(--accent-green);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+  }
+  ul { padding-left: 1.5rem; }
+  .checklist { list-style: none; padding-left: 0; }
+  .checklist li { padding: 0.3rem 0; }
+  .checklist li::before { content: "[ ] "; color: var(--text-muted); font-family: monospace; }
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.5rem; margin: 1rem 0; }
+  .toc ul { list-style: none; }
+  .toc li { padding: 0.2rem 0; }
+  .phase-header { display: flex; align-items: center; gap: 0.5rem; }
+  .phase-num { background: var(--accent); color: var(--bg); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.85em; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin: 1rem 0; }
+  .stat { text-align: center; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+  .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<h1>Drawings Feature - TypeScript PRP</h1>
+<p style="color: var(--text-muted);">Product Requirement Prompt for one-pass implementation success</p>
+<p><span class="badge badge-red">Not Started</span> | Last Updated: 2026-02-02</p>
+
+<div class="stat-grid">
+  <div class="stat"><div class="stat-value">34</div><div class="stat-label">Total Tasks</div></div>
+  <div class="stat"><div class="stat-value">7</div><div class="stat-label">Phases</div></div>
+  <div class="stat"><div class="stat-value">7</div><div class="stat-label">DB Tables</div></div>
+  <div class="stat"><div class="stat-value">10</div><div class="stat-label">Issues Found</div></div>
+</div>
+
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ul>
+    <li><a href="#goal">Goal & Success Criteria</a></li>
+    <li><a href="#issues">Current Issues (10 Found)</a></li>
+    <li><a href="#schema">Database Schema (7 Tables, 2 Views)</a></li>
+    <li><a href="#architecture">Architecture & Patterns</a></li>
+    <li><a href="#tasks">Implementation Tasks (34 Total)</a></li>
+    <li><a href="#files">File Map</a></li>
+    <li><a href="#gotchas">Critical Gotchas</a></li>
+    <li><a href="#validation">Validation Loop</a></li>
+    <li><a href="#procore">Procore Reference</a></li>
+  </ul>
+</div>
+
+<hr>
+
+<h2 id="goal">Goal & Success Criteria</h2>
+
+<p>Transform the existing Drawings feature from a <strong>mock-data prototype</strong> into a fully functional production system with real database integration, file upload to Supabase Storage, revision tracking, hierarchical area organization, and a PDF viewer with markup support.</p>
+
+<div class="card">
+  <h4>Success Definition</h4>
+  <ul class="checklist">
+    <li>Migration applied, types generated with drawings tables</li>
+    <li>Upload button on main page creates real records</li>
+    <li>Drawing log table displays real data from drawing_log view</li>
+    <li>Detail panel shows real revision history, sketches, downloads</li>
+    <li>Areas page shows hierarchical tree with real data</li>
+    <li>PDF viewer renders uploaded drawing files</li>
+    <li>All mock data removed</li>
+    <li>E2E tests pass for upload, view, revise, delete workflows</li>
+    <li>Production build: 0 TypeScript errors</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2 id="issues">Current Issues (10 Found)</h2>
+
+<div class="critical">
+  <strong>CRITICAL #1: Migration NOT Applied</strong><br>
+  <code>database.types.ts</code> has <strong>0 references</strong> to drawings tables. Migration file exists at <code>supabase/migrations/20260131142854_add_drawings_system.sql</code> but was never applied. <strong>ALL tasks are blocked until this is done.</strong>
+</div>
+
+<div class="critical">
+  <strong>CRITICAL #2: Upload Button is DEAD</strong><br>
+  The "Upload Drawings" button on the main page (<code>page.tsx:592</code>) has <strong>no onClick handler</strong>. Clicking it does nothing.
+</div>
+
+<div class="critical">
+  <strong>CRITICAL #3: All Data is Mock</strong><br>
+  The main drawings page has ~800 lines of hardcoded mock data arrays. No database queries exist. The DrawingLogTable component is built but NOT integrated.
+</div>
+
+<div class="warn">
+  <strong>HIGH #4: No DrawingService</strong><br>
+  No service layer exists. Hooks reference tables directly (which don't exist yet). Must follow SpecificationService pattern.
+</div>
+
+<div class="warn">
+  <strong>HIGH #5: Two Duplicate Upload Dialogs</strong><br>
+  <code>DrawingUploadDialog.tsx</code> (494 lines) and <code>upload-drawing-dialog.tsx</code> (387 lines) both exist. Must consolidate.
+</div>
+
+<div class="warn">
+  <strong>MEDIUM #6: Broken Link Path</strong><br>
+  Line ~596: <code>/projects/${projectId}/drawings/board</code> should be <code>/${projectId}/drawings/board</code>
+</div>
+
+<div class="card">
+  <strong>Other Issues:</strong>
+  <ul>
+    <li>#7: Temporary type definitions in drawings.types.ts</li>
+    <li>#8: DrawingLogTable not integrated into any page</li>
+    <li>#9: No E2E tests exist</li>
+    <li>#10: Storage RLS policies may need to be applied</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2 id="schema">Database Schema</h2>
+
+<h3>7 Tables + 2 Views</h3>
+
+<table>
+  <tr><th>Table</th><th>PK</th><th>Key Columns</th><th>FK References</th></tr>
+  <tr>
+    <td><code>drawing_areas</code></td>
+    <td>UUID</td>
+    <td>project_id (INT), name, parent_area_id, sort_order</td>
+    <td>projects(id), self-ref</td>
+  </tr>
+  <tr>
+    <td><code>drawing_sets</code></td>
+    <td>UUID</td>
+    <td>project_id (INT), name, issued_at, status</td>
+    <td>projects(id)</td>
+  </tr>
+  <tr>
+    <td><code>drawings</code></td>
+    <td>UUID</td>
+    <td>project_id (INT), drawing_number, title, discipline, drawing_type, current_revision_id</td>
+    <td>projects(id), drawing_areas(id), drawing_revisions(id)</td>
+  </tr>
+  <tr>
+    <td><code>drawing_revisions</code></td>
+    <td>UUID</td>
+    <td>drawing_id, revision_number, status, file_url, file_name, file_size, is_current_revision</td>
+    <td>drawings(id), drawing_sets(id)</td>
+  </tr>
+  <tr>
+    <td><code>drawing_sketches</code></td>
+    <td>UUID</td>
+    <td>drawing_revision_id, sketch_number, name, file_url</td>
+    <td>drawing_revisions(id)</td>
+  </tr>
+  <tr>
+    <td><code>drawing_downloads</code></td>
+    <td>UUID</td>
+    <td>drawing_revision_id, downloaded_by, downloaded_at</td>
+    <td>drawing_revisions(id)</td>
+  </tr>
+  <tr>
+    <td><code>drawing_related_items</code></td>
+    <td>UUID</td>
+    <td>drawing_id, related_type, related_id</td>
+    <td>drawings(id)</td>
+  </tr>
+</table>
+
+<div class="critical">
+  <strong>CRITICAL FK TYPE:</strong> <code>project_id</code> is <strong>INTEGER</strong> (matches <code>projects.id</code>). All entity IDs are UUID.
+</div>
+
+<h3>Views</h3>
+<table>
+  <tr><th>View</th><th>Purpose</th><th>Key Joins</th></tr>
+  <tr>
+    <td><code>drawing_log</code></td>
+    <td>Main list query - drawings with current revision</td>
+    <td>drawings + current revision + area + set + uploader email</td>
+  </tr>
+  <tr>
+    <td><code>drawing_areas_with_counts</code></td>
+    <td>Hierarchical areas with drawing counts</td>
+    <td>Recursive CTE on drawing_areas + drawing count aggregation</td>
+  </tr>
+</table>
+
+<h3>RLS Pattern</h3>
+<pre><code>-- All tables use project_permissions join
+EXISTS (
+  SELECT 1 FROM project_permissions
+  WHERE project_id = [table].project_id
+  AND user_id = auth.uid()
+)</code></pre>
+
+<h3>Triggers</h3>
+<ul>
+  <li><code>update_updated_at_column()</code> - on drawing_areas, drawing_sets, drawings</li>
+  <li><code>ensure_single_current_revision()</code> - on drawing_revisions INSERT/UPDATE</li>
+</ul>
+
+<hr>
+
+<h2 id="architecture">Architecture & Patterns</h2>
+
+<div class="card">
+  <h4>Layer Architecture (follow Specifications pattern)</h4>
+  <pre><code>Database (Supabase)
+  ↓
+DrawingService (server-side, Result wrapper)
+  ↓
+API Routes (Next.js 15, async params)
+  ↓
+React Query Hooks (use-drawings.ts, etc.)
+  ↓
+UI Components (DrawingLogTable, DrawingUploadDialog, etc.)
+  ↓
+Pages (/(main)/[projectId]/drawings/page.tsx)</code></pre>
+</div>
+
+<h3>Key Patterns</h3>
+
+<div class="grid">
+  <div class="card">
+    <h4>Service Pattern</h4>
+    <pre><code>class DrawingService {
+  static async list(
+    projectId: number
+  ): Promise&lt;Result&lt;DrawingLogEntry[]&gt;&gt; {
+    const supabase = await createClient();
+    // query drawing_log view
+  }
+}</code></pre>
+  </div>
+  <div class="card">
+    <h4>Hook Pattern</h4>
+    <pre><code>function useDrawings(projectId) {
+  return useQuery({
+    queryKey: ['drawings', projectId],
+    queryFn: () => fetch(
+      `/api/projects/${projectId}/drawings`
+    ).then(r => r.json()),
+  });
+}</code></pre>
+  </div>
+  <div class="card">
+    <h4>API Route Pattern</h4>
+    <pre><code>export async function GET(
+  request: NextRequest,
+  context: { params: Promise&lt;{
+    projectId: string
+  }&gt; }
+) {
+  const { projectId } = await context.params;
+  const id = parseInt(projectId, 10);
+  // ...
+}</code></pre>
+  </div>
+  <div class="card">
+    <h4>Page Pattern</h4>
+    <pre><code>&lt;ProjectPageHeader
+  title="Drawings"
+  description="Manage drawings"
+  actions={&lt;UploadButton /&gt;}
+/&gt;
+&lt;PageContainer&gt;
+  &lt;DrawingLogTable data={data} /&gt;
+&lt;/PageContainer&gt;</code></pre>
+  </div>
+</div>
+
+<hr>
+
+<h2 id="tasks">Implementation Tasks (34 Total)</h2>
+
+<h3><span class="phase-num">1</span> Data Layer (Tasks 1-3)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th><th>Status</th></tr>
+  <tr><td>1</td><td>Apply database migration</td><td>Migration SQL</td><td><span class="badge badge-yellow">Medium</span></td><td><span class="badge badge-red">BLOCKER</span></td></tr>
+  <tr><td>2</td><td>Generate & verify types</td><td>database.types.ts</td><td><span class="badge badge-green">Low</span></td><td>Blocked by 1</td></tr>
+  <tr><td>3</td><td>Update domain types</td><td>drawings.types.ts</td><td><span class="badge badge-yellow">Medium</span></td><td>Blocked by 2</td></tr>
+</table>
+
+<h3><span class="phase-num">2</span> Service Layer (Tasks 4-7)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th></tr>
+  <tr><td>4</td><td>Create DrawingService</td><td>DrawingService.ts</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>5</td><td>Add revision methods</td><td>DrawingService.ts</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>6</td><td>Create DrawingAreaService</td><td>DrawingAreaService.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>7</td><td>Create DrawingSetService</td><td>DrawingSetService.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+</table>
+
+<h3><span class="phase-num">3</span> API Layer (Tasks 8-14)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th></tr>
+  <tr><td>8</td><td>Update drawings route</td><td>drawings/route.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>9</td><td>Update revisions route</td><td>revisions/route.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>10</td><td>Update download route</td><td>download/route.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>11</td><td>Update areas routes</td><td>drawing-areas/route.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>12</td><td>Create sets route</td><td>drawing-sets/route.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>13</td><td>Create sketches route</td><td>sketches/route.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>14</td><td>Create related items route</td><td>related-items/route.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+</table>
+
+<h3><span class="phase-num">4</span> Hook Layer (Tasks 15-19)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th></tr>
+  <tr><td>15</td><td>Create main drawing hooks</td><td>use-drawings.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>16</td><td>Create revision hooks</td><td>use-drawing-revisions.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>17</td><td>Update upload hook</td><td>use-drawing-upload.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>18</td><td>Update areas hook</td><td>use-drawing-areas.ts</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>19</td><td>Create set hooks</td><td>use-drawing-sets.ts</td><td><span class="badge badge-green">Low</span></td></tr>
+</table>
+
+<h3><span class="phase-num">5</span> UI Components (Tasks 20-22)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th></tr>
+  <tr><td>20</td><td>Delete duplicate upload dialog</td><td>upload-drawing-dialog.tsx (DELETE)</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>21</td><td>Wire upload dialog to hooks</td><td>DrawingUploadDialog.tsx</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>22</td><td>Verify DrawingLogTable types</td><td>DrawingLogTable.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+</table>
+
+<h3><span class="phase-num">6</span> Page Layer (Tasks 23-28)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>File</th><th>Complexity</th></tr>
+  <tr><td>23</td><td><strong>Rewrite main page</strong></td><td>drawings/page.tsx</td><td><span class="badge badge-purple">Very High</span></td></tr>
+  <tr><td>24</td><td>Update areas page</td><td>areas/page.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>25</td><td>Update board page</td><td>board/page.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>26</td><td>Update table view</td><td>(tables)/drawings/page.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>27</td><td>Verify viewer page</td><td>viewer/[drawingId]/page.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>28</td><td>Update revisions page</td><td>revisions/page.tsx</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+</table>
+
+<h3><span class="phase-num">7</span> Testing & Validation (Tasks 29-34)</h3>
+<table>
+  <tr><th>#</th><th>Task</th><th>Test Type</th><th>Complexity</th></tr>
+  <tr><td>29</td><td>E2E upload test</td><td>Upload workflow</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>30</td><td>E2E revision test</td><td>Revision workflow</td><td><span class="badge badge-red">High</span></td></tr>
+  <tr><td>31</td><td>E2E area management test</td><td>Area CRUD</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>32</td><td>E2E filter/search test</td><td>Filters</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+  <tr><td>33</td><td>Cleanup test data</td><td>afterAll hooks</td><td><span class="badge badge-green">Low</span></td></tr>
+  <tr><td>34</td><td>Final validation</td><td>Build + lint + types</td><td><span class="badge badge-yellow">Medium</span></td></tr>
+</table>
+
+<hr>
+
+<h2 id="files">File Map</h2>
+
+<h3>Files to CREATE</h3>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>frontend/src/services/DrawingService.ts</code></td><td>Main service with CRUD + revisions + storage</td></tr>
+  <tr><td><code>frontend/src/services/DrawingAreaService.ts</code></td><td>Area CRUD with hierarchy</td></tr>
+  <tr><td><code>frontend/src/services/DrawingSetService.ts</code></td><td>Set CRUD</td></tr>
+  <tr><td><code>frontend/src/hooks/use-drawings.ts</code></td><td>Main CRUD hooks</td></tr>
+  <tr><td><code>frontend/src/hooks/use-drawing-revisions.ts</code></td><td>Revision hooks</td></tr>
+  <tr><td><code>frontend/src/hooks/use-drawing-sets.ts</code></td><td>Set hooks</td></tr>
+  <tr><td><code>frontend/src/app/api/projects/[projectId]/drawing-sets/route.ts</code></td><td>Sets API</td></tr>
+  <tr><td><code>frontend/tests/e2e/drawings.spec.ts</code></td><td>E2E tests</td></tr>
+</table>
+
+<h3>Files to MODIFY</h3>
+<table>
+  <tr><th>File</th><th>Change</th></tr>
+  <tr><td><code>frontend/src/types/drawings.types.ts</code></td><td>Replace temp types with generated</td></tr>
+  <tr><td><code>frontend/src/hooks/use-drawing-upload.ts</code></td><td>Wire to API routes</td></tr>
+  <tr><td><code>frontend/src/hooks/use-drawing-areas.ts</code></td><td>Wire to API routes</td></tr>
+  <tr><td><code>frontend/src/components/drawings/DrawingUploadDialog.tsx</code></td><td>Wire to real hooks</td></tr>
+  <tr><td><code>frontend/src/components/drawings/DrawingLogTable.tsx</code></td><td>Verify types match view</td></tr>
+  <tr><td><code>frontend/src/app/(main)/[projectId]/drawings/page.tsx</code></td><td>Remove ALL mock data, integrate hooks</td></tr>
+  <tr><td><code>frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx</code></td><td>Wire to real data</td></tr>
+  <tr><td><code>frontend/src/app/(main)/[projectId]/drawings/board/page.tsx</code></td><td>Wire to real data</td></tr>
+  <tr><td><code>frontend/src/app/(tables)/drawings/page.tsx</code></td><td>Remove mock data</td></tr>
+  <tr><td><code>API routes (5 files)</code></td><td>Wire to service layer</td></tr>
+</table>
+
+<h3>Files to DELETE</h3>
+<table>
+  <tr><th>File</th><th>Reason</th></tr>
+  <tr><td><code>frontend/src/components/drawings/upload-drawing-dialog.tsx</code></td><td>Duplicate of DrawingUploadDialog.tsx</td></tr>
+</table>
+
+<hr>
+
+<h2 id="gotchas">Critical Gotchas</h2>
+
+<div class="critical">
+  <strong>FK Type Mismatch</strong>: <code>project_id</code> must be <strong>INTEGER</strong> (not UUID). <code>projects.id</code> is <code>number</code> in the database. This caused a production bug in scheduling (2026-01-28).
+</div>
+
+<div class="critical">
+  <strong>Next.js 15 Async Params</strong>: <code>params</code> must be <code>await</code>ed in API routes and pages. <code>const { projectId } = await context.params;</code>
+</div>
+
+<div class="warn">
+  <strong>Route Naming</strong>: Use <code>[projectId]</code>, <code>[drawingId]</code>, <code>[areaId]</code>. NEVER use generic <code>[id]</code>.
+</div>
+
+<div class="warn">
+  <strong>.next Cache</strong>: After creating/modifying routes, run <code>rm -rf .next</code> before testing. Stale cache causes false 404s.
+</div>
+
+<div class="warn">
+  <strong>Storage RLS</strong>: Uploads fail silently without storage policies. Check <code>20260201000002_add_storage_rls_policies.sql</code>.
+</div>
+
+<div class="warn">
+  <strong>Supabase Client Context</strong>: Use <code>@/lib/supabase/server</code> in API routes, <code>@/lib/supabase/client</code> in browser.
+</div>
+
+<hr>
+
+<h2 id="validation">Validation Loop</h2>
+
+<div class="card">
+  <h4>Level 1: After Each File</h4>
+  <pre><code>cd frontend && npx tsc --noEmit && npm run lint</code></pre>
+</div>
+
+<div class="card">
+  <h4>Level 2: After Migration</h4>
+  <pre><code>npm run db:types
+grep -c "drawing" src/types/database.types.ts  # Expect 50+</code></pre>
+</div>
+
+<div class="card">
+  <h4>Level 3: Integration</h4>
+  <pre><code>rm -rf .next && npm run dev
+# Wait for "Ready", then test pages load</code></pre>
+</div>
+
+<div class="card">
+  <h4>Level 4: E2E</h4>
+  <pre><code>npx playwright test tests/e2e/drawings.spec.ts --headed</code></pre>
+</div>
+
+<hr>
+
+<h2 id="procore">Procore Crawl Reference</h2>
+
+<h3>Procore UI Actions (25 discovered)</h3>
+<table>
+  <tr><th>Action</th><th>Type</th><th>Command Key</th></tr>
+  <tr><td>Upload</td><td>button</td><td><code>upload</code></td></tr>
+  <tr><td>Add Drawing Area</td><td>button</td><td><code>add_drawing_area</code></td></tr>
+  <tr><td>Export</td><td>button</td><td><code>export</code></td></tr>
+  <tr><td>Filter</td><td>div</td><td><code>filter</code></td></tr>
+  <tr><td>Search</td><td>div</td><td><code>search</code></td></tr>
+  <tr><td>Download</td><td>div</td><td><code>download</code></td></tr>
+  <tr><td>Markup</td><td>div</td><td><code>markup</code></td></tr>
+  <tr><td>Info</td><td>div</td><td><code>info</code></td></tr>
+  <tr><td>Edit</td><td>dropdown</td><td><code>edit</code></td></tr>
+  <tr><td>Delete</td><td>dropdown</td><td><code>delete</code></td></tr>
+  <tr><td>CSV Export</td><td>dropdown</td><td><code>csv</code></td></tr>
+  <tr><td>PDF Export</td><td>dropdown</td><td><code>pdf</code></td></tr>
+  <tr><td>Reports</td><td>button</td><td><code>reports</code></td></tr>
+  <tr><td>Sketches</td><td>dropdown</td><td><code>sketches</code></td></tr>
+  <tr><td>QR Code</td><td>tab</td><td>tab</td></tr>
+</table>
+
+<h3>Procore Table Columns</h3>
+<table>
+  <tr><th>Column</th><th>DB Column</th><th>Type</th></tr>
+  <tr><td>Drawing No.</td><td>drawing_number</td><td>text</td></tr>
+  <tr><td>Drawing Title</td><td>title</td><td>text</td></tr>
+  <tr><td>Discipline</td><td>discipline</td><td>text</td></tr>
+  <tr><td>Revision</td><td>revision_number</td><td>text</td></tr>
+  <tr><td>Set</td><td>set_name (via view)</td><td>text</td></tr>
+  <tr><td>Drawing Date</td><td>drawing_date</td><td>date</td></tr>
+  <tr><td>Received Date</td><td>received_date</td><td>date</td></tr>
+  <tr><td>Status</td><td>status</td><td>text</td></tr>
+</table>
+
+<h3>Crawl Data Location</h3>
+<pre><code>PRPs/pm-tools/drawings/crawl-drawings/
+  spec/COMMANDS.md     - 25 UI actions
+  spec/FORMS.md        - Upload/edit form fields
+  spec/schema.sql      - Inferred schema
+  spec/MUTATIONS.md    - Behavior specs
+  pages/               - Screenshots per page</code></pre>
+
+<hr>
+
+<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">
+  Generated 2026-02-02 | PRP: <code>PRPs/drawings/prp-drawings.md</code> | Tasks: <code>PRPs/drawings/TASKS.md</code>
+</p>
+
+</body>
+</html>

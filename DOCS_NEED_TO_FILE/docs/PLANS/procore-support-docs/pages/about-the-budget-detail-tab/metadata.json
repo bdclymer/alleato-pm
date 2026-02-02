@@ -1,0 +1,141 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/about-the-budget-detail-tab/",
+  "pageName": "about-the-budget-detail-tab",
+  "category": "tutorial",
+  "pageId": "about-the-budget-detail-tab",
+  "timestamp": "2025-12-29T16:37:01.626Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 10,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 2,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 1,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "About the Budget Detail Tab",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 71,
+      "sections": 4
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Name",
+          "Column Type",
+          "Column Format",
+          "Description"
+        ],
+        "rows": 12,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "About the Budget Detail Tab",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/about-the-budget-detail-tab/"
+      }
+    ],
+    "title": "About the Budget Detail Tab",
+    "h1": "About the Budget Detail Tab",
+    "metaDescription": "This tutorial details the columns in the Budget Detail tab of the Project level Budget Tool."
+  },
+  "links": 6,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget",
+      "text": "Apply Group Options to Organize Your Data",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "budget change",
+      "classes": "",
+      "id": null,
+      "index": 59,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-the-view-group-and-filter-options-on-the-budget-detail-tab",
+      "text": "Apply the View, Group, and Filter Options on the Budget Detail Tab",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 60,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-the-view-snapshot-group-and-filter-options-on-a-budget-view",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-change-detail-for-a-budget-line-item",
+      "text": "View Budget Change Detail for a Budget Line Item",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 62,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/about-the-budget-detail-tab/screenshot.png"
+}

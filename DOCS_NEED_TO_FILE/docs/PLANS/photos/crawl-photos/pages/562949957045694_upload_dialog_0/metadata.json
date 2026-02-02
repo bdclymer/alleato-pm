@@ -1,0 +1,18 @@
+{
+  "parentPage": "562949957045694",
+  "parentUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957045694",
+  "buttonText": "Upload",
+  "dialogIndex": 0,
+  "formFields": [],
+  "uploadFeatures": {
+    "hasDropZone": true,
+    "hasFileInput": true,
+    "hasAlbumSelector": true,
+    "hasTitleField": false,
+    "hasDescriptionField": false,
+    "hasDateField": true,
+    "hasLocationField": false,
+    "hasTagsField": false
+  },
+  "timestamp": "2026-01-12T16:05:46.334Z"
+}

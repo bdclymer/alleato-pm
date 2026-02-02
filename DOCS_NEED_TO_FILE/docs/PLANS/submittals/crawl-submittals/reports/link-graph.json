@@ -1,0 +1,86 @@
+{
+  "totalPages": 7,
+  "totalLinks": 37,
+  "totalClickables": 47,
+  "pages": [
+    {
+      "name": "submittals-list-view-filtered",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals?view=list&serializer_view=minimal_list&filters%5Bball_in_court_id%5D%5B%5D=12808642&sort%5Battribute%5D=number&sort%5Bdirection%5D=desc&per_page=150&page=1",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=general",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "submittals-list-view",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals?view=list",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=general",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "submittals-settings-general",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=general",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "submittals-settings-workflow",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=workflow",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "submittals-settings-custom-fields",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=custom_fields",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "submittals-configure",
+      "url": "https://us02.procore.com/562949954728542/project/submittals/configure",
+      "outgoingLinks": [
+        "mailto:support@procore.com"
+      ]
+    },
+    {
+      "name": "submittals-create-new",
+      "url": "https://us02.procore.com/562949954728542/project/submittals/new",
+      "outgoingLinks": [
+        "mailto:support@procore.com"
+      ]
+    }
+  ]
+}

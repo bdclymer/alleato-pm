@@ -1,0 +1,667 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/calendar/all",
+  "pageName": "calendar_all",
+  "category": "schedule",
+  "pageId": "calendar_all",
+  "timestamp": "2026-01-11T08:37:03.577Z",
+  "analysis": {
+    "components": {
+      "buttons": 16,
+      "forms": 0,
+      "inputs": 23,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 45,
+      "calendar": 3,
+      "gantt": 0,
+      "timeline": 0,
+      "tasks": 48,
+      "events": 0,
+      "datePicker": 0
+    },
+    "tables": [],
+    "calendarElements": [
+      {
+        "index": 1,
+        "classes": "calendar-scope",
+        "id": null,
+        "childCount": 33
+      },
+      {
+        "index": 2,
+        "classes": {},
+        "id": null,
+        "childCount": 7
+      },
+      {
+        "index": 3,
+        "classes": {},
+        "id": null,
+        "childCount": 7
+      }
+    ],
+    "title": "Schedule • Goodwill Bart",
+    "h1": "Schedule"
+  },
+  "links": 11,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0,
+      "isScheduleRelated": false
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1,
+      "isScheduleRelated": false
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2,
+      "isScheduleRelated": false
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/schedule",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3,
+      "isScheduleRelated": true
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/calendar/settings/general",
+      "text": "",
+      "classes": "",
+      "id": "configure_tab-link",
+      "index": 4,
+      "isScheduleRelated": true
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/calendar/month",
+      "text": "Calendar",
+      "classes": "",
+      "id": "month-link",
+      "index": 6,
+      "isScheduleRelated": true
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/calendar",
+      "text": "Gantt",
+      "classes": "",
+      "id": "gantt_chart-link",
+      "index": 7,
+      "isScheduleRelated": true
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/calendar/lookaheads",
+      "text": "Lookaheads",
+      "classes": "",
+      "id": "lookaheads-link",
+      "index": 8,
+      "isScheduleRelated": true
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 9,
+      "isScheduleRelated": false
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 10,
+      "isScheduleRelated": false
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 11,
+      "isScheduleRelated": false
+    }
+  ],
+  "clickables": 48,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_18_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_18_1__sc-17s58xs-2 StyledDropdownTab-core-12_18_1__sc-17s58xs-5 fenOvn fxfXAW hWIJCL",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_18_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_18_1__sc-17s58xs-2 StyledDropdownTab-core-12_18_1__sc-17s58xs-5 fenOvn fxfXAW hWIJCL",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 gMCSzj StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 gMCSzj StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "New",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 ilHShg StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 ilHShg StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Clear All Filters",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Filters",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Configure",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Demo/Make-safe MEP",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Demo walls",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Demo flooring",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Framing new walls",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Complete underground plumbing",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Receive permit",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Demo 3 existing restrooms",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Underground plumbing Inspection",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Backfill and concrete pour-back plumbing trenches",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Framing restroom walls and remaining offices",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : In-wall Plumbing Rough-In",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Floor leveling of pool and locker room area",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Framing of classrooms 110 & 111, conference room",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : In-wall electrical and FA Rough-In",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Rough Inspection- In-wall",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : HVAC Rough-In",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Sprinkler Rough-In",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Lighting Rough-In",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Receive doors, frames, hardware",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Pool foam and concrete infill",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Hang Drywall",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Demo flooring",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Finish drywall",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "Goodwill Excel Center- Bart : Door frame install",
+      "id": "ActionLink-dWSZLi hCmkHR",
+      "type": "span",
+      "classes": "ActionLink-dWSZLi hCmkHR",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "1",
+      "id": "react-aria3137103464-73",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 cAvWuT",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "hasDropdown": false,
+      "index": 41
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "hasDropdown": false,
+      "index": 42
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 43
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 44
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 45
+    },
+    {
+      "text": "",
+      "id": "ag-button ag-paging-button",
+      "type": "div",
+      "classes": "ag-button ag-paging-button",
+      "hasDropdown": false,
+      "index": 46
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG",
+      "type": "button",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG",
+      "hasDropdown": false,
+      "index": 47
+    }
+  ],
+  "dropdowns": 5,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_18_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_18_1__sc-17s58xs-2 StyledDropdownTab-core-12_18_1__sc-17s58xs-5 fenOvn fxfXAW hWIJCL",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 gMCSzj StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "New",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 ilHShg StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "1",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 cAvWuT",
+      "id": "react-aria3137103464-73",
+      "hasMenu": false,
+      "index": 4
+    }
+  ],
+  "calendarInteractions": 16,
+  "calendarInteractionDetails": [
+    {
+      "text": "SearchCmdK",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "ariaLabel": null,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "ariaLabel": null,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_18_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_18_1__sc-17s58xs-2 StyledDropdownTab-core-12_18_1__sc-17s58xs-5 fenOvn fxfXAW hWIJCL",
+      "ariaLabel": null,
+      "index": 2
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 gMCSzj StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "ariaLabel": "Export",
+      "index": 3
+    },
+    {
+      "text": "New",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 ilHShg StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 iRKmFM",
+      "ariaLabel": "New",
+      "index": 4
+    },
+    {
+      "text": "Go back",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "ariaLabel": "Go back",
+      "index": 5
+    },
+    {
+      "text": "Clear All Filters",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "ariaLabel": null,
+      "index": 6
+    },
+    {
+      "text": "Close",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz",
+      "ariaLabel": "Close",
+      "index": 7
+    },
+    {
+      "text": "Delete field",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "ariaLabel": "Delete field",
+      "index": 8
+    },
+    {
+      "text": "Delete field",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG StyledSelectClearIcon-core-12_18_1__sc-mr8gwe-5 gNStHP",
+      "ariaLabel": "Delete field",
+      "index": 9
+    },
+    {
+      "text": "Filters",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "ariaLabel": null,
+      "index": 10
+    },
+    {
+      "text": "Configure",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 frOdHz StyledToggleButton-core-12_18_1__sc-1x59fxi-0",
+      "ariaLabel": null,
+      "index": 11
+    },
+    {
+      "text": "1",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledDropdownButton-core-12_18_1__sc-ufsy2q-2 cAvWuT",
+      "ariaLabel": null,
+      "index": 12
+    },
+    {
+      "text": "Previous page",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "ariaLabel": "Previous page",
+      "index": 13
+    },
+    {
+      "text": "Next page",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 cxkjKD StyledButton-core-12_18_1__sc-fy34i1-3 jTJXr",
+      "ariaLabel": "Next page",
+      "index": 14
+    },
+    {
+      "text": "Remove the date",
+      "classes": "StyledButton-core-12_18_1__sc-c5bhwh-3 fVAERG",
+      "ariaLabel": "Remove the date",
+      "index": 15
+    }
+  ],
+  "screenshotPath": "pages/calendar_all/screenshot.png"
+}

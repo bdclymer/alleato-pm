@@ -1,0 +1,560 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/rfis/562949957101832/edit",
+  "pageName": "edit",
+  "category": "rfis",
+  "pageId": "edit",
+  "timestamp": "2026-01-11T07:06:08.547Z",
+  "analysis": {
+    "components": {
+      "buttons": 28,
+      "forms": 1,
+      "inputs": 9,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 77,
+      "statusBadges": 0,
+      "dateFields": 0,
+      "fileAttachments": 0
+    },
+    "tables": [],
+    "rfiElements": {
+      "rfiNumbers": 0,
+      "questionFields": 0,
+      "answerFields": 0,
+      "assigneeFields": 0,
+      "dueDateFields": 0,
+      "statusSelects": 0,
+      "priorityFields": 0,
+      "responsibleParty": 0,
+      "costImpact": 0,
+      "scheduleImpact": 0,
+      "drawings": 1,
+      "specifications": 0
+    },
+    "title": "RFIs • Goodwill Bart",
+    "h1": "RFI #1: Roof Drain"
+  },
+  "links": 18,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/rfi/tutorials/edit-an-rfi",
+      "text": "Help",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/rfis",
+      "text": "RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 4
+    },
+    {
+      "href": "https://storage.procore.com/api/v5/files/us-east-1/pro-core.com/companies/523344359949265/01JFJMGAXQ4988BG75AH421N5Y?companyId=562949953443325&projectId=562949954728542&sig=b21704a944045d34099bdddf5d9836d55dbe4abdaaeed87ccadd05ed7ecf6688",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/document-viewer/prostore/562950985059716?item_type=Rfi%3A%3AQuestion&item_id=562949957101360&parent_id=562949957101832&fullscreen=true",
+      "text": "P201_ FLOOR PLAN SAN. AND VENT PIPING RFI #01 Move Exist RWL.pdf",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz sc-faUjhM fIEaiR",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 6
+    },
+    {
+      "href": "https://storage.procore.com/api/v5/files/us-east-1/pro-core.com/companies/523344359949265/01JFJEE5CTPGDW02A1PR514TWH?companyId=562949953443325&projectId=562949954728542&sig=00cb95f0235ad2558854be63836a142bdbb5efb02d72fd295eae30ae1944650e",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/document-viewer/prostore/562950984834103?item_type=Rfi%3A%3AQuestion&item_id=562949957101360&parent_id=562949957101832&fullscreen=true",
+      "text": "8D6E3156-8073-43F1-AF68-CE099E5669E9.jpeg",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz sc-faUjhM fIEaiR",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 8
+    },
+    {
+      "href": "https://storage.procore.com/api/v5/files/us-east-1/pro-core.com/companies/523344359949265/01JFJEE5AAZAFYDXF6MX4GFP11?companyId=562949953443325&projectId=562949954728542&sig=67bff559b5b2d0d546fde59e041c28f72da33f7618ab3645a3d20f72732c437d",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/document-viewer/prostore/562950984834102?item_type=Rfi%3A%3AQuestion&item_id=562949957101360&parent_id=562949957101832&fullscreen=true",
+      "text": "2C6A647D-1D72-48CA-A752-DB1032CC9C42.jpeg",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz sc-faUjhM fIEaiR",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 10
+    },
+    {
+      "href": "https://storage.procore.com/api/v5/files/us-east-1/pro-core.com/companies/523344359949265/01JFJEE59TSDBCXJMRHT6A2MN8?companyId=562949953443325&projectId=562949954728542&sig=52ec180e645c40cad2df1e58a0cba8387f4c41fb9338d597f60e13f163d36444",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/document-viewer/prostore/562950984834096?item_type=Rfi%3A%3AQuestion&item_id=562949957101360&parent_id=562949957101832&fullscreen=true",
+      "text": "3F857E06-90A4-42DD-B6E8-B753D491A9B0.jpeg",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz sc-faUjhM fIEaiR",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_events/events/562949956030597",
+      "text": "CE #009 - RFI #1: Roof Drain",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/drawing_log/show/562950056902101",
+      "text": "P201",
+      "classes": "StyledLink-core-12_32_0__sc-jfowrl-0 iGIYHz",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 14
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 15
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 16
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 17
+    }
+  ],
+  "clickables": 42,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Conversations",
+      "id": "StyledBox-core-12_29_0__sc-fgsy0p-0 fOvsLT DockAppButton-kkaxzl cqrwb",
+      "type": "div",
+      "classes": "StyledBox-core-12_29_0__sc-fgsy0p-0 fOvsLT DockAppButton-kkaxzl cqrwb",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Download All",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 kmUpAS",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 kmUpAS",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_32_0__sc-c5bhwh-4 iwlElg",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Nick Jepson",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "react-aria5064638064-:r8p:",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledRemove-core-12_32_0__sc-zqi94b-1 foIjrb",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "id": "react-aria5064638064-:r31:",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledRemove-core-12_32_0__sc-zqi94b-1 foIjrb",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "react-aria5064638064-:r38:",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledRemove-core-12_32_0__sc-zqi94b-1 foIjrb",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "",
+      "id": "react-aria5064638064-:r3f:",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledRemove-core-12_32_0__sc-zqi94b-1 foIjrb",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "",
+      "id": "react-aria5064638064-:r3m:",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledRemove-core-12_32_0__sc-zqi94b-1 foIjrb",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn sc-kMribo kcHLYw",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn sc-kMribo kcHLYw",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "McCurdy Mechanical Corporation",
+      "id": "responsible_contractor",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Select a Specification",
+      "id": "specification_section",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Select a Location",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 laaESu sc-kqGoIF loNqcp StyledLocationsPickerField-zSyUt EuYav",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 laaESu sc-kqGoIF loNqcp StyledLocationsPickerField-zSyUt EuYav",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "Select a subjob",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "Select a cost code",
+      "id": "cost_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 gtA-dtA",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "TBD",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "Yes (Unknown)",
+      "id": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_32_0__sc-mr8gwe-6 tWcoh",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dINEUn StyledSelectClearIcon-core-12_32_0__sc-mr8gwe-5 jPNuIg",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "Save Changes",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 dVxCJp",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 dVxCJp",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hhAsdi",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "Attach",
+      "id": "StyledButton-core-12_32_0__sc-c5bhwh-3 hMEdyB",
+      "type": "button",
+      "classes": "StyledButton-core-12_32_0__sc-c5bhwh-3 hMEdyB",
+      "hasDropdown": false,
+      "index": 41
+    }
+  ],
+  "dropdowns": 4,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Select a person",
+      "classes": "StyledTrigger-core-12_32_0__sc-1uf5708-30 hopSep",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Nick Jepson (Alleato Group)",
+      "classes": "StyledTrigger-core-12_32_0__sc-1uf5708-30 hYkYJP",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Alex Huettl (Alleato Group)Andrew Cannon (Alleato ",
+      "classes": "StyledTrigger-core-12_32_0__sc-1uf5708-30 hYkYJP",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    }
+  ],
+  "screenshotPath": "pages/edit/screenshot.png"
+}

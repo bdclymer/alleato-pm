@@ -1,0 +1,179 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/list",
+  "pageName": "list",
+  "category": "punch-list",
+  "pageId": "list",
+  "timestamp": "2026-01-11T08:41:47.959Z",
+  "analysis": {
+    "components": {
+      "buttons": 6,
+      "forms": 0,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 23,
+      "statusBadges": 0,
+      "checkboxes": 0,
+      "images": 2,
+      "thumbnails": 0
+    },
+    "tables": [],
+    "punchItems": [],
+    "statusFilters": [
+      {
+        "text": "Add FilterAssigneeAssignee CompanyAssignee Respons",
+        "classes": "StyledBox-core-12_20_3__sc-fgsy0p-0 iudHhV list_list-page__search-filters__2hJ-b"
+      },
+      {
+        "text": "Add FilterAssigneeAssignee CompanyAssignee Respons",
+        "classes": "StyledBox-core-12_20_3__sc-fgsy0p-0 iudHhV list_list-page__filters__DYXCS"
+      },
+      {
+        "text": "Add FilterAssigneeAssignee CompanyAssignee Respons",
+        "classes": "z_2U9-QHByb SQHaD-QHByb filterOverrides_tokenContainer__caJqR"
+      },
+      {
+        "text": "AssigneeAssignee CompanyAssignee ResponseBall In C",
+        "classes": "C9vYj-QHByb MFOQR-QHByb filterOverrides_tokenBody__mdAva"
+      }
+    ],
+    "title": "Punch List • Goodwill Bart",
+    "h1": "Punch List"
+  },
+  "links": 6,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/punch_list/configure_tab",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_20_3__sc-c5bhwh-4 jMlUSl",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/punch_list/new",
+      "text": "Create",
+      "classes": "StyledLinkButton-core-12_20_3__sc-c5bhwh-4 iTbBPW",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/my_items_list",
+      "text": "My Items (0)",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/recycle_bin_list",
+      "text": "Recycle Bin (0)",
+      "classes": "",
+      "id": null,
+      "index": 7
+    }
+  ],
+  "clickables": 7,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr StyledDropdownButton-core-12_20_3__sc-ufsy2q-2 eFmztM",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr StyledDropdownButton-core-12_20_3__sc-ufsy2q-2 eFmztM",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Create",
+      "id": "StyledLinkButton-core-12_20_3__sc-c5bhwh-4 iTbBPW",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_20_3__sc-c5bhwh-4 iTbBPW",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu eZvjhH",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu eZvjhH",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledButton-core-12_20_3__sc-3j8khv-1 StyledSearchButton-core-12_20_3__sc-3j8khv-2 fvqwa ceTclY",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledButton-core-12_20_3__sc-3j8khv-1 StyledSearchButton-core-12_20_3__sc-3j8khv-2 fvqwa ceTclY",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Add Filter",
+      "id": "B0zT5-QHByb",
+      "type": "button",
+      "classes": "B0zT5-QHByb",
+      "hasDropdown": false,
+      "index": 6
+    }
+  ],
+  "dropdowns": 3,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr StyledDropdownButton-core-12_20_3__sc-ufsy2q-2 eFmztM",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu eZvjhH",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "screenshotPath": "pages/list/screenshot.png"
+}

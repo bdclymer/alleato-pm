@@ -1,0 +1,365 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/communications?view=received",
+  "pageName": "communications_received",
+  "category": "emails",
+  "pageId": "communications_received",
+  "timestamp": "2026-01-12T16:03:24.556Z",
+  "analysis": {
+    "components": {
+      "buttons": 4,
+      "forms": 1,
+      "inputs": 5,
+      "tables": 4,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 3,
+      "tabs": 0,
+      "dropdowns": 1,
+      "icons": 12,
+      "emailList": 5,
+      "attachments": 3,
+      "recipients": 24,
+      "threads": 9,
+      "compose": 6
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [],
+        "rows": 0,
+        "classes": "",
+        "id": "left_pane_comms"
+      },
+      {
+        "index": 2,
+        "headers": [
+          "From:",
+          "Sent:",
+          "To:",
+          "CC:",
+          "Subject:",
+          "Attachments:",
+          ""
+        ],
+        "rows": 8,
+        "classes": "threads_table",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "From:",
+          "Sent:",
+          "To:",
+          "CC:",
+          "Subject:",
+          "Attachments:",
+          ""
+        ],
+        "rows": 7,
+        "classes": "email_info",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [],
+        "rows": 1,
+        "classes": "communication_tags",
+        "id": null
+      }
+    ],
+    "emailElements": {
+      "subjects": [
+        "Fw: Goodwill electrical room",
+        "Fw: Goodwill electrical room\n    01/20/25 at 02:05 pm",
+        "Fw: Goodwill electrical room"
+      ],
+      "senders": [
+        "Nick Jepson"
+      ],
+      "dates": [
+        "01/20/25 02:05 pm",
+        "01/20/25 at 02:05 pm",
+        ""
+      ]
+    },
+    "title": "Emails • Goodwill Bart",
+    "h1": "Emails"
+  },
+  "links": 24,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/emails",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/configure_tab",
+      "text": "",
+      "classes": "config-container powertip",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=inbox",
+      "text": "Inbox (1)",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=archive",
+      "text": "Archive (0)",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=all",
+      "text": "All (1)",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=spam",
+      "text": "Spam (0)",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=recycle_bin",
+      "text": "Recycle Bin (0)",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949976407783/new_inline_reply?locale=en",
+      "text": "Reply All",
+      "classes": "thread_reply_button push-btn",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949976407783/toggle_private",
+      "text": "Make Private",
+      "classes": "thread_private_button push-btn",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949976407783/toggle_open",
+      "text": "Archive",
+      "classes": "push-btn",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949976407783/toggle_hidden",
+      "text": "Recycle",
+      "classes": "push-btn",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_events/events/new?origin_global_id=Z2lkOi8vcHJvY29yZS9Db21tdW5pY2F0aW9uVGhyZWFkLzU2Mjk0OTk3NzM4MDU4OQ",
+      "text": "Create Change Event",
+      "classes": "push-btn",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949976407783/view_ecrion_pdf",
+      "text": "PDF",
+      "classes": " bttn bttn-primary-outline",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949977380589/forward",
+      "text": "Forward",
+      "classes": "push-btn",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/562949977380589/mark_thread_as_spam?is_spam=true",
+      "text": "Mark as Spam",
+      "classes": "push-btn",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://storage.procore.com/api/v5/files/us-east-1/pro-core.com/prostore/562949953443325/20250120190555_production-us02_8532a69659c0850e1a9925ad3a1ddd0ff3d6?companyId=562949953443325&projectId=562949954728542&sig=bf504c0dda18caa0dcfeb98eef4acaf675e556a8d23ef9fee70a702a84a4af36",
+      "text": "image0.jpeg",
+      "classes": "",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communication/new",
+      "text": "Create Email",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/fancybox_add_tag",
+      "text": "Create Tag",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": "ajax_fancybox_tag_create",
+      "index": 21
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 26
+    }
+  ],
+  "clickables": 6,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Clear",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Search",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 5
+    }
+  ],
+  "dropdowns": 7,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n             ",
+      "classes": "dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 2
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n             ",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 3
+    },
+    {
+      "text": "Export",
+      "classes": "dropdown-toggle export ",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "PDF",
+      "classes": "wrench-dropdown export-dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 5
+    },
+    {
+      "text": "PDF",
+      "classes": "wrench-dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 6
+    }
+  ],
+  "screenshotPath": "pages/communications_received/screenshot.png"
+}

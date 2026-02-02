@@ -1,0 +1,32 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/change_orders/562949955898890/view_change_order_package_pdf",
+  "pageName": "view_change_order_package_pdf",
+  "category": "change-orders",
+  "pageId": "view_change_order_package_pdf",
+  "timestamp": "2025-12-30T01:03:40.693Z",
+  "analysis": {
+    "components": {
+      "buttons": 0,
+      "forms": 0,
+      "inputs": 0,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 0,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 0
+    },
+    "tables": [],
+    "title": "",
+    "h1": null
+  },
+  "links": 0,
+  "linkDetails": [],
+  "clickables": 0,
+  "clickableDetails": [],
+  "dropdowns": 0,
+  "dropdownDetails": [],
+  "screenshotPath": "pages/view_change_order_package_pdf/screenshot.png"
+}

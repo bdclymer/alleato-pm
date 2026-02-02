@@ -1,0 +1,434 @@
+{
+  "url": "https://community.procore.com/s/global-search/email",
+  "pageName": "email",
+  "category": "emails",
+  "pageId": "email",
+  "timestamp": "2026-01-12T16:06:16.371Z",
+  "analysis": {
+    "components": {
+      "buttons": 23,
+      "forms": 0,
+      "inputs": 9,
+      "tables": 0,
+      "modals": 3,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 6,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 4,
+      "emailList": 0,
+      "attachments": 3,
+      "recipients": 44,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": []
+    },
+    "title": "Search Results | email",
+    "h1": "Search Results"
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://community.procore.com/s/global-search/email?nocache=https%3A%2F%2Fcommunity.procore.com%2Fs%2Fglobal-search%2Femail",
+      "text": "Refresh",
+      "classes": "",
+      "id": "auraErrorReload",
+      "index": 1
+    },
+    {
+      "href": "https://community.procore.com/s/",
+      "text": "Home",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn comm-navigation__home-link",
+      "id": "0",
+      "index": 4
+    },
+    {
+      "href": "https://community.procore.com/s/topiccatalog",
+      "text": "Forums",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "1",
+      "index": 5
+    },
+    {
+      "href": "https://community.procore.com/s/group/CollaborationGroup/00B80000008bbPCEAY",
+      "text": "Groups",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "2",
+      "index": 6
+    },
+    {
+      "href": "https://meetups.procore.com/",
+      "text": "Meetups & Events",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "3",
+      "index": 7
+    },
+    {
+      "href": "http://support.procore.com/",
+      "text": "Support",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "4",
+      "index": 8
+    },
+    {
+      "href": "https://www.procore.com/legal/cookie-notice",
+      "text": "Cookie Notice",
+      "classes": "ot-cookie-policy-link",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://www.procore.com/legal/cookie-notice",
+      "text": "More information",
+      "classes": "privacy-notice-link",
+      "id": null,
+      "index": 21
+    }
+  ],
+  "clickables": 25,
+  "clickableDetails": [
+    {
+      "text": "×",
+      "id": "dismissError",
+      "type": "a",
+      "classes": "close",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "Refresh",
+      "id": "auraErrorReload",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Resources",
+      "id": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "type": "button",
+      "classes": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "hasDropdown": true,
+      "index": 2
+    },
+    {
+      "text": "More",
+      "id": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "type": "button",
+      "classes": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "hasDropdown": true,
+      "index": 3
+    },
+    {
+      "text": "Expand search",
+      "id": "slds-button slds-button_icon search-triggerButton js-search-triggerButton slds-button_icon-bare",
+      "type": "button",
+      "classes": "slds-button slds-button_icon search-triggerButton js-search-triggerButton slds-button_icon-bare",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Search",
+      "id": "slds-button slds-button_icon search-inputSearchButton search-inputSearchButton--left slds-button_icon-border",
+      "type": "button",
+      "classes": "slds-button slds-button_icon search-inputSearchButton search-inputSearchButton--left slds-button_icon-border",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Search",
+      "id": "slds-button slds-button_icon search-deflectionItemSearchIcon slds-button_icon-border",
+      "type": "button",
+      "classes": "slds-button slds-button_icon search-deflectionItemSearchIcon slds-button_icon-border",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Close search",
+      "id": "slds-button slds-button_icon search-triggercloseButton js-search-triggercloseButton slds-button_icon-bare slds-button_icon-inverse",
+      "type": "button",
+      "classes": "slds-button slds-button_icon search-triggercloseButton js-search-triggercloseButton slds-button_icon-bare slds-button_icon-inverse",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Collapse List",
+      "id": "slds-button navExpandToggle qe-searchNavExpandToggle slds-button_reset slds-text-link slds-nav-vertical__action slds-nav-vertical__action_overflow",
+      "type": "button",
+      "classes": "slds-button navExpandToggle qe-searchNavExpandToggle slds-button_reset slds-text-link slds-nav-vertical__action slds-nav-vertical__action_overflow",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Accept All Cookies",
+      "id": "onetrust-accept-btn-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Disable All",
+      "id": "onetrust-reject-all-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Cookies Settings",
+      "id": "onetrust-pc-btn-handler",
+      "type": "button",
+      "classes": "cookie-setting-link",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "id": "close-pc-btn-handler",
+      "type": "button",
+      "classes": "ot-close-icon",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Allow All",
+      "id": "accept-recommended-btn-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Back Button",
+      "id": "ot-link-btn back-btn-handler",
+      "type": "button",
+      "classes": "ot-link-btn back-btn-handler",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Filter Icon",
+      "id": "filter-btn-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Clear",
+      "id": "clear-filters-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Apply",
+      "id": "filter-apply-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Cancel",
+      "id": "filter-cancel-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "Disable all",
+      "id": "ot-pc-refuse-all-handler",
+      "type": "button",
+      "classes": "ot-pc-refuse-all-handler",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Confirm My Choices",
+      "id": "save-preference-btn-handler onetrust-close-btn-handler",
+      "type": "button",
+      "classes": "save-preference-btn-handler onetrust-close-btn-handler",
+      "hasDropdown": false,
+      "index": 24
+    }
+  ],
+  "dropdowns": 19,
+  "dropdownDetails": [
+    {
+      "text": "Home",
+      "classes": "mainNavItem comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Home",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn comm-navigation__home-link",
+      "id": "0",
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Forums",
+      "classes": "mainNavItem comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Forums",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "1",
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "Groups",
+      "classes": "mainNavItem comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "Groups",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "2",
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "Meetups & Events",
+      "classes": "mainNavItem comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "Meetups & Events",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "3",
+      "hasMenu": false,
+      "index": 7
+    },
+    {
+      "text": "Support",
+      "classes": "mainNavItem comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 8
+    },
+    {
+      "text": "Support",
+      "classes": "comm-navigation__top-level-item-link js-top-level-menu-item linkBtn",
+      "id": "4",
+      "hasMenu": false,
+      "index": 9
+    },
+    {
+      "text": "Resources",
+      "classes": "comm-navigation__top-level-item comm-navigation__menu-item",
+      "id": null,
+      "hasMenu": true,
+      "index": 10
+    },
+    {
+      "text": "Resources",
+      "classes": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "id": null,
+      "hasMenu": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "classes": "slds-icon-utility-chevrondown comm-navigation__sub-menu-trigger-icon slds-icon_container",
+      "id": null,
+      "hasMenu": false,
+      "index": 12
+    },
+    {
+      "text": "More",
+      "classes": "comm-navigation__top-level-item comm-navigation__menu-item comm-hide",
+      "id": null,
+      "hasMenu": true,
+      "index": 13
+    },
+    {
+      "text": "More",
+      "classes": "comm-navigation__top-level-item-link comm-navigation__sub-menu-trigger js-top-level-menu-item linkBtn",
+      "id": null,
+      "hasMenu": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "classes": "slds-icon-utility-chevrondown comm-navigation__sub-menu-trigger-icon slds-icon_container",
+      "id": null,
+      "hasMenu": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "classes": "search-input search-input--left",
+      "id": "272:0-input",
+      "hasMenu": false,
+      "index": 16
+    },
+    {
+      "text": "Account Management",
+      "classes": "profile-menuListOverlay comm-hide forceCommunityThemeProfileMenu",
+      "id": null,
+      "hasMenu": false,
+      "index": 17
+    },
+    {
+      "text": "Filter Icon",
+      "classes": "",
+      "id": "filter-btn-handler",
+      "hasMenu": false,
+      "index": 18
+    }
+  ],
+  "screenshotPath": "pages/email/screenshot.png"
+}

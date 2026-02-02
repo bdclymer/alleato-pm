@@ -1,0 +1,254 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-the-budget-changes-feature-to-a-budget-view",
+  "pageName": "add-the-columns-for-the-budget-changes-feature-to-a-budget-view",
+  "category": "tutorial",
+  "pageId": "add-the-columns-for-the-budget-changes-feature-to-a-budget-view",
+  "timestamp": "2025-12-29T16:44:15.086Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 4,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 36,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 39,
+      "headings": {
+        "h1": 1,
+        "h2": 6,
+        "h3": 7,
+        "h4": 6
+      },
+      "codeBlocks": 0,
+      "images": 8,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Add the Columns for the 'Budget Changes' Feature to a Budget View",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 1: Add or Modify a Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 2: Add the Source Columns for the Budget Changes Feature",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 3: Modify the Calculated Columns for the Budget Changes Feature",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 4: Preview the Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Step 5: Assign the Budget View to Your Projects",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Next Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 148,
+      "sections": 9
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Steps from the Configure Columns window in the Company Admin tool…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Steps from the Configure Columns window in the Company Admin tool…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "Steps from the Configure Columns window in the Company Admin tool…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "Steps from the Configure Columns window in the Company Admin tool…",
+          "Settings"
+        ],
+        "rows": 1,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Add the Columns for the 'Budget Changes' Feature to a Budget View",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-the-budget-changes-feature-to-a-budget-view/"
+      }
+    ],
+    "title": "Add the Columns for the 'Budget Changes' Feature to a Budget View",
+    "h1": "Add the Columns for the 'Budget Changes' Feature to a Budget View",
+    "metaDescription": "How to add a 'Budget ROM' source column to a Procore budget view."
+  },
+  "links": 11,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/add-the-columns-for-the-budget-changes-feature-to-a-budget-view/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/about-budget-changes/",
+      "text": "new Budget Changes feature",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/about-budget-changes/common-questions",
+      "text": "Common Questions",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-an-internal-budget-change",
+      "text": "Create Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set Up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/edit-an-existing-budget-view",
+      "text": "Edit an Existing Budget View",
+      "classes": "",
+      "id": null,
+      "index": 59,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-budget-view-for-custom-reporting",
+      "text": "Set Up a Budget View for Custom Reporting",
+      "classes": "",
+      "id": null,
+      "index": 60,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/about-the-procore-standard-budget-view",
+      "text": "Procore Standard Budget",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-budget-rom-column-in-procores-budget-tool",
+      "text": "What is the 'Budget ROM' column in Procore's Budget tool?",
+      "classes": "",
+      "id": null,
+      "index": 64,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/change-events-project/tutorials/create-budget-changes-from-a-change-event",
+      "text": "Create Budget Changes from a Change Event",
+      "classes": "",
+      "id": null,
+      "index": 66,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-the-procore-labor-productivity-cost-budget-view",
+      "text": "Set Up the Procore Labor Productivity Cost Budget View",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 67,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/add-the-columns-for-the-budget-changes-feature-to-a-budget-view/screenshot.png"
+}

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { ProjectToolPage } from "@/components/layout/project-tool-page";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -520,14 +519,6 @@ export default function ProjectDrawingsPage() {
   );
   const uniqueSets = Array.from(new Set(drawings.map((drawing) => drawing.set)));
 
-  const drawingCount = enrichedDrawings.length;
-  const publishedCount = enrichedDrawings.filter(
-    (drawing) => drawing.status === "Published",
-  ).length;
-  const revisionTotal = drawingRevisions.filter((rev) =>
-    enrichedDrawings.find((drawing) => drawing.id === rev.drawingId),
-  ).length;
-
   const handleClearFilters = () => {
     setSearchTerm("");
     setDisciplineFilter("all");
@@ -591,205 +582,157 @@ export default function ProjectDrawingsPage() {
     : "Drawing viewer";
 
   return (
-    <ProjectToolPage
-      title="Drawings"
-      description={`Project drawings and blueprints for project ${projectId}`}
-      actions={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
-            <FileUp className="h-4 w-4" />
-            Upload Drawings
-          </Button>
-          <Button asChild variant="outline" size="sm" className="gap-2">
-            <Link href={`/projects/${projectId}/drawings/board`}>
-              <Layers className="h-4 w-4" />
-              View board
-            </Link>
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                Reports
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Reports</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Drawing Log</DropdownMenuItem>
-              <DropdownMenuItem>Download Log</DropdownMenuItem>
-              <DropdownMenuItem>Open Items</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Export PDF</DropdownMenuItem>
-              <DropdownMenuItem>Export CSV</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      }
-    >
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4" data-testid="drawing-stats">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Drawings</CardDescription>
-              <CardTitle className="text-2xl">{drawingCount}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Across selected drawing area
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Published</CardDescription>
-              <CardTitle className="text-2xl">{publishedCount}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Ready for field teams
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Revisions</CardDescription>
-              <CardTitle className="text-2xl">{revisionTotal}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Tracked across drawings
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Sketches</CardDescription>
-              <CardTitle className="text-2xl">{sketches.length}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Attached to revisions
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-[280px,1fr]" data-testid="drawing-layout">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Layers className="h-4 w-4" /> Drawing Areas
-              </CardTitle>
-              <CardDescription>Organize drawings by area/folder</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[320px]">
-                <div className="space-y-3">
-                  {drawingAreas.map((area) => {
-                    const count = drawings.filter(
-                      (drawing) => drawing.areaId === area.id,
-                    ).length;
-                    const isActive = selectedArea === area.id;
-                    return (
-                      <button
-                        key={area.id}
-                        type="button"
-                        onClick={() => setSelectedArea(area.id)}
-                        className={`w-full rounded-lg border p-4 text-left transition hover:border-primary hover:shadow-sm ${
-                          isActive
-                            ? "border-primary bg-primary/5"
-                            : "border-border bg-background"
-                        }`}
-                        aria-pressed={isActive}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="font-semibold">{area.name}</div>
-                          <Badge variant={isActive ? "default" : "outline"}>
-                            {count}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {area.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="space-y-2">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="relative w-full lg:max-w-sm">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search drawings"
-                        value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
-                        className="pl-9"
-                        aria-label="Search drawings"
-                      />
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-                      Clear
-                    </Button>
+    <>
+      <ProjectPageHeader
+        title="Drawings"
+        description={`Project drawings and blueprints for project ${projectId}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <FileUp className="h-4 w-4" />
+              Upload Drawings
+            </Button>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link href={`/projects/${projectId}/drawings/board`}>
+                <Layers className="h-4 w-4" />
+                View board
+              </Link>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  Reports
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Reports</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Drawing Log</DropdownMenuItem>
+                <DropdownMenuItem>Download Log</DropdownMenuItem>
+                <DropdownMenuItem>Open Items</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Export PDF</DropdownMenuItem>
+                <DropdownMenuItem>Export CSV</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
+      />
+      <PageContainer>
+      <div className="space-y-3">
+        <div className="grid gap-4 lg:grid-cols-[220px,1fr]" data-testid="drawing-layout">
+          <div className="space-y-1.5" data-testid="drawing-areas">
+            <div className="flex items-center justify-between px-1 pb-1">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Drawing Areas</h3>
+            </div>
+            {drawingAreas.map((area) => {
+              const count = drawings.filter(
+                (drawing) => drawing.areaId === area.id,
+              ).length;
+              const isActive = selectedArea === area.id;
+              return (
+                <button
+                  key={area.id}
+                  type="button"
+                  onClick={() => setSelectedArea(area.id)}
+                  className={`w-full rounded-md border px-3 py-2 text-left text-sm transition hover:border-primary ${
+                    isActive
+                      ? "border-primary bg-primary/5"
+                      : "border-border bg-background"
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium truncate">{area.name}</span>
+                    <Badge variant={isActive ? "default" : "outline"} className="text-xs ml-2 shrink-0">
+                      {count}
+                    </Badge>
                   </div>
-                  <div className="flex gap-2">
-                    <Select
-                      value={disciplineFilter}
-                      onValueChange={setDisciplineFilter}
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                    {area.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="space-y-3">
+            <div className="rounded-lg border bg-card">
+              <div className="flex flex-col gap-2 p-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-1 items-center gap-2">
+                  <div className="relative w-full lg:max-w-sm">
+                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search drawings"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      className="pl-9 h-9"
+                      aria-label="Search drawings"
+                    />
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                    Clear
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Select
+                    value={disciplineFilter}
+                    onValueChange={setDisciplineFilter}
+                  >
+                    <SelectTrigger
+                      className="w-[160px] h-9"
+                      aria-label="Discipline filter"
                     >
-                      <SelectTrigger
-                        className="w-[160px]"
-                        aria-label="Discipline filter"
-                      >
-                        <SelectValue placeholder="Discipline" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All disciplines</SelectItem>
-                        {uniqueDisciplines.map((discipline) => (
-                          <SelectItem key={discipline} value={discipline}>
-                            {discipline}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger
-                        className="w-[140px]"
-                        aria-label="Status filter"
-                      >
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All statuses</SelectItem>
-                        <SelectItem value="Published">Published</SelectItem>
-                        <SelectItem value="Draft">Draft</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={setFilter} onValueChange={setSetFilter}>
-                      <SelectTrigger className="w-[170px]" aria-label="Set filter">
-                        <SelectValue placeholder="Drawing set" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All sets</SelectItem>
-                        {uniqueSets.map((setName) => (
-                          <SelectItem key={setName} value={setName}>
-                            {setName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <SelectValue placeholder="Discipline" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All disciplines</SelectItem>
+                      {uniqueDisciplines.map((discipline) => (
+                        <SelectItem key={discipline} value={discipline}>
+                          {discipline}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger
+                      className="w-[140px] h-9"
+                      aria-label="Status filter"
+                    >
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
+                      <SelectItem value="Published">Published</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={setFilter} onValueChange={setSetFilter}>
+                    <SelectTrigger className="w-[170px] h-9" aria-label="Set filter">
+                      <SelectValue placeholder="Drawing set" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All sets</SelectItem>
+                      {uniqueSets.map((setName) => (
+                        <SelectItem key={setName} value={setName}>
+                          {setName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardHeader>
-              <CardContent className="overflow-x-auto" data-testid="drawing-table">
+              </div>
+              <div className="overflow-x-auto" data-testid="drawing-table">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -879,8 +822,8 @@ export default function ProjectDrawingsPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {selectedDrawing && currentRevision ? (
               <Card data-testid="drawing-detail">
@@ -1423,6 +1366,7 @@ export default function ProjectDrawingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </ProjectToolPage>
+      </PageContainer>
+    </>
   );
 }

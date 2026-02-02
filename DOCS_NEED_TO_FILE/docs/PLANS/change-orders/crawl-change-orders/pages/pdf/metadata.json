@@ -1,0 +1,1899 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/change_orders/#pdf",
+  "pageName": "#pdf",
+  "category": "change-orders",
+  "pageId": "pdf",
+  "timestamp": "2025-12-30T01:04:59.443Z",
+  "analysis": {
+    "components": {
+      "buttons": 6,
+      "forms": 0,
+      "inputs": 2,
+      "tables": 2,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 140
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "",
+          "Contract",
+          "#",
+          "Revision",
+          "Title",
+          "Date Initiated",
+          "Contract Company",
+          "Designated Reviewer",
+          "Due Date",
+          "Review Date",
+          "Status",
+          "Amount",
+          "",
+          ""
+        ],
+        "rows": 48,
+        "classes": "sortable item_list",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "",
+          "Contract",
+          "#",
+          "Revision",
+          "Title",
+          "Date Initiated",
+          "Contract Company",
+          "Designated Reviewer",
+          "Due Date",
+          "Review Date",
+          "Status",
+          "Amount",
+          "",
+          ""
+        ],
+        "rows": 0,
+        "classes": "pc-sticky-header-wrapper sortable item_list",
+        "id": null
+      }
+    ],
+    "title": "Change Orders • Goodwill Bart",
+    "h1": "Change Orders: Commitments (48)"
+  },
+  "links": 249,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/change-orders",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/configure_tab",
+      "text": "",
+      "classes": "styles_cogLink__3_UE1 no_print",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/list?tab=prime",
+      "text": "Prime Contract",
+      "classes": "styles_tab_link__1yNof",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956495846&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956495846&subtab=commitments",
+      "text": "014",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956495846&subtab=commitments",
+      "text": "Door Hardware Install",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956495846/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956448351&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956448351&subtab=commitments",
+      "text": "013",
+      "classes": "",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956448351&subtab=commitments",
+      "text": "CE #029 - Trade Damage",
+      "classes": "",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956448351/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445515&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445515&subtab=commitments",
+      "text": "012",
+      "classes": "",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445515&subtab=commitments",
+      "text": "CE #028 - Broken Glass",
+      "classes": "",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956445515/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445137&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 21
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 22
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445137&subtab=commitments",
+      "text": "011",
+      "classes": "",
+      "id": null,
+      "index": 23
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956445137&subtab=commitments",
+      "text": "CE #016 - Transom Windows",
+      "classes": "",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956445137/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956300783&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 26
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 27
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956300783&subtab=commitments",
+      "text": "010",
+      "classes": "",
+      "id": null,
+      "index": 28
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956300783&subtab=commitments",
+      "text": "CE #024 - Extend Walls to Deck",
+      "classes": "",
+      "id": null,
+      "index": 29
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956300783/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 30
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232592&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 31
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 32
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232592&subtab=commitments",
+      "text": "009",
+      "classes": "",
+      "id": null,
+      "index": 33
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232592&subtab=commitments",
+      "text": "RFI #22 Frame Around Columns",
+      "classes": "",
+      "id": null,
+      "index": 34
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956232592/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 35
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232463&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 36
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 37
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232463&subtab=commitments",
+      "text": "008",
+      "classes": "",
+      "id": null,
+      "index": 38
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232463&subtab=commitments",
+      "text": "RFI #23 Frame Wall Corridor 129",
+      "classes": "",
+      "id": null,
+      "index": 39
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956232463/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 40
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232373&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 41
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 42
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232373&subtab=commitments",
+      "text": "007",
+      "classes": "",
+      "id": null,
+      "index": 43
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232373&subtab=commitments",
+      "text": "RFI #24 Extend Walls to Deck",
+      "classes": "",
+      "id": null,
+      "index": 44
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956232373/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 45
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232110&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 46
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 47
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232110&subtab=commitments",
+      "text": "006",
+      "classes": "",
+      "id": null,
+      "index": 48
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956232110&subtab=commitments",
+      "text": "RFI #25 Conference Room Wall",
+      "classes": "",
+      "id": null,
+      "index": 49
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956232110/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 50
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956230622&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 51
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 52
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956230622&subtab=commitments",
+      "text": "005",
+      "classes": "",
+      "id": null,
+      "index": 53
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956230622&subtab=commitments",
+      "text": "CE #009 - RFI #1: Roof Drain",
+      "classes": "",
+      "id": null,
+      "index": 54
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956230622/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 55
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956498461&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 56
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/purchase_order_contracts/562949957643548",
+      "text": "Purchase Order #PO-003",
+      "classes": "",
+      "id": null,
+      "index": 57
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956498461&subtab=commitments",
+      "text": "004",
+      "classes": "",
+      "id": null,
+      "index": 58
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956498461&subtab=commitments",
+      "text": "Classroom & Exterior Door Hardware",
+      "classes": "",
+      "id": null,
+      "index": 59
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956498461/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 60
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956482933&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 61
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957167482",
+      "text": "Contract #SC-005",
+      "classes": "",
+      "id": null,
+      "index": 62
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956482933&subtab=commitments",
+      "text": "004",
+      "classes": "",
+      "id": null,
+      "index": 63
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956482933&subtab=commitments",
+      "text": "CE #031 - Additional Requests",
+      "classes": "",
+      "id": null,
+      "index": 64
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956482933/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 65
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956212634&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 66
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 67
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956212634&subtab=commitments",
+      "text": "004",
+      "classes": "",
+      "id": null,
+      "index": 68
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956212634&subtab=commitments",
+      "text": "Smart Display & TV Blocking",
+      "classes": "",
+      "id": null,
+      "index": 69
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956212634/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 70
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956230539&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 71
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166673",
+      "text": "Contract #SC-003",
+      "classes": "",
+      "id": null,
+      "index": 72
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956230539&subtab=commitments",
+      "text": "004",
+      "classes": "",
+      "id": null,
+      "index": 73
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956230539&subtab=commitments",
+      "text": "CE #009 - RFI #1: Roof Drain",
+      "classes": "",
+      "id": null,
+      "index": 74
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956230539/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 75
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956391276&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 76
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/purchase_order_contracts/562949957643548",
+      "text": "Purchase Order #PO-003",
+      "classes": "",
+      "id": null,
+      "index": 77
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956391276&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 78
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956391276&subtab=commitments",
+      "text": "CE #026 - Door Lite Kits",
+      "classes": "",
+      "id": null,
+      "index": 79
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956391276/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 80
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956103453&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 81
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166673",
+      "text": "Contract #SC-003",
+      "classes": "",
+      "id": null,
+      "index": 82
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956103453&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 83
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956103453&subtab=commitments",
+      "text": "CE #008 - Phase 1 & 2 Changes",
+      "classes": "",
+      "id": null,
+      "index": 84
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956103453/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 85
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956423443&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 86
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957715119",
+      "text": "Contract #SC-014",
+      "classes": "",
+      "id": null,
+      "index": 87
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956423443&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 88
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956423443&subtab=commitments",
+      "text": "CE #028 - Broken Glass",
+      "classes": "",
+      "id": null,
+      "index": 89
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956423443/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 90
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956448273&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 91
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957179824",
+      "text": "Contract #SC-006",
+      "classes": "",
+      "id": null,
+      "index": 92
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956448273&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 93
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956448273&subtab=commitments",
+      "text": "CE #029 - Trade Damage",
+      "classes": "",
+      "id": null,
+      "index": 94
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956448273/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 95
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956198151&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 96
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957167482",
+      "text": "Contract #SC-005",
+      "classes": "",
+      "id": null,
+      "index": 97
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956198151&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 98
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956198151&subtab=commitments",
+      "text": "Self Leveling Classroom 110, Classroom 111, Conference Room 109, Corridor 129",
+      "classes": "",
+      "id": null,
+      "index": 99
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956198151/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 100
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956124048&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 101
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 102
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956124048&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 103
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956124048&subtab=commitments",
+      "text": "CE #011 - RFI #5 Daycare Rated Wall",
+      "classes": "",
+      "id": null,
+      "index": 104
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956124048/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 105
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956645526&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 106
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957710151",
+      "text": "Contract #SC-013",
+      "classes": "",
+      "id": null,
+      "index": 107
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956645526&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 108
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956645526&subtab=commitments",
+      "text": "CE #034 - Modify Mens & Womens",
+      "classes": "",
+      "id": null,
+      "index": 109
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956645526/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 110
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956645541&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 111
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957643666",
+      "text": "Contract #SC-009",
+      "classes": "",
+      "id": null,
+      "index": 112
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956645541&subtab=commitments",
+      "text": "003",
+      "classes": "",
+      "id": null,
+      "index": 113
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956645541&subtab=commitments",
+      "text": "Modify Mens & Women Vanity",
+      "classes": "",
+      "id": null,
+      "index": 114
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956645541/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 115
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956103815&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 116
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957167482",
+      "text": "Contract #SC-005",
+      "classes": "",
+      "id": null,
+      "index": 117
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956103815&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 118
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956103815&subtab=commitments",
+      "text": "CE #008 - Phase 1 & 2 Changes",
+      "classes": "",
+      "id": null,
+      "index": 119
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956103815/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 120
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956347471&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 121
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957179824",
+      "text": "Contract #SC-006",
+      "classes": "",
+      "id": null,
+      "index": 122
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956347471&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 123
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956347471&subtab=commitments",
+      "text": "CE #016 - Transom Windows",
+      "classes": "",
+      "id": null,
+      "index": 124
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956347471/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 125
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949956103881&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 126
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957179879",
+      "text": "Contract #SC-007",
+      "classes": "",
+      "id": null,
+      "index": 127
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949956103881&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 128
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949956103881&subtab=commitments",
+      "text": "CE #008 - Phase 1 & 2 Changes",
+      "classes": "",
+      "id": null,
+      "index": 129
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956103881/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 130
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956336094&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 131
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957715119",
+      "text": "Contract #SC-014",
+      "classes": "",
+      "id": null,
+      "index": 132
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956336094&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 133
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956336094&subtab=commitments",
+      "text": "CE #016 - Transom Windows",
+      "classes": "",
+      "id": null,
+      "index": 134
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956336094/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 135
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956624175&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 136
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957710151",
+      "text": "Contract #SC-013",
+      "classes": "",
+      "id": null,
+      "index": 137
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956624175&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 138
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956624175&subtab=commitments",
+      "text": "CE #034 - Modify Mens & Womens",
+      "classes": "",
+      "id": null,
+      "index": 139
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956624175/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 140
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956467174&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 141
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957702055",
+      "text": "Contract #SC-012",
+      "classes": "",
+      "id": null,
+      "index": 142
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956467174&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 143
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956467174&subtab=commitments",
+      "text": "CE #030 - Toilet Paper Holders",
+      "classes": "",
+      "id": null,
+      "index": 144
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956467174/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 145
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956540511&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 146
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957644081",
+      "text": "Contract #SC-011",
+      "classes": "",
+      "id": null,
+      "index": 147
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956540511&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 148
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956540511&subtab=commitments",
+      "text": "Reduce Scope of Work",
+      "classes": "",
+      "id": null,
+      "index": 149
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956540511/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 150
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956482974&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 151
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957643666",
+      "text": "Contract #SC-009",
+      "classes": "",
+      "id": null,
+      "index": 152
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956482974&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 153
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956482974&subtab=commitments",
+      "text": "CE #031 - Additional Requests",
+      "classes": "",
+      "id": null,
+      "index": 154
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956482974/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 155
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068969&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 156
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166673",
+      "text": "Contract #SC-003",
+      "classes": "",
+      "id": null,
+      "index": 157
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068969&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 158
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068969&subtab=commitments",
+      "text": "CE #004 - Phase 2 Demolition,",
+      "classes": "",
+      "id": null,
+      "index": 159
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956068969/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 160
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956344035&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 161
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/purchase_order_contracts/562949957643548",
+      "text": "Purchase Order #PO-003",
+      "classes": "",
+      "id": null,
+      "index": 162
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956344035&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 163
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956344035&subtab=commitments",
+      "text": "CE #025 - Credit for Cores",
+      "classes": "",
+      "id": null,
+      "index": 164
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956344035/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 165
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956103574&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 166
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 167
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956103574&subtab=commitments",
+      "text": "002",
+      "classes": "",
+      "id": null,
+      "index": 168
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956103574&subtab=commitments",
+      "text": "CE #008 - Phase 1 & 2 Changes",
+      "classes": "",
+      "id": null,
+      "index": 169
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956103574/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 170
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956068466&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 171
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166702",
+      "text": "Contract #SC-004",
+      "classes": "",
+      "id": null,
+      "index": 172
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956068466&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 173
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166702/route_to_change_order_package?change_order_package_id=562949956068466&subtab=commitments",
+      "text": "CE #004 - Phase 2 Demolition,",
+      "classes": "",
+      "id": null,
+      "index": 174
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956068466/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 175
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068852&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 176
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166673",
+      "text": "Contract #SC-003",
+      "classes": "",
+      "id": null,
+      "index": 177
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068852&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 178
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166673/route_to_change_order_package?change_order_package_id=562949956068852&subtab=commitments",
+      "text": "CE #002 - 157K to 187K",
+      "classes": "",
+      "id": null,
+      "index": 179
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956068852/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 180
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956408184&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 181
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957702055",
+      "text": "Contract #SC-012",
+      "classes": "",
+      "id": null,
+      "index": 182
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956408184&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 183
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957702055/route_to_change_order_package?change_order_package_id=562949956408184&subtab=commitments",
+      "text": "Fire Extinguisher Cabinet",
+      "classes": "",
+      "id": null,
+      "index": 184
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956408184/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 185
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957988967/route_to_change_order_package?change_order_package_id=562949956471002&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 186
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957988967",
+      "text": "Contract #SC-017",
+      "classes": "",
+      "id": null,
+      "index": 187
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957988967/route_to_change_order_package?change_order_package_id=562949956471002&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 188
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957988967/route_to_change_order_package?change_order_package_id=562949956471002&subtab=commitments",
+      "text": "CE #031 - Additional Requests",
+      "classes": "",
+      "id": null,
+      "index": 189
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956471002/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 190
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956180086&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 191
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957644081",
+      "text": "Contract #SC-011",
+      "classes": "",
+      "id": null,
+      "index": 192
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956180086&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 193
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957644081/route_to_change_order_package?change_order_package_id=562949956180086&subtab=commitments",
+      "text": "Patch Roof at Vestibule",
+      "classes": "",
+      "id": null,
+      "index": 194
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956180086/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 195
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956068930&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 196
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957167482",
+      "text": "Contract #SC-005",
+      "classes": "",
+      "id": null,
+      "index": 197
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956068930&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 198
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957167482/route_to_change_order_package?change_order_package_id=562949956068930&subtab=commitments",
+      "text": "CE #004 - Phase 2 Demolition,",
+      "classes": "",
+      "id": null,
+      "index": 199
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956068930/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 200
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956115562&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 201
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957179824",
+      "text": "Contract #SC-006",
+      "classes": "",
+      "id": null,
+      "index": 202
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956115562&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 203
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179824/route_to_change_order_package?change_order_package_id=562949956115562&subtab=commitments",
+      "text": "CE #008 - Phase 1 & 2 Changes",
+      "classes": "",
+      "id": null,
+      "index": 204
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956115562/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 205
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166626/route_to_change_order_package?change_order_package_id=562949956445084&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 206
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957166626",
+      "text": "Contract #SC-001",
+      "classes": "",
+      "id": null,
+      "index": 207
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166626/route_to_change_order_package?change_order_package_id=562949956445084&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 208
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957166626/route_to_change_order_package?change_order_package_id=562949956445084&subtab=commitments",
+      "text": "Smart Displays & TVs",
+      "classes": "",
+      "id": null,
+      "index": 209
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956445084/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 210
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957720215/route_to_change_order_package?change_order_package_id=562949956481234&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 211
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957720215",
+      "text": "Contract #SC-015",
+      "classes": "",
+      "id": null,
+      "index": 212
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957720215/route_to_change_order_package?change_order_package_id=562949956481234&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 213
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957720215/route_to_change_order_package?change_order_package_id=562949956481234&subtab=commitments",
+      "text": "CE #031 - Additional Requests",
+      "classes": "",
+      "id": null,
+      "index": 214
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956481234/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 215
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957642101/route_to_change_order_package?change_order_package_id=562949956476682&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 216
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957642101",
+      "text": "Contract #SC-008",
+      "classes": "",
+      "id": null,
+      "index": 217
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957642101/route_to_change_order_package?change_order_package_id=562949956476682&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 218
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957642101/route_to_change_order_package?change_order_package_id=562949956476682&subtab=commitments",
+      "text": "CE #029 - Trade Damage",
+      "classes": "",
+      "id": null,
+      "index": 219
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956476682/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 220
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956268526&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 221
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/purchase_order_contracts/562949957643548",
+      "text": "Purchase Order #PO-003",
+      "classes": "",
+      "id": null,
+      "index": 222
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956268526&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 223
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643548/route_to_change_order_package?change_order_package_id=562949956268526&subtab=commitments",
+      "text": "CE #016 - Transom Windows",
+      "classes": "",
+      "id": null,
+      "index": 224
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956268526/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 225
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949955871847&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 226
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957179879",
+      "text": "Contract #SC-007",
+      "classes": "",
+      "id": null,
+      "index": 227
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949955871847&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 228
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957179879/route_to_change_order_package?change_order_package_id=562949955871847&subtab=commitments",
+      "text": "Extra HVAC Work",
+      "classes": "",
+      "id": null,
+      "index": 229
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949955871847/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 230
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956476688&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 231
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957643666",
+      "text": "Contract #SC-009",
+      "classes": "",
+      "id": null,
+      "index": 232
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956476688&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 233
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957643666/route_to_change_order_package?change_order_package_id=562949956476688&subtab=commitments",
+      "text": "CE #029 - Trade Damage",
+      "classes": "",
+      "id": null,
+      "index": 234
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956476688/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 235
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956327250&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 236
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957715119",
+      "text": "Contract #SC-014",
+      "classes": "",
+      "id": null,
+      "index": 237
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956327250&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 238
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957715119/route_to_change_order_package?change_order_package_id=562949956327250&subtab=commitments",
+      "text": "CE #017 - Frosting Glass",
+      "classes": "",
+      "id": null,
+      "index": 239
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956327250/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 240
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956410513&subtab=commitments",
+      "text": "View",
+      "classes": "bttn bttn-xs ",
+      "id": null,
+      "index": 241
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments/work_order_contracts/562949957710151",
+      "text": "Contract #SC-013",
+      "classes": "",
+      "id": null,
+      "index": 242
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956410513&subtab=commitments",
+      "text": "001",
+      "classes": "",
+      "id": null,
+      "index": 243
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949957710151/route_to_change_order_package?change_order_package_id=562949956410513&subtab=commitments",
+      "text": "CE #028 - Broken Glass",
+      "classes": "",
+      "id": null,
+      "index": 244
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/change_orders/562949956410513/view_change_order_package_pdf",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 245
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 246
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 247
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 248
+    }
+  ],
+  "clickables": 6,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_17_6__sc-17s58xs-0 StyledDropdownTabBase-core-12_17_6__sc-17s58xs-2 StyledDropdownTab-core-12_17_6__sc-17s58xs-5 rfxPv ferlgy BcrYC",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_17_6__sc-17s58xs-0 StyledDropdownTabBase-core-12_17_6__sc-17s58xs-2 StyledDropdownTab-core-12_17_6__sc-17s58xs-5 rfxPv ferlgy BcrYC",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo no_print",
+      "type": "button",
+      "classes": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo no_print",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Reports",
+      "id": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo",
+      "type": "button",
+      "classes": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Add Filter",
+      "id": "_3DCfX-QHByb",
+      "type": "button",
+      "classes": "_3DCfX-QHByb",
+      "hasDropdown": false,
+      "index": 5
+    }
+  ],
+  "dropdowns": 4,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_17_6__sc-17s58xs-0 StyledDropdownTabBase-core-12_17_6__sc-17s58xs-2 StyledDropdownTab-core-12_17_6__sc-17s58xs-5 rfxPv ferlgy BcrYC",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo no_print",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Reports",
+      "classes": "StyledButton-core-12_17_6__sc-c5bhwh-3 YkGYT StyledDropdownButton-core-12_17_6__sc-ufsy2q-2 fGYWxo",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    }
+  ],
+  "screenshotPath": "pages/pdf/screenshot.png"
+}

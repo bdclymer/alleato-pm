@@ -1,0 +1,35 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/meetings-project/tutorials/create-a-meeting-from-a-template",
+  "pageName": "meeting_create",
+  "category": "meetings",
+  "timestamp": "2026-01-12T16:08:50.223Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 16,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35
+    },
+    "tables": [],
+    "formFields": [
+      {
+        "index": 1,
+        "type": "checkbox",
+        "name": "light-theme",
+        "id": "light-theme",
+        "placeholder": null,
+        "label": "Light Theme             Dark Mode Light Mode",
+        "required": false
+      }
+    ],
+    "title": "Create a Meeting from a Template",
+    "h1": "Create a Meeting from a Template"
+  }
+}

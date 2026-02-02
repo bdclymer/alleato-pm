@@ -1,0 +1,910 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/contracts/commitments/work_order_contracts/562949957644001/edit",
+  "pageName": "edit",
+  "category": "commitments",
+  "pageId": "edit",
+  "timestamp": "2025-12-29T21:39:56.763Z",
+  "analysis": {
+    "components": {
+      "buttons": 63,
+      "forms": 1,
+      "inputs": 10,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 124
+    },
+    "tables": [],
+    "formFields": [
+      {
+        "index": 1,
+        "type": "text",
+        "name": "number",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 2,
+        "type": "checkbox",
+        "name": "executed",
+        "id": "react-aria833333330-:r3l:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 3,
+        "type": "textarea",
+        "name": null,
+        "id": "tiny-react_28317996411767044391534",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 4,
+        "type": "file",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 5,
+        "type": "textarea",
+        "name": null,
+        "id": "tiny-react_82482588621767044391536",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 6,
+        "type": "textarea",
+        "name": null,
+        "id": "tiny-react_87942665531767044391536",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 7,
+        "type": "checkbox",
+        "name": "access_policy.private",
+        "id": "react-aria833333330-:r69:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 8,
+        "type": "text",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 9,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria833333330-:r6u:",
+        "placeholder": null,
+        "label": "Allow these non-admin users to view the SOV items.",
+        "required": false
+      },
+      {
+        "index": 10,
+        "type": "text",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      }
+    ],
+    "title": "Procore",
+    "h1": "Edit Subcontract #SC-010"
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/commitments/tutorials/edit-a-commitment",
+      "text": "Help",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/commitments",
+      "text": "Commitments",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 7
+    }
+  ],
+  "clickables": 76,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Conversations",
+      "id": "StyledBox-core-12_29_0__sc-fgsy0p-0 fOvsLT DockAppButton-kkaxzl cqrwb",
+      "type": "div",
+      "classes": "StyledBox-core-12_29_0__sc-fgsy0p-0 fOvsLT DockAppButton-kkaxzl cqrwb",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "12pt",
+      "id": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Attach Files",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "",
+      "id": "react-aria833333330-:r9u:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledRemove-core-12_25_2__sc-zqi94b-1 cxJLPT",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "12pt",
+      "id": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 41
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 42
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 43
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 44
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 45
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 46
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 47
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 48
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 49
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 50
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 51
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 52
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 53
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 54
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 55
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 56
+    },
+    {
+      "text": "12pt",
+      "id": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "hasDropdown": false,
+      "index": 57
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 58
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 59
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 60
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 61
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "hasDropdown": false,
+      "index": 62
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "hasDropdown": false,
+      "index": 63
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "hasDropdown": false,
+      "index": 64
+    },
+    {
+      "text": "",
+      "id": "react-aria833333330-:r6n:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledRemove-core-12_25_2__sc-zqi94b-1 cxJLPT",
+      "hasDropdown": false,
+      "index": 65
+    },
+    {
+      "text": "",
+      "id": "react-aria833333330-:r6p:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledRemove-core-12_25_2__sc-zqi94b-1 cxJLPT",
+      "hasDropdown": false,
+      "index": 66
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 67
+    },
+    {
+      "text": "",
+      "id": "react-aria833333330-:r9j:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledRemove-core-12_25_2__sc-zqi94b-1 cxJLPT",
+      "hasDropdown": false,
+      "index": 68
+    },
+    {
+      "text": "",
+      "id": "react-aria833333330-:r9q:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledRemove-core-12_25_2__sc-zqi94b-1 cxJLPT",
+      "hasDropdown": false,
+      "index": 69
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD sc-gNXrtx lkkJBf",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD sc-gNXrtx lkkJBf",
+      "hasDropdown": false,
+      "index": 70
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 71
+    },
+    {
+      "text": "Save",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 72
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 73
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 74
+    },
+    {
+      "text": "Attach",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 jFezsx",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 jFezsx",
+      "hasDropdown": false,
+      "index": 75
+    }
+  ],
+  "dropdowns": 17,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "12pt",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 7
+    },
+    {
+      "text": "12pt",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "id": null,
+      "hasMenu": false,
+      "index": 8
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 9
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 10
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 11
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 12
+    },
+    {
+      "text": "12pt",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "id": null,
+      "hasMenu": false,
+      "index": 13
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 14
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 15
+    },
+    {
+      "text": "Heather McCrayRick McCray",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 iTKdkq",
+      "id": null,
+      "hasMenu": false,
+      "index": 16
+    }
+  ],
+  "screenshotPath": "pages/edit/screenshot.png"
+}

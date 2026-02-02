@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Design System Violation",
+  "description": "Schema for tracking design system violations in the Alleato-Procore codebase",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "auditDate": { "type": "string", "format": "date-time" },
+        "auditVersion": { "type": "string" },
+        "totalViolations": { "type": "integer" },
+        "totalFiles": { "type": "integer" },
+        "sections": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["auditDate", "auditVersion", "totalViolations"]
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this violation"
+          },
+          "file": {
+            "type": "string",
+            "description": "Path to the file containing the violation"
+          },
+          "line": {
+            "type": "integer",
+            "description": "Line number where violation occurs"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "color",
+              "spacing",
+              "typography",
+              "border-radius",
+              "shadow",
+              "component-usage",
+              "layout",
+              "responsive",
+              "accessibility",
+              "naming",
+              "dark-mode",
+              "animation"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "major", "minor", "suggestion"]
+          },
+          "rule": {
+            "type": "string",
+            "description": "The design rule that was violated"
+          },
+          "currentCode": {
+            "type": "string",
+            "description": "The current incorrect code"
+          },
+          "suggestedFix": {
+            "type": "string",
+            "description": "The suggested correct code"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Why this is a violation and why the fix is better"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "in_progress", "fixed", "verified", "wont_fix"],
+            "default": "pending"
+          },
+          "fixAttempts": {
+            "type": "integer",
+            "default": 0
+          },
+          "verificationResult": {
+            "type": "object",
+            "properties": {
+              "verified": { "type": "boolean" },
+              "verifiedAt": { "type": "string", "format": "date-time" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "required": ["id", "file", "category", "severity", "rule", "currentCode", "suggestedFix", "status"]
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "byCategory": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "bySeverity": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "byStatus": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        },
+        "topViolatingFiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "count": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["metadata", "violations"]
+}

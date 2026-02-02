@@ -1,0 +1,494 @@
+# AGENT.md - Codex Task Agent Instructions
+
+> **For OpenAI Codex agents working on Alleato-Procore feature implementations.**
+> **This file is optimized for linear execution (no sub-agents).**
+
+**Last Updated:** 2026-01-14
+
+---
+
+## Quick Start: Resuming Work
+
+```bash
+# 1. Go to the feature folder
+cd apps/docs/pages/PLANS/{feature-name}/
+
+# 2. Read the task list to see current progress
+cat TASKS.mdx | head -150
+
+# 3. Check for blockers
+cat STATUS.mdx
+
+# 4. CRITICAL: Read lessons learned before starting
+cat ../_shared/LESSONS-LEARNED.md
+
+# 5. Find the first unchecked [ ] task and start working
+```
+
+**The TASKS.mdx file is your source of truth.** Find the first unchecked `[ ]` task and complete it.
+
+---
+
+## Project Overview
+
+**Alleato-Procore** is a production-grade construction project management system replicating Procore's functionality.
+
+| Layer | Stack |
+|-------|-------|
+| Frontend | Next.js 15 (App Router), Tailwind CSS, shadcn/ui |
+| Backend | Supabase (Postgres, Auth, RLS, Storage) |
+| Testing | Playwright (browser-verified) |
+
+---
+
+## Feature Folder Structure
+
+Every feature has a dedicated folder containing ALL related documentation:
+
+```
+apps/docs/pages/PLANS/{feature-name}/
+│
+├── TASKS.mdx                    # CRITICAL: Current task list with checkboxes
+├── STATUS.mdx                   # Current status, blockers, context
+├── PLANS.mdx                    # Feature specification and requirements
+├── CONTEXT.mdx                  # Dependencies and related file paths
+│
+├── crawl-{feature}/             # Procore reference data
+│   ├── pages/                   # Screenshots + DOM for each page state
+│   │   └── {page-name}/
+│   │       ├── screenshot.png   # Visual reference from Procore
+│   │       ├── dom.html         # Extracted DOM structure
+│   │       └── metadata.json    # Page metadata (URL, timestamp)
+│   ├── reports/                 # Analysis reports (JSON, markdown)
+│   ├── sitemap-table.mdx        # Navigation structure
+│   └── README.mdx               # Crawl summary and findings
+│
+├── reference/                   # Historical documentation
+│   ├── COMPLETION-REPORT.mdx    # Final completion evidence
+│   └── VERIFICATION.mdx         # Verification results
+│
+├── specs/                       # Technical specifications
+│   └── spec-{feature}.mdx       # Detailed technical spec
+│
+└── COMPARISON-REPORT.mdx        # Side-by-side Procore vs Implementation
+```
+
+---
+
+## Shared Resources (CRITICAL - Read First!)
+
+**Location:** `apps/docs/pages/PLANS/_shared/`
+
+```
+_shared/
+├── LESSONS-LEARNED.md           # MUST READ: Known mistakes and solutions
+├── QUICK-REFERENCE.md           # Common commands and snippets
+├── QUALITY-GATES.md             # Mandatory checks before completion
+└── patterns/
+    ├── README.md                # Pattern index
+    ├── api-auth-pattern.md      # How to authenticate API tests
+    ├── domcontentloaded-pattern.md  # Playwright wait patterns
+    └── ...more patterns
+```
+
+### ALWAYS Read Before Starting Work:
+1. **`_shared/LESSONS-LEARNED.md`** - Prevents you from making the same mistakes
+2. **`_shared/patterns/`** - Proven solutions to common problems
+
+---
+
+## Understanding TASKS.mdx
+
+Every feature's `TASKS.mdx` follows this structure:
+
+```markdown
+# TASKS: {Feature} Implementation
+
+**Status:** Phase X In Progress (Y%)
+**Last Updated:** YYYY-MM-DD HH:MM
+**Overall Completion:** Z%
+
+## Phase Status Table
+| Phase | Status | Completion |
+|-------|--------|------------|
+| Phase 1: Database | ✅ Complete | 100% |
+| Phase 2: API | 🟡 In Progress | 60% |
+| Phase 3: UI | ⬜ Not Started | 0% |
+
+## Phase 2: API (IN PROGRESS)
+- [x] Completed task
+- [x] Another completed task
+- [ ] NEXT: This is what you work on  ← START HERE
+- [ ] After that, do this
+
+## Immediate Next Steps (Priority Order)
+1. First critical thing
+2. Second thing
+3. Third thing
+
+## Known Issues & Blockers
+- Issue description and how to resolve
+```
+
+**Your workflow:**
+1. Find the first `[ ]` (unchecked) task
+2. Complete it
+3. Change `[ ]` to `[x]`
+4. Update "Last Updated" timestamp
+5. Move to next `[ ]` task
+
+---
+
+## Critical Lessons Learned
+
+These are the most important patterns to avoid. **Reading `_shared/LESSONS-LEARNED.md` prevents hours of debugging.**
+
+### 1. NetworkIdle Timeout (CRITICAL)
+**Mistake:** Using `waitForLoadState('networkidle')` in Playwright tests
+**Result:** Tests timeout after 30+ seconds, especially with real-time features
+
+```typescript
+// WRONG - Will hang or timeout
+await page.goto('/dashboard');
+await page.waitForLoadState('networkidle');
+
+// CORRECT - Reliable and fast
+await page.goto('/dashboard');
+await page.waitForLoadState('domcontentloaded');
+await page.locator('[data-testid="content-loaded"]').waitFor();
+```
+
+### 2. Route Parameter Mismatch (CRITICAL)
+**Mistake:** Using `[id]` in some routes and `[projectId]` in others
+**Result:** Next.js routing breaks, 404 errors
+
+```bash
+# ALWAYS check existing routes first
+find frontend/src/app -type d -name "[*]"
+
+# WRONG - Inconsistent naming
+api/projects/[id]/contracts/
+[projectId]/contracts/[contractId]/
+
+# CORRECT - Always use [projectId]
+api/projects/[projectId]/contracts/
+[projectId]/contracts/[contractId]/
+```
+
+### 3. Stale Supabase Types (HIGH)
+**Mistake:** Writing database code without regenerating types
+**Result:** TypeScript errors like "Property X does not exist on type"
+
+```bash
+# ALWAYS run before ANY database work
+npx supabase gen types typescript \
+  --project-id "lgveqfnpkxvzbnnwuled" \
+  --schema public > frontend/src/types/database.types.ts
+```
+
+### 4. Auth in Playwright API Tests (CRITICAL)
+**Mistake:** API requests return 401/403 despite "being logged in"
+**Cause:** Not including auth cookies in API requests
+
+```typescript
+// Read auth state from fixture
+import fs from 'fs';
+const authData = JSON.parse(
+  fs.readFileSync('tests/.auth/user.json', 'utf-8')
+);
+const cookies = authData.cookies
+  .map(c => `${c.name}=${c.value}`)
+  .join('; ');
+
+// Include cookies in API request
+await page.request.post('/api/projects/123/items', {
+  headers: { Cookie: cookies },
+  data: { name: 'Test' }
+});
+```
+
+### 5. Premature Completion Claims (CRITICAL)
+**Mistake:** Saying "complete" without running quality checks
+**Result:** Hidden TypeScript errors, failing tests
+
+**NEVER claim complete without:**
+- `npm run quality --prefix frontend` showing 0 errors
+- Tests executed with documented pass rate
+- TASKS.mdx updated with checkmarks
+
+### 6. Foreign Key Constraint (HIGH)
+**Mistake:** Setting `created_by` to a user that doesn't have a profile
+**Result:** FK constraint violation error
+
+```sql
+-- Check if profile exists before insert
+SELECT id FROM profiles WHERE id = auth.uid();
+```
+
+---
+
+## Database Work Requirements (MANDATORY)
+
+**This section is NON-NEGOTIABLE. Failure to follow these rules causes hours of debugging.**
+
+### Before Writing ANY Database Code
+
+You MUST review the current schema before writing any code that touches the database:
+
+```bash
+# 1. ALWAYS read the current types file first
+cat frontend/src/types/database.types.ts | head -500
+
+# 2. Search for the specific table you're working with
+grep -A 50 "your_table_name:" frontend/src/types/database.types.ts
+```
+
+**Why this matters:**
+- The types file is the source of truth for what columns exist
+- Writing code without checking types leads to "Property X does not exist" errors
+- Other agents may have added/removed columns you don't know about
+
+### After ANY Database Changes
+
+If you create migrations, modify tables, add columns, or change RLS policies:
+
+```bash
+# IMMEDIATELY regenerate types after ANY schema change
+npx supabase gen types typescript \
+  --project-id "lgveqfnpkxvzbnnwuled" \
+  --schema public > frontend/src/types/database.types.ts
+
+# Then verify the types are correct
+npm run typecheck --prefix frontend
+```
+
+### Database Work Checklist
+
+```markdown
+BEFORE writing database code:
+- [ ] Read frontend/src/types/database.types.ts
+- [ ] Identify the exact table and column names
+- [ ] Check for existing RLS policies on the table
+
+AFTER any schema changes:
+- [ ] Regenerate types (command above)
+- [ ] Run typecheck to verify
+- [ ] Update any code using the changed tables
+- [ ] Test the changes work end-to-end
+```
+
+### Common Database Mistakes
+
+| Mistake | Result | Prevention |
+|---------|--------|------------|
+| Guessing column names | TypeScript errors | Read types file first |
+| Not regenerating types | Stale type definitions | Run gen types after changes |
+| Missing RLS policies | 403 Forbidden errors | Check existing policies |
+| Wrong FK references | Constraint violations | Verify referenced tables exist |
+
+---
+
+## Quality Gates (Mandatory)
+
+**Run these commands before claiming ANY task complete:**
+
+```bash
+# 1. Code quality check (MUST pass with 0 errors)
+npm run quality --prefix frontend
+
+# 2. Regenerate types if doing database work
+npx supabase gen types typescript \
+  --project-id "lgveqfnpkxvzbnnwuled" \
+  --schema public > frontend/src/types/database.types.ts
+
+# 3. Run relevant tests
+cd frontend && npx playwright test tests/e2e/{feature}*.spec.ts
+
+# 4. For major milestones, generate verification report
+npx tsx .agents/tools/generate-verification-report.ts {feature}
+```
+
+**If any gate fails:** Fix the issue. Do NOT skip or ignore errors.
+
+---
+
+## Execution Workflow (Linear - No Sub-Agents)
+
+OpenAI Codex executes linearly. Follow this sequence:
+
+### Starting a Session
+
+```
+1. Read TASKS.mdx → Find first unchecked [ ] task
+2. Read STATUS.mdx → Check for blockers
+3. Read _shared/LESSONS-LEARNED.md → Avoid known mistakes
+4. Read crawl/{feature}/pages/ screenshots → Understand target UI
+5. Run: npm run quality --prefix frontend → Verify clean state
+6. IF task involves database:
+   - Read frontend/src/types/database.types.ts
+   - Identify exact table/column names before coding
+7. Implement the task
+8. IF you changed the database schema:
+   - Regenerate types immediately (see Database Work Requirements)
+9. Run quality check again
+10. Update TASKS.mdx checkbox [ ] → [x]
+11. Update STATUS.mdx with progress
+12. Repeat from step 7 or end session
+```
+
+### Ending a Session
+
+```
+1. Update all completed TASKS.mdx checkboxes
+2. Update STATUS.mdx with:
+   - Current completion percentage
+   - Any blockers encountered
+   - What should be done next
+3. Update "Last Updated" timestamp
+4. Commit changes with descriptive message
+```
+
+---
+
+## Code Locations
+
+| Purpose | Location |
+|---------|----------|
+| Frontend pages | `frontend/src/app/[projectId]/{feature}/` |
+| API routes | `frontend/src/app/api/projects/[projectId]/{feature}/` |
+| Components | `frontend/src/components/{feature}/` |
+| Schemas/Types | `frontend/src/lib/schemas/{feature}.ts` |
+| Services | `frontend/src/lib/services/{feature}-service.ts` |
+| E2E Tests | `frontend/tests/e2e/{feature}*.spec.ts` |
+| Migrations | `supabase/migrations/*.sql` |
+| DB Types | `frontend/src/types/database.types.ts` |
+
+---
+
+## Common Commands
+
+```bash
+# Quality check (run after EVERY change)
+npm run quality --prefix frontend
+
+# Run specific feature tests
+cd frontend && npx playwright test tests/e2e/{feature}.spec.ts
+
+# Run tests with UI for debugging
+cd frontend && npx playwright test tests/e2e/{feature}.spec.ts --ui
+
+# Generate HTML test report
+cd frontend && npx playwright test --reporter=html
+
+# Start dev server
+npm run dev --prefix frontend
+
+# Generate Supabase types (BEFORE any database work)
+npx supabase gen types typescript \
+  --project-id "lgveqfnpkxvzbnnwuled" \
+  --schema public > frontend/src/types/database.types.ts
+```
+
+---
+
+## Test Credentials
+
+```
+Email: test1@mail.com
+Password: test12026!!!
+Auth fixture: frontend/tests/.auth/user.json
+```
+
+---
+
+## Using Procore Reference Data
+
+Each feature folder contains crawled Procore screenshots and DOM:
+
+```
+crawl-{feature}/pages/{page-name}/
+├── screenshot.png    # How Procore looks (match this)
+├── dom.html          # HTML structure to reference
+└── metadata.json     # URL and page title
+```
+
+**Use these to:**
+1. Match Procore's visual design
+2. Understand expected field names and layouts
+3. Ensure feature parity
+4. Create COMPARISON-REPORT.mdx showing differences
+
+---
+
+## When to Stop and Ask
+
+**Stop immediately and document in STATUS.mdx if you encounter:**
+- Missing database tables (migration not applied)
+- Schema mismatch between types and code
+- Missing credentials or environment access
+- Ambiguous requirements
+- Architectural decisions needed
+- Errors you cannot resolve after 2-3 attempts
+
+**Never guess. Document the blocker and stop.**
+
+---
+
+## Banned Behaviors
+
+| Do NOT | Do Instead |
+|--------|------------|
+| Claim "complete" without verification | Run quality gates, show output |
+| Say "tests should pass" | Run them, document results |
+| Guess file locations | Search the codebase first |
+| Skip quality gates | Fix errors before proceeding |
+| Add `@ts-ignore` | Fix the type error properly |
+| Use `any` type | Define proper TypeScript types |
+| Leave `console.log` in code | Remove before committing |
+| Create `_backup` or `_fixed` files | Edit files in place |
+| Over-engineer | Only implement what's asked |
+
+---
+
+## Completion Checklist
+
+Before marking any phase or major task complete:
+
+```markdown
+- [ ] All tasks in the phase have [x] checkboxes
+- [ ] `npm run quality --prefix frontend` passes (0 errors)
+- [ ] Tests written and passing for new functionality
+- [ ] TASKS.mdx updated with completion status
+- [ ] STATUS.mdx updated with current state
+- [ ] Last Updated timestamp refreshed
+- [ ] If UI work: screenshots taken for comparison
+```
+
+---
+
+## Key References
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| This file | `PLANS/AGENT.md` | Codex agent instructions |
+| Lessons Learned | `PLANS/_shared/LESSONS-LEARNED.md` | Known mistakes to avoid |
+| Patterns Library | `PLANS/_shared/patterns/` | Proven solutions |
+| Full Claude Instructions | `/CLAUDE.md` | Complete project rules |
+| Error Patterns | `.agents/patterns/errors/` | Documented error patterns |
+| Mandatory Gates | `*project-mgmt/shared/MANDATORY-GATES.mdx` | Required quality checks |
+| Playwright Patterns | `.agents/patterns/PLAYWRIGHT-PATTERNS.md` | Test patterns |
+
+---
+
+## Summary
+
+1. **TASKS.mdx is your guide** - Find unchecked tasks, complete them, check them off
+2. **Read _shared/LESSONS-LEARNED.md** - Prevents repeated mistakes
+3. **Review database.types.ts BEFORE database work** - Know the schema before coding
+4. **Regenerate types AFTER database changes** - Keep types in sync with schema
+5. **Use crawl/ data** - Screenshots show what to build
+6. **Run quality checks** - `npm run quality --prefix frontend` must pass
+7. **Update status files** - Keep TASKS.mdx and STATUS.mdx current
+8. **Document blockers** - Don't guess, document and stop
+
+**The goal is to leave the project in a state where the next agent can immediately pick up where you left off.**

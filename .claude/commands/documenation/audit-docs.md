@@ -7,11 +7,13 @@ command: /audit-docs
 # Documentation Audit Command
 
 ## Usage
+
 ```
 /audit-docs <folder_path>
 ```
 
 Example:
+
 ```
 /audit-docs /Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/
 ```
@@ -31,24 +33,28 @@ This command launches a specialized documentation auditor agent that:
 The agent performs the following checks:
 
 ### 1. Content Accuracy Verification
+
 - Cross-references documentation claims with actual implementation
 - Verifies code examples still work
 - Checks that API references are current
 - Validates file paths and dependencies mentioned
 
 ### 2. Completeness Assessment
+
 - Ensures all required sections are present
 - Checks for missing documentation for new features
 - Verifies all public APIs are documented
 - Confirms examples cover main use cases
 
 ### 3. Freshness Analysis
+
 - Compares documentation timestamps with related code changes
 - Identifies stale references to deprecated features
 - Flags documentation that hasn't been updated recently
 - Checks for broken links and references
 
 ### 4. Consistency Review
+
 - Ensures formatting standards are followed
 - Verifies naming conventions are consistent
 - Checks that terminology is used uniformly
@@ -56,14 +62,18 @@ The agent performs the following checks:
 
 ## Output Format
 
-### NO NEW REPORT FILES!
+### NO NEW REPORT FILES
+
 The audit should:
+
 1. **Update existing documentation directly**
 2. **Delete duplicate/outdated files**
 3. **Add entry to `AUDIT-LOG.md` in the feature folder**
 
 ### Audit Log Entry Format
+
 Creates/updates `AUDIT-LOG.md` in the audited directory:
+
 ```markdown
 ## [Date] Audit Results
 - Verified Completion: X% (was claiming Y%)
@@ -74,6 +84,7 @@ Creates/updates `AUDIT-LOG.md` in the audited directory:
 ```
 
 ### Direct Updates
+
 - **Fix percentages** in existing files
 - **Remove false claims** from documentation
 - **Delete stale files** instead of archiving
@@ -94,6 +105,7 @@ When you run this command, I will:
 6. Optionally create GitHub issues for tracking fixes
 
 After audit completes, you'll see:
+
 ```
 ✓ Audit complete!
 Reports saved:
@@ -107,6 +119,7 @@ To fix issues:
 ## Configuration Options
 
 You can customize the audit with additional parameters:
+
 - `--depth <number>` - How deep to traverse subdirectories (default: unlimited)
 - `--types <extensions>` - File types to audit (default: .md,.mdx,.txt)
 - `--strict` - Use stricter validation rules
@@ -137,6 +150,7 @@ cat .audit-reports/latest.md
 ## Integration with Development Workflow
 
 This command can be integrated into your workflow:
+
 - Run before major releases
 - Schedule weekly audits via CI/CD
 - Hook into pre-commit for documentation changes

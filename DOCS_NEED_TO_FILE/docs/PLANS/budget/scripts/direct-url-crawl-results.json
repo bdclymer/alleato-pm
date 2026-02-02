@@ -1,0 +1,348 @@
+{
+  "timestamp": "2025-12-29T16:38:03.696Z",
+  "totalAttempted": 60,
+  "totalCaptured": 10,
+  "successRate": "16.7%",
+  "views": [
+    {
+      "viewName": "budget-main-view",
+      "description": "Main Budget View",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:34:35.206Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-main-view/screenshot.png"
+    },
+    {
+      "viewName": "budget-forecasting",
+      "description": "Budget Forecasting",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets/forecasting",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets/forecasting",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:35:03.248Z",
+      "analysis": {
+        "components": {
+          "buttons": 6,
+          "tables": 0,
+          "tabs": 0
+        },
+        "tables": [],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-forecasting/screenshot.png"
+    },
+    {
+      "viewName": "budget-details-tab",
+      "description": "Details Tab (Query)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=details",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=details",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:36:01.077Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-details-tab/screenshot.png"
+    },
+    {
+      "viewName": "budget-forecast-tab",
+      "description": "Forecast Tab (Query)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=forecast",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=forecast",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:36:09.982Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-forecast-tab/screenshot.png"
+    },
+    {
+      "viewName": "budget-snapshots-tab",
+      "description": "Snapshots Tab (Query)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=snapshots",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=snapshots",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:36:18.939Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-snapshots-tab/screenshot.png"
+    },
+    {
+      "viewName": "budget-history-tab",
+      "description": "History Tab (Query)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=history",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=history",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:36:29.705Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-history-tab/screenshot.png"
+    },
+    {
+      "viewName": "budget-details-hash",
+      "description": "Details (Hash)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#details",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#details",
+      "httpStatus": 200,
+      "timestamp": "2025-12-29T16:36:38.607Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-details-hash/screenshot.png"
+    },
+    {
+      "viewName": "budget-forecast-hash",
+      "description": "Forecast (Hash)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#forecast",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#forecast",
+      "timestamp": "2025-12-29T16:36:43.302Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-forecast-hash/screenshot.png"
+    },
+    {
+      "viewName": "budget-snapshots-hash",
+      "description": "Snapshots (Hash)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#snapshots",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#snapshots",
+      "timestamp": "2025-12-29T16:36:48.005Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-snapshots-hash/screenshot.png"
+    },
+    {
+      "viewName": "budget-history-hash",
+      "description": "History (Hash)",
+      "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#history",
+      "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets#history",
+      "timestamp": "2025-12-29T16:36:52.705Z",
+      "analysis": {
+        "components": {
+          "buttons": 12,
+          "tables": 2,
+          "tabs": 0
+        },
+        "tables": [
+          {
+            "index": 1,
+            "headers": [],
+            "rows": 1
+          },
+          {
+            "index": 2,
+            "headers": [
+              "Calculation Method",
+              "Unit Qty",
+              "UOM",
+              "Unit Cost",
+              "Original Budget"
+            ],
+            "rows": 1
+          }
+        ],
+        "title": "Budget",
+        "h1": "Budget"
+      },
+      "screenshotPath": "pages/budget-history-hash/screenshot.png"
+    }
+  ]
+}

@@ -158,6 +158,38 @@ await page.click('button[type="submit"]');
 - Use saved auth state for Playwright tests
 - Provide automatic authentication in crawlers/scripts
 
+### 10. Page Header Consistency Gate (MANDATORY)
+**ALL project pages MUST use the standard `ProjectPageHeader` + `PageContainer` pattern.**
+
+```tsx
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
+
+// Standard pattern:
+<>
+  <ProjectPageHeader
+    title="Feature Name"
+    description="Feature description"
+    actions={<div>...</div>}
+  />
+  <PageContainer>
+    {/* page content */}
+  </PageContainer>
+</>
+```
+
+**NEVER:**
+- Use `ProjectToolPage` (deprecated wrapper with wrong header variant)
+- Use `PageHeader` from `@/components/design-system` directly (deprecated)
+- Create custom/one-off headers for project pages
+- Skip the header entirely on project tool pages
+
+**ALWAYS:**
+- Import `ProjectPageHeader` and `PageContainer` from `@/components/layout`
+- Follow the same pattern used by Schedule, Commitments, and other standard pages
+- Include `title`, `description`, and `actions` props
+
+**Why:** Inconsistent headers make the app look broken. Every page must have the same header structure.
+
 ---
 
 ## Scaffolding System

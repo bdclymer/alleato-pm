@@ -1,0 +1,1835 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/directory",
+  "pageName": "directory",
+  "category": "emails",
+  "pageId": "directory",
+  "timestamp": "2026-01-12T16:09:02.857Z",
+  "analysis": {
+    "components": {
+      "buttons": 72,
+      "forms": 64,
+      "inputs": 156,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 2,
+      "tabs": 0,
+      "dropdowns": 1,
+      "icons": 137,
+      "emailList": 64,
+      "attachments": 0,
+      "recipients": 228,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": [
+        ""
+      ]
+    },
+    "title": "Directory • Goodwill Bart",
+    "h1": "Project Directory"
+  },
+  "links": 165,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/directory",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/configure_tab",
+      "text": "",
+      "classes": "StyledAnchor-core-12_27_1__sc-172j5qh-8 jTtuPl",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949956955785",
+      "text": "Alleato Group",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10753964/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10753964/vcard",
+      "text": "AA",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12640369/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12640369/vcard",
+      "text": "AA",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11855884/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11855884/vcard",
+      "text": "AC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8095660/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8095660/vcard",
+      "text": "BC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11722976/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11722976/vcard",
+      "text": "JD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12808642/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12808642/vcard",
+      "text": "NJ",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13425864/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13425864/vcard",
+      "text": "JM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12016026/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12016026/vcard",
+      "text": "FN",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 21
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12675505/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 22
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12675505/vcard",
+      "text": "CR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 23
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8709927/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8709927/vcard",
+      "text": "AT",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13276000/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 26
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13276000/vcard",
+      "text": "CT",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 27
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13832742/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 28
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13832742/vcard",
+      "text": "AW",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 29
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949962798415",
+      "text": "Alleato LLC",
+      "classes": "",
+      "id": null,
+      "index": 30
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13021363/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 31
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13021363/vcard",
+      "text": "MC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 32
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13408722/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 33
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13408722/vcard",
+      "text": "JC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 34
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949964058288",
+      "text": "Budget Blinds (Columbus, IN)",
+      "classes": "",
+      "id": null,
+      "index": 35
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4072878/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 36
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4072878/vcard",
+      "text": "AM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 37
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949963561980",
+      "text": "C&S Heating & Cooling Inc.",
+      "classes": "",
+      "id": null,
+      "index": 38
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3437348/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 39
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3437348/vcard",
+      "text": "JC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 40
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949958616941",
+      "text": "Central Indiana Hardware, CO, Inc",
+      "classes": "",
+      "id": null,
+      "index": 41
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/9485978/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 42
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/9485978/vcard",
+      "text": "DB",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 43
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4744386/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 44
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4744386/vcard",
+      "text": "KL",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 45
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7414623/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 46
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7414623/vcard",
+      "text": "",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 47
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3920653/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 48
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3920653/vcard",
+      "text": "MM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 49
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11080811/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 50
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11080811/vcard",
+      "text": "KP",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 51
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4342529/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 52
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4342529/vcard",
+      "text": "BW",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 53
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949964191277",
+      "text": "Central Security and Communications",
+      "classes": "",
+      "id": null,
+      "index": 54
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7092788/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 55
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7092788/vcard",
+      "text": "DL",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 56
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949957188072",
+      "text": "Deem, LLC",
+      "classes": "",
+      "id": null,
+      "index": 57
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1327958/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 58
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1327958/vcard",
+      "text": "RH",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 59
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8257144/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 60
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8257144/vcard",
+      "text": "BR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 61
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5964175/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 62
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5964175/vcard",
+      "text": "MR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 63
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10856155/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 64
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10856155/vcard",
+      "text": "KS",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 65
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949958798913",
+      "text": "Diamond Glassworks and Aluminum Systems",
+      "classes": "",
+      "id": null,
+      "index": 66
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10028723/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 67
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10028723/vcard",
+      "text": "DD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 68
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1350854/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 69
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1350854/vcard",
+      "text": "KD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 70
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/939221/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 71
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/939221/vcard",
+      "text": "DL",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 72
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10292581/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 73
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10292581/vcard",
+      "text": "HM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 74
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4071554/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 75
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4071554/vcard",
+      "text": "LP",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 76
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5318173/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 77
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5318173/vcard",
+      "text": "EW",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 78
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949962692216",
+      "text": "Foundation Building Materials, Inc",
+      "classes": "",
+      "id": null,
+      "index": 79
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3475860/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 80
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3475860/vcard",
+      "text": "MR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 81
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949958459505",
+      "text": "Glenmark Construction Co., Inc",
+      "classes": "",
+      "id": null,
+      "index": 82
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1815782/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 83
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1815782/vcard",
+      "text": "GK",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 84
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11184768/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 85
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11184768/vcard",
+      "text": "GK",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 86
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12034909/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 87
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12034909/vcard",
+      "text": "NK",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 88
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949960492361",
+      "text": "Goodwill Industries of Central Indiana, Llc",
+      "classes": "",
+      "id": null,
+      "index": 89
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11564530/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 90
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/11564530/vcard",
+      "text": "AM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 91
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12968180/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 92
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12968180/vcard",
+      "text": "JR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 93
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949962466218",
+      "text": "Integrity Concrete Cutters",
+      "classes": "",
+      "id": null,
+      "index": 94
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1553513/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 95
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1553513/vcard",
+      "text": "JB",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 96
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949963403262",
+      "text": "Kenny Glass, Inc.",
+      "classes": "",
+      "id": null,
+      "index": 97
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3809550/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 98
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3809550/vcard",
+      "text": "RC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 99
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/2130899/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 100
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/2130899/vcard",
+      "text": "SC",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 101
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949962692498",
+      "text": "Market Ready Interiors Inc",
+      "classes": "",
+      "id": null,
+      "index": 102
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12044757/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 103
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12044757/vcard",
+      "text": "JD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 104
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7509114/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 105
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/7509114/vcard",
+      "text": "MG",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 106
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8060724/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 107
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8060724/vcard",
+      "text": "NG",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 108
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949964413333",
+      "text": "McCray & Sons INC",
+      "classes": "",
+      "id": null,
+      "index": 109
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5446832/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 110
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5446832/vcard",
+      "text": "HM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 111
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1305843/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 112
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1305843/vcard",
+      "text": "RM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 113
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949960822508",
+      "text": "McCurdy Mechanical Corporation",
+      "classes": "",
+      "id": null,
+      "index": 114
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8619463/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 115
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8619463/vcard",
+      "text": "CA",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 116
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/246470/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 117
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/246470/vcard",
+      "text": "DM",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 118
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1244386/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 119
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1244386/vcard",
+      "text": "MN",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 120
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/788712/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 121
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/788712/vcard",
+      "text": "BZ",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 122
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949964058254",
+      "text": "MDC Group",
+      "classes": "",
+      "id": null,
+      "index": 123
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4314498/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 124
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/4314498/vcard",
+      "text": "AF",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 125
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10886276/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 126
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10886276/vcard",
+      "text": "M",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 127
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949959060572",
+      "text": "Quality Roofing Services, Inc",
+      "classes": "",
+      "id": null,
+      "index": 128
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1814843/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 129
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1814843/vcard",
+      "text": "GB",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 130
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/2167727/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 131
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/2167727/vcard",
+      "text": "SD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 132
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10776547/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 133
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/10776547/vcard",
+      "text": "DR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 134
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949962679058",
+      "text": "S & M Painting and Drywall Co.",
+      "classes": "",
+      "id": null,
+      "index": 135
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/789954/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 136
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/789954/vcard",
+      "text": "JH",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 137
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1185706/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 138
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/1185706/vcard",
+      "text": "AR",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 139
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949958521169",
+      "text": "Siemens Industry, Inc",
+      "classes": "",
+      "id": null,
+      "index": 140
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8533660/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 141
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/8533660/vcard",
+      "text": "CL",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 142
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949959922910",
+      "text": "Vista Building Services, Inc",
+      "classes": "",
+      "id": null,
+      "index": 143
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3001478/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 144
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/3001478/vcard",
+      "text": "ES",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 145
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/6495078/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 146
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/6495078/vcard",
+      "text": "BA",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 147
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12721877/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 148
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/12721877/vcard",
+      "text": "AB",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 149
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13473393/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 150
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/13473393/vcard",
+      "text": "SD",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 151
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5638375/edit",
+      "text": "Edit",
+      "classes": "bttn bttn-xs styles_button__b6Tsy",
+      "id": null,
+      "index": 152
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/users/5638375/vcard",
+      "text": "RS",
+      "classes": "table_procore-anchor-tag__MtBcR",
+      "id": null,
+      "index": 153
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/popup_add_person",
+      "text": "Add User",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": "popup_add_person",
+      "index": 155
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/popup_add_distribution_group",
+      "text": "Add Distribution Group",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": "popup_add_distribution_group",
+      "index": 156
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/bulk_add",
+      "text": "Bulk Add from Co. Directory",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 157
+    },
+    {
+      "href": "https://support.procore.com/references/procore-import-templates",
+      "text": "Download Validated Template",
+      "classes": "",
+      "id": null,
+      "index": 159
+    },
+    {
+      "href": "mailto:imports@procore.com?body=Requesting%20user%3A%20bclymer%40alleatogroup.com.%0A%0APlease%20attach%20your%20completed%20user%20import%20template%20to%20this%20email.&subject=Project%20562949954728542%3A%20Goodwill%20Bart%20User%20Import%20Requested",
+      "text": "Send Completed Template",
+      "classes": "",
+      "id": null,
+      "index": 160
+    },
+    {
+      "href": "https://support.procore.com/references/procore-import-templates",
+      "text": "Download Validated Template",
+      "classes": "",
+      "id": null,
+      "index": 161
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/vendors_for_import",
+      "text": "Download Existing Vendors for Import",
+      "classes": "",
+      "id": null,
+      "index": 162
+    },
+    {
+      "href": "mailto:imports@procore.com?body=Requesting%20user%3A%20bclymer%40alleatogroup.com.%0A%0APlease%20attach%20your%20completed%20company%20import%20template%20to%20this%20email.&subject=Project%20562949954728542%3A%20Goodwill%20Bart%20Company%20Import%20Requested",
+      "text": "Send Completed Template",
+      "classes": "",
+      "id": null,
+      "index": 163
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 164
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 165
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 166
+    }
+  ],
+  "clickables": 73,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 hnGHGX StyledDropdownButton-core-12_27_1__sc-ufsy2q-2 iYgwdY",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 hnGHGX StyledDropdownButton-core-12_27_1__sc-ufsy2q-2 iYgwdY",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_27_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_27_1__sc-17s58xs-2 StyledDropdownTab-core-12_27_1__sc-17s58xs-5 kFmjya iawKgC lchDMT",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_27_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_27_1__sc-17s58xs-2 StyledDropdownTab-core-12_27_1__sc-17s58xs-5 kFmjya iawKgC lchDMT",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Add Filter",
+      "id": "tokenHead__src-Filters__1LUMq",
+      "type": "button",
+      "classes": "tokenHead__src-Filters__1LUMq",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "1",
+      "id": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "type": "button",
+      "classes": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 41
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 42
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 43
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 44
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 45
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 46
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 47
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 48
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 49
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 50
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 51
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 52
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 53
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 54
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 55
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 56
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 57
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 58
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 59
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 60
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 61
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 62
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 63
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 64
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 65
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 66
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 67
+    },
+    {
+      "text": "Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "hasDropdown": false,
+      "index": 68
+    },
+    {
+      "text": "Re-Invite",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "hasDropdown": false,
+      "index": 69
+    },
+    {
+      "text": "1",
+      "id": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "type": "button",
+      "classes": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "hasDropdown": false,
+      "index": 70
+    },
+    {
+      "text": "Add Company",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 jccxI sc-aXZVg eiUXbQ",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 jccxI sc-aXZVg eiUXbQ",
+      "hasDropdown": false,
+      "index": 71
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 72
+    }
+  ],
+  "dropdowns": 7,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 hnGHGX StyledDropdownButton-core-12_27_1__sc-ufsy2q-2 iYgwdY",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_27_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_27_1__sc-17s58xs-2 StyledDropdownTab-core-12_27_1__sc-17s58xs-5 kFmjya iawKgC lchDMT",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Show, Hide, or Reorder ColumnsSelect All|Reset to ",
+      "classes": "dropdownContainer__src-TableConfig__LgZ40",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "classes": "dropdownTriangle__src-TableConfig__3Nn-N",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "Show, Hide, or Reorder ColumnsSelect All|Reset to ",
+      "classes": "dropdownHead__src-TableConfig__25eZv",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "Job TitleEmail / PhoneAddressCompanyPermission Tem",
+      "classes": "dropdownBody__src-TableConfig__3ygdI withSlot__src-TableConfig__HvzAY",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    }
+  ],
+  "screenshotPath": "pages/directory/screenshot.png"
+}

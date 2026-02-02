@@ -1,0 +1,168 @@
+{
+  "url": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget",
+  "pageName": "apply-the-budget-view-to-your-budget",
+  "category": "documentation",
+  "pageId": "apply-the-budget-view-to-your-budget",
+  "timestamp": "2025-12-29T16:44:34.782Z",
+  "analysis": {
+    "components": {
+      "buttons": 13,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 31,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 47,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 3,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 2,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Equipment User Guide",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Apply the Budget View to your Budget",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 29,
+      "sections": 4
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Equipment User Guide",
+        "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/"
+      },
+      {
+        "text": "Apply the Budget View to your Budget",
+        "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget/"
+      }
+    ],
+    "title": "Equipment User Guide - Apply the Budget View to your Budget",
+    "h1": "Equipment User Guide",
+    "metaDescription": " | Apply the Budget View to your Budget"
+  },
+  "links": 11,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/apply-the-budget-view-to-your-budget/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/equipment-budget-overview",
+      "text": "Equipment and Budget Overview",
+      "classes": "",
+      "id": null,
+      "index": 81,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/create-a-new-budget-view",
+      "text": "Create a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 82,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/preview-the-budget",
+      "text": "Preview the Budget",
+      "classes": "",
+      "id": null,
+      "index": 84,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Assign the Budget View to a Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 86,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-the-procore-labor-productivity-cost-budget-view",
+      "text": "Set Up the Procore Labor Productivity Cost Budget View",
+      "classes": "",
+      "id": null,
+      "index": 134,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/apply-the-view-snapshot-group-and-filter-options-on-a-budget-view",
+      "text": "Apply the View, Snapshot, Group, and Filter Options on a Budget or Forecasting View",
+      "classes": "",
+      "id": null,
+      "index": 135,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance",
+      "text": "Send a Budget to ERP Integrations for Accounting Acceptance.",
+      "classes": "",
+      "id": null,
+      "index": 137,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-procores-standard-budget-views",
+      "text": "What are Procore's standard budget views?",
+      "classes": "",
+      "id": null,
+      "index": 138,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/preview-the-budget/",
+      "text": "Preview the Budget",
+      "classes": "link-with-icon",
+      "id": null,
+      "index": 140,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project/",
+      "text": "Assign the Budget View to a Procore Project",
+      "classes": "link-with-icon",
+      "id": null,
+      "index": 141,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/apply-the-budget-view-to-your-budget/screenshot.png"
+}

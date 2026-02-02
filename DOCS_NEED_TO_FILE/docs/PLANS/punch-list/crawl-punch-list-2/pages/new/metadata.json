@@ -1,0 +1,494 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/punch_list/new",
+  "pageName": "new",
+  "category": "punch-list",
+  "pageId": "new",
+  "timestamp": "2026-01-12T16:00:21.836Z",
+  "analysis": {
+    "components": {
+      "buttons": 34,
+      "forms": 1,
+      "inputs": 9,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 72,
+      "statusBadges": 0,
+      "checkboxes": 1,
+      "images": 2,
+      "thumbnails": 0
+    },
+    "tables": [],
+    "punchItems": [],
+    "statusFilters": [],
+    "title": "Punch List • Goodwill Bart",
+    "h1": "New Punch List Item"
+  },
+  "links": 3,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/list",
+      "text": "Punch List",
+      "classes": "",
+      "id": null,
+      "index": 3
+    }
+  ],
+  "clickables": 45,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe sc-bJYsdd fcWqkD",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe sc-bJYsdd fcWqkD",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Select Type",
+      "id": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe sc-bJYsdd fcWqkD",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe sc-bJYsdd fcWqkD",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Select a Location",
+      "id": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 dGeNxb sc-loyRtV fgyMtD StyledLocationsPicker-leMlle jXNBsg",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 dGeNxb sc-loyRtV fgyMtD StyledLocationsPicker-leMlle jXNBsg",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Select Priority",
+      "id": "root_priority",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Select Trade",
+      "id": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Select Schedule Impact",
+      "id": "root_schedule_impact",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "Select Cost Impact",
+      "id": "root_cost_impact",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "",
+      "id": "root_cost_code_id",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_20_3__sc-mr8gwe-6 gOfDnl",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 bAsFYe StyledSelectClearIcon-core-12_20_3__sc-mr8gwe-5 jBaHdl",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn",
+      "type": "button",
+      "classes": "tox-tbtn",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "12pt",
+      "id": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "id": "tox-split-button",
+      "type": "div",
+      "classes": "tox-split-button",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "",
+      "id": "tox-tbtn tox-tbtn--disabled",
+      "type": "button",
+      "classes": "tox-tbtn tox-tbtn--disabled",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "Attach Files",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "Save",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "Save & Create New",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 cFRAGY",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 cFRAGY",
+      "hasDropdown": false,
+      "index": 41
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "hasDropdown": false,
+      "index": 42
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "hasDropdown": false,
+      "index": 43
+    },
+    {
+      "text": "Attach",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 iOJsuI",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 iOJsuI",
+      "hasDropdown": false,
+      "index": 44
+    }
+  ],
+  "dropdowns": 10,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Brandon Clymer",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 fdxzXM",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 gwPIxK",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Brandon Clymer",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 fdxzXM",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 gwPIxK",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "12pt",
+      "classes": "tox-tbtn tox-tbtn--select tox-tbtn--bespoke",
+      "id": null,
+      "hasMenu": false,
+      "index": 7
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 8
+    },
+    {
+      "text": "To open the popup, press Shift+Enter",
+      "classes": "tox-split-button",
+      "id": null,
+      "hasMenu": false,
+      "index": 9
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "screenshotPath": "pages/new/screenshot.png"
+}

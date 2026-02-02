@@ -1,0 +1,154 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance",
+  "pageName": "send-a-budget-to-erp-integrations-for-accounting-acceptance",
+  "category": "tutorial",
+  "pageId": "send-a-budget-to-erp-integrations-for-accounting-acceptance",
+  "timestamp": "2025-12-29T16:46:03.842Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 14,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 2,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Send a Budget to ERP Integrations for Accounting Acceptance",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 29,
+      "sections": 7
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "ERP Integrations",
+        "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/"
+      },
+      {
+        "text": "Send a Budget to ERP Integrations for Accounting Acceptance",
+        "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance/"
+      }
+    ],
+    "title": "Send a Budget to ERP Integrations for Accounting Acceptance",
+    "h1": "Send a Budget to ERP Integrations for Accounting Acceptance",
+    "metaDescription": "How to send a Procore project's Budget to the ERP Integrations tool for acceptance by an accounting approver."
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/permissions-company/tutorials/grant-granular-permissions-in-a-project-permissions-template",
+      "text": "'Send and Retrieve Budgets from ERP' granular permission",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/lock-a-budget",
+      "text": "Lock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/retrieve-a-budget-from-erp-integrations-before-acceptance",
+      "text": "Retrieve a Budget Sent to ERP Integrations Before Acceptance",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/add-a-budget-line-item",
+      "text": "Create a Budget Line Item",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/create-budget-changes",
+      "text": "Create a Budget Change",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/export-a-procore-budget-to-erp",
+      "text": "Export a Procore Budget to ERP",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 59,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/accept-or-reject-a-budget-for-export-to-erp",
+      "text": "Accept or Reject a Budget for Export to ERP",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/send-a-budget-to-erp-integrations-for-accounting-acceptance/screenshot.png"
+}

@@ -1,0 +1,132 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-a-prime-contract-sov-from-the-project-budget/",
+  "pageName": "create-a-prime-contract-sov-from-the-project-budget",
+  "category": "tutorial",
+  "pageId": "create-a-prime-contract-sov-from-the-project-budget",
+  "timestamp": "2025-12-29T16:39:23.901Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 17,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 37,
+      "headings": {
+        "h1": 1,
+        "h2": 6,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 4,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Create a Schedule of Values on a Prime Contract using the Project's Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Next Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 35,
+      "sections": 9
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Prime Contracts",
+        "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/"
+      },
+      {
+        "text": "Create a Schedule of Values on a Prime Contract using the Project's Budget",
+        "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-a-prime-contract-sov-from-the-project-budget/"
+      }
+    ],
+    "title": "Create a Schedule of Values on a Prime Contract using the Project's Budget",
+    "h1": "Create a Schedule of Values on a Prime Contract using the Project's Budget",
+    "metaDescription": "How to create line items on a prime contract's Schedule of Values (SOV) by importing line items from a project's budget."
+  },
+  "links": 4,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/update-the-schedule-of-values-on-a-prime-contract",
+      "text": "Create the SOV from the Project's Budget",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget",
+      "classes": "",
+      "id": null,
+      "index": 61,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/lock-a-budget",
+      "text": "Lock a Budget",
+      "classes": "",
+      "id": null,
+      "index": 62,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs",
+      "text": "What is a budget code in Procore's WBS?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 69,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/create-a-prime-contract-sov-from-the-project-budget/screenshot.png"
+}

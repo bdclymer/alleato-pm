@@ -1,0 +1,705 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/direct_costs/configure_tab",
+  "pageName": "configure_tab",
+  "category": "direct-costs",
+  "pageId": "configure_tab",
+  "timestamp": "2026-01-05T19:34:45.096Z",
+  "analysis": {
+    "components": {
+      "buttons": 2,
+      "forms": 0,
+      "inputs": 4,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 2,
+      "dropdowns": 0,
+      "icons": 11
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Name ▴",
+          "Company",
+          "None",
+          "Read Only",
+          "Standard",
+          "Admin"
+        ],
+        "rows": 64,
+        "classes": "item_list permissions_table",
+        "id": null
+      }
+    ],
+    "title": "Direct Costs • Goodwill Bart",
+    "h1": "Direct Cost Settings"
+  },
+  "links": 72,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/direct-costs/tutorials/configure-advanced-settings-direct-costs",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949961718060",
+      "text": "Accounting, Accounting",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963914444",
+      "text": "Accounting2, Accounting2",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963604704",
+      "text": "Arney, Bryan",
+      "classes": "",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964178638",
+      "text": "Austin, Cazee",
+      "classes": "",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964255138",
+      "text": "Bird, Dwight",
+      "classes": "",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962781248",
+      "text": "Blatz, Greg",
+      "classes": "",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963995529",
+      "text": "Bohner, Anikka",
+      "classes": "",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517835",
+      "text": "Butler, Justin",
+      "classes": "",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964295436",
+      "text": "Calcetero, Maria",
+      "classes": "",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963056319",
+      "text": "Cannon, Andrew",
+      "classes": "",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964260577",
+      "text": "Carothers, Romey",
+      "classes": "",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963971475",
+      "text": "Chavis, Sandy",
+      "classes": "",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963568054",
+      "text": "Christoff, Jeff",
+      "classes": "",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949956955789",
+      "text": "Clymer, Brandon",
+      "classes": "",
+      "id": null,
+      "index": 21
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964675924",
+      "text": "Curtin, Jack",
+      "classes": "",
+      "id": null,
+      "index": 22
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963244897",
+      "text": "Davis, Jennifer",
+      "classes": "",
+      "id": null,
+      "index": 23
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963243756",
+      "text": "Davis, Sabrina",
+      "classes": "",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964764407",
+      "text": "Davis, Sabrina",
+      "classes": "",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962911462",
+      "text": "Dawson, Jesse",
+      "classes": "",
+      "id": null,
+      "index": 26
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963348285",
+      "text": "Driscoll, David",
+      "classes": "",
+      "id": null,
+      "index": 27
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949959160218",
+      "text": "Druin, Karin",
+      "classes": "",
+      "id": null,
+      "index": 28
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964763681",
+      "text": "Fowler, Archie",
+      "classes": "",
+      "id": null,
+      "index": 29
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963330969",
+      "text": "Green, Mike",
+      "classes": "",
+      "id": null,
+      "index": 30
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962692529",
+      "text": "Green, Nick",
+      "classes": "",
+      "id": null,
+      "index": 31
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962704263",
+      "text": "Hayden, Jackie",
+      "classes": "",
+      "id": null,
+      "index": 35
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958944695",
+      "text": "Hess, Ruth",
+      "classes": "",
+      "id": null,
+      "index": 36
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964088828",
+      "text": "Jepson, Nick",
+      "classes": "",
+      "id": null,
+      "index": 37
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963181188",
+      "text": "Kelly, Greg",
+      "classes": "",
+      "id": null,
+      "index": 38
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964184869",
+      "text": "Kelly, Griffin",
+      "classes": "",
+      "id": null,
+      "index": 39
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964075635",
+      "text": "Kelly, Nolan",
+      "classes": "",
+      "id": null,
+      "index": 40
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964191285",
+      "text": "Lainhart, David",
+      "classes": "",
+      "id": null,
+      "index": 41
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958752758",
+      "text": "Lessaris, Dave",
+      "classes": "",
+      "id": null,
+      "index": 42
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958641596",
+      "text": "Lopez, Chris",
+      "classes": "",
+      "id": null,
+      "index": 43
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963554336",
+      "text": "Lynk, Kevin",
+      "classes": "",
+      "id": null,
+      "index": 44
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964058290",
+      "text": "Marti, Alyssa",
+      "classes": "",
+      "id": null,
+      "index": 45
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963348294",
+      "text": "Martin, Hayden",
+      "classes": "",
+      "id": null,
+      "index": 46
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964148803",
+      "text": "McCray, Heather",
+      "classes": "",
+      "id": null,
+      "index": 47
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964058125",
+      "text": "McCray, Rick",
+      "classes": "",
+      "id": null,
+      "index": 48
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517718",
+      "text": "McCurdy, Dave",
+      "classes": "",
+      "id": null,
+      "index": 49
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964785933",
+      "text": "MDC Group Accounting,",
+      "classes": "",
+      "id": null,
+      "index": 50
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964692653",
+      "text": "Mendez, Jose",
+      "classes": "",
+      "id": null,
+      "index": 51
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964177932",
+      "text": "Morris, Lynn",
+      "classes": "",
+      "id": null,
+      "index": 52
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958767979",
+      "text": "Mueller, Megan",
+      "classes": "",
+      "id": null,
+      "index": 53
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962732668",
+      "text": "Mulder, Andrew",
+      "classes": "",
+      "id": null,
+      "index": 57
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517704",
+      "text": "Neff, Mitzi",
+      "classes": "",
+      "id": null,
+      "index": 58
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964295464",
+      "text": "Njie, Fatima",
+      "classes": "",
+      "id": null,
+      "index": 62
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963657977",
+      "text": "Parks, Kasha",
+      "classes": "",
+      "id": null,
+      "index": 63
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949960492408",
+      "text": "Patterson, Logan",
+      "classes": "",
+      "id": null,
+      "index": 64
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964244164",
+      "text": "Rains, Jared",
+      "classes": "",
+      "id": null,
+      "index": 65
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963378440",
+      "text": "Reed, Mark",
+      "classes": "",
+      "id": null,
+      "index": 69
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949960574378",
+      "text": "Rhoades, Brennan",
+      "classes": "",
+      "id": null,
+      "index": 70
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963040316",
+      "text": "Rhoton, Adam",
+      "classes": "",
+      "id": null,
+      "index": 71
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963035171",
+      "text": "Rice, David",
+      "classes": "",
+      "id": null,
+      "index": 72
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964295156",
+      "text": "Richeson, Mason",
+      "classes": "",
+      "id": null,
+      "index": 73
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963960508",
+      "text": "Rusin, Canden",
+      "classes": "",
+      "id": null,
+      "index": 74
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964058259",
+      "text": "Sims, Rick",
+      "classes": "",
+      "id": null,
+      "index": 75
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962567396",
+      "text": "Sipe, Kevin",
+      "classes": "",
+      "id": null,
+      "index": 76
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964663112",
+      "text": "Spangle, Eric",
+      "classes": "",
+      "id": null,
+      "index": 77
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958179854",
+      "text": "Taylor, AJ",
+      "classes": "",
+      "id": null,
+      "index": 78
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964547956",
+      "text": "Tragesser, Chad",
+      "classes": "",
+      "id": null,
+      "index": 79
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949965119917",
+      "text": "Wehner, Alec",
+      "classes": "",
+      "id": null,
+      "index": 80
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958519582",
+      "text": "Wetherholt, Elizabeth",
+      "classes": "",
+      "id": null,
+      "index": 81
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958621735",
+      "text": "Whiteman, Brad",
+      "classes": "",
+      "id": null,
+      "index": 82
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962703765",
+      "text": "Zeis, Brenda",
+      "classes": "",
+      "id": null,
+      "index": 83
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/direct_costs/summary/index",
+      "text": "Back",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 85
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 86
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 87
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 88
+    }
+  ],
+  "clickables": 18,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 17
+    }
+  ],
+  "dropdowns": 1,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    }
+  ],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

@@ -1,0 +1,115 @@
+{
+  "url": "https://v2.support.procore.com/faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget/",
+  "pageName": "faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget",
+  "category": "faq",
+  "pageId": "faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget",
+  "timestamp": "2025-12-29T16:42:49.274Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 11,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 33,
+      "headings": {
+        "h1": 1,
+        "h2": 3,
+        "h3": 4,
+        "h4": 3
+      },
+      "codeBlocks": 0,
+      "images": 0,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Should I update my Budget View to add RFQ values to the budget?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "If you ARE already showing ROM in your Budget view:",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "If you are NOT showing ROM in your Budget view:",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 31,
+      "sections": 6
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Should I update my Budget View to add RFQ values to the budget?",
+        "href": "https://v2.support.procore.com/faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget/"
+      }
+    ],
+    "title": "Should I update my Budget View to add RFQ values to the budget?",
+    "h1": "Should I update my Budget View to add RFQ values to the budget?",
+    "metaDescription": "Should I update my Budget View to add RFQ values to the budget"
+  },
+  "links": 3,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/change-events-project/tutorials/add-the-change-events-columns-to-a-budget-view-including-revenue-rom",
+      "text": "Add Change Event Columns to Budget View",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/change-events-project/tutorials/add-cost-rom-rfq-and-non-commitment-source-columns-to-a-budget-view",
+      "text": "Add Cost ROM, RFQ & Non-Commitment Cost Source Columns to a Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 56,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-should-i-update-my-budget-view-to-add-rfq-values-to-the-budget/screenshot.png"
+}

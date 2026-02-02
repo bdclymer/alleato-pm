@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-01-06T00:03:22.015Z",
+  "summary": {
+    "totalUsers": 4,
+    "totalVendors": 4,
+    "totalPages": 2,
+    "adminUsers": 2,
+    "dataCompleteness": {
+      "usersWithEmail": 4,
+      "usersWithPhone": 3,
+      "completeProfiles": 3
+    }
+  },
+  "usersByCompany": {
+    "ABC Construction": {
+      "users": [
+        {
+          "id": "12345",
+          "name": "John Smith",
+          "email": "john.smith@company.com",
+          "phone": "555-123-4567",
+          "company": "ABC Construction",
+          "companyUrl": "/companies/abc-construction",
+          "permissionTemplate": "Project Manager",
+          "isAdmin": true,
+          "profileUrl": "/directory/users/12345"
+        },
+        {
+          "id": "12347",
+          "name": "Mike Johnson",
+          "email": "mike.j@abc.com",
+          "phone": "",
+          "company": "ABC Construction",
+          "companyUrl": "/companies/abc-construction",
+          "permissionTemplate": "Field Worker",
+          "isAdmin": false,
+          "profileUrl": "/directory/users/12347"
+        }
+      ],
+      "adminCount": 1,
+      "regularCount": 1
+    },
+    "XYZ Contractors": {
+      "users": [
+        {
+          "id": "12346",
+          "name": "Jane Doe",
+          "email": "jane.doe@xyz-contractors.com",
+          "phone": "555-234-5678",
+          "company": "XYZ Contractors",
+          "companyUrl": "/companies/xyz-contractors",
+          "permissionTemplate": "Subcontractor",
+          "isAdmin": false,
+          "profileUrl": "/directory/users/12346"
+        }
+      ],
+      "adminCount": 0,
+      "regularCount": 1
+    },
+    "Design Associates": {
+      "users": [
+        {
+          "id": "12348",
+          "name": "Sarah Williams",
+          "email": "sarah@designfirm.com",
+          "phone": "555-345-6789",
+          "company": "Design Associates",
+          "companyUrl": "/companies/design-associates",
+          "permissionTemplate": "Architect",
+          "isAdmin": true,
+          "profileUrl": "/directory/users/12348"
+        }
+      ],
+      "adminCount": 1,
+      "regularCount": 0
+    }
+  },
+  "vendorAnalysis": {
+    "ABC Construction": {
+      "type": "General Contractor",
+      "userCount": 15,
+      "hasUsers": true,
+      "primaryContact": "John Smith"
+    },
+    "XYZ Contractors": {
+      "type": "Subcontractor",
+      "userCount": 8,
+      "hasUsers": true,
+      "primaryContact": "Jane Doe"
+    },
+    "Design Associates": {
+      "type": "Architect",
+      "userCount": 3,
+      "hasUsers": true,
+      "primaryContact": "Sarah Williams"
+    },
+    "Safety Consultants Inc": {
+      "type": "Consultant",
+      "userCount": 0,
+      "hasUsers": false,
+      "primaryContact": null
+    }
+  },
+  "permissionDistribution": {
+    "Project Manager": {
+      "count": 1,
+      "users": [
+        "John Smith"
+      ],
+      "isAdminTemplate": true
+    },
+    "Subcontractor": {
+      "count": 1,
+      "users": [
+        "Jane Doe"
+      ],
+      "isAdminTemplate": false
+    },
+    "Field Worker": {
+      "count": 1,
+      "users": [
+        "Mike Johnson"
+      ],
+      "isAdminTemplate": false
+    },
+    "Architect": {
+      "count": 1,
+      "users": [
+        "Sarah Williams"
+      ],
+      "isAdminTemplate": true
+    }
+  }
+}

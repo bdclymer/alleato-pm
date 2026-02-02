@@ -4,7 +4,7 @@ import * as React from "react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
@@ -21,12 +21,10 @@ import {
   BarChart3,
   FilePenLine,
   ArrowUpRight,
-  Clock,
   Briefcase,
   Target,
   Zap,
   Video,
-  ArrowRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -453,71 +451,21 @@ export function ProjectHomeClient({
               maxItems={5}
             />
 
-            {/* Meetings Summary Cards */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  Meetings
-                </h3>
-                <Link
-                  href={`/${project.id}/meetings`}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-                >
-                  View all
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  {
-                    label: "Total Meetings",
-                    value: meetings.length,
-                    icon: Video,
-                    color: "text-foreground",
-                  },
-                  {
-                    label: "This Month",
-                    value: meetings.filter((m) => {
-                      if (!m.date) return false;
-                      const d = new Date(m.date);
-                      const now = new Date();
-                      return (
-                        d.getMonth() === now.getMonth() &&
-                        d.getFullYear() === now.getFullYear()
-                      );
-                    }).length,
-                    icon: Calendar,
-                    color: "text-[hsl(var(--status-info))]",
-                  },
-                  {
-                    label: "Upcoming",
-                    value: meetings.filter((m) => {
-                      if (!m.date) return false;
-                      return new Date(m.date) > new Date();
-                    }).length,
-                    icon: Clock,
-                    color: "text-[hsl(var(--status-warning))]",
-                  },
-                ].map((card) => (
-                  <Link
-                    key={card.label}
-                    href={`/${project.id}/meetings`}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-                  >
-                    <card.icon className={cn("h-5 w-5", card.color)} />
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {card.label}
-                      </p>
-                      <p className="text-sm font-semibold tabular-nums">
-                        {card.value}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <InfoSection
+              title="Meetings"
+              icon={Video}
+              items={meetings.slice(0, 5).map((meeting) => ({
+                id: meeting.id,
+                title: meeting.title || "Untitled Meeting",
+                subtitle: meeting.date
+                  ? `${format(new Date(meeting.date), "MMM d, yyyy")}${meeting.duration_minutes ? ` · ${meeting.duration_minutes} min` : ""}`
+                  : undefined,
+                href: `/${project.id}/meetings`,
+              }))}
+              viewAllHref={`/${project.id}/meetings`}
+              emptyMessage="No meetings yet"
+              maxItems={5}
+            />
           </div>
 
           {/* Right Column */}
@@ -655,6 +603,10 @@ export function ProjectHomeClient({
                         className="flex items-center gap-3 py-2 border-b border-neutral-100/60 last:border-0"
                       >
                         <Avatar className="h-7 w-7 border border-neutral-200/80">
+                          <AvatarImage
+                            src="/alleato-favicon.png"
+                            alt={String(memberName)}
+                          />
                           <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
                             {initials}
                           </AvatarFallback>

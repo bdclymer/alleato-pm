@@ -1,0 +1,64 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/schedule",
+  "pageName": "schedule",
+  "category": "scheduling",
+  "pageId": "schedule",
+  "timestamp": "2026-01-12T16:02:22.618Z",
+  "analysis": {
+    "components": {
+      "buttons": 0,
+      "forms": 0,
+      "inputs": 0,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 0,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 0,
+      "badges": 0,
+      "gantt": 0,
+      "calendar": 0,
+      "tasks": 0,
+      "milestones": 0,
+      "progress": 0,
+      "dependencies": 1,
+      "resources": 0,
+      "datePicker": 0
+    },
+    "tables": [],
+    "scheduleElements": {
+      "ganttChart": 0,
+      "timelineView": 0,
+      "taskList": 0,
+      "criticalPath": 0,
+      "baseline": 0,
+      "lookahead": 0,
+      "resourceView": 0,
+      "importExport": 0,
+      "filters": 0,
+      "viewSelector": 0
+    },
+    "title": "404 This page is lost.",
+    "h1": null
+  },
+  "links": 1,
+  "linkDetails": [
+    {
+      "href": "mailto:support@procore.com",
+      "text": "support@procore.com",
+      "classes": "error-link",
+      "id": null,
+      "index": 1,
+      "isScheduleLink": false
+    }
+  ],
+  "clickables": 0,
+  "clickableDetails": [],
+  "dropdowns": 0,
+  "dropdownDetails": [],
+  "scheduleInteractions": 0,
+  "scheduleInteractionDetails": [],
+  "screenshotPath": "pages/schedule/screenshot.png"
+}

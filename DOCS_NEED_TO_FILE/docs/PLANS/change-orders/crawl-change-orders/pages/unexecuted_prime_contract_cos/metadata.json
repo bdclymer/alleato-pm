@@ -1,0 +1,227 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/reports/unexecuted_prime_contract_cos",
+  "pageName": "unexecuted_prime_contract_cos",
+  "category": "change-orders",
+  "pageId": "unexecuted_prime_contract_cos",
+  "timestamp": "2025-12-30T01:05:07.923Z",
+  "analysis": {
+    "components": {
+      "buttons": 2,
+      "forms": 1,
+      "inputs": 6,
+      "tables": 2,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 1,
+      "icons": 11
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Contract",
+          "#",
+          "Revision",
+          "Title",
+          "Designated Reviewer",
+          "Amount",
+          "Schedule Impact",
+          "Status",
+          "Due Date"
+        ],
+        "rows": 2,
+        "classes": "sortable item_list",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Contract",
+          "#",
+          "Revision",
+          "Title",
+          "Designated Reviewer",
+          "Amount",
+          "Schedule Impact",
+          "Status",
+          "Due Date"
+        ],
+        "rows": 0,
+        "classes": "pc-sticky-header-wrapper sortable item_list",
+        "id": null
+      }
+    ],
+    "title": "360 Reporting • Goodwill Bart",
+    "h1": "Unexecuted PCCOs and Unpaid Unassociated COs"
+  },
+  "links": 13,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/reports",
+      "text": "Project Reports",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956482890",
+      "text": "Goodwill Bart",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956482890",
+      "text": "005",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956482890",
+      "text": "PCO #008, #009",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956475311",
+      "text": "Goodwill Bart",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956475311",
+      "text": "004",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/prime_contracts/562949957345977/change_orders/change_order_packages/562949956475311",
+      "text": "PCO #007 Permit Fees",
+      "classes": "",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 14
+    }
+  ],
+  "clickables": 3,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 2
+    }
+  ],
+  "dropdowns": 6,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n          \n  ",
+      "classes": "dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 1
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n          \n  ",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 2
+    },
+    {
+      "text": "Export",
+      "classes": "dropdown-toggle export ",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "PDF",
+      "classes": "wrench-dropdown export-dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 4
+    },
+    {
+      "text": "PDF",
+      "classes": "wrench-dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 5
+    }
+  ],
+  "screenshotPath": "pages/unexecuted_prime_contract_cos/screenshot.png"
+}

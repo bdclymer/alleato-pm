@@ -1,0 +1,168 @@
+# TASKS: Prime Contracts
+
+- Feature: prime-contracts
+- Started: 2025-12-27 (crawl), 2026-01-11 (finalization)
+- Status: In Progress (~75% complete)
+- Last Updated: 2026-01-14
+
+## Implementation Summary
+
+| Phase | Status | Progress |
+|-------|--------|----------|
+| Phase 1: Database & Schema | COMPLETE | 9/9 (100%) |
+| Phase 2: API Routes | COMPLETE | 14/14 (100%) |
+| Phase 3: Core UI Pages | MOSTLY COMPLETE | 4/5 (80%) |
+| Phase 4: Components & Features | IN PROGRESS | 6/12 (50%) |
+| Phase 5: Testing & Verification | PENDING | 0/4 (0%) |
+
+---
+
+## Phase 1: Database & Schema
+
+- [x] prime_contracts table with all fields
+- [x] prime_contract_change_orders table (contract_change_orders)
+- [x] prime_contract_sovs table (Schedule of Values)
+- [x] contract_line_items table (UUID-based)
+- [x] contract_billing_periods table
+- [x] contract_payments table
+- [x] contract_financial_summary_mv materialized view
+- [x] RLS policies for all tables
+- [x] TypeScript types generated (database.types.ts)
+
+## Phase 2: API Routes
+
+- [x] GET /api/projects/[projectId]/contracts - List contracts (with financial summary)
+- [x] POST /api/projects/[projectId]/contracts - Create contract
+- [x] GET /api/projects/[projectId]/contracts/[contractId] - Get contract (with financial summary)
+- [x] PUT /api/projects/[projectId]/contracts/[contractId] - Update contract
+- [x] DELETE /api/projects/[projectId]/contracts/[contractId] - Delete contract
+- [x] GET/POST /api/projects/[projectId]/contracts/[contractId]/line-items
+- [x] GET/PUT/DELETE /api/projects/[projectId]/contracts/[contractId]/line-items/[lineItemId]
+- [x] POST /api/projects/[projectId]/contracts/[contractId]/line-items/import
+- [x] GET/POST /api/projects/[projectId]/contracts/[contractId]/change-orders
+- [x] GET/PUT/DELETE /api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]
+- [x] POST .../change-orders/[changeOrderId]/approve
+- [x] POST .../change-orders/[changeOrderId]/reject
+- [x] Zod validation schemas (contracts, line-items, change-orders)
+- [x] Financial summary enrichment from contract_financial_summary_mv
+
+## Phase 3: Core UI Pages
+
+- [x] /[projectId]/prime-contracts/page.tsx - List view with GenericDataTable
+- [x] /[projectId]/prime-contracts/new/page.tsx - Create form
+- [x] /[projectId]/prime-contracts/[contractId]/page.tsx - Detail view with 8 tabs
+- [x] /[projectId]/prime-contracts/[contractId]/edit/page.tsx - Edit form (needs status enum fix)
+- [ ] Table config enhancements (actions column, bulk operations)
+
+## Phase 4: Components & Features
+
+### Completed
+- [x] ContractForm component (create/edit modes)
+- [x] ScheduleOfValuesGrid component
+- [x] ScheduleOfValuesRow component
+- [x] contracts.config.ts table configuration
+- [x] General Info card (3-column Procore layout)
+- [x] Contract Summary card (financial fields from materialized view)
+
+### Detail Page Tabs (8 total)
+- [x] General tab - General Info, Contract Summary, Line Items table, Contract Dates
+- [x] Change Orders tab - Full table with status badges, totals
+- [ ] Invoices tab - Placeholder only (needs API integration)
+- [ ] Payments Received tab - Placeholder only (needs API integration)
+- [ ] Emails tab - Placeholder only
+- [ ] Change History tab - Placeholder only
+- [ ] Financial Markup tab - Placeholder only
+- [x] Advanced Settings tab - Inclusions/Exclusions, Privacy settings
+
+### Missing Features
+- [ ] Edit page status enum fix (uses old values: draft/active/completed/cancelled/on_hold)
+- [ ] Dates panel in General Info (Start Date, Est. Completion, Substantial Completion, Actual Completion, Signed Contract Received, Contract Termination)
+- [ ] Contract Actions Toolbar (export, print, bulk actions)
+- [ ] Advanced Filter/Search Components
+- [ ] Add/Edit Line Items inline functionality
+- [ ] Delete confirmation dialog
+
+## Phase 5: Testing & Verification
+
+- [ ] E2E tests for contracts CRUD
+- [ ] E2E tests for line items
+- [ ] E2E tests for change orders
+- [ ] HTML Verification Report generated
+
+---
+
+## Test Data Created
+
+- Test Contract ID: `33f9bb5c-23d0-4a7d-8f1c-35d4f0585bf3`
+- Project: Goodwill Tremont (ID: 25108)
+- Contract Number: TEST-1768432629211
+- 5 Line Items totaling $150,000:
+  1. General Conditions: $25,000
+  2. Site Work & Excavation: $35,000
+  3. Concrete Foundation: $45,000
+  4. Structural Steel: $30,000
+  5. Electrical: $15,000
+
+---
+
+## Current Blockers
+
+1. **Edit page status enum mismatch** - Uses old status values, needs update to: draft, out_for_bid, out_for_signature, approved, complete, terminated
+
+---
+
+## Next Actions (Priority Order)
+
+1. Fix edit page status enum to match `prime_contract_status_v2`
+2. Add missing dates to General Info section
+3. Implement Invoices tab with API integration
+4. Implement Payments Received tab with API integration
+5. Add inline line item editing
+6. Run E2E test suite
+7. Generate verification report
+
+---
+
+## Files Reference
+
+### API Routes
+
+- `frontend/src/app/api/projects/[projectId]/contracts/route.ts`
+- `frontend/src/app/api/projects/[projectId]/contracts/validation.ts`
+- `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/route.ts`
+- `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/`
+- `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/`
+
+### Frontend Pages
+
+- `frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx`
+- `frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx`
+- `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx`
+- `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx`
+
+### Components
+
+- `frontend/src/components/domain/contracts/ContractForm.tsx`
+- `frontend/src/components/domain/contracts/ScheduleOfValuesGrid.tsx`
+- `frontend/src/components/domain/contracts/ScheduleOfValuesRow.tsx`
+- `frontend/src/components/domain/contracts/CostCodeSelector.tsx`
+- `frontend/src/components/domain/contracts/ImportFromBudgetModal.tsx`
+
+### Types
+
+- `frontend/src/types/prime-contracts.ts`
+- `frontend/src/types/contract-line-items.ts`
+- `frontend/src/types/contract-change-orders.ts`
+- `frontend/src/types/contract-billing-payments.ts`
+
+### Configuration
+
+- `frontend/src/config/tables/contracts.config.ts`
+
+### Reference Screenshots
+
+- `scripts/screenshot-capture/outputs/procore-grouped-by-tool/prime-contracts/`
+
+### Scripts
+
+- `frontend/add-line-items.ts` - Test data creation script

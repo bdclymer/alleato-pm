@@ -1,0 +1,288 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings/permissions",
+  "pageName": "permissions",
+  "category": "photos",
+  "pageId": "permissions",
+  "timestamp": "2026-01-12T16:05:05.770Z",
+  "analysis": {
+    "components": {
+      "buttons": 7,
+      "forms": 0,
+      "inputs": 41,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 4,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 33,
+      "imageElements": 2,
+      "thumbnails": 0,
+      "galleries": 0,
+      "albums": 0,
+      "uploadButtons": 0,
+      "lightboxes": 0,
+      "mediaPlayers": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "NameSortable column",
+          "CompanySortable column",
+          "Actions",
+          "NoneSortable column",
+          "Read OnlySortable column",
+          "StandardSortable column",
+          "AdminSortable column"
+        ],
+        "rows": 10,
+        "classes": "StyledTable-core-12_25_2__sc-9c7xd-26 LHthK",
+        "id": null
+      }
+    ],
+    "forms": [],
+    "photosSections": [],
+    "imageCount": 2,
+    "backgroundImages": 0,
+    "title": "Photos • Goodwill Bart",
+    "h1": "Photos Settings",
+    "h2s": [
+      "User Permissions for Photos"
+    ]
+  },
+  "links": 18,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+      "text": "Photos",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+      "text": "Photos Settings",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517718",
+      "text": "McCurdy, Dave",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962703765",
+      "text": "Zeis, Brenda",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962704263",
+      "text": "Hayden, Jackie",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958752758",
+      "text": "Lessaris, Dave",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963040316",
+      "text": "Rhoton, Adam",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517704",
+      "text": "Neff, Mitzi",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964058125",
+      "text": "McCray, Rick",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958944695",
+      "text": "Hess, Ruth",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949959160218",
+      "text": "Druin, Karin",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517835",
+      "text": "Butler, Justin",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 18
+    }
+  ],
+  "clickables": 9,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Photos Settings",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "a",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Permissions Table",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "type": "a",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledButton-core-12_25_2__sc-3j8khv-1 StyledSearchButton-core-12_25_2__sc-3j8khv-2 eMhBmL cosxjV",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledButton-core-12_25_2__sc-3j8khv-1 StyledSearchButton-core-12_25_2__sc-3j8khv-2 eMhBmL cosxjV",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "1",
+      "id": "react-aria1563335423-:r8s:",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 eYCide StyledButton-core-12_25_2__sc-fy34i1-3 cCVxPn",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 eYCide StyledButton-core-12_25_2__sc-fy34i1-3 cCVxPn",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledButton-core-12_25_2__sc-fy34i1-3 cCVxPn",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledButton-core-12_25_2__sc-fy34i1-3 cCVxPn",
+      "hasDropdown": false,
+      "index": 8
+    }
+  ],
+  "dropdowns": 3,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH kqrjgC",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "1",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "id": "react-aria1563335423-:r8s:",
+      "hasMenu": false,
+      "index": 2
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "photoItems": 0,
+  "photoItemDetails": [],
+  "screenshotPath": "pages/permissions/screenshot.png"
+}

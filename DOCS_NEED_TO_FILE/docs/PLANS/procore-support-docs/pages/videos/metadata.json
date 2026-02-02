@@ -1,0 +1,236 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/videos/",
+  "pageName": "videos",
+  "category": "documentation",
+  "pageId": "videos",
+  "timestamp": "2025-12-29T16:43:58.065Z",
+  "analysis": {
+    "components": {
+      "buttons": 192,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 3,
+      "cards": 0,
+      "lists": 10,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 196,
+      "headings": {
+        "h1": 1,
+        "h2": 1,
+        "h3": 23,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 20,
+      "videos": 20
+    },
+    "articleContent": {
+      "title": "Budget",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Videos",
+          "id": "page-title"
+        },
+        {
+          "level": "h3",
+          "text": "Configure Budget Settings",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Set Up a Budget",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Set Up a Budget - Owner",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Set Up a Budget - Specialty Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add New Line Items to a Budget - General Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add New Line Items to a Budget - Owner",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Add New Line Items to a Budget - Specialty Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Create a Budget Change",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Create a Budget Modification",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Create a Budget Modification - Owner",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Navigate the Forecasting Tab",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Navigate the Forecasting Tab - Owner",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Navigate the Forecasting Tab - Specialty Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Set Up Budget Views - Specialty Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Buyout Savings Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Buyout Savings While in a Buyout Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Current/Revised Buyout Budget View",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Budget Forecasts, Projections and Reports",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Budget Forecasts, Projections and Reports - Specialty Contractor",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Change Order Analysis",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "All tool-specific videos available here!",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 11,
+      "sections": 23
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "Videos",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/videos/"
+      }
+    ],
+    "title": "Videos",
+    "h1": "Budget",
+    "metaDescription": "This page includes training videos that show how to perform various tasks in or related to the project's Budget tool."
+  },
+  "links": 7,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project",
+      "text": "Overview",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials",
+      "text": "Tutorials",
+      "classes": "",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/faq-or-troubleshooting",
+      "text": "FAQ/Troubleshooting",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/videos",
+      "text": "Videos",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/permissions",
+      "text": "Permissions",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/diagrams",
+      "text": "Diagrams",
+      "classes": "",
+      "id": null,
+      "index": 58,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/videos/screenshot.png"
+}

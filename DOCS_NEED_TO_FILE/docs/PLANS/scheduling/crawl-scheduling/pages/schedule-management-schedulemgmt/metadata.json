@@ -1,0 +1,161 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/schedulemgmt",
+  "pageName": "schedule-management-schedulemgmt",
+  "category": "scheduling",
+  "pageId": "schedule-management-schedulemgmt",
+  "timestamp": "2026-01-12T16:02:09.306Z",
+  "analysis": {
+    "components": {
+      "buttons": 6,
+      "forms": 0,
+      "inputs": 0,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 17,
+      "badges": 0,
+      "gantt": 0,
+      "calendar": 0,
+      "tasks": 0,
+      "milestones": 0,
+      "progress": 0,
+      "dependencies": 0,
+      "resources": 0,
+      "datePicker": 0
+    },
+    "tables": [],
+    "scheduleElements": {
+      "ganttChart": 0,
+      "timelineView": 0,
+      "taskList": 0,
+      "criticalPath": 0,
+      "baseline": 0,
+      "lookahead": 0,
+      "resourceView": 0,
+      "importExport": 0,
+      "filters": 0,
+      "viewSelector": 0
+    },
+    "title": "Procore",
+    "h1": "Scheduling"
+  },
+  "links": 6,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0,
+      "isScheduleLink": false
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1,
+      "isScheduleLink": true
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2,
+      "isScheduleLink": true
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 3,
+      "isScheduleLink": false
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 4,
+      "isScheduleLink": false
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 5,
+      "isScheduleLink": false
+    }
+  ],
+  "clickables": 6,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_29_0__sc-c5bhwh-3 bUmXYw",
+      "type": "button",
+      "classes": "StyledButton-core-12_29_0__sc-c5bhwh-3 bUmXYw",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Feedback",
+      "id": "sch_pendo_feedback_button",
+      "type": "button",
+      "classes": "StyledButton-core-12_29_0__sc-c5bhwh-3 fOdnps StyledToggleButton-core-12_29_0__sc-1x59fxi-0 StyledToggleButton-kKBEon ckJpND",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Import Read-Only Schedule",
+      "id": "StyledButton-core-12_29_0__sc-c5bhwh-3 dJRwvD StyledButton-fUjlwV bBHOCu",
+      "type": "button",
+      "classes": "StyledButton-core-12_29_0__sc-c5bhwh-3 dJRwvD StyledButton-fUjlwV bBHOCu",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Create Editable Schedule",
+      "id": "StyledButton-core-12_29_0__sc-c5bhwh-3 dJRwvD StyledButton-fUjlwV bBHOCu",
+      "type": "button",
+      "classes": "StyledButton-core-12_29_0__sc-c5bhwh-3 dJRwvD StyledButton-fUjlwV bBHOCu",
+      "hasDropdown": false,
+      "index": 5
+    }
+  ],
+  "dropdowns": 1,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    }
+  ],
+  "scheduleInteractions": 0,
+  "scheduleInteractionDetails": [],
+  "screenshotPath": "pages/schedule-management-schedulemgmt/screenshot.png"
+}

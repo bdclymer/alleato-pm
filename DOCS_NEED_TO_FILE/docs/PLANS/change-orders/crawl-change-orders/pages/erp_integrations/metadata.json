@@ -1,0 +1,222 @@
+{
+  "url": "https://us02.procore.com/562949953443325/company/erp_integrations",
+  "pageName": "erp_integrations",
+  "category": "change-orders",
+  "pageId": "erp_integrations",
+  "timestamp": "2025-12-30T01:05:38.236Z",
+  "analysis": {
+    "components": {
+      "buttons": 3,
+      "forms": 1,
+      "inputs": 4,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 1,
+      "icons": 9
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [],
+        "rows": 1,
+        "classes": "item_list",
+        "id": null
+      }
+    ],
+    "title": "ERP Integrations • Alleato Group",
+    "h1": "ERP Integrations"
+  },
+  "links": 19,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/procore-context-help/erp-integrations/Commitments/Commitments_Ready_to_Export",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/connections/configure_tab",
+      "text": "",
+      "classes": "config-container powertip",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/default_financial_groupings",
+      "text": "Std. Cost Codes & Cost Types",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/vendors/ready_to_import",
+      "text": "Companies",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/jobs/ready_to_import",
+      "text": "Jobs",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/sub_jobs/ready_to_import",
+      "text": "Sub Jobs",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/budgets/ready_to_import",
+      "text": "Budgets",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/commitments/ready_to_export",
+      "text": "Commitments",
+      "classes": "",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/commitment_change_orders/ready_to_export",
+      "text": "Commitment Change Orders",
+      "classes": "",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/job_costs",
+      "text": "Job Costs",
+      "classes": "",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/tools/erp/requisitions",
+      "text": "Subcontractor Invoices",
+      "classes": "",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/commitments/failed",
+      "text": "Failed To Export (0)",
+      "classes": "",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/commitments/synced",
+      "text": "Synced (184)",
+      "classes": "",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations/commitments/ready_to_export?page=1&provider_id=562949953443325&query=",
+      "text": "Clear",
+      "classes": "",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 20
+    }
+  ],
+  "clickables": 4,
+  "clickableDetails": [
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Search",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 3
+    }
+  ],
+  "dropdowns": 2,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh bRDZZP",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    }
+  ],
+  "screenshotPath": "pages/erp_integrations/screenshot.png"
+}

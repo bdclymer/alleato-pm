@@ -1,0 +1,38 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+Running 3 tests using 1 worker
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+  ✘  1 [setup] › tests/auth.setup.ts:10:6 › authenticate (10ms)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+  ✘  2 [debug] › tests/e2e/budget-creation-e2e.spec.ts:27:7 › Budget creation workflow › creates a budget and validates commitments impact (8ms)
+
+
+  1) [setup] › tests/auth.setup.ts:10:6 › authenticate ─────────────────────────────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  2) [debug] › tests/e2e/budget-creation-e2e.spec.ts:27:7 › Budget creation workflow › creates a budget and validates commitments impact 
+
+    Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1200/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  2 failed
+    [setup] › tests/auth.setup.ts:10:6 › authenticate ──────────────────────────────────────────────
+    [debug] › tests/e2e/budget-creation-e2e.spec.ts:27:7 › Budget creation workflow › creates a budget and validates commitments impact 
+  1 did not run

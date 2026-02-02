@@ -1,0 +1,12 @@
+[dotenv@17.2.3] injecting env (29) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+
+Running 3 tests using 2 workers
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+  ✓  1 [debug] › tests/e2e/page-tabs-styling.spec.ts:3:5 › Page tabs use homepage styling classes (146ms)
+  ✓  2 [setup] › tests/auth.setup.ts:6:6 › authenticate (2.3s)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+  ✓  3 [chromium] › tests/e2e/page-tabs-styling.spec.ts:3:5 › Page tabs use homepage styling classes (179ms)
+
+  3 passed (3.3s)

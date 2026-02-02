@@ -1,0 +1,222 @@
+Task ID,Parent Task,Phase,Category,Priority,Task Name,Description,Status,Completion Date
+1.1,1.1,Phase 1,Database Schema,P0 - Critical,Database Schema - Prime Contracts Core,Create prime_contracts table with all required columns,Parent Task,
+1.1.1,1.1,Phase 1,Database Schema,P0 - Critical,Create prime_contracts table,Create table with all required columns,Complete,2025-12-28
+1.1.2,1.1,Phase 1,Database Schema,P0 - Critical,Add indexes,Add indexes on project_id vendor_id status contract_number,Complete,2025-12-28
+1.1.3,1.1,Phase 1,Database Schema,P0 - Critical,Create RLS policies,Create RLS policies for project-level access,Complete,2025-12-28
+1.1.4,1.1,Phase 1,Database Schema,P0 - Critical,Add foreign key constraints,Add foreign key relationships,Complete,2025-12-28
+1.1.5,1.1,Phase 1,Database Schema,P0 - Critical,Create database migration file,Create migration SQL file,Complete,2025-12-28
+1.1.6,1.1,Phase 1,Database Schema,P0 - Critical,Generate TypeScript types,Generate types from schema,Complete,2025-12-28
+1.2,1.2,Phase 1,Database Schema,P0 - Critical,Database Schema - Contract Line Items,Create contract_line_items table for Schedule of Values,Parent Task,
+1.2.1,1.2,Phase 1,Database Schema,P0 - Critical,Create contract_line_items table,Create table for SOV line items,Complete,2025-12-28
+1.2.2,1.2,Phase 1,Database Schema,P0 - Critical,Add indexes and foreign keys,Add indexes and foreign key relationships,Complete,2025-12-28
+1.2.3,1.2,Phase 1,Database Schema,P0 - Critical,Create RLS policies,Create RLS policies for line items,Complete,2025-12-28
+1.2.4,1.2,Phase 1,Database Schema,P0 - Critical,Add triggers for auto-updating contract totals,Create triggers for automatic total updates,Complete,2025-12-28
+1.2.5,1.2,Phase 1,Database Schema,P0 - Critical,Generate TypeScript types,Generate types from schema,Complete,2025-12-28
+1.3,1.3,Phase 1,Database Schema,P1 - High,Database Schema - Change Orders,Create contract_change_orders table for change order workflow,Parent Task,
+1.3.1,1.3,Phase 1,Database Schema,P1 - High,Create contract_change_orders table,Create table for change orders,Complete,2025-12-28
+1.3.2,1.3,Phase 1,Database Schema,P1 - High,Add status workflow fields,Add fields for status tracking,Complete,2025-12-28
+1.3.3,1.3,Phase 1,Database Schema,P1 - High,Create approval tracking fields,Add approval/rejection tracking,Complete,2025-12-28
+1.3.4,1.3,Phase 1,Database Schema,P1 - High,Add indexes and RLS policies,Add indexes and RLS policies,Complete,2025-12-28
+1.3.5,1.3,Phase 1,Database Schema,P1 - High,Generate TypeScript types,Generate types from schema,Complete,2025-12-28
+1.4,1.4,Phase 1,Database Schema,P1 - High,Database Schema - Billing & Payments,Create billing periods and payments tables,Parent Task,
+1.4.1,1.4,Phase 1,Database Schema,P1 - High,Create contract_billing_periods table,Create table for billing periods,Complete,2025-12-28
+1.4.2,1.4,Phase 1,Database Schema,P1 - High,Create contract_payments table,Create table for payment tracking,Complete,2025-12-28
+1.4.3,1.4,Phase 1,Database Schema,P1 - High,Add retention tracking fields,Add retention percentage and amount fields,Complete,2025-12-28
+1.4.4,1.4,Phase 1,Database Schema,P1 - High,Create RLS policies,Create RLS policies for billing data,Complete,2025-12-28
+1.4.5,1.4,Phase 1,Database Schema,P1 - High,Generate TypeScript types,Generate types from schema,Complete,2025-12-28
+1.5,1.5,Phase 1,Database Schema,P1 - High,Database Schema - Supporting Tables,Create vendors documents snapshots and views tables,Parent Task,
+1.5.1,1.5,Phase 1,Database Schema,P1 - High,Create vendors table,Create vendors table if not exists,Complete,2025-12-28
+1.5.2,1.5,Phase 1,Database Schema,P1 - High,Create contract_documents table,Create table for document management,Complete,2025-12-28
+1.5.3,1.5,Phase 1,Database Schema,P1 - High,Create contract_snapshots table,Create table for contract snapshots,Complete,2025-12-28
+1.5.4,1.5,Phase 1,Database Schema,P1 - High,Create contract_views table,Create table for custom views,Complete,2025-12-28
+1.5.5,1.5,Phase 1,Database Schema,P1 - High,Generate TypeScript types,Generate types from schema,Complete,2025-12-28
+1.6,1.6,Phase 1,API Development,P0 - Critical,API Routes - Contract CRUD,Create RESTful endpoints for contract operations,Parent Task,
+1.6.1,1.6,Phase 1,API Development,P0 - Critical,Create GET/POST /api/projects/[id]/contracts,Create list and create endpoints,Complete,2025-12-28
+1.6.2,1.6,Phase 1,API Development,P0 - Critical,Create GET/PUT/DELETE contract by ID,Create single contract CRUD endpoints,Complete,2025-12-28
+1.6.3,1.6,Phase 1,API Development,P0 - Critical,Add request validation with Zod,Add Zod schema validation,Complete,2025-12-28
+1.6.4,1.6,Phase 1,API Development,P0 - Critical,Add error handling,Implement comprehensive error handling,Complete,2025-12-28
+1.6.5,1.6,Phase 1,API Development,P0 - Critical,Add permission checks,Implement permission validation,Complete,2025-12-28
+1.6.6,1.6,Phase 1,API Development,P0 - Critical,Generate OpenAPI documentation,Create API documentation (deferred),Deferred,
+1.7,1.7,Phase 1,API Development,P0 - Critical,API Routes - Line Items,Create CRUD endpoints for contract line items,Parent Task,
+1.7.1,1.7,Phase 1,API Development,P0 - Critical,Create GET/POST line-items endpoint,Create list and create endpoints for line items,Complete,2025-12-28
+1.7.2,1.7,Phase 1,API Development,P0 - Critical,Create GET/PUT/DELETE single line item,Create single line item CRUD endpoints,Complete,2025-12-28
+1.7.3,1.7,Phase 1,API Development,P0 - Critical,Add CRUD operations,Implement full CRUD functionality,Complete,2025-12-28
+1.7.4,1.7,Phase 1,API Development,P0 - Critical,Add Zod validation and permissions,Add validation and permission checks,Complete,2025-12-28
+1.7.5,1.7,Phase 1,API Development,P0 - Critical,Verify auto-calculation of total_cost,Test quantity * unit_cost calculation,Complete,2025-12-28
+1.8,1.8,Phase 1,API Development,P0 - Critical,API Routes - Change Orders,Create endpoints for change order workflow and approval,Parent Task,
+1.8.1,1.8,Phase 1,API Development,P0 - Critical,Create change orders CRUD endpoint,Create GET/POST change orders endpoint,Implemented (Auth Blocked),2025-12-29
+1.8.2,1.8,Phase 1,API Development,P0 - Critical,Add approval workflow endpoints,Create approve/reject endpoints,Implemented (Auth Blocked),2025-12-29
+1.8.3,1.8,Phase 1,API Development,P0 - Critical,Create approve endpoint,Create POST approve endpoint,Implemented (Auth Blocked),2025-12-29
+1.8.4,1.8,Phase 1,API Development,P0 - Critical,Create reject endpoint,Create POST reject endpoint,Implemented (Auth Blocked),2025-12-29
+1.8.5,1.8,Phase 1,API Development,P0 - Critical,Add notification triggers,Implement change notifications (deferred),Deferred,
+2.1,2.1,Phase 2,UI Components,P0 - Critical,Contracts Table Component,Build sortable filterable contracts list table,Parent Task,
+2.1.1,2.1,Phase 2,UI Components,P0 - Critical,Implement contracts table in page.tsx,Create inline table in page component,Complete,
+2.1.2,2.1,Phase 2,UI Components,P0 - Critical,Implement AG Grid or TanStack Table,Use data table library,Not Started,
+2.1.3,2.1,Phase 2,UI Components,P0 - Critical,Add sortable columns,Add sorting for all columns,Complete,
+2.1.4,2.1,Phase 2,UI Components,P0 - Critical,Add full filtering capability,Add comprehensive filtering,Not Started,
+2.1.5,2.1,Phase 2,UI Components,P0 - Critical,Add row selection,Add checkbox row selection,Not Started,
+2.1.6,2.1,Phase 2,UI Components,P0 - Critical,Add pagination,Implement table pagination,Not Started,
+2.1.7,2.1,Phase 2,UI Components,P0 - Critical,Add search functionality,Add global search,Not Started,
+2.1.8,2.1,Phase 2,UI Components,P0 - Critical,Add loading states and error handling,Add loading and error UI,Complete,
+2.2,2.2,Phase 2,UI Components,P0 - Critical,Contract Actions Toolbar,Build toolbar with create export import and bulk actions,Parent Task,
+2.2.1,2.2,Phase 2,UI Components,P0 - Critical,Create ContractsToolbar component,Build toolbar component,Not Started,
+2.2.2,2.2,Phase 2,UI Components,P0 - Critical,Add Create Contract button,Add create button with action,Not Started,
+2.2.3,2.2,Phase 2,UI Components,P0 - Critical,Add Export dropdown,Add export to PDF Excel CSV,Not Started,
+2.2.4,2.2,Phase 2,UI Components,P0 - Critical,Add Import dropdown,Add import functionality,Not Started,
+2.2.5,2.2,Phase 2,UI Components,P0 - Critical,Add Bulk Actions menu,Add bulk operation menu,Not Started,
+2.2.6,2.2,Phase 2,UI Components,P0 - Critical,Add filters panel toggle,Add filter panel toggle,Not Started,
+2.2.7,2.2,Phase 2,UI Components,P0 - Critical,Add view selector,Add custom view selector,Not Started,
+2.3,2.3,Phase 2,UI Components,P0 - Critical,Create Contract Form,Build form for creating new prime contracts,Parent Task,
+2.3.1,2.3,Phase 2,UI Components,P0 - Critical,Create page component,Create new contract page,Not Started,
+2.3.2,2.3,Phase 2,UI Components,P0 - Critical,Build form with React Hook Form,Implement form with validation,Not Started,
+2.3.3,2.3,Phase 2,UI Components,P0 - Critical,Add Zod validation schema,Create validation schema,Not Started,
+2.3.4,2.3,Phase 2,UI Components,P0 - Critical,Add vendor/subcontractor selector,Add vendor dropdown,Not Started,
+2.3.5,2.3,Phase 2,UI Components,P0 - Critical,Add date pickers,Add date selection inputs,Not Started,
+2.3.6,2.3,Phase 2,UI Components,P0 - Critical,Add currency inputs with formatting,Add formatted currency inputs,Not Started,
+2.3.7,2.3,Phase 2,UI Components,P0 - Critical,Add save/cancel actions,Implement form actions,Not Started,
+2.3.8,2.3,Phase 2,UI Components,P0 - Critical,Add form validation errors,Display validation errors,Not Started,
+2.4,2.4,Phase 2,UI Components,P0 - Critical,Contract Detail View,Build detailed contract view page with tabs,Parent Task,
+2.4.1,2.4,Phase 2,UI Components,P0 - Critical,Create detail page component,Create contract detail page,Not Started,
+2.4.2,2.4,Phase 2,UI Components,P0 - Critical,Build header with contract info,Create detail page header,Not Started,
+2.4.3,2.4,Phase 2,UI Components,P0 - Critical,Add tabs component,Implement tab navigation,Not Started,
+2.4.4,2.4,Phase 2,UI Components,P0 - Critical,Implement Overview tab,Create overview tab content,Not Started,
+2.4.5,2.4,Phase 2,UI Components,P0 - Critical,Add Edit/Delete actions,Add action buttons,Not Started,
+2.4.6,2.4,Phase 2,UI Components,P0 - Critical,Add breadcrumb navigation,Implement breadcrumbs,Not Started,
+2.4.7,2.4,Phase 2,UI Components,P0 - Critical,Add loading and error states,Add loading and error UI,Not Started,
+2.5,2.5,Phase 2,UI Components,P1 - High,Edit Contract Form,Build form for editing existing contracts,Parent Task,
+2.5.1,2.5,Phase 2,UI Components,P1 - High,Create edit page component,Create edit contract page,Not Started,
+2.5.2,2.5,Phase 2,UI Components,P1 - High,Pre-populate form with existing data,Load contract data into form,Not Started,
+2.5.3,2.5,Phase 2,UI Components,P1 - High,Add validation and error handling,Implement validation,Not Started,
+2.5.4,2.5,Phase 2,UI Components,P1 - High,Implement optimistic updates,Add optimistic UI updates,Not Started,
+2.5.5,2.5,Phase 2,UI Components,P1 - High,Add cancel/save actions,Implement form actions,Not Started,
+2.5.6,2.5,Phase 2,UI Components,P1 - High,Handle concurrent edit conflicts,Handle edit conflicts,Not Started,
+2.6,2.6,Phase 2,UI Components,P0 - Critical,Line Items Table Component,Build inline editable table for line items (SOV),Parent Task,
+2.6.1,2.6,Phase 2,UI Components,P0 - Critical,Create LineItemsTable component,Build line items table component,Not Started,
+2.6.2,2.6,Phase 2,UI Components,P0 - Critical,Add inline editing capability,Enable inline cell editing,Not Started,
+2.6.3,2.6,Phase 2,UI Components,P0 - Critical,Implement add/delete rows,Add row management,Not Started,
+2.6.4,2.6,Phase 2,UI Components,P0 - Critical,Show calculated totals,Display column totals,Not Started,
+2.6.5,2.6,Phase 2,UI Components,P0 - Critical,Add cost code selector,Add cost code dropdown,Not Started,
+2.6.6,2.6,Phase 2,UI Components,P0 - Critical,Validate line numbers uniqueness,Ensure unique line numbers,Not Started,
+2.6.7,2.6,Phase 2,UI Components,P0 - Critical,Add bulk import from Excel,Implement Excel import,Not Started,
+2.7,2.7,Phase 2,UI Components,P1 - High,Filter and Search Components,Build comprehensive filtering and search UI,Parent Task,
+2.7.1,2.7,Phase 2,UI Components,P1 - High,Create FilterPanel component,Build filter panel component,Not Started,
+2.7.2,2.7,Phase 2,UI Components,P1 - High,Add status filter dropdown,Add status filtering,Not Started,
+2.7.3,2.7,Phase 2,UI Components,P1 - High,Add date range picker,Add date range filtering,Not Started,
+2.7.4,2.7,Phase 2,UI Components,P1 - High,Add vendor filter,Add vendor filtering,Not Started,
+2.7.5,2.7,Phase 2,UI Components,P1 - High,Add search input with debouncing,Add debounced search,Not Started,
+2.7.6,2.7,Phase 2,UI Components,P1 - High,Add saved filters feature,Allow saving filter presets,Not Started,
+2.7.7,2.7,Phase 2,UI Components,P1 - High,Add filter chips display,Display active filters as chips,Not Started,
+3.1,3.1,Phase 3,Advanced Features,P1 - High,Change Order Management,Build UI for creating and managing change orders,Parent Task,
+3.1.1,3.1,Phase 3,Advanced Features,P1 - High,Create ChangeOrdersTab component,Build change orders tab,Not Started,
+3.1.2,3.1,Phase 3,Advanced Features,P1 - High,Add change order creation form,Build creation form,Not Started,
+3.1.3,3.1,Phase 3,Advanced Features,P1 - High,Implement approval workflow UI,Build approval interface,Not Started,
+3.1.4,3.1,Phase 3,Advanced Features,P1 - High,Show change order history,Display change order log,Not Started,
+3.1.5,3.1,Phase 3,Advanced Features,P1 - High,Add status indicators,Add status badges,Not Started,
+3.1.6,3.1,Phase 3,Advanced Features,P1 - High,Link to budget impact,Show budget impact,Not Started,
+3.1.7,3.1,Phase 3,Advanced Features,P1 - High,Add approval/rejection actions,Implement approve/reject actions,Not Started,
+3.2,3.2,Phase 3,Advanced Features,P2 - Medium,Billing Periods Management,Build UI for managing billing periods,Parent Task,
+3.2.1,3.2,Phase 3,Advanced Features,P2 - Medium,Create BillingTab component,Build billing tab,Not Started,
+3.2.2,3.2,Phase 3,Advanced Features,P2 - Medium,Add billing period creation,Add period creation form,Not Started,
+3.2.3,3.2,Phase 3,Advanced Features,P2 - Medium,Show retention calculations,Display retention amounts,Not Started,
+3.2.4,3.2,Phase 3,Advanced Features,P2 - Medium,Display payment history,Show payment log,Not Started,
+3.2.5,3.2,Phase 3,Advanced Features,P2 - Medium,Add period status indicators,Add status badges,Not Started,
+3.2.6,3.2,Phase 3,Advanced Features,P2 - Medium,Link to payment applications,Connect to payments,Not Started,
+3.3,3.3,Phase 3,Advanced Features,P2 - Medium,Payment Applications,Build UI for tracking payments and retention,Parent Task,
+3.3.1,3.3,Phase 3,Advanced Features,P2 - Medium,Create PaymentForm component,Build payment form,Not Started,
+3.3.2,3.3,Phase 3,Advanced Features,P2 - Medium,Add payment entry form,Build payment input form,Not Started,
+3.3.3,3.3,Phase 3,Advanced Features,P2 - Medium,Calculate retention withheld,Auto-calculate retention,Not Started,
+3.3.4,3.3,Phase 3,Advanced Features,P2 - Medium,Show payment due amounts,Display amounts due,Not Started,
+3.3.5,3.3,Phase 3,Advanced Features,P2 - Medium,Track payment status,Track payment state,Not Started,
+3.3.6,3.3,Phase 3,Advanced Features,P2 - Medium,Generate payment reports,Create payment reports,Not Started,
+3.4,3.4,Phase 3,Advanced Features,P2 - Medium,Document Management,Build UI for uploading and viewing contract documents,Parent Task,
+3.4.1,3.4,Phase 3,Advanced Features,P2 - Medium,Create DocumentsTab component,Build documents tab,Not Started,
+3.4.2,3.4,Phase 3,Advanced Features,P2 - Medium,Add file upload with drag-drop,Implement file upload,Not Started,
+3.4.3,3.4,Phase 3,Advanced Features,P2 - Medium,Implement document preview,Add preview functionality,Not Started,
+3.4.4,3.4,Phase 3,Advanced Features,P2 - Medium,Add version control,Implement versioning,Not Started,
+3.4.5,3.4,Phase 3,Advanced Features,P2 - Medium,Support multiple file types,Support various file formats,Not Started,
+3.4.6,3.4,Phase 3,Advanced Features,P2 - Medium,Add download functionality,Enable file downloads,Not Started,
+3.4.7,3.4,Phase 3,Advanced Features,P2 - Medium,Track upload history,Log document uploads,Not Started,
+3.5,3.5,Phase 3,Advanced Features,P1 - High,Contract Calculations Engine,Build calculation engine for financial values,Parent Task,
+3.5.1,3.5,Phase 3,Advanced Features,P1 - High,Create calculations library,Build calculation functions,Not Started,
+3.5.2,3.5,Phase 3,Advanced Features,P1 - High,Calculate revised contract value,Implement value calculation,Not Started,
+3.5.3,3.5,Phase 3,Advanced Features,P1 - High,Calculate pending change orders,Calculate pending amounts,Not Started,
+3.5.4,3.5,Phase 3,Advanced Features,P1 - High,Calculate percent complete,Implement completion percentage,Not Started,
+3.5.5,3.5,Phase 3,Advanced Features,P1 - High,Calculate retention amounts,Calculate retention,Not Started,
+3.5.6,3.5,Phase 3,Advanced Features,P1 - High,Add unit tests for calculations,Test calculation functions,Not Started,
+3.6,3.6,Phase 3,Advanced Features,P2 - Medium,Import/Export Functionality,Build import from Excel and export to multiple formats,Parent Task,
+3.6.1,3.6,Phase 3,Advanced Features,P2 - Medium,Create import wizard UI,Build import interface,Not Started,
+3.6.2,3.6,Phase 3,Advanced Features,P2 - Medium,Support Excel import,Add Excel import,Not Started,
+3.6.3,3.6,Phase 3,Advanced Features,P2 - Medium,Add data validation and preview,Validate and preview imports,Not Started,
+3.6.4,3.6,Phase 3,Advanced Features,P2 - Medium,Implement PDF export,Add PDF export,Not Started,
+3.6.5,3.6,Phase 3,Advanced Features,P2 - Medium,Add Excel export,Add Excel export,Not Started,
+3.6.6,3.6,Phase 3,Advanced Features,P2 - Medium,Add CSV export,Add CSV export,Not Started,
+3.6.7,3.6,Phase 3,Advanced Features,P2 - Medium,Support custom templates,Allow custom export templates,Not Started,
+4.1,4.1,Phase 4,Integration,P1 - High,Budget Integration,Link contracts to budget lines and show commitments,Parent Task,
+4.1.1,4.1,Phase 4,Integration,P1 - High,Create budget selector component,Build budget selector,Not Started,
+4.1.2,4.1,Phase 4,Integration,P1 - High,Link contract to budget codes,Connect to budget,Not Started,
+4.1.3,4.1,Phase 4,Integration,P1 - High,Show commitments in budget view,Display in budget,Not Started,
+4.1.4,4.1,Phase 4,Integration,P1 - High,Update budget on approval,Sync approved changes,Not Started,
+4.1.5,4.1,Phase 4,Integration,P1 - High,Add budget variance alerts,Add variance warnings,Not Started,
+4.1.6,4.1,Phase 4,Integration,P1 - High,Create integration tests,Test budget integration,Not Started,
+4.2,4.2,Phase 4,Integration,P0 - Critical,Permissions & Security,Implement role-based access control,Parent Task,
+4.2.1,4.2,Phase 4,Integration,P0 - Critical,Define permission levels,Define access levels,Not Started,
+4.2.2,4.2,Phase 4,Integration,P0 - Critical,Implement permission checks in API,Add API permission checks,Not Started,
+4.2.3,4.2,Phase 4,Integration,P0 - Critical,Add UI permission guards,Add UI access control,Not Started,
+4.2.4,4.2,Phase 4,Integration,P0 - Critical,Test with different user roles,Role-based testing,Not Started,
+4.2.5,4.2,Phase 4,Integration,P0 - Critical,Add audit logging,Implement audit trail,Not Started,
+4.2.6,4.2,Phase 4,Integration,P0 - Critical,Implement field-level security,Add field-level access control,Not Started,
+4.3,4.3,Phase 4,Integration,P2 - Medium,Snapshots & History,Track and restore historical contract states,Parent Task,
+4.3.1,4.3,Phase 4,Integration,P2 - Medium,Implement snapshot creation,Create snapshot functionality,Not Started,
+4.3.2,4.3,Phase 4,Integration,P2 - Medium,Build history viewer UI,Build history interface,Not Started,
+4.3.3,4.3,Phase 4,Integration,P2 - Medium,Add comparison between snapshots,Compare snapshot versions,Not Started,
+4.3.4,4.3,Phase 4,Integration,P2 - Medium,Implement snapshot restore,Add restore functionality,Not Started,
+4.3.5,4.3,Phase 4,Integration,P2 - Medium,Add automatic snapshots on major changes,Auto-create snapshots,Not Started,
+4.4,4.4,Phase 4,Integration,P1 - High,Performance Optimization,Optimize queries and implement caching,Parent Task,
+4.4.1,4.4,Phase 4,Integration,P1 - High,Add database indexes,Optimize database queries,Not Started,
+4.4.2,4.4,Phase 4,Integration,P1 - High,Implement query optimization,Optimize API queries,Not Started,
+4.4.3,4.4,Phase 4,Integration,P1 - High,Add caching layer,Implement caching,Not Started,
+4.4.4,4.4,Phase 4,Integration,P1 - High,Implement virtual scrolling,Add virtual scrolling for tables,Not Started,
+4.4.5,4.4,Phase 4,Integration,P1 - High,Optimize bundle size,Reduce bundle size,Not Started,
+4.4.6,4.4,Phase 4,Integration,P1 - High,Add performance monitoring,Monitor performance,Not Started,
+4.5,4.5,Phase 4,Integration,P1 - High,Accessibility & Responsive Design,Ensure WCAG compliance and mobile support,Parent Task,
+4.5.1,4.5,Phase 4,Integration,P1 - High,Add ARIA labels,Add accessibility labels,Not Started,
+4.5.2,4.5,Phase 4,Integration,P1 - High,Ensure keyboard navigation,Implement keyboard support,Not Started,
+4.5.3,4.5,Phase 4,Integration,P1 - High,Test with screen readers,Screen reader testing,Not Started,
+4.5.4,4.5,Phase 4,Integration,P1 - High,Implement responsive layouts,Make mobile-friendly,Not Started,
+4.5.5,4.5,Phase 4,Integration,P1 - High,Test on mobile devices,Mobile device testing,Not Started,
+4.5.6,4.5,Phase 4,Integration,P1 - High,Add accessibility tests,Automated a11y testing,Not Started,
+4.6,4.6,Phase 4,Integration,P0 - Critical,Error Handling & Edge Cases,Comprehensive error handling and edge case coverage,Parent Task,
+4.6.1,4.6,Phase 4,Integration,P0 - Critical,Add error boundaries,Implement error boundaries,Not Started,
+4.6.2,4.6,Phase 4,Integration,P0 - Critical,Implement retry logic,Add retry mechanisms,Not Started,
+4.6.3,4.6,Phase 4,Integration,P0 - Critical,Add user-friendly error messages,Improve error messages,Not Started,
+4.6.4,4.6,Phase 4,Integration,P0 - Critical,Handle network failures,Handle connection issues,Not Started,
+4.6.5,4.6,Phase 4,Integration,P0 - Critical,Add validation for edge cases,Edge case validation,Not Started,
+4.6.6,4.6,Phase 4,Integration,P0 - Critical,Create error recovery flows,Build recovery workflows,Not Started,
+5.1,5.1,Phase 5,Deployment,P0 - Critical,Comprehensive E2E Test Suite,Build complete end-to-end test coverage,Parent Task,
+5.1.1,5.1,Phase 5,Deployment,P0 - Critical,Database schema tests,10 tests for core schema,Complete,2025-12-28
+5.1.2,5.1,Phase 5,Deployment,P0 - Critical,Line items schema tests,10 tests for line items schema,Complete,2025-12-28
+5.1.3,5.1,Phase 5,Deployment,P0 - Critical,Change orders schema tests,11 tests for change orders schema,Complete,2025-12-28
+5.1.4,5.1,Phase 5,Deployment,P0 - Critical,Billing payments schema tests,21 tests for billing and payments,Complete,2025-12-28
+5.1.5,5.1,Phase 5,Deployment,P0 - Critical,Supporting tables schema tests,15 tests for supporting tables,Complete,2025-12-28
+5.1.6,5.1,Phase 5,Deployment,P0 - Critical,API CRUD tests,13 tests for contract CRUD,Complete,2025-12-28
+5.1.7,5.1,Phase 5,Deployment,P0 - Critical,API line items tests,13 tests for line items API,Complete,2025-12-28
+5.1.8,5.1,Phase 5,Deployment,P0 - Critical,API change orders tests,15 tests for change orders API (auth blocked),Implemented (Auth Blocked),2025-12-29
+5.1.9,5.1,Phase 5,Deployment,P0 - Critical,UI workflow tests,E2E tests for UI workflows,Not Started,
+5.1.10,5.1,Phase 5,Deployment,P0 - Critical,Integration tests,Cross-feature integration tests,Not Started,
+5.1.11,5.1,Phase 5,Deployment,P0 - Critical,Visual regression tests,Visual regression testing,Not Started,
+5.1.12,5.1,Phase 5,Deployment,P0 - Critical,Performance tests,Performance and load testing,Not Started,
+5.2,5.2,Phase 5,Deployment,P1 - High,Documentation,Create comprehensive user and developer docs,Parent Task,
+5.2.1,5.2,Phase 5,Deployment,P1 - High,Write user guides,Create end-user documentation,Not Started,
+5.2.2,5.2,Phase 5,Deployment,P1 - High,Create API documentation,Document all API endpoints,Not Started,
+5.2.3,5.2,Phase 5,Deployment,P1 - High,Document database schema,Create schema documentation,Not Started,
+5.2.4,5.2,Phase 5,Deployment,P1 - High,Add inline code comments,Improve code documentation,Not Started,
+5.2.5,5.2,Phase 5,Deployment,P1 - High,Create architecture diagrams,Build system diagrams,Not Started,
+5.2.6,5.2,Phase 5,Deployment,P1 - High,Write deployment guide,Create deployment instructions,Not Started,
+5.3,5.3,Phase 5,Deployment,P0 - Critical,Production Deployment,Deploy to production environment,Parent Task,
+5.3.1,5.3,Phase 5,Deployment,P0 - Critical,Run final QA tests,Execute final testing,Not Started,
+5.3.2,5.3,Phase 5,Deployment,P0 - Critical,Create deployment checklist,Build deployment checklist,Not Started,
+5.3.3,5.3,Phase 5,Deployment,P0 - Critical,Deploy to staging,Deploy to staging environment,Not Started,
+5.3.4,5.3,Phase 5,Deployment,P0 - Critical,Perform UAT,User acceptance testing,Not Started,
+5.3.5,5.3,Phase 5,Deployment,P0 - Critical,Deploy to production,Production deployment,Not Started,
+5.3.6,5.3,Phase 5,Deployment,P0 - Critical,Monitor for issues,Post-deployment monitoring,Not Started,
+5.3.7,5.3,Phase 5,Deployment,P0 - Critical,Create rollback plan,Plan rollback procedure,Not Started,

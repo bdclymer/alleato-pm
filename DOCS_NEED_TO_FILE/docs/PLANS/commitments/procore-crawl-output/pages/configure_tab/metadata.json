@@ -1,0 +1,957 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/commitments/configure_tab",
+  "pageName": "configure_tab",
+  "category": "commitments",
+  "pageId": "configure_tab",
+  "timestamp": "2025-12-29T21:31:53.656Z",
+  "analysis": {
+    "components": {
+      "buttons": 4,
+      "forms": 2,
+      "inputs": 81,
+      "tables": 4,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 7,
+      "tabs": 8,
+      "dropdowns": 19,
+      "icons": 14
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Contracts Private By Default:",
+          "Enable Purchase Orders:",
+          "Enable Subcontracts:",
+          "RFQs Will Be Due After:",
+          "Number of Commitment Change Order Tiers:",
+          "Allow Standard Level Users to Create CCOs:",
+          "Allow Standard Level Users to Create CORs:",
+          "Allow Standard Level Users to Create PCOs:",
+          "Enable Always Editable Schedule of Values:",
+          "Enable Field Initiated Change Orders:",
+          "Show Financial Markup Application Criteria on Change Order PDF exports:\n          \n            Details include cost codes and cost types specified in the financial markup."
+        ],
+        "rows": 11,
+        "classes": "edit",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Include Primary Contact in Default Distribution:",
+          "Commitment Distribution:",
+          "Commitment Change Order Distribution:",
+          "Commitment Change Order Request Distribution:",
+          "Commitment Potential Change Order Distribution:",
+          "Request For Quote Distribution:",
+          "Invoice Distribution:"
+        ],
+        "rows": 7,
+        "classes": "edit",
+        "id": null
+      },
+      {
+        "index": 3,
+        "headers": [
+          "Default Accounting Method for Purchase Orders:",
+          "Default Accounting Method For Subcontracts:",
+          "Default Purchase Order Retainage Percent:",
+          "Default Subcontract Retainage Percent:",
+          "Enable Comments By Default:",
+          "Enable Completed Work Retainage By Default:",
+          "Enable Financial Markup By Default:",
+          "Enable Payments By Default:",
+          "Enable Invoices by Default:",
+          "Show Cost Codes on Invoice PDF by Default:",
+          "Enable Stored Material Retainage By Default:",
+          "Enable Subcontractor SOV By Default:"
+        ],
+        "rows": 10,
+        "classes": "edit",
+        "id": null
+      },
+      {
+        "index": 4,
+        "headers": [
+          "Enable Prefilled Billing Periods:",
+          "Monthly Billing Period:",
+          "To",
+          "Monthly Due Date:",
+          "Enable Reminder Emails:",
+          "Every Day\nEvery 2 Days\nEvery 3 Days",
+          "Allow Over Billing:",
+          "",
+          "Custom Email Text:",
+          "",
+          "Receive Email Digest of all Unapproved Invoices:",
+          "",
+          "Invoice PDF Footer Text:",
+          "",
+          "Send Notification Emails to Subcontractors when Invoices are Approved:",
+          "",
+          "Enable Subcontractor Proposed Amount:",
+          ""
+        ],
+        "rows": 10,
+        "classes": "edit",
+        "id": null
+      }
+    ],
+    "formFields": [
+      {
+        "index": 1,
+        "type": "hidden",
+        "name": "international_date_format[{:value=>\"false\"}]",
+        "id": "international_date_format_{:value=>\"false\"}",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 2,
+        "type": "hidden",
+        "name": "company[currency_symbol]",
+        "id": "company_currency_symbol",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 3,
+        "type": "hidden",
+        "name": null,
+        "id": "generic_tool_id",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 4,
+        "type": "hidden",
+        "name": "_method",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 5,
+        "type": "hidden",
+        "name": "authenticity_token",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 6,
+        "type": "hidden",
+        "name": "project_configuration[contracts_private_by_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 7,
+        "type": "checkbox",
+        "name": "project_configuration[contracts_private_by_default]",
+        "id": "project_configuration_contracts_private_by_default",
+        "placeholder": null,
+        "label": "Contracts Private By Default:",
+        "required": false
+      },
+      {
+        "index": 8,
+        "type": "hidden",
+        "name": "project_configuration[enable_purchase_orders]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 9,
+        "type": "checkbox",
+        "name": "project_configuration[enable_purchase_orders]",
+        "id": "project_configuration_enable_purchase_orders",
+        "placeholder": null,
+        "label": "Enable Purchase Orders:",
+        "required": false
+      },
+      {
+        "index": 10,
+        "type": "hidden",
+        "name": "project_configuration[enable_work_orders]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 11,
+        "type": "checkbox",
+        "name": "project_configuration[enable_work_orders]",
+        "id": "project_configuration_enable_work_orders",
+        "placeholder": null,
+        "label": "Enable Subcontracts:",
+        "required": false
+      },
+      {
+        "index": 12,
+        "type": "text",
+        "name": "project_configuration[rfq_due_days_default]",
+        "id": "project_configuration_rfq_due_days_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 13,
+        "type": "hidden",
+        "name": "project_configuration[allow_standard_to_create_cop]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 14,
+        "type": "checkbox",
+        "name": "project_configuration[allow_standard_to_create_cop]",
+        "id": "project_configuration_allow_standard_to_create_cop",
+        "placeholder": null,
+        "label": "Allow Standard Level Users to Create CCOs:",
+        "required": false
+      },
+      {
+        "index": 15,
+        "type": "hidden",
+        "name": "project_configuration[allow_standard_to_create_cor]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 16,
+        "type": "checkbox",
+        "name": "project_configuration[allow_standard_to_create_cor]",
+        "id": "project_configuration_allow_standard_to_create_cor",
+        "placeholder": null,
+        "label": "Allow Standard Level Users to Create CORs:",
+        "required": false
+      },
+      {
+        "index": 17,
+        "type": "hidden",
+        "name": "project_configuration[allow_standard_to_create_pco]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 18,
+        "type": "checkbox",
+        "name": "project_configuration[allow_standard_to_create_pco]",
+        "id": "project_configuration_allow_standard_to_create_pco",
+        "placeholder": null,
+        "label": "Allow Standard Level Users to Create PCOs:",
+        "required": false
+      },
+      {
+        "index": 19,
+        "type": "hidden",
+        "name": "contracts_configuration[enable_commitments_editable_sov]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 20,
+        "type": "checkbox",
+        "name": "contracts_configuration[enable_commitments_editable_sov]",
+        "id": "contracts_configuration_enable_commitments_editable_sov",
+        "placeholder": null,
+        "label": "Enable Always Editable Schedule of Values:",
+        "required": false
+      },
+      {
+        "index": 21,
+        "type": "hidden",
+        "name": "contracts_configuration[field_initiated_change_orders_enabled]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 22,
+        "type": "checkbox",
+        "name": "contracts_configuration[field_initiated_change_orders_enabled]",
+        "id": "contracts_configuration_field_initiated_change_orders_enabled",
+        "placeholder": null,
+        "label": "Enable Field Initiated Change Orders:",
+        "required": false
+      },
+      {
+        "index": 23,
+        "type": "hidden",
+        "name": "contracts_configuration[show_markup_criteria_on_commitments]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 24,
+        "type": "checkbox",
+        "name": "contracts_configuration[show_markup_criteria_on_commitments]",
+        "id": "contracts_configuration_show_markup_criteria_on_commitments",
+        "placeholder": null,
+        "label": "Show Financial Markup Application Criteria on Change Order PDF exports:",
+        "required": false
+      },
+      {
+        "index": 25,
+        "type": "hidden",
+        "name": "project[include_primary_contact_in_contract_distributions]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 26,
+        "type": "checkbox",
+        "name": "project[include_primary_contact_in_contract_distributions]",
+        "id": "project_include_primary_contact_in_contract_distributions",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 27,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 28,
+        "type": "select-multiple",
+        "name": "project[default_distributions_commitment_contract][]",
+        "id": "project_default_distributions_commitment_contract",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 29,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 30,
+        "type": "select-multiple",
+        "name": "project[default_distributions_commitment_cop][]",
+        "id": "project_default_distributions_commitment_cop",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 31,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 32,
+        "type": "select-multiple",
+        "name": "project[default_distributions_commitment_cor][]",
+        "id": "project_default_distributions_commitment_cor",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 33,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 34,
+        "type": "select-multiple",
+        "name": "project[default_distributions_commitment_pco][]",
+        "id": "project_default_distributions_commitment_pco",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 35,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 36,
+        "type": "select-multiple",
+        "name": "project[default_distributions_request_for_quote][]",
+        "id": "project_default_distributions_request_for_quote",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 37,
+        "type": "select-one",
+        "name": null,
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 38,
+        "type": "select-multiple",
+        "name": "project[default_requisition][]",
+        "id": "project_default_requisition",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 39,
+        "type": "select-one",
+        "name": "project_configuration[purchase_order_accounting_method]",
+        "id": "project_configuration_purchase_order_accounting_method",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 40,
+        "type": "select-one",
+        "name": "project_configuration[work_order_accounting_method]",
+        "id": "project_configuration_work_order_accounting_method",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 41,
+        "type": "text",
+        "name": "contracts_configuration[purchase_order_retainage_percent_default]",
+        "id": "contracts_configuration_purchase_order_retainage_percent_default",
+        "placeholder": null,
+        "label": "Default Purchase Order Retainage Percent",
+        "required": false
+      },
+      {
+        "index": 42,
+        "type": "text",
+        "name": "contracts_configuration[work_order_retainage_percent_default]",
+        "id": "contracts_configuration_work_order_retainage_percent_default",
+        "placeholder": null,
+        "label": "Default Subcontract Retainage Percent",
+        "required": false
+      },
+      {
+        "index": 43,
+        "type": "hidden",
+        "name": "project_configuration[allow_comments_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 44,
+        "type": "checkbox",
+        "name": "project_configuration[allow_comments_default]",
+        "id": "project_configuration_allow_comments_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 45,
+        "type": "hidden",
+        "name": "project_configuration[display_work_retainage_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 46,
+        "type": "checkbox",
+        "name": "project_configuration[display_work_retainage_default]",
+        "id": "project_configuration_display_work_retainage_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 47,
+        "type": "hidden",
+        "name": "project_configuration[allow_markups_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 48,
+        "type": "checkbox",
+        "name": "project_configuration[allow_markups_default]",
+        "id": "project_configuration_allow_markups_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 49,
+        "type": "hidden",
+        "name": "project_configuration[allow_payments_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 50,
+        "type": "checkbox",
+        "name": "project_configuration[allow_payments_default]",
+        "id": "project_configuration_allow_payments_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 51,
+        "type": "hidden",
+        "name": "project_configuration[allow_payment_applications_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 52,
+        "type": "checkbox",
+        "name": "project_configuration[allow_payment_applications_default]",
+        "id": "project_configuration_allow_payment_applications_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 53,
+        "type": "hidden",
+        "name": "project_configuration[show_cost_code_on_pdf_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 54,
+        "type": "checkbox",
+        "name": "project_configuration[show_cost_code_on_pdf_default]",
+        "id": "project_configuration_show_cost_code_on_pdf_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 55,
+        "type": "hidden",
+        "name": "project_configuration[display_materials_retainage_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 56,
+        "type": "checkbox",
+        "name": "project_configuration[display_materials_retainage_default]",
+        "id": "project_configuration_display_materials_retainage_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 57,
+        "type": "hidden",
+        "name": "project_configuration[enable_ssov_default]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 58,
+        "type": "checkbox",
+        "name": "project_configuration[enable_ssov_default]",
+        "id": "project_configuration_enable_ssov_default",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 59,
+        "type": "hidden",
+        "name": "_method",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 60,
+        "type": "hidden",
+        "name": "authenticity_token",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 61,
+        "type": "hidden",
+        "name": "project_configuration[default_start_day]",
+        "id": "project_configuration_default_start_day",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 62,
+        "type": "hidden",
+        "name": "project_configuration[default_end_day]",
+        "id": "project_configuration_default_end_day",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 63,
+        "type": "hidden",
+        "name": "project_configuration[default_billing_day]",
+        "id": "project_configuration_default_billing_day",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 64,
+        "type": "hidden",
+        "name": "project_configuration[prefilled_periods_enabled]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 65,
+        "type": "checkbox",
+        "name": "project_configuration[prefilled_periods_enabled]",
+        "id": "project_configuration_prefilled_periods_enabled",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 66,
+        "type": "select-one",
+        "name": "project_configuration[billing_period_start]",
+        "id": "project_configuration_billing_period_start",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 67,
+        "type": "select-one",
+        "name": "project_configuration[billing_period_end]",
+        "id": "project_configuration_billing_period_end",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 68,
+        "type": "select-one",
+        "name": "project_configuration[billing_date]",
+        "id": "project_configuration_billing_date",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 69,
+        "type": "hidden",
+        "name": "project_configuration[send_requisition_reminders]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 70,
+        "type": "checkbox",
+        "name": "project_configuration[send_requisition_reminders]",
+        "id": "project_configuration_send_requisition_reminders",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 71,
+        "type": "select-one",
+        "name": "project_configuration[requisition_reminder_interval]",
+        "id": "project_configuration_requisition_reminder_interval",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 72,
+        "type": "hidden",
+        "name": "project_configuration[allow_overbilling_of_requisition]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 73,
+        "type": "checkbox",
+        "name": "project_configuration[allow_overbilling_of_requisition]",
+        "id": "project_configuration_allow_overbilling_of_requisition",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 74,
+        "type": "textarea",
+        "name": "project_configuration[requisitions_custom_email_text]",
+        "id": "project_configuration_requisitions_custom_email_text",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 75,
+        "type": "select-one",
+        "name": "project_configuration[requisition_digest_frequency]",
+        "id": "project_configuration_requisition_digest_frequency",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 76,
+        "type": "textarea",
+        "name": "project_configuration[requisition_pdf_footer_text]",
+        "id": "project_configuration_requisition_pdf_footer_text",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 77,
+        "type": "hidden",
+        "name": "project_configuration[send_subcontractors_emails_for_approved_invoices]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 78,
+        "type": "checkbox",
+        "name": "project_configuration[send_subcontractors_emails_for_approved_invoices]",
+        "id": "project_configuration_send_subcontractors_emails_for_approved_invoices",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 79,
+        "type": "hidden",
+        "name": "project_configuration[display_subcontractor_claimed_amount]",
+        "id": null,
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 80,
+        "type": "checkbox",
+        "name": "project_configuration[display_subcontractor_claimed_amount]",
+        "id": "project_configuration_display_subcontractor_claimed_amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 81,
+        "type": "text",
+        "name": null,
+        "id": "permissions_table_search",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      }
+    ],
+    "title": "Commitments • Goodwill Bart",
+    "h1": "Commitment Settings"
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/commitments/tutorials/configure-advanced-settings-commitments",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/admin/configurable_field_sets?configurable_field_set_types%5B%5D=ConfigurableFieldSet%3A%3APrimeContract&configurable_field_set_types%5B%5D=ConfigurableFieldSet%3A%3APurchaseOrderContract&configurable_field_set_types%5B%5D=ConfigurableFieldSet%3A%3AWorkOrderContract",
+      "text": "Contract Fieldsets page\nin the Company Admin tool",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/commitments",
+      "text": "Back",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 13
+    }
+  ],
+  "clickables": 5,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Update",
+      "id": "update_button",
+      "type": "button",
+      "classes": "update_button",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Update",
+      "id": "update_button",
+      "type": "button",
+      "classes": "update_button",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle",
+      "hasDropdown": false,
+      "index": 4
+    }
+  ],
+  "dropdowns": 1,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    }
+  ],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

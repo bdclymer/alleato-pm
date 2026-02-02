@@ -1,0 +1,36 @@
+{
+  "viewName": "budget-details-tab",
+  "description": "Details Tab (Query)",
+  "attemptedUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=details",
+  "actualUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/budgets?tab=details",
+  "httpStatus": 200,
+  "timestamp": "2025-12-29T16:36:01.077Z",
+  "analysis": {
+    "components": {
+      "buttons": 12,
+      "tables": 2,
+      "tabs": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [],
+        "rows": 1
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Calculation Method",
+          "Unit Qty",
+          "UOM",
+          "Unit Cost",
+          "Original Budget"
+        ],
+        "rows": 1
+      }
+    ],
+    "title": "Budget",
+    "h1": "Budget"
+  },
+  "screenshotPath": "pages/budget-details-tab/screenshot.png"
+}

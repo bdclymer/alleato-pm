@@ -1,0 +1,163 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals/settings?view=workflow",
+  "pageName": "submittals-settings-workflow",
+  "category": "submittals",
+  "pageId": "submittals-settings-workflow",
+  "timestamp": "2026-01-11T07:11:54.839Z",
+  "analysis": {
+    "components": {
+      "buttons": 8,
+      "forms": 1,
+      "inputs": 55,
+      "tables": 1,
+      "modals": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "badges": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Email Event",
+          "Creator",
+          "Submittal Manager",
+          "Submitter",
+          "Approver",
+          "Reviewer",
+          "Distribution Group"
+        ],
+        "rows": 7,
+        "classes": "StyledTable-core-12_25_2__sc-9c7xd-26 dNpTWr tableOverrides_emailTable__BgJ24"
+      }
+    ],
+    "title": "Submittals • Goodwill Bart",
+    "h1": "Submittal Settings"
+  },
+  "links": 7,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/submittals",
+      "text": "Submittals",
+      "classes": "",
+      "index": 4
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "index": 9
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "index": 10
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "index": 11
+    }
+  ],
+  "clickables": 9,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "type": "button",
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "index": 1
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 gCOfKW bJaxMm NOspi",
+      "type": "button",
+      "index": 2
+    },
+    {
+      "text": "",
+      "classes": "StyledIncrementerButton-core-12_25_2__sc-1782nvg-4 bCIZd",
+      "type": "button",
+      "index": 3
+    },
+    {
+      "text": "",
+      "classes": "StyledIncrementerButton-core-12_25_2__sc-1782nvg-4 bCIZd",
+      "type": "button",
+      "index": 4
+    },
+    {
+      "text": "ascending",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 kstVpc",
+      "type": "div",
+      "index": 5
+    },
+    {
+      "text": "Reset Table to Default",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 dtgzVL",
+      "type": "button",
+      "index": 6
+    },
+    {
+      "text": "Cancel",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 jdYavD",
+      "type": "button",
+      "index": 7
+    },
+    {
+      "text": "Save Changes",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 kwyJzQ",
+      "type": "button",
+      "index": 8
+    }
+  ],
+  "dropdowns": 4,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 gCOfKW bJaxMm NOspi",
+      "index": 1
+    },
+    {
+      "text": "Select Submittal Manager",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 ffoSQo",
+      "index": 2
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 bpdLgH",
+      "index": 3
+    }
+  ],
+  "screenshotPath": "pages/submittals-settings-workflow/screenshot.png"
+}

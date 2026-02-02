@@ -1,0 +1,626 @@
+{
+  "url": "https://support.procore.com/product-releases/new-releases/new-communication-settings-in-the-emails-tool",
+  "pageName": "new-communication-settings-in-the-emails-tool",
+  "category": "emails",
+  "pageId": "new-communication-settings-in-the-emails-tool",
+  "timestamp": "2026-01-12T16:08:57.312Z",
+  "analysis": {
+    "components": {
+      "buttons": 20,
+      "forms": 2,
+      "inputs": 16,
+      "tables": 0,
+      "modals": 1,
+      "navigation": 5,
+      "cards": 0,
+      "lists": 23,
+      "tabs": 0,
+      "dropdowns": 1,
+      "icons": 8,
+      "emailList": 1,
+      "attachments": 0,
+      "recipients": 46,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": [
+        "Last updated\n    \n        Sep 16, 2024",
+        "Last updated",
+        "Sep 16, 2024"
+      ]
+    },
+    "title": "Emails: New Communication Settings for the Emails Tool - Procore",
+    "h1": "Emails: New Communication Settings for the Emails Tool"
+  },
+  "links": 46,
+  "linkDetails": [
+    {
+      "href": "https://support.procore.com/",
+      "text": "Support",
+      "classes": "",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://www.procore.com/?journey=supporttoprocore",
+      "text": "procore.com",
+      "classes": "link-https",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://es.support.procore.com/",
+      "text": "América Latina (Español)",
+      "classes": "link-https",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://en-au.support.procore.com/",
+      "text": "Australia (English)",
+      "classes": "link-https",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://pt-br.support.procore.com/",
+      "text": "Brasil (Português)",
+      "classes": "link-https",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://en-ca.support.procore.com/",
+      "text": "Canada (English)",
+      "classes": "link-https",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://fr-ca.support.procore.com/",
+      "text": "Canada (Français)",
+      "classes": "link-https",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://de.support.procore.com/",
+      "text": "Deutschland (Deutsch)",
+      "classes": "link-https",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://es-es.support.procore.com/",
+      "text": "España (Español)",
+      "classes": "link-https",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://fr.support.procore.com/",
+      "text": "France (Français)",
+      "classes": "link-https",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://pl-pl.support.procore.com/",
+      "text": "Polska (Polski) - BETA",
+      "classes": "link-https",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://en-gb.support.procore.com/",
+      "text": "United Kingdom (English)",
+      "classes": "link-https",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://support.procore.com/",
+      "text": "United States (English)",
+      "classes": "internal",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://zh-sg.support.procore.com/",
+      "text": "新加坡（简体中文）",
+      "classes": "link-https",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://ja-jp.support.procore.com/",
+      "text": "日本（日本語）",
+      "classes": "link-https",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://support.procore.com/references/contact-support",
+      "text": "Contact",
+      "classes": "",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://app.procore.com/?journey=supporttologin",
+      "text": "Procore App Login",
+      "classes": "link-https",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://support.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "https://support.procore.com/tc/Training_Center_Help/",
+      "text": "Training Center Help",
+      "classes": "mt-icon-editor-training-link",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://support.procore.com/Special:AuthenticationProviders?returntotitle=tc%2Fprocore%2FLegacy%2FRelease_Documentation_Archives%2F2021%2FEmails%3A_New_Communication_Settings_for_the_Emails_Tool",
+      "text": "Sign in",
+      "classes": "mt-icon-quick-sign-in ",
+      "id": null,
+      "index": 23
+    },
+    {
+      "href": "https://support.procore.com/",
+      "text": "Home",
+      "classes": "",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://support.procore.com/tc",
+      "text": "tc",
+      "classes": "",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "https://support.procore.com/tc/procore",
+      "text": "procore",
+      "classes": "",
+      "id": null,
+      "index": 26
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy",
+      "text": "Legacy",
+      "classes": "",
+      "id": null,
+      "index": 27
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy/Release_Documentation_Archives",
+      "text": "Release Documentation Archives",
+      "classes": "",
+      "id": null,
+      "index": 28
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy/Release_Documentation_Archives/2021",
+      "text": "2021",
+      "classes": "",
+      "id": null,
+      "index": 29
+    },
+    {
+      "href": "https://support.procore.com/@api/deki/pages/110956/pdf/Emails%253A%2bNew%2bCommunication%2bSettings%2bfor%2bthe%2bEmails%2bTool.pdf",
+      "text": "Save as PDF",
+      "classes": "",
+      "id": null,
+      "index": 30
+    },
+    {
+      "href": "https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fsupport.procore.com%2Ftc%2Fprocore%2FLegacy%2FRelease_Documentation_Archives%2F2021%2FEmails%253A_New_Communication_Settings_for_the_Emails_Tool",
+      "text": "Share",
+      "classes": "mt-icon-facebook-share",
+      "id": null,
+      "index": 32
+    },
+    {
+      "href": "https://twitter.com/intent/tweet?url=https%3A%2F%2Fsupport.procore.com%2Ftc%2Fprocore%2FLegacy%2FRelease_Documentation_Archives%2F2021%2FEmails%253A_New_Communication_Settings_for_the_Emails_Tool&text=Emails%3A+New+Communication+Settings+for+the+Emails+Tool",
+      "text": "Tweet",
+      "classes": "mt-icon-twitter-share",
+      "id": null,
+      "index": 33
+    },
+    {
+      "href": "https://www.linkedin.com/shareArticle?url=https%3A%2F%2Fsupport.procore.com%2Ftc%2Fprocore%2FLegacy%2FRelease_Documentation_Archives%2F2021%2FEmails%253A_New_Communication_Settings_for_the_Emails_Tool&title=Emails%3A+New+Communication+Settings+for+the+Emails+Tool&summary=This+announcement+represents+a+single+point+in+time.+Future+releases+may+impact+the+information+below.",
+      "text": "Share",
+      "classes": "mt-icon-linkedin-share",
+      "id": null,
+      "index": 34
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/emails/tutorials/send-an-inbound-email-to-the-projects-emails-tool",
+      "text": "Send An Inbound Email to the Project's Email Tool",
+      "classes": "",
+      "id": null,
+      "index": 41
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy/Release_Documentation_Archives/2021/Emails%3A_New_Communication_Settings_for_the_Emails_Tool",
+      "text": "Send An Inbound Email to the Project's Email Tool",
+      "classes": "mt-self-link",
+      "id": null,
+      "index": 43
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy/Release_Documentation_Archives/2021/Emails%3A_New_Communication_Settings_for_the_Emails_Tool",
+      "text": "Where can I find the email address to send photos, documents, and emails to Procore?",
+      "classes": "mt-self-link",
+      "id": null,
+      "index": 44
+    },
+    {
+      "href": "https://support.procore.com/faq/which-emails-are-affected-by-the-updated-inbound-email-communication-settings-in-procore",
+      "text": "Which emails are affected by the updated inbound email communication settings in Procore?",
+      "classes": "",
+      "id": null,
+      "index": 45
+    },
+    {
+      "href": "mailto:support@procore.com",
+      "text": "support@procore.com",
+      "classes": "",
+      "id": null,
+      "index": 46
+    },
+    {
+      "href": "https://support.procore.com/tc/procore/Legacy/Bid_Board_Estimating_Archives/Export-an-Estimate-from-a-Bid-Board-Project",
+      "text": "Export an Estimate from a Bid Board Project",
+      "classes": "mt-icon-previous-article",
+      "id": null,
+      "index": 48
+    },
+    {
+      "href": "https://support.procore.com/Special:Search?tags=article%3Arelease",
+      "text": "Release Note",
+      "classes": "",
+      "id": null,
+      "index": 49
+    },
+    {
+      "href": "https://support.procore.com/Special:Search?tags=language%3Aen-us",
+      "text": "English-US",
+      "classes": "",
+      "id": null,
+      "index": 50
+    },
+    {
+      "href": "https://support.procore.com/Special:Search?tags=stage%3Apublished",
+      "text": "Published",
+      "classes": "",
+      "id": null,
+      "index": 51
+    },
+    {
+      "href": "https://support.procore.com/Special:Search?tags=2021-01",
+      "text": "2021-01",
+      "classes": "",
+      "id": null,
+      "index": 52
+    },
+    {
+      "href": "https://support.procore.com/Special:Search?tags=ann",
+      "text": "ann",
+      "classes": "",
+      "id": null,
+      "index": 53
+    },
+    {
+      "href": "https://www.procore.com/legal/privacy",
+      "text": "Privacy Notice",
+      "classes": "link-https",
+      "id": null,
+      "index": 60
+    },
+    {
+      "href": "https://www.procore.com/legal/terms-of-service",
+      "text": "Terms of Service",
+      "classes": "link-https",
+      "id": null,
+      "index": 61
+    },
+    {
+      "href": "https://www.procore.com/",
+      "text": "procore.com",
+      "classes": "link-https",
+      "id": null,
+      "index": 62
+    },
+    {
+      "href": "https://app.procore.com/mindtouch/auth",
+      "text": "Log In",
+      "classes": "link-https",
+      "id": null,
+      "index": 63
+    },
+    {
+      "href": "https://www.procore.com/legal/cookie-notice",
+      "text": "More information",
+      "classes": "privacy-notice-link",
+      "id": null,
+      "index": 64
+    }
+  ],
+  "clickables": 24,
+  "clickableDetails": [
+    {
+      "text": "United States (English)",
+      "id": "dropdown-toggle mt-icon-earth mt-icon-arrow-down7",
+      "type": "a",
+      "classes": "dropdown-toggle mt-icon-earth mt-icon-arrow-down7",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "Search",
+      "id": "ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only mt-inputredirect-button",
+      "type": "button",
+      "classes": "ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only mt-inputredirect-button",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Search",
+      "id": "mt-button ui-button-icon mt-icon-site-search-button search-button",
+      "type": "button",
+      "classes": "mt-button ui-button-icon mt-icon-site-search-button search-button",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Expand/collapse global hierarchy",
+      "id": "elm-hierarchy-trigger mt-hierarchy-trigger ui-button-icon mt-icon-hierarchy-trigger-closed",
+      "type": "button",
+      "classes": "elm-hierarchy-trigger mt-hierarchy-trigger ui-button-icon mt-icon-hierarchy-trigger-closed",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Expand/collapse global location",
+      "id": "mt-icon-hierarchy-mobile-view-trigger ui-button-icon mt-icon-hierarchy-mobile-trigger-closed",
+      "type": "button",
+      "classes": "mt-icon-hierarchy-mobile-view-trigger ui-button-icon mt-icon-hierarchy-mobile-trigger-closed",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Share",
+      "id": "mt-icon-facebook-share",
+      "type": "a",
+      "classes": "mt-icon-facebook-share",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Share",
+      "id": "mt-icon-linkedin-share",
+      "type": "a",
+      "classes": "mt-icon-linkedin-share",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Table of contents",
+      "id": "mt-toggle mt-summary-toggle ui-button-icon mt-toggle-expand",
+      "type": "button",
+      "classes": "mt-toggle mt-summary-toggle ui-button-icon mt-toggle-expand",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "",
+      "id": "salesforceLiveChatHelpButton",
+      "type": "input",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "‌‍​",
+      "id": "back-to-top-button",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "",
+      "id": "liveagent_button_online_57334000000Cakh",
+      "type": "img",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "",
+      "id": "close-pc-btn-handler",
+      "type": "button",
+      "classes": "ot-close-icon",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Allow All",
+      "id": "accept-recommended-btn-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Back Button",
+      "id": "ot-link-btn back-btn-handler",
+      "type": "button",
+      "classes": "ot-link-btn back-btn-handler",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Filter Icon",
+      "id": "filter-btn-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Clear",
+      "id": "clear-filters-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Apply",
+      "id": "filter-apply-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Cancel",
+      "id": "filter-cancel-handler",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Reject All",
+      "id": "ot-pc-refuse-all-handler",
+      "type": "button",
+      "classes": "ot-pc-refuse-all-handler",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "Confirm My Choices",
+      "id": "save-preference-btn-handler onetrust-close-btn-handler",
+      "type": "button",
+      "classes": "save-preference-btn-handler onetrust-close-btn-handler",
+      "hasDropdown": false,
+      "index": 23
+    }
+  ],
+  "dropdowns": 9,
+  "dropdownDetails": [
+    {
+      "text": "United States (English)América Latina (Español)Aus",
+      "classes": "dropdown dropdown-hover",
+      "id": null,
+      "hasMenu": true,
+      "index": 0
+    },
+    {
+      "text": "United States (English)",
+      "classes": "dropdown-toggle mt-icon-earth mt-icon-arrow-down7",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "América Latina (Español)Australia (English)Brasil ",
+      "classes": "dropdown-menu",
+      "id": "lang-dd",
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Sign in",
+      "classes": "elm-user-menu",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "Sign in",
+      "classes": "mt-user-menu",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "Sign in",
+      "classes": "mt-user-menu-user",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "Share",
+      "classes": "mt-icon-social-share mt-dropdown-link",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "Share \n                \n                \n         ",
+      "classes": "mt-social-share-list mt-dropdown",
+      "id": null,
+      "hasMenu": false,
+      "index": 7
+    },
+    {
+      "text": "Filter Icon",
+      "classes": "",
+      "id": "filter-btn-handler",
+      "hasMenu": false,
+      "index": 8
+    }
+  ],
+  "screenshotPath": "pages/new-communication-settings-in-the-emails-tool/screenshot.png"
+}

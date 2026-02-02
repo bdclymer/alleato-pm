@@ -1,0 +1,27 @@
+{
+  "name": "procore-directory-crawl",
+  "version": "1.0.0",
+  "description": "Comprehensive web scraping tool for Procore project directory",
+  "main": "crawl-directory-comprehensive.js",
+  "scripts": {
+    "start": "node crawl-directory-comprehensive.js",
+    "test": "node test-directory-crawl.js",
+    "install-playwright": "npx playwright install chromium"
+  },
+  "keywords": [
+    "procore",
+    "directory",
+    "crawler",
+    "web-scraping",
+    "documentation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

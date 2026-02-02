@@ -1,0 +1,378 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+  "pageName": "albums",
+  "category": "photos",
+  "pageId": "albums",
+  "timestamp": "2026-01-12T16:04:35.297Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 0,
+      "inputs": 2,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 26,
+      "imageElements": 5,
+      "thumbnails": 0,
+      "galleries": 0,
+      "albums": 21,
+      "uploadButtons": 1,
+      "lightboxes": 4,
+      "mediaPlayers": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "",
+          "Page",
+          "Album Name"
+        ],
+        "rows": 1,
+        "classes": "item-list reorderAlbumsModal_borderCollapse__8zGy4",
+        "id": null
+      }
+    ],
+    "forms": [],
+    "photosSections": [
+      {
+        "selector": "[class*=\"photo\"]",
+        "text": "1888 Photos",
+        "classes": "albumCard_photoCount__97ZYP"
+      },
+      {
+        "selector": "[class*=\"photo\"]",
+        "text": "18 Photos",
+        "classes": "albumCard_photoCount__97ZYP"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Subscribe",
+        "classes": "albums_subscribeText__DpI-b"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Subscribe",
+        "classes": "albums_subscribeLabel__8ko2o"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Please ConfirmAre you sure you want to delete this album?CancelConfirmUnclassified1888 Photos",
+        "classes": "albumCard_card__CvjNe"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Unclassified1888 Photos",
+        "classes": "albumCard_wrapper__Ebaie"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Unclassified1888 Photos",
+        "classes": "StyledCardContainer-core-12_25_2__sc-2fii7b-0 eUwctu albumCard_container__cd8NZ"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Unclassified1888 Photos",
+        "classes": "albumCard_info__jMRhR"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Unclassified1888 Photos",
+        "classes": "albumCard_nameContainer__M+BwU"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Unclassified",
+        "classes": "albumCard_name__PtOoe"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "1888 Photos",
+        "classes": "albumCard_photoCount__97ZYP"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "",
+        "classes": "albumCard_bottom__jKENA"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "",
+        "classes": "albumCard_lock__ElHT9 clickable"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Please ConfirmAre you sure you want to delete this album?CancelConfirmPhotos From Daily Log18 Photos",
+        "classes": "albumCard_card__CvjNe"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Photos From Daily Log18 Photos",
+        "classes": "albumCard_wrapper__Ebaie"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Photos From Daily Log18 Photos",
+        "classes": "StyledCardContainer-core-12_25_2__sc-2fii7b-0 eUwctu albumCard_container__cd8NZ"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Photos From Daily Log18 Photos",
+        "classes": "albumCard_info__jMRhR"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Photos From Daily Log18 Photos",
+        "classes": "albumCard_nameContainer__M+BwU"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "Photos From Daily Log",
+        "classes": "albumCard_name__PtOoe"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "18 Photos",
+        "classes": "albumCard_photoCount__97ZYP"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "",
+        "classes": "albumCard_bottom__jKENA"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "",
+        "classes": "fa fa-trash-o albumCard_trash__-7XFm clickable"
+      },
+      {
+        "selector": "[class*=\"album\"]",
+        "text": "",
+        "classes": "albumCard_lock__ElHT9 clickable"
+      },
+      {
+        "selector": "[class*=\"upload\"]",
+        "text": "",
+        "classes": "fullScreenUploadDrop_uploadIcon__27cXS"
+      }
+    ],
+    "imageCount": 3,
+    "backgroundImages": 2,
+    "title": "Photos • Goodwill Bart",
+    "h1": "Photos",
+    "h2s": []
+  },
+  "links": 12,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/images/configure_tab",
+      "text": "",
+      "classes": "StyledLinkButton-core-12_25_2__sc-c5bhwh-4 dwggXs",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+      "text": "Map",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+      "text": "Timeline",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+      "text": "Recycle Bin",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957045694",
+      "text": "Unclassified1888 Photos",
+      "classes": "albumCard_wrapper__Ebaie",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957592422",
+      "text": "Photos From Daily Log18 Photos",
+      "classes": "albumCard_wrapper__Ebaie",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 12
+    }
+  ],
+  "clickables": 12,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Create Album",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq SearchBox_buttonStyle__bNRbo",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq SearchBox_buttonStyle__bNRbo",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Add Filter",
+      "id": "rw-widget-override Overview_active__bgabR",
+      "type": "span",
+      "classes": "rw-widget-override Overview_active__bgabR",
+      "hasDropdown": true,
+      "index": 4
+    },
+    {
+      "text": "Reorder",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Confirm",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Confirm",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Confirm",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 11
+    }
+  ],
+  "dropdowns": 2,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Add Filter",
+      "classes": "rw-dropdownlist rw-widget",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "photoItems": 0,
+  "photoItemDetails": [],
+  "screenshotPath": "pages/albums/screenshot.png"
+}

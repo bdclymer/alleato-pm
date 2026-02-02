@@ -1,0 +1,55 @@
+{
+  "totalPages": 3,
+  "totalLinks": 28,
+  "totalClickables": 427,
+  "totalDropdowns": 11,
+  "totalTabs": 0,
+  "pages": [
+    {
+      "name": "dailylog",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://support.procore.com/products/online/user-guide/project-level/daily-log",
+        "https://us02.procore.com/562949954728542/project/daily_log/configure_tab?track=settings_icon",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/list",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/calendar",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/change_history",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "configure_tab?track=settings_icon",
+      "url": "https://us02.procore.com/562949954728542/project/daily_log/configure_tab?track=settings_icon",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/list",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "list",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/list",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://support.procore.com/products/online/user-guide/project-level/daily-log",
+        "https://us02.procore.com/562949954728542/project/daily_log/configure_tab?track=settings_icon",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/calendar",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/change_history",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    }
+  ]
+}

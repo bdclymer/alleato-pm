@@ -1,0 +1,126 @@
+{
+  "url": "https://v2.support.procore.com/faq-what-source-columns-are-available-in-custom-budget-views/",
+  "pageName": "faq-what-source-columns-are-available-in-custom-budget-views",
+  "category": "faq",
+  "pageId": "faq-what-source-columns-are-available-in-custom-budget-views",
+  "timestamp": "2025-12-29T16:43:32.870Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 9,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 3,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 1,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "What source columns are available in Procore's budget views?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 139,
+      "sections": 5
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Column Source",
+          "Source Tool",
+          "Data Column",
+          "Group or Filter Options"
+        ],
+        "rows": 30,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "What source columns are available in Procore's budget views?",
+        "href": "https://v2.support.procore.com/faq-what-source-columns-are-available-in-custom-budget-views/"
+      }
+    ],
+    "title": "What source columns are available in Procore's budget views?",
+    "h1": "What source columns are available in Procore's budget views?",
+    "metaDescription": null
+  },
+  "links": 4,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-are-procores-standard-budget-views",
+      "text": "What are Procore's standard budget views?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 53,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects",
+      "text": "Which budget views should I add to my Procore projects?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 54,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-do-i-add-the-timesheet-hours-column-to-a-budget-view",
+      "text": "How do I add the 'Timesheet Hours' column to a budget view?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 55,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/faq-what-source-columns-are-available-in-custom-budget-views/screenshot.png"
+}

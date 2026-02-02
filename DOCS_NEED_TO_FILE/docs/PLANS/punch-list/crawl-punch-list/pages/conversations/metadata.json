@@ -1,0 +1,113 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/conversations",
+  "pageName": "conversations",
+  "category": "punch-list",
+  "pageId": "conversations",
+  "timestamp": "2026-01-11T08:42:05.586Z",
+  "analysis": {
+    "components": {
+      "buttons": 6,
+      "forms": 0,
+      "inputs": 2,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 20,
+      "statusBadges": 0,
+      "checkboxes": 0,
+      "images": 3,
+      "thumbnails": 0
+    },
+    "tables": [],
+    "punchItems": [],
+    "statusFilters": [],
+    "title": "Conversations • Goodwill Bart",
+    "h1": null
+  },
+  "links": 1,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    }
+  ],
+  "clickables": 7,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Start Direct Message",
+      "id": "StyledButton-core-12_31_0__sc-c5bhwh-3 JUpRC",
+      "type": "button",
+      "classes": "StyledButton-core-12_31_0__sc-c5bhwh-3 JUpRC",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Share Feedback",
+      "id": "StyledButton-core-12_31_0__sc-c5bhwh-3 gXBODd",
+      "type": "button",
+      "classes": "StyledButton-core-12_31_0__sc-c5bhwh-3 gXBODd",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "StyledLinkButton-core-12_31_0__sc-c5bhwh-4 crptGX",
+      "type": "a",
+      "classes": "StyledLinkButton-core-12_31_0__sc-c5bhwh-4 crptGX",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_31_0__sc-c5bhwh-3 bhHItl",
+      "type": "button",
+      "classes": "StyledButton-core-12_31_0__sc-c5bhwh-3 bhHItl",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_31_0__sc-c5bhwh-3 bhHItl",
+      "type": "button",
+      "classes": "StyledButton-core-12_31_0__sc-c5bhwh-3 bhHItl",
+      "hasDropdown": false,
+      "index": 6
+    }
+  ],
+  "dropdowns": 1,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "screenshotPath": "pages/conversations/screenshot.png"
+}

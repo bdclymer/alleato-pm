@@ -1,0 +1,179 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-reports",
+  "pageName": "view-budget-reports",
+  "category": "tutorial",
+  "pageId": "view-budget-reports",
+  "timestamp": "2025-12-29T16:46:38.013Z",
+  "analysis": {
+    "components": {
+      "buttons": 11,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 15,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 38,
+      "headings": {
+        "h1": 1,
+        "h2": 5,
+        "h3": 6,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 4,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "View Budget Reports",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Prerequisites",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Budget Modifications Report",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Buyout Summary Report",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Legacy Budget Detail Report",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Monitored Resources Report",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 38,
+      "sections": 8
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Budget",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/"
+      },
+      {
+        "text": "View Budget Reports",
+        "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-reports/"
+      }
+    ],
+    "title": "View Budget Reports",
+    "h1": "View Budget Reports",
+    "metaDescription": "How to view and work with the various budget reports that are available in the project's Budget tool."
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/view-budget-reports/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "index": 34,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/",
+      "text": "Budget",
+      "classes": "",
+      "id": null,
+      "index": 51,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/set-up-a-budget-in-a-new-procore-project",
+      "text": "Set up a Budget in a New Procore Project",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/about-budget-changes/",
+      "text": "new Budget Changes feature",
+      "classes": "",
+      "id": null,
+      "index": 55,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 56,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/budget-project/tutorials/about-the-budget-detail-tab",
+      "text": "About the Budget Detail Tab",
+      "classes": "",
+      "id": null,
+      "index": 57,
+      "category": "tutorial"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-a-labor-productivity-budget-view-and-field-production-report",
+      "text": "What is the difference between a labor productivity budget view and field production report?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 58,
+      "category": "faq"
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-differences-between-budget-reports-in-procore-analytics",
+      "text": "What are the differences between the various budget reports in Procore Analytics?",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 59,
+      "category": "faq"
+    }
+  ],
+  "screenshotPath": "pages/view-budget-reports/screenshot.png"
+}

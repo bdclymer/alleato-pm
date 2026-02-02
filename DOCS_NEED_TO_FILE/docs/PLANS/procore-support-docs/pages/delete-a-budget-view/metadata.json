@@ -1,0 +1,106 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/delete-a-budget-view/",
+  "pageName": "delete-a-budget-view",
+  "category": "tutorial",
+  "pageId": "delete-a-budget-view",
+  "timestamp": "2025-12-29T16:39:53.072Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 14,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 4,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 1,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Delete a Budget View",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Background",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Things to Consider",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "Steps",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 23,
+      "sections": 6
+    },
+    "tables": [],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Admin (Company)",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/"
+      },
+      {
+        "text": "Delete a Budget View",
+        "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/delete-a-budget-view/"
+      }
+    ],
+    "title": "Delete a Budget View",
+    "h1": "Delete a Budget View",
+    "metaDescription": "How to delete a budget view."
+  },
+  "links": 2,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/project-equipment-user-guide/assign-the-budget-view-to-a-procore-project",
+      "text": "Set Up a New Budget View",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-company/tutorials/set-up-a-budget-view-for-custom-reporting",
+      "text": "Set Up a Budget View for Custom Reporting",
+      "classes": "see-also-link",
+      "id": null,
+      "index": 54,
+      "category": "tutorial"
+    }
+  ],
+  "screenshotPath": "pages/delete-a-budget-view/screenshot.png"
+}

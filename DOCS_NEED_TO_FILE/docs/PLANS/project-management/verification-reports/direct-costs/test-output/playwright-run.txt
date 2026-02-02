@@ -1,0 +1,193 @@
+[dotenv@17.2.3] injecting env (56) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+Running 29 tests using 7 workers
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+Auth setup - attempting login with: {
+  email: [32m'test1@mail.com'[39m,
+  supabaseUrl: [32m'https://lgveqfnpkxvzbnnwuled.supabase.co'[39m
+}
+Auth setup - Supabase login successful
+Auth setup - session injected into localStorage
+Auth setup - session in localStorage after reload: [33mtrue[39m
+Auth setup - cookies after login: [ [32m'__next_hmr_refresh_hash__'[39m ]
+Auth setup - found Supabase cookies: [33m0[39m
+Auth setup complete - state saved to: /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/.auth/user.json
+  ✓   1 [setup] › tests/auth.setup.ts:7:6 › authenticate (10.1s)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+🧪 Test Project ID: 60
+▶️  Test: Table display
+
+🧪 Test Project ID: 60
+▶️  Test: List page loads
+
+🧪 Test Project ID: 60
+
+🧪 Test Project ID: 60
+▶️  Test: Navigate to create form
+
+🧪 Test Project ID: 60
+▶️  Test: Filter controls present
+
+🧪 Test Project ID: 60
+▶️  Test: Tab switching
+
+🧪 Test Project ID: 60
+▶️  Test: Create form fields present
+  -   8 [chromium] › tests/e2e/direct-costs.spec.ts:254:9 › Direct Costs Feature › 3. View Detail Page › should load detail page for existing direct cost
+
+🧪 Test Project ID: 60
+▶️  Test: Export button present
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/04-create-form-fields.png
+✅ Create form page loaded (or not implemented yet)
+  ✓   4 [chromium] › tests/e2e/direct-costs.spec.ts:210:9 › Direct Costs Feature › 2. Create Direct Cost › should display create form fields (10.2s)
+
+🧪 Test Project ID: 60
+▶️  Test: Bulk operations UI
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/01-list-page-load.png
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/06-filters.png
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/08-export-button.png
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/07-table-view.png
+✅ Filter area checked
+✅ Export area checked
+✅ Table displays
+✅ Found 3 tabs
+✅ List page loads correctly
+  ✓   2 [chromium] › tests/e2e/direct-costs.spec.ts:276:9 › Direct Costs Feature › 4. Filter and Search › should display filter controls if available (12.4s)
+  ✓   7 [chromium] › tests/e2e/direct-costs.spec.ts:116:9 › Direct Costs Feature › 1. List Page Loads › should display direct costs page with correct elements (12.4s)
+  ✓   3 [chromium] › tests/e2e/direct-costs.spec.ts:296:9 › Direct Costs Feature › 5. Table Functionality › should display table if data exists (12.4s)
+  ✓   9 [chromium] › tests/e2e/direct-costs.spec.ts:320:9 › Direct Costs Feature › 6. Export Functionality › should display export button if available (7.6s)
+
+🧪 Test Project ID: 60
+▶️  Test: Breadcrumbs
+
+🧪 Test Project ID: 60
+▶️  Test: Mobile responsive
+
+🧪 Test Project ID: 60
+▶️  Test: API create
+
+🧪 Test Project ID: 60
+▶️  Test: API fetch
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/09-bulk-operations.png
+✅ Bulk operations area checked
+  ✓  10 [chromium] › tests/e2e/direct-costs.spec.ts:340:9 › Direct Costs Feature › 7. Bulk Operations › should display bulk action controls if available (2.8s)
+
+🧪 Test Project ID: 60
+▶️  Test: Line items UI
+✅ API fetch successful: 0 direct costs
+ℹ️  API create not working (schema validation or API not implemented)
+  ✓  14 [chromium] › tests/e2e/direct-costs.spec.ts:419:9 › Direct Costs Feature › 10. API Integration › should fetch direct costs via API (822ms)
+  ✓  13 [chromium] › tests/e2e/direct-costs.spec.ts:400:9 › Direct Costs Feature › 10. API Integration › should successfully create direct cost via API (872ms)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+🧪 Test Project ID: 60
+▶️  Test: List page loads
+
+🧪 Test Project ID: 60
+▶️  Test: Tab switching
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/03-create-form-load.png
+✅ Navigate to create form works
+  ✓   6 [chromium] › tests/e2e/direct-costs.spec.ts:188:9 › Direct Costs Feature › 2. Create Direct Cost › should navigate to create form when clicking New Direct Cost (14.4s)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+🧪 Test Project ID: 60
+▶️  Test: Navigate to create form
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/11-mobile-view.png
+✅ Mobile view works
+  ✓  12 [chromium] › tests/e2e/direct-costs.spec.ts:380:9 › Direct Costs Feature › 9. Responsive Design › should load page on mobile viewport (2.9s)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/10-breadcrumbs.png
+✅ Navigation checked
+  ✓  11 [chromium] › tests/e2e/direct-costs.spec.ts:360:9 › Direct Costs Feature › 8. Navigation and Breadcrumbs › should display breadcrumbs if available (3.0s)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+🧪 Test Project ID: 60
+▶️  Test: Create form fields present
+
+🧪 Test Project ID: 60
+ℹ️  Tab exists but not clickable (might be hidden)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/02-cost-code-tab.png
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/01-list-page-load.png
+✅ Found 3 tabs
+✅ List page loads correctly
+  ✓   5 [chromium] › tests/e2e/direct-costs.spec.ts:154:9 › Direct Costs Feature › 1. List Page Loads › should switch between tab views (16.4s)
+  ✓  16 [debug] › tests/e2e/direct-costs.spec.ts:116:9 › Direct Costs Feature › 1. List Page Loads › should display direct costs page with correct elements (2.5s)
+  -  20 [debug] › tests/e2e/direct-costs.spec.ts:254:9 › Direct Costs Feature › 3. View Detail Page › should load detail page for existing direct cost
+
+🧪 Test Project ID: 60
+▶️  Test: Table display
+
+🧪 Test Project ID: 60
+▶️  Test: Export button present
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+🧪 Test Project ID: 60
+▶️  Test: Filter controls present
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/12-line-items.png
+✅ Line items area checked (or page not implemented yet)
+  ✓  15 [chromium] › tests/e2e/direct-costs.spec.ts:443:9 › Direct Costs Feature › 11. Line Items Management › should display line items in create form (4.2s)
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+
+🧪 Test Project ID: 60
+▶️  Test: Bulk operations UI
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/03-create-form-load.png
+✅ Navigate to create form works
+  ✓  18 [debug] › tests/e2e/direct-costs.spec.ts:188:9 › Direct Costs Feature › 2. Create Direct Cost › should navigate to create form when clicking New Direct Cost (4.0s)
+
+🧪 Test Project ID: 60
+▶️  Test: Breadcrumbs
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/07-table-view.png
+✅ Table displays
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/06-filters.png
+✅ Filter area checked
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/08-export-button.png
+✅ Export area checked
+  ✓  21 [debug] › tests/e2e/direct-costs.spec.ts:296:9 › Direct Costs Feature › 5. Table Functionality › should display table if data exists (2.9s)
+  ✓  23 [debug] › tests/e2e/direct-costs.spec.ts:276:9 › Direct Costs Feature › 4. Filter and Search › should display filter controls if available (2.6s)
+  ✓  22 [debug] › tests/e2e/direct-costs.spec.ts:320:9 › Direct Costs Feature › 6. Export Functionality › should display export button if available (2.9s)
+
+🧪 Test Project ID: 60
+▶️  Test: Mobile responsive
+
+🧪 Test Project ID: 60
+▶️  Test: API create
+
+🧪 Test Project ID: 60
+▶️  Test: API fetch
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/04-create-form-fields.png
+✅ Create form page loaded (or not implemented yet)
+  ✓  19 [debug] › tests/e2e/direct-costs.spec.ts:210:9 › Direct Costs Feature › 2. Create Direct Cost › should display create form fields (3.9s)
+✅ API fetch successful: 0 direct costs
+  ✓  28 [debug] › tests/e2e/direct-costs.spec.ts:419:9 › Direct Costs Feature › 10. API Integration › should fetch direct costs via API (435ms)
+
+🧪 Test Project ID: 60
+▶️  Test: Line items UI
+ℹ️  API create not working (schema validation or API not implemented)
+  ✓  27 [debug] › tests/e2e/direct-costs.spec.ts:400:9 › Direct Costs Feature › 10. API Integration › should successfully create direct cost via API (571ms)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/09-bulk-operations.png
+✅ Bulk operations area checked
+  ✓  24 [debug] › tests/e2e/direct-costs.spec.ts:340:9 › Direct Costs Feature › 7. Bulk Operations › should display bulk action controls if available (2.2s)
+ℹ️  Tab exists but not clickable (might be hidden)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/02-cost-code-tab.png
+  ✓  17 [debug] › tests/e2e/direct-costs.spec.ts:154:9 › Direct Costs Feature › 1. List Page Loads › should switch between tab views (6.6s)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/10-breadcrumbs.png
+✅ Navigation checked
+  ✓  25 [debug] › tests/e2e/direct-costs.spec.ts:360:9 › Direct Costs Feature › 8. Navigation and Breadcrumbs › should display breadcrumbs if available (2.0s)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/11-mobile-view.png
+✅ Mobile view works
+  ✓  26 [debug] › tests/e2e/direct-costs.spec.ts:380:9 › Direct Costs Feature › 9. Responsive Design › should load page on mobile viewport (1.8s)
+📸 Screenshot saved: tests/screenshots/direct-costs-e2e/12-line-items.png
+✅ Line items area checked (or page not implemented yet)
+  ✓  29 [debug] › tests/e2e/direct-costs.spec.ts:443:9 › Direct Costs Feature › 11. Line Items Management › should display line items in create form (3.9s)
+
+  2 skipped
+  27 passed (35.9s)

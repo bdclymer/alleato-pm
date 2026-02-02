@@ -1,0 +1,104 @@
+{
+  "url": "https://v2.support.procore.com/faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system/",
+  "pageName": "faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system",
+  "category": "faq",
+  "pageId": "faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system",
+  "timestamp": "2025-12-29T16:42:20.289Z",
+  "analysis": {
+    "components": {
+      "buttons": 12,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 9,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 34,
+      "headings": {
+        "h1": 1,
+        "h2": 2,
+        "h3": 2,
+        "h4": 2
+      },
+      "codeBlocks": 0,
+      "images": 6,
+      "videos": 0
+    },
+    "articleContent": {
+      "title": "Can I export Procore budget modifications to an integrated ERP system?",
+      "headings": [
+        {
+          "level": "h2",
+          "text": "Answer",
+          "id": null
+        },
+        {
+          "level": "h2",
+          "text": "See Also",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "About Procore",
+          "id": null
+        },
+        {
+          "level": "h3",
+          "text": "Downloads",
+          "id": null
+        }
+      ],
+      "paragraphs": 40,
+      "sections": 5
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Task",
+          "Supported",
+          "Not Supported"
+        ],
+        "rows": 6,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "breadcrumbs": [
+      {
+        "text": "Support Home",
+        "href": "https://v2.support.procore.com/"
+      },
+      {
+        "text": "Can I export Procore budget modifications to an integrated ERP system?",
+        "href": "https://v2.support.procore.com/faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system/"
+      }
+    ],
+    "title": "Can I export Procore budget modifications to an integrated ERP system?",
+    "h1": "Can I export Procore budget modifications to an integrated ERP system?",
+    "metaDescription": "For companies using Procore + ERP Integrations, this FAQ summarizes the integrated ERP systems that permit you to export budget modifications from Procore."
+  },
+  "links": 2,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/process-guides/about-budget-changes/common-questions",
+      "text": "Common Questions",
+      "classes": "",
+      "id": null,
+      "index": 52,
+      "category": "documentation"
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/about-budget-changes/",
+      "text": "About Budget Changes",
+      "classes": "",
+      "id": null,
+      "index": 53,
+      "category": "documentation"
+    }
+  ],
+  "screenshotPath": "pages/faq-can-i-export-procore-budget-modifications-to-an-integrated-erp-system/screenshot.png"
+}
