@@ -458,6 +458,41 @@ export function PortfolioFilters({
         )}
       </div>
 
+      {/* Desktop action buttons */}
+      <div className="hidden lg:flex items-center gap-2">
+        {/* Export dropdown - Desktop */}
+        {onExport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-10 text-sm border-border hover:border-border/80">
+                <FileText className="w-4 h-4 mr-2" />
+                Export
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onExport("pdf")}>
+                Export to PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport("csv")}>
+                Export to CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {/* Create Project - Desktop */}
+        {onCreateProject && (
+          <Button
+            onClick={onCreateProject}
+            className="bg-brand text-white hover:bg-brand/90 h-10 text-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Project
+          </Button>
+        )}
+      </div>
+
       {/* View type toggles - Desktop only */}
       {!hideViewToggle && (
         <div className="hidden lg:flex items-center gap-1 border rounded-md p-0.5">

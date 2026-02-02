@@ -491,10 +491,10 @@ export function SiteHeader() {
   );
 
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 pt-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden">
+    <header className="flex h-(--header-height) shrink-0 items-center gap-2 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden bg-[#252525] text-zinc-100">
       <div className="flex w-full items-center gap-1 px-2 sm:px-4 lg:gap-2 lg:px-6 min-w-0">
         {/* Desktop: Show sidebar trigger */}
-        <SidebarTrigger className="-ml-1 hidden md:flex" />
+        <SidebarTrigger className="-ml-1 hidden md:flex text-zinc-300 hover:text-white hover:bg-zinc-800" />
 
         {/* Mobile: Show hamburger menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -502,7 +502,7 @@ export function SiteHeader() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden p-2 h-8 w-8 hover:bg-muted"
+              className="md:hidden p-2 h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800"
               aria-label="Open navigation menu"
             >
               <Menu className="h-4 w-4" />
@@ -520,7 +520,7 @@ export function SiteHeader() {
 
         <Separator
           orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4 hidden md:block"
+          className="mx-2 data-[orientation=vertical]:h-4 hidden md:block bg-zinc-700"
         />
 
         {/* Breadcrumbs - Hidden on small screens */}
@@ -528,14 +528,14 @@ export function SiteHeader() {
           {breadcrumbs.map((crumb, index) => (
             <span key={`${crumb.href}-${index}`} className="flex items-center gap-1">
               {index > 0 && (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 text-zinc-500" />
               )}
               {index === breadcrumbs.length - 1 ? (
-                <span className="text-foreground truncate">{crumb.label}</span>
+                <span className="text-white truncate">{crumb.label}</span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors truncate"
+                  className="text-zinc-400 hover:text-white transition-colors truncate"
                 >
                   {crumb.label}
                 </Link>
@@ -564,7 +564,7 @@ export function SiteHeader() {
             }}
             onOpenChange={(open) => open && fetchProjects()}
           >
-            <SelectTrigger className="h-8 w-[120px] sm:w-[160px] lg:w-[240px]">
+            <SelectTrigger className="h-8 w-[120px] sm:w-[160px] lg:w-[240px] border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 focus:ring-zinc-600">
               <SelectValue placeholder="Project">
                 {currentProject ? (
                   <span className="font-medium truncate text-xs sm:text-sm">
@@ -614,9 +614,9 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 min-h-[2rem] hidden md:flex items-center gap-2 px-3 py-0 text-sm"
+                className="h-8 min-h-[2rem] hidden md:flex items-center gap-2 px-3 py-0 text-sm border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 hover:text-white"
               >
-                <span className="text-xs text-muted-foreground hidden lg:inline">
+                <span className="text-xs text-zinc-400 hidden lg:inline">
                   Project Tools
                 </span>
                 <span className="text-sm font-medium">
@@ -767,7 +767,7 @@ export function SiteHeader() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center rounded-full border-2 border-border p-0.5 transition-smooth hover:border-primary hover:scale-105 focus-ring-brand"
+                className="flex items-center rounded-full border-2 border-zinc-600 p-0.5 transition-smooth hover:border-zinc-400 hover:scale-105 focus-ring-brand"
                 aria-label="Open user menu"
               >
                 <Avatar className="h-7 w-7 sm:h-8 sm:w-8 rounded-full">
