@@ -52,6 +52,7 @@ Format: ### YYYY-MM-DD HH:MM
 -->
 
 ### {TIMESTAMP}
+
 - Started: Implementation planning
 - PRP: `PRPs/{FEATURE}/prp-{FEATURE}.md`
 - Next: Begin Phase 1 tasks
@@ -60,9 +61,9 @@ Format: ### YYYY-MM-DD HH:MM
 
 ## Quick Reference
 
-**PRP Document**: `PRPs/{FEATURE}/prp-{FEATURE}.md`
-**Crawl Data**: `playwright-procore-crawl/procore-crawls/{FEATURE}/`
-**Spec Artifacts**: `playwright-procore-crawl/procore-crawls/{FEATURE}/spec/`
+**PRP Document**: `docs-ai/contents/docs/PRPs/{FEATURE}/prp-{FEATURE}.md`
+**Crawl Data**: `docs-ai/contents/docs/PRPs/{FEATURE}/crawl/`
+**Spec Artifacts**: `docs-ai/contents/docs/PRPs/{FEATURE}/crawl/spec/`
 
 ### Key Commands
 
@@ -88,12 +89,14 @@ npm run dev
 ## How to Update This File
 
 When completing a task:
+
 1. Change `- [ ]` to `- [x]`
 2. Update the Progress Summary counts
 3. Add an entry to Session Log
 4. Update the Status badge if changing phases
 
 **Status Badges**:
+
 - ⚪ Not Started
 - 🟡 In Progress
 - 🟢 Complete

@@ -237,5 +237,4 @@ export function PageHeader({
   );
 }
 
-// For backwards compatibility, export as ProjectPageHeader too
-export { PageHeader as ProjectPageHeader };
+// Backwards compatibility handled via named export above.

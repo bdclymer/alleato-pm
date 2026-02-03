@@ -9,6 +9,7 @@ Migrate pages to use the correct layout components from `@/components/layouts`.
 ### For Table Pages (list views, data tables)
 
 **Before:**
+
 ```tsx
 export default function SomePage() {
   return (
@@ -18,8 +19,7 @@ export default function SomePage() {
     </div>
   );
 }
-```
-
+```sql
 **After:**
 ```tsx
 import { TableLayout } from '@/components/layouts';
@@ -43,11 +43,11 @@ export default function SomePage() {
     </>
   );
 }
-```
-
+```sql
 ### For Form Pages (create/edit forms)
 
 **Before:**
+
 ```tsx
 export default function CreatePage() {
   return (
@@ -57,8 +57,7 @@ export default function CreatePage() {
     </div>
   );
 }
-```
-
+```sql
 **After:**
 ```tsx
 import { FormLayout } from '@/components/layouts';
@@ -93,6 +92,7 @@ export default function CreatePage() {
    - Dashboard → use `DashboardLayout`
 
 3. **Add imports at top:**
+
    ```tsx
    import { TableLayout } from '@/components/layouts'; // or FormLayout
    import { PageHeader } from '@/components/layout';
@@ -149,6 +149,7 @@ breadcrumbs={[
 ## Completion Criteria
 
 For each page you migrate:
+
 - ✅ Correct layout component imported and used
 - ✅ PageHeader added with title, description, breadcrumbs
 - ✅ Manual containers removed

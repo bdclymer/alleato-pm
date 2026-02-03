@@ -5,28 +5,32 @@
 **Description:** Create a GitHub issue that automatically triggers Codex execution in the cloud.
 
 **Usage:**
-```
-/codex-task
-```
 
+```text
+/codex-task
+```diff
 **What This Does:**
+
 1. Prompts you for task details (interactive)
 2. Creates a GitHub issue with proper formatting
 3. Auto-labels the issue with 'codex' (triggers workflow)
 4. Returns the issue URL
 
 **Behind the Scenes:**
+
 - Uses GitHub CLI (`gh`) to create the issue
 - Applies appropriate template based on task type
 - Auto-triggers `.github/workflows/codex-issue-handler.yml`
 - Codex executes in GitHub Actions cloud (no local resources)
 
 **Prerequisites:**
+
 - GitHub CLI installed: `brew install gh` (macOS) or [gh installation](https://cli.github.com/)
 - Authenticated: `gh auth login`
 
 **Flow:**
-```
+
+```text
 You run: /codex-task
   ↓
 Interactive prompts collect task details
@@ -43,7 +47,8 @@ You review and merge
 ```
 
 **Example Session:**
-```
+
+```bash
 $ /codex-task
 
 🤖 Create Codex Task
@@ -78,17 +83,18 @@ Issue created: https://github.com/user/repo/issues/123
 Codex will start automatically (watch for comments on issue)
 
 Branch will be: codex/issue-123-feature
-```
-
+```text
 **Advanced: Batch Tasks**
 
 Create multiple issues at once:
+
 ```bash
 # From scripts/create-codex-task.sh
 ./scripts/create-codex-task.sh --batch tasks.json
 ```
 
 **Monitoring:**
+
 - Watch issue comments for status updates
 - Codex comments when starting, on completion, or on failure
 - PR link will be posted to issue when ready
@@ -96,15 +102,18 @@ Create multiple issues at once:
 **Troubleshooting:**
 
 Issue not auto-triggering?
+
 - Check issue has 'codex' label
 - Check GitHub Actions tab for workflow runs
 - Verify `OPENAI_API_KEY` secret is set
 
 Workflow failing?
-- Check Actions logs: https://github.com/USER/REPO/actions
+
+- Check Actions logs: <https://github.com/USER/REPO/actions>
 - Common issues documented in `.github/CODEX-CLOUD-TASKS-GUIDE.md`
 
 **See Also:**
+
 - `.github/CODEX-QUICK-START.md` - Quick reference
 - `.github/CODEX-CLOUD-TASKS-GUIDE.md` - Comprehensive guide
 - `scripts/create-codex-task.sh` - Direct script usage

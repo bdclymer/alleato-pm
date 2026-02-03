@@ -14,6 +14,7 @@
 ## Current State of Implementation
 
 ### What EXISTS (Working):
+
 1. ✓ "Add Line Item" button opens modal dialog
 2. ✓ Modal shows "Add Budget Line Items" heading
 3. ✓ Basic form fields present:
@@ -28,24 +29,29 @@
 ### What DOESN'T EXIST (Missing Features):
 
 #### 1. Smart Copy UOM Toggle ❌
+
 **Expected:** Checkbox labeled "Copy UOM to new rows" (checked by default)
 **Actual:** No checkbox present anywhere in the modal
 **Impact:** Test 1 fails immediately looking for this checkbox
 
 #### 2. Auto-Focus First Field ❌
+
 **Expected:** When "Add Another Line Item" is clicked, focus should move to the Qty field of the new row
 **Actual:** Unknown - can't test without implementing feature
 **Impact:** Test 2 times out trying to click budget code input (selector issues)
 
 #### 3. Running Total Display ❌
+
 **Status:** Partially exists - shows "1 line item • Total: $0.00"
 **Missing:**
-  - Real-time updates as values are entered
-  - Currency formatting with commas ($1,000.00, $3,000.00, etc.)
-  - Plural "line items" vs singular "line item"
+
+- Real-time updates as values are entered
+- Currency formatting with commas ($1,000.00, $3,000.00, etc.)
+- Plural "line items" vs singular "line item"
 **Impact:** Test 3 times out on budget code selector
 
 #### 4. Previous Improvements ❌
+
 **Currency Formatting:** Unknown if Amount field formats with commas
 **Enter Key:** Unknown if Enter key creates new row
 **Impact:** Test 4 times out on budget code selector
@@ -53,6 +59,7 @@
 ## Test Selector Issues
 
 All tests are failing on selectors like:
+
 - `modal.getByPlaceholder(/select budget code/i)` - The input doesn't have a placeholder attribute
 - `modal.getByPlaceholder(/quantity/i)` - Works (placeholder="Quantity")
 - `modal.getByPlaceholder(/unit cost/i)` - Works (placeholder="Unit cost")
@@ -113,6 +120,7 @@ All tests are failing on selectors like:
 To make these tests pass, the following features must be implemented:
 
 ### 1. Smart Copy UOM Toggle
+
 **Location:** `frontend/src/components/budget/BudgetLineItemCreatorModal.tsx`
 
 - Add a checkbox above the form rows
@@ -121,12 +129,14 @@ To make these tests pass, the following features must be implemented:
 - Behavior: When checked, new rows should copy the UOM from the previous row
 
 ### 2. Auto-Focus First Field
+
 **Location:** Same component, "Add Another Line Item" handler
 
 - When new row is added, focus should move to the Qty input of that row
 - Use React ref or `input.focus()` after state update
 
 ### 3. Running Total Improvements
+
 **Location:** Modal footer component
 
 - Update total in real-time as Amount fields change
@@ -134,6 +144,7 @@ To make these tests pass, the following features must be implemented:
 - Show "1 line item" vs "2 line items" (singular/plural)
 
 ### 4. Currency Formatting in Amount Field
+
 **Location:** Amount input component
 
 - Format displayed value with commas

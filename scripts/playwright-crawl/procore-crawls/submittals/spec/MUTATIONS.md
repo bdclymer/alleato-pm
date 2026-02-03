@@ -51,7 +51,7 @@ and network request analysis.
 
 Observed status values from crawl data:
 
-```
+```text
                     ┌──────────┐
                     │  Draft   │  (initial)
                     └────┬─────┘
@@ -73,6 +73,7 @@ Observed status values from crawl data:
 ```
 
 Observed response values per approver:
+
 - `Submitted` — approver has received the submittal
 - `Pending` — awaiting response
 - `Approved` — approved without notes
@@ -81,6 +82,7 @@ Observed response values per approver:
 ## Workflow Responses
 
 The detail view shows a "Workflow Responses" section with:
+
 - Person name and company
 - Response status (Approved as Noted, etc.)
 - Comments (free text)
@@ -100,6 +102,7 @@ This suggests a `submittal_responses` table:
 ## Distribution Summary
 
 The detail view shows:
+
 - **From:** Submittal Manager (person + company)
 - **To:** List of recipients (person + company)
 - **Message:** Optional message text

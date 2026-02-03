@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Table2, Code, Wrench, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { DashboardLayout } from "@/components/layouts";
-import { PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 const devTools = [
   {
     title: "Table Page Generator",

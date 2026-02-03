@@ -16,6 +16,7 @@ Prompt-based hooks offer several advantages:
 ### Before (Basic Command Hook)
 
 **Configuration:**
+
 ```json
 {
   "PreToolUse": [
@@ -30,8 +31,7 @@ Prompt-based hooks offer several advantages:
     }
   ]
 }
-```
-
+```bash
 **Script (validate-bash.sh):**
 ```bash
 #!/bin/bash
@@ -43,9 +43,9 @@ if [[ "$command" == *"rm -rf"* ]]; then
   echo "Dangerous command detected" >&2
   exit 2
 fi
-```
-
+```bash
 **Problems:**
+
 - Only checks for exact "rm -rf" pattern
 - Doesn't catch variations like `rm -fr` or `rm -r -f`
 - Misses other dangerous commands (`dd`, `mkfs`, etc.)
@@ -55,6 +55,7 @@ fi
 ### After (Advanced Prompt Hook)
 
 **Configuration:**
+
 ```json
 {
   "PreToolUse": [
@@ -70,8 +71,7 @@ fi
     }
   ]
 }
-```
-
+```diff
 **Benefits:**
 - Catches all variations and patterns
 - Understands intent, not just literal strings
@@ -102,6 +102,7 @@ fi
 ```
 
 **Script (validate-write.sh):**
+
 ```bash
 #!/bin/bash
 input=$(cat)
@@ -118,8 +119,7 @@ if [[ "$file_path" == "/etc/"* ]] || [[ "$file_path" == "/sys/"* ]]; then
   echo '{"decision": "deny", "reason": "System file"}' >&2
   exit 2
 fi
-```
-
+```bash
 **Problems:**
 - Hard-coded path patterns
 - Doesn't understand symlinks
@@ -143,9 +143,9 @@ fi
     }
   ]
 }
-```
-
+```bash
 **Benefits:**
+
 - Context-aware (considers content too)
 - Handles symlinks and edge cases
 - Natural understanding of "system directories"
@@ -168,8 +168,7 @@ if [ "$size" -gt 10000000 ]; then
   echo '{"decision": "deny", "reason": "File too large"}' >&2
   exit 2
 fi
-```
-
+```bash
 **Use command hooks when:** Validation is purely mathematical or deterministic.
 
 ### 2. External Tool Integration
@@ -198,8 +197,7 @@ command=$(echo "$input" | jq -r '.tool_input.command')
 if [[ "$command" =~ ^(ls|pwd|echo)$ ]]; then
   exit 0  # Safe commands
 fi
-```
-
+```bash
 **Use command hooks when:** Performance is critical and logic is simple.
 
 ## Hybrid Approach
@@ -226,8 +224,7 @@ Combine both for multi-stage validation:
     }
   ]
 }
-```
-
+```diff
 The command hook does fast deterministic checks, while the prompt hook handles complex reasoning.
 
 ## Migration Checklist
@@ -254,7 +251,7 @@ When migrating hooks:
 
 ### Original Plugin Structure
 
-```
+```text
 my-plugin/
 ├── .claude-plugin/plugin.json
 ├── hooks/hooks.json
@@ -266,7 +263,7 @@ my-plugin/
 
 ### After Migration
 
-```
+```text
 my-plugin/
 ├── .claude-plugin/plugin.json
 ├── hooks/hooks.json      # Now uses prompt hooks
@@ -275,8 +272,7 @@ my-plugin/
         ├── validate-bash.sh
         ├── validate-write.sh
         └── check-tests.sh
-```
-
+```bash
 ### Updated hooks.json
 
 ```json
@@ -313,8 +309,7 @@ my-plugin/
     }
   ]
 }
-```
-
+```bash
 **Result:** Simpler, more maintainable, more powerful.
 
 ## Common Migration Patterns
@@ -330,25 +325,26 @@ fi
 ```
 
 **After:**
-```
-"Check for privilege escalation (sudo, su, etc)"
-```
 
+```text
+"Check for privilege escalation (sudo, su, etc)"
+```bash
 ### Pattern: Regex → Intent
 
 **Before:**
+
 ```bash
 if [[ "$file" =~ \.(env|secret|key|token)$ ]]; then
   echo "Credential file" >&2
   exit 2
 fi
-```
-
+```text
 **After:**
 ```
-"Verify not writing to credential files (.env, secrets, keys, tokens)"
-```
 
+"Verify not writing to credential files (.env, secrets, keys, tokens)"
+
+```bash
 ### Pattern: Multiple Conditions → Criteria List
 
 **Before:**
@@ -357,10 +353,10 @@ if [ condition1 ] || [ condition2 ] || [ condition3 ]; then
   echo "Invalid" >&2
   exit 2
 fi
-```
-
+```text
 **After:**
-```
+
+```text
 "Check: 1) condition1 2) condition2 3) condition3. Deny if any fail."
 ```
 

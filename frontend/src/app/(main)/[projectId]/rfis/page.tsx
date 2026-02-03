@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProjectRfis } from "@/lib/supabase/queries";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { RfisClient } from "./rfis-client";
 
 export default async function RfisPage({
@@ -23,7 +24,7 @@ export default async function RfisPage({
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="RFIs"
         description="Requests for Information"
       />

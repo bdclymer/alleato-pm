@@ -14,12 +14,11 @@ Radix UI Select component in `task-edit-modal.tsx` was using an empty string val
 
 ## Error Message
 
-```
+```bash
 A <Select.Item /> must have a value prop that is not an empty string.
 This is because the Select value can be set to an empty string to clear
 the selection and show the placeholder.
-```
-
+```typescript
 ---
 
 ## Root Cause
@@ -27,6 +26,7 @@ the selection and show the placeholder.
 **File:** `frontend/src/components/scheduling/task-edit-modal.tsx`
 
 **Lines affected:**
+
 - Line 413: `value={formData.parent_task_id || ""}`
 - Line 415: `handleChange("parent_task_id", value || null)`
 - Line 422: `<SelectItem value="">No parent (root task)</SelectItem>`
@@ -40,6 +40,7 @@ the selection and show the placeholder.
 Applied the same pattern already used for `constraint_type` field in the same component:
 
 ### Before
+
 ```typescript
 <Select
   value={formData.parent_task_id || ""}
@@ -49,8 +50,7 @@ Applied the same pattern already used for `constraint_type` field in the same co
 >
   <SelectContent>
     <SelectItem value="">No parent (root task)</SelectItem>
-```
-
+```typescript
 ### After
 ```typescript
 <Select
@@ -68,13 +68,13 @@ Applied the same pattern already used for `constraint_type` field in the same co
 ## Pattern Identified
 
 The `constraint_type` field (lines 439-443) was already using this pattern correctly:
+
 ```typescript
 value={formData.constraint_type || "none"}
 onValueChange={(value) =>
   handleChange("constraint_type", value === "none" ? null : (value as ConstraintType))
 }
-```
-
+```diff
 **Lesson:** When a Select needs a "no selection" option, use a sentinel value like `"none"` and convert it to `null` in the change handler.
 
 ---

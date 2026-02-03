@@ -9,11 +9,11 @@ You are an automated endpoint generator. You DO NOT describe steps -- you EXECUT
 
 ## Arguments
 
-```
+```bash
 $ARGUMENTS
-```
-
+```sql
 Parse the arguments:
+
 - **HTTP method**: GET, POST, PUT, PATCH, DELETE (required)
 - **Entity**: The entity name, e.g., "contracts", "ScheduleTask", "companies" (required)
 - **Purpose**: What the endpoint does, e.g., "export to CSV", "bulk update status", "get summary stats" (required)
@@ -21,7 +21,8 @@ Parse the arguments:
 - `--no-service` - Skip service method, put logic directly in route handler
 
 Examples:
-```
+
+```text
 /api-endpoint GET contracts export-csv --hook
 /api-endpoint POST schedule-tasks bulk-update-status --hook
 /api-endpoint GET budget summary-stats
@@ -47,6 +48,7 @@ If the input is already kebab-case or snake_case, convert accordingly.
 Read `frontend/src/types/database.types.ts` using the Read tool.
 
 Find the table matching `ENTITY_TABLE`. Extract:
+
 - All column names and types
 - Which columns are nullable
 - Primary key type
@@ -58,14 +60,17 @@ If the table does NOT exist: STOP. Tell user to run `/scaffold {Entity}` or `/su
 Read these files in parallel using the Read tool:
 
 **3a. Existing service (if it exists):**
+
 - `frontend/src/services/{entity}Service.ts`
 - Note existing methods, DTO types, and patterns
 
 **3b. Existing hook (if it exists and --hook flag set):**
+
 - `frontend/src/hooks/use-{entities}.ts`
 - Note existing functions and return type
 
 **3c. Existing API routes:**
+
 - `frontend/src/app/api/projects/[projectId]/{entities}/route.ts`
 - Note which methods already exist (GET, POST, etc.)
 
@@ -76,6 +81,7 @@ If the service file doesn't exist and `--no-service` is not set: create a minima
 Based on the HTTP method and purpose, determine:
 
 **Route path:**
+
 - Collection action: `/api/projects/[projectId]/{entities}/{action}`
   - Example: `/api/projects/[projectId]/contracts/export`
   - Example: `/api/projects/[projectId]/schedule-tasks/bulk-update`
@@ -83,6 +89,7 @@ Based on the HTTP method and purpose, determine:
   - Example: `/api/projects/[projectId]/contracts/[contractId]/duplicate`
 
 **Request/Response shape:**
+
 - GET endpoints: query params for filters, JSON response
 - POST endpoints: JSON body, JSON response
 - PATCH/PUT endpoints: JSON body with partial entity, JSON response
@@ -95,6 +102,7 @@ Add a new method to the existing service file at `frontend/src/services/{entity}
 Use the Edit tool to add the method to the class. Follow these patterns:
 
 **Query method (GET):**
+
 ```typescript
 async {methodName}(
   projectId: number,
@@ -109,8 +117,7 @@ async {methodName}(
   if (error) throw error;
   return data;
 }
-```
-
+```sql
 **Mutation method (POST/PATCH/DELETE):**
 ```typescript
 async {methodName}(
@@ -126,8 +133,7 @@ async {methodName}(
   if (error) throw error;
   return data;
 }
-```
-
+```sql
 If the service file doesn't exist, create it following the scaffold pattern from `.claude/scaffolds/crud-resource/service.ts`.
 
 ## STEP 6: Write API Route
@@ -135,6 +141,7 @@ If the service file doesn't exist, create it following the scaffold pattern from
 Create the route file at the determined path.
 
 **Route file template:**
+
 ```typescript
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -176,8 +183,7 @@ export async function {METHOD}(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
-```
-
+```sql
 **CRITICAL route rules:**
 - ALWAYS use `[projectId]` not `[id]`
 - ALWAYS `await params` (Next.js 15 async params)
@@ -232,20 +238,19 @@ Also update the hook's return type interface and return statement to include the
 ## STEP 8: Verify
 
 **8a. Route conflict check:**
+
 ```bash
 bash scripts/check-route-conflicts.sh
-```
-
+```bash
 **8b. TypeScript check:**
 ```bash
 npm run typecheck --prefix frontend 2>&1 | head -50
-```
-
+```diff
 Fix any errors before proceeding.
 
 ## STEP 9: Report Results
 
-```
+```markdown
 ## Endpoint Added: {METHOD} /api/projects/[projectId]/{entities}/{action}
 
 ### Files Modified

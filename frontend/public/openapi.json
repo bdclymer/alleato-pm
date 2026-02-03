@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Alleato Procore API",
+    "title": "Alleato PM",
     "description": "Comprehensive API documentation for the Alleato Procore application.\n\nThis API provides endpoints for:\n- Project management\n- Financial management (commitments, contracts, invoices)\n- RAG-based chat functionality\n- Authentication and authorization\n- Company management\n- Document search and insights\n\nThe API is split between:\n- **Backend API** (FastAPI at port 8051) - Handles RAG chat and agent workflows\n- **Frontend API** (Next.js at port 3000/3001) - Handles CRUD operations and Supabase integration\n",
     "version": "1.0.0",
     "contact": {

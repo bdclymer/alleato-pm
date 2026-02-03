@@ -1,188 +1,186 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { drawingFilterSchema } from "@/types/drawings.types";
+import { createClient } from "@/lib/supabase/server";
+import { DrawingService } from "@/services/DrawingService";
+import type { DrawingFilters } from "@/services/DrawingService";
 
-interface RouteContext {
-  params: Promise<{ projectId: string }>;
-}
-
+/**
+ * GET /api/projects/[projectId]/drawings
+ * List drawings with optional filters
+ */
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const { projectId } = await params;
+  const supabase = await createClient();
 
-    const { projectId } = await context.params;
-    const { searchParams } = new URL(request.url);
-    
-    // Parse query parameters
-    const filters = {
-      search: searchParams.get('search'),
-      discipline: searchParams.get('discipline'),
-      drawingType: searchParams.get('drawingType'),
-      status: searchParams.get('status'),
-      areaId: searchParams.get('areaId'),
-      drawingSetId: searchParams.get('drawingSetId'),
-      uploadedBy: searchParams.get('uploadedBy'),
-      dateFrom: searchParams.get('dateFrom'),
-      dateTo: searchParams.get('dateTo'),
-    };
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    // Validate filters
-    const validationResult = drawingFilterSchema.safeParse(filters);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: "Invalid filters", details: validationResult.error.issues },
-        { status: 400 }
-      );
-    }
+  // Parse query parameters
+  const searchParams = request.nextUrl.searchParams;
+  const filters: DrawingFilters = {
+    search: searchParams.get("search") || undefined,
+    area_id: searchParams.get("area_id") || undefined,
+    discipline: searchParams.get("discipline") || undefined,
+    status: searchParams.get("status") || undefined,
+    set_id: searchParams.get("set_id") || undefined,
+    page: searchParams.get("page")
+      ? Number(searchParams.get("page"))
+      : undefined,
+    page_size: searchParams.get("page_size")
+      ? Number(searchParams.get("page_size"))
+      : undefined,
+  };
 
-    // Pagination
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = (page - 1) * limit;
+  const service = new DrawingService(supabase);
+  const result = await service.list(projectId, filters);
 
-    // Build query using the drawing_log view
-    let query = supabase
-      .from('drawing_log')
-      .select('*', { count: 'exact' })
-      .eq('project_id', parseInt(projectId))
-      .order('drawing_updated_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    // Apply filters
-    const validFilters = validationResult.data;
-    
-    if (validFilters.search) {
-      query = query.or(`drawing_number.ilike.%${validFilters.search}%,title.ilike.%${validFilters.search}%`);
-    }
-
-    if (validFilters.discipline) {
-      query = query.eq('discipline', validFilters.discipline);
-    }
-
-    if (validFilters.drawingType) {
-      query = query.eq('drawing_type', validFilters.drawingType);
-    }
-
-    if (validFilters.status) {
-      query = query.eq('status', validFilters.status);
-    }
-
-    if (validFilters.areaId) {
-      query = query.eq('area_id', validFilters.areaId);
-    }
-
-    if (validFilters.drawingSetId) {
-      query = query.eq('drawing_set_id', validFilters.drawingSetId);
-    }
-
-    if (validFilters.uploadedBy) {
-      query = query.eq('uploaded_by', validFilters.uploadedBy);
-    }
-
-    if (validFilters.dateFrom) {
-      query = query.gte('received_date', validFilters.dateFrom);
-    }
-
-    if (validFilters.dateTo) {
-      query = query.lte('received_date', validFilters.dateTo);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      data: data || [],
-      pagination: {
-        page,
-        limit,
-        total: count || 0,
-        totalPages: Math.ceil((count || 0) / limit)
-      }
-    });
-
-  } catch (error) {
-    console.error('Drawings GET error:', error);
+  if (result.error) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: result.error.message },
+      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
     );
   }
+
+  return NextResponse.json(result.data);
 }
 
+/**
+ * POST /api/projects/[projectId]/drawings
+ * Create a new drawing with file upload
+ */
 export async function POST(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: Promise<{ projectId: string }> },
 ) {
+  const { projectId } = await params;
+  const supabase = await createClient();
+
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Parse multipart form data
+    const formData = await request.formData();
 
-    const { projectId } = await context.params;
-    const body = await request.json();
+    const drawingNumber = formData.get("drawing_number") as string;
+    const title = formData.get("title") as string;
+    const discipline = (formData.get("discipline") as string) || undefined;
+    const drawingType = (formData.get("drawing_type") as string) || undefined;
+    const areaId = (formData.get("area_id") as string) || undefined;
+    const revisionNumber = formData.get("revision_number") as string;
+    const receivedDate = formData.get("received_date") as string;
+    const drawingDate = (formData.get("drawing_date") as string) || undefined;
+    const description = (formData.get("description") as string) || undefined;
+    const file = formData.get("file") as File;
 
-    // Basic validation - detailed validation happens in the upload hook
-    if (!body.drawingNumber || !body.title) {
+    // Validate required fields
+    if (!drawingNumber || !title || !revisionNumber || !receivedDate || !file) {
       return NextResponse.json(
-        { error: "Drawing number and title are required" },
-        { status: 400 }
+        {
+          error: "Missing required fields: drawing_number, title, revision_number, received_date, file",
+        },
+        { status: 400 },
       );
     }
 
-    // Check for duplicate drawing number in project
-    const { data: existing } = await supabase
-      .from('drawings')
-      .select('id')
-      .eq('project_id', parseInt(projectId))
-      .eq('drawing_number', body.drawingNumber)
-      .limit(1);
+    const service = new DrawingService(supabase);
 
-    if (existing && existing.length > 0) {
+    // Step 1: Create the drawing
+    const createResult = await service.create(
+      projectId,
+      {
+        drawing_number: drawingNumber,
+        title,
+        discipline,
+        drawing_type: drawingType,
+        area_id: areaId,
+      },
+      user.id,
+    );
+
+    if (createResult.error) {
+      const statusCode =
+        createResult.error.type === "DUPLICATE_DRAWING_NUMBER" ? 409 : 500;
       return NextResponse.json(
-        { error: "Drawing number already exists in this project" },
-        { status: 409 }
+        { error: createResult.error.message },
+        { status: statusCode },
       );
     }
 
-    const { data, error } = await supabase
-      .from('drawings')
-      .insert({
-        project_id: parseInt(projectId),
-        area_id: body.areaId || null,
-        drawing_number: body.drawingNumber,
-        title: body.title,
-        discipline: body.discipline || null,
-        drawing_type: body.drawingType || null,
-        created_by: user.id,
-      })
-      .select('*')
-      .single();
+    const drawing = createResult.data;
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    // Step 2: Upload the file
+    const uploadResult = await service.uploadFile(projectId, drawing.id, file);
+
+    if (uploadResult.error) {
+      // Rollback: delete the drawing if file upload fails
+      await service.delete(projectId, drawing.id);
+
+      const statusCode =
+        uploadResult.error.type === "FILE_TOO_LARGE" ? 400 : 500;
+      return NextResponse.json(
+        { error: uploadResult.error.message },
+        { status: statusCode },
+      );
     }
 
-    return NextResponse.json(data, { status: 201 });
+    // Step 3: Create the first revision with the uploaded file
+    const revisionResult = await service.createRevision(
+      drawing.id,
+      {
+        revision_number: revisionNumber,
+        drawing_date: drawingDate,
+        received_date: receivedDate,
+        status: "active",
+        file_url: uploadResult.data.url,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        description,
+      },
+      user.id,
+    );
 
-  } catch (error) {
-    console.error('Drawings POST error:', error);
+    if (revisionResult.error) {
+      // Rollback: delete the drawing and file if revision creation fails
+      await service.delete(projectId, drawing.id);
+
+      return NextResponse.json(
+        { error: revisionResult.error.message },
+        { status: 500 },
+      );
+    }
+
+    // Fetch the complete drawing with revision
+    const finalResult = await service.getById(projectId, drawing.id);
+
+    if (finalResult.error) {
+      return NextResponse.json(
+        { error: finalResult.error.message },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(finalResult.data, { status: 201 });
+  } catch (err) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        error: "Failed to create drawing",
+        details: err instanceof Error ? err.message : "Unknown error",
+      },
+      { status: 500 },
     );
   }
 }

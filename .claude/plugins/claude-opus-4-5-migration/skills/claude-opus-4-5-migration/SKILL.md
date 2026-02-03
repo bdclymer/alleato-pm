@@ -52,6 +52,7 @@ Remove the `context-1m-2025-08-07` beta header if present—it is not yet suppor
 Opus 4.5 has known behavioral differences from previous models. **Only apply these fixes if the user explicitly requests them or reports a specific issue.** By default, just update model strings.
 
 **Integration guidelines**: When adding snippets, don't just append them to prompts. Integrate them thoughtfully:
+
 - Use XML tags (e.g., `<code_guidelines>`, `<tool_usage>`) to organize additions
 - Match the style and structure of the existing prompt
 - Place snippets in logical locations (e.g., coding guidelines near other coding instructions)
@@ -64,6 +65,7 @@ Opus 4.5 is more responsive to system prompts. Aggressive language that prevente
 **Apply if**: User reports tools being called too frequently or unnecessarily.
 
 **Find and soften**:
+
 - `CRITICAL:` → remove or soften
 - `You MUST...` → `You should...`
 - `ALWAYS do X` → `Do X`

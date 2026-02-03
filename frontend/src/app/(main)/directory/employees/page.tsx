@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -170,7 +170,7 @@ export default function DirectoryEmployeesPage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -191,7 +191,7 @@ export default function DirectoryEmployeesPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -210,7 +210,7 @@ export default function DirectoryEmployeesPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

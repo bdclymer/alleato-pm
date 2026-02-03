@@ -5,6 +5,7 @@
 ## Phase 1: Cache Invalidation (REQUIRED FIRST STEP)
 
 When you create/modify ANY of these:
+
 - New page.tsx files
 - New route directories
 - Modified layout.tsx
@@ -20,13 +21,11 @@ pkill -f "next dev"
 sleep 2
 npm run dev > /tmp/nextjs-dev.log 2>&1 &
 sleep 10
-```
-
+```bash
 Then verify the server started:
 ```bash
 tail -20 /tmp/nextjs-dev.log
-```
-
+```markdown
 ## Phase 2: Verify Route Exists
 
 **BEFORE using Playwright**, verify the route is compiled:
@@ -37,8 +36,7 @@ ls -la src/app/\(main\)/\[projectId\]/[FEATURE]/page.tsx
 
 # Check server logs for compilation
 grep "Compiled /\[projectId\]/[FEATURE]" /tmp/nextjs-dev.log
-```
-
+```markdown
 ## Phase 3: Browser Test
 
 **NOW** use Playwright to navigate:
@@ -50,6 +48,7 @@ mcp__playwright__browser_navigate to http://localhost:3000/[projectId]/[FEATURE]
 ## Phase 4: Only NOW Debug Code
 
 If still 404 after Phase 1-3, THEN check:
+
 - File syntax errors
 - Import/export issues
 - TypeScript errors
@@ -57,6 +56,7 @@ If still 404 after Phase 1-3, THEN check:
 ## Historical Incidents
 
 ### 2026-02-01: Direct Costs Refactor
+
 - **Symptom:** 404 on `/67/direct-costs`
 - **Assumed:** Code was wrong
 - **Actual:** Stale `.next` cache
@@ -67,12 +67,14 @@ If still 404 after Phase 1-3, THEN check:
 ### Pattern Recognition
 
 **If you see 404 on a route that should exist:**
+
 1. ❌ **WRONG:** Start debugging the code
 2. ✅ **CORRECT:** Clear `.next` cache first
 
 ## Enforcement
 
 Every agent working with Next.js routes MUST:
+
 - [ ] Clear `.next` before testing new routes
 - [ ] Wait 10 seconds for server to rebuild
 - [ ] Check server logs for "Compiled" message

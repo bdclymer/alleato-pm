@@ -11,6 +11,7 @@ Testing commands ensures they work correctly, handle edge cases, and provide goo
 ### Level 1: Syntax and Structure Validation
 
 **What to test:**
+
 - YAML frontmatter syntax
 - Markdown format
 - File location and naming
@@ -29,8 +30,7 @@ ls .claude/commands/*.md
 
 # Check file is in correct location
 test -f .claude/commands/my-command.md && echo "Found" || echo "Missing"
-```
-
+```bash
 **Automated validation script:**
 
 ```bash
@@ -68,11 +68,11 @@ if [ ! -s "$COMMAND_FILE" ]; then
 fi
 
 echo "✓ Command file structure valid"
-```
-
+```bash
 ### Level 2: Frontmatter Field Validation
 
 **What to test:**
+
 - Field types correct
 - Values in valid ranges
 - Required fields present (if any)
@@ -121,8 +121,7 @@ if echo "$FRONTMATTER" | grep -q "^description:"; then
 fi
 
 echo "✓ Frontmatter fields valid"
-```
-
+```markdown
 ### Level 3: Manual Command Invocation
 
 **What to test:**
@@ -156,6 +155,7 @@ tail -f ~/.claude/debug-logs/latest
 ### Level 4: Argument Testing
 
 **What to test:**
+
 - Positional arguments work ($1, $2, etc.)
 - $ARGUMENTS captures all arguments
 - Missing arguments handled gracefully
@@ -205,8 +205,7 @@ echo "Test 4: Special characters"
 echo "  Command: /$COMMAND \"value with spaces\""
 echo "  Expected: Entire phrase captured"
 echo "  Manual test required"
-```
-
+```bash
 ### Level 5: File Reference Testing
 
 **What to test:**
@@ -241,11 +240,11 @@ dd if=/dev/zero of=/tmp/large-file.bin bs=1M count=100
 
 # Cleanup
 rm /tmp/test-file*.txt /tmp/large-file.bin
-```
-
+```yaml
 ### Level 6: Bash Execution Testing
 
 **What to test:**
+
 - !` commands execute correctly
 - Command output included in prompt
 - Command failures handled
@@ -286,8 +285,7 @@ EOF
 
 > /test-forbidden
 # Verify: Permission denied or appropriate error
-```
-
+```markdown
 ### Level 7: Integration Testing
 
 **What to test:**
@@ -323,8 +321,7 @@ EOF
 
 > /workflow-complete
 # Verify: State file cleaned up
-```
-
+```text
 **Scenario 3: Command + MCP Integration**
 
 ```bash
@@ -336,8 +333,7 @@ EOF
 # 1. MCP server starts (if stdio)
 # 2. Tool calls succeed
 # 3. Results included in output
-```
-
+```bash
 ## Automated Testing Approaches
 
 ### Command Test Suite
@@ -383,8 +379,7 @@ echo "Tests complete"
 echo "Failed: $FAILED_TESTS"
 
 exit $FAILED_TESTS
-```
-
+```bash
 ### Pre-Commit Hook
 
 Validate commands before committing:
@@ -449,8 +444,7 @@ jobs:
             echo "ERROR: TODOs found in commands"
             exit 1
           fi
-```
-
+```markdown
 ## Edge Case Testing
 
 ### Test Edge Cases
@@ -459,30 +453,29 @@ jobs:
 ```bash
 > /cmd ""
 > /cmd '' ''
-```
-
+```text
 **Special characters:**
+
 ```bash
 > /cmd "arg with spaces"
 > /cmd arg-with-dashes
 > /cmd arg_with_underscores
 > /cmd arg/with/slashes
 > /cmd 'arg with "quotes"'
-```
-
+```text
 **Long arguments:**
 ```bash
 > /cmd $(python -c "print('a' * 10000)")
 ```
 
 **Unusual file paths:**
+
 ```bash
 > /cmd ./file
 > /cmd ../file
 > /cmd ~/file
 > /cmd "/path with spaces/file"
-```
-
+```bash
 **Bash command edge cases:**
 ```markdown
 # Commands that might fail
@@ -494,8 +487,7 @@ jobs:
 !`echo ""`
 !`cat /dev/null`
 !`yes | head -n 1000000`
-```
-
+```bash
 ## Performance Testing
 
 ### Response Time Testing
@@ -524,8 +516,7 @@ echo "Analyze results:"
 echo "  - Average response time"
 echo "  - Variance"
 echo "  - Acceptable threshold: < 3 seconds for fast commands"
-```
-
+```bash
 ### Resource Usage Testing
 
 ```bash
@@ -587,8 +578,7 @@ Recruit testers:
 2. Did the output meet your expectations?
 3. What would you change?
 4. Would you use this command regularly?
-```
-
+```markdown
 ## Testing Checklist
 
 Before releasing a command:
@@ -651,8 +641,7 @@ head -n 20 .claude/commands/my-command.md
 
 # Restart Claude Code
 claude --debug
-```
-
+```bash
 **Issue: Arguments not substituting**
 
 ```bash
@@ -662,8 +651,7 @@ grep '\$ARGUMENTS' .claude/commands/my-command.md
 
 # Test with simple command first
 echo "Test: \$1 and \$2" > .claude/commands/test-args.md
-```
-
+```text
 **Issue: Bash commands not executing**
 
 ```bash

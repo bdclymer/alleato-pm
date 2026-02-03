@@ -19,7 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-import { ProjectPageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
@@ -453,7 +453,7 @@ export default function ProjectContractDetailPage() {
   if (loading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Prime Contract"
           description="Loading contract details..."
         />
@@ -467,7 +467,7 @@ export default function ProjectContractDetailPage() {
   if (error || !contract) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Prime Contract"
           description="Unable to load contract"
           breadcrumbs={[
@@ -497,7 +497,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title={contract.title}
         description={
           contract.vendor ? (

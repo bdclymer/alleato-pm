@@ -14,7 +14,7 @@ CREATE TABLE drawing_areas (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL,
     
-    CONSTRAINT unique_area_name_per_project UNIQUE(project_id, parent_area_id, name)
+    CONSTRAINT unique_drawing_area_name_per_project UNIQUE(project_id, parent_area_id, name)
 );
 
 -- Drawing sets for grouping revisions
@@ -191,36 +191,44 @@ ALTER TABLE drawing_areas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view drawing areas for accessible projects" ON drawing_areas
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_areas.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_areas.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
 CREATE POLICY "Users can create drawing areas in accessible projects" ON drawing_areas
     FOR INSERT WITH CHECK (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_areas.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_areas.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
 CREATE POLICY "Users can update drawing areas in accessible projects" ON drawing_areas
     FOR UPDATE USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_areas.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_areas.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
 CREATE POLICY "Users can delete drawing areas in accessible projects" ON drawing_areas
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_areas.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_areas.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -229,18 +237,22 @@ ALTER TABLE drawing_sets ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view drawing sets for accessible projects" ON drawing_sets
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_sets.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_sets.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
 CREATE POLICY "Users can manage drawing sets in accessible projects" ON drawing_sets
     FOR ALL USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawing_sets.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawing_sets.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -249,18 +261,22 @@ ALTER TABLE drawings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view drawings for accessible projects" ON drawings
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawings.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawings.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
 CREATE POLICY "Users can manage drawings in accessible projects" ON drawings
     FOR ALL USING (
         EXISTS (
-            SELECT 1 FROM project_permissions 
-            WHERE project_id = drawings.project_id 
-            AND user_id = auth.uid()
+            SELECT 1 FROM project_directory_memberships pdm
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE pdm.project_id = drawings.project_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -270,9 +286,11 @@ CREATE POLICY "Users can view drawing revisions for accessible projects" ON draw
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM drawings d
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE d.id = drawing_revisions.drawing_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE d.id = drawing_revisions.drawing_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -280,9 +298,11 @@ CREATE POLICY "Users can manage drawing revisions in accessible projects" ON dra
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM drawings d
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE d.id = drawing_revisions.drawing_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE d.id = drawing_revisions.drawing_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -293,9 +313,11 @@ CREATE POLICY "Users can view drawing sketches for accessible projects" ON drawi
         EXISTS (
             SELECT 1 FROM drawing_revisions dr
             JOIN drawings d ON d.id = dr.drawing_id
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE dr.id = drawing_sketches.drawing_revision_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE dr.id = drawing_sketches.drawing_revision_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -304,9 +326,11 @@ CREATE POLICY "Users can manage drawing sketches in accessible projects" ON draw
         EXISTS (
             SELECT 1 FROM drawing_revisions dr
             JOIN drawings d ON d.id = dr.drawing_id
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE dr.id = drawing_sketches.drawing_revision_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE dr.id = drawing_sketches.drawing_revision_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -324,9 +348,11 @@ CREATE POLICY "Users can view drawing related items for accessible projects" ON 
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM drawings d
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE d.id = drawing_related_items.drawing_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE d.id = drawing_related_items.drawing_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 
@@ -334,9 +360,11 @@ CREATE POLICY "Users can manage drawing related items in accessible projects" ON
     FOR ALL USING (
         EXISTS (
             SELECT 1 FROM drawings d
-            JOIN project_permissions pp ON pp.project_id = d.project_id
-            WHERE d.id = drawing_related_items.drawing_id 
-            AND pp.user_id = auth.uid()
+            JOIN project_directory_memberships pdm ON pdm.project_id = d.project_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
+            WHERE d.id = drawing_related_items.drawing_id
+            AND ua.auth_user_id = auth.uid()
+            AND pdm.status = 'active'
         )
     );
 

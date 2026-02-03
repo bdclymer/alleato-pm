@@ -20,20 +20,17 @@ You can [install the CLI](https://www.npmjs.com/package/supabase) via npm or oth
 
 ```bash
 npm i supabase@">=1.8.1" --save-dev
-```
-
+```bash
 Login with your Personal Access Token:
 
 ```bash
 npx supabase login
-```
-
+```text
 Before generating types, ensure you initialize your Supabase project:
 
 ```bash
 npx supabase init
-```
-
+```bash
 Generate types for your project to produce the `database.types.ts` file in the types folder:
 
 ```bash
@@ -44,8 +41,7 @@ or in case of local development:
 
 ```bash
 npx supabase gen types typescript --local > src/types/database.types.ts
-```
-
+```sql
 These types are generated from your database schema. Given a table `public.movies`, the generated types will look like:
 
 ```sql
@@ -54,8 +50,7 @@ create table public.movies (
   name text not null,
   data jsonb null
 );
-```
-
+```yaml
 ```ts ./database.types.ts
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -85,8 +80,7 @@ export interface Database {
     }
   }
 }
-```
-
+```typescript
 ## Using TypeScript type definitions
 
 You can supply the type definitions to `supabase-js` like so:
@@ -113,8 +107,7 @@ export type Json = // ...
 export interface Database {
   // ...
 }
-```
-
+```yaml
 ```ts ./database.types.ts
 import { MergeDeep } from 'type-fest'
 import { Database as DatabaseGenerated } from './database-generated.types'
@@ -136,8 +129,7 @@ export type Database = MergeDeep<
     }
   }
 >
-```
-
+```typescript
 <Admonition type="note">
 
 To use `MergeDeep`, set `compilerOptions.strictNullChecks` to `true` in your `tsconfig.json`.
@@ -191,8 +183,7 @@ export type Database = MergeDeep<
     }
   }
 >
-```
-
+```typescript
 ### Type-safe JSON querying
 
 Once you've defined your custom JSON types, TypeScript will automatically infer the correct types when using JSON selectors:
@@ -234,8 +225,7 @@ const { data } = await supabase
   .overrideTypes<Array<{ id: string }>, { merge: false }>()
 // Use it with `maybeSingle` or `single`
 const { data } = await supabase.from('countries').select().single().overrideTypes<{ id: string }>()
-```
-
+```typescript
 ### Type shorthands
 
 The generated types provide shorthands for accessing tables and enums.
@@ -248,8 +238,7 @@ let movie: Database['public']['Tables']['movies']['Row'] = // ...
 
 // After 😍
 let movie: Tables<'movies'>
-```
-
+```sql
 ### Response types for complex queries
 
 `supabase-js` always returns a `data` object (for success), and an `error` object (for unsuccessful requests).
@@ -269,8 +258,7 @@ create table cities (
   "name" text,
   "country_id" int references "countries"
 );
-```
-
+```typescript
 We can get the nested `CountriesWithCities` type like this:
 
 ```ts
@@ -299,8 +287,7 @@ Add the following script to your `package.json` to run it using `npm run update-
 
 ```json
 "update-types": "npx supabase gen types --lang=typescript --project-id \"$PROJECT_REF\" > src/types/database.types.ts"
-```
-
+```yaml
 Create a file `.github/workflows/update-types.yml` with the following snippet to define the action along with the environment variables. This script will commit new type changes to your repo every night.
 
 ```yaml

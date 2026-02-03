@@ -17,13 +17,13 @@ To do this, follow these steps precisely:
 
 Note: Still review Claude generated PR's.
 
-2. Launch a haiku agent to return a list of file paths (not their contents) for all relevant CLAUDE.md files including:
+1. Launch a haiku agent to return a list of file paths (not their contents) for all relevant CLAUDE.md files including:
    - The root CLAUDE.md file, if it exists
    - Any CLAUDE.md files in directories containing files modified by the pull request
 
-3. Launch a sonnet agent to view the pull request and return a summary of the changes
+2. Launch a sonnet agent to view the pull request and return a summary of the changes
 
-4. Launch 4 agents in parallel to independently review the changes. Each agent should return the list of issues, where each issue includes a description and the reason it was flagged (e.g. "CLAUDE.md adherence", "bug"). The agents should do the following:
+3. Launch 4 agents in parallel to independently review the changes. Each agent should return the list of issues, where each issue includes a description and the reason it was flagged (e.g. "CLAUDE.md adherence", "bug"). The agents should do the following:
 
    Agents 1 + 2: CLAUDE.md compliance sonnet agents
    Audit changes for CLAUDE.md compliance in parallel. Note: When evaluating CLAUDE.md compliance for a file, you should only consider CLAUDE.md files that share a file path with the file or parents.
@@ -48,11 +48,11 @@ Note: Still review Claude generated PR's.
 
    In addition to the above, each subagent should be told the PR title and description. This will help provide context regarding the author's intent.
 
-5. For each issue found in the previous step by agents 3 and 4, launch parallel subagents to validate the issue. These subagents should get the PR title and description along with a description of the issue. The agent's job is to review the issue to validate that the stated issue is truly an issue with high confidence. For example, if an issue such as "variable is not defined" was flagged, the subagent's job would be to validate that is actually true in the code. Another example would be CLAUDE.md issues. The agent should validate that the CLAUDE.md rule that was violated is scoped for this file and is actually violated. Use Opus subagents for bugs and logic issues, and sonnet agents for CLAUDE.md violations.
+4. For each issue found in the previous step by agents 3 and 4, launch parallel subagents to validate the issue. These subagents should get the PR title and description along with a description of the issue. The agent's job is to review the issue to validate that the stated issue is truly an issue with high confidence. For example, if an issue such as "variable is not defined" was flagged, the subagent's job would be to validate that is actually true in the code. Another example would be CLAUDE.md issues. The agent should validate that the CLAUDE.md rule that was violated is scoped for this file and is actually violated. Use Opus subagents for bugs and logic issues, and sonnet agents for CLAUDE.md violations.
 
-6. Filter out any issues that were not validated in step 5. This step will give us our list of high signal issues for our review.
+5. Filter out any issues that were not validated in step 5. This step will give us our list of high signal issues for our review.
 
-7. Finally, comment on the pull request.
+6. Finally, comment on the pull request.
    When writing your comment, follow these guidelines:
    a. Keep your output brief
    b. Avoid emojis
@@ -85,11 +85,11 @@ Found 3 issues:
 
 <link to file and line with full sha1 + line range for context, eg. https://github.com/anthropics/claude-code/blob/1d54823877c4de72b2316a64032a54afc404e619/README.md#L13-L17>
 
-2. <brief description of bug> (some/other/CLAUDE.md says: "<exact quote from CLAUDE.md>")
+1. <brief description of bug> (some/other/CLAUDE.md says: "<exact quote from CLAUDE.md>")
 
 <link to file and line with full sha1 + line range for context>
 
-3. <brief description of bug> (bug due to <file and code snippet>)
+1. <brief description of bug> (bug due to <file and code snippet>)
 
 <link to file and line with full sha1 + line range for context>
 
@@ -105,10 +105,12 @@ No issues found. Checked for bugs and CLAUDE.md compliance.
 
 ---
 
-- When linking to code, follow the following format precisely, otherwise the Markdown preview won't render correctly: https://github.com/anthropics/claude-code/blob/c21d3c10bc8e898b7ac1a2d745bdc9bc4e423afe/package.json#L10-L15
+- When linking to code, follow the following format precisely, otherwise the Markdown preview won't render correctly: <https://github.com/anthropics/claude-code/blob/c21d3c10bc8e898b7ac1a2d745bdc9bc4e423afe/package.json#L10-L15>
   - Requires full git sha
   - You must provide the full sha. Commands like `https://github.com/owner/repo/blob/$(git rev-parse HEAD)/foo/bar` will not work, since your comment will be directly rendered in Markdown.
   - Repo name must match the repo you're code reviewing
+
   - # sign after the file name
+
   - Line range format is L[start]-L[end]
   - Provide at least 1 line of context before and after, centered on the line you are commenting about (eg. if you are commenting about lines 5-6, you should link to `L4-7`)

@@ -13,6 +13,7 @@ This subagent specializes in systematically capturing, analyzing, and documentin
 A successful crawl produces **two layers**:
 
 ### A) Raw Evidence (never edited)
+
 - Full-page screenshots
 - DOM snapshots (HTML)
 - Raw extracted metadata (links/clickables/dropdowns/tables/forms)
@@ -20,6 +21,7 @@ A successful crawl produces **two layers**:
 - Crawl state for resume (manifest + visited URLs)
 
 ### B) Derived Analysis (can be regenerated)
+
 - Page role classification + confidence
 - Component inventory
 - Table + form structure summaries
@@ -33,6 +35,7 @@ A successful crawl produces **two layers**:
 ## Core Capabilities
 
 ### 1) Browser Automation
+
 - Playwright crawling with authentication
 - Multi-page navigation
 - Deterministic interaction exploration (menus, dropdowns, tabs)
@@ -40,12 +43,14 @@ A successful crawl produces **two layers**:
 - Table parsing (headers, counts, column heuristics)
 
 ### 2) Content Capture (Raw)
+
 - Full-page screenshots (PNG)
 - DOM snapshot (HTML)
 - Metadata extraction (JSON)
 - Optional video capture for animation-heavy flows
 
 ### 3) Network Intelligence Capture (Raw → Rollups)
+
 - Intercept **XHR/fetch** requests and responses
 - Store sanitized records:
   - endpoint URL (canonicalized)
@@ -58,6 +63,7 @@ A successful crawl produces **two layers**:
   - **triggering UI action context** (best-effort)
 
 ### 4) Structural Extraction
+
 - UI component inventory (buttons/forms/tables/modals/tabs/dropdowns)
 - Links and navigation relationship mapping
 - Clickable element inventory
@@ -66,6 +72,7 @@ A successful crawl produces **two layers**:
 - Form fields extraction (label/name/type/required if detectable)
 
 ### 5) Documentation Generation
+
 - Sitemap table (Markdown)
 - Link graph (JSON)
 - Detailed report (JSON)
@@ -74,6 +81,7 @@ A successful crawl produces **two layers**:
 - **Inferred schema suggestions** (JSON)
 
 ### 6) Output Organization + Idempotency
+
 - Standardized directory structure
 - Consistent naming conventions
 - Resume support via checkpoint files
@@ -84,6 +92,7 @@ A successful crawl produces **two layers**:
 ## Invocation (Tool-Agnostic)
 
 This workflow is invoked when any of the following occurs:
+
 - A user explicitly requests a Procore feature crawl
 - A task requires UI parity reference artifacts (screenshots + DOM)
 - A task requires API inference from real UI network traffic
@@ -95,10 +104,12 @@ No slash commands are required. (Works with Codex/Claude/humans.)
 ## Inputs
 
 ### Mandatory
+
 - `feature_name`: sanitized feature name (e.g., `submittals`, `rfis`)
 - `start_url`: full Procore URL to begin crawling
 
 ### Optional
+
 - `project_id`: Procore project ID (default: `562949954728542`)
 - `max_pages`: max pages to crawl (default: `50`)
 - `wait_time_ms`: wait time between actions (default: `2000`)
@@ -112,7 +123,7 @@ No slash commands are required. (Works with Codex/Claude/humans.)
 
 All crawler output MUST be written here:
 
-/playwright-procore-crawl/procore-crawls/{feature_name}/crawl-{feature_name}/
+/docs-ai/contents/docs/PRPs/{feature_name}/crawl-{feature_name}/
 
 Nothing goes in `.claude/`.
 
@@ -120,7 +131,7 @@ Nothing goes in `.claude/`.
 
 ## Output Structure (Required)
 
-/playwright-procore-crawl/procore-crawls/{feature_name}/crawl-{feature_name}/
+/docs-ai/contents/docs/PRPs/{feature_name}/crawl-{feature_name}/
 ├── README.md
 ├── {FEATURE}-CRAWL-STATUS.md
 ├── crawl-manifest.json               # run metadata + checkpoints
@@ -153,15 +164,19 @@ Nothing goes in `.claude/`.
 ## Definitions
 
 ### Page ID
+
 A stable directory name derived from:
+
 - canonical URL path + meaningful label
 - sanitized to filesystem-safe format
 
 ### Raw vs Derived
+
 - `raw/` contains only captured artifacts. Never edited.
 - `analysis/` is derived from raw and may be regenerated.
 
 ### Page Roles
+
 Each page must be classified as one of:
 
 - `list`
@@ -175,6 +190,7 @@ Each page must be classified as one of:
 - `unknown`
 
 Each classification includes:
+
 - role
 - confidence: `high | medium | low`
 - short rationale
@@ -186,9 +202,11 @@ Saved in: `pages/{page_id}/analysis/page-role.json`
 ## Network Capture Requirements (Mandatory)
 
 ### What to Capture
+
 Capture only `xhr` and `fetch` traffic. For each request/response store:
 
 **Request fields**
+
 - canonical URL
 - method
 - query params
@@ -199,6 +217,7 @@ Capture only `xhr` and `fetch` traffic. For each request/response store:
 - **action context**: the current UI action label
 
 **Response fields**
+
 - status code
 - sanitized headers
 - response schema (if JSON)
@@ -206,13 +225,16 @@ Capture only `xhr` and `fetch` traffic. For each request/response store:
 - link to request via `requestId`
 
 ### Sanitization Rules (Hard Requirements)
+
 - Never store passwords, auth tokens, cookies, authorization headers, session ids
 - Replace sensitive values with `[REDACTED]`
 - Prefer storing **schemas** over full bodies
 - If body is non-JSON or large: store placeholder `[NON_JSON_OR_TOO_LARGE]`
 
 ### Action Context Attribution
+
 The crawler must label major actions before triggering them. Examples:
+
 - `navigate:list`
 - `open:detail:first-row`
 - `filter:status=open`
@@ -231,10 +253,12 @@ Raw logs written to: `pages/{page_id}/raw/network.ndjson` (NDJSON format)
 The crawler MUST support safe re-runs and resume.
 
 ### Required State Files
+
 - `visited-urls.json`: array of canonical URLs already captured
 - `crawl-manifest.json`: run metadata (timestamps, counters, errors, checkpoints)
 
 ### Behavior
+
 - On start, load visited URLs; skip visited pages unless `force=true`
 - After each page capture completes:
   - append URL to visited set
@@ -248,6 +272,7 @@ If the process crashes mid-run, a re-run must resume with minimal duplication.
 ## Crawl Workflow (Step-by-Step)
 
 ### Phase 1 — Setup
+
 1) Validate inputs, sanitize `feature_name`
 2) Create output directories
 3) Load or create:
@@ -255,14 +280,16 @@ If the process crashes mid-run, a re-run must resume with minimal duplication.
    - `crawl-manifest.json`
 
 ### Phase 2 — Authenticate
-4) Authenticate via one of:
+
+1) Authenticate via one of:
    - session restore (preferred)
    - login flow fallback
-5) Verify authenticated state (guard check)
+2) Verify authenticated state (guard check)
 
 ### Phase 3 — Capture + Explore (Loop)
-6) Seed queue with `start_url`
-7) While queue not empty AND visited < max_pages:
+
+1) Seed queue with `start_url`
+2) While queue not empty AND visited < max_pages:
    - canonicalize URL
    - skip if visited unless `force=true`
    - generate stable `page_id`
@@ -283,7 +310,8 @@ If the process crashes mid-run, a re-run must resume with minimal duplication.
      - checkpoint manifest + visited urls
 
 ### Phase 4 — Generate Reports
-8) Generate `reports/*`:
+
+1) Generate `reports/*`:
    - sitemap-table.md
    - link-graph.json
    - detailed-report.json
@@ -293,16 +321,18 @@ If the process crashes mid-run, a re-run must resume with minimal duplication.
    - handoff.json (small bundle)
 
 ### Phase 5 — Status + README
-9) Write `{FEATURE}-CRAWL-STATUS.md`:
+
+1) Write `{FEATURE}-CRAWL-STATUS.md`:
    - pages captured
    - key flows reached
    - any errors/timeouts
    - where outputs live
-10) Write `README.md` describing:
-   - how to run
-   - how to resume
-   - output structure
-   - troubleshooting
+2) Write `README.md` describing:
+
+- how to run
+- how to resume
+- output structure
+- troubleshooting
 
 ---
 
@@ -362,69 +392,69 @@ Summaries that downstream DB/UI agents can use without re-parsing HTML.
 inferred-actions.json
 
 List of discovered actions on page:
-	•	create, edit, delete (if visible), export, filter, sort, etc.
+ • create, edit, delete (if visible), export, filter, sort, etc.
 
 Inferred API Map + Schema (Reports)
-	•	API inference must be grounded in network capture.
-	•	Schema inference should use:
-	•	table headers + form fields + network payload shapes
-	•	All inferences must include confidence:
-	•	high = direct evidence
-	•	medium = strong hints
-	•	low = educated guess
+ • API inference must be grounded in network capture.
+ • Schema inference should use:
+ • table headers + form fields + network payload shapes
+ • All inferences must include confidence:
+ • high = direct evidence
+ • medium = strong hints
+ • low = educated guess
 
 ⸻
 
 Quality Standards (Crawler)
 
 Minimum Coverage
-	•	main list view captured (if exists)
-	•	at least 1 detail view captured (if exists)
-	•	key menus/dropdowns expanded and captured
-	•	network logs present for at least:
-	•	list page load
-	•	detail page load
+ • main list view captured (if exists)
+ • at least 1 detail view captured (if exists)
+ • key menus/dropdowns expanded and captured
+ • network logs present for at least:
+ • list page load
+ • detail page load
 
 Output Validity
-	•	all JSON files must parse
-	•	NDJSON must be one JSON object per line
-	•	directory structure must match spec exactly
+ • all JSON files must parse
+ • NDJSON must be one JSON object per line
+ • directory structure must match spec exactly
 
 ⸻
 
 Common Failure Modes & Required Handling
 
 Authentication Failure
-	•	detect login failure state
-	•	write error to manifest
-	•	stop with actionable error message
-	•	do not continue capturing unauthenticated pages
+ • detect login failure state
+ • write error to manifest
+ • stop with actionable error message
+ • do not continue capturing unauthenticated pages
 
 SPA Navigation / Timeouts
-	•	prefer domcontentloaded + explicit locator waits
-	•	avoid reliance on networkidle as a universal rule
+ • prefer domcontentloaded + explicit locator waits
+ • avoid reliance on networkidle as a universal rule
 
 Missing Elements
-	•	log absence in metadata rather than failing the crawl
+ • log absence in metadata rather than failing the crawl
 
 ⸻
 
 Success Criteria
 
 A crawl is successful when:
-	•	40–50 pages captured (or feature scope exhausted)
-	•	screenshots + dom + metadata exist for each page
-	•	network logs exist and are sanitized
-	•	inferred API map and schema reports generated
-	•	status report clearly states what was captured and what’s next
+ • 40–50 pages captured (or feature scope exhausted)
+ • screenshots + dom + metadata exist for each page
+ • network logs exist and are sanitized
+ • inferred API map and schema reports generated
+ • status report clearly states what was captured and what’s next
 
 ⸻
 
 Limitations (Honest)
-	•	May miss deeply dynamic interactions requiring specific data
-	•	Cannot infer backend business logic that isn’t visible in UI/network
-	•	Restricted by Procore permissions and authentication stability
-	•	Avoids destructive submits unless explicitly allowed in sandbox
+ • May miss deeply dynamic interactions requiring specific data
+ • Cannot infer backend business logic that isn’t visible in UI/network
+ • Restricted by Procore permissions and authentication stability
+ • Avoids destructive submits unless explicitly allowed in sandbox
 
 ---
 

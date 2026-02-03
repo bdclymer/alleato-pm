@@ -3,11 +3,13 @@
 Run a comprehensive design system audit on the specified scope.
 
 ## Usage
-```
+
+```bash
 /design-audit [scope]
 ```
 
 **Scopes:**
+
 - `all` - Full codebase audit (default)
 - `ui` - Core UI components only
 - `layout` - Layout components only

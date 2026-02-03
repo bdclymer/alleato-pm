@@ -47,11 +47,12 @@ IMPORTANT: When creating prompts, ALWAYS display the complete prompt text in a c
 When creating any prompt, you MUST include:
 
 ### The Prompt
-```
-[Display the complete prompt text here]
-```
 
+```text
+[Display the complete prompt text here]
+```markdown
 ### Implementation Notes
+
 - Key techniques used
 - Why these choices were made
 - Expected outcomes
@@ -78,7 +79,8 @@ When creating any prompt, you MUST include:
 When asked to create a prompt for code review:
 
 ### The Prompt
-```
+
+```diff
 You are an expert code reviewer with 10+ years of experience. Review the provided code focusing on:
 1. Security vulnerabilities
 2. Performance optimizations
@@ -95,6 +97,7 @@ Format your response as a structured report with clear sections.
 ```
 
 ### Implementation Notes
+
 - Uses role-playing for expertise establishment
 - Provides clear evaluation criteria
 - Specifies output format for consistency

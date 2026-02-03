@@ -21,12 +21,11 @@ The plugin uses a SessionStart hook to inject additional context into every
 session. This context instructs Claude to provide brief educational explanations
 before and after writing code, formatted as:
 
-```
+```text
 `★ Insight ─────────────────────────────────────`
 [2-3 key educational points]
 `─────────────────────────────────────────────────`
-```
-
+```markdown
 ## Usage
 
 Once installed, the plugin activates automatically at the start of every
@@ -68,5 +67,5 @@ add to the default system prompt.
 - Update the plugin - create a local copy of this plugin to personalize this
   plugin
   - Hint: Ask Claude to read
-    https://docs.claude.com/en/docs/claude-code/plugins.md and set it up for
+    <https://docs.claude.com/en/docs/claude-code/plugins.md> and set it up for
     you!

@@ -47,8 +47,7 @@ Task({
 
     Write findings to: .claude/research/[feature-name].md`
 })
-```
-
+```diff
 **Output Required:** Research summary file exists before proceeding.
 
 ---
@@ -88,9 +87,9 @@ Task({
 ### Section 1: [Area]
 - [ ] Task 1
 - [ ] Task 2
-```
-
+```yaml
 **PLANS.md Structure:**
+
 ```markdown
 # [Feature Name] - Implementation Plan
 
@@ -108,8 +107,7 @@ Task({
 
 ## Testing Strategy
 ## Verification Protocol
-```
-
+```yaml
 **Gate:** Cannot proceed to implementation without TASKS.md and PLANS.md created.
 
 ---
@@ -162,8 +160,7 @@ When done, create .claude/worker-done-[task-id].md with:
 
 BEGIN IMPLEMENTATION.`
 })
-```
-
+```yaml
 **Rules:**
 - One task per worker agent
 - Workers do NOT run tests
@@ -205,8 +202,7 @@ Create .claude/tests-passing-[task-id].md when done with:
 - All passing: YES/NO
 - Test output: [paste actual output]`
 })
-```
-
+```yaml
 **Gate:** Cannot proceed without `.claude/tests-passing-[task-id].md` showing all tests pass.
 
 ---
@@ -270,8 +266,7 @@ VERIFIED ✓ / FAILED ✗
 
 BE RUTHLESS. If ANY check fails, mark as FAILED.`
 })
-```
-
+```bash
 **Gate:** Cannot mark task complete without VERIFIED status.
 
 ---
@@ -330,11 +325,13 @@ These are NOT acceptable as evidence:
 4. **Only then complete** - Completion requires VERIFIED status
 
 **BANNED:**
+
 - "Verification found 3 issues" → STOP and report
 - "Known issue - low priority" → Leave unfixed
 - "85% passing is acceptable" → Partial pass = FAIL
 
 **REQUIRED:**
+
 - "Verification found 3 issues" → Fix all 3 → Re-verify → PASS
 - Continue until VERIFIED or genuinely blocked
 
@@ -435,7 +432,7 @@ Claude MUST NOT stop to:
 
 ## FILE ORGANIZATION
 
-```
+```bash
 project/
 ├── .claude/
 │   ├── current-task.md           # Active task
@@ -455,13 +452,12 @@ project/
 └── tests/
     └── e2e/
         └── [feature].spec.ts     # Feature tests
-```
-
+```diff
 ---
 
 ## QUICK REFERENCE: Starting a New Feature
 
-```
+```text
 1. USER: "Implement [feature]"
 
 2. CLAUDE:

@@ -11,6 +11,7 @@ Grep searches and assumptions are NOT evidence. Actual runtime output IS evidenc
 ## The Violation Pattern (From Incident 2026-01-28)
 
 Claude modified `scheduling-service.ts` THREE TIMES based on assumptions:
+
 1. Removed `created_by`/`updated_by` columns (assumption: columns don't exist)
 2. Investigated `dependency_type` CHECK constraint (assumption: values wrong)
 3. Investigated `is_overdue` computed column (assumption: missing property)
@@ -28,6 +29,7 @@ Claude modified `scheduling-service.ts` THREE TIMES based on assumptions:
 Before ANY code modification, you MUST:
 
 1. **Check actual runtime behavior**
+
    ```bash
    # Test API directly
    curl -v "http://localhost:3000/api/endpoint"
@@ -84,6 +86,7 @@ If you find yourself doing any of these, STOP:
 ## Historical Incidents
 
 ### 2026-01-28: Scheduling Service Misdiagnosis
+
 - **Symptoms:** E2E tests stuck on loading spinner
 - **Wrong diagnoses:** Missing columns, constraint values, computed properties
 - **Actual cause:** UUID/INTEGER type mismatch in foreign key

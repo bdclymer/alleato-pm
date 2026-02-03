@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 import { getProjectInfo } from '@/lib/supabase/project-fetcher';
 import type { Database } from '@/types/database.types';
 import { DashboardLayout } from '@/components/layouts';
-import { ProjectPageHeader } from '@/components/layout';
+import { PageHeader } from '@/components/layout';
 
 // Extended types to handle fields that may exist in DB but not in generated types
 type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & {
@@ -150,7 +150,7 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title={meeting.title || 'Untitled Meeting'}
         description={meeting.summary || undefined}
         breadcrumbs={[

@@ -21,7 +21,8 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { TaskTable } from "@/components/scheduling/task-table";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
@@ -738,7 +739,7 @@ export default function ProjectSchedulePage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Schedule"
           description="Track project schedule tasks and milestones"
           actions={headerActions}
@@ -782,7 +783,7 @@ export default function ProjectSchedulePage() {
 
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Schedule"
           description="Track project schedule tasks and milestones"
           actions={headerActions}
@@ -848,7 +849,7 @@ export default function ProjectSchedulePage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Schedule"
         description="Track project schedule tasks and milestones"
         actions={headerActions}

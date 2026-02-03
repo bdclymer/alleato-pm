@@ -12,7 +12,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -244,7 +244,7 @@ export default function DistributionGroupsPage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -265,7 +265,7 @@ export default function DistributionGroupsPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -284,7 +284,7 @@ export default function DistributionGroupsPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

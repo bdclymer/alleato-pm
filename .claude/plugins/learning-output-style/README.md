@@ -28,6 +28,7 @@ The plugin uses a SessionStart hook to inject additional context into every sess
 ## When Claude requests contributions
 
 Claude will ask you to write code for:
+
 - Business logic with multiple valid approaches
 - Error handling strategies
 - Algorithm implementation choices
@@ -38,6 +39,7 @@ Claude will ask you to write code for:
 ## When Claude won't request contributions
 
 Claude will implement directly:
+
 - Boilerplate or repetitive code
 - Obvious implementations with no meaningful choices
 - Configuration or setup code
@@ -57,13 +59,14 @@ Consider: auto-extending improves UX but may leave sessions open longer; hard ti
 
 In addition to interactive learning, Claude will provide educational insights about implementation choices using this format:
 
-```
+```text
 `★ Insight ─────────────────────────────────────`
 [2-3 key educational points about the codebase or implementation]
 `─────────────────────────────────────────────────`
 ```
 
 These insights focus on:
+
 - Specific implementation choices for your codebase
 - Patterns and conventions in your code
 - Trade-offs and design decisions
@@ -86,7 +89,7 @@ This SessionStart hook pattern is roughly equivalent to CLAUDE.md, but it is mor
 - Disable the plugin - keep the code installed on your device
 - Uninstall the plugin - remove the code from your device
 - Update the plugin - create a local copy of this plugin to personalize it
-  - Hint: Ask Claude to read https://docs.claude.com/en/docs/claude-code/plugins.md and set it up for you!
+  - Hint: Ask Claude to read <https://docs.claude.com/en/docs/claude-code/plugins.md> and set it up for you!
 
 ## Philosophy
 

@@ -3,24 +3,24 @@
 ## Working Directory Awareness
 
 ### Rule 1: Check pwd FIRST
+
 Before running any command that depends on relative paths:
+
 ```bash
 pwd
-```
-
+```markdown
 ### Rule 2: Use Absolute Paths
 ALWAYS prefer absolute paths over relative paths:
 
 **WRONG:**
 ```bash
 npx supabase gen types ... > src/types/database.types.ts
-```
-
+```bash
 **CORRECT:**
+
 ```bash
 npx supabase gen types ... > /Users/meganharrison/Documents/github/alleato-procore/frontend/src/types/database.types.ts
-```
-
+```bash
 ### Rule 3: Don't Use `cd` in Command Chains (zsh issue)
 This DOES NOT WORK reliably:
 ```bash
@@ -28,11 +28,11 @@ cd frontend && npm run something  # FAILS in zsh
 ```
 
 Instead, use absolute paths or run from correct directory:
+
 ```bash
 npm run something --prefix /path/to/frontend
 # OR verify pwd first, then run command separately
-```
-
+```javascript
 ---
 
 ## String Escaping
@@ -43,13 +43,12 @@ Double quotes with special characters cause escaping nightmares:
 **WRONG:**
 ```bash
 node -e "console.log('Key exists:', !!process.env.VAR)"  # !! gets interpreted
-```
-
+```sql
 **CORRECT:**
+
 ```bash
 node -e 'console.log("Key exists:", !!process.env.VAR)'  # Single quotes outer
-```
-
+```sql
 ### Rule 5: Heredocs for Multi-line SQL/Scripts
 Don't try to escape multi-line strings. Use heredocs:
 
@@ -64,11 +63,12 @@ EOF
 ## Environment Variables
 
 ### Rule 6: Source env files properly
+
 **WRONG:**
+
 ```bash
 source .env.local && node script.js  # May not work
-```
-
+```bash
 **CORRECT:**
 ```bash
 export $(cat .env.local | grep -v '^#' | xargs) && node script.js

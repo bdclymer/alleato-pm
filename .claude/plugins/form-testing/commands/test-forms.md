@@ -16,8 +16,7 @@ Systematically test forms with Playwright browser verification, automatic databa
 /test-forms inline           # Test 2 inline forms only
 /test-forms auth             # Test 4 auth forms only
 /test-forms create-project   # Test specific form by name
-```
-
+```bash
 ## Arguments
 
 - `$ARGUMENTS` - Test scope or specific form name
@@ -156,8 +155,7 @@ Document in `documentation/forms/test-runs/[timestamp]/FORM_ERRORS.md`:
 - **Screenshot**: [path to screenshot]
 - **Timestamp**: [ISO 8601 timestamp]
 - **Tester**: Form Testing Agent (Playwright)
-```
-
+```markdown
 **Severity Classification:**
 
 - **BLOCKER**: Form cannot be submitted, crashes, or loses data
@@ -227,8 +225,7 @@ Document in `documentation/forms/test-runs/[timestamp]/FORM_ERRORS.md`:
 ## Next Steps
 
 [If errors found, suggest retest or fixes needed]
-```
-
+```markdown
 ### Phase 6: Update Inventory
 
 **Actions:**
@@ -258,17 +255,20 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 ### Playwright Gate
 
 **Rules:**
+
 - NEVER reason about form behavior without browser verification
 - NEVER assume UI state without actual testing
 - NEVER skip screenshot capture
 - ALWAYS capture evidence for every claim
 
 **Violations:**
+
 - Speculating about form behavior → FAILURE
 - Reporting status without screenshots → FAILURE
 - Assuming validation works → FAILURE
 
 **Compliance:**
+
 - Launch Playwright for every form
 - Capture screenshots for all 8 states
 - Verify behavior in actual browser
@@ -277,6 +277,7 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 ### Quality Gate
 
 **Rules:**
+
 - Run `npm run quality --prefix frontend` after ANY code changes
 - Fix ALL type errors before continuing
 - Fix ALL lint errors before continuing
@@ -285,6 +286,7 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 - NEVER use `any` type (use `unknown` instead)
 
 **Applies to:**
+
 - Test helper utilities
 - Test configurations
 - Cleanup scripts
@@ -293,6 +295,7 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 ### Database Gate
 
 **Rules:**
+
 - Use real test data (not mocks)
 - Clean up ALL created data after tests
 - Verify cleanup was successful
@@ -300,6 +303,7 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 - Use `E2E_TEST_` prefix for identification
 
 **Compliance:**
+
 - Track every created record ID
 - Call `cleanupTestData()` in `test.afterAll()`
 - Run orphaned data cleanup after suite
@@ -307,7 +311,7 @@ These gates from `CLAUDE.md` are **MANDATORY** and cannot be bypassed:
 
 ## Output Structure
 
-```
+```text
 documentation/forms/
 ├── FORM_INVENTORY.md                      # Master registry (updated)
 └── test-runs/
@@ -324,11 +328,11 @@ documentation/forms/
             ├── create-project-error-handling.png
             ├── create-project-accessibility.png
             └── ...
-```
-
+```markdown
 ## Behavioral Rules
 
 **Agent MUST:**
+
 - Execute ALL 8 tests for each form
 - Capture screenshots for every state
 - Continue testing after finding blockers
@@ -337,6 +341,7 @@ documentation/forms/
 - Update inventory after completion
 
 **Agent MUST NOT:**
+
 - Skip tests to save time
 - Assume behavior without verification
 - Fix errors (only document)
@@ -347,17 +352,20 @@ documentation/forms/
 ## Error Handling
 
 **If infrastructure fails:**
+
 1. Document what's missing
 2. Provide setup instructions
 3. Stop workflow gracefully
 
 **If form test fails:**
+
 1. Capture error screenshot
 2. Document in FORM_ERRORS.md
 3. Mark form as "Fail" in plan
 4. Continue to next form
 
 **If cleanup fails:**
+
 1. Log error details
 2. Mark cleanup status as failed
 3. Include orphaned record IDs in report
@@ -366,6 +374,7 @@ documentation/forms/
 ## Success Criteria
 
 Test run is successful when:
+
 - ✅ All forms in scope were tested
 - ✅ Screenshots captured for all 8 states per form
 - ✅ All errors documented with reproduction steps
@@ -377,16 +386,19 @@ Test run is successful when:
 ## Integration Points
 
 **Invokes:**
+
 - Form Testing Agent (executes tests)
 - Form Inventory Agent (updates catalog)
 
 **Uses:**
+
 - `frontend/tests/helpers/form-testing.ts`
 - `frontend/tests/helpers/modal-testing.ts`
 - `frontend/tests/helpers/test-data-cleanup.ts`
 - `frontend/tests/config/form-test-configs.ts`
 
 **Outputs:**
+
 - Test plan (TEST_PLAN.md)
 - Error log (FORM_ERRORS.md, if errors found)
 - Test report (FORM_TEST_REPORT.md)

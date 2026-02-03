@@ -11,6 +11,7 @@ version: 0.1.0
 Agents are autonomous subprocesses that handle complex, multi-step tasks independently. Understanding agent structure, triggering conditions, and system prompt design enables creating powerful autonomous capabilities.
 
 **Key concepts:**
+
 - Agents are FOR autonomous work, commands are FOR user-initiated actions
 - Markdown file format with YAML frontmatter
 - Triggering via description field with examples
@@ -55,8 +56,7 @@ You are [agent role description]...
 
 **Output Format:**
 [What to return]
-```
-
+```typescript
 ## Frontmatter Fields
 
 ### name (required)
@@ -90,7 +90,7 @@ Defines when Claude should trigger this agent. **This is the most critical field
 4. `<commentary>` explaining why agent triggers
 
 **Format:**
-```
+```yaml
 Use this agent when [conditions]. Examples:
 
 <example>
@@ -103,8 +103,8 @@ assistant: "[How Claude should respond]"
 </example>
 
 [More examples...]
-```
 
+```bash
 **Best practices:**
 - Include 2-4 concrete examples
 - Show proactive and reactive triggering
@@ -154,6 +154,7 @@ tools: ["Read", "Write", "Grep", "Bash"]
 **Best practice:** Limit tools to minimum needed (principle of least privilege)
 
 **Common tool sets:**
+
 - Read-only analysis: `["Read", "Grep", "Glob"]`
 - Code generation: `["Read", "Write", "Grep"]`
 - Testing: `["Read", "Bash", "Grep"]`
@@ -166,6 +167,7 @@ The markdown body becomes the agent's system prompt. Write in second person, add
 ### Structure
 
 **Standard template:**
+
 ```markdown
 You are [role] specializing in [domain].
 
@@ -193,8 +195,7 @@ Provide results in this format:
 Handle these situations:
 - [Edge case 1]: [How to handle]
 - [Edge case 2]: [How to handle]
-```
-
+```markdown
 ### Best Practices
 
 ✅ **DO:**
@@ -220,10 +221,11 @@ Handle these situations:
 
 Use this prompt pattern (extracted from Claude Code):
 
-```
+```typescript
 Create an agent configuration based on this request: "[YOUR DESCRIPTION]"
 
 Requirements:
+
 1. Extract core intent and responsibilities
 2. Design expert persona for the domain
 3. Create comprehensive system prompt with:
@@ -241,8 +243,8 @@ Return JSON with:
   "whenToUse": "Use this agent when... Examples: <example>...</example>",
   "systemPrompt": "You are..."
 }
-```
 
+```text
 Then convert to agent file format with frontmatter.
 
 See `examples/agent-creation-prompt.md` for complete template.
@@ -262,10 +264,11 @@ See `examples/agent-creation-prompt.md` for complete template.
 ### Identifier Validation
 
 ```
+
 ✅ Valid: code-reviewer, test-gen, api-analyzer-v2
 ❌ Invalid: ag (too short), -start (starts with hyphen), my_agent (underscore)
-```
 
+```diff
 **Rules:**
 - 3-50 characters
 - Lowercase letters, numbers, hyphens only
@@ -288,14 +291,14 @@ See `examples/agent-creation-prompt.md` for complete template.
 
 ### Plugin Agents Directory
 
-```
+```yaml
 plugin-name/
 └── agents/
     ├── analyzer.md
     ├── reviewer.md
     └── generator.md
-```
 
+```yaml
 All `.md` files in `agents/` are auto-discovered.
 
 ### Namespacing
@@ -359,6 +362,7 @@ Output: [What to provide]
 ### Best Practices
 
 **DO:**
+
 - ✅ Include 2-4 concrete examples in description
 - ✅ Write specific triggering conditions
 - ✅ Use `inherit` for model unless specific need
@@ -367,6 +371,7 @@ Output: [What to provide]
 - ✅ Test agent triggering thoroughly
 
 **DON'T:**
+
 - ❌ Use generic descriptions without examples
 - ❌ Omit triggering conditions
 - ❌ Give all agents same color

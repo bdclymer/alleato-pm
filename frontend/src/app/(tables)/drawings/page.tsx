@@ -12,7 +12,6 @@ import {
   Edit,
   Trash2,
   Download,
-  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -20,77 +19,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface Drawing {
-  id: string;
-  number: string;
-  title: string;
-  discipline:
-    | "architectural"
-    | "structural"
-    | "mechanical"
-    | "electrical"
-    | "plumbing";
-  revision: string;
-  status:
-    | "issued_for_construction"
-    | "issued_for_review"
-    | "superseded"
-    | "void";
-  uploadedBy: string;
-  uploadedAt: string;
-  fileSize: string;
-}
-
-const mockDrawings: Drawing[] = [
-  {
-    id: "1",
-    number: "A-101",
-    title: "First Floor Plan",
-    discipline: "architectural",
-    revision: "B",
-    status: "issued_for_construction",
-    uploadedBy: "Architect",
-    uploadedAt: "2025-12-05",
-    fileSize: "2.4 MB",
-  },
-  {
-    id: "2",
-    number: "S-201",
-    title: "Foundation Plan",
-    discipline: "structural",
-    revision: "A",
-    status: "issued_for_construction",
-    uploadedBy: "Structural Engineer",
-    uploadedAt: "2025-12-04",
-    fileSize: "3.1 MB",
-  },
-  {
-    id: "3",
-    number: "M-301",
-    title: "HVAC Layout - Floor 1",
-    discipline: "mechanical",
-    revision: "C",
-    status: "issued_for_review",
-    uploadedBy: "MEP Engineer",
-    uploadedAt: "2025-12-06",
-    fileSize: "1.8 MB",
-  },
-];
+import { useDrawings } from "@/hooks/use-drawings";
+import type { DrawingLogTableRow } from "@/types/drawings.types";
 
 export default function DrawingsPage() {
-  const [data, setData] = React.useState<Drawing[]>(mockDrawings);
+  // Use project 31 as default for tables view (standalone page, no projectId in route)
+  const { data: drawingsData, isLoading } = useDrawings("31");
+  const drawings = drawingsData?.drawings || [];
 
-  const columns: ColumnDef<Drawing>[] = [
+  const columns: ColumnDef<DrawingLogTableRow>[] = [
     {
-      accessorKey: "number",
+      accessorKey: "drawingNumber",
       header: "Number",
       cell: ({ row }) => (
         <button
           type="button"
           className="font-medium text-[hsl(var(--procore-orange))] hover:underline"
         >
-          {row.getValue("number")}
+          {row.getValue("drawingNumber")}
         </button>
       ),
     },
@@ -102,13 +48,14 @@ export default function DrawingsPage() {
       accessorKey: "discipline",
       header: "Discipline",
       cell: ({ row }) => {
-        const discipline = row.getValue("discipline") as string;
+        const discipline = row.getValue("discipline") as string | null;
+        if (!discipline) return null;
         const disciplineColors: Record<string, string> = {
-          architectural: "bg-blue-100 text-blue-700",
-          structural: "bg-green-100 text-green-700",
-          mechanical: "bg-purple-100 text-purple-700",
-          electrical: "bg-yellow-100 text-yellow-700",
-          plumbing: "bg-cyan-100 text-cyan-700",
+          Architectural: "bg-blue-100 text-blue-700",
+          Structural: "bg-green-100 text-green-700",
+          Mechanical: "bg-purple-100 text-purple-700",
+          Electrical: "bg-yellow-100 text-yellow-700",
+          Plumbing: "bg-cyan-100 text-cyan-700",
         };
         return (
           <Badge
@@ -122,19 +69,21 @@ export default function DrawingsPage() {
       },
     },
     {
-      accessorKey: "revision",
+      accessorKey: "revisionNumber",
       header: "Rev",
     },
     {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const status = row.getValue("status") as string | null;
+        if (!status) return null;
         const statusColors: Record<string, string> = {
-          issued_for_construction: "bg-green-100 text-green-700",
-          issued_for_review: "bg-yellow-100 text-yellow-700",
+          approved: "bg-green-100 text-green-700",
+          under_review: "bg-yellow-100 text-yellow-700",
           superseded: "bg-muted text-foreground",
           void: "bg-red-100 text-red-700",
+          draft: "bg-blue-100 text-blue-700",
         };
         return (
           <Badge
@@ -146,24 +95,31 @@ export default function DrawingsPage() {
       },
     },
     {
-      accessorKey: "uploadedBy",
+      accessorKey: "uploadedByEmail",
       header: "Uploaded By",
     },
     {
-      accessorKey: "uploadedAt",
-      header: "Uploaded",
+      accessorKey: "receivedDate",
+      header: "Received",
       cell: ({ row }) => {
-        const date = row.getValue("uploadedAt") as string;
-        return new Date(date).toLocaleDateString();
+        const date = row.getValue("receivedDate") as string | null;
+        return date ? new Date(date).toLocaleDateString() : "";
       },
     },
     {
       accessorKey: "fileSize",
       header: "Size",
+      cell: ({ row }) => {
+        const size = row.getValue("fileSize") as number | null;
+        if (!size) return "";
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+      },
     },
     {
       id: "actions",
-      cell: ({ row }) => (
+      cell: () => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -193,9 +149,16 @@ export default function DrawingsPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground">Loading drawings...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Drawings</h1>
@@ -209,47 +172,37 @@ export default function DrawingsPage() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-background rounded-lg border p-4">
           <div className="text-sm font-medium text-muted-foreground">Total</div>
           <div className="text-2xl font-bold text-foreground mt-1">
-            {data.length}
+            {drawings.length}
           </div>
         </div>
         <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            For Construction
-          </div>
+          <div className="text-sm font-medium text-muted-foreground">Approved</div>
           <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((d) => d.status === "issued_for_construction").length}
+            {drawings.filter((d) => d.status === "approved").length}
           </div>
         </div>
         <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">For Review</div>
+          <div className="text-sm font-medium text-muted-foreground">Under Review</div>
           <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((d) => d.status === "issued_for_review").length}
+            {drawings.filter((d) => d.status === "under_review").length}
           </div>
         </div>
         <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Superseded</div>
+          <div className="text-sm font-medium text-muted-foreground">Draft</div>
           <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((d) => d.status === "superseded").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Void</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((d) => d.status === "void").length}
+            {drawings.filter((d) => d.status === "draft").length}
           </div>
         </div>
       </div>
 
-      {/* Table */}
       <div className="flex-1 bg-background rounded-lg border overflow-hidden">
         <DataTable
           columns={columns}
-          data={data}
+          data={drawings}
           searchKey="title"
           searchPlaceholder="Search drawings..."
         />

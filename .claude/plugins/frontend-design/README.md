@@ -13,7 +13,7 @@ Claude automatically uses this skill for frontend work. Creates production-ready
 
 ## Usage
 
-```
+```text
 "Create a dashboard for a music streaming app"
 "Build a landing page for an AI security startup"
 "Design a settings panel with dark mode"
@@ -27,5 +27,5 @@ See the [Frontend Aesthetics Cookbook](https://github.com/anthropics/claude-cook
 
 ## Authors
 
-Prithvi Rajasekaran (prithvi@anthropic.com)
-Alexander Bricken (alexander@anthropic.com)
+Prithvi Rajasekaran (<prithvi@anthropic.com>)
+Alexander Bricken (<alexander@anthropic.com>)

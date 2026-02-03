@@ -109,8 +109,7 @@ You are an expert code quality reviewer specializing in identifying issues, secu
 - Unclear code intent: Note ambiguity and request clarification
 - Missing context (no CLAUDE.md): Apply general best practices
 - Large changeset: Focus on most impactful files first
-```
-
+```yaml
 ## Example 2: Test Generator Agent
 
 **File:** `agents/test-generator.md`
@@ -198,16 +197,16 @@ describe('[module name]', () => {
 
   // More tests...
 })
-```
-
+```yaml
 **Edge Cases:**
+
 - No existing tests: Create new test file following best practices
 - Existing test file: Add new tests maintaining consistency
 - Unclear behavior: Add tests for observable behavior, note uncertainties
 - Complex mocking: Prefer integration tests or minimal mocking
 - Untestable code: Suggest refactoring for testability
-```
 
+```yaml
 ## Example 3: Documentation Generator
 
 **File:** `agents/docs-generator.md`
@@ -390,6 +389,7 @@ You are an expert security analyst specializing in identifying vulnerabilities a
 ### Adapt to Your Domain
 
 Take these templates and customize:
+
 - Change domain expertise (e.g., "Python expert" vs "React expert")
 - Adjust process steps for your specific workflow
 - Modify output format to match your needs
@@ -399,6 +399,7 @@ Take these templates and customize:
 ### Adjust Tool Access
 
 Restrict or expand based on agent needs:
+
 - **Read-only agents**: `["Read", "Grep", "Glob"]`
 - **Generator agents**: `["Read", "Write", "Grep"]`
 - **Executor agents**: `["Read", "Write", "Bash", "Grep"]`
@@ -407,6 +408,7 @@ Restrict or expand based on agent needs:
 ### Customize Colors
 
 Choose colors that match agent purpose:
+
 - **Blue**: Analysis, review, investigation
 - **Cyan**: Documentation, information
 - **Green**: Generation, creation, success-oriented

@@ -8,8 +8,8 @@
 | Item | Value |
 |------|-------|
 | Feature | {feature} |
-| Feature Directory | `playwright-procore-crawl/procore-crawls/{feature}/` |
-| Crawl Data | `crawl-{feature}/` |
+| Feature Directory | `docs-ai/contents/docs/PRPs/{feature}/` |
+| Crawl Data | `docs-ai/contents/docs/PRPs/{feature}/crawl/` |
 | Frontend Pages | `frontend/src/app/[projectId]/{feature}/` |
 | Components | `frontend/src/components/{feature}/` |
 | Tests | `frontend/tests/e2e/{feature}*.spec.ts` |
@@ -71,19 +71,23 @@
 <!-- Auto-detected or manually specified existing implementations -->
 
 ### Pages
+
 - [ ] `frontend/src/app/[projectId]/{feature}/page.tsx` - List page
 - [ ] `frontend/src/app/[projectId]/{feature}/new/page.tsx` - Create page
 - [ ] `frontend/src/app/[projectId]/{feature}/[id]/page.tsx` - Detail page
 
 ### Components
+
 - [ ] `frontend/src/components/{feature}/{Feature}Table.tsx`
 - [ ] `frontend/src/components/{feature}/{Feature}Form.tsx`
 - [ ] `frontend/src/components/{feature}/FiltersPanel.tsx`
 
 ### Hooks
+
 - [ ] `frontend/src/hooks/use-{feature}.ts`
 
 ### API Routes
+
 - [ ] `frontend/src/app/api/projects/[id]/{feature}/route.ts`
 - [ ] `frontend/src/app/api/projects/[id]/{feature}/[id]/route.ts`
 
@@ -91,25 +95,25 @@
 
 ## Supabase Configuration
 
-```
+```bash
 Project ID: lgveqfnpkxvzbnnwuled
-```
-
+```markdown
 ### Type Generation
+
 ```bash
 npx supabase gen types typescript \
   --project-id "lgveqfnpkxvzbnnwuled" \
   --schema public > frontend/src/types/database.types.ts
-```
-
+```diff
 ---
 
 ## Test Credentials
 
-```
-Email: test1@mail.com
+```yaml
+Email: <test1@mail.com>
 Password: test12026!!!
 Auth file: frontend/tests/.auth/user.json
+
 ```
 
 ---

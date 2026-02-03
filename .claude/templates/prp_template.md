@@ -57,20 +57,17 @@ _Before writing this PRP, validate: "If someone knew nothing about this codebase
 - docfile: [PRPs/docs/typescript_specific.md]
   why: [Custom documentation for complex TypeScript/Next.js patterns]
   section: [Specific section if document is large]
-```
-
+```markdown
 ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
 
 ```bash
 
-```
-
+```markdown
 ### Desired Codebase tree with files to be added and responsibility of file
 
 ```bash
 
-```
-
+```markdown
 ### Known Gotchas of our codebase & Library Quirks
 
 ```typescript
@@ -95,8 +92,7 @@ Examples:
  - API response types
  - Component prop types
 
-```
-
+```typescript
 ### Implementation Tasks (ordered by dependencies)
 
 ```yaml
@@ -140,8 +136,7 @@ Task 6: CREATE __tests__/{component}.test.tsx
   - NAMING: describe blocks, test naming conventions, TypeScript test typing
   - COVERAGE: All components and hooks with positive and negative test cases
   - PLACEMENT: Tests alongside the code they test
-```
-
+```tsx
 ### Implementation Patterns & Key Details
 
 ```typescript
@@ -179,8 +174,7 @@ export function use{Domain}Action(): {Domain}ActionResult {
   // PATTERN: Hook structure with TypeScript generics (see hooks/useExisting.ts)
   // GOTCHA: [React hook rules and TypeScript typing requirements]
 }
-```
-
+```markdown
 ### Integration Points
 
 ```yaml
@@ -215,8 +209,7 @@ npm run lint:fix               # Auto-fix linting issues
 npm run type-check             # Full TypeScript validation
 
 # Expected: Zero errors. If errors exist, READ output and fix before proceeding.
-```
-
+```markdown
 ### Level 2: Unit Tests (Component Validation)
 
 ```bash
@@ -232,8 +225,7 @@ npm test -- hooks/
 npm test -- --coverage --watchAll=false
 
 # Expected: All tests pass. If failing, debug root cause and fix implementation.
-```
-
+```bash
 ### Level 3: Integration Testing (System Validation)
 
 ```bash
@@ -259,8 +251,7 @@ npm run build
 curl http://localhost:3000/{page} | grep -q "expected-content"
 
 # Expected: All integrations working, proper responses, no hydration errors
-```
-
+```bash
 ### Level 4: Creative & Domain-Specific Validation
 
 ```bash
@@ -375,7 +366,7 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 | Pages | DOM | `pages/{page}/dom.html` | Full DOM snapshot |
 | Pages | Metadata | `pages/{page}/metadata.json` | Links, dropdowns, system actions |
 
-**Base Path**: `playwright-procore-crawl/procore-crawls/{feature}/`
+**Base Path**: `docs-ai/contents/docs/PRPs/{feature}/crawl/`
 
 ### Screenshots
 
@@ -383,9 +374,10 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 
 _{Description of what the screenshot shows}_
 
-![Procore {Feature} Screenshot](../../playwright-procore-crawl/procore-crawls/{feature}/pages/{page}/screenshot.png)
+![Procore {Feature} Screenshot](../../docs-ai/contents/docs/PRPs/{feature}/crawl/pages/{page}/screenshot.png)
 
 **Key UI Elements to Replicate:**
+
 - {List key UI elements observed in screenshot}
 - {Include layout structure, toolbars, panels}
 - {Note any context menus or modals}

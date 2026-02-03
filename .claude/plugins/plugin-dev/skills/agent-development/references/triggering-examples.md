@@ -16,8 +16,7 @@ assistant: "[How Claude should respond before triggering]"
 </commentary>
 assistant: "[How Claude triggers the agent - usually 'I'll use the [agent-name] agent...']"
 </example>
-```
-
+```markdown
 ## Anatomy of a Good Example
 
 ### Context
@@ -25,64 +24,67 @@ assistant: "[How Claude triggers the agent - usually 'I'll use the [agent-name] 
 **Purpose:** Set the scene - what happened before the user's message
 
 **Good contexts:**
-```
+```yaml
 Context: User just implemented a new authentication feature
 Context: User has created a PR and wants it reviewed
 Context: User is debugging a test failure
 Context: After writing several functions without documentation
-```
 
+```text
 **Bad contexts:**
 ```
+
 Context: User needs help (too vague)
 Context: Normal usage (not specific)
-```
 
+```markdown
 ### User Message
 
 **Purpose:** Show the exact phrasing that should trigger the agent
 
 **Good user messages:**
-```
+```yaml
 user: "I've added the OAuth flow, can you check it?"
 user: "Review PR #123"
 user: "Why is this test failing?"
 user: "Add docs for these functions"
-```
 
+```text
 **Vary the phrasing:**
 Include multiple examples with different phrasings for the same intent:
 ```
+
 Example 1: user: "Review my code"
 Example 2: user: "Can you check this implementation?"
 Example 3: user: "Look over my changes"
-```
 
+```markdown
 ### Assistant Response (Before Triggering)
 
 **Purpose:** Show what Claude says before launching the agent
 
 **Good responses:**
-```
+```yaml
 assistant: "I'll analyze your OAuth implementation."
 assistant: "Let me review that PR for you."
 assistant: "I'll investigate the test failure."
-```
 
+```text
 **Proactive example:**
 ```
+
 assistant: "Great! Now let me review the code quality."
 <commentary>
 Code was just written, proactively trigger review agent.
 </commentary>
-```
 
+```markdown
 ### Commentary
 
 **Purpose:** Explain the reasoning - WHY this agent should trigger
 
 **Good commentary:**
-```
+```typescript
 <commentary>
 User explicitly requested code review, trigger the code-reviewer agent.
 </commentary>
@@ -94,32 +96,32 @@ After code implementation, proactively use review agent to check quality.
 <commentary>
 PR analysis request matches pr-analyzer agent's expertise.
 </commentary>
-```
-
+```text
 **Include decision logic:**
 ```
+
 <commentary>
 User wrote tests (Test tool used). The test-analyzer agent should check
 test quality and coverage before continuing.
 </commentary>
-```
-
+```markdown
 ### Assistant Response (Triggering)
 
 **Purpose:** Show how Claude invokes the agent
 
 **Standard pattern:**
-```
-assistant: "I'll use the [agent-name] agent to [what it will do]."
-```
 
+```text
+assistant: "I'll use the [agent-name] agent to [what it will do]."
+```text
 **Examples:**
 ```
+
 assistant: "I'll use the code-reviewer agent to analyze the changes."
 assistant: "Let me use the test-generator agent to create comprehensive tests."
 assistant: "I'll use the security-analyzer agent to check for vulnerabilities."
-```
 
+```yaml
 ## Example Types
 
 ### Type 1: Explicit Request
@@ -135,8 +137,7 @@ assistant: "I'll use the security-analyzer agent to perform a thorough security 
 Direct security analysis request triggers the security-analyzer agent.
 </commentary>
 </example>
-```
-
+```yaml
 ### Type 2: Proactive Triggering
 
 Agent triggers after relevant work without explicit request:
@@ -152,8 +153,7 @@ for SQL injection and other database security issues.
 </commentary>
 assistant: "I'll use the security-analyzer agent to check the database code."
 </example>
-```
-
+```yaml
 ### Type 3: Implicit Request
 
 User implies need without stating it directly:
@@ -186,8 +186,7 @@ to ensure tests follow best practices.
 </commentary>
 assistant: "I'll use the test-quality-analyzer agent to review the tests."
 </example>
-```
-
+```yaml
 ## Multiple Examples Strategy
 
 ### Cover Different Phrasings
@@ -207,8 +206,7 @@ user: "Can you check my implementation?"
 user: "Look over these changes"
 [...]
 </example>
-```
-
+```yaml
 ### Cover Proactive and Reactive
 
 ```markdown
@@ -227,8 +225,7 @@ Code written, proactively review.
 </commentary>
 [...]
 </example>
-```
-
+```yaml
 ### Cover Edge Cases
 
 ```markdown
@@ -257,8 +254,7 @@ Large PR mentioned, use thorough analysis mode.
 user: "Review my code"
 assistant: "I'll use the code-reviewer agent."
 </example>
-```
-
+```yaml
 **Why bad:** No context about what led to this request.
 
 ### ✅ With Context
@@ -272,8 +268,7 @@ assistant: "I'll use the code-reviewer agent to analyze the auth implementation.
 Auth code written, review for security and best practices.
 </commentary>
 </example>
-```
-
+```yaml
 ### ❌ No Commentary
 
 ```markdown
@@ -282,8 +277,7 @@ Context: User requests review
 user: "Check my changes"
 assistant: "I'll use the reviewer agent."
 </example>
-```
-
+```yaml
 **Why bad:** Doesn't explain WHY agent triggers.
 
 ### ✅ With Commentary
@@ -306,8 +300,7 @@ Code review request triggers agent to check quality, security, and adherence to 
 user: "Review my code"
 assistant: "I found the following issues: [lists issues]"
 </example>
-```
-
+```yaml
 **Why bad:** Shows agent's output, not triggering.
 
 ### ✅ Shows Triggering
@@ -320,19 +313,20 @@ assistant: "I'll use the code-reviewer agent to perform the review."
 Review request triggers the agent.
 </commentary>
 </example>
-```
-
+```yaml
 ## How Many Examples?
 
 ### Minimum: 2 Examples
 
 Cover at least:
+
 1. Explicit request
 2. One variation or proactive trigger
 
 ### Recommended: 3-4 Examples
 
 Cover:
+
 1. Explicit request (direct ask)
 2. Implicit request (user implies need)
 3. Proactive trigger (after relevant work)
@@ -365,8 +359,7 @@ assistant: "I'll use the code-reviewer agent to perform a thorough review."
 Explicit review request triggers the agent.
 </commentary>
 </example>
-```
-
+```yaml
 ### Test Generation Agent
 
 ```markdown
@@ -411,8 +404,7 @@ assistant: "I'll use the api-docs-writer agent to generate clear documentation."
 Documentation request triggers the agent.
 </commentary>
 </example>
-```
-
+```yaml
 ### Validation Agent
 
 ```markdown
@@ -441,6 +433,7 @@ Explicit validation request triggers the agent.
 ### Agent Not Triggering
 
 **Check:**
+
 1. Examples include relevant keywords from user message
 2. Context matches actual usage scenarios
 3. Commentary explains triggering logic clearly
@@ -452,6 +445,7 @@ Add more examples covering different phrasings.
 ### Agent Triggers Too Often
 
 **Check:**
+
 1. Examples are too broad or generic
 2. Triggering conditions overlap with other agents
 3. Commentary doesn't distinguish when NOT to use
@@ -462,6 +456,7 @@ Make examples more specific, add negative examples.
 ### Agent Triggers in Wrong Scenarios
 
 **Check:**
+
 1. Examples don't match actual intended use
 2. Commentary suggests inappropriate triggering
 
@@ -471,6 +466,7 @@ Revise examples to show only correct triggering scenarios.
 ## Best Practices Summary
 
 ✅ **DO:**
+
 - Include 2-4 concrete, specific examples
 - Show both explicit and proactive triggering
 - Provide clear context for each example
@@ -479,6 +475,7 @@ Revise examples to show only correct triggering scenarios.
 - Show Claude using Agent tool
 
 ❌ **DON'T:**
+
 - Use generic, vague examples
 - Omit context or commentary
 - Show only one type of triggering

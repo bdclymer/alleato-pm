@@ -4,11 +4,8 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  ProjectPageHeader,
-  PageContainer,
-  FormContainer,
-} from "@/components/layout";
+import { PageContainer, FormContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
@@ -118,16 +115,9 @@ export default function NewContractPage() {
       }
 
       if (data.attachmentFiles && data.attachmentFiles.length > 0) {
-        console.log("Uploading attachments:", data.attachmentFiles.length);
         for (const file of data.attachmentFiles) {
           const formData = new FormData();
           formData.append("file", file);
-          console.log(
-            "Uploading attachment:",
-            file.name,
-            "to contract:",
-            newContract.id,
-          );
           const attachmentResponse = await fetch(
             `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
             {
@@ -140,9 +130,6 @@ export default function NewContractPage() {
             const errorData = await attachmentResponse.json().catch(() => ({}));
             console.error("Attachment upload failed:", errorData);
             throw new Error(errorData.error || "Failed to upload attachment");
-          } else {
-            const result = await attachmentResponse.json();
-            console.log("Attachment uploaded successfully:", result);
           }
         }
       }
@@ -170,7 +157,7 @@ export default function NewContractPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="New Prime Contract"
         breadcrumbs={[
           { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },

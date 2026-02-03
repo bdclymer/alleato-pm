@@ -32,7 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 
 interface BudgetPageHeaderProps {
   title?: string;
@@ -288,7 +288,7 @@ export function BudgetPageHeader({
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title={title}
         titleContent={titleContent}
         description={statusDescription}

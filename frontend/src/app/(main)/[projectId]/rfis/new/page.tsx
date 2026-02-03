@@ -4,7 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Save, Send } from "lucide-react";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { FormContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,7 +90,7 @@ export default function NewRfiPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="New RFI"
         description="Create a new Request for Information"
         actions={

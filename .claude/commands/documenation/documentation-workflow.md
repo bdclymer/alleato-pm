@@ -3,11 +3,13 @@
 ## Two-Command System for Documentation Quality
 
 ### 1. `/audit-docs` - Detection (Read-Only)
+
 **Purpose**: Identify issues without making changes
 **Safety**: 100% safe, never modifies files
 **Use**: Daily checks, PR validation, health monitoring
 
 ### 2. `/fix-docs` - Correction (Write)
+
 **Purpose**: Fix issues identified by audit
 **Safety**: Requires approval, creates backups
 **Use**: After review, during maintenance windows
@@ -15,11 +17,11 @@
 ## Quick Start Examples
 
 ### Simple Health Check
+
 ```bash
 # Just check documentation status
 /audit-docs ./PLANS/directory/
-```
-
+```markdown
 ### Fix Critical Issues Only
 ```bash
 # Audit first
@@ -28,14 +30,13 @@
 # Review the audit report
 # Then fix only critical issues
 /fix-docs audit.md --severity critical
-```
-
+```markdown
 ### Interactive Fix Session
+
 ```bash
 # Get interactive prompts for each fix
 /audit-docs ./PLANS/ | /fix-docs --interactive
-```
-
+```markdown
 ## Why Two Commands?
 
 Think of it like going to the doctor:
@@ -64,23 +65,23 @@ Think of it like going to the doctor:
 ```
 
 ### Before Code Review
+
 ```bash
 # Ensure docs are accurate
 /audit-docs ./feature-docs/
 
 # Fix any issues
 /fix-docs --interactive
-```
-
+```markdown
 ### Sprint Planning
 ```bash
 # Generate documentation debt report
 /audit-docs ./entire-project/ --format detailed > tech-debt.md
 
 # Plan fixes for sprint
-```
-
+```markdown
 ### Release Preparation
+
 ```bash
 # Must pass documentation gate
 /audit-docs ./docs --severity critical
@@ -90,11 +91,11 @@ Think of it like going to the doctor:
 
 # Verify fixes
 /audit-docs ./docs --severity critical
-```
-
+```markdown
 ## Decision Tree
 
 ```
+
 Start
   ↓
 Run /audit-docs
@@ -108,8 +109,8 @@ Issues found?
           Time available?
             ├─ Yes → /fix-docs --interactive
             └─ No → Schedule for later
-```
 
+```bash
 ## Safety Levels
 
 | Command | Options | Risk Level | Use Case |
@@ -136,9 +137,9 @@ else
   echo "Run: /fix-docs --severity critical"
   exit 1
 fi
-```
-
+```bash
 ### CI/CD Pipeline
+
 ```yaml
 # GitHub Actions
 - name: Documentation Audit
@@ -150,8 +151,7 @@ fi
       echo "Documentation issues found"
       exit 1
     fi
-```
-
+```bash
 ### VS Code Task
 ```json
 {
@@ -171,6 +171,7 @@ fi
 ## Best Practices
 
 ### ✅ DO
+
 - Run audits frequently (they're free!)
 - Review before fixing
 - Fix incrementally
@@ -178,6 +179,7 @@ fi
 - Use appropriate fix options
 
 ### ❌ DON'T
+
 - Don't fix without auditing first
 - Don't auto-fix production without review
 - Don't ignore audit warnings indefinitely
@@ -195,8 +197,7 @@ done
 
 # Generate trend report
 /audit-docs --trend week*.json > trend-report.md
-```
-
+```markdown
 ## Quick Reference Card
 
 ```bash

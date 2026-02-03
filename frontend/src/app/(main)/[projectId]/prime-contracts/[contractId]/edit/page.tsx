@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
-import { ProjectPageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -149,7 +149,7 @@ export default function EditContractPage() {
   if (loading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Edit Contract"
           breadcrumbs={[
             { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
@@ -224,7 +224,7 @@ export default function EditContractPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Edit Contract"
         breadcrumbs={[
           { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },

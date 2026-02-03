@@ -27,6 +27,7 @@ You are about to create documentation. Before proceeding, you MUST:
 
 **CRITICAL RULE:**
 Files like completion reports, summaries, cleanup reports, and plans go in:
+
 - `documentation/docs/development/completion-reports/` (for completion work)
 - `documentation/docs/plans/[category]/` (for implementation plans)
 

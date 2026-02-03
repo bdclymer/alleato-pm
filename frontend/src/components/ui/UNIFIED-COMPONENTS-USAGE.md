@@ -5,12 +5,15 @@ This guide documents the standardized modal and slideover components that ensure
 ## Core Components
 
 ### 1. UnifiedModal
+
 A consistent modal component with standardized overlay, animations, and sizing.
 
 ### 2. UnifiedSlideover
+
 A consistent slideover/drawer component for sidebars and detail panels.
 
 ### 3. ProjectChecklistSidebar
+
 An example implementation using the UnifiedSlideover for the project homepage.
 
 ## UnifiedModal Usage
@@ -52,8 +55,7 @@ export function BasicModalExample() {
     </Modal>
   )
 }
-```
-
+```tsx
 ### Controlled Modal with Different Sizes
 
 ```tsx
@@ -85,16 +87,14 @@ export function ControlledModalExample() {
     </>
   )
 }
-```
-
+```typescript
 ### Modal without Close Button
 
 ```tsx
 <ModalContent hideCloseButton>
   {/* Content */}
 </ModalContent>
-```
-
+```typescript
 ## UnifiedSlideover Usage
 
 ### Basic Slideover Example
@@ -175,8 +175,7 @@ export function SlideoverVariationsExample() {
     </>
   )
 }
-```
-
+```typescript
 ## ProjectChecklistSidebar Usage
 
 ### Basic Implementation
@@ -197,8 +196,7 @@ export function ProjectHomePage({ projectId }: { projectId: string }) {
     </div>
   )
 }
-```
-
+```html
 ### Custom Trigger Position
 
 ```tsx
@@ -207,8 +205,7 @@ export function ProjectHomePage({ projectId }: { projectId: string }) {
   projectName="My Project"
   triggerClassName="top-32 right-8" // Override default position
 />
-```
-
+```typescript
 ## Migration Guide
 
 ### Migrating from Dialog to UnifiedModal
@@ -225,6 +222,7 @@ import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
 ```
 
 **After:**
+
 ```tsx
 import { Modal, ModalContent, ModalHeader } from "@/components/ui/unified-modal"
 
@@ -233,8 +231,7 @@ import { Modal, ModalContent, ModalHeader } from "@/components/ui/unified-modal"
     {/* Content */}
   </ModalContent>
 </Modal>
-```
-
+```typescript
 ### Migrating from Sheet to UnifiedSlideover
 
 **Before:**
@@ -246,9 +243,9 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
     {/* Content */}
   </SheetContent>
 </Sheet>
-```
-
+```typescript
 **After:**
+
 ```tsx
 import { Slideover, SlideoverContent } from "@/components/ui/unified-slideover"
 
@@ -257,8 +254,7 @@ import { Slideover, SlideoverContent } from "@/components/ui/unified-slideover"
     {/* Content */}
   </SlideoverContent>
 </Slideover>
-```
-
+```typescript
 ## Component Props Reference
 
 ### UnifiedModal Props

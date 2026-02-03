@@ -54,8 +54,7 @@ function MyComponent() {
     />
   )
 }
-```
-
+```yaml
 ## Props
 
 | Prop | Type | Required | Description |
@@ -109,8 +108,7 @@ Update the gradient classes in the `nextSteps` array:
   // Change this gradient:
   color: 'from-blue-500 to-cyan-500'
 }
-```
-
+```yaml
 ### Adding/Removing Steps
 
 Modify the `nextSteps` array to add or remove timeline items:
@@ -126,8 +124,7 @@ const nextSteps = [
   },
   // ... more steps
 ]
-```
-
+```yaml
 ### Adjusting Animation Timing
 
 Modify the delay values in the motion components:
@@ -163,6 +160,7 @@ Modify the delay values in the motion components:
 ### Why Not Generic Confetti?
 
 Generic confetti animations have become a cliché in SaaS applications. This design:
+
 - **Contextual**: Uses construction/blueprint metaphors relevant to the domain
 - **Professional**: Maintains a sophisticated tone while still being celebratory
 - **Memorable**: The blueprint aesthetic is distinctive and ties to the product
@@ -188,6 +186,7 @@ Generic confetti animations have become a cliché in SaaS applications. This des
 - Safari 14+
 
 Requires support for:
+
 - CSS Grid
 - CSS Gradients
 - Backdrop blur (graceful degradation if unsupported)
@@ -202,6 +201,7 @@ Requires support for:
 ## Future Enhancements
 
 Potential additions:
+
 - Progress indicators showing which steps have been completed
 - Ability to mark steps as "skip" or "done"
 - Confetti particle system using canvas (if celebration needs more punch)

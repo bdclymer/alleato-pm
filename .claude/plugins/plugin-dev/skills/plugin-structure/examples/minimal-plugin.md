@@ -4,14 +4,13 @@ A bare-bones plugin with a single command.
 
 ## Directory Structure
 
-```
+```text
 hello-world/
 ├── .claude-plugin/
 │   └── plugin.json
 └── commands/
     └── hello.md
-```
-
+```yaml
 ## File Contents
 
 ### .claude-plugin/plugin.json
@@ -20,8 +19,7 @@ hello-world/
 {
   "name": "hello-world"
 }
-```
-
+```yaml
 ### commands/hello.md
 
 ```markdown
@@ -49,7 +47,7 @@ Include the current timestamp in the greeting to show the command executed succe
 
 After installing the plugin:
 
-```
+```bash
 $ claude
 > /hello
 Hello! This is a simple command from the hello-world plugin.

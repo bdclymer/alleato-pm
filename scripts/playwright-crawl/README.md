@@ -50,7 +50,7 @@ Only **after** these are understood do we consider:
 
 ## High-Level Architecture
 
-```
+```text
 Procore UI
     ↓
 Playwright Crawler (Observation Only)
@@ -64,8 +64,7 @@ Spec Generation (Commands, Schema, Mutations, Forms)
 Human + AI Analysis
     ↓
 Rebuild with Confidence
-```
-
+```diff
 ---
 
 ## Key Conceptual Distinctions (CRITICAL)
@@ -115,7 +114,7 @@ Skipping or blending these steps introduces errors.
 
 ## Repository Structure
 
-```
+```text
 /scripts/playwright-crawl/
 ├── scripts/
 │   ├── crawl-procore-module.js         # Generic Playwright crawler
@@ -273,8 +272,7 @@ PROCORE_MODULE=<module-name> node scripts/generate-procore-module-spec.js
 # 7. Review specs
 # 8. Define mutation behavior
 # 9. Only then: implement
-```
-
+```typescript
 Skipping steps increases rework and error risk.
 
 ---

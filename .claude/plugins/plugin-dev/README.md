@@ -23,6 +23,7 @@ Each skill follows best practices with progressive disclosure: lean core documen
 A comprehensive, end-to-end workflow command for creating plugins from scratch, similar to the feature-dev workflow.
 
 **8-Phase Process:**
+
 1. **Discovery** - Understand plugin purpose and requirements
 2. **Component Planning** - Determine needed skills, commands, agents, hooks, MCP
 3. **Detailed Design** - Specify each component and resolve ambiguities
@@ -33,6 +34,7 @@ A comprehensive, end-to-end workflow command for creating plugins from scratch, 
 8. **Documentation** - Finalize README and prepare for distribution
 
 **Features:**
+
 - Asks clarifying questions at each phase
 - Loads relevant skills automatically
 - Uses agent-creator for AI-assisted agent generation
@@ -41,14 +43,14 @@ A comprehensive, end-to-end workflow command for creating plugins from scratch, 
 - Guides through testing and verification
 
 **Usage:**
+
 ```bash
 /plugin-dev:create-plugin [optional description]
 
 # Examples:
 /plugin-dev:create-plugin
 /plugin-dev:create-plugin A plugin for managing database migrations
-```
-
+```typescript
 Use this workflow for structured, high-quality plugin development from concept to completion.
 
 ## Skills
@@ -199,14 +201,12 @@ Install from claude-code-marketplace:
 
 ```bash
 /plugin install plugin-dev@claude-code-marketplace
-```
-
+```text
 Or for development, use directly:
 
 ```bash
 cc --plugin-dir /path/to/plugin-dev
-```
-
+```markdown
 ## Quick Start
 
 ### Creating Your First Plugin
@@ -229,6 +229,7 @@ cc --plugin-dir /path/to/plugin-dev
 The plugin-dev toolkit supports your entire plugin development lifecycle:
 
 ```
+
 ┌─────────────────────┐
 │  Design Structure   │  → plugin-structure skill
 │  (manifest, layout) │
@@ -255,8 +256,8 @@ The plugin-dev toolkit supports your entire plugin development lifecycle:
 │                     │     validate-hook-schema.sh
 └──────────┬──────────┘     test-hook.sh
            │                 hook-linter.sh
-```
 
+```markdown
 ## Features
 
 ### Progressive Disclosure
@@ -281,11 +282,11 @@ The hook-development skill includes production-ready utilities:
 
 # Lint hook scripts for best practices
 ./hook-linter.sh my-hook.sh
-```
-
+```markdown
 ### Working Examples
 
 Every skill provides working examples:
+
 - **Hook Development**: 3 complete hook scripts (bash, write validation, context loading)
 - **MCP Integration**: 3 server configurations (stdio, SSE, HTTP)
 - **Plugin Structure**: 3 plugin layouts (minimal, standard, advanced)
@@ -295,6 +296,7 @@ Every skill provides working examples:
 ## Documentation Standards
 
 All skills follow consistent standards:
+
 - Third-person descriptions ("This skill should be used when...")
 - Strong trigger phrases for reliable loading
 - Imperative/infinitive form throughout
@@ -312,7 +314,7 @@ All skills follow consistent standards:
 
 ### Building a Database Plugin
 
-```
+```text
 1. "What's the structure for a plugin with MCP integration?"
    → plugin-structure skill provides layout
 
@@ -326,7 +328,7 @@ All skills follow consistent standards:
 
 ### Creating a Validation Plugin
 
-```
+```text
 1. "Create hooks that validate all file writes for security"
    → hook-development skill with examples
 
@@ -336,11 +338,10 @@ All skills follow consistent standards:
 3. "Organize my hooks and configuration files"
    → plugin-structure skill shows best practices
 
-```
-
+```markdown
 ### Integrating External Services
 
-```
+```text
 1. "Add Asana MCP server with OAuth"
    → mcp-integration skill covers SSE servers
 
@@ -356,22 +357,26 @@ All skills follow consistent standards:
 All skills emphasize:
 
 ✅ **Security First**
+
 - Input validation in hooks
 - HTTPS/WSS for MCP servers
 - Environment variables for credentials
 - Principle of least privilege
 
 ✅ **Portability**
+
 - Use ${CLAUDE_PLUGIN_ROOT} everywhere
 - Relative paths only
 - Environment variable substitution
 
 ✅ **Testing**
+
 - Validate configurations before deployment
 - Test hooks with sample inputs
 - Use debug mode (`claude --debug`)
 
 ✅ **Documentation**
+
 - Clear README files
 - Documented environment variables
 - Usage examples
@@ -391,7 +396,7 @@ This plugin is part of the claude-code-marketplace. To contribute improvements:
 
 ## Author
 
-Daisy Hollman (daisy@anthropic.com)
+Daisy Hollman (<daisy@anthropic.com>)
 
 ## License
 

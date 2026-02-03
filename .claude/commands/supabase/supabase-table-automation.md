@@ -7,12 +7,14 @@ Create an automated CLI tool to generate standardized Supabase table pages, elim
 ## Current State Analysis
 
 ### ✅ Working Pages (Connected to Supabase):
+
 1. **meetings** - Uses new MeetingsDataTable pattern (document_metadata table)
 2. **meetings2** - Server-side version
 3. **employees** - Uses new EmployeesDataTable pattern
 4. **tasks** - Uses older GenericEditableTable (ai_tasks table - **EMPTY**)
 
 ### ❌ Mock Data Pages (NOT Connected to Supabase):
+
 1. **drawings** - Mock data, not using Supabase
 2. **punch-list** - Unknown implementation
 3. **photos** - Unknown implementation
@@ -23,6 +25,7 @@ Create an automated CLI tool to generate standardized Supabase table pages, elim
 8. **documents** - Likely mock or different implementation
 
 ### 📊 Supabase Tables with Data:
+
 - **tasks** (75 rows) ✓
 - **risks** (34 rows) ✓
 - **decisions** (31 rows) ✓
@@ -33,11 +36,14 @@ Create an automated CLI tool to generate standardized Supabase table pages, elim
 - **document_metadata** (~100 rows for meetings) ✓ - **DONE**
 
 ### 🔄 Empty Tables:
+
 - commitments (0 rows)
 - ai_tasks (0 rows)
 
 ### 📋 Tables Needing Pages Created:
+
 Priority order based on data availability:
+
 1. **documents** (1,721 rows) - HIGH PRIORITY
 2. **contacts** (299 rows) - HIGH PRIORITY
 3. **risks** (34 rows)
@@ -47,6 +53,7 @@ Priority order based on data availability:
 ## Problem Statement
 
 Creating each Supabase table page manually requires:
+
 - 30-45 minutes per table
 - 7 repetitive steps
 - High risk of inconsistency
@@ -57,21 +64,27 @@ With 5+ tables to connect, this represents 2.5-4 hours of repetitive work.
 ## Proposed Solution: CLI Code Generator
 
 ### Option A: Node.js CLI Tool (RECOMMENDED)
+
 **Pros:**
+
 - Already in the tech stack (TypeScript/JavaScript)
 - Can import and validate against actual Supabase types
 - Easy to integrate with existing frontend tooling
 - Can run as npm script
 
 **Cons:**
+
 - Need to create new CLI tool
 
 ### Option B: Python Script
+
 **Pros:**
+
 - Direct Supabase access already configured
 - Can introspect database schema
 
 **Cons:**
+
 - Another language in the workflow
 - Can't validate against TypeScript types
 
@@ -80,7 +93,8 @@ With 5+ tables to connect, this represents 2.5-4 hours of repetitive work.
 ## Architecture Design
 
 ### Tool Structure
-```
+
+```text
 scripts/generators/
 ├── generate-table-page.ts          # Main CLI script
 ├── templates/
@@ -93,8 +107,7 @@ scripts/generators/
     ├── supabase-inspector.ts       # Introspect table schema
     ├── type-mapper.ts              # Map SQL types to TS/React components
     └── file-generator.ts           # Generate files from templates
-```
-
+```sql
 ### Configuration Schema
 
 ```json
@@ -113,8 +126,7 @@ scripts/generators/
   "statusField": "status",
   "dateField": "created_at"
 }
-```
-
+```sql
 ### Component Templates
 
 All templates will follow the **new standardized pattern** seen in:
@@ -162,7 +174,7 @@ npm run generate:tables -- --config=scripts/generators/config/batch-config.json
 
 ### Automation Workflow
 
-```
+```text
 1. User runs: npm run generate:table
 2. CLI prompts for:
    - Table name (from Supabase)
@@ -187,6 +199,7 @@ npm run generate:tables -- --config=scripts/generators/config/batch-config.json
 ## Implementation Plan
 
 ### Phase 1: Core Generator (Day 1 - 4 hours)
+
 1. **Setup** (30 min)
    - Create `scripts/generators/` structure
    - Install handlebars, inquirer, chalk
@@ -210,23 +223,25 @@ npm run generate:tables -- --config=scripts/generators/config/batch-config.json
    - Add dry-run mode
 
 ### Phase 2: Batch Generation (Day 1 - 2 hours)
-5. **Generate Priority Tables** (2 hours)
+
+1. **Generate Priority Tables** (2 hours)
    - Create configs for: documents, contacts, risks, decisions, opportunities
    - Run generator for each
    - Test each generated page
    - Fix template issues
 
 ### Phase 3: Integration & Documentation (Day 2 - 2 hours)
-6. **Navigation Updates** (30 min)
+
+1. **Navigation Updates** (30 min)
    - Auto-update site-header.tsx
    - Handle both core tools and project management tools
 
-7. **Testing Suite** (30 min)
+2. **Testing Suite** (30 min)
    - Run all E2E tests
    - Fix failing tests
    - Update Playwright config
 
-8. **Documentation** (1 hour)
+3. **Documentation** (1 hour)
    - Update CREATING_SUPABASE_TABLE_PAGES.md
    - Add generator usage guide
    - Document customization options
@@ -234,19 +249,25 @@ npm run generate:tables -- --config=scripts/generators/config/batch-config.json
 ## Risk Mitigation
 
 ### Risk 1: Templates Don't Fit All Tables
+
 **Mitigation:**
+
 - Start with 80% use case (standard CRUD tables)
 - Support template overrides
 - Allow post-generation customization
 
 ### Risk 2: Type Generation Fails
+
 **Mitigation:**
+
 - Fallback to manual type definitions
 - Validate types before generation
 - Clear error messages
 
 ### Risk 3: Generated Code Breaks
+
 **Mitigation:**
+
 - Run E2E tests as part of generation
 - Git diff before committing
 - Dry-run mode to preview changes
@@ -254,16 +275,19 @@ npm run generate:tables -- --config=scripts/generators/config/batch-config.json
 ## Success Criteria
 
 ✅ **Functional**:
+
 - Generate working page in <2 minutes vs 30-45 minutes manual
 - All generated pages pass E2E tests
 - All 5 priority tables connected
 
 ✅ **Quality**:
+
 - Generated code matches manual code quality
 - Consistent UI/UX across all pages
 - Type-safe throughout
 
 ✅ **Maintainable**:
+
 - Easy to customize templates
 - Clear documentation
 - Reusable for future tables
@@ -314,6 +338,7 @@ Before proceeding with implementation, need clarification on:
 ## Recommendation
 
 **Start with Generator + 2 Priority Tables** (6-8 hours):
+
 1. Build the CLI generator (4 hours)
 2. Generate documents table (1 hour)
 3. Generate contacts table (1 hour)

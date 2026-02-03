@@ -109,7 +109,7 @@ Convert behaviors into matchable patterns:
 
 Return your findings as structured text in this format:
 
-```
+```markdown
 ## Hookify Analysis Results
 
 ### Issue 1: Dangerous rm Commands

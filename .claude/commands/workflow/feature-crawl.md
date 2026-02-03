@@ -11,8 +11,7 @@ Streamlined workflow for capturing comprehensive screenshots and analysis of Pro
 
 ```bash
 /feature-crawl <feature-name> <app-url> [support-url] [project-id]
-```
-
+```markdown
 ### Examples
 
 ```bash
@@ -27,8 +26,7 @@ Streamlined workflow for capturing comprehensive screenshots and analysis of Pro
 
 # Crawl Punch List with custom project
 /feature-crawl punch-list https://us02.procore.com/123456789/project/punch_list https://support.procore.com/products/online/user-guide/project-level/punch-list 123456789
-```
-
+```typescript
 ## What It Does
 
 The feature crawler automates the complete workflow:
@@ -75,16 +73,17 @@ You are a feature crawling specialist. Your mission is to comprehensively captur
 ### Step 1: Parse User Input
 
 Extract from the user's command:
+
 - **Feature Name**: Sanitized name for directories (e.g., "submittals", "change-orders")
 - **App URL**: Full Procore application URL to begin crawling
-- **Support URL** (optional): Procore support documentation URL (e.g., https://support.procore.com/...)
+- **Support URL** (optional): Procore support documentation URL (e.g., <https://support.procore.com/>...)
 - **Project ID**: Extract from URL or use provided value (default: 562949954728542)
 
 ### Step 2: Create Directory Structure
 
 Set up organized output directories:
 
-```
+```typescript
 docs/project-mgmt/<feature-name>/
 ├── crawl-<feature-name>/
 │   ├── README.md
@@ -108,14 +107,14 @@ Create a specialized app crawler script at:
 Base it on the proven pattern from `crawl-direct-costs-comprehensive.js`:
 
 **Key Configuration:**
+
 ```javascript
 const OUTPUT_DIR = "./docs/project-mgmt/<feature-name>/procore-crawl-output";
 const START_URL = "<provided-app-url>";
 const PROCORE_EMAIL = "bclymer@alleatogroup.com";
 const PROCORE_PASSWORD = "[from auth.json or .env]";
 const maxPages = 50; // Safety limit
-```
-
+```diff
 **Include:**
 - Login automation
 - Page navigation and waiting
@@ -138,9 +137,9 @@ const OUTPUT_DIR = "./documentation/*project-mgmt/active/<feature-name>/procore-
 const START_URL = "<provided-support-url>";
 const WAIT_TIME = 2000;
 const maxPages = 100; // Comprehensive documentation crawl
-```
-
+```diff
 **Include:**
+
 - No authentication needed (public docs)
 - Article navigation and link extraction
 - Expandable section handling (`captureExpandables()`)
@@ -164,11 +163,11 @@ const maxPages = 100; // Comprehensive documentation crawl
 Run the generated scripts in sequence:
 
 **App Crawler:**
+
 ```bash
 cd scripts/screenshot-capture
 node scripts/crawl-<feature-name>-comprehensive.js
-```
-
+```text
 **Documentation Crawler (if support URL provided):**
 ```bash
 cd scripts/screenshot-capture
@@ -182,6 +181,7 @@ Monitor progress and handle any errors gracefully. The app crawler will authenti
 Create `<FEATURE>-CRAWL-STATUS.md` with:
 
 **Template Structure:**
+
 ```markdown
 # Procore <Feature Name> Crawl - Status Report
 
@@ -260,8 +260,7 @@ CREATE TABLE <feature> (
   project_id BIGINT,
   -- key fields observed in forms and tables
 );
-```
-
+```typescript
 ### API Endpoints Needed
 - List endpoints
 - CRUD operations
@@ -301,11 +300,11 @@ CREATE TABLE <feature> (
 3. Design API endpoints from observed interactions
 4. Build frontend components matching captured UI
 5. Implement business logic from documentation
-```
-
+```bash
 ### Step 6: Generate README
 
 Create `README.md` in the crawl directory with:
+
 - Purpose and overview
 - How to run the crawler
 - Output structure
@@ -315,6 +314,7 @@ Create `README.md` in the crawl directory with:
 ### Step 7: Summary Report
 
 Provide the user with:
+
 - ✅ Crawl completion status
 - 📊 Statistics (pages captured, links found, components identified)
 - 📁 Output location
@@ -332,11 +332,13 @@ Provide the user with:
 ## Output Files Generated
 
 For each captured page:
+
 - `screenshot.png` - Full-page screenshot (~1MB)
 - `dom.html` - Complete DOM snapshot (~500KB)
 - `metadata.json` - Extracted data and analysis (~40KB)
 
 Reports:
+
 - `sitemap-table.md` - Visual sitemap with links to screenshots
 - `detailed-report.json` - Complete metadata for all pages
 - `link-graph.json` - Link relationships and navigation map
@@ -344,6 +346,7 @@ Reports:
 ## Integration with Implementation
 
 The crawler output directly feeds into:
+
 1. **Database Design**: Schema extracted from tables and forms
 2. **API Planning**: Endpoints identified from interactions
 3. **Frontend Development**: Components and layouts documented
@@ -354,20 +357,24 @@ The crawler output directly feeds into:
 If the crawler encounters issues:
 
 **Authentication Fails:**
+
 - Check credentials in `scripts/screenshot-capture/auth.json`
 - Re-run authentication: `cd scripts/screenshot-capture && npm run auth`
 
 **Pages Timeout:**
+
 - Increase WAIT_TIME in generated script
 - Check internet connection
 - Verify Procore service availability
 
 **Too Few/Many Pages:**
+
 - Adjust maxPages limit
 - Review URL filtering in extractLinks()
 - Check if authentication succeeded
 
 **Missing Features:**
+
 - Manually capture complex interactions
 - Add specific URL patterns to queue
 - Modify extraction logic for custom elements
@@ -395,8 +402,7 @@ If the crawler encounters issues:
 4. Creates: SUBMITTALS-CRAWL-STATUS.md with app analysis
 5. Creates: README.md with instructions
 6. Reports: "App Crawl: 47 pages, 312 links, 89 clickables"
-```
-
+```markdown
 ### Example 2: App + Documentation
 
 ```bash
@@ -419,6 +425,7 @@ If the crawler encounters issues:
 ## Success Criteria
 
 A successful crawl includes:
+
 - ✅ All main feature views captured
 - ✅ Detail pages for sample items
 - ✅ Dropdowns and menus documented

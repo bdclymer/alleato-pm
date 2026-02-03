@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -189,7 +189,7 @@ export default function DirectoryCompaniesPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -213,7 +213,7 @@ export default function DirectoryCompaniesPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Company Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

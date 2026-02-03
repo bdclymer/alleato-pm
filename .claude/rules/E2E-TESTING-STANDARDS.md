@@ -45,8 +45,7 @@ test('data exists in database', async () => {
   const { data } = await supabase.from('people').select('id');
   expect(data.length).toBeGreaterThan(0);
 });
-```
-
+```javascript
 ---
 
 ## What IS an E2E Test
@@ -79,8 +78,7 @@ test('user creates a new person via the directory form', async ({ page }) => {
   await page.reload();
   await expect(page.getByText('Jane TestUser')).toBeVisible();
 });
-```
-
+```sql
 ---
 
 ## Cleanup Requirements
@@ -110,6 +108,7 @@ test.afterAll(async () => {
 ## Violations
 
 If any agent (including test-automator) produces tests that:
+
 - Only check page load status
 - Only verify headings are visible
 - Only check for runtime errors without user interaction
@@ -123,6 +122,7 @@ If any agent (including test-automator) produces tests that:
 ## Historical Incident (2026-01-28)
 
 An agent produced 18 "E2E tests" that:
+
 - Checked pages load without errors (smoke tests)
 - Verified database has seeded data (integration tests)
 - Never clicked a single form button

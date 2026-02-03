@@ -4,7 +4,7 @@ This is the exact system prompt used by Claude Code's agent generation feature, 
 
 ## The Prompt
 
-```
+```yaml
 You are an elite AI agent architect specializing in crafting high-performance agent configurations. Your expertise lies in translating user requirements into precisely-tuned agent specifications that maximize effectiveness and reliability.
 
 **Important Context**: You may have access to project-specific instructions from CLAUDE.md files and other context that may include coding standards, project structure, and custom requirements. Consider this context when creating agents to ensure they align with the project's established patterns and practices.
@@ -68,8 +68,7 @@ Key principles for your system prompts:
 - Build in quality assurance and self-correction mechanisms
 
 Remember: The agents you create should be autonomous experts capable of handling their designated tasks with minimal additional guidance. Your system prompts are their complete operational manual.
-```
-
+```yaml
 ## Usage Pattern
 
 Use this prompt to generate agent configurations:
@@ -86,8 +85,7 @@ Create an agent configuration based on this request: "I need an agent that revie
   "whenToUse": "Use this agent when the user asks to review a pull request, check code quality, or analyze PR changes. Examples:\n\n<example>\nContext: User has created a PR and wants quality review\nuser: \"Can you review PR #123 for code quality?\"\nassistant: \"I'll use the pr-quality-reviewer agent to analyze the PR.\"\n<commentary>\nPR review request triggers the pr-quality-reviewer agent.\n</commentary>\n</example>",
   "systemPrompt": "You are an expert code quality reviewer...\n\n**Your Core Responsibilities:**\n1. Analyze code changes for quality issues\n2. Check adherence to best practices\n..."
 }
-```
-
+```yaml
 ## Converting to Agent File
 
 Take the JSON output and create the agent markdown file:
@@ -126,15 +124,16 @@ You are an expert code quality reviewer...
 The base prompt is excellent but can be enhanced for specific needs:
 
 **For security-focused agents:**
-```
+
+```diff
 Add after "Architect Comprehensive Instructions":
 - Include OWASP top 10 security considerations
 - Check for common vulnerabilities (injection, XSS, etc.)
 - Validate input sanitization
-```
-
+```diff
 **For test-generation agents:**
-```
+
+```diff
 Add after "Optimize for Performance":
 - Follow AAA pattern (Arrange, Act, Assert)
 - Include edge cases and error scenarios
@@ -142,18 +141,19 @@ Add after "Optimize for Performance":
 ```
 
 **For documentation agents:**
-```
+
+```diff
 Add after "Design Expert Persona":
 - Use clear, concise language
 - Include code examples
 - Follow project documentation standards from CLAUDE.md
-```
-
+```yaml
 ## Best Practices from Internal Implementation
 
 ### 1. Consider Project Context
 
 The prompt specifically mentions using CLAUDE.md context:
+
 - Agent should align with project patterns
 - Follow project-specific coding standards
 - Respect established practices
@@ -161,7 +161,8 @@ The prompt specifically mentions using CLAUDE.md context:
 ### 2. Proactive Agent Design
 
 Include examples showing proactive usage:
-```
+
+```yaml
 <example>
 Context: After writing code, agent should review proactively
 user: "Please write a function..."
@@ -176,15 +177,16 @@ assistant: "Now let me review this code with the code-reviewer agent"
 ### 3. Scope Assumptions
 
 For code review agents, assume "recently written code" not entire codebase:
-```
+
+```bash
 For agents that review code, assume recent changes unless explicitly
 stated otherwise.
-```
-
+```markdown
 ### 4. Output Structure
 
 Always define clear output format in system prompt:
-```
+
+```text
 **Output Format:**
 Provide results as:
 1. Summary (2-3 sentences)

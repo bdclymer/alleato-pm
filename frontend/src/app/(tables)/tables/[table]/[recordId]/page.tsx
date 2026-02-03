@@ -16,7 +16,7 @@ import {
 } from "@/lib/table-registry";
 import { RowDetailClient } from "./RowDetailClient";
 import { FormLayout } from "@/components/layouts";
-import { PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 interface RowDetailPageProps {
   params: Promise<{ table: string; recordId: string }>;
   searchParams: Promise<{ edit?: string }>;

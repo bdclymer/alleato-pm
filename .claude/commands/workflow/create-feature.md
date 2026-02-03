@@ -11,11 +11,11 @@ You DO NOT skip validation -- if a gate fails, you STOP and fix it before contin
 
 ## Arguments
 
-```
+```bash
 $ARGUMENTS
-```
-
+```typescript
 Parse:
+
 - **EntityName** (required): PascalCase name, e.g., `ChangeOrder`, `DrawingArea`, `BudgetModification`
 - **--fields** (optional): Comma-separated field definitions. Format: `fieldName:sqlType[:nullable]`
   - Examples: `amount:numeric`, `due_date:date:nullable`, `status:text`, `assignee_id:uuid:nullable`
@@ -31,6 +31,7 @@ Parse:
 Read ALL of these files using the Read tool (in parallel):
 
 **Reference docs (how to do things right):**
+
 1. **`.claude/FK-TYPES-REFERENCE.md`** -- FK type lookup (which PKs are INTEGER vs UUID)
 2. **`.claude/rules/CRITICAL-NEXTJS-ROUTING-RULES.md`** -- Route naming rules (prevent `[id]` conflicts)
 3. **`.claude/rules/SUPABASE-GATE.md`** -- Database type safety requirements
@@ -46,18 +47,21 @@ Read ALL of these files using the Read tool (in parallel):
 After reading, internalize these facts before writing ANY code:
 
 **Database:**
+
 - `projects.id` is `number` (INTEGER) -- project_id FK must be INTEGER
 - `people.id` is `string` (UUID)
 - `companies.id` is `string` (UUID)
 - `auth.users.id` is `string` (UUID) -- created_by/updated_by are UUID
 
 **API Routes:**
+
 - Route params: `[projectId]`, `[companyId]`, `[contractId]` -- NEVER `[id]`
 - Params are async in Next.js 15: `const { projectId } = await params`
 - Server Supabase client: `await createClient()` (with await)
 - Browser Supabase client: `createClient()` (no await)
 
 **Known Failure Patterns (from pattern docs -- these have caused real incidents):**
+
 - FK type mismatch INTEGER vs UUID (`database-issues.md`) -- Gate 1d catches this
 - CHECK constraint case sensitivity (`database-issues.md`) -- use exact case from migration
 - Table renamed but old name in code (`database-issues.md`) -- always use database.types.ts names
@@ -85,6 +89,7 @@ From EntityName (e.g., `DrawingArea`):
 | `entity-kebab` | kebab-case plural | `drawing-areas` |
 
 Pluralization rules:
+
 - Default: add "s"
 - Ends in "y" (not vowel+y): replace "y" with "ies" (Category -> Categories)
 - Ends in "s","x","z","ch","sh": add "es"
@@ -95,10 +100,10 @@ Pluralization rules:
 ## GATE 1: Verify Database State (BLOCKING)
 
 ### 1a. Generate fresh types
+
 ```bash
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
-```
-
+```markdown
 ### 1b. Read the types file
 Read `frontend/src/types/database.types.ts` using the Read tool.
 
@@ -158,6 +163,7 @@ For the migration, replace the "Core fields" section with the user's fields:
 ```
 
 Map field types:
+
 | Arg Type | SQL Type | TS Type |
 |----------|----------|---------|
 | `text` | `TEXT` | `string` |
@@ -172,6 +178,7 @@ Map field types:
 For the service DTOs, form schema, and page table, add the custom fields too.
 
 For the Zod form schema, map to Zod validators:
+
 | Arg Type | Zod Validator |
 |----------|---------------|
 | `text` | `z.string().min(1, "Required")` |
@@ -182,7 +189,9 @@ For the Zod form schema, map to Zod validators:
 | `uuid` | `z.string().uuid().optional()` |
 
 ### 3c. ALWAYS keep these standard fields in migration
+
 Never remove from the template:
+
 - `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`
 - `project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE`
 - `created_at`, `updated_at`, `created_by`, `updated_by`
@@ -215,6 +224,7 @@ For the API route split: The template has two sections. First (GET+POST) goes to
 Use `mcp__supabase__apply_migration` or `mcp__supabase__execute_sql`.
 
 If it fails:
+
 1. Read the error
 2. Fix the SQL
 3. Rewrite the migration file
@@ -227,8 +237,7 @@ If it fails:
 
 ```bash
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
-```
-
+```diff
 ---
 
 ## GATE 2: Post-Generation Validation (BLOCKING)
@@ -245,14 +254,14 @@ Read `frontend/src/types/database.types.ts` and confirm:
 ### 2b. Route Conflict Check
 ```bash
 bash scripts/check-route-conflicts.sh
-```
+```typescript
 **If it fails: FIX immediately. Do not continue.**
 
 ### 2c. TypeScript Compilation
+
 ```bash
 cd /Users/meganharrison/Documents/github/alleato-pm/frontend && npx tsc --noEmit 2>&1 | head -80
-```
-
+```typescript
 **If there are type errors in the generated files:**
 1. Read the error messages
 2. Fix each error
@@ -278,6 +287,7 @@ If page files were written (not `--skip-page`), clear the cache to prevent stale
 ```bash
 rm -rf /Users/meganharrison/Documents/github/alleato-pm/frontend/.next
 ```
+
 This is from Prevention Checklist Gate #1 -- stale cache has wasted 90+ minutes across 3 incidents.
 
 ---
@@ -285,6 +295,7 @@ This is from Prevention Checklist Gate #1 -- stale cache has wasted 90+ minutes 
 ## STEP 7: Add to Navigation (unless --skip-page)
 
 Read `frontend/src/lib/menu-list.ts` and add the new entity to the project menu:
+
 - Find the existing menu items array
 - Add a new entry following the existing pattern
 - Use the kebab-case path: `/{entity-kebab}`
@@ -294,7 +305,7 @@ Read `frontend/src/lib/menu-list.ts` and add the new entity to the project menu:
 
 ## STEP 8: Report Results
 
-```
+```markdown
 ## Feature Created: {ENTITY}
 
 ### Files Created

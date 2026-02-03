@@ -13,6 +13,7 @@ The Agent SDK Development Plugin streamlines the entire lifecycle of building Ag
 Interactive command that guides you through creating a new Claude Agent SDK application.
 
 **What it does:**
+
 - Asks clarifying questions about your project (language, name, agent type, starting point)
 - Checks for and installs the latest SDK version
 - Creates all necessary project files and configuration
@@ -22,16 +23,16 @@ Interactive command that guides you through creating a new Claude Agent SDK appl
 - Automatically verifies the setup using the appropriate verifier agent
 
 **Usage:**
+
 ```bash
 /new-sdk-app my-project-name
-```
-
+```bash
 Or simply:
 ```bash
 /new-sdk-app
-```
-
+```diff
 The command will interactively ask you:
+
 1. Language choice (TypeScript or Python)
 2. Project name (if not provided)
 3. Agent type (coding, business, custom)
@@ -39,14 +40,14 @@ The command will interactively ask you:
 5. Tooling preferences (npm/yarn/pnpm or pip/poetry)
 
 **Example:**
+
 ```bash
 /new-sdk-app customer-support-agent
 # → Creates a new Agent SDK project for a customer support agent
 # → Sets up TypeScript or Python environment
 # → Installs latest SDK version
 # → Verifies the setup automatically
-```
-
+```markdown
 ### Agent: `agent-sdk-verifier-py`
 
 Thoroughly verifies Python Agent SDK applications for correct setup and best practices.
@@ -68,10 +69,11 @@ Thoroughly verifies Python Agent SDK applications for correct setup and best pra
 **Usage:**
 The agent runs automatically after `/new-sdk-app` creates a Python project, or you can trigger it by asking:
 ```
+
 "Verify my Python Agent SDK application"
 "Check if my SDK app follows best practices"
-```
 
+```diff
 **Output:**
 Provides a comprehensive report with:
 - Overall status (PASS / PASS WITH WARNINGS / FAIL)
@@ -101,11 +103,11 @@ Thoroughly verifies TypeScript Agent SDK applications for correct setup and best
 
 **Usage:**
 The agent runs automatically after `/new-sdk-app` creates a TypeScript project, or you can trigger it by asking:
-```
+```diff
 "Verify my TypeScript Agent SDK application"
 "Check if my SDK app follows best practices"
-```
 
+```diff
 **Output:**
 Provides a comprehensive report with:
 - Overall status (PASS / PASS WITH WARNINGS / FAIL)
@@ -123,28 +125,29 @@ Here's a typical workflow using this plugin:
 /new-sdk-app code-reviewer-agent
 ```
 
-2. **Answer the interactive questions:**
-```
+1. **Answer the interactive questions:**
+
+```text
 Language: TypeScript
 Agent type: Coding agent (code review)
 Starting point: Basic agent with common features
-```
-
-3. **Automatic verification:**
+```text
+1. **Automatic verification:**
 The command automatically runs `agent-sdk-verifier-ts` to ensure everything is correctly set up.
 
-4. **Start developing:**
+2. **Start developing:**
+
 ```bash
 # Set your API key
 echo "ANTHROPIC_API_KEY=your_key_here" > .env
 
 # Run your agent
 npm start
-```
-
+```bash
 5. **Verify after changes:**
-```
+```text
 "Verify my SDK application"
+
 ```
 
 ## Installation
@@ -177,6 +180,7 @@ This plugin is included in the Claude Code repository. To use it:
 **Issue**: TypeScript project has type errors after creation
 
 **Solution**:
+
 - The `/new-sdk-app` command runs type checking automatically
 - If errors persist, check that you're using the latest SDK version
 - Verify your `tsconfig.json` matches SDK requirements
@@ -186,6 +190,7 @@ This plugin is included in the Claude Code repository. To use it:
 **Issue**: Cannot import from `claude_agent_sdk`
 
 **Solution**:
+
 - Ensure you've installed dependencies: `pip install -r requirements.txt`
 - Activate your virtual environment if using one
 - Check that the SDK is installed: `pip show claude-agent-sdk`
@@ -195,13 +200,14 @@ This plugin is included in the Claude Code repository. To use it:
 **Issue**: Verifier agent reports warnings
 
 **Solution**:
+
 - Review the specific warnings in the report
 - Check the SDK documentation references provided
 - Warnings don't prevent functionality but indicate areas for improvement
 
 ## Author
 
-Ashwin Bhat (ashwin@anthropic.com)
+Ashwin Bhat (<ashwin@anthropic.com>)
 
 ## Version
 

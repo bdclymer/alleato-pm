@@ -9,10 +9,10 @@
 ## What Happened
 
 The Next.js dev server failed to start with error:
-```
-[Error: You cannot use different slug names for the same dynamic path ('id' !== 'recordId').]
-```
 
+```text
+[Error: You cannot use different slug names for the same dynamic path ('id' !== 'recordId').]
+```diff
 **This was the THIRD time this error occurred.**
 
 ---
@@ -20,25 +20,26 @@ The Next.js dev server failed to start with error:
 ## Root Causes
 
 ### Conflict 1: API vs Pages Route Mismatch
-```
+
+```text
 frontend/src/app/api/projects/[id]/          ← Wrong
 frontend/src/app/[projectId]/                ← Correct
 ```
 
 ### Conflict 2: Duplicate Admin Routes
-```
+
+```text
 frontend/src/app/admin/tables/[table]/[id]/       ← Obsolete
 frontend/src/app/admin/tables/[table]/[recordId]/ ← Correct
-```
-
+```typescript
 ### Conflict 3: Import Path Reference
+
 ```typescript
 // frontend/src/app/[projectId]/change-orders/new/page.tsx
 import { createChangeOrderSchema } from "@/app/api/projects/[id]/contracts/[contractId]/change-orders/validation";
                                                                    ^^^^
                                                                    Wrong - should be [projectId]
-```
-
+```diff
 ---
 
 ## What Was Fixed
@@ -50,25 +51,24 @@ mv frontend/src/app/api/projects/[id] \
 ```
 
 ### 2. Updated Import Path
+
 ```typescript
 // Before
 import { createChangeOrderSchema } from "@/app/api/projects/[id]/contracts/[contractId]/change-orders/validation";
 
 // After
 import { createChangeOrderSchema } from "@/app/api/projects/[projectId]/contracts/[contractId]/change-orders/validation";
-```
-
+```markdown
 ### 3. Deleted Obsolete Route
 ```bash
 rm -rf frontend/src/app/admin/tables/[table]/[id]/
-```
-
+```yaml
 ### 4. Verified Fix
+
 ```bash
 npm run dev --prefix frontend
 # ✓ Ready in 1611ms (no errors)
-```
-
+```yaml
 ---
 
 ## Prevention Measures Added
@@ -107,6 +107,7 @@ npm run check:routes
 ```
 
 ### 4. NPM Script Added
+
 ```json
 {
   "scripts": {

@@ -3,11 +3,12 @@
 Verify that fixes were applied correctly and still hold.
 
 ## Usage
-```
-/design-verify [options]
-```
 
+```bash
+/design-verify [options]
+```yaml
 **Options:**
+
 - `all` - Verify all "fixed" violations
 - `file:path/to/file.tsx` - Verify fixes in specific file
 - `recent` - Verify fixes from last 24 hours
@@ -17,6 +18,7 @@ Verify that fixes were applied correctly and still hold.
 You are verifying design system fixes. Follow this process:
 
 ### Step 1: Load Fixed Violations
+
 Read violations from `.claude/design-audit/violations.json`
 Filter to status: "fixed" (not yet "verified")
 
@@ -40,6 +42,7 @@ For each fixed violation:
    - If quality fails → "broken" (needs investigation)
 
 5. **Update violations.json** with:
+
    ```json
    {
      "status": "verified|regressed|broken",
@@ -54,12 +57,13 @@ For each fixed violation:
 ### Step 3: Handle Regressions
 
 For any "regressed" violations:
+
 1. Log them for re-fixing
 2. Ask if user wants to run `/design-fix` on them
 
 ### Step 4: Summary Report
 
-```
+```yaml
 Verification Results
 ====================
 Verified: X violations

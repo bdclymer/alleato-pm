@@ -12,7 +12,7 @@ import {
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Info } from "lucide-react";
-import { AppShell } from "@/components/layout";
+import { AppShell } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
 import {

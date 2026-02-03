@@ -9,6 +9,7 @@
 ## What Was Wrong
 
 Claude agents repeatedly:
+
 - ❌ Asked user to manually log in for Playwright tests
 - ❌ Created interactive prompts waiting for user input
 - ❌ Didn't know credentials exist in `.env` file
@@ -25,6 +26,7 @@ Claude agents repeatedly:
 **Location:** Line 76 in `/CLAUDE.md`
 
 **New Mandatory Gate:**
+
 ```markdown
 ### 8. Authentication Gate (CRITICAL - READ THIS)
 **NEVER** ask the user to manually log in for Playwright tests or web crawlers.
@@ -32,8 +34,7 @@ Claude agents repeatedly:
 Credentials are ALWAYS in `.env` file:
 - PROCORE_USER=bclymer@alleatogroup.com
 - PROCORE_PASSWORD=Clymer926!
-```
-
+```markdown
 ### 2. Enhanced Testing Commands Section
 
 **Location:** Line 169 in `/CLAUDE.md`
@@ -81,9 +82,9 @@ This appears BEFORE the detailed gates so Claude sees it immediately.
 # Re-authenticate (run ONCE)
 cd frontend
 npx playwright test tests/auth.setup.ts
-```
-
+```javascript
 **DO NOT:**
+
 - Add login code to every test
 - Ask user to log in manually
 - Run auth.setup.ts before every test
@@ -91,11 +92,11 @@ npx playwright test tests/auth.setup.ts
 ### For Web Crawlers / Scripts
 
 **Credentials are ALWAYS in `.env`:**
+
 ```bash
 PROCORE_USER=bclymer@alleatogroup.com
 PROCORE_PASSWORD=Clymer926!
-```
-
+```javascript
 **Mandatory pattern:**
 ```javascript
 import dotenv from 'dotenv';
@@ -111,6 +112,7 @@ await page.click('button[type="submit"]');
 ```
 
 **DO NOT:**
+
 - Ask user to log in manually
 - Create interactive prompts
 - Wait for user input when .env exists
@@ -123,6 +125,7 @@ await page.click('button[type="submit"]');
 **Root cause:** Claude Code doesn't have persistent memory across sessions.
 
 **Solutions implemented:**
+
 1. ✅ Documentation in CLAUDE.md (main instruction file)
 2. ✅ Quick reference at top (seen immediately)
 3. ✅ Detailed examples with code
@@ -170,12 +173,14 @@ To verify this is fixed, ask Claude to:
 ## Success Criteria
 
 ✅ **Claude will NEVER again:**
+
 - Ask user to manually log in for tests
 - Create interactive auth prompts
 - Wait for user input when .env exists
 - Claim auth is unavailable
 
 ✅ **Claude will ALWAYS:**
+
 - Load credentials from .env automatically
 - Use saved auth state for Playwright tests
 - Provide automatic authentication in scripts

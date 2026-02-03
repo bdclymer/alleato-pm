@@ -15,9 +15,11 @@ Claude Code spent an extended debugging session chasing wrong root causes for fa
 ## Timeline of Failures
 
 ### 1. Initial Symptom
+
 E2E tests stuck on loading spinner - page never rendered data.
 
 ### 2. First Wrong Diagnosis: Missing Columns
+
 Claude searched for `created_by` in types, didn't find it, and concluded:
 > "The schedule_tasks table in the generated types does NOT have created_by or updated_by columns! This is the issue."
 
@@ -26,6 +28,7 @@ Claude searched for `created_by` in types, didn't find it, and concluded:
 **Why this was wrong:** Column presence wasn't the issue - the service would have thrown a clear error if columns didn't exist. The real issue was queries returning no data.
 
 ### 3. Second Wrong Diagnosis: CHECK Constraint Values
+
 Claude investigated dependency_type values:
 > "The database CHECK constraint expects FS, SS, FF, SF but we changed the service and types to use finish_to_start, etc."
 
@@ -34,6 +37,7 @@ Claude investigated dependency_type values:
 **Why this was wrong:** The query wasn't even reaching dependencies - it was failing earlier.
 
 ### 4. Third Wrong Diagnosis: Computed Column
+
 Claude investigated `is_overdue`:
 > "line 516 shows t.is_overdue being accessed, but is_overdue is NOT a column"
 
@@ -42,6 +46,7 @@ Claude investigated `is_overdue`:
 **Why this was wrong:** JavaScript undefined access doesn't throw errors.
 
 ### 5. Actual Root Cause (Finally Found)
+
 Query was using integer project ID ("67") but `schedule_tasks.project_id` was UUID type, while `projects.id` was INTEGER.
 
 ```javascript
@@ -56,9 +61,11 @@ Query was using integer project ID ("67") but `schedule_tasks.project_id` was UU
 ## What Should Have Happened
 
 1. **Test the actual query first**
+
    ```bash
    node -e '... supabase.from("schedule_tasks").select("*")...'
    ```
+
    This would have immediately shown empty results.
 
 2. **Check the column types in database.types.ts**
@@ -83,6 +90,7 @@ These changes may or may not be correct, but they were made without confirming t
 ## Additional Failures
 
 ### Told User to Run SQL Manually
+
 Instead of using MCP tools or Supabase CLI, Claude dumped 150+ lines of SQL and said:
 > "User: You need to run this SQL in Supabase..."
 
@@ -90,6 +98,7 @@ User response:
 > "why can't you freaking run it with the supabase cli or mcp?"
 
 ### Repeated Bash Command Failures
+
 - `cd frontend && ...` failed (zsh incompatibility)
 - Relative path redirects failed (wrong working directory)
 - `!!` escaping issues in node -e strings

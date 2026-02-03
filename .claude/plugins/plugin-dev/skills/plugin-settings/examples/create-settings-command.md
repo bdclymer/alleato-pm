@@ -52,8 +52,7 @@ Use AskUserQuestion to gather configuration:
     }
   ]
 }
-```
-
+```yaml
 ### Step 2: Parse Answers
 
 Extract answers from AskUserQuestion result:
@@ -83,6 +82,7 @@ To modify settings, edit this file and restart Claude Code.
 ### Step 4: Inform User
 
 Tell the user:
+
 - Settings file created at `.claude/my-plugin.local.md`
 - Current configuration summary
 - How to edit manually if needed
@@ -92,6 +92,7 @@ Tell the user:
 ## Implementation Notes
 
 Always validate user input before writing:
+
 - Check mode is valid
 - Validate numeric fields are numbers
 - Ensure paths don't have traversal attempts

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Download, ZoomIn, ZoomOut, RotateCw, Share2, FileText } from "lucide-react";
+import { ArrowLeft, Download, Share2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import dynamic from "next/dynamic";
 import {
   Breadcrumb,
@@ -20,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useDrawing } from "@/hooks/use-drawings";
 
 // Dynamically import the DrawingViewer component to avoid SSR issues
 const DrawingViewer = dynamic(
@@ -34,111 +34,19 @@ const DrawingViewer = dynamic(
   }
 );
 
-interface DrawingRevision {
-  id: string;
-  drawing_id: string;
-  version: string;
-  title: string;
-  discipline: string;
-  file_url: string;
-  file_size?: number;
-  file_type: string;
-  page_count?: number;
-  created_at: string;
-  created_by_name?: string;
-  drawing_title?: string;
-  drawing_number?: string;
-  drawing_area_name?: string;
-}
-
 export default function DrawingViewerPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
   const drawingId = params.drawingId as string;
 
-  const [revision, setRevision] = useState<DrawingRevision | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Viewer controls state
-  const [viewerKey, setViewerKey] = useState(0); // Force re-render of viewer
-
-  useEffect(() => {
-    async function fetchRevision() {
-      try {
-        setIsLoading(true);
-        const supabase = createClient();
-
-        // Fetch the specific drawing revision with related data
-        const { data, error: fetchError } = await supabase
-          .from("drawing_revisions")
-          .select(`
-            id,
-            drawing_id,
-            version,
-            title,
-            discipline,
-            file_url,
-            file_size,
-            file_type,
-            page_count,
-            created_at,
-            drawings!inner(
-              title,
-              number,
-              drawing_areas(name)
-            ),
-            created_by:profiles!drawing_revisions_created_by_fkey(
-              display_name
-            )
-          `)
-          .eq("id", drawingId)
-          .eq("drawings.project_id", parseInt(projectId, 10))
-          .is("deleted_at", null)
-          .single();
-
-        if (fetchError) {
-          if (fetchError.code === "PGRST116") {
-            throw new Error("Drawing not found");
-          }
-          throw fetchError;
-        }
-
-        // Transform data for display
-        const transformedRevision: DrawingRevision = {
-          id: data.id,
-          drawing_id: data.drawing_id,
-          version: data.version,
-          title: data.title,
-          discipline: data.discipline,
-          file_url: data.file_url,
-          file_size: data.file_size,
-          file_type: data.file_type,
-          page_count: data.page_count,
-          created_at: data.created_at,
-          created_by_name: data.created_by?.display_name,
-          drawing_title: data.drawings?.title,
-          drawing_number: data.drawings?.number,
-          drawing_area_name: data.drawings?.drawing_areas?.name,
-        };
-
-        setRevision(transformedRevision);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load drawing");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchRevision();
-  }, [projectId, drawingId]);
+  const { data: drawing, isLoading, error } = useDrawing(projectId, drawingId);
 
   const handleDownload = useCallback(async () => {
-    if (!revision) return;
+    if (!drawing) return;
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/drawings/revisions/${drawingId}/download`);
+      const response = await fetch(`/api/projects/${projectId}/drawings/${drawingId}/download`);
       if (!response.ok) {
         throw new Error("Failed to download drawing");
       }
@@ -146,10 +54,9 @@ export default function DrawingViewerPage() {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
-      // Create download link
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${revision.drawing_number || revision.title}-${revision.version}.pdf`;
+      a.download = `${drawing.drawing_number || drawing.title}-${drawing.current_revision?.revision_number ?? 'latest'}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -160,25 +67,23 @@ export default function DrawingViewerPage() {
       toast.error("Failed to download drawing");
       console.error("Error downloading drawing:", error);
     }
-  }, [projectId, drawingId, revision]);
+  }, [projectId, drawingId, drawing]);
 
   const handleShare = useCallback(async () => {
-    if (!revision) return;
+    if (!drawing) return;
 
     const shareUrl = `${window.location.origin}/${projectId}/drawings/viewer/${drawingId}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: revision.title || revision.drawing_title || "Drawing",
+          title: drawing.title || "Drawing",
           url: shareUrl,
         });
       } catch (error) {
-        // User cancelled share or share failed
-        console.log("Share cancelled or failed:", error);
+        console.warn("Share cancelled or failed:", error);
       }
     } else {
-      // Fallback to clipboard
       try {
         await navigator.clipboard.writeText(shareUrl);
         toast.success("Drawing URL copied to clipboard");
@@ -186,31 +91,11 @@ export default function DrawingViewerPage() {
         toast.error("Failed to copy URL to clipboard");
       }
     }
-  }, [projectId, drawingId, revision]);
+  }, [projectId, drawingId, drawing]);
 
   const handleBack = () => {
     router.push(`/${projectId}/drawings/revisions`);
   };
-
-  const handleKeyPress = useCallback((event: KeyboardEvent) => {
-    switch (event.key) {
-      case "Escape":
-        handleBack();
-        break;
-      case "d":
-      case "D":
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          handleDownload();
-        }
-        break;
-    }
-  }, [handleBack, handleDownload]);
-
-  useEffect(() => {
-    document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [handleKeyPress]);
 
   if (error) {
     return (
@@ -218,7 +103,7 @@ export default function DrawingViewerPage() {
         <div className="text-center">
           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-xl font-semibold text-foreground mb-2">Drawing Not Found</h1>
-          <p className="text-muted-foreground mb-6">{error}</p>
+          <p className="text-muted-foreground mb-6">{error instanceof Error ? error.message : "Unknown error"}</p>
           <Button onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Drawings
@@ -239,7 +124,7 @@ export default function DrawingViewerPage() {
     );
   }
 
-  if (!revision) {
+  if (!drawing) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -282,7 +167,7 @@ export default function DrawingViewerPage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem className="text-foreground truncate max-w-[200px]">
-                  {revision.title || revision.drawing_title}
+                  {drawing.title}
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -292,12 +177,11 @@ export default function DrawingViewerPage() {
         {/* Center - Drawing info */}
         <div className="text-center min-w-0 flex-1 hidden md:block">
           <h1 className="font-semibold text-foreground truncate">
-            {revision.title || revision.drawing_title}
+            {drawing.title}
           </h1>
           <p className="text-sm text-muted-foreground truncate">
-            {revision.drawing_number && `${revision.drawing_number} • `}
-            Version {revision.version}
-            {revision.drawing_area_name && ` • ${revision.drawing_area_name}`}
+            {drawing.drawing_number && `${drawing.drawing_number} • `}
+            Revision {drawing.current_revision?.revision_number ?? 'N/A'}
           </p>
         </div>
 
@@ -321,13 +205,13 @@ export default function DrawingViewerPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/drawings/${revision.drawing_id}`)}>
+              <DropdownMenuItem onClick={() => router.push(`/${projectId}/drawings/${drawing.id}`)}>
                 View Drawing Details
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/drawings/${revision.drawing_id}/revisions`)}>
+              <DropdownMenuItem onClick={() => router.push(`/${projectId}/drawings/${drawing.id}/revisions`)}>
                 All Revisions
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.open(revision.file_url, "_blank")}>
+              <DropdownMenuItem onClick={() => drawing.current_revision?.file_url && window.open(drawing.current_revision.file_url, "_blank")}>
                 Open in New Tab
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -338,23 +222,31 @@ export default function DrawingViewerPage() {
       {/* Mobile title bar */}
       <div className="bg-card border-b px-4 py-2 md:hidden">
         <h1 className="font-semibold text-foreground truncate">
-          {revision.title || revision.drawing_title}
+          {drawing.title}
         </h1>
         <p className="text-sm text-muted-foreground truncate">
-          Version {revision.version}
-          {revision.drawing_area_name && ` • ${revision.drawing_area_name}`}
+          Revision {drawing.current_revision?.revision_number ?? 'N/A'}
         </p>
       </div>
 
       {/* Viewer */}
       <div className="flex-1 bg-muted/20">
-        <DrawingViewer
-          key={viewerKey}
-          fileUrl={revision.file_url}
-          fileName={revision.title || revision.drawing_title || "Drawing"}
-          fileType={revision.file_type}
-          pageCount={revision.page_count}
-        />
+        {drawing.current_revision?.file_url ? (
+          <DrawingViewer
+            fileUrl={drawing.current_revision.file_url}
+            fileName={drawing.title || "Drawing"}
+            drawingNumber={drawing.drawing_number ?? undefined}
+            title={drawing.title ?? undefined}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-lg font-semibold text-foreground mb-2">No File Available</h2>
+              <p className="text-muted-foreground">This drawing does not have a current revision file.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,15 +1,18 @@
 # PageTitleComplianceSubagent Charter
 
 ## Mission
+
 Ensure every project-scoped route uses the `useProjectTitle` hook so browser tabs always display `Project Name – Page Title – Alleato OS`, as defined in `docs/pages/PAGE_TITLE_UPDATE.md`. This subagent owns the rollout, automated verification, and documentation for page-title correctness.
 
 ## Primary Inputs
+
 - `docs/pages/PAGE_TITLE_UPDATE.md` – functional spec and backlog of pages still missing the hook.
 - `frontend/src/hooks/useProjectTitle.ts` – hook implementation to keep stable.
 - All project routes under `frontend/src/app/(project-mgmt)/[projectId]/**` and `(financial)` routes that derive project context via query params.
 - Playwright specs under `frontend/tests/e2e/`.
 
 ## Scope of Work
+
 1. **Audit coverage** – Enumerate every page that should call `useProjectTitle`. Prioritize the unchecked items listed in the “Next Steps” section of the documentation.
 2. **Implement hook calls** – Import and invoke the hook at the top of each client component (or dedicated child component when the page is a server component).
 3. **Dynamic titles** – Where page titles vary (e.g., create vs edit forms), ensure the hook receives the correct string after data loads.
@@ -18,6 +21,7 @@ Ensure every project-scoped route uses the `useProjectTitle` hook so browser tab
 6. **Documentation updates** – Move items from the “Next Steps” checklist to “Completed”, citing PR/file references.
 
 ## Implementation Checklist
+
 1. **Discovery**
    - Run `rg -l \"useProjectTitle\" frontend/src/app` to find existing usage.
    - Build a checklist mapping routes → file paths → hook status.
@@ -37,6 +41,7 @@ Ensure every project-scoped route uses the `useProjectTitle` hook so browser tab
    - Update `docs/pages/PAGE_TITLE_UPDATE.md` with the completed checklist, new examples, and test references.
 
 ## Acceptance Criteria
+
 - Every route listed under “Next Steps” in the source doc now uses `useProjectTitle`.
 - Dynamic titles (e.g., detail pages with entity names) display the correct text once data loads.
 - Playwright tests prove both path and query-param routes set titles with project names (no IDs).
@@ -44,6 +49,7 @@ Ensure every project-scoped route uses the `useProjectTitle` hook so browser tab
 - Lint/typecheck continue to pass (`cd frontend && npm run lint && npm run typecheck`).
 
 ## Dependencies & Coordination
+
 - Coordinate with ProjectContextResilienceSubagent to ensure project data is available before `useProjectTitle` runs, especially on query-param routes.
 - When breadcrumbs influence titles, align with BreadcrumbExperienceSubagent so naming conventions match.
 - Log progress and decisions inside `PLANS_DOC.md` after each milestone.

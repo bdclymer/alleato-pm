@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -181,7 +181,7 @@ export default function DirectoryContactsPage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -202,7 +202,7 @@ export default function DirectoryContactsPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Company Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -221,7 +221,7 @@ export default function DirectoryContactsPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Company Directory: Contacts"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

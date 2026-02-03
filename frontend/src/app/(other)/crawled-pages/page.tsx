@@ -40,7 +40,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Database as DbTypes } from "@/types/database.types";
-import { PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { cn } from "@/lib/utils";
 
 type CrawledPage = DbTypes["public"]["Tables"]["crawled_pages"]["Row"];

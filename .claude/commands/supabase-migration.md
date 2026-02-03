@@ -9,11 +9,11 @@ You are an automated migration engine. You DO NOT describe steps -- you EXECUTE 
 
 ## Arguments
 
-```
+```bash
 $ARGUMENTS
-```
-
+```sql
 Parse the description of the desired schema change. Examples:
+
 - "add columns phone, address to companies table"
 - "create join table project_users linking projects and people"
 - "add index on contracts.status"
@@ -26,6 +26,7 @@ Read `frontend/src/types/database.types.ts` using the Read tool.
 This is NON-NEGOTIABLE. You must understand the current schema before writing ANY SQL.
 
 From the types file, extract:
+
 - All table names in `Tables` interface
 - For each table mentioned in the user's request, note:
   - Column names and their TypeScript types
@@ -37,6 +38,7 @@ From the types file, extract:
 Before writing SQL, verify:
 
 **For adding columns to existing tables:**
+
 - Table exists in `database.types.ts`
 - Column does NOT already exist
 - If adding a FK column, verify the referenced table's PK type:
@@ -49,16 +51,19 @@ Before writing SQL, verify:
 **CRITICAL:** `projects.id` is INTEGER. Any `project_id` FK must be `INTEGER NOT NULL REFERENCES projects(id)`. This has caused bugs 3+ times.
 
 **For creating new tables:**
+
 - Table name does NOT already exist in types
 - All FK references point to tables that DO exist
 - FK column types match referenced PK types
 
 **For creating join tables:**
+
 - Both referenced tables exist
 - PK types of both tables are noted
 - Composite primary key or unique constraint planned
 
 **For adding indexes:**
+
 - Table and column both exist
 - Index does not already exist (check migration files if uncertain)
 
@@ -67,6 +72,7 @@ Before writing SQL, verify:
 Create the migration SQL following these conventions:
 
 **Table creation pattern:**
+
 ```sql
 -- Always include:
 -- 1. Primary key (UUID with gen_random_uuid() or SERIAL/INTEGER)
@@ -76,8 +82,7 @@ Create the migration SQL following these conventions:
 -- 5. Indexes on all FKs
 -- 6. updated_at trigger
 -- 7. RLS enabled + 4 policies (SELECT, INSERT, UPDATE, DELETE)
-```
-
+```sql
 **Column addition pattern:**
 ```sql
 ALTER TABLE table_name
@@ -88,6 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_table_column ON table_name(column_name);
 ```
 
 **Join table pattern:**
+
 ```sql
 CREATE TABLE IF NOT EXISTS table_a_table_b (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -96,8 +102,7 @@ CREATE TABLE IF NOT EXISTS table_a_table_b (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(table_a_id, table_b_id)
 );
-```
-
+```sql
 **For RLS policies on project-scoped tables, use this exact pattern:**
 ```sql
 CREATE POLICY "table_select_policy" ON table_name
@@ -110,11 +115,11 @@ CREATE POLICY "table_select_policy" ON table_name
             AND pdm.status = 'active'
         )
     );
-```
-
+```markdown
 ## STEP 4: Write Migration File
 
 Generate the filename with current timestamp:
+
 - Format: `{YYYYMMDDHHMMSS}_{description_in_snake_case}.sql`
 - Example: `20260131143000_add_phone_to_companies.sql`
 
@@ -131,10 +136,10 @@ Use `mcp__supabase__apply_migration` with the migration name and SQL content.
 Use `mcp__supabase__execute_sql` with the SQL content.
 
 **Option C: CLI**
+
 ```bash
 npx supabase db push --project-id "lgveqfnpkxvzbnnwuled"
-```
-
+```text
 If the migration fails:
 1. Read the error message carefully
 2. Fix the SQL (common issues: wrong FK type, missing referenced table, syntax error)
@@ -153,27 +158,30 @@ npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema p
 Read `frontend/src/types/database.types.ts` and confirm:
 
 **For new tables:**
+
 - Table appears in `Tables` interface
 - All columns present with correct types
 - `project_id` is `number` (not `string`) if project-scoped
 
 **For new columns:**
+
 - Column appears in the table's `Row`, `Insert`, and `Update` types
 - Type matches what was intended (e.g., `string` for TEXT, `number` for INTEGER)
 - Nullability is correct (`string | null` vs `string`)
 
 **For indexes/constraints:**
+
 - No direct verification needed in types, but confirm migration ran without error
 
 ## STEP 8: Check for Downstream Impact
 
 Search for files that import from or query the modified table:
 
-```
+```bash
 # Find hooks, services, and API routes that reference this table
-```
-
+```diff
 Use the Grep tool to search for the table name in:
+
 - `frontend/src/hooks/`
 - `frontend/src/services/`
 - `frontend/src/app/api/`
@@ -184,7 +192,7 @@ If any existing code references columns that were renamed or removed, list those
 
 Output a summary:
 
-```
+```markdown
 ## Migration Applied: {description}
 
 ### Migration File

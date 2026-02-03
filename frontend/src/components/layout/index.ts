@@ -1,11 +1,9 @@
 export { GlobalHeader } from "./global-header";
 export { CompanyHeader } from "./company-header";
-export { AppShell } from "./app-shell";
 export { AppHeader } from "./AppHeader";
 export { PageContainer } from "./PageContainer";
 export { FormContainer } from "./FormContainer";
-export { PageHeader } from "./PageHeader";
-export { ProjectPageHeader } from "./ProjectPageHeader";
+export { PageHeader, ProjectPageHeader } from "./page-header-unified";
 export { PageToolbar } from "./PageToolbar";
 export { PageTabs } from "./PageTabs";
 export { PageTabsV2 } from "./PageTabsV2";

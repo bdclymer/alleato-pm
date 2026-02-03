@@ -5,6 +5,7 @@
 **Total Tests: 26** (8 original + 18 extended)
 
 **Coverage Areas:**
+
 - ✅ File Upload & Validation
 - ✅ Revision Management
 - ✅ Area Assignments
@@ -42,6 +43,7 @@
 | 12 | Accept valid PDF | Successful upload within limits |
 
 **Why These Matter:**
+
 - Prevents storage waste from invalid uploads
 - Protects against denial-of-service via large files
 - Ensures consistent file handling across the system
@@ -58,6 +60,7 @@
 | 18 | Add revision with notes | Revision metadata tracking |
 
 **Why These Matter:**
+
 - Maintains document history audit trail
 - Prevents accidental deletion of active documents
 - Enables tracking of specification changes over time
@@ -71,6 +74,7 @@
 | 21 | Multi-area assignment | Specs can belong to multiple areas |
 
 **Why These Matter:**
+
 - Organizes specs by building areas/zones
 - Enables area-specific spec packages for contractors
 - Supports complex project organization structures
@@ -85,6 +89,7 @@
 | 25 | Case-insensitive search | Search works regardless of case |
 
 **Why These Matter:**
+
 - Ensures usability with large spec libraries (100+ specs)
 - Validates search functionality for quick spec lookup
 - Tests edge case of no search results
@@ -101,6 +106,7 @@
 | 31 | Error recovery | Cancel dialogs, dismiss toasts |
 
 **Why These Matter:**
+
 - Prevents data integrity issues (duplicates)
 - Validates security (XSS via special chars)
 - Tests real-world data variations
@@ -119,6 +125,7 @@
 | **File Upload** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 **Legend:**
+
 - ✅ Covered by tests
 - ❌ Not applicable or not yet implemented
 
@@ -139,15 +146,14 @@
 
 ### Fixtures Used
 
-```
+```text
 frontend/tests/fixtures/
 ├── test-document.pdf         (455 bytes - valid PDF)
 ├── revised-drawing.pdf        (324 bytes - valid PDF)
 ├── test-drawing-1.pdf         (324 bytes - valid PDF)
 ├── test-drawing-2.pdf         (324 bytes - valid PDF)
 └── invalid-file.txt           (32 bytes - non-PDF)
-```
-
+```markdown
 ### Generated Test Data
 
 - **Large PDFs**: Generated in-memory (52MB) for size validation
@@ -161,8 +167,7 @@ frontend/tests/fixtures/
 test.beforeAll()  → Create test data (specs, areas, revisions)
 test.afterAll()   → Delete test data by ID
 test.afterEach()  → Cleanup per-test resources
-```
-
+```markdown
 **Cleanup guarantees:**
 - No test data left behind
 - Tests can run multiple times
@@ -259,8 +264,7 @@ npx playwright test tests/e2e/specifications.spec.ts
 
 # Extended suite
 npx playwright test tests/e2e/specifications-extended.spec.ts
-```
-
+```markdown
 ### Specific Test Categories
 
 ```bash
@@ -272,8 +276,7 @@ npx playwright test -g "Revision Management"
 
 # Edge cases only
 npx playwright test -g "Edge Cases"
-```
-
+```markdown
 ### Debug Mode
 
 ```bash
@@ -299,6 +302,7 @@ Tests run automatically on:
 - ✅ Pre-release builds
 
 **Artifacts saved:**
+
 - Screenshots on failure
 - Video recordings (on CI)
 - Test reports (HTML)

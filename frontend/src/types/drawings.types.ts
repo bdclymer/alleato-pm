@@ -8,92 +8,30 @@
 import { z } from 'zod';
 import type { Database } from './database.types';
 
-// Temporary type definitions until migration is applied
-interface DrawingAreaRow {
-  id: string;
-  project_id: number;
-  parent_area_id: string | null;
-  name: string;
-  description: string | null;
-  sort_order: number;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
+// Types derived from generated Supabase types (migration applied)
+type Tables = Database['public']['Tables'];
+type Views = Database['public']['Views'];
 
-interface DrawingRow {
-  id: string;
-  project_id: number;
-  area_id: string | null;
-  drawing_number: string;
-  title: string;
-  discipline: string | null;
-  drawing_type: string | null;
-  current_revision_id: string | null;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
+type DrawingAreaRow = Tables['drawing_areas']['Row'];
+type DrawingRow = Tables['drawings']['Row'];
+type DrawingRevisionRow = Tables['drawing_revisions']['Row'];
+type DrawingSetRow = Tables['drawing_sets']['Row'];
+type DrawingSketchRow = Tables['drawing_sketches']['Row'];
+type DrawingDownloadRow = Tables['drawing_downloads']['Row'];
+type DrawingRelatedItemRow = Tables['drawing_related_items']['Row'];
 
-interface DrawingRevisionRow {
-  id: string;
-  drawing_id: string;
-  revision_number: string;
-  drawing_set_id: string | null;
-  drawing_date: string | null;
-  received_date: string;
-  status: string;
-  file_url: string;
-  file_name: string;
-  file_size: number;
-  file_type: string;
-  is_current_revision: boolean;
-  description: string | null;
-  uploaded_by: string;
-  created_at: string;
-}
+// View row types
+export type DrawingLogViewRow = Views['drawing_log']['Row'];
+export type DrawingAreaWithCountViewRow = Views['drawing_areas_with_counts']['Row'];
 
-interface DrawingSetRow {
-  id: string;
-  project_id: number;
-  name: string;
-  issued_at: string;
-  status: string;
-  description: string | null;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface DrawingSketchRow {
-  id: string;
-  drawing_revision_id: string;
-  sketch_number: string;
-  name: string;
-  description: string | null;
-  sketch_date: string;
-  file_url: string;
-  created_by: string;
-  created_at: string;
-}
-
-interface DrawingDownloadRow {
-  id: string;
-  drawing_revision_id: string;
-  downloaded_by: string;
-  downloaded_at: string;
-  ip_address: string | null;
-  user_agent: string | null;
-}
-
-interface DrawingRelatedItemRow {
-  id: string;
-  drawing_id: string;
-  related_type: string;
-  related_id: string;
-  created_by: string;
-  created_at: string;
-}
+// Insert/Update types for services
+export type DrawingAreaInsert = Tables['drawing_areas']['Insert'];
+export type DrawingAreaUpdate = Tables['drawing_areas']['Update'];
+export type DrawingInsert = Tables['drawings']['Insert'];
+export type DrawingUpdate = Tables['drawings']['Update'];
+export type DrawingRevisionInsert = Tables['drawing_revisions']['Insert'];
+export type DrawingSetInsert = Tables['drawing_sets']['Insert'];
+export type DrawingSetUpdate = Tables['drawing_sets']['Update'];
 
 // Status enums for better type safety
 export type DrawingStatus = 'draft' | 'under_review' | 'approved' | 'superseded' | 'void';
@@ -126,8 +64,9 @@ export type DrawingDiscipline = typeof DRAWING_DISCIPLINES[number];
 export type DrawingType = typeof DRAWING_TYPES[number];
 
 // Enhanced interfaces with relations and computed properties
+// Note: DB uses snake_case (parent_area_id, sort_order), keep that for consistency
 export interface DrawingArea extends DrawingAreaRow {
-  drawingCount?: number;
+  drawing_count?: number;
   children?: DrawingArea[];
   depth?: number;
   path?: string[];
@@ -199,8 +138,7 @@ export const drawingAreaSchema = z.object({
   sortOrder: z.number()
     .int('Sort order must be an integer')
     .min(0, 'Sort order must be non-negative')
-    .optional()
-    .default(0),
+    .optional(),
 });
 
 export const drawingUploadSchema = z.object({
@@ -268,9 +206,40 @@ export type DrawingUploadFormData = z.infer<typeof drawingUploadSchema>;
 export type DrawingFilterFormData = z.infer<typeof drawingFilterSchema>;
 export type DrawingRevisionFormData = z.infer<typeof drawingRevisionSchema>;
 
+// Mapper: convert snake_case DB view row to camelCase UI type
+export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
+  return {
+    id: row.id ?? '',
+    projectId: row.project_id ?? 0,
+    areaId: row.area_id ?? null,
+    drawingNumber: row.drawing_number ?? '',
+    title: row.title ?? '',
+    discipline: row.discipline ?? null,
+    drawingType: row.drawing_type ?? null,
+    drawingCreatedAt: row.drawing_created_at ?? '',
+    drawingUpdatedAt: row.drawing_updated_at ?? '',
+    revisionId: row.revision_id ?? null,
+    revisionNumber: row.revision_number ?? null,
+    drawingDate: row.drawing_date ?? null,
+    receivedDate: row.received_date ?? null,
+    status: (row.status as DrawingStatus) ?? null,
+    fileUrl: row.file_url ?? null,
+    fileName: row.file_name ?? null,
+    fileSize: row.file_size ?? null,
+    fileType: row.file_type ?? null,
+    revisionDescription: row.revision_description ?? null,
+    uploadedBy: row.uploaded_by ?? null,
+    revisionCreatedAt: row.revision_created_at ?? null,
+    areaName: row.area_name ?? null,
+    setName: row.set_name ?? null,
+    uploadedByEmail: row.uploaded_by_email ?? null,
+  };
+}
+
 // Additional interfaces for special data structures
+// This interface uses snake_case properties as returned by the drawing_areas_with_counts view
 export interface DrawingAreaWithCount extends DrawingArea {
-  drawingCount: number;
+  drawing_count: number;
   depth: number;
   path: string[];
   children?: DrawingAreaWithCount[];

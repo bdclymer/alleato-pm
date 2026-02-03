@@ -54,13 +54,29 @@ export async function createProject(name: string): Promise<number> {
 export async function addProjectMember(
   projectId: number,
   userId: string,
-  access: "admin" | "editor" | "owner" = "admin",
+  role: "admin" | "editor" | "owner" = "admin",
 ): Promise<void> {
-  const { error } = await supabase.from("project_members").insert({
-    project_id: projectId,
-    user_id: userId,
-    access,
-  });
+  // Look up person_id from auth user ID via users_auth
+  const { data: userAuth, error: lookupError } = await supabase
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", userId)
+    .single();
+
+  if (lookupError || !userAuth) {
+    throw new Error(
+      `Failed to find person for auth user ${userId}: ${lookupError?.message ?? "not found"}`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("project_directory_memberships")
+    .insert({
+      project_id: projectId,
+      person_id: userAuth.person_id,
+      role,
+      user_type: "employee",
+    });
 
   if (error) {
     throw new Error(`Failed to add project member: ${error.message}`);
@@ -223,7 +239,7 @@ export async function deleteChangeOrdersByProject(projectId: number) {
 
 export async function deleteProjectMembers(projectId: number) {
   const { error } = await supabase
-    .from("project_members")
+    .from("project_directory_memberships")
     .delete()
     .eq("project_id", projectId);
 

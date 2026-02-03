@@ -9,28 +9,28 @@ This workflow defines the minimum effective process required to implement a Proc
 The goal is shipping real, working features—not producing paperwork.
 
 ## Core Principles (Non-Negotiable)
-	1.	The feature folder is the single source of truth
-	2.	No proof = not done
-	3.	Tests + quality checks are mandatory
-	4.	Verification is skeptical and independent
-	5.	If it’s confusing, simplify
+
+ 1. The feature folder is the single source of truth
+ 2. No proof = not done
+ 3. Tests + quality checks are mandatory
+ 4. Verification is skeptical and independent
+ 5. If it’s confusing, simplify
 
 ## Canonical Feature Folder
 
 Every feature lives in exactly one place:
 
-```
+```text
 documentation/*project-mgmt/active/{feature}/
-```
-
+```text
 Everything related to the feature goes here.
 
 Nothing critical goes in .claude/, temp folders, or agent memory.
 
 ## Required Files
 
-```
-playwright-procore-crawl/procore-crawls/{feature}/
+```text
+docs-ai/contents/docs/PRPs/{feature}/
 ├── STATUS.md           # Current state + what’s next
 ├── TASKS.md            # Checklist of work (single source of tasks)
 ├── PLAN.md             # Short implementation plan
@@ -49,18 +49,17 @@ If a file does not exist, that step is not complete.
 **Goal: Know what exists and what’s missing.**
 
 - **Action:**
-    - Read the codebase
-    - Review Procore crawl artifacts (if present)
-    - Identify gaps vs. desired feature parity
+  - Read the codebase
+  - Review Procore crawl artifacts (if present)
+  - Identify gaps vs. desired feature parity
 
 - **Required Update:**
-    - Update STATUS.md with:
-    - What already exists
-    - What is missing
-    - What you will work on next
+  - Update STATUS.md with:
+  - What already exists
+  - What is missing
+  - What you will work on next
 
 **Rule:** Do not create a separate research doc. Research lives in STATUS.md.
-
 
 ### Step 2 — Plan (Decide, Don’t Speculate)
 
@@ -68,33 +67,33 @@ If a file does not exist, that step is not complete.
 - **Output:** PLAN.md (short, decisive)
 
 - **PLAN.md must include:**
-    - Pages/routes involved
-    - API endpoints involved (or “none”)
-    - Database tables involved (or “none”)
-    - UI components/patterns used
-    - Tests that will be written
+  - Pages/routes involved
+  - API endpoints involved (or “none”)
+  - Database tables involved (or “none”)
+  - UI components/patterns used
+  - Tests that will be written
 
 - **Constraints:**
-    - No essays
-    - No future hypotheticals
-    - If unsure, choose the simplest viable approach
-
+  - No essays
+  - No future hypotheticals
+  - If unsure, choose the simplest viable approach
 
 ### Step 3 — Implement (Work the Checklist)
 
 **Goal: Execute the plan.**
 
 **Action:**
+
 - Implement tasks listed in TASKS.md
 - Check items off only after code exists
 - Add a link to the completed file path and/or url
 
 **Rules:**
+
 - If you touch DB → verify schema + regenerate types
 - If you touch UI → follow existing design system
 - If you add behavior → add tests
 - Do not claim completion in chat—only via files
-
 
 ### Step 4 — Prove (Gates)
 
@@ -107,34 +106,37 @@ This step produces evidence, not opinions.
 ### Gate 1 — Code Quality
 
 Run from repo root:
-```
-npm run quality --prefix frontend
-```
 
+```bash
+npm run quality --prefix frontend
+```diff
 Requirement:
+
 - Zero TypeScript errors
 - Zero lint errors
 
 Evidence:
-- Paste actual terminal output into TEST-RESULTS.md
 
+- Paste actual terminal output into TEST-RESULTS.md
 
 ### Gate 2 — Tests
 
 Run feature tests:
-```
+
+```bash
 npx playwright test frontend/tests/e2e/{feature}*.spec.ts
 ```
 
 Requirement:
+
 - All tests pass
 - No skipped tests
 - No retries hiding failures
 
 Evidence:
+
 - Paste actual test output into TEST-RESULTS.md
 - If Playwright HTML report is generated, link or reference it
-
 
 ## Gate 3 — Verification (Independent & Skeptical)
 
@@ -144,7 +146,7 @@ The verifier assumes nothing is correct without proof.
 
 **VERIFICATION.md Template**
 
-```
+```bash
 # Verification: {feature}
 
 ## Quality Check
@@ -179,14 +181,13 @@ Notes:
 
 ## Final Verdict
 VERIFIED / FAILED
-```
-
+```bash
 If any section fails → fix the issue → re-run gates → update files.
-
 
 Definition of “Complete”
 
 A feature is COMPLETE only when all are true:
+
 - All tasks checked in TASKS.md
 - PLAN.md exists and reflects implementation
 - TEST-RESULTS.md contains real, recent output
@@ -194,7 +195,6 @@ A feature is COMPLETE only when all are true:
 - STATUS.md updated to “Complete” with next action
 
 Anything less = not done.
-
 
 ## STATUS.md Contract (Important)
 
@@ -204,7 +204,7 @@ What is the current state, and what happens next?
 
 **Example**
 
-```
+```diff
 Status: In Progress
 
 Completed:
@@ -223,13 +223,12 @@ Next:
 
 No history logs. No essays. Just truth.
 
-
 ## Known Pitfalls (Read Before Testing)
 
 - Do not rely on waitForLoadState('networkidle') in SPAs
 - Prefer:
-    * domcontentloaded
-    * explicit locator waits
+  - domcontentloaded
+  - explicit locator waits
 
 **Do not claim “tests should pass”**
 
@@ -239,10 +238,10 @@ Paste real output or it didn’t happen.
 
 Fix → re-run → prove.
 
-
 ## Codex Compatibility Notes
 
 This workflow:
+
 - Uses no slash commands
 - Assumes no Claude-specific routing
 - Works with:
@@ -255,21 +254,22 @@ Invocation is explicit:
 
 “Follow .agents/workflows/feature-implementation.md exactly.”
 
-
 ## When to Stop and Ask
 
 Stop only if:
+
 - Required credentials/access are missing
 - A core architectural decision is ambiguous
 - You are blocked after multiple concrete attempts
 
 Do not stop to:
+
 - Ask permission to continue
 - Report failures without fixing
 - Ask “should I do X?” — decide and do
 
-
 ## Final Reminder
+
 - Files are the system
 - Evidence beats confidence
 - Simple processes ship faster

@@ -11,6 +11,7 @@ version: 0.1.0
 Model Context Protocol (MCP) enables Claude Code plugins to integrate with external services and APIs by providing structured tool access. Use MCP integration to expose external service capabilities as tools within Claude Code.
 
 **Key capabilities:**
+
 - Connect to external services (databases, APIs, file systems)
 - Provide 10+ related tools from a single service
 - Handle OAuth and complex authentication flows
@@ -34,8 +35,7 @@ Create `.mcp.json` at plugin root:
     }
   }
 }
-```
-
+```bash
 **Benefits:**
 - Clear separation of concerns
 - Easier to maintain
@@ -56,9 +56,9 @@ Add `mcpServers` field to plugin.json:
     }
   }
 }
-```
-
+```diff
 **Benefits:**
+
 - Single configuration file
 - Good for simple single-server plugins
 
@@ -69,6 +69,7 @@ Add `mcpServers` field to plugin.json:
 Execute local MCP servers as child processes. Best for local tools and custom servers.
 
 **Configuration:**
+
 ```json
 {
   "filesystem": {
@@ -79,8 +80,7 @@ Execute local MCP servers as child processes. Best for local tools and custom se
     }
   }
 }
-```
-
+```diff
 **Use cases:**
 - File system access
 - Local database connections
@@ -107,12 +107,14 @@ Connect to hosted MCP servers with OAuth support. Best for cloud services.
 ```
 
 **Use cases:**
+
 - Official hosted MCP servers (Asana, GitHub, etc.)
 - Cloud services with MCP endpoints
 - OAuth-based authentication
 - No local installation needed
 
 **Authentication:**
+
 - OAuth flows handled automatically
 - User prompted on first use
 - Tokens managed by Claude Code
@@ -122,6 +124,7 @@ Connect to hosted MCP servers with OAuth support. Best for cloud services.
 Connect to RESTful MCP servers with token authentication.
 
 **Configuration:**
+
 ```json
 {
   "api-service": {
@@ -133,8 +136,7 @@ Connect to RESTful MCP servers with token authentication.
     }
   }
 }
-```
-
+```bash
 **Use cases:**
 - REST API-based MCP servers
 - Token-based authentication
@@ -156,9 +158,9 @@ Connect to WebSocket MCP servers for real-time bidirectional communication.
     }
   }
 }
-```
-
+```bash
 **Use cases:**
+
 - Real-time data streaming
 - Persistent connections
 - Push notifications from server
@@ -169,12 +171,12 @@ Connect to WebSocket MCP servers for real-time bidirectional communication.
 All MCP configurations support environment variable substitution:
 
 **${CLAUDE_PLUGIN_ROOT}** - Plugin directory (always use for portability):
+
 ```json
 {
   "command": "${CLAUDE_PLUGIN_ROOT}/servers/my-server"
 }
-```
-
+```bash
 **User environment variables** - From user's shell:
 ```json
 {
@@ -194,6 +196,7 @@ When MCP servers provide tools, they're automatically prefixed:
 **Format:** `mcp__plugin_<plugin-name>_<server-name>__<tool-name>`
 
 **Example:**
+
 - Plugin: `asana`
 - Server: `asana`
 - Tool: `create_task`
@@ -210,25 +213,25 @@ allowed-tools: [
   "mcp__plugin_asana_asana__asana_search_tasks"
 ]
 ---
-```
-
+```diff
 **Wildcard (use sparingly):**
 ```markdown
 ---
 allowed-tools: ["mcp__plugin_asana_asana__*"]
 ---
-```
-
+```bash
 **Best practice:** Pre-allow specific tools, not wildcards, for security.
 
 ## Lifecycle Management
 
 **Automatic startup:**
+
 - MCP servers start when plugin enables
 - Connection established before first tool use
 - Restart required for configuration changes
 
 **Lifecycle:**
+
 1. Plugin loads
 2. MCP configuration parsed
 3. Server process started (stdio) or connection established (SSE/HTTP/WS)
@@ -249,8 +252,7 @@ OAuth handled automatically by Claude Code:
   "type": "sse",
   "url": "https://mcp.example.com/sse"
 }
-```
-
+```bash
 User authenticates in browser on first use. No additional configuration needed.
 
 ### Token-Based (Headers)
@@ -283,8 +285,7 @@ Pass configuration to MCP server:
     "LOG_LEVEL": "info"
   }
 }
-```
-
+```markdown
 ## Integration Patterns
 
 ### Pattern 1: Simple Tool Wrapper
@@ -301,8 +302,7 @@ Steps:
 1. Gather item details from user
 2. Use mcp__plugin_name_server__create_item
 3. Confirm creation
-```
-
+```text
 **Use for:** Adding validation or preprocessing before MCP calls.
 
 ### Pattern 2: Autonomous Agent
@@ -316,8 +316,7 @@ Analysis Process:
 1. Query data via mcp__plugin_db_server__query
 2. Process and analyze results
 3. Generate insights report
-```
-
+```text
 **Use for:** Multi-step MCP workflows without user interaction.
 
 ### Pattern 3: Multi-Server Plugin
@@ -348,8 +347,7 @@ Always use secure connections:
 ```json
 ✅ "url": "https://mcp.example.com/sse"
 ❌ "url": "http://mcp.example.com/sse"
-```
-
+```markdown
 ### Token Management
 
 **DO:**
@@ -373,13 +371,13 @@ Pre-allow only necessary MCP tools:
 ]
 
 ❌ allowed-tools: ["mcp__plugin_api_server__*"]
-```
-
+```bash
 ## Error Handling
 
 ### Connection Failures
 
 Handle MCP server unavailability:
+
 - Provide fallback behavior in commands
 - Inform user of connection issues
 - Check server URL and configuration
@@ -387,6 +385,7 @@ Handle MCP server unavailability:
 ### Tool Call Errors
 
 Handle failed MCP operations:
+
 - Validate inputs before calling MCP tools
 - Provide clear error messages
 - Check rate limiting and quotas
@@ -394,6 +393,7 @@ Handle failed MCP operations:
 ### Configuration Errors
 
 Validate MCP configuration:
+
 - Test server connectivity during development
 - Validate JSON syntax
 - Check required environment variables
@@ -403,6 +403,7 @@ Validate MCP configuration:
 ### Lazy Loading
 
 MCP servers connect on-demand:
+
 - Not all servers connect at startup
 - First tool use triggers connection
 - Connection pooling managed automatically
@@ -411,7 +412,7 @@ MCP servers connect on-demand:
 
 Batch similar requests when possible:
 
-```
+```bash
 # Good: Single query with filters
 tasks = search_tasks(project="X", assignee="me", limit=50)
 
@@ -449,6 +450,7 @@ claude --debug
 ```
 
 Look for:
+
 - MCP server connection attempts
 - Tool discovery logs
 - Authentication flows
@@ -457,18 +459,21 @@ Look for:
 ### Common Issues
 
 **Server not connecting:**
+
 - Check URL is correct
 - Verify server is running (stdio)
 - Check network connectivity
 - Review authentication configuration
 
 **Tools not available:**
+
 - Verify server connected successfully
 - Check tool names match exactly
 - Run `/mcp` to see available tools
 - Restart Claude Code after config changes
 
 **Authentication failing:**
+
 - Clear cached auth tokens
 - Re-authenticate
 - Check token scopes and permissions
@@ -497,6 +502,7 @@ Look for:
 ### Best Practices
 
 **DO:**
+
 - ✅ Use ${CLAUDE_PLUGIN_ROOT} for portable paths
 - ✅ Document required environment variables
 - ✅ Use secure connections (HTTPS/WSS)
@@ -505,6 +511,7 @@ Look for:
 - ✅ Handle connection and tool errors gracefully
 
 **DON'T:**
+
 - ❌ Hardcode absolute paths
 - ❌ Commit credentials to git
 - ❌ Use HTTP instead of HTTPS
@@ -532,8 +539,8 @@ Working examples in `examples/`:
 
 ### External Resources
 
-- **Official MCP Docs**: https://modelcontextprotocol.io/
-- **Claude Code MCP Docs**: https://docs.claude.com/en/docs/claude-code/mcp
+- **Official MCP Docs**: <https://modelcontextprotocol.io/>
+- **Claude Code MCP Docs**: <https://docs.claude.com/en/docs/claude-code/mcp>
 - **MCP SDK**: @modelcontextprotocol/sdk
 - **Testing**: Use `claude --debug` and `/mcp` command
 

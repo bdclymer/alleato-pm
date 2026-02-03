@@ -5,6 +5,7 @@
 This directory contains **crawler output and reports** for the Procore **submittals** tool.
 
 This module is part of a larger system designed to:
+
 - Observe Procore functionality
 - Extract UI and behavioral intelligence
 - Ingest structured data into Supabase
@@ -14,7 +15,7 @@ This module is part of a larger system designed to:
 
 ## Directory Structure
 
-```
+```text
 submittals/
 ├── screenshots/              # One screenshot per page, named to match
 │   ├── <page-name>.png
@@ -38,7 +39,8 @@ submittals/
 2. Screenshots are saved to `screenshots/` (one .png per page, named to match the page)
 3. DOM snapshots and metadata are saved to `dom/<page-name>/`
 4. Reports are generated into `reports/`
-4. The ETL script ingests this data into Supabase using:
+5. The ETL script ingests this data into Supabase using:
+
    ```bash
    PROCORE_MODULE=submittals node etl/etl_ingest_procore_crawl.js
    ```

@@ -1,7 +1,8 @@
 import { Calendar, Clock } from "lucide-react";
 
 import { EmptyState } from "@/components/design-system";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 
 import { MeetingsTableWrapper } from "./meetings-table-wrapper";
@@ -40,7 +41,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
 
   return (
     <>
-      <ProjectPageHeader title="Meetings" />
+      <PageHeader title="Meetings" />
 
       <PageContainer>
         {/* Meeting Statistics */}

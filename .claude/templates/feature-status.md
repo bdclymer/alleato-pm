@@ -87,6 +87,7 @@ Lock files location: `.claude/locks/{feature}/`
 <!-- Append-only log of session activity -->
 
 ### Session: {session-id}
+
 - **Started:** {timestamp}
 - **Phase:** {phase-worked-on}
 - **Tasks Completed:**
@@ -98,6 +99,7 @@ Lock files location: `.claude/locks/{feature}/`
 ---
 
 ### Session: {previous-session-id}
+
 - **Started:** {timestamp}
 - **Phase:** {phase}
 - **Tasks Completed:**

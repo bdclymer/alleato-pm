@@ -32,21 +32,22 @@ When components are used:
 
 Single directory with all commands:
 
-```
+```text
 commands/
 ├── build.md
 ├── test.md
 ├── deploy.md
 ├── review.md
 └── docs.md
-```
-
+```diff
 **When to use**:
+
 - 5-15 commands total
 - All commands at same abstraction level
 - No clear categorization
 
 **Advantages**:
+
 - Simple, easy to navigate
 - No configuration needed
 - Fast discovery
@@ -55,7 +56,7 @@ commands/
 
 Multiple directories for different command types:
 
-```
+```text
 commands/              # Core commands
 ├── build.md
 └── test.md
@@ -70,6 +71,7 @@ workflow-commands/     # Workflow automation
 ```
 
 **Manifest configuration**:
+
 ```json
 {
   "commands": [
@@ -78,8 +80,7 @@ workflow-commands/     # Workflow automation
     "./workflow-commands"
   ]
 }
-```
-
+```diff
 **When to use**:
 - 15+ commands
 - Clear functional categories
@@ -94,7 +95,7 @@ workflow-commands/     # Workflow automation
 
 Nested organization for complex plugins:
 
-```
+```text
 commands/
 ├── ci/
 │   ├── build.md
@@ -106,8 +107,8 @@ commands/
 └── management/
     ├── config.md
     └── status.md
-```
 
+```text
 **Note**: Claude Code doesn't support nested command discovery automatically. Use custom paths:
 
 ```json
@@ -121,11 +122,13 @@ commands/
 ```
 
 **When to use**:
+
 - 20+ commands
 - Multi-level categorization
 - Complex workflows
 
 **Advantages**:
+
 - Maximum organization
 - Clear boundaries
 - Scalable structure
@@ -136,15 +139,15 @@ commands/
 
 Organize agents by their primary role:
 
-```
+```text
 agents/
 ├── code-reviewer.md        # Reviews code
 ├── test-generator.md       # Generates tests
 ├── documentation-writer.md # Writes docs
 └── refactorer.md          # Refactors code
-```
-
+```diff
 **When to use**:
+
 - Agents have distinct, non-overlapping roles
 - Users invoke agents manually
 - Clear agent responsibilities
@@ -153,7 +156,7 @@ agents/
 
 Organize by specific capabilities:
 
-```
+```text
 agents/
 ├── python-expert.md        # Python-specific
 ├── typescript-expert.md    # TypeScript-specific
@@ -162,6 +165,7 @@ agents/
 ```
 
 **When to use**:
+
 - Technology-specific agents
 - Domain expertise focus
 - Automatic agent selection
@@ -170,15 +174,15 @@ agents/
 
 Organize by workflow stage:
 
-```
+```text
 agents/
 ├── planning-agent.md      # Planning phase
 ├── implementation-agent.md # Coding phase
 ├── testing-agent.md       # Testing phase
 └── deployment-agent.md    # Deployment phase
-```
-
+```diff
 **When to use**:
+
 - Sequential workflows
 - Stage-specific expertise
 - Pipeline automation
@@ -189,7 +193,7 @@ agents/
 
 Each skill covers a specific topic:
 
-```
+```text
 skills/
 ├── api-design/
 │   └── SKILL.md
@@ -202,6 +206,7 @@ skills/
 ```
 
 **When to use**:
+
 - Knowledge-based skills
 - Educational or reference content
 - Broad applicability
@@ -210,7 +215,7 @@ skills/
 
 Skills for specific tools or technologies:
 
-```
+```text
 skills/
 ├── docker/
 │   ├── SKILL.md
@@ -224,9 +229,9 @@ skills/
     ├── SKILL.md
     └── scripts/
         └── validate-config.sh
-```
-
+```diff
 **When to use**:
+
 - Tool-specific expertise
 - Complex tool configurations
 - Tool best practices
@@ -235,7 +240,7 @@ skills/
 
 Skills for complete workflows:
 
-```
+```text
 skills/
 ├── code-review-workflow/
 │   ├── SKILL.md
@@ -254,6 +259,7 @@ skills/
 ```
 
 **When to use**:
+
 - Multi-step processes
 - Company-specific workflows
 - Process automation
@@ -262,7 +268,7 @@ skills/
 
 Comprehensive skill with all resource types:
 
-```
+```text
 skills/
 └── api-testing/
     ├── SKILL.md              # Core skill (1500 words)
@@ -279,9 +285,9 @@ skills/
     │   └── generate-report.py
     └── assets/
         └── test-template.json
-```
-
+```diff
 **Resource usage**:
+
 - **SKILL.md**: Overview and when to use resources
 - **references/**: Detailed guides (loaded as needed)
 - **examples/**: Copy-paste code samples
@@ -294,7 +300,7 @@ skills/
 
 Single hooks.json with all hooks:
 
-```
+```text
 hooks/
 ├── hooks.json     # All hook definitions
 └── scripts/
@@ -304,6 +310,7 @@ hooks/
 ```
 
 **hooks.json**:
+
 ```json
 {
   "PreToolUse": [...],
@@ -311,8 +318,7 @@ hooks/
   "Stop": [...],
   "SessionStart": [...]
 }
-```
-
+```diff
 **When to use**:
 - 5-10 hooks total
 - Simple hook logic
@@ -322,7 +328,7 @@ hooks/
 
 Separate files per event type:
 
-```
+```bash
 hooks/
 ├── hooks.json              # Combines all
 ├── pre-tool-use.json      # PreToolUse hooks
@@ -334,8 +340,8 @@ hooks/
     │   └── bash.sh
     └── context/
         └── load.sh
-```
 
+```bash
 **hooks.json** (combines):
 ```json
 {
@@ -348,6 +354,7 @@ hooks/
 **Note**: Use build script to combine files, Claude Code doesn't support file references.
 
 **When to use**:
+
 - 10+ hooks
 - Different teams managing different events
 - Complex hook configurations
@@ -356,7 +363,7 @@ hooks/
 
 Group by functional purpose:
 
-```
+```text
 hooks/
 ├── hooks.json
 └── scripts/
@@ -371,9 +378,9 @@ hooks/
     └── workflow/
         ├── notify-team.sh
         └── update-status.sh
-```
-
+```diff
 **When to use**:
+
 - Many hook scripts
 - Clear functional boundaries
 - Team specialization
@@ -384,7 +391,7 @@ hooks/
 
 All scripts in single directory:
 
-```
+```text
 scripts/
 ├── build.sh
 ├── test.py
@@ -394,6 +401,7 @@ scripts/
 ```
 
 **When to use**:
+
 - 5-10 scripts
 - All scripts related
 - Simple plugin
@@ -402,7 +410,7 @@ scripts/
 
 Group by purpose:
 
-```
+```text
 scripts/
 ├── build/
 │   ├── compile.sh
@@ -416,9 +424,9 @@ scripts/
 └── utils/
     ├── log.sh
     └── notify.sh
-```
-
+```diff
 **When to use**:
+
 - 10+ scripts
 - Clear categories
 - Reusable utilities
@@ -427,7 +435,7 @@ scripts/
 
 Group by programming language:
 
-```
+```text
 scripts/
 ├── bash/
 │   ├── build.sh
@@ -441,6 +449,7 @@ scripts/
 ```
 
 **When to use**:
+
 - Multi-language scripts
 - Different runtime requirements
 - Language-specific dependencies
@@ -451,7 +460,7 @@ scripts/
 
 Components sharing common resources:
 
-```
+```text
 plugin/
 ├── commands/
 │   ├── test.md        # Uses lib/test-utils.sh
@@ -464,15 +473,14 @@ plugin/
 └── lib/
     ├── test-utils.sh
     └── deploy-utils.sh
-```
-
+```bash
 **Usage in components**:
+
 ```bash
 #!/bin/bash
 source "${CLAUDE_PLUGIN_ROOT}/lib/test-utils.sh"
 run_tests
-```
-
+```diff
 **Benefits**:
 - Code reuse
 - Consistent behavior
@@ -483,6 +491,7 @@ run_tests
 Separate concerns into layers:
 
 ```
+
 plugin/
 ├── commands/          # User interface layer
 ├── agents/            # Orchestration layer
@@ -491,8 +500,8 @@ plugin/
     ├── core/         # Core business logic
     ├── integrations/ # External services
     └── utils/        # Helper functions
-```
 
+```diff
 **When to use**:
 - Large plugins (100+ files)
 - Multiple developers
@@ -502,7 +511,7 @@ plugin/
 
 Nested plugin structure:
 
-```
+```text
 plugin/
 ├── .claude-plugin/
 │   └── plugin.json
@@ -516,8 +525,8 @@ plugin/
     └── extension-b/
         ├── commands/
         └── agents/
-```
 
+```text
 **Manifest**:
 ```json
 {
@@ -530,6 +539,7 @@ plugin/
 ```
 
 **When to use**:
+
 - Modular functionality
 - Optional features
 - Plugin families

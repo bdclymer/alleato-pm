@@ -3,11 +3,12 @@
 Generate a comprehensive report of design system status.
 
 ## Usage
-```
-/design-report [format]
-```
 
+```bash
+/design-report [format]
+```diff
 **Formats:**
+
 - `summary` - Quick overview (default)
 - `full` - Detailed report with all violations
 - `markdown` - Export as markdown file
@@ -18,11 +19,12 @@ Generate a comprehensive report of design system status.
 Generate a design system compliance report.
 
 ### Step 1: Load Current State
+
 Read `.claude/design-audit/violations.json`
 
 ### Step 2: Calculate Metrics
 
-```
+```text
 Total Violations: X
   - Pending: X
   - In Progress: X
@@ -56,7 +58,8 @@ Compliance Score: X% (verified / total * 100)
 ### Step 3: Generate Report Based on Format
 
 **Format: summary** (default)
-```
+
+```yaml
 Design System Compliance Report
 ===============================
 Generated: [timestamp]
@@ -92,6 +95,7 @@ Write raw data to `.claude/design-audit/report-[timestamp].json`
 ### Step 4: Recommendations
 
 Based on the data, provide actionable recommendations:
+
 - If many color violations: "Focus on replacing raw hex values with design tokens"
 - If many spacing violations: "Standardize on 8px grid spacing"
 - If many component violations: "Migrate raw HTML to ShadCN components"

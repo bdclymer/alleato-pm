@@ -60,8 +60,8 @@ export function DrawingAreaSelector({
     // Second pass: build hierarchy
     areas.forEach(area => {
       const areaWithChildren = areaMap.get(area.id)!;
-      if (area.parentAreaId) {
-        const parent = areaMap.get(area.parentAreaId);
+      if (area.parent_area_id) {
+        const parent = areaMap.get(area.parent_area_id);
         if (parent) {
           parent.children!.push(areaWithChildren);
         }
@@ -144,7 +144,7 @@ export function DrawingAreaSelector({
 
           {/* Drawing count badge */}
           <Badge variant="secondary" className="ml-2">
-            {area.drawingCount}
+            {area.drawing_count}
           </Badge>
 
           {/* Actions dropdown */}
@@ -172,7 +172,7 @@ export function DrawingAreaSelector({
                   Edit Area
                 </DropdownMenuItem>
               )}
-              {onDeleteArea && area.drawingCount === 0 && (
+              {onDeleteArea && area.drawing_count === 0 && (
                 <DropdownMenuItem
                   onClick={() => onDeleteArea(area)}
                   className="text-red-600 focus:text-red-600"
@@ -248,7 +248,7 @@ export function DrawingAreaSelector({
               All Drawings
             </span>
             <Badge variant="secondary" className="ml-auto">
-              {areas.reduce((sum, area) => sum + area.drawingCount, 0)}
+              {areas.reduce((sum, area) => sum + (area.drawing_count || 0), 0)}
             </Badge>
           </div>
 

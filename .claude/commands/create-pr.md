@@ -21,16 +21,14 @@ $ARGUMENTS
 
    # Ensure we're not on main
    # If on main, create a feature branch
-   ```
-
+   ```text
 2. **Review Changes**
 
    ```bash
    # See what will be included
    git status
    git diff main...HEAD
-   ```
-
+   ```bash
 3. **Create Commits**
    - Stage relevant files
    - Create logical, atomic commits if not already done
@@ -45,8 +43,7 @@ $ARGUMENTS
 
    ```bash
    git push -u origin HEAD
-   ```
-
+   ```bash
 5. **Create PR**
 
    ```bash

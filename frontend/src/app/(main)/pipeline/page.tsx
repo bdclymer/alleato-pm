@@ -32,7 +32,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 
 interface Document {
   id: string;

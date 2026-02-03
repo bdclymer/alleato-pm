@@ -11,6 +11,7 @@ version: 0.2.0
 Slash commands are frequently-used prompts defined as Markdown files that Claude executes during interactive sessions. Understanding command structure, frontmatter options, and dynamic features enables creating powerful, reusable workflows.
 
 **Key concepts:**
+
 - Markdown file format for commands
 - YAML frontmatter for configuration
 - Dynamic arguments and file references
@@ -22,6 +23,7 @@ Slash commands are frequently-used prompts defined as Markdown files that Claude
 ### What is a Slash Command?
 
 A slash command is a Markdown file containing a prompt that Claude executes when invoked. Commands provide:
+
 - **Reusability**: Define once, use repeatedly
 - **Consistency**: Standardize common workflows
 - **Sharing**: Distribute across team or projects
@@ -34,6 +36,7 @@ A slash command is a Markdown file containing a prompt that Claude executes when
 When a user invokes `/command-name`, the command content becomes Claude's instructions. Write commands as directives TO Claude about what to do, not as messages TO the user.
 
 **Correct approach (instructions for Claude):**
+
 ```markdown
 Review this code for security vulnerabilities including:
 - SQL injection
@@ -41,31 +44,32 @@ Review this code for security vulnerabilities including:
 - Authentication issues
 
 Provide specific line numbers and severity ratings.
-```
-
+```text
 **Incorrect approach (messages to user):**
 ```markdown
 This command will review your code for security issues.
 You'll receive a report with vulnerability details.
-```
-
+```diff
 The first example tells Claude what to do. The second tells the user what will happen but doesn't instruct Claude. Always use the first approach.
 
 ### Command Locations
 
 **Project commands** (shared with team):
+
 - Location: `.claude/commands/`
 - Scope: Available in specific project
 - Label: Shown as "(project)" in `/help`
 - Use for: Team workflows, project-specific tasks
 
 **Personal commands** (available everywhere):
+
 - Location: `~/.claude/commands/`
 - Scope: Available in all projects
 - Label: Shown as "(user)" in `/help`
 - Use for: Personal workflows, cross-project utilities
 
 **Plugin commands** (bundled with plugins):
+
 - Location: `plugin-name/commands/`
 - Scope: Available when plugin installed
 - Label: Shown as "(plugin-name)" in `/help`
@@ -77,7 +81,7 @@ The first example tells Claude what to do. The second tells the user what will h
 
 Commands are Markdown files with `.md` extension:
 
-```
+```text
 .claude/commands/
 ├── review.md           # /review command
 ├── test.md             # /test command
@@ -85,14 +89,14 @@ Commands are Markdown files with `.md` extension:
 ```
 
 **Simple command:**
+
 ```markdown
 Review this code for security vulnerabilities including:
 - SQL injection
 - XSS attacks
 - Authentication bypass
 - Insecure data handling
-```
-
+```yaml
 No frontmatter needed for basic commands.
 
 ### With YAML Frontmatter
@@ -107,8 +111,7 @@ model: sonnet
 ---
 
 Review this code for security vulnerabilities...
-```
-
+```yaml
 ## YAML Frontmatter Fields
 
 ### description
@@ -121,8 +124,7 @@ Review this code for security vulnerabilities...
 ---
 description: Review pull request for code quality
 ---
-```
-
+```diff
 **Best practice:** Clear, actionable description (under 60 characters)
 
 ### allowed-tools
@@ -138,6 +140,7 @@ allowed-tools: Read, Write, Edit, Bash(git:*)
 ```
 
 **Patterns:**
+
 - `Read, Write, Edit` - Specific tools
 - `Bash(git:*)` - Bash with git commands only
 - `*` - All tools (rarely needed)
@@ -154,8 +157,7 @@ allowed-tools: Read, Write, Edit, Bash(git:*)
 ---
 model: haiku
 ---
-```
-
+```diff
 **Use cases:**
 - `haiku` - Fast, simple commands
 - `sonnet` - Standard workflows
@@ -171,9 +173,9 @@ model: haiku
 ---
 argument-hint: [pr-number] [priority] [assignee]
 ---
-```
-
+```yaml
 **Benefits:**
+
 - Helps users understand command arguments
 - Improves command discovery
 - Documents command interface
@@ -188,8 +190,7 @@ argument-hint: [pr-number] [priority] [assignee]
 ---
 disable-model-invocation: true
 ---
-```
-
+```yaml
 **Use when:** Command should only be manually invoked
 
 ## Dynamic Arguments
@@ -208,13 +209,14 @@ Fix issue #$ARGUMENTS following our coding standards and best practices.
 ```
 
 **Usage:**
-```
+
+```text
 > /fix-issue 123
 > /fix-issue 456
-```
-
+```text
 **Expands to:**
-```
+
+```bash
 Fix issue #123 following our coding standards...
 Fix issue #456 following our coding standards...
 ```
@@ -231,37 +233,37 @@ argument-hint: [pr-number] [priority] [assignee]
 
 Review pull request #$1 with priority level $2.
 After review, assign to $3 for follow-up.
-```
-
+```text
 **Usage:**
-```
+```text
 > /review-pr 123 high alice
-```
 
+```text
 **Expands to:**
 ```
+
 Review pull request #123 with priority level high.
 After review, assign to alice for follow-up.
-```
 
+```bash
 ### Combining Arguments
 
 Mix positional and remaining arguments:
 
 ```markdown
 Deploy $1 to $2 environment with options: $3
-```
-
+```text
 **Usage:**
-```
+
+```text
 > /deploy api staging --force --skip-tests
 ```
 
 **Expands to:**
-```
-Deploy api to staging environment with options: --force --skip-tests
-```
 
+```bash
+Deploy api to staging environment with options: --force --skip-tests
+```yaml
 ## File References
 
 ### Using @ Syntax
@@ -278,13 +280,13 @@ Review @$1 for:
 - Code quality
 - Best practices
 - Potential bugs
-```
-
+```text
 **Usage:**
 ```
-> /review-file src/api/users.ts
-```
 
+> /review-file src/api/users.ts
+
+```diff
 **Effect:** Claude reads `src/api/users.ts` before processing command
 
 ### Multiple File References
@@ -298,8 +300,7 @@ Identify:
 - Breaking changes
 - New features
 - Bug fixes
-```
-
+```markdown
 ### Static File References
 
 Reference known files without arguments:
@@ -311,8 +312,7 @@ Ensure:
 - TypeScript version matches
 - Dependencies are aligned
 - Build configuration is correct
-```
-
+```markdown
 ## Bash Execution in Commands
 
 Commands can execute bash commands inline to dynamically gather context before Claude processes the command. This is useful for including repository state, environment information, or project-specific context.
@@ -332,21 +332,22 @@ For complete syntax, examples, and best practices, see `references/plugin-featur
 Simple organization for small command sets:
 
 ```
+
 .claude/commands/
 ├── build.md
 ├── test.md
 ├── deploy.md
 ├── review.md
 └── docs.md
-```
 
+```text
 **Use when:** 5-15 commands, no clear categories
 
 ### Namespaced Structure
 
 Organize commands in subdirectories:
 
-```
+```bash
 .claude/commands/
 ├── ci/
 │   ├── build.md        # /build (project:ci)
@@ -358,8 +359,8 @@ Organize commands in subdirectories:
 └── docs/
     ├── generate.md     # /generate (project:docs)
     └── publish.md      # /publish (project:docs)
-```
 
+```bash
 **Benefits:**
 - Logical grouping by category
 - Namespace shown in `/help`
@@ -429,8 +430,7 @@ Example: /deploy staging v1.2.3
 -->
 
 Deploy application to $1 environment using version $2...
-```
-
+```yaml
 ## Common Patterns
 
 ### Review Pattern
@@ -450,8 +450,7 @@ Review each file for:
 4. Documentation needs
 
 Provide specific feedback for each file.
-```
-
+```yaml
 ### Testing Pattern
 
 ```markdown
@@ -464,8 +463,7 @@ allowed-tools: Bash(npm:*)
 Run tests: !`npm test $1`
 
 Analyze results and suggest fixes for failures.
-```
-
+```yaml
 ### Documentation Pattern
 
 ```markdown
@@ -497,8 +495,7 @@ PR #$1 Workflow:
 2. Review changes
 3. Run checks
 4. Approve or request changes
-```
-
+```yaml
 ## Troubleshooting
 
 **Command not appearing:**
@@ -547,8 +544,7 @@ allowed-tools: Bash(node:*)
 Run analysis: !`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js $1`
 
 Review results and report findings.
-```
-
+```bash
 **Common patterns:**
 
 ```markdown
@@ -563,8 +559,7 @@ Review results and report findings.
 
 # Access plugin resources
 @${CLAUDE_PLUGIN_ROOT}/docs/reference.md
-```
-
+```diff
 **Why use it:**
 - Works across all installations
 - Portable between systems
@@ -576,6 +571,7 @@ Review results and report findings.
 Plugin commands discovered automatically from `commands/` directory:
 
 ```
+
 plugin-name/
 ├── commands/
 │   ├── foo.md              # /foo (plugin:plugin-name)
@@ -583,8 +579,8 @@ plugin-name/
 │   └── utils/
 │       └── helper.md       # /helper (plugin:plugin-name:utils)
 └── plugin.json
-```
 
+```yaml
 **Namespace benefits:**
 - Logical command grouping
 - Shown in `/help` output
@@ -612,8 +608,7 @@ Load configuration: @${CLAUDE_PLUGIN_ROOT}/config/$1-deploy.json
 
 Deploy to $1 using configuration settings.
 Monitor deployment and report status.
-```
-
+```yaml
 **Template-based pattern:**
 
 ```markdown
@@ -625,8 +620,7 @@ argument-hint: [component]
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/docs.md
 
 Generate documentation for $1 following template structure.
-```
-
+```yaml
 **Multi-script pattern:**
 
 ```markdown
@@ -669,8 +663,7 @@ The agent will analyze:
 Agent uses plugin resources:
 - ${CLAUDE_PLUGIN_ROOT}/config/rules.json
 - ${CLAUDE_PLUGIN_ROOT}/checklists/review.md
-```
-
+```yaml
 **Key points:**
 - Agent must exist in `plugin/agents/` directory
 - Claude uses Task tool to launch agent
@@ -696,9 +689,9 @@ Use the api-docs-standards skill to ensure:
 - Error documentation
 
 Generate production-ready API docs.
-```
-
+```yaml
 **Key points:**
+
 - Skill must exist in `plugin/skills/` directory
 - Mention skill name to trigger invocation
 - Document skill purpose
@@ -707,6 +700,7 @@ Generate production-ready API docs.
 ### Hook Coordination
 
 Design commands that work with plugin hooks:
+
 - Commands can prepare state for hooks to process
 - Hooks execute automatically on tool events
 - Commands should document expected hook behavior
@@ -740,8 +734,7 @@ Phase 4 - Report:
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/review.md
 
 Compile findings into report following template.
-```
-
+```yaml
 **When to use:**
 - Complex multi-step workflows
 - Leverage multiple plugin capabilities
@@ -785,8 +778,7 @@ Otherwise:
   Explain where to place config file
   Show expected format
   Provide example configuration
-```
-
+```yaml
 ### Plugin Resource Validation
 
 ```markdown
@@ -801,8 +793,7 @@ Validate plugin setup:
 
 If all checks pass, run analysis.
 Otherwise, report missing components.
-```
-
+```yaml
 ### Error Handling
 
 ```markdown
@@ -822,6 +813,7 @@ If build failed:
 ```
 
 **Best practices:**
+
 - Validate early in command
 - Provide helpful error messages
 - Suggest corrective actions

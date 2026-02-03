@@ -23,12 +23,14 @@ The Change Orders feature implementation has been thoroughly verified and meets 
 **Method:** Ran `npx tsc --noEmit` from frontend directory
 
 **Findings:**
+
 - Change Orders files have NO TypeScript errors
 - All imports resolve correctly
 - Type safety properly enforced using `Database["public"]["Tables"]["change_orders"]["Update"]`
 - Existing TypeScript errors are in unrelated `drawings` feature (not in scope)
 
 **Evidence:**
+
 ```bash
 # Checked specifically for change-orders related errors
 grep -E "change-orders" typescript_output
@@ -44,6 +46,7 @@ grep -E "change-orders" typescript_output
 **Method:** Ran `npx playwright test tests/e2e/change-orders-crud.spec.ts` with authenticated user state
 
 **Test Results:**
+
 ```
 ✓ 1 [setup] › authenticate (196ms)
 ✓ 2 List page renders with seeded change orders (3.0s)
@@ -58,6 +61,7 @@ grep -E "change-orders" typescript_output
 ```
 
 **Coverage:**
+
 - ✅ List page rendering with seeded data
 - ✅ Create functionality (form submission → database → UI update)
 - ✅ Form validation (required field enforcement)
@@ -74,17 +78,20 @@ grep -E "change-orders" typescript_output
 **Status:** ✅ PASS
 
 **Method:**
+
 - Searched for all imports referencing change-orders
 - Verified no broken import paths
 - Confirmed no references to old API routes
 
 **Findings:**
+
 - All imports resolve correctly
 - No broken references found
 - Client component properly imports from local `./change-orders-client`
 - Contract detail page correctly imports `ContractChangeOrder` type
 
 **Dead Code:**
+
 - ✅ NO dead code found in change-orders files
 - ✅ All exported functions/components are used
 - ✅ No orphaned files
@@ -96,10 +103,12 @@ grep -E "change-orders" typescript_output
 **Status:** ✅ PASS
 
 **Method:**
+
 - Checked if `/api/change-orders/` directory exists
 - Searched codebase for references to old route pattern
 
 **Evidence:**
+
 ```bash
 ls -la frontend/src/app/api/change-orders/
 # Result: No such file or directory ✓
@@ -122,11 +131,13 @@ grep -r "/api/change-orders" frontend/src
 **File:** `supabase/migrations/20260201110000_change_orders_rls.sql`
 
 **File Metadata:**
+
 ```
 -rw-r--r--@ 1 meganharrison  staff  2450 Feb  1 15:38
 ```
 
 **RLS Policies Implemented:**
+
 1. ✅ **SELECT Policy** - Users can view change orders for projects they belong to
    - Includes privacy filter: private change orders only visible to admins
    - Uses `project_directory_memberships → people → users_auth` join pattern
@@ -141,6 +152,7 @@ grep -r "/api/change-orders" frontend/src
    - Project membership check enforced
 
 **Security Pattern:**
+
 ```sql
 EXISTS (
     SELECT 1 FROM project_directory_memberships pdm
@@ -189,6 +201,7 @@ EXISTS (
 **Implementation Quality:**
 
 ✅ **Delete Handler:**
+
 ```typescript
 const handleDeleteRow = async (id: string | number) => {
   const response = await fetch(`/api/projects/${projectId}/change-orders/${id}`, {
@@ -197,11 +210,13 @@ const handleDeleteRow = async (id: string | number) => {
   // ... error handling, toast notifications, router refresh
 }
 ```
+
 - Uses project-scoped route: `/api/projects/${projectId}/change-orders/${id}`
 - Proper error handling with user feedback
 - Calls `router.refresh()` to update UI after mutation
 
 ✅ **Table Configuration:**
+
 - Comprehensive column definitions (co_number, title, description, status, amount, dates)
 - Badge rendering for status with variant mapping
 - Search across multiple fields
@@ -228,6 +243,7 @@ const handleDeleteRow = async (id: string | number) => {
    - Isolated test data prevents cross-test pollution
 
 3. **List Page Tests** ✅
+
    ```typescript
    test('List page renders with seeded change orders', async ({ page }) => {
      await page.goto('/67/change-orders');
@@ -235,10 +251,12 @@ const handleDeleteRow = async (id: string | number) => {
      await expect(page.getByText('Test Change Order 1')).toBeVisible();
    });
    ```
+
    - Verifies actual data rendering from database
    - Uses semantic selectors (getByText)
 
 4. **Create Workflow** ✅
+
    ```typescript
    test('Create a change order via the form', async ({ page }) => {
      await page.getByRole('button', { name: /new/i }).click();
@@ -248,6 +266,7 @@ const handleDeleteRow = async (id: string | number) => {
      await expect(page.getByText('CO-TEST-NEW-001')).toBeVisible();
    });
    ```
+
    - Full user workflow: open form → fill → submit → verify
    - Tests actual database write and UI update
 
@@ -298,10 +317,12 @@ const handleDeleteRow = async (id: string | number) => {
 ### Type Safety
 
 ✅ **Strong Typing Throughout:**
+
 ```typescript
 type ChangeOrderUpdate = Database["public"]["Tables"]["change_orders"]["Update"];
 type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
 ```
+
 - Uses generated Supabase types
 - No `any` types found
 - Proper Zod validation with `changeOrderSchema`
@@ -309,6 +330,7 @@ type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
 ### Error Handling
 
 ✅ **Comprehensive Error Handling:**
+
 ```typescript
 if (error) {
   if (error.code === "PGRST116") {
@@ -317,6 +339,7 @@ if (error) {
   return apiErrorResponse(error);
 }
 ```
+
 - Specific error codes handled
 - User-friendly error messages
 - Proper HTTP status codes
@@ -324,6 +347,7 @@ if (error) {
 ### Business Logic
 
 ✅ **Smart Defaults & Auto-Population:**
+
 - `approved_at` and `approved_by` set automatically on approval
 - `submitted_at` and `submitted_by` set when moving from draft to pending
 - `updated_at` always refreshed on updates
@@ -353,6 +377,7 @@ if (error) {
    - `frontend/tests/e2e/change-orders-crud.spec.ts`
 
 **Old Routes Removed:**
+
 - ✅ `frontend/src/app/api/change-orders/` → DELETED (confirmed)
 
 ---
@@ -362,6 +387,7 @@ if (error) {
 ### Contract-Scoped Change Orders
 
 **Note:** The implementation also includes contract-scoped routes:
+
 - `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/route.ts`
 - These routes handle change orders scoped to specific contracts
 - Include approve/reject endpoints
@@ -376,6 +402,7 @@ if (error) {
 ### Existing Functionality Preserved
 
 **Checked:**
+
 - ✅ Contract detail page still imports `ContractChangeOrder` type correctly
 - ✅ No broken imports in other modules
 - ✅ Change orders still linked to contracts via `contract_id` FK
@@ -388,12 +415,14 @@ if (error) {
 ## Performance Considerations
 
 **Query Optimization:**
+
 - ✅ Pagination implemented (default 50 per page)
 - ✅ Indexes on foreign keys (`project_id`, `contract_id`)
 - ✅ Efficient RLS policies (uses EXISTS with proper joins)
 - ✅ Count queries limited to necessary routes
 
 **Database Access:**
+
 - ✅ Single query for list endpoint
 - ✅ No N+1 query patterns detected
 - ✅ Proper use of `.select()` to limit columns
@@ -403,12 +432,14 @@ if (error) {
 ## Documentation & Maintainability
 
 **Code Documentation:**
+
 - ✅ Clear comments in RLS migration
 - ✅ Descriptive variable names
 - ✅ Consistent naming conventions
 - ✅ Type definitions exported for reuse
 
 **Testing Documentation:**
+
 - ✅ Test file has clear test descriptions
 - ✅ Setup/teardown clearly defined
 - ✅ E2E test patterns follow project standards

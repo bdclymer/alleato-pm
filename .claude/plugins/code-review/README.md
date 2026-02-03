@@ -29,8 +29,7 @@ Performs automated code review on a pull request using multiple specialized agen
 
 ```bash
 /code-review
-```
-
+```text
 **Example workflow:**
 
 ```bash
@@ -42,8 +41,7 @@ Performs automated code review on a pull request using multiple specialized agen
 # - Score each issue for confidence
 # - Post comment with issues ≥80 confidence
 # - Skip posting if no high-confidence issues found
-```
-
+```diff
 **Features:**
 
 - Multiple independent agents for comprehensive review
@@ -72,8 +70,7 @@ https://github.com/owner/repo/blob/abc123.../src/auth.ts#L88-L95
 3. Inconsistent naming pattern (src/conventions/CLAUDE.md says "Use camelCase for functions")
 
 https://github.com/owner/repo/blob/abc123.../src/utils.ts#L23-L28
-```
-
+```diff
 **Confidence scoring:**
 
 - **0**: Not confident, false positive
@@ -138,8 +135,7 @@ This plugin is included in the Claude Code repository. The command is automatica
 # Trigger on PR creation or update
 # Automatically posts review comments
 # Skip if review already exists
-```
-
+```markdown
 ## Requirements
 
 - Git repository with GitHub integration
@@ -188,10 +184,10 @@ Check if:
 **Solution**:
 Links must follow this exact format:
 
-```
-https://github.com/owner/repo/blob/[full-sha]/path/file.ext#L[start]-L[end]
-```
+```sql
+<https://github.com/owner/repo/blob/[full-sha]/path/file.ext#L[start]-L[end>]
 
+```sql
 - Must use full SHA (not abbreviated)
 - Must use `#L` notation
 - Must include line range with at least 1 line of context

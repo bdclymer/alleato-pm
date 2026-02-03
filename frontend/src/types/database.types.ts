@@ -5952,6 +5952,488 @@ export type Database = {
           },
         ]
       }
+      drawing_areas: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          parent_area_id: string | null
+          project_id: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          parent_area_id?: string | null
+          project_id: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          parent_area_id?: string | null
+          project_id?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_areas_parent_area_id_fkey"
+            columns: ["parent_area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_downloads: {
+        Row: {
+          downloaded_at: string
+          downloaded_by: string
+          drawing_revision_id: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+        }
+        Insert: {
+          downloaded_at?: string
+          downloaded_by: string
+          drawing_revision_id: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Update: {
+          downloaded_at?: string
+          downloaded_by?: string
+          drawing_revision_id?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "drawing_downloads_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_related_items: {
+        Row: {
+          created_at: string
+          created_by: string
+          drawing_id: string
+          id: string
+          related_id: string
+          related_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          drawing_id: string
+          id?: string
+          related_id: string
+          related_type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          drawing_id?: string
+          id?: string
+          related_id?: string
+          related_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_related_items_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_related_items_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_revisions: {
+        Row: {
+          created_at: string
+          description: string | null
+          drawing_date: string | null
+          drawing_id: string
+          drawing_set_id: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          is_current_revision: boolean
+          received_date: string
+          revision_number: string
+          status: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          drawing_date?: string | null
+          drawing_id: string
+          drawing_set_id?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          is_current_revision?: boolean
+          received_date?: string
+          revision_number?: string
+          status?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          drawing_date?: string | null
+          drawing_id?: string
+          drawing_set_id?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_current_revision?: boolean
+          received_date?: string
+          revision_number?: string
+          status?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_revisions_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_revisions_drawing_set_id_fkey"
+            columns: ["drawing_set_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_sets: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          issued_at: string
+          name: string
+          project_id: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          issued_at: string
+          name: string
+          project_id: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          issued_at?: string
+          name?: string
+          project_id?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_sketches: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          drawing_revision_id: string
+          file_url: string
+          id: string
+          name: string
+          sketch_date: string
+          sketch_number: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          drawing_revision_id: string
+          file_url: string
+          id?: string
+          name: string
+          sketch_date?: string
+          sketch_number: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          drawing_revision_id?: string
+          file_url?: string
+          id?: string
+          name?: string
+          sketch_date?: string
+          sketch_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "drawing_sketches_drawing_revision_id_fkey"
+            columns: ["drawing_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawings: {
+        Row: {
+          area_id: string | null
+          created_at: string
+          created_by: string
+          current_revision_id: string | null
+          discipline: string | null
+          drawing_number: string
+          drawing_type: string | null
+          id: string
+          project_id: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          created_at?: string
+          created_by: string
+          current_revision_id?: string | null
+          discipline?: string | null
+          drawing_number: string
+          drawing_type?: string | null
+          id?: string
+          project_id: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          created_at?: string
+          created_by?: string
+          current_revision_id?: string | null
+          discipline?: string | null
+          drawing_number?: string
+          drawing_type?: string | null
+          id?: string
+          project_id?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_current_revision"
+            columns: ["current_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["revision_id"]
+          },
+          {
+            foreignKeyName: "fk_drawings_current_revision"
+            columns: ["current_revision_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       erp_sync_log: {
         Row: {
           created_at: string
@@ -10290,6 +10772,139 @@ export type Database = {
         }
         Relationships: []
       }
+      punch_items: {
+        Row: {
+          assignee_company: string | null
+          assignee_id: string | null
+          ball_in_court: string | null
+          closed_by_id: string | null
+          created_at: string
+          created_by: string | null
+          date_closed: string | null
+          date_notified: string | null
+          date_resolved: string | null
+          description: string | null
+          due_date: string | null
+          final_approver_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_private: boolean | null
+          location: string | null
+          number: number
+          priority: string | null
+          project_id: number
+          punch_item_manager_id: string | null
+          reference: string | null
+          status: string
+          title: string
+          trade: string | null
+          type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assignee_company?: string | null
+          assignee_id?: string | null
+          ball_in_court?: string | null
+          closed_by_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_closed?: string | null
+          date_notified?: string | null
+          date_resolved?: string | null
+          description?: string | null
+          due_date?: string | null
+          final_approver_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_private?: boolean | null
+          location?: string | null
+          number: number
+          priority?: string | null
+          project_id: number
+          punch_item_manager_id?: string | null
+          reference?: string | null
+          status?: string
+          title: string
+          trade?: string | null
+          type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assignee_company?: string | null
+          assignee_id?: string | null
+          ball_in_court?: string | null
+          closed_by_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_closed?: string | null
+          date_notified?: string | null
+          date_resolved?: string | null
+          description?: string | null
+          due_date?: string | null
+          final_approver_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_private?: boolean | null
+          location?: string | null
+          number?: number
+          priority?: string | null
+          project_id?: number
+          punch_item_manager_id?: string | null
+          reference?: string | null
+          status?: string
+          title?: string
+          trade?: string | null
+          type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "punch_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_order_sov_items: {
         Row: {
           amount: number
@@ -14613,6 +15228,99 @@ export type Database = {
           },
           {
             foreignKeyName: "documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_areas_with_counts: {
+        Row: {
+          depth: number | null
+          description: string | null
+          drawing_count: number | null
+          id: string | null
+          name: string | null
+          parent_area_id: string | null
+          path: string[] | null
+          project_id: number | null
+          sort_order: number | null
+        }
+        Relationships: []
+      }
+      drawing_log: {
+        Row: {
+          area_id: string | null
+          area_name: string | null
+          discipline: string | null
+          drawing_created_at: string | null
+          drawing_date: string | null
+          drawing_number: string | null
+          drawing_type: string | null
+          drawing_updated_at: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string | null
+          project_id: number | null
+          received_date: string | null
+          revision_created_at: string | null
+          revision_description: string | null
+          revision_id: string | null
+          revision_number: string | null
+          set_name: string | null
+          status: string | null
+          title: string | null
+          uploaded_by: string | null
+          uploaded_by_email: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"

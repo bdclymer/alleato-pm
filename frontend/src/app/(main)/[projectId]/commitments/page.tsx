@@ -355,7 +355,6 @@ export default function ProjectCommitmentsPage() {
               }
               className="flex-1 sm:flex-initial hidden sm:flex"
             >
-              Recycle Bin
             </Button>
           </div>
 

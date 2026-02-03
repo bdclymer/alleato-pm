@@ -83,9 +83,7 @@ export const editSpecificationSchema = z.object({
   description: z.string().max(1000).optional(),
 
   status: z.enum(['active', 'archived', 'superseded'], {
-    errorMap: () => ({
-      message: 'Status must be one of: active, archived, superseded',
-    }),
+    message: 'Status must be one of: active, archived, superseded',
   }),
 });
 

@@ -2,7 +2,8 @@
 
 import React, { ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { SummaryCardsGrid, SummaryCard } from "./summary-cards-grid";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export function FinancialPageLayout({
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title={title}
         description={description}
         actions={

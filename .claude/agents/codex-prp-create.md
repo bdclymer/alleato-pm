@@ -28,6 +28,7 @@ Single-Agent Research Operating System (Codex)
 The Loop (use for every research track)
 
 For each track below, follow this exact loop:
+
  1. Locate relevant artifacts (search + directory scan)
  2. Open + read the most relevant 3–10 files end-to-end (not snippets only)
  3. Extract: conventions, types, APIs, component patterns, validation commands
@@ -48,23 +49,24 @@ Before codebase analysis, check for existing Procore crawl data + spec artifacts
 
 # Crawl data location
 
-playwright-procore-crawl/procore-crawls/{feature}/
+docs-ai/contents/docs/PRPs/{feature}/
 
 # Key files to load
 
-playwright-procore-crawl/procore-crawls/{feature}/crawl-summary.json
-playwright-procore-crawl/procore-crawls/{feature}/spec/COMMANDS.md
-playwright-procore-crawl/procore-crawls/{feature}/spec/MUTATIONS.md
-playwright-procore-crawl/procore-crawls/{feature}/spec/schema.sql
-playwright-procore-crawl/procore-crawls/{feature}/spec/FORMS.md
+docs-ai/contents/docs/PRPs/{feature}/crawl-summary.json
+docs-ai/contents/docs/PRPs/{feature}/spec/COMMANDS.md
+docs-ai/contents/docs/PRPs/{feature}/spec/MUTATIONS.md
+docs-ai/contents/docs/PRPs/{feature}/spec/schema.sql
+docs-ai/contents/docs/PRPs/{feature}/spec/FORMS.md
 
 Procedure
+
  1. If crawl-summary.json exists: read it first.
  2. If crawl data exists but no crawl-summary.json, generate it:
 
-cd playwright-procore-crawl && PROCORE_MODULE={feature} node scripts/generate-crawl-summary.js
+cd scripts/screenshot-capture && PROCORE_MODULE={feature} node scripts/generate-crawl-summary.js
 
- 3. If no crawl data exists: stop and run /feature-crawl {feature} <procore-url> first.
+ 1. If no crawl data exists: stop and run /feature-crawl {feature} <procore-url> first.
 
 Mandatory PRP Integration
 
@@ -80,7 +82,7 @@ Add this exact section format to the PRP:
 
 ## Procore Crawl Data Reference
 
-Base Path: `playwright-procore-crawl/procore-crawls/{feature}/`
+Base Path: `docs-ai/contents/docs/PRPs/{feature}/`
 
 ### Sitemap
 
@@ -181,6 +183,7 @@ Goal
 Provide high-leverage, version-relevant references with anchors (not generic links).
 
 Procedure
+
  1. Identify what’s actually used in the repo:
 
  • Next.js version (package.json)
@@ -188,14 +191,14 @@ Procedure
  • TS version
  • any framework libraries (zod, react-hook-form, tanstack table, etc.)
 
- 2. For each critical topic, add 2–5 anchored URLs:
+ 1. For each critical topic, add 2–5 anchored URLs:
 
  • TypeScript types/interfaces patterns relevant to this feature
  • Next.js App Router patterns (Route Handlers, Server Components, caching, forms)
  • React patterns relevant to UI state/hydration
  • Library docs for whatever the repo uses (zod, tanstack, shadcn, etc.)
 
- 3. For any “load-bearing” doc:
+ 1. For any “load-bearing” doc:
 
  • create a local markdown snapshot in:
 docs-ai/contents/docs/PRPs/docs/{topic}.md
@@ -287,6 +290,7 @@ Base output path: docs-ai/contents/docs/PRPs/{feature-name}/
 TASKS.md Generation
 
 After completing the PRP markdown:
+
  1. Use .claude/templates/tasks_template.md
  2. Extract tasks from “Implementation Tasks”
  3. Organize phases:
@@ -349,6 +353,7 @@ Definition of done: a new AI agent can implement the feature successfully using 
 ⸻
 
 If you want, I can also rewrite this into a Codex “two-command” setup:
+
  1. create-prp {feature} (does research + writes PRP)
  2. implement-prp {feature} (executes TASKS.md with strict gates)
 

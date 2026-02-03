@@ -32,13 +32,12 @@ Review the code in this repository for:
    - Documentation adequate
 
 Provide specific feedback with file and line references.
-```
-
+```text
 **Usage:**
-```
+```yaml
 > /review
-```
 
+```yaml
 ---
 
 ## Example 2: Security Review Command
@@ -78,10 +77,10 @@ Prioritize issues by severity.
 ```
 
 **Usage:**
-```
-> /security-review
-```
 
+```text
+> /security-review
+```yaml
 ---
 
 ## Example 3: Test Command with File Argument
@@ -106,13 +105,13 @@ Analyze results:
 - Flaky tests
 
 If failures found, suggest fixes based on error messages.
-```
-
+```text
 **Usage:**
 ```
-> /test-file src/utils/helpers.test.ts
-```
 
+> /test-file src/utils/helpers.test.ts
+
+```yaml
 ---
 
 ## Example 4: Documentation Generator
@@ -151,10 +150,10 @@ Include:
 - Known limitations
 
 Format as Markdown suitable for project documentation.
-```
-
+```text
 **Usage:**
-```
+
+```text
 > /document src/api/users.ts
 ```
 
@@ -184,13 +183,12 @@ Provide:
 - Summary of changes
 - Suggested next actions
 - Any warnings or issues
-```
-
+```text
 **Usage:**
-```
+```yaml
 > /git-status
-```
 
+```yaml
 ---
 
 ## Example 6: Deployment Command
@@ -225,10 +223,10 @@ Proceed with deployment? (yes/no)
 ```
 
 **Usage:**
-```
-> /deploy staging v1.2.3
-```
 
+```text
+> /deploy staging v1.2.3
+```yaml
 ---
 
 ## Example 7: Comparison Command
@@ -267,13 +265,13 @@ Compare @$1 with @$2
    - Documentation updates needed
 
 Present as structured comparison report.
-```
-
+```text
 **Usage:**
 ```
-> /compare-files src/old-api.ts src/new-api.ts
-```
 
+> /compare-files src/old-api.ts src/new-api.ts
+
+```yaml
 ---
 
 ## Example 8: Quick Fix Command
@@ -302,10 +300,10 @@ Focus on:
 - No breaking changes
 
 Provide code changes with file paths and line numbers.
-```
-
+```text
 **Usage:**
-```
+
+```text
 > /quick-fix button not responding to clicks
 > /quick-fix typo in error message
 ```
@@ -347,14 +345,13 @@ Research best practices for: $ARGUMENTS
    - Resources for implementation
 
 Provide actionable guidance based on research.
-```
-
+```text
 **Usage:**
-```
+```yaml
 > /research error handling in async operations
 > /research API authentication patterns
-```
 
+```yaml
 ---
 
 ## Example 10: Explain Code Command
@@ -400,11 +397,11 @@ Explain at level appropriate for junior engineer.
 ```
 
 **Usage:**
-```
+
+```text
 > /explain src/utils/cache.ts
 > /explain AuthService.login
-```
-
+```yaml
 ---
 
 ## Key Patterns
@@ -417,8 +414,7 @@ allowed-tools: Read, Grep
 ---
 
 Analyze but don't modify...
-```
-
+```diff
 **Use for:** Code review, documentation, analysis
 
 ### Pattern 2: Git Operations
@@ -442,8 +438,7 @@ argument-hint: [target]
 ---
 
 Process $1...
-```
-
+```bash
 **Use for:** File operations, targeted actions
 
 ### Pattern 4: Multiple Arguments
@@ -454,8 +449,7 @@ argument-hint: [source] [target] [options]
 ---
 
 Process $1 to $2 with $3...
-```
-
+```bash
 **Use for:** Workflows, deployments, comparisons
 
 ### Pattern 5: Fast Execution
@@ -466,8 +460,7 @@ model: haiku
 ---
 
 Quick simple task...
-```
-
+```bash
 **Use for:** Simple, repetitive commands
 
 ### Pattern 6: File Comparison

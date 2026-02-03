@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-01
 **Verifier:** Task Verification Enforcer
-**Test Environment:** http://localhost:3001
+**Test Environment:** <http://localhost:3001>
 **Project ID Tested:** 67
 
 ---
@@ -12,6 +12,7 @@
 ✅ **PARTIAL SUCCESS** - Core functionality works, but form has critical dependency issues
 
 **Overall Status:** 6/10
+
 - ✅ Page loads successfully
 - ✅ Table displays correctly (empty state)
 - ✅ Navigation works
@@ -39,6 +40,7 @@
 | `GET /api/projects/[projectId]/direct-costs/export` | ✅ | ✅ | ✅ | Export |
 
 **File Locations:**
+
 - `/frontend/src/app/api/projects/[projectId]/direct-costs/route.ts`
 - `/frontend/src/app/api/projects/[projectId]/direct-costs/[costId]/route.ts`
 - `/frontend/src/app/api/projects/[projectId]/direct-costs/bulk/route.ts`
@@ -47,6 +49,7 @@
 **Parameter Naming:** ✅ Correct - uses `[projectId]` and `[costId]`, not generic `[id]`
 
 **Auth Implementation:**
+
 ```typescript
 const { data: { user }, error: userError } = await supabase.auth.getUser();
 if (userError || !user) {
@@ -55,6 +58,7 @@ if (userError || !user) {
 ```
 
 **Async Params Handling:** ✅ All routes properly await params:
+
 ```typescript
 const { projectId } = await params;
 ```
@@ -68,6 +72,7 @@ const { projectId } = await params;
 3. ✅ `/api/projects/[projectId]/budget-codes` - EXISTS
 
 **Evidence:**
+
 ```
 DirectCostForm.tsx:209-211
 fetch(`/api/projects/${projectId}/vendors`),        // 404
@@ -76,6 +81,7 @@ fetch(`/api/projects/${projectId}/budget-codes`),   // Works
 ```
 
 **Browser Console Errors:**
+
 ```
 [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found)
 @ http://localhost:3001/api/projects/67/vendors:0
@@ -126,6 +132,7 @@ direct_costs: {
 **employee_id:** `number | null` - ⚠️ **NEEDS VERIFICATION**
 
 **Foreign Key Relationships Found:**
+
 ```typescript
 Relationships: [
   {
@@ -142,6 +149,7 @@ Relationships: [
 ### ✅ VERIFIED - Vendor FK Join Works
 
 **Test Query:**
+
 ```javascript
 const { data, error } = await supabase
   .from("direct_costs")
@@ -177,12 +185,14 @@ const { data: directCosts, error } = await supabase
 **Test Result:** ✅ Query executes successfully (returns empty array)
 
 **Notes:**
+
 - Only joins vendors, not employees
 - Missing fields in select that component expects (see Type Safety section)
 
 ### ⚠️ Incomplete SELECT
 
 **Component expects:**
+
 ```typescript
 type DirectCostRow = {
   vendor: { name: string } | null;
@@ -196,6 +206,7 @@ type DirectCostRow = {
 **Actual query only selects:** `vendor:vendors(name)`
 
 **Recommendation:** Add employee join:
+
 ```typescript
 .select(`
   *,
@@ -219,11 +230,13 @@ const directCostRows = (directCosts || []) as any[];
 **Problem:** Using `as any[]` bypasses type checking
 
 **Should be:**
+
 ```typescript
 const directCostRows: DirectCostRow[] = directCosts || [];
 ```
 
 **Type Import Missing:** Component defines `DirectCostRow` locally instead of importing from schema:
+
 ```typescript
 // Should import from:
 import { DirectCostRow } from '@/lib/schemas/direct-costs';
@@ -247,6 +260,7 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 **File:** `/frontend/src/app/(main)/[projectId]/direct-costs/direct-costs-client.tsx`
 
 **Status:** Working correctly
+
 - ✅ Table config matches schema
 - ✅ Delete handler implemented
 - ✅ Filters configured
@@ -262,23 +276,28 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 **Issues:**
 
 1. **Missing API Routes (lines 209-211):**
+
    ```typescript
    fetch(`/api/projects/${projectId}/vendors`),      // 404
    fetch(`/api/projects/${projectId}/employees`),    // 404
    ```
 
 2. **Silent Failure:**
+
    ```typescript
    if (vendorsRes.ok) { setVendors(vendorsData) }  // Never sets if 404
    ```
+
    - No error shown to user
    - Dropdowns remain disabled
    - Form appears broken
 
 3. **Incorrect Navigation (line 42):**
+
    ```typescript
    router.push(`/projects/${projectId}/direct-costs/${response.id}`)
    ```
+
    Should be: `/67/direct-costs/${response.id}` (uses [projectId] pattern)
 
 ---
@@ -299,12 +318,13 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 
 ### ✅ Page Load Test
 
-**URL:** http://localhost:3001/67/direct-costs
+**URL:** <http://localhost:3001/67/direct-costs>
 **Result:** ✅ SUCCESS
 
 **Screenshot:** `.playwright-mcp/direct-costs-page-loaded.png`
 
 **Observed:**
+
 - ✅ Page loads without errors (except missing API routes)
 - ✅ Breadcrumbs correct: "Projects > Vermillion Rise Warehouse > Direct Costs"
 - ✅ "Add Direct Cost" button visible and clickable
@@ -319,6 +339,7 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 **Result:** ✅ SUCCESS - navigates to `/67/direct-costs/new`
 
 **Observed:**
+
 - ✅ Multi-step form loads
 - ✅ Steps visible: Basic Information → Line Items → Attachments
 - ✅ Form fields render
@@ -327,12 +348,14 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 ### ❌ Console Errors
 
 **Critical Errors:**
+
 ```
 [ERROR] Failed to load resource: 404 @ /api/projects/67/vendors
 [ERROR] Failed to load resource: 404 @ /api/projects/67/employees
 ```
 
 **Warnings:**
+
 ```
 [WARNING] Image with src "/favicon-light.png" has...
 ```
@@ -377,6 +400,7 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 **Status:** ⚠️ NOT TESTED
 
 **Required Tests:**
+
 1. Verify authenticated user can read their project's direct costs
 2. Verify user cannot read other projects' direct costs
 3. Verify create/update/delete permissions
@@ -414,6 +438,7 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 ## Summary
 
 **What Works:**
+
 - ✅ API routes are well-structured with proper auth
 - ✅ Database schema is correct
 - ✅ Supabase queries execute successfully
@@ -422,12 +447,14 @@ import { DirectCostRow } from '@/lib/schemas/direct-costs';
 - ✅ Parameter naming follows standards
 
 **Critical Blockers:**
+
 - ❌ **Missing `/api/projects/[projectId]/vendors` route** - Form cannot load vendors
 - ❌ **Missing `/api/projects/[projectId]/employees` route** - Form cannot load employees
 
 **Impact:** Users can view the list page but **CANNOT create or edit direct costs** because the form cannot load required dropdown data.
 
 **Next Steps:**
+
 1. Create missing API routes
 2. Test form submission flow
 3. Verify RLS policies

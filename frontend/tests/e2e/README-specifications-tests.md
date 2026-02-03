@@ -25,41 +25,41 @@ Extended scenarios and edge cases:
 
 #### File Upload Validation (4 tests)
 
-9. **Reject non-PDF files (.docx)** - Browser blocks non-PDF uploads
-10. **Reject non-PDF files (.txt)** - Validates file type restriction
-11. **Reject oversized files (>50MB)** - Shows error for files exceeding limit
-12. **Accept valid PDF within size limit** - Successful upload of valid PDF
+1. **Reject non-PDF files (.docx)** - Browser blocks non-PDF uploads
+2. **Reject non-PDF files (.txt)** - Validates file type restriction
+3. **Reject oversized files (>50MB)** - Shows error for files exceeding limit
+4. **Accept valid PDF within size limit** - Successful upload of valid PDF
 
 #### Revision Management (6 tests)
 
-13. **Display sequential revision numbering** - Rev 1, Rev 2, Rev 3 numbering
-14. **Set current revision** - Display current revision indicator
-15. **Download revision** - Initiate file download
-16. **Delete non-current revision** - Remove old revisions
-17. **Prevent delete of current revision** - Disable delete for active revision
-18. **Revision notes** - Add notes when uploading new revision
+1. **Display sequential revision numbering** - Rev 1, Rev 2, Rev 3 numbering
+2. **Set current revision** - Display current revision indicator
+3. **Download revision** - Initiate file download
+4. **Delete non-current revision** - Remove old revisions
+5. **Prevent delete of current revision** - Disable delete for active revision
+6. **Revision notes** - Add notes when uploading new revision
 
 #### Area Management (3 tests)
 
-19. **Assign specification to area** - Link spec to area
-20. **Filter by area** - Filter specs by assigned area
-21. **Multi-area assignment** - Assign spec to multiple areas
+1. **Assign specification to area** - Link spec to area
+2. **Filter by area** - Filter specs by assigned area
+3. **Multi-area assignment** - Assign spec to multiple areas
 
 #### Pagination & Search (4 tests)
 
-22. **Pagination controls** - Display when >20 specs exist
-23. **Navigate between pages** - Click next/previous
-24. **Search with no results** - Show empty state
-25. **Search case-insensitive** - Search works regardless of case
+1. **Pagination controls** - Display when >20 specs exist
+2. **Navigate between pages** - Click next/previous
+3. **Search with no results** - Show empty state
+4. **Search case-insensitive** - Search works regardless of case
 
 #### Edge Cases (6 tests)
 
-26. **Prevent duplicate section numbers** - Unique constraint validation
-27. **Special characters in title** - Handle &, <, >, ", etc.
-28. **Empty description** - Optional field can be blank
-29. **Long section numbers** - Handle extended numbering schemes
-30. **Very long titles** - Validate or truncate long titles
-31. **Error recovery** - Cancel dialogs, dismiss toasts
+1. **Prevent duplicate section numbers** - Unique constraint validation
+2. **Special characters in title** - Handle &, <, >, ", etc.
+3. **Empty description** - Optional field can be blank
+4. **Long section numbers** - Handle extended numbering schemes
+5. **Very long titles** - Validate or truncate long titles
+6. **Error recovery** - Cancel dialogs, dismiss toasts
 
 ## Total Coverage
 
@@ -92,8 +92,7 @@ npx playwright test -g "should reject oversized files"
 
 # Run headed (see browser)
 npm run test:headed
-```
-
+```sql
 ## Test Data Cleanup
 
 All tests follow proper cleanup patterns:
@@ -129,8 +128,7 @@ await fileInput.setInputFiles({
   mimeType: "application/pdf",
   buffer: Buffer.from("%PDF-1.4 content"),
 });
-```
-
+```javascript
 ### Large File Creation
 
 ```typescript
@@ -139,8 +137,7 @@ function createLargePDFBuffer(): Buffer {
   const padding = Buffer.alloc(contentSize, "A");
   return Buffer.concat([Buffer.from("%PDF-1.4\n"), padding, Buffer.from("%%EOF\n")]);
 }
-```
-
+```javascript
 ### Toast Dismissal
 
 ```typescript
@@ -161,8 +158,7 @@ const sections = Array.from({ length: 35 }, (_, i) => ({
   section_number: `99 88 ${String(i).padStart(2, "0")}`,
   title: `Pagination Test Spec ${i + 1}`,
 }));
-```
-
+```markdown
 ## Known Issues / Future Improvements
 
 1. **Multi-area assignment** - UI may not support multiple areas yet
@@ -183,8 +179,7 @@ const sections = Array.from({ length: 35 }, (_, i) => ({
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-```
-
+```markdown
 ## Test Execution Time
 
 - **specifications.spec.ts**: ~45-60 seconds

@@ -3,7 +3,9 @@
 Run verification checks before marking ANY task as complete.
 
 ## Quick Verification (Default)
+
 Runs basic checks to ensure code quality:
+
 - TypeScript compilation
 - ESLint checks  
 - Build verification
@@ -12,8 +14,7 @@ Runs basic checks to ensure code quality:
 
 ```bash
 cd frontend && npx tsx scripts/verify-task.ts
-```
-
+```markdown
 ## Visual Verification (MANDATORY for UI Changes)
 For ANY UI changes, you MUST run visual verification:
 
@@ -26,15 +27,16 @@ npx tsx scripts/verify-visual.ts
 
 # Or specify pages:
 npx tsx scripts/verify-visual.ts /dashboard:dashboard /executive:executive
-```
-
+```diff
 This will:
+
 - Capture screenshots at 3 viewports
 - Verify layout metrics (viewport usage, padding, spacing)
 - Flag issues like narrow dashboards or missing edge padding
 - Save screenshots to tests/screenshots/visual-verification/
 
 ## Extended Verification
+
 For more complex tasks, also run:
 
 ```bash
@@ -56,6 +58,7 @@ npm run db:check
 ## Verification Checklist
 
 Before marking complete, ensure:
+
 - [ ] All verification checks pass
 - [ ] No TypeScript errors
 - [ ] No lint errors
@@ -76,6 +79,7 @@ Before marking complete, ensure:
 ## Report Issues
 
 If verification fails:
+
 1. Fix all issues
 2. Re-run verification
 3. Only mark complete when ALL checks pass

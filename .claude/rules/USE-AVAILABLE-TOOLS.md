@@ -9,47 +9,54 @@
 ## Tools Available in This Project
 
 ### 1. Supabase MCP
+
 Use for:
+
 - Running SQL queries
 - Executing migrations
 - Checking schema
 - Managing database
 
 **WRONG:**
-```
+
+```sql
 User: You need to run this SQL in Supabase:
 DROP TABLE IF EXISTS ...
 CREATE TABLE ...
-```
-
+```text
 **CORRECT:**
-```
+
+```bash
 Let me run that SQL through the Supabase MCP.
 [Uses mcp__supabase__execute_sql tool]
 ```
 
 ### 2. Supabase CLI
+
 Use for:
+
 - Generating types: `npx supabase gen types typescript ...`
 - Database operations
 
 **WRONG:**
-```
+
+```bash
 After running this SQL, regenerate the Supabase types:
 npx supabase gen types typescript ...
-```
-
+```text
 **CORRECT:**
-```
+
+```text
 [Runs the command directly via Bash tool]
 ```
 
 ### 3. ToolSearch for Deferred Tools
-Before giving up and asking user to do something, search for a tool:
-```
-[Uses ToolSearch with query: "supabase sql"]
-```
 
+Before giving up and asking user to do something, search for a tool:
+
+```text
+[Uses ToolSearch with query: "supabase sql"]
+```diff
 ---
 
 ## The Incident (2026-01-28)
@@ -66,7 +73,7 @@ User's response:
 
 ## Decision Tree
 
-```
+```text
 Need to do something?
     |
     v

@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/Users/meganharrison/Documents/github/alleato-pm/frontend/playwright.config.ts",
-    "rootDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+    "configFile": "/Users/meganharrison/Documents/github/alleato-procore/frontend/playwright.config.ts",
+    "rootDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
     "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "setup",
         "name": "setup",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/.*\\.setup\\.ts/"
@@ -32,7 +32,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -40,7 +40,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -48,7 +48,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -56,7 +56,7 @@
         },
         "id": "debug",
         "name": "debug",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -64,7 +64,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -72,7 +72,7 @@
         },
         "id": "no-auth",
         "name": "no-auth",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
@@ -110,7 +110,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.58.1",
-    "workers": 5,
+    "workers": 7,
     "webServer": {
       "command": "npm run dev",
       "url": "http://localhost:3000",
@@ -140,7 +140,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6189,
+                  "duration": 99,
                   "errors": [],
                   "stdout": [
                     {
@@ -149,13 +149,13 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-02-01T21:12:58.298Z",
+                  "startTime": "2026-02-02T17:47:08.967Z",
                   "annotations": [],
                   "attachments": [
                     {
                       "name": "screenshot",
                       "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                      "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
                     }
                   ]
                 }
@@ -171,20 +171,442 @@
       ]
     },
     {
-      "title": "e2e/budget-line-item-improvements.spec.ts",
-      "file": "e2e/budget-line-item-improvements.spec.ts",
+      "title": "financial/rfis.spec.ts",
+      "file": "financial/rfis.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Budget Line Item Creator - Critical 3 Improvements",
-          "file": "e2e/budget-line-item-improvements.spec.ts",
-          "line": 3,
+          "title": "RFIs – Full CRUD",
+          "file": "financial/rfis.spec.ts",
+          "line": 88,
           "column": 6,
           "specs": [
             {
-              "title": "Improvement 1: Smart Copy UOM Toggle",
+              "title": "Empty state shows when no RFIs exist",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5061,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:128:44",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                          "column": 44,
+                          "line": 128
+                        },
+                        "snippet": "  126 |     const rowCount = await emptyTable.count().catch(() => 0);\n  127 |\n> 128 |     expect(hasEmptyText || rowCount === 0).toBe(true);\n      |                                            ^\n  129 |   });\n  130 |\n  131 |   // ── READ: Seeded RFI renders in list ───────────────────────────"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                            "column": 44,
+                            "line": 128
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  126 |     const rowCount = await emptyTable.count().catch(() => 0);\n  127 |\n> 128 |     expect(hasEmptyText || rowCount === 0).toBe(true);\n      |                                            ^\n  129 |   });\n  130 |\n  131 |   // ── READ: Seeded RFI renders in list ───────────────────────────\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:128:44"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:09.802Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-7f2d5-te-shows-when-no-RFIs-exist-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-7f2d5-te-shows-when-no-RFIs-exist-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-7f2d5-te-shows-when-no-RFIs-exist-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                        "column": 44,
+                        "line": 128
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-8630e292b0961392b8a1",
+              "file": "financial/rfis.spec.ts",
+              "line": 109,
+              "column": 7
+            },
+            {
+              "title": "Seeded RFI renders in the list with correct data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1631,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:16.957Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-2db22--the-list-with-correct-data-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-5f6da66c72d287eba6f5",
+              "file": "financial/rfis.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "Status summary cards show accurate counts",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 5067,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:09.800Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-aa0e3--cards-show-accurate-counts-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-fb195d6d7762ef0236e3",
+              "file": "financial/rfis.spec.ts",
+              "line": 162,
+              "column": 7
+            },
+            {
+              "title": "Create RFI as draft via form persists to database",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3817,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:15.778Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-402e3-a-form-persists-to-database-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-32fc80c3bb4dbce57e84",
+              "file": "financial/rfis.spec.ts",
+              "line": 209,
+              "column": 7
+            },
+            {
+              "title": "Create RFI as open validates required fields and persists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 8121,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:09.797Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-bff3e-equired-fields-and-persists-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-5bcf7eb2b380f0362f03",
+              "file": "financial/rfis.spec.ts",
+              "line": 255,
+              "column": 7
+            },
+            {
+              "title": "Open validation shows errors for missing required fields",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 16516,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel(/subject/i)\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel(/subject/i)\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/auth/login\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/auth/login\"\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel(/subject/i)\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel(/subject/i)\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/auth/login\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/auth/login\"\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:322:32",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                          "column": 32,
+                          "line": 322
+                        },
+                        "snippet": "  320 |     // Wait for form to render\n  321 |     const subjectInput = page.getByLabel(/subject/i);\n> 322 |     await expect(subjectInput).toBeVisible({ timeout: 15000 });\n      |                                ^\n  323 |\n  324 |     // Only fill subject (missing question, due date, assignees for Open)\n  325 |     await subjectInput.fill(\"Incomplete RFI\");"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                            "column": 32,
+                            "line": 322
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel(/subject/i)\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel(/subject/i)\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3000/auth/login\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3000/auth/login\"\u001b[22m\n\n\n  320 |     // Wait for form to render\n  321 |     const subjectInput = page.getByLabel(/subject/i);\n> 322 |     await expect(subjectInput).toBeVisible({ timeout: 15000 });\n      |                                ^\n  323 |\n  324 |     // Only fill subject (missing question, due date, assignees for Open)\n  325 |     await subjectInput.fill(\"Incomplete RFI\");\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:322:32"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:18.832Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-75721-for-missing-required-fields-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-75721-for-missing-required-fields-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-75721-for-missing-required-fields-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                        "column": 32,
+                        "line": 322
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-7721eb3f170f7e5248f9",
+              "file": "financial/rfis.spec.ts",
+              "line": 314,
+              "column": 7
+            },
+            {
+              "title": "Clicking RFI row navigates to detail page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 6905,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:09.801Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-75c0e-ow-navigates-to-detail-page-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-346051bd3dbbcfeb1365",
+              "file": "financial/rfis.spec.ts",
+              "line": 345,
+              "column": 7
+            },
+            {
+              "title": "Edit RFI updates subject and persists",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 19760,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /edit/i })\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /edit/i })\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /edit/i })\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /edit/i })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:400:30",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                          "column": 30,
+                          "line": 400
+                        },
+                        "snippet": "  398 |     // Click Edit button\n  399 |     const editButton = page.getByRole(\"button\", { name: /edit/i });\n> 400 |     await expect(editButton).toBeVisible({ timeout: 15000 });\n      |                              ^\n  401 |     await editButton.click();\n  402 |\n  403 |     // Update subject"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                            "column": 30,
+                            "line": 400
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('button', { name: /edit/i })\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: /edit/i })\u001b[22m\n\n\n  398 |     // Click Edit button\n  399 |     const editButton = page.getByRole(\"button\", { name: /edit/i });\n> 400 |     await expect(editButton).toBeVisible({ timeout: 15000 });\n      |                              ^\n  401 |     await editButton.click();\n  402 |\n  403 |     // Update subject\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:400:30"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-02T17:47:17.615Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-add88-pdates-subject-and-persists-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-add88-pdates-subject-and-persists-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-add88-pdates-subject-and-persists-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts",
+                        "column": 30,
+                        "line": 400
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "299f5895b94f6db60dc7-930bad2bec118e9d1885",
+              "file": "financial/rfis.spec.ts",
+              "line": 383,
+              "column": 7
+            },
+            {
+              "title": "Close RFI from detail page updates status",
               "ok": false,
               "tags": [],
               "tests": [
@@ -197,68 +619,68 @@
                   "results": [
                     {
                       "workerIndex": 5,
-                      "parallelIndex": 0,
+                      "parallelIndex": 4,
                       "status": "failed",
-                      "duration": 30985,
+                      "duration": 5058,
                       "error": {
-                        "message": "Error: Copy UOM toggle should be visible\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Copy UOM toggle should be visible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\u001b[22m\n",
-                        "stack": "Error: Copy UOM toggle should be visible\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Copy UOM toggle should be visible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:30:66",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"closed\"\u001b[39m\nReceived: \u001b[31m\"open\"\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"closed\"\u001b[39m\nReceived: \u001b[31m\"open\"\u001b[39m\n    at pollFor (/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts:17:6)\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:458:18",
                         "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                          "column": 66,
-                          "line": 30
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                          "column": 6,
+                          "line": 17
                         },
-                        "snippet": "  28 |     );\n  29 |\n> 30 |     await expect(uomToggle, 'Copy UOM toggle should be visible').toBeVisible();\n     |                                                                  ^\n  31 |\n  32 |     // Verify it's checked by default\n  33 |     await expect(uomToggle, 'Copy UOM toggle should be checked by default').toBeChecked();"
+                        "snippet": "\u001b[90m   at \u001b[39mhelpers/poll.ts:17\n\n  15 |       { timeout },\n  16 |     )\n> 17 |     .toBe(true);\n     |      ^\n  18 | }\n  19 |\n  20 | export function pollForSimple<T>(fn: () => Promise<T> | T, options?: { timeout?: number; intervals?: number[] }) {"
                       },
                       "errors": [
                         {
                           "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 66,
-                            "line": 30
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                            "column": 6,
+                            "line": 17
                           },
-                          "message": "Error: Copy UOM toggle should be visible\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Copy UOM toggle should be visible with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').locator('input[type=\"checkbox\"]').and(locator('[name*=\"copyUom\"], [id*=\"copyUom\"]')).or(locator('text=\"Add Budget Line Items\"').locator('..').getByRole('checkbox', { name: /copy.*uom/i }))\u001b[22m\n\n\n  28 |     );\n  29 |\n> 30 |     await expect(uomToggle, 'Copy UOM toggle should be visible').toBeVisible();\n     |                                                                  ^\n  31 |\n  32 |     // Verify it's checked by default\n  33 |     await expect(uomToggle, 'Copy UOM toggle should be checked by default').toBeChecked();\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:30:66"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m\"closed\"\u001b[39m\nReceived: \u001b[31m\"open\"\u001b[39m\n\n   at helpers/poll.ts:17\n\n  15 |       { timeout },\n  16 |     )\n> 17 |     .toBe(true);\n     |      ^\n  18 | }\n  19 |\n  20 | export function pollForSimple<T>(fn: () => Promise<T> | T, options?: { timeout?: number; intervals?: number[] }) {\n    at pollFor (/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts:17:6)\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:458:18"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-02-01T21:13:29.299Z",
+                      "startTime": "2026-02-02T17:47:09.797Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-chromium/test-failed-1.png"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-abf34--detail-page-updates-status-chromium/test-failed-1.png"
                         },
                         {
                           "name": "video",
                           "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-chromium/video.webm"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-abf34--detail-page-updates-status-chromium/video.webm"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-chromium/error-context.md"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-abf34--detail-page-updates-status-chromium/error-context.md"
                         }
                       ],
                       "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                        "column": 66,
-                        "line": 30
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                        "column": 6,
+                        "line": 17
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "acee8923d96352cc99c0-5b763db0737f05b70d60",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 13,
+              "id": "299f5895b94f6db60dc7-cd9359586e6940f7d4f6",
+              "file": "financial/rfis.spec.ts",
+              "line": 431,
               "column": 7
             },
             {
-              "title": "Improvement 2: Auto-Focus First Field",
+              "title": "Delete RFI removes it from database",
               "ok": false,
               "tags": [],
               "tests": [
@@ -271,484 +693,64 @@
                   "results": [
                     {
                       "workerIndex": 6,
-                      "parallelIndex": 1,
-                      "status": "timedOut",
-                      "duration": 62534,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 27,
-                            "line": 99
-                          },
-                          "message": "Error: locator.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').getByPlaceholder(/select budget code/i)\u001b[22m\n\n\n   97 |     // Fill in first row completely within the modal\n   98 |     const budgetCodeInput = modal.getByPlaceholder(/select budget code/i);\n>  99 |     await budgetCodeInput.click();\n      |                           ^\n  100 |     await page.waitForSelector('[role=\"option\"]');\n  101 |     await page.locator('[role=\"option\"]').first().click();\n  102 |\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:99:27"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:13:29.313Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-chromium/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-51c4e30f0e628ee7c35a",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 87,
-              "column": 7
-            },
-            {
-              "title": "Improvement 3: Running Total Display",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 7,
-                      "parallelIndex": 2,
-                      "status": "timedOut",
-                      "duration": 62311,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 29,
-                            "line": 153
-                          },
-                          "message": "Error: locator.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').getByPlaceholder(/select budget code/i).first()\u001b[22m\n\n\n  151 |       const budgetCodeInputs = modal.getByPlaceholder(/select budget code/i);\n  152 |       const budgetCodeInput = budgetCodeInputs.nth(rowIndex);\n> 153 |       await budgetCodeInput.click();\n      |                             ^\n  154 |       await page.waitForSelector('[role=\"option\"]');\n  155 |       await page.locator('[role=\"option\"]').first().click();\n  156 |\n    at fillRow (/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:153:29)\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:175:11"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:13:29.293Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-chromium/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-4d7204ac8992ac6d1b81",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 136,
-              "column": 7
-            },
-            {
-              "title": "Previous Improvements: Currency formatting and Enter key",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 8,
-                      "parallelIndex": 3,
-                      "status": "timedOut",
-                      "duration": 61975,
-                      "error": {
-                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
-                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                      },
-                      "errors": [
-                        {
-                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
-                        },
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 27,
-                            "line": 235
-                          },
-                          "message": "Error: locator.click: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('text=\"Add Budget Line Items\"').locator('..').getByPlaceholder(/select budget code/i)\u001b[22m\n\n\n  233 |     // Fill first row in modal\n  234 |     const budgetCodeInput = modal.getByPlaceholder(/select budget code/i);\n> 235 |     await budgetCodeInput.click();\n      |                           ^\n  236 |     await page.waitForSelector('[role=\"option\"]');\n  237 |     await page.locator('[role=\"option\"]').first().click();\n  238 |\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:235:27"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:13:29.305Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-chromium/error-context.md"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-f02ec975574d55b51e38",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 223,
-              "column": 7
-            },
-            {
-              "title": "Improvement 1: Smart Copy UOM Toggle",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 28535,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75",
-                        "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                          "column": 75,
-                          "line": 10
-                        },
-                        "snippet": "   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 75,
-                            "line": 10
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n\n   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:12:58.341Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-debug/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-debug/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-7225e-ent-1-Smart-Copy-UOM-Toggle-debug/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                        "column": 75,
-                        "line": 10
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-feba34c90f590f4e90a9",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 13,
-              "column": 7
-            },
-            {
-              "title": "Improvement 2: Auto-Focus First Field",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [
-                    {
-                      "workerIndex": 2,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 28408,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75",
-                        "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                          "column": 75,
-                          "line": 10
-                        },
-                        "snippet": "   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 75,
-                            "line": 10
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n\n   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:12:58.324Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-debug/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-debug/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-0050e-nt-2-Auto-Focus-First-Field-debug/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                        "column": 75,
-                        "line": 10
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-eedaebbbbf32dc810b19",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 87,
-              "column": 7
-            },
-            {
-              "title": "Improvement 3: Running Total Display",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [
-                    {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 28406,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75",
-                        "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                          "column": 75,
-                          "line": 10
-                        },
-                        "snippet": "   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 75,
-                            "line": 10
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n\n   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75"
-                        }
-                      ],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-01T21:12:58.350Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-debug/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-debug/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-21679-ent-3-Running-Total-Display-debug/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                        "column": 75,
-                        "line": 10
-                      }
-                    }
-                  ],
-                  "status": "unexpected"
-                }
-              ],
-              "id": "acee8923d96352cc99c0-d3861d15f5d5bd2f4a9b",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 136,
-              "column": 7
-            },
-            {
-              "title": "Previous Improvements: Currency formatting and Enter key",
-              "ok": false,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [
-                    {
-                      "workerIndex": 4,
                       "parallelIndex": 4,
                       "status": "failed",
-                      "duration": 28556,
+                      "duration": 17148,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeUndefined\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m{\"assignees\": [], \"ball_in_court\": null, \"ball_in_court_employee_id\": null, \"closed_date\": null, \"cost_code\": null, \"cost_impact\": null, \"created_at\": \"2026-02-02T17:47:17.761407+00:00\", \"created_by\": null, \"created_by_employee_id\": null, \"date_initiated\": \"2026-02-02\", \"distribution_list\": null, \"due_date\": null, \"id\": \"57219194-7eb5-4122-bd83-7f9224d20844\", \"is_private\": false, \"location\": null, \"number\": 1, \"project_id\": 305, \"question\": \"\", \"received_from\": null, \"reference\": null, \"responsible_contractor\": null, \"rfi_manager\": null, \"rfi_manager_employee_id\": null, \"rfi_stage\": null, \"schedule_impact\": null, \"specification\": null, \"status\": \"draft\", \"sub_job\": null, \"subject\": \"RFI To Delete\", \"updated_at\": \"2026-02-02T17:47:17.761407+00:00\"}\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeUndefined\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m{\"assignees\": [], \"ball_in_court\": null, \"ball_in_court_employee_id\": null, \"closed_date\": null, \"cost_code\": null, \"cost_impact\": null, \"created_at\": \"2026-02-02T17:47:17.761407+00:00\", \"created_by\": null, \"created_by_employee_id\": null, \"date_initiated\": \"2026-02-02\", \"distribution_list\": null, \"due_date\": null, \"id\": \"57219194-7eb5-4122-bd83-7f9224d20844\", \"is_private\": false, \"location\": null, \"number\": 1, \"project_id\": 305, \"question\": \"\", \"received_from\": null, \"reference\": null, \"responsible_contractor\": null, \"rfi_manager\": null, \"rfi_manager_employee_id\": null, \"rfi_stage\": null, \"schedule_impact\": null, \"specification\": null, \"status\": \"draft\", \"sub_job\": null, \"subject\": \"RFI To Delete\", \"updated_at\": \"2026-02-02T17:47:17.761407+00:00\"}\u001b[39m\n    at pollFor (/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts:17:6)\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:499:18",
                         "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                          "column": 75,
-                          "line": 10
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                          "column": 6,
+                          "line": 17
                         },
-                        "snippet": "   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {"
+                        "snippet": "\u001b[90m   at \u001b[39mhelpers/poll.ts:17\n\n  15 |       { timeout },\n  16 |     )\n> 17 |     .toBe(true);\n     |      ^\n  18 | }\n  19 |\n  20 | export function pollForSimple<T>(fn: () => Promise<T> | T, options?: { timeout?: number; intervals?: number[] }) {"
                       },
                       "errors": [
                         {
                           "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                            "column": 75,
-                            "line": 10
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                            "column": 6,
+                            "line": 17
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: 'Budget', level: 1 })\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: 'Budget', level: 1 })\u001b[22m\n\n\n   8 |\n   9 |     // Wait for the page to be ready (use the main heading, not the sidebar)\n> 10 |     await expect(page.getByRole('heading', { name: 'Budget', level: 1 })).toBeVisible();\n     |                                                                           ^\n  11 |   });\n  12 |\n  13 |   test('Improvement 1: Smart Copy UOM Toggle', async ({ page }) => {\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts:10:75"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeUndefined\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m{\"assignees\": [], \"ball_in_court\": null, \"ball_in_court_employee_id\": null, \"closed_date\": null, \"cost_code\": null, \"cost_impact\": null, \"created_at\": \"2026-02-02T17:47:17.761407+00:00\", \"created_by\": null, \"created_by_employee_id\": null, \"date_initiated\": \"2026-02-02\", \"distribution_list\": null, \"due_date\": null, \"id\": \"57219194-7eb5-4122-bd83-7f9224d20844\", \"is_private\": false, \"location\": null, \"number\": 1, \"project_id\": 305, \"question\": \"\", \"received_from\": null, \"reference\": null, \"responsible_contractor\": null, \"rfi_manager\": null, \"rfi_manager_employee_id\": null, \"rfi_stage\": null, \"schedule_impact\": null, \"specification\": null, \"status\": \"draft\", \"sub_job\": null, \"subject\": \"RFI To Delete\", \"updated_at\": \"2026-02-02T17:47:17.761407+00:00\"}\u001b[39m\n\n   at helpers/poll.ts:17\n\n  15 |       { timeout },\n  16 |     )\n> 17 |     .toBe(true);\n     |      ^\n  18 | }\n  19 |\n  20 | export function pollForSimple<T>(fn: () => Promise<T> | T, options?: { timeout?: number; intervals?: number[] }) {\n    at pollFor (/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts:17:6)\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/financial/rfis.spec.ts:499:18"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-02-01T21:12:58.211Z",
+                      "startTime": "2026-02-02T17:47:16.734Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-debug/test-failed-1.png"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-4be59-FI-removes-it-from-database-chromium/test-failed-1.png"
                         },
                         {
                           "name": "video",
                           "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-debug/video.webm"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-4be59-FI-removes-it-from-database-chromium/video.webm"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-budget-line-item-impro-bcfc9-cy-formatting-and-Enter-key-debug/error-context.md"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/financial-rfis-RFIs-–-Full-4be59-FI-removes-it-from-database-chromium/error-context.md"
                         }
                       ],
                       "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/e2e/budget-line-item-improvements.spec.ts",
-                        "column": 75,
-                        "line": 10
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/helpers/poll.ts",
+                        "column": 6,
+                        "line": 17
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "acee8923d96352cc99c0-90f309f5d646b2ec094f",
-              "file": "e2e/budget-line-item-improvements.spec.ts",
-              "line": 223,
+              "id": "299f5895b94f6db60dc7-e04a2781c9d80d745b42",
+              "file": "financial/rfis.spec.ts",
+              "line": 469,
               "column": 7
             }
           ]
@@ -758,11 +760,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-01T21:12:55.281Z",
-    "duration": 100424.12100000001,
-    "expected": 1,
+    "startTime": "2026-02-02T17:47:08.228Z",
+    "duration": 29579.462,
+    "expected": 6,
     "skipped": 0,
-    "unexpected": 8,
+    "unexpected": 5,
     "flaky": 0
   }
 }

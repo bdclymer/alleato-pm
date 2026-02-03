@@ -65,6 +65,7 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 7. **Provide Action Plan**
 
    Organize findings:
+
    ```markdown
    # PR Review Summary
 
@@ -90,12 +91,13 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 ## Usage Examples:
 
 **Full review (default):**
-```
-/pr-review-toolkit:review-pr
-```
 
+```text
+/pr-review-toolkit:review-pr
+```text
 **Specific aspects:**
-```
+
+```text
 /pr-review-toolkit:review-pr tests errors
 # Reviews only test coverage and error handling
 
@@ -107,39 +109,45 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 ```
 
 **Parallel review:**
-```
+
+```text
 /pr-review-toolkit:review-pr all parallel
 # Launches all agents in parallel
-```
-
+```markdown
 ## Agent Descriptions:
 
 **comment-analyzer**:
+
 - Verifies comment accuracy vs code
 - Identifies comment rot
 - Checks documentation completeness
 
 **pr-test-analyzer**:
+
 - Reviews behavioral test coverage
 - Identifies critical gaps
 - Evaluates test quality
 
 **silent-failure-hunter**:
+
 - Finds silent failures
 - Reviews catch blocks
 - Checks error logging
 
 **type-design-analyzer**:
+
 - Analyzes type encapsulation
 - Reviews invariant expression
 - Rates type design quality
 
 **code-reviewer**:
+
 - Checks CLAUDE.md compliance
 - Detects bugs and issues
 - Reviews general code quality
 
 **code-simplifier**:
+
 - Simplifies complex code
 - Improves clarity and readability
 - Applies project standards
@@ -156,7 +164,8 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 ## Workflow Integration:
 
 **Before committing:**
-```
+
+```text
 1. Write code
 2. Run: /pr-review-toolkit:review-pr code errors
 3. Fix any critical issues
@@ -164,16 +173,17 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 ```
 
 **Before creating PR:**
-```
+
+```text
 1. Stage all changes
 2. Run: /pr-review-toolkit:review-pr all
 3. Address all critical and important issues
 4. Run specific reviews again to verify
 5. Create PR
-```
-
+```text
 **After PR feedback:**
-```
+
+```text
 1. Make requested changes
 2. Run targeted reviews based on feedback
 3. Verify issues are resolved

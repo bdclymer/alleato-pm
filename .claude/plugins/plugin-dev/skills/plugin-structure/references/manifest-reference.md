@@ -19,11 +19,13 @@ The manifest MUST be in the `.claude-plugin/` directory at the plugin root. Clau
 **Example**: `"test-automation-suite"`
 
 The unique identifier for the plugin. Used for:
+
 - Plugin identification in Claude Code
 - Conflict detection with other plugins
 - Command namespacing (optional)
 
 **Requirements**:
+
 - Must be unique across all installed plugins
 - Use only lowercase letters, numbers, and hyphens
 - No spaces or special characters
@@ -31,10 +33,10 @@ The unique identifier for the plugin. Used for:
 - End with a letter or number
 
 **Validation**:
+
 ```javascript
 /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
-```
-
+```diff
 **Examples**:
 - ✅ Good: `api-tester`, `code-review`, `git-workflow-automation`
 - ❌ Bad: `API Tester`, `code_review`, `-git-workflow`, `test-`
@@ -97,15 +99,14 @@ Brief explanation of plugin purpose and functionality.
     "url": "https://janedeveloper.com"
   }
 }
-```
-
+```diff
 **Alternative format** (string only):
+
 ```json
 {
   "author": "Jane Developer <jane@example.com> (https://janedeveloper.com)"
 }
-```
-
+```diff
 **Use cases**:
 - Credit and attribution
 - Contact for support or questions
@@ -145,6 +146,7 @@ Source code repository location.
 ```
 
 **Object format** (detailed):
+
 ```json
 {
   "repository": {
@@ -153,8 +155,7 @@ Source code repository location.
     "directory": "packages/plugin-name"
   }
 }
-```
-
+```diff
 **Use cases**:
 - Source code access
 - Issue reporting
@@ -184,8 +185,7 @@ Software license identifier.
 {
   "license": "(MIT OR Apache-2.0)"
 }
-```
-
+```markdown
 #### keywords
 
 **Type**: Array of strings
@@ -194,6 +194,7 @@ Software license identifier.
 Tags for plugin discovery and categorization.
 
 **Best practices**:
+
 - Use 5-10 keywords
 - Include functionality categories
 - Add technology names
@@ -201,6 +202,7 @@ Tags for plugin discovery and categorization.
 - Avoid duplicating plugin name
 
 **Categories to consider**:
+
 - Functionality: `testing`, `debugging`, `documentation`, `deployment`
 - Technologies: `typescript`, `python`, `docker`, `aws`
 - Workflows: `ci-cd`, `code-review`, `git-workflow`
@@ -217,12 +219,12 @@ Tags for plugin discovery and categorization.
 Additional directories or files containing command definitions.
 
 **Single path**:
+
 ```json
 {
   "commands": "./custom-commands"
 }
-```
-
+```text
 **Multiple paths**:
 ```json
 {
@@ -237,6 +239,7 @@ Additional directories or files containing command definitions.
 **Behavior**: Supplements default `commands/` directory (does not replace)
 
 **Use cases**:
+
 - Organizing commands by category
 - Separating stable from experimental commands
 - Loading commands from shared locations
@@ -252,6 +255,7 @@ Additional directories or files containing agent definitions.
 **Format**: Same as `commands` field
 
 **Use cases**:
+
 - Grouping agents by specialization
 - Separating general-purpose from task-specific agents
 - Loading agents from plugin dependencies
@@ -264,12 +268,12 @@ Additional directories or files containing agent definitions.
 Hook configuration location or inline definition.
 
 **File path**:
+
 ```json
 {
   "hooks": "./config/hooks.json"
 }
-```
-
+```bash
 **Inline configuration**:
 ```json
 {
@@ -288,9 +292,9 @@ Hook configuration location or inline definition.
     ]
   }
 }
-```
-
+```bash
 **Use cases**:
+
 - Simple plugins: Inline configuration (< 50 lines)
 - Complex plugins: External JSON file
 - Multiple hook sets: Separate files for different contexts
@@ -303,12 +307,12 @@ Hook configuration location or inline definition.
 MCP server configuration location or inline definition.
 
 **File path**:
+
 ```json
 {
   "mcpServers": "./.mcp.json"
 }
-```
-
+```bash
 **Inline configuration**:
 ```json
 {
@@ -325,6 +329,7 @@ MCP server configuration location or inline definition.
 ```
 
 **Use cases**:
+
 - Simple plugins: Single inline server (< 20 lines)
 - Complex plugins: External `.mcp.json` file
 - Multiple servers: Always use external file
@@ -341,6 +346,7 @@ All paths in component fields must follow these rules:
 4. **Forward slashes only**: Even on Windows
 
 **Examples**:
+
 - ✅ `"./commands"`
 - ✅ `"./src/commands"`
 - ✅ `"./configs/hooks.json"`
@@ -377,17 +383,20 @@ When Claude Code loads components:
 Claude Code validates the manifest on plugin load:
 
 **Syntax validation**:
+
 - Valid JSON format
 - No syntax errors
 - Correct field types
 
 **Field validation**:
+
 - `name` field present and valid format
 - `version` follows semantic versioning (if present)
 - Paths are relative with `./` prefix
 - URLs are valid (if present)
 
 **Component validation**:
+
 - Referenced paths exist
 - Hook and MCP configurations are valid
 - No circular dependencies
@@ -395,24 +404,25 @@ Claude Code validates the manifest on plugin load:
 ### Common Validation Errors
 
 **Invalid name format**:
+
 ```json
 {
   "name": "My Plugin"  // ❌ Contains spaces
 }
-```
+```text
 Fix: Use kebab-case
 ```json
 {
   "name": "my-plugin"  // ✅
 }
-```
-
+```text
 **Absolute path**:
+
 ```json
 {
   "commands": "/Users/name/commands"  // ❌ Absolute path
 }
-```
+```text
 Fix: Use relative path
 ```json
 {
@@ -421,24 +431,25 @@ Fix: Use relative path
 ```
 
 **Missing ./ prefix**:
+
 ```json
 {
   "hooks": "hooks/hooks.json"  // ❌ No ./
 }
-```
+```text
 Fix: Add ./ prefix
 ```json
 {
   "hooks": "./hooks/hooks.json"  // ✅
 }
-```
-
+```text
 **Invalid version**:
+
 ```json
 {
   "version": "1.0"  // ❌ Not semantic versioning
 }
-```
+```text
 Fix: Use MAJOR.MINOR.PATCH
 ```json
 {
@@ -456,8 +467,7 @@ Bare minimum for a working plugin:
 {
   "name": "hello-world"
 }
-```
-
+```text
 Relies entirely on default directory discovery.
 
 ### Recommended Plugin
@@ -478,8 +488,7 @@ Good metadata for distribution:
   "license": "MIT",
   "keywords": ["code-review", "automation", "quality", "ci-cd"]
 }
-```
-
+```markdown
 ### Complete Plugin
 
 Full configuration with all features:

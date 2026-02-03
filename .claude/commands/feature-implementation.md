@@ -3,8 +3,9 @@
 This is the shared workflow template for implementing Procore features. Variables are substituted by the `/implement-feature` command.
 
 ## Variables
+
 - `{feature}` - Feature name (e.g., "direct-costs")
-- `{feature_dir}` - Path: `playwright-procore-crawl/procore-crawls/{feature}`
+- `{feature_dir}` - Path: `docs-ai/contents/docs/PRPs/{feature}`
 - `{crawl_dir}` - Path: `{feature_dir}/crawl-{feature}`
 
 ---
@@ -21,13 +22,13 @@ This is the shared workflow template for implementing Procore features. Variable
 | Test results | `{feature_dir}/TEST-RESULTS.md` | `.claude/TEST-*.md` |
 | Status updates | `{feature_dir}/STATUS.md` | `.claude/*-STATUS.md` |
 
-
 **Project management files go in `documentation/*project-mgmt/`:**
 
 **Workflow signal files:**
+
 - Research: `documentation/*project-mgmt/shared/research/{feature}.md`
-- Worker signals: `playwright-procore-crawl/procore-crawls/{feature}/worker-done-*.md`
-- Test signals: `playwright-procore-crawl/procore-crawls/{feature}/tests-passing-*.md`
+- Worker signals: `docs-ai/contents/docs/PRPs/{feature}/worker-done-*.md`
+- Test signals: `docs-ai/contents/docs/PRPs/{feature}/tests-passing-*.md`
 - Session log: `documentation/*project-mgmt/shared/logs/task-log.md`
 
 ---
@@ -52,6 +53,7 @@ Before starting ANY phase, check the pattern library for relevant patterns:
 **Location:** `.agents/patterns/`
 
 **Process:**
+
 1. Read `.agents/patterns/index.json`
 2. Match task keywords against pattern triggers
 3. Read and apply relevant patterns BEFORE writing code
@@ -90,18 +92,17 @@ Import from fixtures for authenticated requests:
 `,
   description: "Test {feature}"
 })
-```
-
+```diff
 ---
 
 ## MANDATORY 8-PHASE WORKFLOW
 
 Every feature implementation MUST follow this phased workflow. Skipping phases is a violation.
 
-```
+```yaml
 PATTERNS --> RESEARCH --> PLAN --> ANALYZE --> IMPLEMENT --> TEST --> VERIFY --> COMPLETE
-```
 
+```yaml
 **Phase 0: PATTERNS** - Read relevant patterns from `.agents/patterns/` before starting
 
 ---
@@ -138,10 +139,12 @@ Task({
 **Action:** Create planning documents in the feature folder.
 
 **Required Files:**
+
 1. `TASKS.md` - Checklist of all deliverables and tasks
 2. `PLANS.md` - Detailed implementation plan with context
 
 **TASKS.md Structure:**
+
 ```markdown
 # TASKS: {Feature}
 
@@ -191,8 +194,7 @@ Task({
 - [ ] Quality check passes
 - [ ] All tests pass
 - [ ] Matches Procore reference
-```
-
+```yaml
 **Gate:** Cannot proceed without TASKS.md and PLANS.md created.
 
 ---
@@ -221,8 +223,7 @@ Task({
     - frontend/tests/e2e/{feature}*.spec.ts (tests)`,
   description: "Analyze {feature} codebase state"
 })
-```
-
+```yaml
 **Output:** TASKS.md updated with current state markers.
 
 ---
@@ -264,8 +265,7 @@ When done, create .claude/worker-done-{feature}-[task-id].md with:
 BEGIN IMPLEMENTATION.`,
   description: "Implement {feature} [task]"
 })
-```
-
+```yaml
 **Rules:**
 - One task per worker agent
 - Workers do NOT run tests
@@ -339,8 +339,7 @@ Create /documentation/*project-mgmt/active/{feature}/tests/tests-passing-{featur
 
 ```bash
 npx tsx .agents/tools/enforce-gates.ts {feature}
-```
-
+```yaml
 This generates `{feature_dir}/GATES.md` with:
 - Checksum proof that gates were run
 - Timestamps
@@ -404,8 +403,7 @@ VERIFIED / FAILED
 BE RUTHLESS. If ANY check fails, mark as FAILED.`,
   description: "Verify {feature}"
 })
-```
-
+```bash
 **Gate:** Cannot mark task complete without VERIFIED status.
 
 ---
@@ -415,6 +413,7 @@ BE RUTHLESS. If ANY check fails, mark as FAILED.`,
 **Trigger:** Verifier returns VERIFIED AND GATES.md shows all PASSED
 
 **Requirements before claiming completion:**
+
 1. `{feature_dir}/GATES.md` exists with all gates PASSED
 2. `{feature_dir}/VERIFICATION-[task].md` shows VERIFIED status
 3. All checksums are present and timestamps are recent (< 1 hour)
@@ -424,6 +423,7 @@ BE RUTHLESS. If ANY check fails, mark as FAILED.`,
 1. Mark item as `[x]` in TASKS.md
 2. Update STATUS.md with new progress
 3. Log to `task-log.md` WITH gate checksums:
+
    ```markdown
    ## [{feature}] [Task Name]
    - Completed: [timestamp]
@@ -478,11 +478,13 @@ When verification finds ANY failures:
 4. **Only then complete** - Completion requires VERIFIED status
 
 **BANNED:**
+
 - "Verification found 3 issues" -> STOP and report
 - "Known issue - low priority" -> Leave unfixed
 - "85% passing is acceptable" -> Partial pass = FAIL
 
 **REQUIRED:**
+
 - "Verification found 3 issues" -> Fix all 3 -> Re-verify -> PASS
 - Continue until VERIFIED or genuinely blocked
 
@@ -539,8 +541,7 @@ npm run typecheck --prefix frontend
 
 # Auto-fix when possible
 npm run quality:fix --prefix frontend
-```
-
+```markdown
 ### Zero Tolerance
 
 | BANNED | REQUIRED |
@@ -595,18 +596,19 @@ When multiple sessions work on the same feature:
 ### Task Locking
 Before starting a task, check/create lock file:
 ```
-.claude/locks/{feature}/{task-id}.lock
-```
 
+.claude/locks/{feature}/{task-id}.lock
+
+```yaml
 Lock file contents:
 ```markdown
 # Lock: {task-id}
 Session: [session-id]
 Started: [timestamp]
 Task: [task description]
-```
-
+```bash
 ### Picking Up Tasks
+
 1. Read STATUS.md for current progress
 2. Read TASKS.md for uncompleted tasks
 3. Check `.claude/locks/{feature}/` for locked tasks
@@ -617,7 +619,9 @@ Task: [task description]
 8. Remove lock file
 
 ### Conflict Resolution
+
 If lock file older than 2 hours, assume session died:
+
 - Remove stale lock
 - Claim task
 - Note in STATUS.md
@@ -626,7 +630,7 @@ If lock file older than 2 hours, assume session died:
 
 ## FILE ORGANIZATION
 
-```
+```text
 alleato-procore/
 │
 ├── documentation/*project-mgmt/active/{feature}/

@@ -19,6 +19,7 @@
 ### Full CRUD Resource (`.claude/scaffolds/crud-resource/`)
 
 Use when creating a new project-scoped entity with:
+
 - Database table
 - Service class
 - React hook
@@ -29,6 +30,7 @@ Use when creating a new project-scoped entity with:
 **Command:** `/scaffold <EntityName>`
 
 **Example:** `/scaffold ScheduleTask` generates:
+
 - `schedule_tasks` table with RLS
 - `ScheduleTaskService` class
 - `useScheduleTasks` hook
@@ -71,8 +73,7 @@ Ask: "What am I building?"
 cat .claude/scaffolds/crud-resource/migration.sql
 cat .claude/scaffolds/crud-resource/service.ts
 cat .claude/scaffolds/crud-resource/hook.ts
-```
-
+```bash
 Replace placeholders with your entity names.
 
 ### Step 3: Verify Against Types
@@ -88,6 +89,7 @@ cat frontend/src/types/database.types.ts | grep -A 20 "your_table"
 ### Step 4: Customize
 
 Add domain-specific:
+
 - Fields to migration
 - Fields to DTOs
 - Fields to form schema

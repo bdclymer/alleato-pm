@@ -4,10 +4,9 @@ Create a new component that follows design system rules.
 
 ## Usage
 
-```
+```bash
 /component ComponentName [type]
-```
-
+```typescript
 **Types:**
 
 - `ui` - Base UI component (goes in components/ui/)
@@ -96,8 +95,7 @@ Add a brief comment at the top of the file:
  * @example
  * <ComponentName prop="value" />
  */
-```
-
+```typescript
 ### Template: UI Component
 
 ```tsx

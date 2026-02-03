@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TableLayout } from "@/components/layouts";
-import { PageHeader } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

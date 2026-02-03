@@ -5,6 +5,7 @@ Comprehensive guide to creating commands that gather user feedback and make deci
 ## Overview
 
 Some commands need user input that doesn't work well with simple arguments. For example:
+
 - Choosing between multiple complex options with trade-offs
 - Selecting multiple items from a list
 - Making decisions that require explanation
@@ -57,8 +58,7 @@ For these cases, use the **AskUserQuestion tool** within command execution rathe
     }
   ]
 }
-```
-
+```yaml
 **Key points:**
 - Users can always choose "Other" to provide custom input (automatic)
 - `multiSelect: true` allows selecting multiple options
@@ -144,8 +144,7 @@ Environments: [environments]
 ## Step 4: Confirm and Next Steps
 
 Confirm configuration created and guide user on next steps.
-```
-
+```yaml
 ### Multi-Stage Interactive Workflow
 
 ```markdown
@@ -194,8 +193,7 @@ If "Modify", ask which specific setting to change.
 ## Stage 4: Execute Setup
 
 Based on confirmed configuration, execute setup steps.
-```
-
+```yaml
 ## Interactive Question Design
 
 ### Question Structure
@@ -211,14 +209,14 @@ Options:
 ```
 
 **Poor questions:**
+
 ```markdown
 Question: "Database?"  // Too vague
 Header: "DB"  // Unclear abbreviation
 Options:
   - Option 1  // Not descriptive
   - Option 2
-```
-
+```yaml
 ### Option Design Best Practices
 
 **Clear labels:**
@@ -253,8 +251,7 @@ Options:
   - Metrics (Performance monitoring)
   - Alerts (Error notifications)
   - Backups (Automatic backups)
-```
-
+```yaml
 User can select any combination: none, some, or all.
 
 **When NOT to use multiSelect:**
@@ -262,8 +259,7 @@ User can select any combination: none, some, or all.
 ```markdown
 Question: "Which authentication method?"
 multiSelect: false  // Only one auth method makes sense
-```
-
+```yaml
 Mutually exclusive choices should not use multiSelect.
 
 ## Command Patterns with AskUserQuestion
@@ -334,8 +330,7 @@ Use AskUserQuestion with multiple questions in one call:
 - options: Linting, Type checking, Code coverage, Security scanning
 
 Process all answers together to generate cohesive configuration.
-```
-
+```yaml
 ### Pattern 3: Conditional Question Flow
 
 ```markdown
@@ -376,8 +371,7 @@ If answer is "Complex":
 ## Process Conditional Answers
 
 Generate configuration appropriate for selected complexity level.
-```
-
+```yaml
 ### Pattern 4: Iterative Collection
 
 ```markdown
@@ -422,8 +416,7 @@ Store each member's information.
 ## Generate Team Configuration
 
 After collecting all N members, create team configuration file with all members and their roles.
-```
-
+```yaml
 ### Pattern 5: Dependency Selection
 
 ```markdown
@@ -486,8 +479,7 @@ If answers are empty or invalid:
 
 If answers look correct:
   Process as expected
-```
-
+```yaml
 ### Progressive Disclosure
 
 ```markdown
@@ -513,11 +505,11 @@ If "Custom":
 If "Guided":
   Ask questions with extra explanation
   Provide recommendations along the way
-```
-
+```yaml
 ### Multi-Select Guidelines
 
 **Good multi-select use:**
+
 ```markdown
 Question: "Which features do you want to enable?"
 multiSelect: true
@@ -528,8 +520,7 @@ Options:
   - Backups
 
 Reason: User might want any combination
-```
-
+```yaml
 **Bad multi-select use:**
 ```markdown
 Question: "Which database engine?"
@@ -574,8 +565,7 @@ If validation fails:
     - Cancel (Abort setup)
 
   Based on answer, retry or proceed or exit.
-```
-
+```yaml
 ### Build Configuration Incrementally
 
 ```markdown
@@ -619,8 +609,7 @@ Options:
   - Yes (Save and apply)
   - No (Start over)
   - Modify (Edit specific settings)
-```
-
+```yaml
 ### Dynamic Options Based on Context
 
 ```markdown
@@ -663,8 +652,7 @@ If language is Python:
     - Pylint (Linting and style)
 
 Questions adapt to project context.
-```
-
+```yaml
 ## Real-World Example: Multi-Agent Swarm Launch
 
 **From multi-agent-swarm plugin:**
@@ -826,8 +814,7 @@ Options:
   - Authorization
   - Rate Limiting
   - Caching
-```
-
+```yaml
 ### Pattern: Environment Configuration
 
 ```markdown
@@ -839,8 +826,7 @@ Options:
   - Development (Local development)
   - Staging (Pre-production testing)
   - Production (Live environment)
-```
-
+```yaml
 ### Pattern: Priority Selection
 
 ```markdown
@@ -853,8 +839,7 @@ Options:
   - High (Important, do soon)
   - Medium (Standard priority)
   - Low (Nice to have)
-```
-
+```yaml
 ### Pattern: Scope Selection
 
 ```markdown
@@ -873,6 +858,7 @@ Options:
 ### Use Both Appropriately
 
 **Arguments for known values:**
+
 ```markdown
 ---
 argument-hint: [project-name]
@@ -884,8 +870,7 @@ Setup for project: $1
 Now gather additional configuration...
 
 Use AskUserQuestion for options that require explanation.
-```
-
+```bash
 **Questions for complex choices:**
 ```markdown
 Project name from argument: $1
@@ -901,17 +886,20 @@ These require explanation, so questions work better than arguments.
 ## Troubleshooting
 
 **Questions not appearing:**
+
 - Verify AskUserQuestion in allowed-tools
 - Check question format is correct
 - Ensure options array has 2-4 items
 
 **User can't make selection:**
+
 - Check option labels are clear
 - Verify descriptions are helpful
 - Consider if too many options
 - Ensure multiSelect setting is correct
 
 **Flow feels confusing:**
+
 - Reduce number of questions
 - Group related questions
 - Add explanation between stages

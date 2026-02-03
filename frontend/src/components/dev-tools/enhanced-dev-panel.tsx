@@ -271,6 +271,41 @@ export function EnhancedDevPanel() {
   })
 
   const envInfo = getEnvInfo()
+  const routeSegments = pathname?.split("/").filter(Boolean) ?? []
+  const featureInsights = [
+    {
+      match: "submittals",
+      label: "Submittals",
+      tables: ["projects", "submittals", "submittal_comments", "submittal_reviewers"],
+      endpoints: [
+        (projectId?: string) => `/api/projects/${projectId}/submittals`,
+        (projectId?: string) => `/api/projects/${projectId}/submittals/summary`,
+        () => `/api/submittals/import`,
+      ],
+    },
+    {
+      match: "budget",
+      label: "Budget",
+      tables: ["projects", "budgets", "budget_lines", "cost_codes"],
+      endpoints: [
+        (projectId?: string) => `/api/projects/${projectId}/budget`,
+        (projectId?: string) => `/api/projects/${projectId}/budget-lines`,
+        () => `/api/budget/forecasts`,
+      ],
+    },
+    {
+      match: "tables-directory",
+      label: "Tables Directory",
+      tables: ["tables", "table_snapshots"],
+      endpoints: [
+        () => `/api/tables`,
+        () => `/api/tables/schemas`,
+      ],
+    },
+  ]
+  const pageInsight = featureInsights.find((insight) =>
+    routeSegments.some((segment) => insight.match === segment),
+  )
 
   return (
     <Sheet>
@@ -284,7 +319,7 @@ export function EnhancedDevPanel() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-[600px] sm:w-[700px]">
+      <SheetContent className="!w-[820px] sm:!w-[760px] max-w-[95vw] sm:max-w-none px-6 py-6">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
@@ -303,16 +338,9 @@ export function EnhancedDevPanel() {
             <TabsTrigger value="network">Network</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-4">
+          <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-6">
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-4">
-              {/* Critical Warnings */}
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  <strong>Common Pain Points:</strong> Next.js cache issues (90+ min wasted), Supabase FK type mismatches (90+ min), Route conflicts (60+ min)
-                </AlertDescription>
-              </Alert>
 
               {/* Environment Info */}
               <div>
@@ -354,13 +382,71 @@ export function EnhancedDevPanel() {
                       <code className="ml-2 text-xs bg-muted px-2 py-1 rounded">{params.projectId}</code>
                     </div>
                   )}
-                </div>
               </div>
+            </div>
 
-              <Separator />
+            {pageInsight && (
+              <>
+                <Separator />
+                {/* Page Insights */}
+                <div>
+                  <h3 className="font-semibold mb-3">Page Insights</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex gap-2 items-center">
+                      <Badge variant="secondary" className="text-xs">
+                        {pageInsight.label}
+                      </Badge>
+                      <span className="text-muted-foreground text-xs">
+                        {routeSegments.join(" / ")}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Supabase tables</div>
+                      <div className="flex flex-wrap gap-2">
+                        {pageInsight.tables.map((table) => (
+                          <Badge key={table} variant="outline" className="text-xs">
+                            {table}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Common API endpoints
+                      </div>
+                      <div className="space-y-1">
+                        {pageInsight.endpoints.map((endpointFn, index) => (
+                          <code
+                            key={index}
+                            className="text-xs bg-muted px-2 py-1 rounded block"
+                          >
+                            {endpointFn(params.projectId)}
+                          </code>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
-              {/* Health Checks */}
-              <div>
+            {!pageInsight && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="font-semibold mb-2">Page Insights</h3>
+                  <p className="text-xs text-muted-foreground">
+                    No feature-specific insights available for this route.
+                    Use the console or API tabs to gather more context.
+                  </p>
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Health Checks */}
+            <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold">System Health</h3>
                   <Button
@@ -599,6 +685,12 @@ const supabase = createClient(url, key);
 
             {/* ERRORS TAB */}
             <TabsContent value="errors" className="space-y-4">
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  <strong>Common Pain Points:</strong> Next.js cache issues (90+ min wasted), Supabase FK type mismatches (90+ min), Route conflicts (60+ min)
+                </AlertDescription>
+              </Alert>
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">Console Errors</h3>
                 <Button

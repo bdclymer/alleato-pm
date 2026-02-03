@@ -4,7 +4,7 @@ A well-structured plugin with commands, agents, and skills.
 
 ## Directory Structure
 
-```
+```text
 code-quality/
 ├── .claude-plugin/
 │   └── plugin.json
@@ -32,8 +32,7 @@ code-quality/
 └── scripts/
     ├── run-linter.sh
     └── generate-report.py
-```
-
+```yaml
 ## File Contents
 
 ### .claude-plugin/plugin.json
@@ -52,8 +51,7 @@ code-quality/
   "license": "MIT",
   "keywords": ["code-quality", "linting", "testing", "code-review", "automation"]
 }
-```
-
+```yaml
 ### commands/lint.md
 
 ```markdown
@@ -125,8 +123,7 @@ After test completion, offer to:
 - Fix failing tests
 - Generate tests for untested code (using test-generator agent)
 - Update documentation based on test changes
-```
-
+```bash
 ### agents/code-reviewer.md
 
 ```markdown
@@ -172,8 +169,7 @@ For each file reviewed:
 - Important issues (should fix)
 - Suggestions (nice to have)
 - Positive feedback (what was done well)
-```
-
+```yaml
 ### agents/test-generator.md
 
 ```markdown
@@ -219,8 +215,7 @@ Generated tests include:
 - Error handling verification
 - Mock data for external dependencies
 - Clear test descriptions
-```
-
+```yaml
 ### skills/code-standards/SKILL.md
 
 ```markdown
@@ -421,8 +416,7 @@ See language-specific guides for:
 - Go: `references/go-style.md`
 - Rust: `references/rust-style.md`
 - Ruby: `references/ruby-style.md`
-```
-
+```bash
 ### hooks/hooks.json
 
 ```json
@@ -452,8 +446,7 @@ See language-specific guides for:
     }
   ]
 }
-```
-
+```bash
 ### hooks/scripts/validate-commit.sh
 
 ```bash
@@ -501,13 +494,13 @@ fi
 
 echo '{"systemMessage": "Code quality checks passed. Ready to commit."}'
 exit 0
-```
-
+```markdown
 ## Usage Examples
 
 ### Running Commands
 
 ```
+
 $ claude
 > /lint
 Running linter checks...
@@ -539,14 +532,15 @@ Untested Files:
   src/api/webhooks.js - 23% coverage
 
 Failed Tests:
+
   1. User API › GET /users › should handle pagination
      Expected 200, received 500
   ...
-```
 
+```markdown
 ### Using Agents
 
-```
+```text
 > Review the changes in src/api/users.js
 
 [code-reviewer agent selected automatically]
@@ -554,6 +548,7 @@ Failed Tests:
 Code Review: src/api/users.js
 
 Critical Issues:
+
   1. Line 45: SQL injection vulnerability
      - Using string concatenation for SQL query
      - Replace with parameterized query
@@ -565,10 +560,12 @@ Critical Issues:
      - Priority: HIGH
 
 Suggestions:
+
   1. Line 23: Consider caching user data
      - Frequent DB queries for same users
      - Add Redis caching layer
      - Priority: MEDIUM
+
 ```
 
 ## Key Points

@@ -37,8 +37,7 @@ Build JWT-based authentication for the REST API.
 ## Coordination
 Depends on Task 3.4 (user model).
 Report status to 'team-leader' session.
-```
-
+```bash
 ### How It's Used
 
 **File:** `hooks/agent-stop-notification.sh`
@@ -83,9 +82,9 @@ if tmux has-session -t "$COORDINATOR_SESSION" 2>/dev/null; then
 fi
 
 exit 0
-```
-
+```yaml
 **Key patterns:**
+
 1. **Quick exit** (line 7-9): Returns immediately if file doesn't exist
 2. **Field extraction** (lines 11-17): Parses each frontmatter field
 3. **Enabled check** (lines 19-21): Respects enabled flag
@@ -113,8 +112,7 @@ additional_instructions: "$EXTRA_INSTRUCTIONS"
 
 $TASK_DETAILS
 EOF
-```
-
+```bash
 ### Updates
 
 PR number updated after PR creation:
@@ -143,8 +141,7 @@ started_at: "2025-01-15T14:30:00Z"
 Fix all the linting errors in the project.
 Make sure tests pass after each fix.
 Document any changes needed in CLAUDE.md.
-```
-
+```sql
 ### How It's Used
 
 **File:** `hooks/stop-hook.sh`
@@ -216,9 +213,9 @@ jq -n \
   }'
 
 exit 0
-```
-
+```bash
 **Key patterns:**
+
 1. **Quick exit** (line 7-9): Skip if not active
 2. **Iteration tracking** (lines 11-20): Count and enforce max iterations
 3. **Promise detection** (lines 25-33): Check for completion signal in output
@@ -249,8 +246,7 @@ $PROMPT
 EOF
 
 echo "Ralph loop initialized: .claude/ralph-loop.local.md"
-```
-
+```bash
 ## Pattern Comparison
 
 | Feature | multi-agent-swarm | ralph-wiggum |
@@ -283,8 +279,7 @@ Both use an `enabled` field for explicit control:
 
 ```yaml
 enabled: true
-```
-
+```bash
 **Why:** Allows temporary deactivation without deleting file.
 
 ### 3. Atomic Updates
@@ -295,8 +290,7 @@ Both use temp file + atomic move:
 TEMP_FILE="${FILE}.tmp.$$"
 sed "s/^field: .*/field: $NEW_VALUE/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
-```
-
+```bash
 **Why:** Prevents corruption if process is interrupted.
 
 ### 4. Quote Handling
@@ -305,8 +299,7 @@ Both strip surrounding quotes from YAML values:
 
 ```bash
 sed 's/^"\(.*\)"$/\1/'
-```
-
+```bash
 **Why:** YAML allows both `field: value` and `field: "value"`.
 
 ### 5. Error Handling
@@ -337,8 +330,7 @@ FILE="/Users/alice/.claude/my-plugin.local.md"
 
 # GOOD
 FILE=".claude/my-plugin.local.md"
-```
-
+```bash
 ### ❌ Unquoted Variables
 
 ```bash
@@ -347,8 +339,7 @@ echo $VALUE
 
 # GOOD
 echo "$VALUE"
-```
-
+```sql
 ### ❌ Non-Atomic Updates
 
 ```bash
@@ -359,8 +350,7 @@ sed -i "s/field: .*/field: $VALUE/" "$FILE"
 TEMP_FILE="${FILE}.tmp.$$"
 sed "s/field: .*/field: $VALUE/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
-```
-
+```sql
 ### ❌ No Default Values
 
 ```bash
@@ -386,6 +376,7 @@ awk '/^---$/{i++; next} i>=2'  # For body
 ## Conclusion
 
 The `.claude/plugin-name.local.md` pattern provides:
+
 - Simple, human-readable configuration
 - Version-control friendly (gitignored)
 - Per-project settings

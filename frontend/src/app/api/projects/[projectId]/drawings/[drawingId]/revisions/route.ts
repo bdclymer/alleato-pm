@@ -1,125 +1,129 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { drawingRevisionSchema } from "@/types/drawings.types";
+import { createClient } from "@/lib/supabase/server";
+import { DrawingService } from "@/services/DrawingService";
 
-interface RouteContext {
-  params: Promise<{ projectId: string; drawingId: string }>;
-}
-
+/**
+ * GET /api/projects/[projectId]/drawings/[drawingId]/revisions
+ * List all revisions for a drawing
+ */
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
 ) {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const { drawingId } = await params;
+  const supabase = await createClient();
 
-    const { drawingId } = await context.params;
-    
-    const { data, error } = await supabase
-      .from('drawing_revisions')
-      .select(`
-        *,
-        drawing_set:drawing_sets(id, name),
-        uploader:auth.users(id, email)
-      `)
-      .eq('drawing_id', drawingId)
-      .order('created_at', { ascending: false });
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+  const service = new DrawingService(supabase);
+  const result = await service.listRevisions(drawingId);
 
-    return NextResponse.json(data || []);
-
-  } catch (error) {
-    console.error('Drawing revisions GET error:', error);
+  if (result.error) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: result.error.message },
+      { status: 500 },
     );
   }
+
+  return NextResponse.json(result.data);
 }
 
+/**
+ * POST /api/projects/[projectId]/drawings/[drawingId]/revisions
+ * Create a new revision for a drawing with file upload
+ */
 export async function POST(
   request: NextRequest,
-  context: RouteContext
+  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
 ) {
+  const { projectId, drawingId } = await params;
+  const supabase = await createClient();
+
+  // Verify authentication
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Parse multipart form data
+    const formData = await request.formData();
 
-    const { drawingId } = await context.params;
-    const body = await request.json();
+    const revisionNumber = formData.get("revision_number") as string;
+    const receivedDate = formData.get("received_date") as string;
+    const drawingDate = (formData.get("drawing_date") as string) || undefined;
+    const drawingSetId = (formData.get("drawing_set_id") as string) || undefined;
+    const status = (formData.get("status") as string) || undefined;
+    const description = (formData.get("description") as string) || undefined;
+    const file = formData.get("file") as File;
 
-    // Validate request body
-    const validationResult = drawingRevisionSchema.safeParse(body);
-    if (!validationResult.success) {
+    // Validate required fields
+    if (!revisionNumber || !receivedDate || !file) {
       return NextResponse.json(
-        { error: "Invalid data", details: validationResult.error.issues },
-        { status: 400 }
+        {
+          error: "Missing required fields: revision_number, received_date, file",
+        },
+        { status: 400 },
       );
     }
 
-    const { revisionNumber, drawingDate, receivedDate, status, description, drawingSetId } = validationResult.data;
+    const service = new DrawingService(supabase);
 
-    // Check if revision number already exists for this drawing
-    const { data: existing } = await supabase
-      .from('drawing_revisions')
-      .select('id')
-      .eq('drawing_id', drawingId)
-      .eq('revision_number', revisionNumber)
-      .limit(1);
+    // Step 1: Upload the file
+    const uploadResult = await service.uploadFile(projectId, drawingId, file);
 
-    if (existing && existing.length > 0) {
+    if (uploadResult.error) {
+      const statusCode =
+        uploadResult.error.type === "FILE_TOO_LARGE" ? 400 : 500;
       return NextResponse.json(
-        { error: "Revision number already exists for this drawing" },
-        { status: 409 }
+        { error: uploadResult.error.message },
+        { status: statusCode },
       );
     }
 
-    // Note: This endpoint is for creating revision records only
-    // File uploads are handled by the upload hook and separate endpoints
-    const { data, error } = await supabase
-      .from('drawing_revisions')
-      .insert({
-        drawing_id: drawingId,
+    // Step 2: Create the revision
+    const revisionResult = await service.createRevision(
+      drawingId,
+      {
         revision_number: revisionNumber,
-        drawing_date: drawingDate || null,
+        drawing_set_id: drawingSetId,
+        drawing_date: drawingDate,
         received_date: receivedDate,
-        status: status,
-        drawing_set_id: drawingSetId || null,
-        description: description || null,
-        uploaded_by: user.id,
-        // File fields would be set during actual upload
-        file_url: '',
-        file_name: '',
-        file_size: 0,
-        file_type: '',
-        is_current_revision: false,
-      })
-      .select('*')
-      .single();
+        status: status || "active",
+        file_url: uploadResult.data.url,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        description,
+      },
+      user.id,
+    );
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (revisionResult.error) {
+      // Clean up uploaded file if revision creation fails
+      // Note: File path cleanup could be added here if needed
+      return NextResponse.json(
+        { error: revisionResult.error.message },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json(data, { status: 201 });
-
-  } catch (error) {
-    console.error('Drawing revisions POST error:', error);
+    return NextResponse.json(revisionResult.data, { status: 201 });
+  } catch (err) {
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        error: "Failed to create revision",
+        details: err instanceof Error ? err.message : "Unknown error",
+      },
+      { status: 500 },
     );
   }
 }

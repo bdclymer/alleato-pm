@@ -9,7 +9,8 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { FormContainer, PageHeader } from "@/components/layout";
+import { FormContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";

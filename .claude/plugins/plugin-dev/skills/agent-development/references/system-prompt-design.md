@@ -35,8 +35,7 @@ Provide results structured as:
 Handle these situations:
 - [Edge case 1]: [Specific handling approach]
 - [Edge case 2]: [Specific handling approach]
-```
-
+```markdown
 ## Pattern 1: Analysis Agents
 
 For agents that analyze code, PRs, or documentation:
@@ -86,8 +85,7 @@ You are an expert [domain] analyzer specializing in [specific analysis type].
 - No issues found: Provide positive feedback and validation
 - Too many issues: Group and prioritize top 10
 - Unclear code: Request clarification rather than guessing
-```
-
+```bash
 ## Pattern 2: Generation Agents
 
 For agents that create code, tests, or documentation:
@@ -129,8 +127,7 @@ Create [what] with:
 - Insufficient context: Ask user for clarification
 - Conflicting patterns: Follow most recent/explicit pattern
 - Complex requirements: Break into smaller pieces
-```
-
+```bash
 ## Pattern 3: Validation Agents
 
 For agents that validate, check, or verify:
@@ -227,14 +224,13 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 - Phase failure: Attempt retry, then report and stop
 - Missing dependencies: Request from user
 - Timeout: Report partial completion
-```
-
+```markdown
 ## Writing Style Guidelines
 
 ### Tone and Voice
 
 **Use second person (addressing the agent):**
-```
+```text
 ✅ You are responsible for...
 ✅ You will analyze...
 ✅ Your process should...
@@ -242,12 +238,13 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ❌ The agent is responsible for...
 ❌ This agent will analyze...
 ❌ I will analyze...
-```
 
+```markdown
 ### Clarity and Specificity
 
 **Be specific, not vague:**
 ```
+
 ✅ Check for SQL injection by examining all database queries for parameterization
 ❌ Look for security issues
 
@@ -256,19 +253,19 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 
 ✅ Categorize as critical (security), major (bugs), or minor (style)
 ❌ Rate the severity of issues
-```
 
+```markdown
 ### Actionable Instructions
 
 **Give concrete steps:**
-```
+```text
 ✅ Read the file using the Read tool, then search for patterns using Grep
 ❌ Analyze the code
 
 ✅ Generate test file at test/path/to/file.test.ts
 ❌ Create tests
-```
 
+```markdown
 ## Common Pitfalls
 
 ### ❌ Vague Responsibilities
@@ -289,14 +286,12 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 1. Analyze TypeScript code for type safety issues
 2. Identify missing type annotations and improper 'any' usage
 3. Recommend specific type improvements with examples
-```
-
+```markdown
 ### ❌ Missing Process Steps
 
 ```markdown
 Analyze the code and provide feedback.
-```
-
+```text
 **Why bad:** Agent doesn't know HOW to analyze.
 
 ### ✅ Clear Process
@@ -308,8 +303,7 @@ Analyze the code and provide feedback.
 3. Check for 'any' type usage
 4. Verify generic type parameters
 5. List findings with file:line references
-```
-
+```markdown
 ### ❌ Undefined Output
 
 ```markdown
@@ -340,6 +334,7 @@ Provide a report.
 ### Minimum Viable Agent
 
 **~500 words minimum:**
+
 - Role description
 - 3 core responsibilities
 - 5-step process
@@ -348,6 +343,7 @@ Provide a report.
 ### Standard Agent
 
 **~1,000-2,000 words:**
+
 - Detailed role and expertise
 - 5-8 responsibilities
 - 8-12 process steps
@@ -358,6 +354,7 @@ Provide a report.
 ### Comprehensive Agent
 
 **~2,000-5,000 words:**
+
 - Complete role with background
 - Comprehensive responsibilities
 - Detailed multi-phase process
@@ -393,6 +390,7 @@ Read the system prompt and ask:
 ### Iterate Based on Results
 
 After testing agent:
+
 1. Identify where it struggled
 2. Add missing guidance to system prompt
 3. Clarify ambiguous instructions
@@ -402,6 +400,7 @@ After testing agent:
 ## Conclusion
 
 Effective system prompts are:
+
 - **Specific**: Clear about what and how
 - **Structured**: Organized with clear sections
 - **Complete**: Covers normal and edge cases

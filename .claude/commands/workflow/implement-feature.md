@@ -18,8 +18,7 @@ Streamlined entry point for implementing Procore features. Automatically determi
 /implement-feature rfis --phase implement
 
 # Available phases: research, plan, analyze, implement, test, verify
-```
-
+```markdown
 ## Agent Instructions
 
 You are a feature implementation orchestrator. Your job is to coordinate the implementation of a Procore feature using the standardized 7-phase workflow.
@@ -30,10 +29,10 @@ Extract from the command:
 - **Feature Name** (required): e.g., "direct-costs", "commitments", "rfis"
 - **Phase Override** (optional): Force a specific phase instead of auto-detect
 
-```
+```typescript
 Arguments provided: {arguments}
-```
 
+```typescript
 Parse the feature name and any flags:
 - `--phase <phase>` - Override auto-detected phase
 - Valid phases: `research`, `plan`, `analyze`, `implement`, `test`, `verify`
@@ -42,49 +41,53 @@ Parse the feature name and any flags:
 
 **2a. Check feature directory exists:**
 ```
-documentation/*project-mgmt/in-progress/{feature}/
-```
 
+documentation/*project-mgmt/in-progress/{feature}/
+
+```bash
 If missing, respond:
-```
+```text
 Feature directory not found: documentation/*project-mgmt/in-progress/{feature}/
 
 To start a new feature:
+
 1. Create the directory: mkdir -p documentation/*project-mgmt/in-progress/{feature}
 2. Run the Procore crawler: /feature-crawl {feature} <procore-url>
 3. Then run: /implement-feature {feature}
-```
 
+```text
 **2b. Check for crawl data:**
 ```
-docs-ai/contents/docs/PRPs/{feature}/crawl-{feature}/
-```
 
+docs-ai/contents/docs/PRPs/{feature}/crawl-{feature}/
+
+```bash
 If missing, suggest:
-```
+```text
 No Procore crawl data found. Run the crawler first:
 /feature-crawl {feature} <procore-app-url> [procore-support-url]
 
 Example:
-/feature-crawl submittals https://us02.procore.com/562949954728542/project/submittals
-```
+/feature-crawl submittals <https://us02.procore.com/562949954728542/project/submittals>
 
+```markdown
 ### Step 3: Read Shared Workflow
 
 Read the shared workflow template:
 ```
-.agents/workflows/feature-implementation.md
-```
 
+.agents/workflows/feature-implementation.md
+
+```bash
 This contains the full 7-phase workflow with all sub-agent patterns and gate requirements.
 
 ### Step 4: Read Feature Context
 
 **4a. Read CONTEXT.md if it exists:**
-```
+```diff
 documentation/*project-mgmt/in-progress/{feature}/CONTEXT.md
-```
 
+```diff
 **4b. If CONTEXT.md doesn't exist, auto-generate from crawl data:**
 - Read crawl metadata files from `crawl-{feature}/pages/*/metadata.json`
 - Extract database tables from forms and table structures
@@ -95,9 +98,10 @@ documentation/*project-mgmt/in-progress/{feature}/CONTEXT.md
 
 **5a. Read STATUS.md if it exists:**
 ```
-documentation/*project-mgmt/in-progress/{feature}/STATUS.md
-```
 
+documentation/*project-mgmt/in-progress/{feature}/STATUS.md
+
+```bash
 **5b. If STATUS.md doesn't exist, check gate files:**
 
 | Gate File | Indicates Phase Complete |
@@ -120,10 +124,10 @@ If in IMPLEMENT phase with multiple tasks:
 
 **6a. Read available tasks from TASKS.md**
 **6b. Check for existing locks:**
-```
+```yaml
 .claude/locks/{feature}/*.lock
-```
 
+```yaml
 **6c. Skip locked tasks, pick first unlocked task**
 **6d. Create lock file for claimed task:**
 ```markdown
@@ -138,6 +142,7 @@ Task: {task-description}
 Based on determined phase, execute the appropriate workflow section from `.agents/workflows/feature-implementation.md`.
 
 **RESEARCH Phase:**
+
 ```typescript
 Task({
   subagent_type: "Explore",
@@ -151,8 +156,7 @@ Task({
     Write findings to: .claude/research/{feature}.md`,
   description: "Research {feature}"
 })
-```
-
+```yaml
 **PLAN Phase:**
 - Create TASKS.md with comprehensive task checklist
 - Create PLANS.md with implementation strategy
@@ -170,10 +174,10 @@ Task({
     4. Update TASKS.md with current state`,
   description: "Analyze {feature} state"
 })
-```
-
+```yaml
 **IMPLEMENT Phase:**
 For each unchecked task in TASKS.md:
+
 ```typescript
 Task({
   subagent_type: "frontend-developer", // or appropriate type
@@ -185,8 +189,7 @@ Task({
     Implement the task. Create .claude/worker-done-{feature}-{task-id}.md when done.`,
   description: "Implement {feature} {task}"
 })
-```
-
+```yaml
 **TEST Phase:**
 ```typescript
 Task({
@@ -203,6 +206,7 @@ Task({
 ```
 
 **VERIFY Phase:**
+
 ```typescript
 Task({
   subagent_type: "debugger",
@@ -217,8 +221,7 @@ Task({
     Create {feature}/VERIFICATION-{task}.md with VERIFIED or FAILED status.`,
   description: "Verify {feature}"
 })
-```
-
+```bash
 ### Step 8: Update STATUS.md
 
 After phase completion:
@@ -246,13 +249,12 @@ After phase completion:
 
 ## Recent Activity
 - {timestamp}: {what-was-done}
-```
-
+```markdown
 ### Step 9: Report Status
 
 Provide a clear status update:
 
-```
+```markdown
 ## {Feature} Implementation Status
 
 **Current Phase:** {phase}
@@ -310,6 +312,7 @@ When multiple sessions run `/implement-feature {same-feature}`:
 5. STATUS.md tracks overall progress
 
 **Stale lock cleanup:** If lock file is older than 2 hours:
+
 - Assume session died
 - Remove stale lock
 - Claim the task
@@ -320,24 +323,23 @@ When multiple sessions run `/implement-feature {same-feature}`:
 ## Quick Reference
 
 ### New Feature (Full Flow)
+
 ```bash
 /feature-crawl submittals https://us02.procore.com/.../submittals
 /implement-feature submittals
 # Auto-executes: RESEARCH -> PLAN -> ANALYZE -> IMPLEMENT -> TEST -> VERIFY
-```
-
+```markdown
 ### Resume Feature
 ```bash
 /implement-feature direct-costs
 # Reads STATUS.md, continues from current phase
-```
-
+```markdown
 ### Force Phase
+
 ```bash
 /implement-feature commitments --phase implement
 # Skips auto-detect, runs IMPLEMENT phase
-```
-
+```markdown
 ### Parallel Sessions
 ```bash
 # Terminal 1
@@ -354,6 +356,7 @@ When multiple sessions run `/implement-feature {same-feature}`:
 ## Success Criteria
 
 The command succeeds when:
+
 - Feature directory and crawl data exist
 - Current phase is determined (auto or override)
 - Appropriate sub-agents are spawned
@@ -361,6 +364,7 @@ The command succeeds when:
 - Progress is reported
 
 The feature is COMPLETE when:
+
 - All tasks in TASKS.md are [x] checked
 - All VERIFICATION-*.md files show VERIFIED
 - STATUS.md shows Phase: COMPLETE

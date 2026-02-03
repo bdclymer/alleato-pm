@@ -26,7 +26,7 @@ equipped with procedural knowledge that no model can fully possess.
 
 Every skill consists of a required SKILL.md file and optional bundled resources:
 
-```
+```text
 skill-name/
 ├── SKILL.md (required)
 │   ├── YAML frontmatter metadata (required)
@@ -37,8 +37,7 @@ skill-name/
     ├── scripts/          - Executable code (Python/Bash/etc.)
     ├── references/       - Documentation intended to be loaded into context as needed
     └── assets/           - Files used in output (templates, icons, fonts, etc.)
-```
-
+```sql
 #### SKILL.md (required)
 
 **Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
@@ -141,8 +140,7 @@ Usage:
 
 ```bash
 scripts/init_skill.py <skill-name> --path <output-directory>
-```
-
+```sql
 The script:
 
 - Creates the skill directory at the specified path
@@ -203,6 +201,7 @@ If validation fails, the script will report the errors and exit without creating
 After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
 
 **Iteration workflow:**
+
 1. Use the skill on real tasks
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated

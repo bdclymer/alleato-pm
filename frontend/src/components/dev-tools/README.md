@@ -11,6 +11,7 @@ Comprehensive debugging panel built specifically for this project's pain points.
 **Problem:** New route files not recognized, causing 404s that take 30+ minutes to debug.
 
 **Solution:**
+
 - One-click `.next` cache clear button
 - Shows cache status
 - Displays instructions for manual restart
@@ -25,6 +26,7 @@ Comprehensive debugging panel built specifically for this project's pain points.
 **Problem:** Creating FKs with wrong types (UUID instead of INTEGER) causes silent query failures.
 
 **Solution:**
+
 - **FK Type Reference Table**: Shows correct types for all major tables
   - `projects.id` → `project_id INTEGER` (not UUID!)
   - `people.id` → `person_id UUID`
@@ -36,6 +38,7 @@ Comprehensive debugging panel built specifically for this project's pain points.
 **Location:** Database tab → "FK Type Reference"
 
 **What it prevents:**
+
 ```typescript
 // ❌ WRONG (causes silent failures)
 direct_costs.employee_id UUID → people.id (mismatch: people uses UUID, but employee_id references integer)
@@ -51,6 +54,7 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 **Problem:** Claude asking user to manually log in when credentials exist in `.env`.
 
 **Solution:**
+
 - Environment info shows if auth keys are configured
 - Health checks validate auth session
 - Quick link to Supabase dashboard
@@ -65,6 +69,7 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 **Problem:** Using generic `[id]` instead of specific `[projectId]` breaks dev server.
 
 **Solution:**
+
 - One-click route conflict checker
 - Runs the `check-route-conflicts.sh` script
 - Shows current dynamic routes
@@ -79,6 +84,7 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 **Problem:** Using `'draft'` instead of `'Draft'` causes silent insert failures.
 
 **Solution:**
+
 - **CHECK Constraint Values Reference**: Shows exact case-sensitive values for all tables
   - Subcontracts status: `Draft, Sent, Pending, Approved, Executed, Closed, Void`
   - Direct costs status: `Draft, Approved, Rejected, Paid`
@@ -92,6 +98,7 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 ## Additional Features
 
 ### System Health Checks
+
 - Database connection test
 - Auth service validation
 - API route ping (if on project page)
@@ -99,17 +106,20 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 - All with response time tracking
 
 ### Console Error Logger
+
 - Captures all `console.error` and `console.warn` calls
 - Shows timestamp and error type
 - Red badge on icon when errors exist
 - Persists during session
 
 ### Quick Actions
+
 - **Regenerate Supabase Types**: One-click `npm run db:types`
 - **Clear Local Storage**: Reset all cached state
 - **Quick Links**: Supabase dashboard, Claude rules
 
 ### Tabs
+
 1. **Overview**: Health checks, quick fixes, environment info
 2. **Database**: FK types, CHECK constraints, testing patterns
 3. **Errors**: Console error log with filtering
@@ -120,16 +130,19 @@ direct_costs.project_id INTEGER → projects.id (both INTEGER)
 ## API Endpoints Created
 
 ### POST `/api/dev-tools/clear-cache`
+
 Deletes `.next` directory to force rebuild.
 
 **Security:** Only works in development mode.
 
 ### POST `/api/dev-tools/regenerate-types`
+
 Runs `npx supabase gen types typescript...` command.
 
 **Security:** Only works in development mode.
 
 ### GET `/api/dev-tools/check-routes`
+
 Runs route conflict checker script or basic validation.
 
 **Security:** Only works in development mode.
@@ -146,20 +159,24 @@ Runs route conflict checker script or basic validation.
 ### When to Use Each Tab
 
 **Overview Tab:**
+
 - Before debugging a 404 → Clear Next.js cache first
 - Before creating new routes → Check route conflicts
 - When types are out of date → Regenerate types
 
 **Database Tab:**
+
 - Before creating a new table with FKs → Check FK type reference
 - Before inserting test data → Check CHECK constraint values
 - After writing a Supabase query → Copy the test pattern
 
 **Errors Tab:**
+
 - When debugging unexpected behavior → Check recent errors
 - When user reports an issue → Export error log
 
 **Network Tab:**
+
 - (Future) Monitor API performance
 - (Future) Debug failed requests
 
@@ -207,22 +224,26 @@ To add new features:
 Based on pain points not yet addressed:
 
 ### TypeScript Errors
+
 - [ ] Show recent compilation errors
 - [ ] Link to problematic files
 - [ ] Quick typecheck button
 
 ### API Monitoring
+
 - [ ] Intercept fetch calls
 - [ ] Log all API requests/responses
 - [ ] Show failed request details
 - [ ] Response time graphs
 
 ### Performance
+
 - [ ] Page load time tracking
 - [ ] Component render counts
 - [ ] Bundle size info
 
 ### Schema Inspector
+
 - [ ] Visual table relationship graph
 - [ ] Column type browser
 - [ ] Migration history viewer

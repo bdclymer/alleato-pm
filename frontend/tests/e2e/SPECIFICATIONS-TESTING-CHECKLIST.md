@@ -5,32 +5,34 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 ## Pre-Test Setup
 
 - [ ] **Environment variables configured**
+
   ```bash
   cat .env.local | grep -E "SUPABASE_URL|SUPABASE_ANON_KEY"
-  ```
-
+  ```javascript
 - [ ] **Test project exists (ID: 31)**
+
   ```bash
   # Check project exists in database
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('projects').select('id').eq('id', 31).single().then(({data,error}) => console.log(error ? 'NOT FOUND' : 'EXISTS'));"
-  ```
-
+  ```text
 - [ ] **Test fixtures exist**
+
   ```bash
   ls -l tests/fixtures/*.pdf tests/fixtures/*.txt
   # Should show: test-document.pdf, revised-drawing.pdf, invalid-file.txt
-  ```
-
+  ```text
 - [ ] **Playwright dependencies installed**
+
   ```bash
   npx playwright install
   ```
 
 - [ ] **Development server NOT running** (tests start their own)
+
   ```bash
   # Kill any existing Next.js servers
   pkill -f "next dev"
-  ```
+  ```diff
 
 ---
 
@@ -39,12 +41,13 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 ### Full Test Suite (26 tests, ~3 minutes)
 
 - [ ] Run all specifications tests
+
   ```bash
   npm run test -- specifications
-  ```
-
+  ```text
 - [ ] Verify all tests pass
-  ```
+
+  ```text
   Expected output:
   ✓ specifications.spec.ts (8/8 passed)
   ✓ specifications-extended.spec.ts (18/18 passed)
@@ -54,41 +57,44 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 ### Individual Test Suites
 
 - [ ] **Original suite** (8 tests, ~45s)
+
   ```bash
   npx playwright test tests/e2e/specifications.spec.ts
-  ```
-
+  ```text
 - [ ] **Extended suite** (18 tests, ~120s)
+
   ```bash
   npx playwright test tests/e2e/specifications-extended.spec.ts
-  ```
+  ```markdown
 
 ### Category-Specific Tests
 
 - [ ] **File upload validation** (4 tests)
+
   ```bash
   npx playwright test -g "File Upload Validation"
-  ```
-
+  ```text
 - [ ] **Revision management** (6 tests)
+
   ```bash
   npx playwright test -g "Revision Management"
   ```
 
 - [ ] **Area management** (3 tests)
+
   ```bash
   npx playwright test -g "Area Management"
-  ```
-
+  ```text
 - [ ] **Pagination & search** (4 tests)
+
   ```bash
   npx playwright test -g "Pagination"
-  ```
-
+  ```javascript
 - [ ] **Edge cases** (6 tests)
+
   ```bash
   npx playwright test -g "Edge Cases"
-  ```
+  ```javascript
 
 ---
 
@@ -98,24 +104,27 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
 - [ ] **All tests passed** (26/26)
 - [ ] **No test data left behind**
+
   ```bash
   # Check for leftover test specs (should be none)
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('specification_sections').select('section_number', {count: 'exact'}).like('section_number', '99%').then(({count}) => console.log('Leftover test specs:', count));"
   ```
 
 - [ ] **No errors in test report**
+
   ```bash
   npx playwright show-report
-  ```
+  ```markdown
 
 ### Review Test Artifacts (if tests failed)
 
 - [ ] **Screenshots** (in `test-results/` directory)
 - [ ] **Videos** (if configured)
 - [ ] **Trace files** (for detailed debugging)
+
   ```bash
   npx playwright show-trace test-results/<test-name>/trace.zip
-  ```
+  ```diff
 
 ---
 
@@ -132,19 +141,21 @@ If tests fail, follow this checklist:
 ### 2. Run Failed Test in Debug Mode
 
 - [ ] Run with UI mode
+
   ```bash
   npm run test:ui
-  ```
-
+  ```text
 - [ ] Run headed (visible browser)
+
   ```bash
   npx playwright test --headed -g "<failing test name>"
   ```
 
 - [ ] Run with debug flag
+
   ```bash
   npx playwright test --debug -g "<failing test name>"
-  ```
+  ```markdown
 
 ### 3. Common Failure Patterns
 
@@ -170,19 +181,22 @@ If tests fail, follow this checklist:
 
 - [ ] Check if table schema changed
 - [ ] Regenerate database types
+
   ```bash
   npm run db:types
-  ```
+  ```markdown
 - [ ] Check if RLS policies are blocking
 
 ### 4. Fix and Re-run
 
 - [ ] Make necessary fixes
 - [ ] Re-run specific test
+
   ```bash
   npx playwright test -g "<fixed test name>"
-  ```
+  ```text
 - [ ] If passes, re-run full suite
+
   ```bash
   npm run test -- specifications
   ```
@@ -196,20 +210,21 @@ If tests leave data behind (shouldn't happen, but just in case):
 ### Manual Cleanup
 
 - [ ] **Delete test specifications**
+
   ```bash
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.from('specification_sections').delete().like('section_number', '99%').then(({error}) => console.log(error || 'Cleaned'));"
-  ```
-
+  ```sql
 - [ ] **Delete test areas**
+
   ```bash
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.from('specification_areas').delete().like('name', '%Test%E2E%').then(({error}) => console.log(error || 'Cleaned'));"
-  ```
-
+  ```sql
 - [ ] **Delete test revisions** (cascades automatically)
 
 ### Verify Cleanup
 
 - [ ] Check no test data remains
+
   ```bash
   # Should show 0
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('specification_sections').select('id', {count: 'exact'}).like('section_number', '99%').then(({count}) => console.log(count));"
@@ -329,19 +344,22 @@ All checkboxes below should be ✅:
 ## Contact & Support
 
 **Documentation:**
+
 - Test summary: `SPECIFICATIONS-TEST-SUMMARY.md`
 - Quick start: `QUICK-START-specifications.md`
 - Detailed README: `README-specifications-tests.md`
 
 **Testing guides:**
+
 - `.claude/testing/E2E-TESTING-GUIDE.md`
 - `.claude/testing/PLAYWRIGHT-PATTERNS.md`
 - `.claude/testing/ANTI-PATTERNS.md`
 
 **For help:**
+
 1. Check documentation above
 2. Review test file comments
-3. Check Playwright docs: https://playwright.dev
+3. Check Playwright docs: <https://playwright.dev>
 4. Ask in team chat
 
 ---

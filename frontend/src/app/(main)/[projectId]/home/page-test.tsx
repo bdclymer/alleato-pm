@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { use } from "react";
-import { AppShell } from "@/components/layout";
+import { AppShell } from "@/components/layouts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PageProps {

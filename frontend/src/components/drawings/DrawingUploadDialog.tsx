@@ -40,11 +40,14 @@ import { FileUploadField } from "@/components/forms/FileUploadField";
 import { useDrawingUpload } from "@/hooks/use-drawing-upload";
 import { useDrawingAreas } from "@/hooks/use-drawing-areas";
 import {
-  drawingUploadSchema,
+  uploadDrawingFormSchema,
+  type UploadDrawingFormData,
+} from "@/lib/schemas/drawing-schemas";
+import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
-  type DrawingUploadFormData,
   type DrawingUploadProgress,
+  type DrawingArea,
 } from "@/types/drawings.types";
 import { cn } from "@/lib/utils";
 
@@ -72,22 +75,16 @@ export function DrawingUploadDialog({
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
-  const { areas } = useDrawingAreas(projectId);
+  const { data: areas = [] } = useDrawingAreas(projectId);
   const { uploadDrawing, uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
 
-  const form = useForm<DrawingUploadFormData>({
-    resolver: zodResolver(drawingUploadSchema),
+  const form = useForm<UploadDrawingFormData>({
+    resolver: zodResolver(uploadDrawingFormSchema),
     defaultValues: {
-      drawingNumber: "",
+      drawing_number: "",
       title: "",
-      discipline: undefined,
-      drawingType: undefined,
-      revisionNumber: "A",
-      drawingDate: undefined,
-      receivedDate: new Date().toISOString().split('T')[0] + 'T09:00:00.000Z',
-      drawingSetId: undefined,
-      description: "",
-      areaId: defaultAreaId,
+      revision_number: "A",
+      received_date: new Date().toISOString(),
     },
   });
 
@@ -102,9 +99,9 @@ export function DrawingUploadDialog({
     setSelectedFiles(prev => [...prev, ...newFiles]);
 
     // Auto-populate drawing number and title from first file if not already set
-    if (!form.getValues('drawingNumber') && files.length > 0) {
+    if (!form.getValues('drawing_number') && files.length > 0) {
       const fileName = files[0].name.replace(/\.[^/.]+$/, "");
-      form.setValue('drawingNumber', fileName);
+      form.setValue('drawing_number', fileName);
       form.setValue('title', fileName);
     }
   };
@@ -113,7 +110,7 @@ export function DrawingUploadDialog({
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleUpload = async (data: DrawingUploadFormData) => {
+  const handleUpload = async (data: UploadDrawingFormData) => {
     if (selectedFiles.length === 0) {
       toast.error("Please select at least one file to upload");
       return;
@@ -156,8 +153,8 @@ export function DrawingUploadDialog({
   };
 
   const flatAreas = React.useMemo(() => {
-    const flatten = (areas: typeof areas, depth = 0): Array<{id: string, name: string, depth: number}> => {
-      return areas.flatMap(area => [
+    const flatten = (areasList: DrawingArea[], depth = 0): Array<{id: string, name: string, depth: number}> => {
+      return areasList.flatMap((area: DrawingArea) => [
         { id: area.id, name: area.name, depth },
         ...flatten(area.children || [], depth + 1)
       ]);
@@ -260,7 +257,7 @@ export function DrawingUploadDialog({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="drawingNumber"
+                name="drawing_number"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Drawing Number *</FormLabel>
@@ -278,7 +275,7 @@ export function DrawingUploadDialog({
 
               <FormField
                 control={form.control}
-                name="revisionNumber"
+                name="revision_number"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Revision</FormLabel>
@@ -343,7 +340,7 @@ export function DrawingUploadDialog({
 
               <FormField
                 control={form.control}
-                name="drawingType"
+                name="drawing_type"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type</FormLabel>
@@ -372,7 +369,7 @@ export function DrawingUploadDialog({
 
               <FormField
                 control={form.control}
-                name="areaId"
+                name="area_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Drawing Area</FormLabel>
@@ -406,7 +403,7 @@ export function DrawingUploadDialog({
 
               <FormField
                 control={form.control}
-                name="drawingDate"
+                name="drawing_date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Drawing Date</FormLabel>

@@ -17,11 +17,13 @@ I verified all three critical improvements by reviewing the component code. The 
 ### Code Evidence
 
 **Lines 117-118:** State declaration
+
 ```typescript
 const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
 ```
 
 **Lines 436-447:** UI Toggle (appears above rows as required)
+
 ```typescript
 {/* Smart Copy UOM Toggle */}
 <div className="flex gap-3 text-xs mb-2">
@@ -38,6 +40,7 @@ const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
 ```
 
 **Lines 269-294:** Smart UOM copying logic in `addRow()`
+
 ```typescript
 const addRow = () => {
   const previousRow = rows[rows.length - 1];
@@ -73,6 +76,7 @@ const addRow = () => {
 ### Code Evidence
 
 **Lines 285-293:** Auto-focus logic in `addRow()`
+
 ```typescript
 // Auto-focus first input of new row after render
 setTimeout(() => {
@@ -86,6 +90,7 @@ setTimeout(() => {
 ```
 
 **Lines 521-525, 565-569, 593-597:** Enter key triggers on Qty, Unit Cost, and Amount fields
+
 ```typescript
 onKeyDown={(e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -96,6 +101,7 @@ onKeyDown={(e) => {
 ```
 
 **Line 530:** Tabindex ensures sequential focusing
+
 ```typescript
 tabIndex={index * 5 + 1}  // Qty field gets tabindex 1, 6, 11, etc.
 ```
@@ -115,6 +121,7 @@ tabIndex={index * 5 + 1}  // Qty field gets tabindex 1, 6, 11, etc.
 ### Code Evidence
 
 **Lines 231-235:** Total calculation
+
 ```typescript
 const calculateTotal = (): number => {
   return rows.reduce((sum, row) => {
@@ -124,6 +131,7 @@ const calculateTotal = (): number => {
 ```
 
 **Lines 223-229:** Currency formatting
+
 ```typescript
 const formatCurrency = (value: string): string => {
   const num = parseFloat(value) || 0;
@@ -135,6 +143,7 @@ const formatCurrency = (value: string): string => {
 ```
 
 **Lines 623-634:** Running Total UI (appears below rows as required)
+
 ```typescript
 {/* Running Total */}
 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-4">
@@ -166,6 +175,7 @@ const formatCurrency = (value: string): string => {
 ### Currency Formatting in Amount Field
 
 **Lines 580-604:** Amount input with currency display
+
 ```typescript
 <div className="relative w-full">
   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -187,6 +197,7 @@ const formatCurrency = (value: string): string => {
 ### Auto-calculate Amount
 
 **Lines 248-251:** Qty/Unit Cost changes trigger calculation
+
 ```typescript
 if (field === "qty" || field === "unitCost") {
   updatedRow.amount = calculateAmount(updatedRow.qty, updatedRow.unitCost);
@@ -194,6 +205,7 @@ if (field === "qty" || field === "unitCost") {
 ```
 
 **Lines 217-221:** Calculation logic
+
 ```typescript
 const calculateAmount = (qty: string, unitCost: string): string => {
   const qtyNum = parseFloat(qty) || 0;
@@ -207,11 +219,13 @@ const calculateAmount = (qty: string, unitCost: string): string => {
 ## Blocking Issue: Runtime Environment
 
 **Error:** Next.js module resolution failure
+
 ```
 Error: Cannot find module './vendor-chunks/micromark-core-commonmark.js'
 ```
 
 **Impact:**
+
 - Budget page returns 500 error
 - Cannot load inline creator component
 - Playwright tests cannot run
@@ -219,6 +233,7 @@ Error: Cannot find module './vendor-chunks/micromark-core-commonmark.js'
 **Cause:** Appears to be a Next.js dependency issue unrelated to the budget component code.
 
 **Recommended Fix:**
+
 ```bash
 # Clean Next.js cache
 rm -rf .next
@@ -288,7 +303,7 @@ npm run dev
 
 ### Manual Testing Steps
 
-1. **Navigate** to http://localhost:3000/31/budget
+1. **Navigate** to <http://localhost:3000/31/budget>
 2. **Open** inline creator (look for "Add Line Item" button)
 3. **Test Smart UOM Toggle:**
    - Verify checkbox is checked

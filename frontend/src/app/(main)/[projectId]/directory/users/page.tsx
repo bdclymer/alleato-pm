@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { UserPlus, Users, Mail, Shield, MoreHorizontal, UserX, RefreshCw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -93,7 +93,7 @@ export default function ProjectDirectoryUsersPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage users for this project"
           actions={
@@ -117,7 +117,7 @@ export default function ProjectDirectoryUsersPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Directory"
         description="Manage users for this project"
         actions={

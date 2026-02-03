@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -66,7 +66,7 @@ export default function DirectoryAccessPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Access Controls"
         description="See every table that governs who can sign in and what they can do."
         showProjectName={false}

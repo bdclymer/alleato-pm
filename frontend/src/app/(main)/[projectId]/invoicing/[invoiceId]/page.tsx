@@ -16,7 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/misc/status-badge";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
 import { Separator } from "@/components/ui/separator";
@@ -171,7 +172,7 @@ export default function InvoiceDetailPage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader title="Invoice Details" description="Loading..." />
+        <PageHeader title="Invoice Details" description="Loading..." />
         <PageContainer>
           <div className="flex justify-center items-center h-64">
             <Text tone="muted">Loading invoice...</Text>
@@ -184,7 +185,7 @@ export default function InvoiceDetailPage() {
   if (error || !invoice) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Invoice Details"
           description="Error loading invoice"
         />
@@ -209,7 +210,7 @@ export default function InvoiceDetailPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
         description={`Contract #${invoice.contract_id}`}
         actions={

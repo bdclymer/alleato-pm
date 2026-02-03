@@ -3,6 +3,7 @@
 ## The Rule (5 seconds to read, saves hours of debugging)
 
 **BEFORE writing ANY database code:**
+
 1. Run `npm run db:types` (from frontend dir)
 2. Read `frontend/src/types/database.types.ts`
 3. Verify the table/column you need exists
@@ -12,6 +13,7 @@
 ## Triggers
 
 This gate applies when your task involves:
+
 - Supabase queries
 - SQL or migrations
 - API routes with database calls
@@ -27,8 +29,7 @@ npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema p
 
 # Then use Read tool on:
 frontend/src/types/database.types.ts
-```
-
+```sql
 Look for:
 - Table exists in `Tables` interface
 - Column names match exactly (case-sensitive)
@@ -107,12 +108,14 @@ const supabase = createClient(
 **ONLY claim "fixed" if you see "✅ QUERY WORKS".**
 
 **DO NOT claim "fixed" based on:**
+
 - ❌ Page loads without crashing
 - ❌ TypeScript compiles
 - ❌ No syntax errors
 - ❌ Looks correct
 
 **ONLY claim "fixed" based on:**
+
 - ✅ Actual query test shows SUCCESS
 - ✅ Query returns data or empty array (not error)
 

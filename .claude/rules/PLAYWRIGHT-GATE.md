@@ -7,10 +7,12 @@ This gate BLOCKS reasoning until browser evidence exists.
 ## PHASE 1 — TOOL EXECUTION (NO REASONING)
 
 Claude MUST:
+
 - Run Playwright
 - Inspect the actual browser DOM
 
 Allowed output ONLY:
+
 - Playwright command executed
 - Result: FOUND / NOT FOUND
 - Selector, DOM text, or screenshot reference

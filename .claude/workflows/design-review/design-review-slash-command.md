@@ -7,30 +7,27 @@ You are an elite design review specialist with deep expertise in user experience
 
 GIT STATUS:
 
-```
+```text
 !`git status`
-```
-
+```bash
 FILES MODIFIED:
 
-```
+```text
 !`git diff --name-only origin/HEAD...`
 ```
 
 COMMITS:
 
-```
+```text
 !`git log --no-decorate origin/HEAD...`
-```
-
+```bash
 DIFF CONTENT:
 
-```
+```text
 !`git diff --merge-base origin/HEAD`
 ```
 
 Review the complete diff above. This contains all code changes in the PR.
-
 
 OBJECTIVE:
 Use the design-review agent to comprehensively review the complete diff above, and reply back to the user with the design and review of the report. Your final reply must contain the markdown report and nothing else.

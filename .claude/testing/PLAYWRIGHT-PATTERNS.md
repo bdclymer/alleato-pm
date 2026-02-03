@@ -16,6 +16,7 @@ Quick reference for common Playwright testing patterns used in this project.
 ## Navigation Patterns
 
 ### Always Use domcontentloaded
+
 ```typescript
 // ✅ GOOD
 await page.goto(url);
@@ -23,8 +24,7 @@ await page.waitForLoadState('domcontentloaded');
 
 // ❌ NEVER - will timeout on modern apps
 await page.waitForLoadState('networkidle');
-```
-
+```javascript
 ### Reload Fallback for Data Hydration
 ```typescript
 await page.goto(`/${projectId}/feature`);
@@ -44,17 +44,16 @@ if (!visible) {
 await expect(
   page.getByRole("cell", { name: "Seeded Item" })
 ).toBeVisible({ timeout: 15000 });
-```
-
+```javascript
 ## Form Interaction Patterns
 
 ### Fill and Submit
+
 ```typescript
 await page.getByLabel("Name").fill("Test Item");
 await page.getByLabel("Description").fill("Test description");
 await page.getByRole("button", { name: /save|submit/i }).click();
-```
-
+```javascript
 ### Handle Auto-Generated Values
 ```typescript
 const numberInput = page.locator("#contractNumber");
@@ -65,6 +64,7 @@ await numberInput.fill("NEW-001");
 ## Table Interaction Patterns
 
 ### Row Actions
+
 ```typescript
 // Find specific row
 const row = page.getByRole("row", { name: /Item Name/i });
@@ -73,19 +73,18 @@ await expect(row).toBeVisible();
 // Click action menu in that row
 await row.getByRole("button", { name: /open menu/i }).click();
 await page.getByRole("menuitem", { name: "Edit" }).click();
-```
-
+```markdown
 ### Cell Verification
 ```typescript
 // Scope to table cells (avoids strict mode violations)
 await expect(
   page.getByRole("cell", { name: "Expected Value" })
 ).toBeVisible();
-```
-
+```javascript
 ## Modal Patterns
 
 ### Open and Interact
+
 ```typescript
 await page.getByRole("button", { name: /add|create/i }).click();
 
@@ -98,8 +97,7 @@ await modal.getByRole("button", { name: /save/i }).click();
 
 // Modal should close
 await expect(modal).not.toBeVisible();
-```
-
+```markdown
 ### Keyboard Navigation
 ```typescript
 // Escape to close
@@ -113,6 +111,7 @@ await page.keyboard.press("Shift+Tab"); // Backwards
 ## Database Verification Patterns
 
 ### Using pollFor for State Verification
+
 ```typescript
 import { pollFor } from "../helpers/poll";
 
@@ -124,26 +123,24 @@ await pollFor(
   },
   15000 // timeout
 );
-```
-
+```javascript
 ### Using pollForSimple for Counts
 ```typescript
 await expect
   .poll(async () => (await listItems(projectId)).length)
   .toBe(3);
-```
-
+```javascript
 ## Error Handling Patterns
 
 ### Confirmation Dialogs
+
 ```typescript
 // Use .last() for confirmation buttons (rendered on top)
 const confirmBtn = page.getByRole("button", { name: /delete|confirm/i }).last();
 if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
   await confirmBtn.click();
 }
-```
-
+```markdown
 ### Multiple Matching Elements
 ```typescript
 // When strict mode violations occur
@@ -153,19 +150,19 @@ page.getByRole("menuitem", { name: /delete/i }).first()
 ## Wait Strategies
 
 ### Preferred: Web-First Assertions
+
 ```typescript
 // ✅ GOOD - auto-waits and retries
 await expect(element).toBeVisible({ timeout: 15000 });
 await expect(element).toHaveText("Expected");
-```
-
+```markdown
 ### Acceptable: Brief Animation Waits
 ```typescript
 // ✅ OK for animations/transitions
 await page.waitForTimeout(500);
-```
-
+```markdown
 ### Avoid: Arbitrary Long Waits
+
 ```typescript
 // ❌ BAD - slow and unreliable
 await page.waitForTimeout(5000);

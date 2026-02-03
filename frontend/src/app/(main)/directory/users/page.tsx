@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { useProjectUsers } from "@/hooks/use-project-users";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -287,7 +287,7 @@ export default function DirectoryUsersPage() {
   if (isLoading) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -308,7 +308,7 @@ export default function DirectoryUsersPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -325,7 +325,7 @@ export default function DirectoryUsersPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

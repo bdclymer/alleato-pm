@@ -7,7 +7,7 @@ import {
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
 import { useAllCompanies } from "@/hooks/use-all-companies";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { getDirectoryTabs } from "@/config/directory-tabs";
@@ -130,7 +130,7 @@ export default function GlobalCompanyDirectoryPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Company Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -157,7 +157,7 @@ export default function GlobalCompanyDirectoryPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Company Directory: Companies"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

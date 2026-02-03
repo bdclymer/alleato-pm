@@ -24,8 +24,7 @@ pattern: regex-pattern-here
 
 Message to show Claude when this rule triggers.
 Can include markdown formatting, warnings, suggestions, etc.
-```
-
+```yaml
 ### Frontmatter Fields
 
 **name** (required): Unique identifier for the rule
@@ -59,8 +58,7 @@ Can include markdown formatting, warnings, suggestions, etc.
 ```yaml
 event: bash
 pattern: rm\s+-rf
-```
-
+```yaml
 ### Advanced Format (Multiple Conditions)
 
 For complex rules with multiple conditions:
@@ -80,8 +78,7 @@ conditions:
 ---
 
 You're adding an API key to a .env file. Ensure this file is in .gitignore!
-```
-
+```diff
 **Condition fields:**
 - `field`: Which field to check
   - For bash: `command`
@@ -137,8 +134,7 @@ pattern: sudo\s+|rm\s+-rf|chmod\s+777
 ---
 
 Dangerous command detected!
-```
-
+```yaml
 **Common patterns:**
 - Dangerous commands: `rm\s+-rf`, `dd\s+if=`, `mkfs`
 - Privilege escalation: `sudo\s+`, `su\s+`
@@ -155,9 +151,9 @@ pattern: console\.log\(|eval\(|innerHTML\s*=
 ---
 
 Potentially problematic code pattern detected!
-```
-
+```yaml
 **Match on different fields:**
+
 ```markdown
 ---
 event: file
@@ -171,8 +167,7 @@ conditions:
 ---
 
 Console.log in TypeScript file!
-```
-
+```yaml
 **Common patterns:**
 - Debug code: `console\.log\(`, `debugger`, `print\(`
 - Security risks: `eval\(`, `innerHTML\s*=`, `dangerouslySetInnerHTML`
@@ -196,6 +191,7 @@ Before stopping, verify:
 ```
 
 **Use for:**
+
 - Reminders about required steps
 - Completion checklists
 - Process enforcement
@@ -217,8 +213,7 @@ Production deployment checklist:
 - [ ] Tests passing?
 - [ ] Reviewed by team?
 - [ ] Monitoring ready?
-```
-
+```markdown
 ## Pattern Writing Tips
 
 ### Regex Basics
@@ -243,14 +238,14 @@ Production deployment checklist:
 - `|` - OR
 
 **Examples:**
-```
+```text
 rm\s+-rf         Matches: rm -rf, rm  -rf
 console\.log\(   Matches: console.log(
 (eval|exec)\(    Matches: eval( or exec(
 chmod\s+777      Matches: chmod 777, chmod  777
 API_KEY\s*=      Matches: API_KEY=, API_KEY =
-```
 
+```markdown
 ### Testing Patterns
 
 Test regex patterns before using:
@@ -264,18 +259,20 @@ Or use online regex testers (regex101.com with Python flavor).
 ### Common Pitfalls
 
 **Too broad:**
+
 ```yaml
 pattern: log    # Matches "log", "login", "dialog", "catalog"
-```
+```yaml
 Better: `console\.log\(|logger\.`
 
 **Too specific:**
 ```yaml
 pattern: rm -rf /tmp  # Only matches exact path
-```
+```yaml
 Better: `rm\s+-rf`
 
 **Escaping issues:**
+
 - YAML quoted strings: `"pattern"` requires double backslashes `\\s`
 - YAML unquoted: `pattern: \s` works as-is
 - **Recommendation**: Use unquoted patterns in YAML
@@ -287,12 +284,14 @@ Better: `rm\s+-rf`
 **Gitignore:** Add `.claude/*.local.md` to `.gitignore`
 
 **Good names:**
+
 - `hookify.dangerous-rm.local.md`
 - `hookify.console-log.local.md`
 - `hookify.require-tests.local.md`
 - `hookify.sensitive-files.local.md`
 
 **Bad names:**
+
 - `hookify.rule1.local.md` (not descriptive)
 - `hookify.md` (missing .local)
 - `danger.local.md` (missing hookify prefix)
@@ -322,6 +321,7 @@ Better: `rm\s+-rf`
 ## Examples
 
 See `${CLAUDE_PLUGIN_ROOT}/examples/` for complete examples:
+
 - `dangerous-rm.local.md` - Block dangerous rm commands
 - `console-log-warning.local.md` - Warn about console.log
 - `sensitive-files-warning.local.md` - Warn about editing .env files
@@ -329,6 +329,7 @@ See `${CLAUDE_PLUGIN_ROOT}/examples/` for complete examples:
 ## Quick Reference
 
 **Minimum viable rule:**
+
 ```markdown
 ---
 name: my-rule
@@ -338,8 +339,7 @@ pattern: dangerous_command
 ---
 
 Warning message here
-```
-
+```yaml
 **Rule with conditions:**
 ```markdown
 ---
@@ -359,6 +359,7 @@ Warning message
 ```
 
 **Event types:**
+
 - `bash` - Bash commands
 - `file` - File edits
 - `stop` - Completion checks
@@ -366,9 +367,11 @@ Warning message
 - `all` - All events
 
 **Field options:**
+
 - Bash: `command`
 - File: `file_path`, `new_text`, `old_text`, `content`
 - Prompt: `user_prompt`
 
 **Operators:**
+
 - `regex_match`, `contains`, `equals`, `not_contains`, `starts_with`, `ends_with`

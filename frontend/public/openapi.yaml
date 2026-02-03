@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Alleato Procore API
+  title: Alleato PM
   description: |
     Comprehensive API documentation for the Alleato Procore application.
     

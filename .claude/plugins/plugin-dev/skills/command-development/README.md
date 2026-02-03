@@ -5,6 +5,7 @@ Comprehensive guidance on creating Claude Code slash commands, including file fo
 ## Overview
 
 This skill provides knowledge about:
+
 - Slash command file format and structure
 - YAML frontmatter configuration fields
 - Dynamic arguments ($ARGUMENTS, $1, $2, etc.)
@@ -23,6 +24,7 @@ This skill provides knowledge about:
 Core skill content covering:
 
 **Fundamentals:**
+
 - Command basics and locations
 - File format (Markdown with optional frontmatter)
 - YAML frontmatter fields overview
@@ -34,6 +36,7 @@ Core skill content covering:
 - Troubleshooting
 
 **Plugin-Specific:**
+
 - ${CLAUDE_PLUGIN_ROOT} environment variable
 - Plugin command discovery and organization
 - Plugin command patterns (configuration, template, multi-script)
@@ -82,6 +85,7 @@ Practical command examples:
 ## When This Skill Triggers
 
 Claude Code activates this skill when users:
+
 - Ask to "create a slash command" or "add a command"
 - Need to "write a custom command"
 - Want to "define command arguments"
@@ -125,8 +129,7 @@ Command prompt content with:
 - Arguments: $1, $2, or $ARGUMENTS
 - Files: @path/to/file
 - Bash: !`command here`
-```
-
+```bash
 ### Locations
 
 - **Project**: `.claude/commands/` (shared with team)
@@ -165,8 +168,7 @@ description: Review code for issues
 ---
 
 Review this code for quality and potential bugs.
-```
-
+```yaml
 ### Command with Arguments
 
 ```markdown
@@ -176,8 +178,7 @@ argument-hint: [environment] [version]
 ---
 
 Deploy to $1 environment using version $2
-```
-
+```yaml
 ### Command with File Reference
 
 ```markdown
@@ -243,11 +244,13 @@ Recent commits: !`git log --oneline -5`
 ## Status
 
 **Completed enhancements:**
+
 - ✓ Plugin command patterns (${CLAUDE_PLUGIN_ROOT}, discovery, organization)
 - ✓ Integration patterns (agents, skills, hooks coordination)
 - ✓ Validation patterns (input, file, resource validation, error handling)
 
 **Remaining enhancements (in progress):**
+
 - Advanced workflows (multi-step command sequences)
 - Testing strategies (how to test commands effectively)
 - Documentation patterns (command documentation best practices)
@@ -256,6 +259,7 @@ Recent commits: !`git log --oneline -5`
 ## Maintenance
 
 To update this skill:
+
 1. Keep SKILL.md focused on core fundamentals
 2. Move detailed specifications to references/
 3. Add new examples/ for different use cases
@@ -266,6 +270,7 @@ To update this skill:
 ## Version History
 
 **v0.1.0** (2025-01-15):
+
 - Initial release with basic command fundamentals
 - Frontmatter field reference
 - 10 simple command examples

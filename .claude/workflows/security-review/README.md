@@ -7,12 +7,14 @@ This directory contains templates and examples for implementing an automated sec
 This workflow establishes a comprehensive methodology for automated security reviews in Claude Code, leveraging AI agents to detect vulnerabilities and enforce security best practices:
 
 **Core Methodology:**
+
 - **Automated Security Scanning**: Deploy AI-powered security reviewers that identify vulnerabilities, exposed secrets, and potential attack vectors
 - **OWASP-Based Analysis**: Follow industry-standard security frameworks including OWASP Top 10 to ensure comprehensive coverage
 - **Severity Classification**: Automatically categorize findings by severity level (Critical, High, Medium, Low) with clear remediation guidance
 - **False Positive Management**: Intelligent filtering to reduce noise and focus on real security issues
 
 **Implementation Features:**
+
 - **Slash Commands**: Enable instant security reviews with `/security-review` that analyzes recent changes for security vulnerabilities
 - **GitHub Actions Integration**: Automated security scanning on every PR, with inline comments highlighting specific security concerns
 - **Secret Detection**: Identify exposed API keys, credentials, and sensitive information before they're committed
@@ -24,8 +26,10 @@ This approach ensures that security is built into the development process from t
 ## Resources
 
 ### Templates & Examples
+
 - [Security Review Slash Command](./security-review-slash-command.md) - Default security review command from Anthropic (source: [claude-code-security-review](https://github.com/anthropics/claude-code-security-review))
 - [Security YAML](./security.yml) - GitHub Action configuration for automated security scanning
 
 ### Video Tutorial
+
 For a detailed walkthrough of this workflow, watch the [comprehensive tutorial on YouTube](https://www.youtube.com/watch?v=nItsfXwujjg).

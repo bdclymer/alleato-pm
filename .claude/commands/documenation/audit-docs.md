@@ -8,13 +8,12 @@ command: /audit-docs
 
 ## Usage
 
-```
+```typescript
 /audit-docs <folder_path>
-```
-
+```text
 Example:
 
-```
+```bash
 /audit-docs /Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/
 ```
 
@@ -81,8 +80,7 @@ Creates/updates `AUDIT-LOG.md` in the audited directory:
 - Files Deleted: [list]
 - Issues Fixed: [count]
 - Next Audit: [date]
-```
-
+```markdown
 ### Direct Updates
 
 - **Fix percentages** in existing files
@@ -106,16 +104,17 @@ When you run this command, I will:
 
 After audit completes, you'll see:
 
-```
+```typescript
 ✓ Audit complete!
 Reports saved:
+
 - .audit-reports/audit-2024-01-19-093045.json (for fix-docs)
 - .audit-reports/audit-2024-01-19-093045.md (for review)
 
 To fix issues:
 /fix-docs --report latest --severity critical
-```
 
+```typescript
 ## Configuration Options
 
 You can customize the audit with additional parameters:

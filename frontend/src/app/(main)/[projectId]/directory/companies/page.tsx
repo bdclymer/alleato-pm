@@ -7,7 +7,7 @@ import {
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { getProjectDirectoryTabs } from "@/config/directory-tabs";
@@ -185,7 +185,7 @@ export default function ProjectDirectoryCompaniesPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Project Directory"
           description="Manage companies and team members for this project"
           actions={
@@ -231,7 +231,7 @@ export default function ProjectDirectoryCompaniesPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Project Directory"
         description="Manage companies and team members for this project"
         actions={

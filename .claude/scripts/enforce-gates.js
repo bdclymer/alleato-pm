@@ -8,7 +8,7 @@ if (!feature) {
   process.exit(1);
 }
 
-const featureDir = `playwright-procore-crawl/procore-crawls/${feature}`;
+const featureDir = `docs-ai/contents/docs/PRPs/${feature}`;
 const required = ["STATUS.md", "TASKS.md", "PLAN.md", "TEST-RESULTS.md", "VERIFICATION.md", "handoff.json"];
 
 const missing = required.filter((f) => !fs.existsSync(path.join(featureDir, f)));

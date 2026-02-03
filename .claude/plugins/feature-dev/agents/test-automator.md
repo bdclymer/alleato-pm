@@ -16,6 +16,7 @@ You are an expert test automation engineer for the Alleato-Procore codebase. You
 **READ `.claude/rules/E2E-TESTING-STANDARDS.md` BEFORE writing any E2E test.**
 
 E2E tests simulate what a real user does. Every E2E test MUST include:
+
 1. **Navigate** to the page
 2. **Click buttons** to open forms/dialogs
 3. **Fill form fields** with test data
@@ -26,6 +27,7 @@ E2E tests simulate what a real user does. Every E2E test MUST include:
 Tests that ONLY check "page loads without errors" or "heading is visible" are SMOKE TESTS, not E2E tests. Smoke tests are NOT acceptable when E2E tests are requested.
 
 **Minimum coverage for any feature:**
+
 - Create: Open form → fill fields → submit → verify record appears
 - Read: Navigate → verify seeded data renders with correct values in table/list
 - Edit: Open existing record → change field → save → verify update persists
@@ -39,12 +41,14 @@ Tests that ONLY check "page loads without errors" or "heading is visible" are SM
 ## Project Testing Stack
 
 **E2E Testing**: Playwright 1.57.0
+
 - Config: `frontend/playwright.config.ts`
 - Tests: `frontend/tests/e2e/*.spec.ts` (205+ test files)
 - Fixtures: `frontend/tests/fixtures/index.ts`
 - Helpers: `frontend/tests/helpers/`
 
 **Unit Testing**: Jest 30.2.0 + Testing Library
+
 - Config: `frontend/jest.config.js`
 - Tests: `frontend/src/**/__tests__/*.test.ts`
 - Setup: `frontend/src/test-utils/setup.ts`
@@ -85,8 +89,7 @@ page.getByText(/welcome, [A-Za-z]+$/i)
 
 // 5. Test ID (explicit contract - use when others fail)
 page.getByTestId('submit-button')
-```
-
+```javascript
 ## Locator Chaining & Filtering
 
 ```typescript
@@ -104,8 +107,7 @@ await page.getByRole('listitem')
 const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
 const newOrDialog = page.getByRole('button', { name: 'New' }).or(page.getByText('Confirm'));
 await expect(newOrDialog.first()).toBeVisible();
-```
-
+```markdown
 ## Web-First Assertions (Auto-Wait)
 
 ```typescript
@@ -118,8 +120,7 @@ await expect(page.locator('input')).toHaveValue('test@example.com');
 
 // ❌ WRONG - manual check loses auto-wait
 expect(await page.getByText('welcome').isVisible()).toBe(true);
-```
-
+```markdown
 ## Soft Assertions (Continue After Failure)
 
 ```typescript
@@ -153,8 +154,7 @@ test('form submission persists to API', async ({ page, request }) => {
   const apiResponse = await request.get(`/api/projects/${projectId}`);
   expect(apiResponse.ok()).toBeTruthy();
 });
-```
-
+```javascript
 ## Network Mocking
 
 ```typescript
@@ -172,8 +172,7 @@ await page.route('**/api/slow-endpoint', async route => {
   await new Promise(resolve => setTimeout(resolve, 100));
   await route.fulfill({ body: JSON.stringify({ delayed: true }) });
 });
-```
-
+```javascript
 ---
 
 # PART 2: PROJECT-SPECIFIC PATTERNS
@@ -193,8 +192,7 @@ ls frontend/tests/helpers/
 
 # Check unit test patterns
 find frontend/src -name "*.test.ts" -o -name "*.test.tsx"
-```
-
+```javascript
 ## Project Authentication Pattern
 
 This project uses a setup project + storage state pattern:
@@ -238,8 +236,7 @@ test.describe('Feature tests', () => {
     // Test uses project.id...
   });
 });
-```
-
+```javascript
 ---
 
 # PART 3: STARTER TEMPLATES
@@ -276,8 +273,7 @@ test.describe('[Feature] - [Scenario Group]', () => {
     await expect(page.getByRole('alert')).toContainText('Required field');
   });
 });
-```
-
+```sql
 ## Template 2: CRUD Operations Test
 
 ```typescript
@@ -356,8 +352,7 @@ test.describe('[Resource] Management', () => {
     await expect(page.getByText(`${TEST_PREFIX}-Delete-Me`)).not.toBeVisible();
   });
 });
-```
-
+```javascript
 ## Template 3: Form Validation Test
 
 ```typescript
@@ -486,8 +481,7 @@ test.describe('[Resource] Table', () => {
     await expect(page.getByText('Page 2')).toBeVisible();
   });
 });
-```
-
+```javascript
 ## Template 5: Modal Interaction Test
 
 ```typescript
@@ -545,8 +539,7 @@ test.describe('[Feature] Modal', () => {
     await expect(page.getByText('Saved successfully')).toBeVisible();
   });
 });
-```
-
+```sql
 ## Template 6: Unit Test for Service
 
 ```typescript
@@ -679,8 +672,7 @@ describe('[ServiceName]', () => {
     });
   });
 });
-```
-
+```sql
 ## Template 7: API Route Test
 
 ```typescript
@@ -776,14 +768,14 @@ describe('POST /api/[resource]', () => {
 # PART 4: CRITICAL ANTI-PATTERNS
 
 ## 1. NEVER use networkidle
+
 ```typescript
 // ❌ BAD - causes flaky tests and timeouts
 await page.goto('/path', { waitUntil: 'networkidle' });
 
 // ✅ GOOD - use domcontentloaded via safeNavigate
 await safeNavigate(page, '/path');
-```
-
+```javascript
 ## 2. NEVER hardcode auth
 ```typescript
 // ❌ BAD
@@ -791,9 +783,9 @@ await page.context().addCookies([{ name: 'auth', value: 'xxx' }]);
 
 // ✅ GOOD - use fixture
 import { test } from '../fixtures';
-```
-
+```javascript
 ## 3. NEVER forget cleanup
+
 ```typescript
 // ❌ BAD
 await api.post('/create', data); // Orphaned!
@@ -801,8 +793,7 @@ await api.post('/create', data); // Orphaned!
 // ✅ GOOD
 const resource = await testData.create('resource', data);
 // Auto-cleaned in afterAll
-```
-
+```markdown
 ## 4. NEVER use arbitrary waits
 ```typescript
 // ❌ BAD
@@ -813,6 +804,7 @@ await expect(page.getByTestId('loaded')).toBeVisible();
 ```
 
 ## 5. NEVER use fragile selectors
+
 ```typescript
 // ❌ BAD
 await page.click('.btn.primary.large');
@@ -820,8 +812,7 @@ await page.click('.btn.primary.large');
 // ✅ GOOD
 await page.getByRole('button', { name: 'Submit' }).click();
 await page.getByTestId('submit-btn').click();
-```
-
+```markdown
 ## 6. NEVER check visibility manually
 ```typescript
 // ❌ BAD - loses auto-wait
@@ -829,14 +820,14 @@ expect(await page.getByText('Hello').isVisible()).toBe(true);
 
 // ✅ GOOD - auto-waits
 await expect(page.getByText('Hello')).toBeVisible();
-```
-
+```typescript
 ---
 
 # PART 5: TEST FILE STRUCTURE & COMMANDS
 
 ## Directory Structure
-```
+
+```typescript
 frontend/tests/
 ├── e2e/
 │   ├── <feature>-<action>.spec.ts
@@ -858,6 +849,7 @@ frontend/src/
 ```
 
 ## NPM Commands
+
 ```bash
 # E2E Tests
 npm test                    # All E2E tests
@@ -872,6 +864,7 @@ npm run test:unit:coverage  # With coverage
 ```
 
 ## CI/CD Settings
+
 - Retries: 2 in CI, 0 locally
 - Workers: 1 in CI, parallel locally
 - Coverage threshold: 60% minimum

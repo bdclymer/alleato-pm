@@ -4,7 +4,7 @@ A complex, enterprise-grade plugin with MCP integration and advanced organizatio
 
 ## Directory Structure
 
-```
+```text
 enterprise-devops/
 ├── .claude-plugin/
 │   └── plugin.json
@@ -96,8 +96,7 @@ enterprise-devops/
     └── templates/
         ├── deployment.yaml
         └── service.yaml
-```
-
+```bash
 ## File Contents
 
 ### .claude-plugin/plugin.json
@@ -140,8 +139,7 @@ enterprise-devops/
   "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json"
 }
-```
-
+```bash
 ### .mcp.json
 
 ```json
@@ -220,8 +218,7 @@ After successful build:
 - Offer to deploy to staging
 - Suggest performance optimizations
 - Generate deployment checklist
-```
-
+```yaml
 ### agents/orchestration/deployment-orchestrator.md
 
 ```markdown
@@ -305,8 +302,7 @@ await SlackClient.notify({
   metadata: deploymentPlan
 })
 \`\`\`
-```
-
+```yaml
 ### skills/kubernetes-ops/SKILL.md
 
 ```markdown
@@ -624,8 +620,7 @@ For manifest validation:
 \`\`\`bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh deployment.yaml
 \`\`\`
-```
-
+```bash
 ### hooks/hooks.json
 
 ```json
@@ -707,6 +702,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh de
 ### MCP Integration
 
 Three custom MCP servers:
+
 - **Kubernetes**: Cluster operations
 - **Terraform**: Infrastructure provisioning
 - **GitHub Actions**: CI/CD automation
@@ -714,6 +710,7 @@ Three custom MCP servers:
 ### Shared Libraries
 
 Reusable code in `lib/`:
+
 - **Core**: Common utilities (logging, config, auth)
 - **Integrations**: External services (Slack, Datadog)
 - **Utils**: Helper functions (retry, validation)
@@ -721,12 +718,14 @@ Reusable code in `lib/`:
 ### Configuration Management
 
 Environment-specific configs in `config/`:
+
 - **Environments**: Per-environment settings
 - **Templates**: Reusable deployment templates
 
 ### Security Automation
 
 Multiple security hooks:
+
 - Secret scanning before writes
 - Permission validation on session start
 - Configuration auditing on completion
@@ -734,6 +733,7 @@ Multiple security hooks:
 ### Monitoring Integration
 
 Built-in monitoring via lib integrations:
+
 - Datadog for metrics
 - PagerDuty for alerts
 - Slack for notifications

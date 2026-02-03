@@ -55,7 +55,7 @@ export function DrawingAreaCard({
       name: area?.name || "",
       description: area?.description || "",
       parentAreaId: parentArea?.id,
-      sortOrder: area?.sortOrder || 0,
+      sortOrder: area?.sort_order ?? 0,
     },
   });
 
@@ -189,9 +189,9 @@ export function DrawingAreaCard({
             <AlertDialogTitle>Delete Drawing Area</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{area?.name}"? This action cannot be undone.
-              {area?.drawingCount && area.drawingCount > 0 && (
+              {area?.drawing_count != null && area.drawing_count > 0 && (
                 <span className="block mt-2 text-red-600 font-medium">
-                  This area contains {area.drawingCount} drawings and cannot be deleted.
+                  This area contains {area.drawing_count} drawings and cannot be deleted.
                 </span>
               )}
             </AlertDialogDescription>
@@ -200,7 +200,7 @@ export function DrawingAreaCard({
             <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={isLoading || (area?.drawingCount && area.drawingCount > 0)}
+              disabled={isLoading || (area?.drawing_count != null && area.drawing_count > 0)}
               className="bg-red-600 hover:bg-red-700"
             >
               {isLoading ? "Deleting..." : "Delete Area"}

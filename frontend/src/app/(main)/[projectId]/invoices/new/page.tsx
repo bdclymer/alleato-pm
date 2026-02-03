@@ -34,7 +34,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
 import { useCommitments } from "@/hooks/use-commitments";
-import { FormContainer, PageHeader } from "@/components/layout";
+import { FormContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 
 interface LineItem {
   id: string;

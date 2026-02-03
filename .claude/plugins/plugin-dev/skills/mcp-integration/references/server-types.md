@@ -11,6 +11,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 ### Configuration
 
 **Basic:**
+
 ```json
 {
   "my-server": {
@@ -18,8 +19,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     "args": ["-y", "my-mcp-server"]
   }
 }
-```
-
+```bash
 **With environment:**
 ```json
 {
@@ -33,8 +33,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     }
   }
 }
-```
-
+```bash
 ### Process Lifecycle
 
 1. **Startup**: Claude Code spawns process with `command` and `args`
@@ -45,6 +44,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 ### Use Cases
 
 **NPM Packages:**
+
 ```json
 {
   "filesystem": {
@@ -52,8 +52,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"]
   }
 }
-```
-
+```bash
 **Custom Scripts:**
 ```json
 {
@@ -65,6 +64,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
 ```
 
 **Python Servers:**
+
 ```json
 {
   "python-server": {
@@ -75,8 +75,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     }
   }
 }
-```
-
+```bash
 ### Best Practices
 
 1. **Use absolute paths or ${CLAUDE_PLUGIN_ROOT}**
@@ -114,9 +113,9 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
     "url": "https://mcp.example.com/sse"
   }
 }
-```
-
+```bash
 **With headers:**
+
 ```json
 {
   "service": {
@@ -128,8 +127,7 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
     }
   }
 }
-```
-
+```markdown
 ### Connection Lifecycle
 
 1. **Initialization**: HTTP connection established to URL
@@ -151,12 +149,14 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
 ```
 
 Claude Code handles OAuth flow:
+
 1. User prompted to authenticate on first use
 2. Opens browser for OAuth flow
 3. Tokens stored securely
 4. Automatic token refresh
 
 **Custom Headers:**
+
 ```json
 {
   "service": {
@@ -167,8 +167,7 @@ Claude Code handles OAuth flow:
     }
   }
 }
-```
-
+```markdown
 ### Use Cases
 
 **Official Services:**
@@ -217,9 +216,9 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     "url": "https://api.example.com/mcp"
   }
 }
-```
-
+```bash
 **With authentication:**
+
 ```json
 {
   "api": {
@@ -232,8 +231,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     }
   }
 }
-```
-
+```bash
 ### Request/Response Flow
 
 1. **Tool Discovery**: GET to discover available tools
@@ -253,14 +251,14 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
 ```
 
 **API Key:**
+
 ```json
 {
   "headers": {
     "X-API-Key": "${API_KEY}"
   }
 }
-```
-
+```bash
 **Custom Auth:**
 ```json
 {
@@ -269,8 +267,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     "X-User-ID": "${USER_ID}"
   }
 }
-```
-
+```bash
 ### Use Cases
 
 - REST API backends
@@ -289,12 +286,14 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
 ### Troubleshooting
 
 **HTTP errors:**
+
 - 401: Check authentication headers
 - 403: Verify permissions
 - 429: Implement rate limiting
 - 500: Check server logs
 
 **Timeout issues:**
+
 - Increase timeout if needed
 - Check server performance
 - Optimize tool implementations
@@ -308,6 +307,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
 ### Configuration
 
 **Basic:**
+
 ```json
 {
   "realtime": {
@@ -315,8 +315,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "wss://mcp.example.com/ws"
   }
 }
-```
-
+```bash
 **With authentication:**
 ```json
 {
@@ -358,12 +357,14 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
 ### Troubleshooting
 
 **Connection drops:**
+
 - Implement reconnection logic
 - Check network stability
 - Verify server supports WebSocket
 - Review firewall settings
 
 **Message delivery:**
+
 - Implement message acknowledgment
 - Handle out-of-order messages
 - Buffer during disconnection
@@ -384,24 +385,28 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
 ## Choosing the Right Type
 
 **Use stdio when:**
+
 - Running local tools or custom servers
 - Need lowest latency
 - Working with file systems or local databases
 - Distributing server with plugin
 
 **Use SSE when:**
+
 - Connecting to hosted services
 - Need OAuth authentication
 - Using official MCP servers (Asana, GitHub)
 - Want automatic reconnection
 
 **Use HTTP when:**
+
 - Integrating with REST APIs
 - Need stateless interactions
 - Using token-based auth
 - Simple request/response pattern
 
 **Use WebSocket when:**
+
 - Need real-time updates
 - Building collaborative features
 - Low-latency critical
@@ -412,6 +417,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
 ### From stdio to SSE
 
 **Before (stdio):**
+
 ```json
 {
   "local-server": {
@@ -419,8 +425,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "args": ["server.js"]
   }
 }
-```
-
+```text
 **After (SSE - deploy server):**
 ```json
 {
@@ -429,11 +434,11 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "https://mcp.example.com/sse"
   }
 }
-```
-
+```markdown
 ### From HTTP to WebSocket
 
 **Before (HTTP):**
+
 ```json
 {
   "api": {
@@ -441,8 +446,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "https://api.example.com/mcp"
   }
 }
-```
-
+```text
 **After (WebSocket):**
 ```json
 {
@@ -479,8 +483,7 @@ Combine different types:
     }
   }
 }
-```
-
+```bash
 ### Conditional Configuration
 
 Use environment variables to switch servers:
@@ -498,6 +501,7 @@ Use environment variables to switch servers:
 ```
 
 Set different values for dev/prod:
+
 - Dev: `API_URL=http://localhost:8080/mcp`
 - Prod: `API_URL=https://api.production.com/mcp`
 
@@ -528,6 +532,7 @@ Set different values for dev/prod:
 ## Conclusion
 
 Choose the MCP server type based on your use case:
+
 - **stdio** for local, custom, or NPM-packaged servers
 - **SSE** for hosted services with OAuth
 - **HTTP** for REST APIs with token auth

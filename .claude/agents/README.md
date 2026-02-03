@@ -40,6 +40,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 ## Available Subagents
 
 ### Development & Architecture
+
 - **[backend-architect](backend-architect.md)** - Design RESTful APIs, microservice boundaries, and database schemas
 - **[frontend-developer](frontend-developer.md)** - Build React components, implement responsive layouts, and handle client-side state management
 - **[ui-ux-designer](ui-ux-designer.md)** - Create interface designs, wireframes, and design systems
@@ -48,6 +49,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[architect-reviewer](architect-review.md)** - Reviews code changes for architectural consistency and patterns
 
 ### Language Specialists
+
 - **[python-pro](python-pro.md)** - Write idiomatic Python code with advanced features and optimizations
 - **[ruby-pro](ruby-pro.md)** - Write idiomatic Ruby code with metaprogramming, Rails patterns, gem development, and testing frameworks
 - **[golang-pro](golang-pro.md)** - Write idiomatic Go code with goroutines, channels, and interfaces
@@ -68,6 +70,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[sql-pro](sql-pro.md)** - Write complex SQL queries, optimize execution plans, and design normalized schemas
 
 ### Infrastructure & Operations
+
 - **[devops-troubleshooter](devops-troubleshooter.md)** - Debug production issues, analyze logs, and fix deployment failures
 - **[deployment-engineer](deployment-engineer.md)** - Configure CI/CD pipelines, Docker containers, and cloud deployments
 - **[cloud-architect](cloud-architect.md)** - Design AWS/Azure/GCP infrastructure and optimize cloud costs
@@ -79,6 +82,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[dx-optimizer](dx-optimizer.md)** - Developer Experience specialist that improves tooling, setup, and workflows
 
 ### Quality & Security
+
 - **[code-reviewer](code-reviewer.md)** - Expert code review with deep configuration security focus and production reliability
 - **[security-auditor](security-auditor.md)** - Review code for vulnerabilities and ensure OWASP compliance
 - **[test-automator](test-automator.md)** - Create comprehensive test suites with unit, integration, and e2e tests
@@ -88,6 +92,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[search-specialist](search-specialist.md)** - Expert web researcher using advanced search techniques and synthesis
 
 ### Data & AI
+
 - **[data-scientist](data-scientist.md)** - Data analysis expert for SQL queries, BigQuery operations, and data insights
 - **[data-engineer](data-engineer.md)** - Build ETL pipelines, data warehouses, and streaming architectures
 - **[ai-engineer](ai-engineer.md)** - Build LLM applications, RAG systems, and prompt pipelines
@@ -96,6 +101,7 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[prompt-engineer](prompt-engineer.md)** - Optimizes prompts for LLMs and AI systems
 
 ### Specialized Domains
+
 - **[api-documenter](api-documenter.md)** - Create OpenAPI/Swagger specs and write developer documentation
 - **[payment-integration](payment-integration.md)** - Integrate Stripe, PayPal, and payment processors
 - **[quant-analyst](quant-analyst.md)** - Build financial models, backtest trading strategies, and analyze market data
@@ -104,12 +110,14 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 - **[context-manager](context-manager.md)** - Manages context across multiple agents and long-running tasks
 
 ### Documentation
+
 - **[docs-architect](docs-architect.md)** - Creates comprehensive technical documentation from existing codebases
 - **[mermaid-expert](mermaid-expert.md)** - Create Mermaid diagrams for flowcharts, sequences, ERDs, and architectures
 - **[reference-builder](reference-builder.md)** - Creates exhaustive technical references and API documentation
 - **[tutorial-engineer](tutorial-engineer.md)** - Creates step-by-step tutorials and educational content from code
 
 ### Business & Marketing
+
 - **[business-analyst](business-analyst.md)** - Analyze metrics, create reports, and track KPIs
 - **[content-marketer](content-marketer.md)** - Write blog posts, social media content, and email newsletters
 - **[sales-automator](sales-automator.md)** - Draft cold emails, follow-ups, and proposal templates
@@ -121,7 +129,9 @@ This repository contains 61 specialized subagents that extend Claude Code's capa
 All 59 subagents are configured with specific Claude models based on task complexity:
 
 ### 🚀 Haiku (Fast & Cost-Effective) - 9 agents
+
 **Model:** `haiku`
+
 - `data-scientist` - SQL queries and data analysis
 - `api-documenter` - OpenAPI/Swagger documentation
 - `reference-builder` - Exhaustive technical references and API documentation
@@ -133,9 +143,11 @@ All 59 subagents are configured with specific Claude models based on task comple
 - `legal-advisor` - Privacy policies and compliance documents
 
 ### ⚡ Sonnet (Balanced Performance) - 37 agents
+
 **Model:** `sonnet`
 
 **Development & Languages:**
+
 - `python-pro` - Python development with advanced features
 - `ruby-pro` - Ruby development with metaprogramming, Rails patterns, and gem development
 - `javascript-pro` - Modern JavaScript and Node.js
@@ -161,6 +173,7 @@ All 59 subagents are configured with specific Claude models based on task comple
 - `graphql-architect` - GraphQL schemas and resolvers
 
 **Infrastructure & Operations:**
+
 - `devops-troubleshooter` - Production debugging
 - `deployment-engineer` - CI/CD pipelines
 - `database-optimizer` - Query optimization
@@ -171,6 +184,7 @@ All 59 subagents are configured with specific Claude models based on task comple
 - `data-engineer` - ETL pipelines
 
 **Quality & Support:**
+
 - `test-automator` - Test suite creation
 - `code-reviewer` - Code quality analysis
 - `debugger` - Error investigation
@@ -182,7 +196,9 @@ All 59 subagents are configured with specific Claude models based on task comple
 - `flutter-expert` - Flutter development
 
 ### 🧠 Opus (Maximum Capability) - 13 agents
+
 **Model:** `opus`
+
 - `ai-engineer` - LLM applications and RAG systems
 - `security-auditor` - Vulnerability analysis
 - `performance-engineer` - Application optimization
@@ -204,8 +220,7 @@ These subagents are automatically available when placed in `~/.claude/agents/` d
 ```bash
 cd ~/.claude
 git clone https://github.com/wshobson/agents.git
-```
-
+```markdown
 ## Usage
 
 ### Automatic Invocation
@@ -213,12 +228,12 @@ Claude Code will automatically delegate to the appropriate subagent based on the
 
 ### Explicit Invocation
 Mention the subagent by name in your request:
-```
+```text
 "Use the code-reviewer to check my recent changes"
 "Have the security-auditor scan for vulnerabilities"
 "Get the performance-engineer to optimize this bottleneck"
-```
 
+```markdown
 ## Usage Examples
 
 ### Single Agent Tasks
@@ -282,8 +297,7 @@ These subagents work together seamlessly, and for more complex orchestrations, y
 # Product launch workflow
 "Launch new feature with marketing campaign"
 # Automatically uses: business-analyst → content-marketer → sales-automator → customer-support
-```
-
+```markdown
 ### Advanced Workflows with Slash Commands
 
 For more sophisticated multi-subagent orchestration, use the companion [Commands repository](https://github.com/wshobson/commands):
@@ -300,11 +314,11 @@ For more sophisticated multi-subagent orchestration, use the companion [Commands
 
 # Security-focused implementation (7+ subagents)
 /security-hardening Implement OAuth2 with zero-trust architecture
-```
-
+```yaml
 ## Subagent Format
 
 Each subagent follows this structure:
+
 ```markdown
 ---
 name: subagent-name
@@ -314,8 +328,7 @@ tools: tool1, tool2  # Optional - defaults to all tools
 ---
 
 System prompt defining the subagent's role and capabilities
-```
-
+```markdown
 ### Model Configuration
 
 As of Claude Code v1.0.64, subagents can specify which Claude model they should use. This allows for cost-effective task delegation based on complexity:
@@ -337,45 +350,50 @@ Claude Code automatically coordinates agents using these common patterns:
 
 ### Sequential Workflows
 ```
+
 User Request → Agent A → Agent B → Agent C → Result
 
 Example: "Build a new API feature"
 backend-architect → frontend-developer → test-automator → security-auditor
-```
 
+```markdown
 ### Parallel Execution
-```
+```text
 User Request → Agent A + Agent B (simultaneously) → Merge Results
 
-Example: "Optimize application performance" 
+Example: "Optimize application performance"
 performance-engineer + database-optimizer → Combined recommendations
-```
 
+```markdown
 ### Conditional Branching
 ```
+
 User Request → Analysis → Route to appropriate specialist
 
 Example: "Fix this bug"
 debugger (analyzes) → Routes to: backend-architect OR frontend-developer OR devops-troubleshooter
-```
 
+```markdown
 ### Review & Validation
-```
+```bash
 Primary Agent → Review Agent → Final Result
 
 Example: "Implement payment processing"
 payment-integration → security-auditor → Validated implementation
+
 ```
 
 ## When to Use Which Agent
 
 ### 🏗️ Planning & Architecture
+
 - **backend-architect**: API design, database schemas, system architecture
 - **frontend-developer**: UI/UX planning, component architecture
 - **ui-ux-designer**: Interface design, wireframes, design systems, user research
 - **cloud-architect**: Infrastructure design, scalability planning
 
 ### 🔧 Implementation & Development  
+
 - **python-pro**: Python-specific development tasks
 - **ruby-pro**: Ruby metaprogramming, Rails applications, gem development, RSpec/Minitest testing
 - **golang-pro**: Go-specific development tasks
@@ -395,6 +413,7 @@ payment-integration → security-auditor → Validated implementation
 - **mobile-developer**: React Native/Flutter development
 
 ### 🛠️ Operations & Maintenance
+
 - **devops-troubleshooter**: Production issues, deployment problems
 - **incident-responder**: Critical outages requiring immediate response
 - **database-optimizer**: Query performance, indexing strategies
@@ -403,12 +422,14 @@ payment-integration → security-auditor → Validated implementation
 - **network-engineer**: Network connectivity, load balancers, SSL/TLS, DNS debugging
 
 ### 📊 Analysis & Optimization
+
 - **performance-engineer**: Application bottlenecks, optimization
 - **security-auditor**: Vulnerability scanning, compliance checks
 - **data-scientist**: Data analysis, insights, reporting
 - **mlops-engineer**: ML infrastructure, experiment tracking, model registries, pipeline automation
 
 ### 🧪 Quality Assurance
+
 - **code-reviewer**: Code quality, configuration security, production reliability
 - **test-automator**: Test strategy, test suite creation
 - **debugger**: Bug investigation, error resolution
@@ -416,44 +437,51 @@ payment-integration → security-auditor → Validated implementation
 - **search-specialist**: Deep web research, competitive analysis, fact-checking
 
 ### 📚 Documentation
+
 - **api-documenter**: OpenAPI/Swagger specs, API documentation
 - **docs-architect**: Comprehensive technical documentation, architecture guides, system manuals
 - **reference-builder**: Exhaustive API references, configuration guides, parameter documentation
 - **tutorial-engineer**: Step-by-step tutorials, learning paths, educational content
 
 ### 💼 Business & Strategy
+
 - **business-analyst**: KPIs, revenue models, growth projections, investor metrics
 - **risk-manager**: Portfolio risk, hedging strategies, R-multiples, position sizing
 - **content-marketer**: SEO content, blog posts, social media, email campaigns
 - **sales-automator**: Cold emails, follow-ups, proposals, lead nurturing
 - **customer-support**: Support tickets, FAQs, help documentation, troubleshooting
-- **legal-advisor** - Draft privacy policies, terms of service, disclaimers, and legal notices 
+- **legal-advisor** - Draft privacy policies, terms of service, disclaimers, and legal notices
 
 ## Best Practices
 
 ### 🎯 Task Delegation
+
 1. **Let Claude Code delegate automatically** - The main agent analyzes context and selects optimal agents
 2. **Be specific about requirements** - Include constraints, tech stack, and quality requirements
 3. **Trust agent expertise** - Each agent is optimized for their domain
 
 ### 🔄 Multi-Agent Workflows
+
 4. **Start with high-level requests** - Let agents coordinate complex multi-step tasks
-5. **Provide context between agents** - Ensure agents have necessary background information
-6. **Review integration points** - Check how different agents' outputs work together
+2. **Provide context between agents** - Ensure agents have necessary background information
+3. **Review integration points** - Check how different agents' outputs work together
 
 ### 🎛️ Explicit Control
+
 7. **Use explicit invocation for specific needs** - When you want a particular expert's perspective
-8. **Combine multiple agents strategically** - Different specialists can validate each other's work
-9. **Request specific review patterns** - "Have security-auditor review backend-architect's API design"
+2. **Combine multiple agents strategically** - Different specialists can validate each other's work
+3. **Request specific review patterns** - "Have security-auditor review backend-architect's API design"
 
 ### 📈 Optimization
+
 10. **Monitor agent effectiveness** - Learn which agents work best for your use cases
-11. **Iterate on complex tasks** - Use agent feedback to refine requirements
-12. **Leverage agent strengths** - Match task complexity to agent capabilities
+2. **Iterate on complex tasks** - Use agent feedback to refine requirements
+3. **Leverage agent strengths** - Match task complexity to agent capabilities
 
 ## Contributing
 
 To add a new subagent:
+
 1. Create a new `.md` file following the format above
 2. Use lowercase, hyphen-separated names
 3. Write clear descriptions for when the subagent should be used
@@ -464,24 +492,29 @@ To add a new subagent:
 ### Common Issues
 
 **Agent not being invoked automatically:**
+
 - Ensure your request clearly indicates the domain (e.g., "performance issue" → performance-engineer)
 - Be specific about the task type (e.g., "review code" → code-reviewer)
 
 **Unexpected agent selection:**
+
 - Provide more context about your tech stack and requirements
 - Use explicit invocation if you need a specific agent
 
 **Multiple agents producing conflicting advice:**
+
 - This is normal - different specialists may have different priorities
 - Ask for clarification: "Reconcile the recommendations from security-auditor and performance-engineer"
 
 **Agent seems to lack context:**
+
 - Provide background information in your request
 - Reference previous conversations or established patterns
 
 ### Getting Help
 
 If agents aren't working as expected:
+
 1. Check agent descriptions in their individual files
 2. Try more specific language in your requests
 3. Use explicit invocation to test specific agents

@@ -20,8 +20,7 @@ This plugin provides a complete testing system for all forms in the application 
 
 # Test single form
 /test-forms create-project
-```
-
+```markdown
 ## Features
 
 - ✅ **28+ Forms Cataloged** - Complete inventory with metadata
@@ -35,7 +34,7 @@ This plugin provides a complete testing system for all forms in the application 
 
 ## Plugin Structure
 
-```
+```diff
 .claude/plugins/form-testing/
 ├── README.md                           # This file
 ├── commands/
@@ -46,8 +45,8 @@ This plugin provides a complete testing system for all forms in the application 
 └── templates/
     ├── TEST_PLAN_TEMPLATE.md          # Test plan structure
     └── ERROR_REPORT_TEMPLATE.md       # Error documentation format
-```
 
+```markdown
 ## The 6-Phase Workflow
 
 ### Phase 1: Scope & Planning
@@ -105,6 +104,7 @@ Update `FORM_INVENTORY.md` with:
 ## Output Structure
 
 ```
+
 documentation/forms/
 ├── FORM_INVENTORY.md              # Always updated master registry
 └── test-runs/
@@ -117,8 +117,8 @@ documentation/forms/
             ├── create-project-filled.png
             ├── create-project-submitted.png
             └── ...
-```
 
+```markdown
 ## Test Helper Utilities
 
 ### Core Form Testing (`frontend/tests/helpers/form-testing.ts`)
@@ -203,13 +203,14 @@ The workflow is integrated with GitHub Actions:
 ### Test All Forms
 ```bash
 /test-forms all
-```
+```text
 Runs comprehensive tests on all 28 forms. Estimated time: 30-45 minutes.
 
 ### Test High Priority Forms Only
+
 ```bash
 /test-forms high-priority
-```
+```text
 Tests only critical user flows (16 forms). Estimated time: 15-20 minutes.
 
 ### Test Specific Form Type
@@ -221,16 +222,16 @@ Tests only critical user flows (16 forms). Estimated time: 15-20 minutes.
 ```
 
 ### Test Single Form
+
 ```bash
 /test-forms create-project
 /test-forms contact-dialog
 /test-forms budget-line-item
-```
-
+```markdown
 ### Retest Failed Forms
 ```bash
 /test-forms @failed
-```
+```text
 Loads forms marked as "fail" from last test report.
 
 ## Adding New Forms
@@ -243,6 +244,7 @@ Loads forms marked as "fail" from last test report.
 ## Maintenance
 
 ### Update Test Helper Utilities
+
 ```bash
 # Edit utilities
 vim frontend/tests/helpers/form-testing.ts
@@ -252,8 +254,7 @@ npm run quality --prefix frontend
 
 # Re-run tests
 /test-forms all
-```
-
+```markdown
 ### Migrate Existing Tests
 Follow the migration strategy in the plan:
 1. Extract test data to `form-test-configs.ts`
@@ -274,6 +275,7 @@ npm run test:cleanup --prefix frontend
 ## Troubleshooting
 
 ### Tests Failing with Authentication Issues
+
 **CRITICAL:** If tests show `[no-auth]` tag and fail to authenticate:
 
 1. **Check Playwright Config** - Verify `comprehensive-form-testing.spec.ts` is NOT in the `no-auth` project testMatch regex
@@ -281,18 +283,21 @@ npm run test:cleanup --prefix frontend
 3. **Fix:** Remove test file from no-auth testMatch on line 46 of `playwright.config.ts`
 
 ### Other Test Failures
+
 1. Check Playwright is installed: `npx playwright install`
 2. Verify auth setup: `.auth/user.json` exists
 3. Check database connection: Supabase URL and keys
 4. Review error screenshots in `documentation/forms/test-runs/latest/screenshots/`
 
 ### Cleanup Failing
+
 1. Verify `SUPABASE_SERVICE_ROLE_KEY` environment variable
 2. Check RLS policies allow deletion
 3. Review cleanup logs for specific errors
 4. Manually query database for orphaned records
 
 ### Modal Tests Failing
+
 1. Verify modal selectors in config
 2. Check animation timing (may need longer waits)
 3. Ensure overlay clickable
@@ -318,6 +323,7 @@ npm run test:cleanup --prefix frontend
 ## Support
 
 For issues or questions:
+
 1. Check error logs in test reports
 2. Review screenshots for visual debugging
 3. Consult `CLAUDE.md` for execution requirements

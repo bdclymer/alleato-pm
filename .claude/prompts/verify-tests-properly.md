@@ -16,6 +16,7 @@ Please follow the test-runner-verifier protocol to ACTUALLY RUN tests and provid
    - Verify test environment is ready
 
 2. **Run Tests 3 Times** (not just once)
+
    ```bash
    for i in 1 2 3; do
      echo "Run $i of 3:"
@@ -45,7 +46,8 @@ Please follow the test-runner-verifier protocol to ACTUALLY RUN tests and provid
    - Final status: PASS or BLOCKED
 
 ### Example of Acceptable Evidence:
-```
+
+```text
 Run 1 of 3:
 Running 5 tests using 1 worker
   ✓ Feature › test 1 (2.3s)
@@ -65,6 +67,7 @@ VERIFIED: All tests passing consistently
 ```
 
 ### DO NOT:
+
 - ❌ Say "tests should pass" without running them
 - ❌ Write tests without executing them
 - ❌ Claim success after one run
@@ -72,6 +75,7 @@ VERIFIED: All tests passing consistently
 - ❌ Provide hypothetical output
 
 ### DO:
+
 - ✅ Actually run the tests
 - ✅ Show real terminal output
 - ✅ Run multiple times

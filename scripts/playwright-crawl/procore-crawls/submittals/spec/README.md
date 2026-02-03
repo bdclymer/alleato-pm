@@ -36,7 +36,7 @@ The submittals module has a richer entity model than a single table:
 
 ### Status Lifecycle
 
-```
+```bash
 Draft → Open → Distributed → Closed
 ```
 

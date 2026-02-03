@@ -74,3 +74,6 @@ openai-cs-agents-demo/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Claude Cache Monitor
+.cache-monitor/

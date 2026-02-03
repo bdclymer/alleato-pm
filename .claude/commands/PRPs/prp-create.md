@@ -26,6 +26,8 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 ### 0. MANDATORY: Supabase Types Generation & Review (CRITICAL - DO THIS FIRST)
 
+#### Step 1: Generate Supabase Types
+
 **BEFORE ANY CODE ANALYSIS OR WRITING**, you MUST generate and review current Supabase types:
 
 ```bash
@@ -33,13 +35,13 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
 ```
 
-**Then READ the generated types file:**
+#### Step 2: READ the generated types file
 
-```
+```sql
 frontend/src/types/database.types.ts
 ```
 
-**Required Analysis:**
+#### Step 3: Complete Required Analysis
 
 - [ ] Identify ALL tables that exist in the database
 - [ ] For tables related to this feature, document:
@@ -52,7 +54,8 @@ frontend/src/types/database.types.ts
   - `users.id` is `string` → any `user_id` FK must be `UUID`
   - `people.id` is `string` → any `person_id` FK must be `UUID`
 
-**Add to PRP Context:**
+#### Step 4: Add to PRP Context
+
 Include a "Database Schema" section in the PRP with:
 
 - Current table structures from database.types.ts
@@ -65,21 +68,21 @@ Include a "Database Schema" section in the PRP with:
 - Ensures code matches actual database schema
 - Catches missing tables/columns before coding starts
 
+---
+
 ### 1. Pattern Review & Historical Error Prevention (MANDATORY)
 
 **BEFORE writing any PRP content**, review historical errors and patterns to avoid repeating mistakes:
 
-**Step 1: Read Incident Log**
+#### Step 1: Read Incident Log**
 
-```
-docs-ai-linked/contents/docs/patterns/INCIDENT-LOG.md
-```
+docs-ai/contents/docs/patterns/INCIDENT-LOG.md
 
 - Identify all 🔴 CRITICAL and 🟡 WARNING incidents
 - Note any incidents related to this feature domain
 - Document prevention systems that must be followed
 
-**Step 2: Review Relevant Pattern Files**
+#### Step 2: Review Relevant Pattern Files
 
 Based on the feature type, read relevant pattern documentation:
 
@@ -93,8 +96,8 @@ Based on the feature type, read relevant pattern documentation:
 
 **Pattern File Locations:**
 
-```
-docs-ai-linked/contents/docs/patterns/
+```bash
+docs-ai/contents/docs/patterns/
 ├── INCIDENT-LOG.md                    # Comprehensive incident history
 ├── database-issues.md                 # Schema and query problems
 ├── api-routing-errors.md              # Route and endpoint failures
@@ -103,9 +106,10 @@ docs-ai-linked/contents/docs/patterns/
 ├── typescript-errors.md               # Type errors and solutions
 ├── ui-errors.md                       # UI/UX issues
 └── PLAYWRIGHT-PATTERNS.mdx            # E2E testing best practices
+
 ```
 
-**Step 3: Extract Applicable Patterns**
+#### Step 3: Extract Applicable Patterns
 
 For each pattern file reviewed, extract:
 
@@ -114,7 +118,7 @@ For each pattern file reviewed, extract:
 - **Prevention Rules**: What must be done to avoid them?
 - **Validation Commands**: How to verify the fix?
 
-**Step 4: Add to PRP**
+#### Step 4: Add to PRP
 
 Create a "Known Pitfalls & Prevention" section in the PRP that includes:
 
@@ -150,20 +154,22 @@ Create a "Known Pitfalls & Prevention" section in the PRP that includes:
 - Makes executing agent aware of common pitfalls upfront
 - Reduces implementation failures from known issues
 
+---
+
 ### 2. Procore Crawl Data & Spec Artifacts (CRITICAL for Procore features)
 
 Before starting codebase analysis, check for existing Procore crawl data and spec artifacts:
 
 ```bash
-# Crawl data location:
-playwright-procore-crawl/procore-crawls/{feature}/
+# Crawl data location (inside the PRP tool folder):
+docs-ai/contents/docs/PRPs/{feature}/crawl/
 
 # Key files to load:
-playwright-procore-crawl/procore-crawls/{feature}/crawl-summary.json  # Structured summary
-playwright-procore-crawl/procore-crawls/{feature}/spec/COMMANDS.md    # Domain commands
-playwright-procore-crawl/procore-crawls/{feature}/spec/MUTATIONS.md   # Behavior specs
-playwright-procore-crawl/procore-crawls/{feature}/spec/schema.sql     # Database schema
-playwright-procore-crawl/procore-crawls/{feature}/spec/FORMS.md       # UI form specs
+docs-ai/contents/docs/PRPs/{feature}/crawl/crawl-summary.json  # Structured summary
+docs-ai/contents/docs/PRPs/{feature}/crawl/spec/COMMANDS.md    # Domain commands
+docs-ai/contents/docs/PRPs/{feature}/crawl/spec/MUTATIONS.md   # Behavior specs
+docs-ai/contents/docs/PRPs/{feature}/crawl/spec/schema.sql     # Database schema
+docs-ai/contents/docs/PRPs/{feature}/crawl/spec/FORMS.md       # UI form specs
 ```
 
 **If crawl-summary.json exists**, read it first - it contains:
@@ -176,8 +182,8 @@ playwright-procore-crawl/procore-crawls/{feature}/spec/FORMS.md       # UI form 
 
 **If crawl data exists but no crawl-summary.json**, run:
 
-```bash
-cd playwright-procore-crawl && PROCORE_MODULE={feature} node scripts/generate-crawl-summary.js
+```typescript
+cd scripts/screenshot-capture && PROCORE_MODULE={feature} node scripts/generate-crawl-summary.js
 ```
 
 **Raw crawl data includes**:
@@ -204,13 +210,9 @@ cd playwright-procore-crawl && PROCORE_MODULE={feature} node scripts/generate-cr
 - Document table columns and data structures from DOM analysis
 - Add "Procore Crawl Data Reference" section (see format below)
 
-**Procore Crawl Data Reference Section Format**:
-Add this section to the PRP with a consolidated table of all crawl files:
-
-```markdown
 ## Procore Crawl Data Reference
 
-This section contains all crawl data files, sitemap, and screenshots from the Procore feature analysis.
+This section contains all crawl data files, sitemap, and screenshots from the Procore feature analysis. Add this section to the PRP with a consolidated table of all crawl files:
 
 ### Sitemap
 
@@ -234,15 +236,16 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 | Pages | DOM | `pages/{page}/dom.html` | Full DOM snapshot |
 | Pages | Metadata | `pages/{page}/metadata.json` | Links, dropdowns, system actions |
 
-**Base Path**: `playwright-procore-crawl/procore-crawls/{feature}/`
+**Base Path**: `docs-ai/contents/docs/PRPs/{feature}/crawl/`
 
 ### Screenshots
 
 #### Main {Feature} View
 
-![Procore {Feature} Screenshot](../../playwright-procore-crawl/procore-crawls/{feature}/pages/{page}/screenshot.png)
+![Procore {Feature} Screenshot](crawl/pages/{page}/screenshot.png)
 
 **Key UI Elements to Replicate:**
+
 - List key UI elements observed in screenshot
 - Include layout structure, toolbars, panels
 - Note any context menus or modals
@@ -252,11 +255,10 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 | Label | Command Key |
 |-------|-------------|
 | {Label from metadata} | `{command_key}` |
-```
 
 If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
 
-### 3. TypeScript/React Codebase Analysis in depth
+### TypeScript/React Codebase Analysis in depth
 
 - Create clear todos and spawn subagents to search the codebase for similar features/patterns Think hard and plan your approach
 - Identify all the necessary TypeScript files to reference in the PRP
@@ -266,7 +268,7 @@ If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
 - Check existing test patterns for React components and TypeScript code validation approach
 - Use the batch tools to spawn subagents to search the codebase for similar features/patterns
 
-### 4. TypeScript/React External Research at scale
+### TypeScript/React External Research at scale
 
 - Create clear todos and spawn with instructions subagents to do deep research for similar features/patterns online and include urls to documentation and examples
 - TypeScript documentation (include specific URLs with version compatibility)
@@ -276,7 +278,7 @@ If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
 - Best practices and common pitfalls found during research (TypeScript compilation issues, React hydration, Next.js gotchas)
 - Use the batch tools to spawn subagents to search for similar features/patterns online and include urls to documentation and examples
 
-### 5. User Clarification
+### User Clarification
 
 - Ask for clarification if you need it
 
@@ -289,6 +291,7 @@ Use `.claude/templates/prp_template.md` as your template structure - it contains
 ### Step 2: Context Completeness Validation
 
 Before writing, apply the **"No Prior Knowledge" test** from the template:
+
 _"If someone knew nothing about this TypeScript/React codebase, would they have everything needed to implement this successfully?"_
 
 ### Step 3: Research Integration
@@ -296,8 +299,11 @@ _"If someone knew nothing about this TypeScript/React codebase, would they have 
 Transform your research findings into the template sections:
 
 **Goal Section**: Use research to define specific, measurable Feature Goal and concrete Deliverable (component, API route, integration, etc.)
+
 **Context Section**: Populate YAML structure with your research findings - specific TypeScript/React URLs, file patterns, gotchas
+
 **Implementation Tasks**: Create dependency-ordered tasks using information-dense keywords from TypeScript/React codebase analysis
+
 **Validation Gates**: Use TypeScript/React-specific validation commands that you've verified work in this codebase
 
 ### Step 4: TypeScript/React Information Density Standards
@@ -318,13 +324,9 @@ After research completion, create comprehensive PRP writing plan using TodoWrite
 - Create systematic approach to filling template with actionable TypeScript context
 - Consider TypeScript compilation dependencies and React component hierarchies
 
-## Output
+#### Create the following files with this File Structure:
 
-### File Structure
-
-Create the following files:
-
-```
+```text
 PRPs/{feature-name}/
 ├── prp-{feature-name}.md      # Main PRP document (static reference)
 ├── TASKS.md                    # Implementation checklist (live progress tracker)
@@ -360,7 +362,7 @@ Generate `prp-{feature-name}.html` for browser viewing:
 - **TASKS.md** - Live checklist (AI updates this during implementation)
 - **prp-{feature-name}.html** - Browser-viewable version (auto-generated)
 
-## TypeScript PRP Quality Gates
+## PRP Quality Gates
 
 ### Mandatory Prerequisites (MUST BE COMPLETED FIRST)
 
@@ -421,6 +423,7 @@ Before marking PRP creation complete, verify:
   - [ ] `database.types.ts` file read and analyzed
   - [ ] Database Schema section added to PRP
   - [ ] FK type requirements (INTEGER vs UUID) documented
+
 - [ ] **Step 1: Pattern review completed**
   - [ ] INCIDENT-LOG.md reviewed
   - [ ] Relevant pattern files (database-issues.md, api-routing-errors.md, etc.) reviewed

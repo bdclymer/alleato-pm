@@ -1,20 +1,24 @@
-"use client";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
+import { PunchListPageWrapper } from "./punch-list-page-wrapper";
 
-import { useParams } from "next/navigation";
-import { ProjectToolPage } from "@/components/layout/project-tool-page";
-import { Card } from "@/components/ui/card";
-
-export default function ProjectPunchListPage() {
-  const params = useParams();
-  const projectId = params.projectId as string;
+export default async function PunchListPage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = await params;
+  const numericProjectId = parseInt(projectId, 10);
 
   return (
-    <ProjectToolPage title="Punch List" description="Track punch list items">
-      <Card className="p-6">
-        <p className="text-muted-foreground">
-          Punch List for project {projectId} - Coming soon
-        </p>
-      </Card>
-    </ProjectToolPage>
+    <>
+      <PageHeader
+        title="Punch List"
+        description="Track and manage punch list items"
+      />
+      <PageContainer>
+        <PunchListPageWrapper projectId={numericProjectId} />
+      </PageContainer>
+    </>
   );
 }

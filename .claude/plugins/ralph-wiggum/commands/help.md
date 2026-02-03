@@ -11,12 +11,12 @@ Please explain the following to the user:
 The Ralph Wiggum technique is an iterative development methodology based on continuous AI loops, pioneered by Geoffrey Huntley.
 
 **Core concept:**
+
 ```bash
 while :; do
   cat PROMPT.md | claude-code --continue
 done
-```
-
+```typescript
 The same prompt is fed to Claude repeatedly. The "self-referential" aspect comes from Claude seeing its own previous work in the files and git history, not from feeding output back as input.
 
 **Each iteration:**
@@ -36,11 +36,11 @@ The technique is described as "deterministically bad in an undeterministic world
 Start a Ralph loop in your current session.
 
 **Usage:**
-```
+```typescript
 /ralph-loop "Refactor the cache layer" --max-iterations 20
 /ralph-loop "Add tests" --completion-promise "TESTS COMPLETE"
-```
 
+```typescript
 **Options:**
 - `--max-iterations <n>` - Max iterations before auto-stop
 - `--completion-promise <text>` - Promise phrase to signal completion
@@ -61,9 +61,10 @@ Cancel an active Ralph loop (removes the loop state file).
 
 **Usage:**
 ```
-/cancel-ralph
-```
 
+/cancel-ralph
+
+```typescript
 **How it works:**
 - Checks for active loop state file
 - Removes `.claude/.ralph-loop.local.md`
@@ -77,10 +78,10 @@ Cancel an active Ralph loop (removes the loop state file).
 
 To signal completion, Claude must output a `<promise>` tag:
 
-```
+```html
 <promise>TASK COMPLETE</promise>
-```
 
+```diff
 The stop hook looks for this specific tag. Without it (or `--max-iterations`), Ralph runs infinitely.
 
 ### Self-Reference Mechanism
@@ -95,11 +96,13 @@ The "loop" doesn't mean Claude talks to itself. It means:
 
 ### Interactive Bug Fix
 
-```
+```typescript
 /ralph-loop "Fix the token refresh logic in auth.ts. Output <promise>FIXED</promise> when all tests pass." --completion-promise "FIXED" --max-iterations 10
+
 ```
 
 You'll see Ralph:
+
 - Attempt fixes
 - Run tests
 - See failures
@@ -109,12 +112,14 @@ You'll see Ralph:
 ## When to Use Ralph
 
 **Good for:**
+
 - Well-defined tasks with clear success criteria
 - Tasks requiring iteration and refinement
 - Iterative development with self-correction
 - Greenfield projects
 
 **Not good for:**
+
 - Tasks requiring human judgment or design decisions
 - One-shot operations
 - Tasks with unclear success criteria
@@ -122,5 +127,5 @@ You'll see Ralph:
 
 ## Learn More
 
-- Original technique: https://ghuntley.com/ralph/
-- Ralph Orchestrator: https://github.com/mikeyobrien/ralph-orchestrator
+- Original technique: <https://ghuntley.com/ralph/>
+- Ralph Orchestrator: <https://github.com/mikeyobrien/ralph-orchestrator>

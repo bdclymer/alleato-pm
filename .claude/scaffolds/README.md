@@ -5,6 +5,7 @@ This directory contains **validated, production-ready templates** that Claude MU
 ## Why Scaffolds Exist
 
 Every time Claude writes new code "from scratch," it makes the same mistakes:
+
 - Wrong FK types (UUID vs INTEGER)
 - Missing RLS policies
 - Incorrect hook patterns

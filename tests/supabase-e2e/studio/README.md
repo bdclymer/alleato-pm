@@ -171,7 +171,7 @@ PWDEBUG=1 pnpm run e2e -- --ui
 
 ## API Mocks
 
-Read here: https://playwright.dev/docs/mock#mock-api-requests
+Read here: <https://playwright.dev/docs/mock#mock-api-requests>
 
 Example:
 

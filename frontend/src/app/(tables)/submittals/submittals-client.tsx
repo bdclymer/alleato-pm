@@ -241,9 +241,6 @@ export function SubmittalsClient({ submittals, projectId }: SubmittalsClientProp
             <h1 className="text-3xl font-bold" data-testid="submittals-heading">
               Submittals
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Submittal tracking and approvals
-            </p>
             {projectId ? (
               <p className="text-xs text-muted-foreground mt-1">
                 Project ID {projectId}
@@ -320,61 +317,7 @@ export function SubmittalsClient({ submittals, projectId }: SubmittalsClientProp
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-5">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Draft
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.draft}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Submitted
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.submitted}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Under Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.underReview}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Approved
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.approved}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Rejected
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statusCounts.rejected}</div>
-            </CardContent>
-          </Card>
-        </div>
-
         <div
-          className="bg-background rounded-lg border"
           data-testid="submittals-table"
         >
           <GenericDataTable data={filteredRows} config={tableConfig} />

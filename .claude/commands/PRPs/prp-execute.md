@@ -48,7 +48,7 @@ PRPs enable working TypeScript/React code on the first attempt through:
 
 4. **Progressive Validation**
 
-   **Execute the 4-level validation system from the TypeScript PRP:**
+   **Execute the 4-level validation system from the PRP:**
    - **Level 1**: Run TypeScript syntax & style validation commands from PRP (ESLint, tsc, Prettier)
    - **Level 2**: Execute component and hook unit test validation from PRP
    - **Level 3**: Run Next.js integration testing commands from PRP (dev server, API routes, production build)

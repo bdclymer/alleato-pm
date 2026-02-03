@@ -16,11 +16,11 @@
               - /url: /directory/companies
       - list [ref=e214]:
         - listitem [ref=e215]:
-          - button "test1 test1 test1@mail.com" [ref=e216] [cursor=pointer]:
+          - button "test1 test1 <test1@mail.com>" [ref=e216] [cursor=pointer]:
             - img "test1" [ref=e218]
             - generic [ref=e219]:
               - generic [ref=e220]: test1
-              - generic [ref=e221]: test1@mail.com
+              - generic [ref=e221]: <test1@mail.com>
             - img [ref=e222]
       - button "Toggle Sidebar" [ref=e18]
     - main [ref=e19]:

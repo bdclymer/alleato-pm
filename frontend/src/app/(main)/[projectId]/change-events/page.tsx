@@ -26,7 +26,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import { PageContainer, PageTabs, ProjectPageHeader } from "@/components/layout";
+import { PageContainer, PageTabs } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import {
   SummaryCardGrid,
   formatCurrencyValue,
@@ -373,7 +374,7 @@ export default function ProjectChangeEventsPage() {
   if (!hasValidProjectId) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Change Events"
           description="Provide a valid project identifier to access change events."
         />
@@ -429,7 +430,7 @@ export default function ProjectChangeEventsPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Change Events"
         description="Track scope changes, approvals, line items, and financial impact."
         actions={

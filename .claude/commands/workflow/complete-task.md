@@ -10,8 +10,7 @@ npx tsx scripts/complete-task.ts "Description of what you did"
 
 # Example:
 npx tsx scripts/complete-task.ts "Updated executive page to use full-width dashboard layout"
-```
-
+```markdown
 ## What It Does
 
 1. **Generates Task Manifest** - Analyzes git changes and creates verification plan
@@ -29,12 +28,13 @@ npx tsx scripts/complete-task.ts "Updated executive page to use full-width dashb
 
 ## Example Output
 
-```
+```yaml
 🔍 Analyzing task: Updated executive page layout
 📋 Task type detected: ui-change
 📁 Files modified: 3
 
 Generated verification manifest:
+
 - Need visual verification: ✓
 - Need functional verification: ✓
 - Success criteria: 4 items
@@ -57,10 +57,12 @@ Starting verification...
 ==================================================
 📊 VERIFICATION COMPLETE
 ==================================================
+
 Status: ❌ FAILED
 Report saved to: .claude/verification/reports/task-123-report.md
 
 ❌ Task cannot be marked complete due to verification failures.
+
 ```
 
 ## Integration with Claude Code

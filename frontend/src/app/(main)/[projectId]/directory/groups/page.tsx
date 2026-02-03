@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { Users2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProjectPageHeader } from "@/components/layout/ProjectPageHeader";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -46,7 +46,7 @@ export default function ProjectDirectoryGroupsPage() {
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title="Directory"
           description="Manage companies and team members for this project"
           actions={
@@ -69,7 +69,7 @@ export default function ProjectDirectoryGroupsPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Directory"
         description="Manage companies and team members for this project"
         actions={

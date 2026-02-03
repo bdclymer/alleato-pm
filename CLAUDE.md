@@ -32,6 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Full prevention system:** `.claude/PREVENTION-CHECKLIST.md`
 **Incident tracking:** `docs-ai/contents/docs/patterns/INCIDENT-LOG.md`
+**PRP Workflow:** `.claude/PRP-WORKFLOW.md` — step-by-step guide for new features and fix/complete workflows
 
 ---
 
@@ -42,15 +43,18 @@ These rules are NON-NEGOTIABLE. Violating them wastes significant time.
 **Full rules in:** `.claude/rules/`
 
 ### 🧠 CLAUDE CODE LEARNING SYSTEM (MANDATORY)
+
 **BEFORE ANY ACTION:** Check documented error patterns to prevent repeating mistakes.
 
 **Required Steps:**
+
 1. Read `.claude/MANDATORY-ERROR-PREVENTION.md`
 2. Check relevant patterns in `docs-ai/contents/docs/patterns/`
 3. Apply documented solutions for known issues
 4. Follow pre-action validation checklist
 
 **Pattern Categories:**
+
 - `authentication-errors.md` - Permission and login issues
 - `database-issues.md` - Schema and query problems
 - `api-routing-errors.md` - Route and endpoint failures
@@ -60,10 +64,13 @@ These rules are NON-NEGOTIABLE. Violating them wastes significant time.
 **This system is MANDATORY. No exceptions. Every repeated error wastes hours.**
 
 ### 1. Supabase Types Gate
+
 **BEFORE** writing ANY code that touches the database:
+
 ```bash
 npm run db:types  # Generate fresh types
 ```
+
 Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 
 **CRITICAL:** When creating FKs, verify the FK column type matches the PK type (e.g., `projects.id` is INTEGER, not UUID).
@@ -71,15 +78,19 @@ Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 **NEVER**: Write SQL, API routes, or hooks without reading the generated types first.
 
 ### 2. Route Naming Gate
+
 **ALWAYS** use specific parameter names: `[projectId]`, `[companyId]`, `[contractId]`
 **NEVER** use generic `[id]` - causes Next.js routing conflicts that block dev server.
 
 ### 3. Playwright Gate
+
 **BEFORE** diagnosing test failures: Run the test and observe actual DOM output.
 **NEVER** guess what's happening without browser evidence.
 
 ### 4. Root Cause Gate (NEW)
+
 **BEFORE** modifying code to fix an issue:
+
 1. Gather runtime evidence (actual errors, query results, console output)
 2. State the root cause as a FACT with evidence
 3. Only THEN make targeted fixes
@@ -87,17 +98,21 @@ Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 **NEVER**: Modify code based on grep searches or assumptions. See `.claude/rules/ROOT-CAUSE-GATE.md`
 
 ### 5. Use Available Tools Gate (NEW)
+
 **ALWAYS** use available tools (MCP, CLI, Bash) instead of telling user to do things manually.
 **NEVER**: Dump SQL and tell user "run this in Supabase" when MCP tools exist.
 
 ### 6. Bash Execution Rules (NEW)
+
 - Check `pwd` before running commands with relative paths
 - Use ABSOLUTE paths for file redirects
 - Don't use `cd X && command` chains (fails in zsh)
 - Use single quotes for `node -e` with special chars
 
 ### 7. Scaffolding Gate (MANDATORY)
+
 **BEFORE** writing new CRUD features from scratch:
+
 1. Use **`/create-feature <EntityName>`** to generate validated code with all gates enforced
 2. Customize the generated code for domain-specific needs
 3. For custom fields: `/create-feature <EntityName> --fields 'field1:type,field2:type'`
@@ -106,7 +121,9 @@ Then READ `frontend/src/types/database.types.ts` to verify tables/columns exist.
 **FK types reference**: `.claude/FK-TYPES-REFERENCE.md`
 
 ### 8. Next.js Cache Gate (CRITICAL - PREVENTS WASTED TIME)
+
 **BEFORE** debugging ANY 404 or routing issue with new/modified Next.js files:
+
 ```bash
 cd frontend && rm -rf .next && pkill -f "next dev" && npm run dev > /tmp/nextjs-dev.log 2>&1 &
 sleep 10
@@ -120,15 +137,18 @@ tail -20 /tmp/nextjs-dev.log  # Verify server shows "Ready"
 See `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md` for full protocol.
 
 ### 9. Authentication Gate (CRITICAL - READ THIS)
+
 **NEVER** ask the user to manually log in for Playwright tests or web crawlers.
 
 **Credentials are ALWAYS in `.env` file:**
+
 ```bash
 PROCORE_USER=bclymer@alleatogroup.com
 PROCORE_PASSWORD=Clymer926!
 ```
 
 **How to use automatic authentication in Node.js scripts:**
+
 ```javascript
 import dotenv from 'dotenv';
 dotenv.config({ path: join(__dirname, '../../.env') }); // Adjust path to project root
@@ -143,22 +163,26 @@ await page.click('button[type="submit"]');
 ```
 
 **For Playwright tests in `frontend/tests/`:**
+
 - Auth state is ALREADY saved in `tests/.auth/user.json`
 - Tests automatically use this saved session
 - NO manual login required
 
 **NEVER:**
+
 - Ask user to log in manually
 - Create interactive auth prompts
 - Wait for user input when credentials exist in .env
 - Assume auth is unavailable
 
 **ALWAYS:**
+
 - Load credentials from .env automatically
 - Use saved auth state for Playwright tests
 - Provide automatic authentication in crawlers/scripts
 
 ### 10. Page Header Consistency Gate (MANDATORY)
+
 **ALL project pages MUST use the standard `ProjectPageHeader` + `PageContainer` pattern.**
 
 ```tsx
@@ -178,17 +202,36 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 ```
 
 **NEVER:**
+
 - Use `ProjectToolPage` (deprecated wrapper with wrong header variant)
 - Use `PageHeader` from `@/components/design-system` directly (deprecated)
 - Create custom/one-off headers for project pages
 - Skip the header entirely on project tool pages
 
 **ALWAYS:**
+
 - Import `ProjectPageHeader` and `PageContainer` from `@/components/layout`
 - Follow the same pattern used by Schedule, Commitments, and other standard pages
 - Include `title`, `description`, and `actions` props
 
 **Why:** Inconsistent headers make the app look broken. Every page must have the same header structure.
+
+### 11. File Organization Gate (MANDATORY)
+
+**BEFORE creating ANY file, verify the correct location.**
+
+| File Type | Required Location |
+|-----------|------------------|
+| Scripts (.js, .ts, .py, .sh) | `scripts/` (with subdirs) |
+| Documentation (.md, .mdx) | `docs-ai/` or `DOCS_NEED_TO_FILE/` |
+| PRPs | `docs-ai/contents/docs/PRPs/<domain>/` |
+| Claude rules | `.claude/rules/` |
+| SQL migrations | `supabase/migrations/` |
+| Frontend code | `frontend/src/` |
+
+**NEVER** create .md, .js, .ts, .py, or .sh files at the project root.
+
+See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
 ---
 
@@ -205,6 +248,7 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 | FK types lookup | `.claude/FK-TYPES-REFERENCE.md` |
 
 **`/create-feature` enforces these gates automatically:**
+
 1. FK type validation (prevents INTEGER/UUID mismatch -- the #1 recurring bug)
 2. Route conflict check (prevents `[id]` vs `[projectId]` errors)
 3. TypeScript compilation (catches type errors before you see them)
@@ -263,12 +307,14 @@ npm run test:unit:coverage
 ### Playwright Authentication (READ THIS)
 
 **How authentication works:**
+
 1. Auth state is PRE-SAVED in `tests/.auth/user.json`
 2. All tests automatically load this saved session
 3. NO login required in individual tests
 4. Session persists across test runs
 
 **If tests fail with "not logged in":**
+
 ```bash
 # Re-authenticate (run ONCE, not before every test)
 cd frontend
@@ -280,6 +326,7 @@ npx playwright test tests/auth.setup.ts
 **Auth file:** `frontend/tests/.auth/user.json`
 
 **Common mistakes to AVOID:**
+
 - ❌ Adding login code to every test
 - ❌ Asking user to log in manually
 - ❌ Thinking auth is missing when it's already configured
@@ -311,11 +358,13 @@ node scripts/crawl-direct-costs-comprehensive.js
 ### Creating New Crawlers
 
 **Use the `/feature-crawl` command:**
+
 ```bash
 /feature-crawl <feature-name> <app-url>
 ```
 
 **Or copy an existing crawler and modify:**
+
 1. Copy `scripts/crawl-specifications-comprehensive.js`
 2. Update `START_URL` to your feature URL
 3. Update `OUTPUT_DIR` to your feature name
@@ -349,12 +398,14 @@ if (currentUrl.includes('login.procore.com')) {
 ```
 
 **NEVER:**
+
 - ❌ Ask user to log in manually
 - ❌ Create interactive prompts waiting for Enter key
 - ❌ Assume credentials are unavailable
 - ❌ Hardcode passwords (use .env)
 
 **ALWAYS:**
+
 - ✅ Load from .env automatically
 - ✅ Auto-login without user interaction
 - ✅ Handle MFA gracefully (persistent session)
@@ -383,6 +434,7 @@ npm run seed:financial         # Seed financial data
 ## Architecture
 
 ### Directory Structure
+
 ```
 alleato-procore/
 ├── frontend/                 # Next.js 15 application
@@ -414,25 +466,30 @@ alleato-procore/
 ### Key Patterns
 
 **Supabase Client Usage:**
+
 - Browser: `import { createClient } from "@/lib/supabase/client"` (singleton)
 - Server Components/API Routes: `import { createClient } from "@/lib/supabase/server"` (creates new instance per request)
 
 **Data Fetching:**
+
 - Custom hooks in `frontend/src/hooks/use-*.ts` wrap Supabase queries
 - React Query for caching and state management
 - Types from `@/types/database.types` for type safety
 
 **API Routes:**
+
 - Located at `frontend/src/app/api/`
 - Use `[projectId]` parameter naming (NOT generic `[id]`)
 - Pattern: `api/projects/[projectId]/resource/route.ts`
 
 **Dynamic Routes:**
+
 - Project routes: `/[projectId]/...` (e.g., `/[projectId]/budget`, `/[projectId]/commitments`)
 - Use specific parameter names: `[projectId]`, `[companyId]`, `[contractId]`, `[userId]`
 - NEVER use generic `[id]` - this causes Next.js routing conflicts
 
 ### Tech Stack
+
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
 - **UI:** shadcn/ui components, Radix UI primitives, Framer Motion
 - **State:** React Query (TanStack Query), Zustand
@@ -443,6 +500,7 @@ alleato-procore/
 ## Critical Rules
 
 ### Route Naming (MANDATORY)
+
 Next.js will fail to start if dynamic route parameters conflict. Always use specific names:
 
 | Resource | Parameter Name |
@@ -456,18 +514,21 @@ Next.js will fail to start if dynamic route parameters conflict. Always use spec
 Check for conflicts: `npm run check:routes`
 
 ### Supabase Types Gate
+
 Before ANY Supabase/database work:
+
 1. Generate types: `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > frontend/src/types/database.types.ts`
 2. Read the generated types
 3. Verify table names and columns exist
 4. Only then write code
 
 ### Playwright Testing
+
 Before claiming tests pass:
+
 1. Actually run Playwright
 2. Observe the browser DOM/output
 3. Only then diagnose or fix issues
-
 
 ### Save all documentation in the docs-ai folder.
 

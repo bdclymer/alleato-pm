@@ -1,11 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  ProjectPageHeader,
-  PageContainer,
-  PageTabs,
-} from "@/components/layout";
+import { PageContainer, PageTabs } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import {
   SummaryCardGrid,
   type SummaryCard,
@@ -95,7 +92,7 @@ export interface DataTablePageProps<TData> {
  * DataTablePage - A standardized template for data table pages
  *
  * This template ensures consistent structure across all table-based pages:
- * - ProjectPageHeader with title, description, and actions
+ * - PageHeader with title, description, and actions
  * - Optional summary cards for key metrics
  * - Optional tab navigation for filtering
  * - DataTableResponsive with search, filters, and pagination
@@ -149,7 +146,7 @@ export function DataTablePage<TData>({
   if (error) {
     return (
       <>
-        <ProjectPageHeader
+        <PageHeader
           title={title}
           description={description}
           actions={actions}
@@ -175,7 +172,7 @@ export function DataTablePage<TData>({
   return (
     <>
       {/* Page Header */}
-      <ProjectPageHeader
+      <PageHeader
         title={title}
         description={description}
         actions={actions}

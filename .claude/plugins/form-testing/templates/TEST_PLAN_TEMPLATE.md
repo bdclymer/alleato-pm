@@ -32,6 +32,7 @@
 | ... | ... | ... | ... | ... | ... | ... | ... |
 
 **Status Legend:**
+
 - ⏳ Pending - Not yet tested
 - 🔄 In Progress - Currently testing
 - ✅ Pass - All tests passed
@@ -55,15 +56,19 @@ Each form undergoes 8 test phases:
 ## Progress Tracking
 
 ### Completed
+
 - [List of forms completed]
 
 ### In Progress
+
 - [Current form being tested]
 
 ### Pending
+
 - [List of forms not yet tested]
 
 ### Blocked
+
 - [List of forms that cannot be tested with reasons]
 
 ## Test Data Tracking

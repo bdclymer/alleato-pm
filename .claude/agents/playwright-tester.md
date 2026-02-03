@@ -3,13 +3,13 @@
 **🚨 IMPORTANT:** This is NOT a separate sub-agent. This is a **specialized prompt configuration** for the `test-automator` sub-agent.
 
 **Usage:**
+
 ```typescript
 Task({
   subagent_type: "test-automator",
   prompt: "Follow .agents/agents/playwright-tester.md. [Your specific test request]"
 })
-```
-
+```javascript
 ---
 
 **Agent Type:** `test-automator` (built-in Claude Code sub-agent)
@@ -48,9 +48,8 @@ const docs = await mcp__context7__get_library_docs({
     "api-testing"
   ]
 });
-```
-
-**Fallback:** If context-7 MCP is unavailable, reference https://playwright.dev/docs/auth directly.
+```text
+**Fallback:** If context-7 MCP is unavailable, reference <https://playwright.dev/docs/auth> directly.
 
 ### Step 2: Read Project-Specific Patterns
 
@@ -60,8 +59,7 @@ const docs = await mcp__context7__get_library_docs({
 2. frontend/config/playwright/playwright.config.ts  # Config
 3. frontend/tests/auth.setup.ts                      # Auth flow
 4. .agents/rules/PLAYWRIGHT-GATE.md                 # Gate rules
-```
-
+```markdown
 ### Step 3: Verify Environment
 
 ```bash
@@ -97,8 +95,7 @@ test('my test', async ({ page }) => {
   await page.goto('/dashboard');
   await page.waitForLoadState('networkidle');
 });
-```
-
+```javascript
 ```typescript
 // ❌ WRONG: Don't re-authenticate in tests
 test('bad test', async ({ page }) => {
@@ -107,8 +104,7 @@ test('bad test', async ({ page }) => {
   await page.fill('[name="email"]', 'test1@mail.com');
   // ...
 });
-```
-
+```typescript
 **For API Requests:** Extract auth cookies from saved state:
 
 ```typescript
@@ -130,8 +126,7 @@ await page.request.post(url, {
   },
   data: { ... }
 });
-```
-
+```diff
 ---
 
 ## 🎯 Selector Strategy (PRIORITY ORDER)
@@ -149,6 +144,7 @@ await page.locator('[role="button"]').filter({ hasText: 'Submit' });
 ```
 
 **Common Roles:**
+
 - `tab`, `tablist`, `tabpanel`
 - `menu`, `menuitem`, `menubar`
 - `button`, `link`
@@ -159,8 +155,7 @@ await page.locator('[role="button"]').filter({ hasText: 'Submit' });
 
 ```typescript
 await page.locator('[data-testid="budget-submit"]').click();
-```
-
+```javascript
 ### 3. Text-Based with Filters
 
 ```typescript
@@ -172,15 +167,13 @@ const button = page
 
 // Regex for flexibility
 await page.locator('button').filter({ hasText: /Submit|Save/ }).click();
-```
-
+```markdown
 ### 4. CSS Classes (Last Resort)
 
 ```typescript
 // Only when no better option exists
 await page.locator('.budget-table-row').first();
-```
-
+```diff
 ---
 
 ## ⏱️ Wait Strategy (MANDATORY)
@@ -208,8 +201,7 @@ await page.waitForSelector('table', { timeout: 10000 });
 
 // Wait in assertions (preferred)
 await expect(page.locator('[role="menu"]')).toBeVisible({ timeout: 5000 });
-```
-
+```markdown
 ### For React State Updates
 
 ```typescript
@@ -219,15 +211,13 @@ await page.waitForTimeout(500); // Allow React to re-render
 
 // Then verify
 await expect(page.locator('[role="menu"]')).toBeVisible();
-```
-
+```typescript
 ### For URL Changes
 
 ```typescript
 await page.waitForURL('**/', { timeout: 15000 });
 await page.waitForURL(/\/projects\/\d+\/budget/);
-```
-
+```typescript
 ---
 
 ## 🧪 Test Structure Template
@@ -319,8 +309,7 @@ function getAuthCookies(): string {
     .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
     .join('; ');
 }
-```
-
+```javascript
 ---
 
 ## 🔌 API Testing Pattern
@@ -362,8 +351,7 @@ test('feature with API setup', async ({ page }) => {
     { headers: { Cookie: authCookies } }
   );
 });
-```
-
+```javascript
 ---
 
 ## 📸 Screenshots and Debugging
@@ -394,8 +382,7 @@ test('my test', async ({ page }) => {
 
   await expect(something).toBeVisible();
 });
-```
-
+```javascript
 ### Console and Error Logging
 
 ```typescript
@@ -440,8 +427,7 @@ await expect(page.locator('[role="menu"]')).toBeVisible({ timeout: 5000 });
 
 // Count
 await expect(page.locator('[role="tab"]')).toHaveCount(3);
-```
-
+```bash
 ### Text Content
 
 ```typescript
@@ -453,8 +439,7 @@ await expect(page.locator('.total')).toHaveText('$100,000.00');
 
 // Regex
 await expect(page.locator('.status')).toHaveText(/Active|Pending/);
-```
-
+```javascript
 ### API Responses
 
 ```typescript
@@ -468,8 +453,7 @@ const data = await response.json();
 expect(data.views).toHaveLength(1);
 expect(data.views[0].name).toBe('Procore Standard');
 expect(data.success).toBe(true);
-```
-
+```diff
 ---
 
 ## 📸 REFERENCE SCREENSHOT COMPARISON (MANDATORY)
@@ -571,8 +555,7 @@ Captured: ${new Date().toISOString()}
   console.log('Comparison report written to:',
     'frontend/tests/screenshots/budget-e2e/COMPARISON-REPORT.md');
 });
-```
-
+```sql
 ### Comparison Checklist (Use This)
 
 **Layout Structure:**
@@ -673,8 +656,7 @@ Create `frontend/tests/screenshots/[feature]-e2e/COMPARISON-REPORT.md`:
 - Fix blocking issues
 - Re-run tests
 - Create new comparison report
-```
-
+```markdown
 ### Automation (Future Enhancement)
 
 For automated pixel comparison (optional later):
@@ -686,8 +668,7 @@ await expect(page).toHaveScreenshot('budget-main.png', {
   maxDiffPixels: 2000, // Allow color/font differences
   maxDiffPixelRatio: 0.1,
 });
-```
-
+```diff
 ---
 
 ## 🐛 Debugging Workflow
@@ -703,20 +684,17 @@ npx playwright test tests/e2e/[feature].spec.ts --headed --headed-slow
 ```bash
 npx playwright test --trace on
 npx playwright show-trace trace.zip
-```
-
+```markdown
 ### 3. Debug Mode (Interactive)
 
 ```bash
 npx playwright test --debug
-```
-
+```markdown
 ### 4. View HTML Report
 
 ```bash
 npx playwright show-report frontend/playwright-report
-```
-
+```markdown
 ### 5. Inspect Specific Element
 
 ```typescript
@@ -735,16 +713,18 @@ When test implementation is complete, provide:
 
 1. ✅ **Test file:** `frontend/tests/e2e/[feature].spec.ts`
 2. ✅ **Execution command:**
+
    ```bash
    npx playwright test tests/e2e/[feature].spec.ts --reporter=list
    ```
+
 3. ✅ **Test output:** Full output showing PASS ✓ or detailed failures
 4. ✅ **Screenshot paths:** List all screenshots saved
 5. ✅ **Coverage report:** List all test cases implemented
 
 **Example Output:**
 
-```
+```text
 Running 5 tests using 1 worker
 
   ✓ [Feature] E2E Tests › should display feature page correctly (2.3s)
@@ -757,6 +737,7 @@ Running 5 tests using 1 worker
 ```
 
 **Screenshots:**
+
 - `frontend/tests/screenshots/feature/01-initial-display.png`
 - `frontend/tests/screenshots/feature/02-create-form.png`
 - `frontend/tests/screenshots/feature/03-edit-dialog.png`
@@ -786,6 +767,7 @@ Before claiming completion, verify ALL:
 ## 📚 Reference Links
 
 ### Project-Specific
+
 - **Patterns:** `.agents/docs/playwright/PLAYWRIGHT-PATTERNS.md`
 - **Gate Rules:** `.agents/rules/PLAYWRIGHT-GATE.md`
 - **Config:** `frontend/config/playwright/playwright.config.ts`
@@ -793,11 +775,12 @@ Before claiming completion, verify ALL:
 - **Example Tests:** `frontend/tests/e2e/budget-comprehensive.spec.ts`
 
 ### Official Playwright Docs (via context-7 MCP)
-- **Authentication:** https://playwright.dev/docs/auth
-- **Locators:** https://playwright.dev/docs/locators
-- **Assertions:** https://playwright.dev/docs/test-assertions
-- **API Testing:** https://playwright.dev/docs/api-testing
-- **Best Practices:** https://playwright.dev/docs/best-practices
+
+- **Authentication:** <https://playwright.dev/docs/auth>
+- **Locators:** <https://playwright.dev/docs/locators>
+- **Assertions:** <https://playwright.dev/docs/test-assertions>
+- **API Testing:** <https://playwright.dev/docs/api-testing>
+- **Best Practices:** <https://playwright.dev/docs/best-practices>
 
 ---
 

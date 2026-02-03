@@ -21,7 +21,10 @@ interface DrawingLogTableProps {
   onDeleteDrawing?: (id: string) => Promise<void>;
 }
 
-const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
+const createDrawingLogConfig = (
+  projectId: string,
+  onBulkAction: (action: string, selectedRows: any[]) => Promise<void>
+): GenericTableConfig => ({
   title: "Drawing Log",
   description: "Manage all drawing revisions and their metadata",
   searchFields: ["drawingNumber", "title", "fileName", "areaName", "setName"],
@@ -31,12 +34,11 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
     {
       id: "view",
       label: "View Drawing",
-      icon: "eye" as const,
+      icon: "external" as const,
     },
     {
       id: "download",
       label: "Download",
-      icon: "download" as const,
     },
     {
       id: "edit",
@@ -46,12 +48,10 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
     {
       id: "newRevision",
       label: "New Revision",
-      icon: "plus" as const,
     },
     {
       id: "qrCode",
       label: "QR Code",
-      icon: "qr-code" as const,
     },
     {
       id: "delete",
@@ -67,10 +67,6 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       defaultVisible: true,
       type: "text",
       isPrimary: true,
-      renderConfig: {
-        type: "link",
-        linkPath: `/${projectId}/drawings/viewer/{id}`,
-      },
     },
     {
       id: "title",
@@ -85,7 +81,7 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       type: "badge",
       renderConfig: {
         type: "badge",
-        variant: "outline",
+        defaultVariant: "outline",
       },
     },
     {
@@ -150,20 +146,12 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       label: "Drawing Date",
       defaultVisible: true,
       type: "date",
-      renderConfig: {
-        type: "date",
-        format: "MMM dd, yyyy",
-      },
     },
     {
       id: "receivedDate",
       label: "Received Date",
       defaultVisible: true,
       type: "date",
-      renderConfig: {
-        type: "date",
-        format: "MMM dd, yyyy",
-      },
     },
     {
       id: "areaName",
@@ -188,9 +176,6 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       label: "File Size",
       defaultVisible: false,
       type: "number",
-      renderConfig: {
-        type: "fileSize",
-      },
     },
     {
       id: "fileType",
@@ -206,7 +191,6 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
           "image/tiff": "outline",
         },
         defaultVariant: "outline",
-        transform: (value: string) => value?.split('/')[1]?.toUpperCase() || value,
       },
     },
     {
@@ -220,10 +204,6 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       label: "Upload Date",
       defaultVisible: false,
       type: "date",
-      renderConfig: {
-        type: "datetime",
-        format: "MMM dd, yyyy hh:mm a",
-      },
     },
     {
       id: "revisionDescription",
@@ -231,7 +211,7 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
       defaultVisible: false,
       type: "text",
       renderConfig: {
-        type: "truncated",
+        type: "truncate",
         maxLength: 50,
       },
     },
@@ -294,27 +274,30 @@ const createDrawingLogConfig = (projectId: string): GenericTableConfig => ({
   enableViewSwitcher: true,
   enableRowSelection: true,
   enableSorting: true,
-  enableColumnVisibility: true,
-  enableExport: true,
-  defaultSort: {
-    field: "drawingNumber",
-    direction: "asc",
-  },
+  enableColumnResize: true,
+  defaultSortColumn: "drawingNumber",
+  defaultSortDirection: "asc",
   bulkActions: [
     {
       id: "bulkDownload",
       label: "Download Selected",
-      icon: "download" as const,
+      onClick: async (selectedIds) => {
+        await onBulkAction("bulkDownload", selectedIds as any[]);
+      },
     },
     {
       id: "bulkExport",
       label: "Export Selected",
-      icon: "file-text" as const,
+      onClick: async (selectedIds) => {
+        await onBulkAction("bulkExport", selectedIds as any[]);
+      },
     },
     {
       id: "bulkStatusUpdate",
       label: "Update Status",
-      icon: "edit" as const,
+      onClick: async (selectedIds) => {
+        await onBulkAction("bulkStatusUpdate", selectedIds as any[]);
+      },
     },
   ],
 });
@@ -453,10 +436,12 @@ export function DrawingLogTable({
 
   return (
     <GenericDataTable
-      data={data}
-      config={createDrawingLogConfig(projectId)}
-      onRowAction={handleRowAction}
-      onBulkAction={handleBulkAction}
+      data={data as unknown as Record<string, unknown>[]}
+      config={createDrawingLogConfig(projectId, handleBulkAction)}
+      onDeleteRow={onDeleteDrawing ? async (id) => {
+        await onDeleteDrawing(String(id));
+        return {};
+      } : undefined}
     />
   );
 }

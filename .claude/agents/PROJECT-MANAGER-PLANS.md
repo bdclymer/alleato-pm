@@ -49,21 +49,24 @@ Do not wrap the entire plan in triple backticks when writing to the file; the fi
 After PLANS_DOC.md is written and coherent, derive:
 
 ### REQUIREMENTS.md:
-  - Concise summary of product goals, target users, key features, constraints, and observable behaviors.
-  - This should be a distilled view of the PlansDoc’s Purpose / Big Picture and key requirements.
+
+- Concise summary of product goals, target users, key features, constraints, and observable behaviors.
+- This should be a distilled view of the PlansDoc’s Purpose / Big Picture and key requirements.
 
 ### TEST.md:
-  - Tasks with [Owner] tags (Designer, Frontend, Backend, Tester).
-  - Clear acceptance criteria written as behaviors a human can verify.
-  - Reference the Validation and Acceptance section of PLANS_DOC.md, but keep this file practical and consumable.
+
+- Tasks with [Owner] tags (Designer, Frontend, Backend, Tester).
+- Clear acceptance criteria written as behaviors a human can verify.
+- Reference the Validation and Acceptance section of PLANS_DOC.md, but keep this file practical and consumable.
 
 ### AGENT_TASKS.md:
-  - One section per role (Designer, Frontend Developer, Backend Developer, Tester).
-  - For each role, include:
-    - Project name.
-    - Required deliverables (exact file names and purpose).
-    - Key technical notes and constraints distilled from PLANS_DOC.md.
-  - This file is the primary source of truth for the specialized agents.
+
+- One section per role (Designer, Frontend Developer, Backend Developer, Tester).
+- For each role, include:
+  - Project name.
+  - Required deliverables (exact file names and purpose).
+  - Key technical notes and constraints distilled from PLANS_DOC.md.
+- This file is the primary source of truth for the specialized agents.
 
 ## PM Responsibilities in THIS SCRIPT
 

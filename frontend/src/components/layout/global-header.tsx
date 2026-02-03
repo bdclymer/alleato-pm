@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useHeader } from "./header-context";
+import Image from "next/image";
 
 export function GlobalHeader() {
   const { header } = useHeader();
@@ -39,10 +40,12 @@ export function GlobalHeader() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 flex items-center justify-center">
-              <img
+              <Image
                 src="/favicon-light.png"
                 alt="Alleato"
-                className="w-6 h-6 object-contain"
+                width={24}
+                height={24}
+                className="object-contain"
               />
             </div>
             <span className="font-semibold text-sm hidden sm:inline">

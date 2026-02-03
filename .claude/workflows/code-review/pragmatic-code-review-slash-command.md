@@ -9,34 +9,30 @@ Analyze the following outputs to understand the scope and content of the changes
 
 GIT STATUS:
 
-```
+```text
 !`git status`
-```
-
+```bash
 FILES MODIFIED:
 
-```
+```text
 !`git diff --name-only origin/HEAD...`
 ```
 
 COMMITS:
 
-```
+```text
 !`git log --no-decorate origin/HEAD...`
-```
-
+```bash
 DIFF CONTENT:
 
-```
+```text
 !`git diff --merge-base origin/HEAD`
 ```
 
 Review the complete diff above. This contains all code changes in the PR.
 
-
 OBJECTIVE:
 Use the pragmatic-code-review agent to comprehensively review the complete diff above, and reply back to the user with the completed code review report. Your final reply must contain the markdown report and nothing else.
-
 
 OUTPUT GUIDELINES:
 Provide specific, actionable feedback. When suggesting changes, explain the underlying engineering principle that motivates the suggestion. Be constructive and concise.

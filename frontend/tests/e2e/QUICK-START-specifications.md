@@ -11,8 +11,7 @@ cat .env.local | grep SUPABASE
 # Should show:
 # NEXT_PUBLIC_SUPABASE_URL=...
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
-
+```markdown
 ## Run All Specifications Tests
 
 ```bash
@@ -23,8 +22,7 @@ npm run test -- specifications
 # Running 26 tests using 4 workers
 # ✓ specifications.spec.ts (8 tests) - 45s
 # ✓ specifications-extended.spec.ts (18 tests) - 120s
-```
-
+```markdown
 ## Run Specific Test Suites
 
 ```bash
@@ -48,8 +46,7 @@ npx playwright test tests/e2e/specifications-extended.spec.ts -g "Pagination"
 
 # Edge cases only (6 tests)
 npx playwright test tests/e2e/specifications-extended.spec.ts -g "Edge Cases"
-```
-
+```markdown
 ## Debug Failed Tests
 
 ```bash
@@ -79,8 +76,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 supabase.from('projects').select('id,name').eq('id', 31).single().then(({data}) => console.log(data));
 "
-```
-
+```sql
 ### Issue: Tests leave behind test data
 
 **Solution:** Manually cleanup test specs
@@ -92,8 +88,7 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 supabase.from('specification_sections').delete().like('section_number', '99%').then(({error}) => console.log(error ? 'Error' : 'Cleaned up'));
 "
-```
-
+```javascript
 ### Issue: File upload tests timeout
 
 **Solution:** Check Supabase storage is configured
@@ -115,19 +110,19 @@ const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 supabase.from('specification_sections').select('id', {count: 'exact'}).eq('project_id', 31).then(({count}) => console.log('Total specs:', count));
 "
-```
-
+```markdown
 ## Test Data
 
 ### Fixtures Location
 
 ```
+
 frontend/tests/fixtures/
 ├── test-document.pdf       → Valid PDF for uploads
 ├── revised-drawing.pdf     → PDF for revisions
 ├── invalid-file.txt        → Non-PDF for rejection tests
-```
 
+```markdown
 ### Test Section Numbers
 
 All test specs use section numbers starting with `99`:
@@ -146,11 +141,11 @@ cat tests/e2e/SPECIFICATIONS-TEST-SUMMARY.md
 
 # View detailed README
 cat tests/e2e/README-specifications-tests.md
-```
-
+```typescript
 ## CI/CD
 
 Tests run automatically on:
+
 - Pull requests to `main`
 - Pushes to `main`
 - Nightly builds
@@ -167,6 +162,7 @@ Expected execution times:
 - **Total: ~2-3 minutes**
 
 If tests take significantly longer:
+
 1. Check network latency to Supabase
 2. Check database performance
 3. Check for other tests running concurrently

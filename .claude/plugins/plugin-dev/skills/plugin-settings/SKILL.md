@@ -11,6 +11,7 @@ version: 0.1.0
 Plugins can store user-configurable settings and state in `.claude/plugin-name.local.md` files within the project directory. This pattern uses YAML frontmatter for structured configuration and markdown content for prompts or additional context.
 
 **Key characteristics:**
+
 - File location: `.claude/plugin-name.local.md` in project root
 - Structure: YAML frontmatter + markdown body
 - Purpose: Per-project plugin configuration and state
@@ -37,8 +38,7 @@ This markdown body can contain:
 - Additional instructions
 - Prompts to feed back to Claude
 - Documentation or notes
-```
-
+```yaml
 ### Example: Plugin State File
 
 **.claude/my-plugin.local.md:**
@@ -55,8 +55,7 @@ coordinator_session: team-leader
 
 This plugin is configured for standard validation mode.
 Contact @team-lead with questions.
-```
-
+```bash
 ## Reading Settings Files
 
 ### From Hooks (Bash Scripts)
@@ -92,8 +91,7 @@ if [[ "$STRICT_MODE" == "true" ]]; then
   # Apply strict validation
   # ...
 fi
-```
-
+```yaml
 See `examples/read-settings-hook.sh` for complete working example.
 
 ### From Commands
@@ -131,8 +129,7 @@ If present, parse YAML frontmatter and adapt behavior according to:
 - enabled: Whether plugin is active
 - mode: Processing mode (strict, standard, lenient)
 - Additional configuration fields
-```
-
+```bash
 ## Parsing Techniques
 
 ### Extract Frontmatter
@@ -140,15 +137,14 @@ If present, parse YAML frontmatter and adapt behavior according to:
 ```bash
 # Extract everything between --- markers
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
-```
-
+```bash
 ### Read Individual Fields
 
 **String fields:**
+
 ```bash
 VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/')
-```
-
+```bash
 **Boolean fields:**
 ```bash
 ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
@@ -156,11 +152,11 @@ ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
 ```
 
 **Numeric fields:**
+
 ```bash
 MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
 # Use: if [[ $MAX -gt 100 ]]; then
-```
-
+```bash
 ### Read Markdown Body
 
 Extract content after second `---`:
@@ -168,8 +164,7 @@ Extract content after second `---`:
 ```bash
 # Get everything after closing ---
 BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
-```
-
+```bash
 ## Common Patterns
 
 ### Pattern 1: Temporarily Active Hooks
@@ -195,8 +190,7 @@ fi
 
 # Run hook logic
 # ...
-```
-
+```yaml
 **Use case:** Enable/disable hooks without editing hooks.json (requires restart).
 
 ### Pattern 2: Agent State Management
@@ -232,8 +226,7 @@ COORDINATOR=$(echo "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordi
 
 # Send notification to coordinator
 tmux send-keys -t "$COORDINATOR" "Agent $AGENT_NAME completed task" Enter
-```
-
+```yaml
 ### Pattern 3: Configuration-Driven Behavior
 
 **.claude/my-plugin.local.md:**
@@ -249,8 +242,7 @@ enable_logging: true
 
 Strict mode enabled for this project.
 All writes validated against security policies.
-```
-
+```bash
 Use in hooks or commands:
 
 ```bash
@@ -267,8 +259,7 @@ case "$LEVEL" in
     # Apply lenient validation
     ;;
 esac
-```
-
+```markdown
 ## Creating Settings Files
 
 ### From Commands
@@ -308,8 +299,7 @@ Your settings are active.
 \`\`\`
 
 After creating or editing, restart Claude Code for changes to take effect.
-```
-
+```markdown
 ## Best Practices
 
 ### File Naming
@@ -331,8 +321,7 @@ Always add to `.gitignore`:
 ```gitignore
 .claude/*.local.md
 .claude/*.local.json
-```
-
+```bash
 Document this in plugin README.
 
 ### Defaults
@@ -348,8 +337,7 @@ else
   # Read from file
   # ...
 fi
-```
-
+```bash
 ### Validation
 
 Validate settings values:
@@ -378,8 +366,7 @@ After editing `.claude/my-plugin.local.md`:
 2. Exit Claude Code
 3. Restart: `claude` or `cc`
 4. New settings will be loaded
-```
-
+```bash
 Hooks cannot be hot-swapped within a session.
 
 ## Security Considerations
@@ -398,8 +385,7 @@ cat > "$STATE_FILE" <<EOF
 user_setting: "$SAFE_VALUE"
 ---
 EOF
-```
-
+```bash
 ### Validate File Paths
 
 If settings contain file paths:
@@ -412,8 +398,7 @@ if [[ "$FILE_PATH" == *".."* ]]; then
   echo "⚠️  Invalid path in settings (path traversal)" >&2
   exit 2
 fi
-```
-
+```yaml
 ### Permissions
 
 Settings files should be:
@@ -444,6 +429,7 @@ Coordinate with auth-agent on shared types.
 ```
 
 **Hook usage (agent-stop-notification.sh):**
+
 - Checks if file exists (line 15-18: quick exit if not)
 - Parses frontmatter to get coordinator_session, agent_name, enabled
 - Sends notifications to coordinator if enabled
@@ -452,6 +438,7 @@ Coordinate with auth-agent on shared types.
 ### ralph-wiggum Plugin
 
 **.claude/ralph-loop.local.md:**
+
 ```markdown
 ---
 iteration: 1
@@ -461,8 +448,7 @@ completion_promise: "All tests passing and build successful"
 
 Fix all the linting errors in the project.
 Make sure tests pass after each fix.
-```
-
+```diff
 **Hook usage (stop-hook.sh):**
 - Checks if file exists (line 15-18: quick exit if not active)
 - Reads iteration count and max_iterations
@@ -474,12 +460,12 @@ Make sure tests pass after each fix.
 
 ### File Location
 
-```
+```bash
 project-root/
 └── .claude/
     └── plugin-name.local.md
-```
 
+```bash
 ### Frontmatter Parsing
 
 ```bash
@@ -495,8 +481,7 @@ VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.
 ```bash
 # Extract body (after second ---)
 BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
-```
-
+```bash
 ### Quick Exit Pattern
 
 ```bash

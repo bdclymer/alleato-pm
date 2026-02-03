@@ -75,8 +75,8 @@ Use this subagent when:
 
 ## Output Structure
 
-```
-/playwright-procore-crawl/procore-crawls/{feature_name}/
+```text
+/docs-ai/contents/docs/PRPs/{feature_name}/
 ├── crawl-{feature_name}/
 │   ├── README.md                          # Crawler documentation
 │   ├── {FEATURE}-CRAWL-STATUS.md         # Analysis report
@@ -91,8 +91,7 @@ Use this subagent when:
 │       ├── detailed-report.json          # Complete metadata
 │       └── link-graph.json               # Navigation map
 └── [other feature planning docs]
-```
-
+```typescript
 ## Agent Workflow
 
 ### Phase 1: Setup
@@ -193,7 +192,7 @@ import { chromium } from "playwright";
 import fs from "fs";
 import path from "path";
 
-const OUTPUT_DIR = "./playwright-procore-crawl/procore-crawls/{feature}/crawl-{feature}";
+const OUTPUT_DIR = "./docs-ai/contents/docs/PRPs/{feature}/crawl-{feature}";
 const START_URL = "{start_url}";
 const PROCORE_EMAIL = "bclymer@alleatogroup.com";
 const PROCORE_PASSWORD = "{from_auth_json}";
@@ -261,8 +260,7 @@ async function main() {
 }
 
 main();
-```
-
+```typescript
 ### Metadata Schema
 
 ```typescript
@@ -356,8 +354,7 @@ interface TableAnalysis {
 if (await page.locator('.error-message').isVisible()) {
   throw new Error("Login failed. Check credentials.");
 }
-```
-
+```javascript
 **Page Timeout:**
 
 ```javascript
@@ -367,8 +364,7 @@ try {
   console.log(`Timeout on ${url}, skipping...`);
   continue;
 }
-```
-
+```javascript
 **Missing Elements:**
 
 ```javascript
@@ -376,8 +372,7 @@ const elements = await page.locator(selector).count();
 if (elements === 0) {
   console.log(`No elements found for ${selector}`);
 }
-```
-
+```bash
 **Incomplete Crawl:**
 
 ```javascript

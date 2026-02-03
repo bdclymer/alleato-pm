@@ -7,6 +7,7 @@ Easily create custom hooks to prevent unwanted behaviors by analyzing conversati
 The hookify plugin makes it simple to create hooks without editing complex `hooks.json` files. Instead, you create lightweight markdown configuration files that define patterns to watch for and messages to show when those patterns match.
 
 **Key features:**
+
 - 🎯 Analyze conversations to find unwanted behaviors automatically
 - 📝 Simple markdown configuration files with YAML frontmatter
 - 🔍 Regex pattern matching for powerful rules
@@ -19,8 +20,7 @@ The hookify plugin makes it simple to create hooks without editing complex `hook
 
 ```bash
 /hookify Warn me when I use rm -rf commands
-```
-
+```text
 This analyzes your request and creates `.claude/hookify.warn-rm.local.md`.
 
 ### 2. Test It Immediately
@@ -28,10 +28,10 @@ This analyzes your request and creates `.claude/hookify.warn-rm.local.md`.
 **No restart needed!** Rules take effect on the very next tool use.
 
 Ask Claude to run a command that should trigger the rule:
-```
+```text
 Run rm -rf /tmp/test
-```
 
+```text
 You should see the warning message immediately!
 
 ## Usage
@@ -40,34 +40,40 @@ You should see the warning message immediately!
 
 **With arguments:**
 ```
+
 /hookify Don't use console.log in TypeScript files
-```
+
+```bash
 Creates a rule from your explicit instructions.
 
 **Without arguments:**
-```
+```text
 /hookify
-```
+
+```bash
 Analyzes recent conversation to find behaviors you've corrected or been frustrated by.
 
 ### Helper Commands
 
 **List all rules:**
 ```
-/hookify:list
-```
 
+/hookify:list
+
+```text
 **Configure rules interactively:**
-```
+```text
 /hookify:configure
-```
+
+```bash
 Enable/disable existing rules through an interactive interface.
 
 **Get help:**
 ```
-/hookify:help
-```
 
+/hookify:help
+
+```yaml
 ## Rule Configuration Format
 
 ### Simple Rule (Single Pattern)
@@ -88,15 +94,16 @@ This command could delete important files. Please:
 - Verify the path is correct
 - Consider using a safer approach
 - Make sure you have backups
-```
-
+```yaml
 **Action field:**
+
 - `warn`: Shows warning but allows operation (default)
 - `block`: Prevents operation from executing (PreToolUse) or stops session (Stop events)
 
 ### Advanced Rule (Multiple Conditions)
 
 `.claude/hookify.sensitive-files.local.md`:
+
 ```markdown
 ---
 name: warn-sensitive-files
@@ -115,8 +122,7 @@ conditions:
 🔐 **Sensitive file edit detected!**
 
 Ensure credentials are not hardcoded and file is in .gitignore.
-```
-
+```yaml
 **All conditions must match** for the rule to trigger.
 
 ## Event Types
@@ -182,8 +188,7 @@ action: warn
 🐛 **Debug code detected**
 
 Remember to remove debugging statements before committing.
-```
-
+```yaml
 **This rule warns but allows** - Claude sees the message but can still proceed.
 
 ### Example 3: Require Tests Before Stopping
@@ -203,8 +208,7 @@ conditions:
 **Tests not detected in transcript!**
 
 Before stopping, please run tests to verify your changes work correctly.
-```
-
+```yaml
 **This blocks Claude from stopping** if no test commands appear in the session transcript. Enable only when you want strict enforcement.
 
 ## Advanced Usage
@@ -230,8 +234,7 @@ conditions:
 🔐 **Hardcoded credential in TypeScript!**
 
 Use environment variables instead of hardcoded values.
-```
-
+```markdown
 ### Operators Reference
 
 - `regex_match`: Pattern must match (most common)
@@ -270,19 +273,19 @@ Set `enabled: true`
 
 **Or use interactive tool:**
 ```
-/hookify:configure
-```
 
+/hookify:configure
+
+```markdown
 ### Delete Rules
 
 Simply delete the `.local.md` file:
 ```bash
 rm .claude/hookify.my-rule.local.md
-```
-
+```markdown
 ### View All Rules
 
-```
+```text
 /hookify:list
 ```
 
@@ -291,6 +294,7 @@ rm .claude/hookify.my-rule.local.md
 This plugin is part of the Claude Code Marketplace. It should be auto-discovered when the marketplace is installed.
 
 **Manual testing:**
+
 ```bash
 cc --plugin-dir /path/to/hookify
 ```
@@ -303,6 +307,7 @@ cc --plugin-dir /path/to/hookify
 ## Troubleshooting
 
 **Rule not triggering:**
+
 1. Check rule file exists in `.claude/` directory (in project root, not plugin directory)
 2. Verify `enabled: true` in frontmatter
 3. Test regex pattern separately
@@ -310,15 +315,18 @@ cc --plugin-dir /path/to/hookify
 5. Try `/hookify:list` to see if rule is loaded
 
 **Import errors:**
+
 - Ensure Python 3 is available: `python3 --version`
 - Check hookify plugin is installed
 
 **Pattern not matching:**
+
 - Test regex: `python3 -c "import re; print(re.search(r'pattern', 'text'))"`
 - Use unquoted patterns in YAML to avoid escaping issues
 - Start simple, then add complexity
 
 **Hook seems slow:**
+
 - Keep patterns simple (avoid complex regex)
 - Use specific event types (bash, file) instead of "all"
 - Limit number of active rules

@@ -3,11 +3,12 @@
 Fix design system violations with verification loop.
 
 ## Usage
-```
-/design-fix [options]
-```
 
+```bash
+/design-fix [options]
+```bash
 **Options:**
+
 - `all` - Fix all pending violations
 - `file:path/to/file.tsx` - Fix violations in specific file
 - `category:color` - Fix all violations of a specific category
@@ -19,15 +20,17 @@ Fix design system violations with verification loop.
 You are fixing design system violations. Follow this process:
 
 ### Step 1: Load Violations
+
 Read the violations from `.claude/design-audit/violations.json`
 
 Filter based on argument: $ARGUMENTS
+
 - If empty, show summary and ask what to fix
 - If specific filter, apply it
 
 ### Step 2: Fix Loop (for each violation)
 
-```
+```text
 FOR each violation in scope:
   1. Read the file containing the violation
   2. Apply the suggested fix
@@ -48,6 +51,7 @@ FOR each violation in scope:
 ### Step 3: Verification Pass
 
 After all fixes are applied:
+
 1. Run full quality check: `npm run quality --prefix frontend`
 2. For each "fixed" violation, verify the fix is still in place
 3. Mark verified violations as "verified"
@@ -56,6 +60,7 @@ After all fixes are applied:
 ### Step 4: Summary Report
 
 Output:
+
 - Violations fixed successfully
 - Violations needing manual review
 - Any new issues introduced

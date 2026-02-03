@@ -8,7 +8,7 @@ This skill updates your code and prompts to be compatible with Opus 4.5. It auto
 
 ## Usage
 
-```
+```text
 "Migrate my codebase to Opus 4.5"
 ```
 
@@ -18,4 +18,4 @@ Refer to our [prompting guide](https://platform.claude.com/docs/en/build-with-cl
 
 ## Authors
 
-William Hu (whu@anthropic.com)
+William Hu (<whu@anthropic.com>)

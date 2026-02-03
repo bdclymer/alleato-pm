@@ -27,8 +27,7 @@ $ARGUMENTS
 
    # Look for error patterns in logs
    # Search for related error messages
-   ```
-
+   ```text
 3. **Isolate the Problem**
    - **Binary Search**: Comment out code sections to narrow down
    - **Git Bisect**: Find when the bug was introduced
@@ -38,24 +37,28 @@ $ARGUMENTS
 4. **Common Debugging Strategies**
 
    ### For Runtime Errors
+
    - Read the full stack trace
    - Identify the exact line causing the error
    - Check variable values at that point
    - Verify assumptions about data types
 
    ### For Logic Errors
+
    - Add print/log statements to trace execution
    - Verify each step produces expected results
    - Check boundary conditions
    - Test with minimal reproducible example
 
    ### For Performance Issues
+
    - Add timing measurements
    - Check for N+1 queries
    - Look for inefficient algorithms
    - Profile if necessary
 
    ### For Integration Issues
+
    - Verify external service is accessible
    - Check authentication/credentials
    - Validate request/response formats

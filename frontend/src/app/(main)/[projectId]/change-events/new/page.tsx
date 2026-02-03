@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import { PageHeader, PageContainer } from "@/components/layout";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { FormLayout, DashboardFormLayout } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";

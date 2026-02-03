@@ -17,7 +17,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { PageContainer, ProjectPageHeader, PageTabs } from "@/components/layout";
+import { PageContainer, PageTabs } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { GenericDataTable } from "@/components/tables/generic-table-factory";
 import { contractsTableConfig } from "@/config/tables/contracts.config";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
@@ -173,7 +174,7 @@ export default function ProjectContractsPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageHeader
         title="Prime Contracts"
         description="Manage prime contracts and owner agreements"
         showExportButton={false}
@@ -231,6 +232,8 @@ export default function ProjectContractsPage() {
           />
         )}
       </PageContainer>
+
+      {/* //TODO: Delete confirmation dialog should use a component - MKH */}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

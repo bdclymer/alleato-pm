@@ -7,6 +7,7 @@ Treat the reader as a complete beginner to this repository: they have only the c
 ## Purpose of PLANS.md
 
 All AI agents must treat this document as **law**. The purpose of PLANS.md is to:
+
 - Standardize the workflow from requirements → planning → execution → deployment.
 - Ensure every project is built using a predictable, testable, auditable process.
 - Provide an explicit structure for EXEC\_PLAN.md files.
@@ -63,7 +64,7 @@ Self-containment and plain language are paramount. If you introduce a phrase tha
 
 Avoid common failure modes. Do not rely on undefined jargon. Do not describe "the letter of a feature" so narrowly that the resulting code compiles but does nothing meaningful. Do not outsource key decisions to the reader. When ambiguity exists, resolve it in the plan itself and explain why you chose that path. Err on the side of over-explaining user-visible effects and under-specifying incidental implementation details.
 
-Anchor the plan with observable outcomes. State what the user can do after implementation, the commands to run, and the outputs they should see. Acceptance should be phrased as behavior a human can verify ("after starting the server, navigating to http://localhost:8080/health returns HTTP 200 with body OK") rather than internal attributes ("added a HealthCheck struct"). 
+Anchor the plan with observable outcomes. State what the user can do after implementation, the commands to run, and the outputs they should see. Acceptance should be phrased as behavior a human can verify ("after starting the server, navigating to <http://localhost:8080/health> returns HTTP 200 with body OK") rather than internal attributes ("added a HealthCheck struct").
 
 If a change is internal, explain how its impact can still be demonstrated (for example, by running tests that fail before and pass after, and by showing a scenario that uses the new behavior).
 
@@ -98,13 +99,16 @@ Strict testing is required because it ensures reliability, prevents silent failu
 **Visual Regression Tests.** required when the system defines a baseline screenshot or UI stability is important. Use `toHaveScreenshot()`.
 
 **Screenshot Requirements.** Screenshots are required proof of functionality. Screenshots must show the **final working state**, not partial renders. Agents must:
+
 - Capture screenshots for all significant UI behaviors
 - Name them clearly (e.g., `new-contract-success.png`)
 - Save them in an organized folder (e.g., `tests/screenshots/contracts/`)
 - Reference them in Progress Log
 
 ### Splitting Tasks
+
 If the agent discovers a task is too large:
+
 - Break it into child tasks **immediately below the main task**.
 - Document the split in Progress Log + Decision Log.
 
@@ -139,6 +143,7 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 ## PLANS_DOC.md Structure
 
 Every PLANS.md file must follow **this exact structure in this exact order**:
+
 1. **Purpose / Big Picture**
    High-level purpose, goals, context.
 2. **Master Checklist** (Phased, Ordered, Executable)
@@ -225,8 +230,7 @@ In crates/foo/planner.rs, define:
     pub trait Planner {
         fn plan(&self, observed: &Observed) -> Vec<Action>;
     }
-```
-
+```typescript
 ## PLANS_DOC Folder Structure
 Every project MUST conform to the following folder structure (adapt as needed for project type, but do not remove categories). This enforced structure provides predictable discovery paths for agents, reduces ambiguity during autonomous execution, and simplifies onboarding for maintainers by ensuring all components live in consistent, well-defined locations.
 
@@ -237,7 +241,7 @@ Every project MUST conform to the following folder structure (adapt as needed fo
 - Domain‑specific UI MUST be in `components/domain/<module>`.
 - API logic MUST be in `backend/src/api`.
 
-```
+```text
 project-root/
   PLANS_DOC.md
   REQUIREMENTS.md
@@ -277,9 +281,11 @@ project-root/
 
   .github/
     workflows/
+
 ```
 
 # Glossary
+
 A shared vocabulary ensuring all agents interpret terms consistently.
 
 - **PlansDoc** – The master execution blueprint generated from REQUIREMENTS.md, dictating tasks, order, testing, and architecture.
@@ -294,8 +300,8 @@ A shared vocabulary ensuring all agents interpret terms consistently.
 - **CI/CD** – Continuous Integration and Continuous Deployment pipeline; verifies builds and tests before merging and deploying.
 - **Mandatory Folder Structure** – The enforced project directory layout required for consistency across projects.
 
-
 # Conclusion
+
 If you follow the guidance above, a single, stateless agent -- or a human novice -- can read your PlansDoc from top to bottom and produce a working, observable result.
 
 **That is the bar: SELF-CONTAINED, SELF-SUFFICIENT, NOVICE-GUIDING, OUTCOME-FOCUSED.**

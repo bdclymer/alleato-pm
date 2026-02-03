@@ -122,6 +122,7 @@ Generate a comprehensive validation report with:
 - Context must pass "No Prior Knowledge" test completely
 
 **Never**:
+
 - Approve PRPs scoring below 8/10 confidence
 - Give vague feedback without specific locations/fixes
 - Skip validation phases

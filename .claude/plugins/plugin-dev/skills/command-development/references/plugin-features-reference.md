@@ -16,15 +16,15 @@ This reference covers features and patterns specific to commands bundled in Clau
 
 Claude Code automatically discovers commands in plugins using the following locations:
 
-```
+```text
 plugin-name/
 ├── commands/              # Auto-discovered commands
 │   ├── foo.md            # /foo (plugin:plugin-name)
 │   └── bar.md            # /bar (plugin:plugin-name)
 └── plugin.json           # Plugin manifest
-```
-
+```diff
 **Key points:**
+
 - Commands are discovered at plugin load time
 - No manual registration required
 - Commands appear in `/help` with "(plugin:plugin-name)" label
@@ -34,7 +34,7 @@ plugin-name/
 
 Organize commands in subdirectories for logical grouping:
 
-```
+```text
 plugin-name/
 └── commands/
     ├── review/
@@ -46,6 +46,7 @@ plugin-name/
 ```
 
 **Namespace behavior:**
+
 - Subdirectory name becomes namespace
 - Shown as "(plugin:plugin-name:namespace)" in `/help`
 - Helps organize related commands
@@ -54,13 +55,15 @@ plugin-name/
 ### Command Naming Conventions
 
 **Plugin command names should:**
+
 1. Be descriptive and action-oriented
 2. Avoid conflicts with common command names
 3. Use hyphens for multi-word names
 4. Consider prefixing with plugin name for uniqueness
 
 **Examples:**
-```
+
+```diff
 Good:
 - /mylyn-sync          (plugin-specific prefix)
 - /analyze-performance (descriptive action)
@@ -70,8 +73,7 @@ Avoid:
 - /test               (conflicts with common name)
 - /run                (too generic)
 - /do-stuff           (not descriptive)
-```
-
+```yaml
 ## CLAUDE_PLUGIN_ROOT Environment Variable
 
 ### Purpose
@@ -79,6 +81,7 @@ Avoid:
 `${CLAUDE_PLUGIN_ROOT}` is a special environment variable available in plugin commands that resolves to the absolute path of the plugin directory.
 
 **Why it matters:**
+
 - Enables portable paths within plugin
 - Allows referencing plugin files and scripts
 - Works across different installations
@@ -97,15 +100,15 @@ allowed-tools: Bash(node:*), Read
 Run analysis: !`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js`
 
 Read template: @${CLAUDE_PLUGIN_ROOT}/templates/report.md
-```
-
+```text
 **Expands to:**
 ```
+
 Run analysis: !`node /path/to/plugins/plugin-name/scripts/analyze.js`
 
 Read template: @/path/to/plugins/plugin-name/templates/report.md
-```
 
+```yaml
 ### Common Patterns
 
 #### 1. Executing Plugin Scripts
@@ -119,8 +122,7 @@ allowed-tools: Bash(node:*)
 Lint results: !`node ${CLAUDE_PLUGIN_ROOT}/bin/lint.js $1`
 
 Review the linting output and suggest fixes.
-```
-
+```yaml
 #### 2. Loading Configuration Files
 
 ```markdown
@@ -132,8 +134,7 @@ allowed-tools: Read, Bash(*)
 Configuration: @${CLAUDE_PLUGIN_ROOT}/config/deploy-config.json
 
 Deploy application using the configuration above for $1 environment.
-```
-
+```bash
 #### 3. Accessing Plugin Resources
 
 ```markdown
@@ -159,8 +160,7 @@ Step 2 - Config: @${CLAUDE_PLUGIN_ROOT}/config/$1.json
 Step 3 - Execute: !`${CLAUDE_PLUGIN_ROOT}/bin/execute $1`
 
 Review results and report status.
-```
-
+```yaml
 ### Best Practices
 
 1. **Always use for plugin-internal paths:**
@@ -170,9 +170,9 @@ Review results and report status.
 
    # Bad
    @./templates/foo.md  # Relative to current directory, not plugin
-   ```
+   ```yaml
+1. **Validate file existence:**
 
-2. **Validate file existence:**
    ```markdown
    ---
    description: Use plugin config if exists
@@ -184,8 +184,8 @@ Review results and report status.
    If config exists, load it: @${CLAUDE_PLUGIN_ROOT}/config.json
    Otherwise, use defaults...
    ```
+1. **Document plugin file structure:**
 
-3. **Document plugin file structure:**
    ```markdown
    <!--
    Plugin structure:
@@ -194,9 +194,9 @@ Review results and report status.
    ├── templates/          (report templates)
    └── config/             (configuration files)
    -->
-   ```
+   ```bash
+2. **Combine with arguments:**
 
-4. **Combine with arguments:**
    ```markdown
    Run: !`${CLAUDE_PLUGIN_ROOT}/bin/process.sh $1 $2`
    ```
@@ -204,16 +204,19 @@ Review results and report status.
 ### Troubleshooting
 
 **Variable not expanding:**
+
 - Ensure command is loaded from plugin
 - Check bash execution is allowed
 - Verify syntax is exact: `${CLAUDE_PLUGIN_ROOT}`
 
 **File not found errors:**
+
 - Verify file exists in plugin directory
 - Check file path is correct relative to plugin root
 - Ensure file permissions allow reading/execution
 
 **Path with spaces:**
+
 - Bash commands automatically handle spaces
 - File references work with spaces in paths
 - No special quoting needed
@@ -238,8 +241,7 @@ Deploy to $1 environment using:
 3. Application version: !`cat package.json | grep version`
 
 Execute deployment and monitor progress.
-```
-
+```yaml
 **When to use:** Commands that need consistent settings across invocations
 
 ### Pattern 2: Template-Based Generation
@@ -260,8 +262,7 @@ Include:
 - API reference
 - Examples
 - Testing guidelines
-```
-
+```yaml
 **When to use:** Standardized output generation
 
 ### Pattern 3: Multi-Script Workflow
@@ -303,8 +304,7 @@ Environment check: !`echo "Deploying to: $1"`
 
 Deploy application using $1 environment configuration.
 Verify deployment and run smoke tests.
-```
-
+```yaml
 **When to use:** Commands that behave differently per environment
 
 ### Pattern 5: Plugin Data Management
@@ -323,8 +323,7 @@ Analyze @$1 and save results to cache:
 !`mkdir -p ${CLAUDE_PLUGIN_ROOT}/cache && date > ${CLAUDE_PLUGIN_ROOT}/cache/last-run.txt`
 
 Store analysis for future reference and comparison.
-```
-
+```yaml
 **When to use:** Commands that need persistent data storage
 
 ## Integration with Plugin Components
@@ -348,8 +347,7 @@ The agent will:
 4. Generate detailed report
 
 Note: This uses the Task tool to launch the plugin's code-analyzer agent.
-```
-
+```yaml
 **Key points:**
 - Agent must be defined in plugin's `agents/` directory
 - Claude will automatically use Task tool to launch agent
@@ -378,6 +376,7 @@ Note: This leverages the plugin's api-docs-standards skill for consistency.
 ```
 
 **Key points:**
+
 - Skill must be defined in plugin's `skills/` directory
 - Mention skill by name to hint Claude should invoke it
 - Skills provide specialized domain knowledge
@@ -398,8 +397,7 @@ Commit changes: !\`git commit -m "$2"\`
 
 Note: This commit will trigger the plugin's pre-commit hook for validation.
 Review hook output for any issues.
-```
-
+```yaml
 **Key points:**
 - Hooks execute automatically on events
 - Commands can prepare state for hooks
@@ -432,8 +430,7 @@ Execute comprehensive review:
    Template: @${CLAUDE_PLUGIN_ROOT}/templates/review-report.md
 
 Generate final report combining all outputs.
-```
-
+```yaml
 **When to use:** Complex workflows leveraging multiple plugin capabilities
 
 ## Validation Patterns
@@ -454,8 +451,7 @@ $IF($1 in [dev, staging, prod],
   Deploy to $1 environment using validated configuration,
   ERROR: Invalid environment '$1'. Must be one of: dev, staging, prod
 )
-```
-
+```yaml
 **Validation approaches:**
 1. Bash validation using grep/test
 2. Inline validation in prompt
@@ -497,8 +493,7 @@ $IF($1 AND $2,
   Deploy version $2 to $1 environment,
   ERROR: Both environment and version required. Usage: /deploy [env] [version]
 )
-```
-
+```yaml
 ### Plugin Resource Validation
 
 Verify plugin resources available:
@@ -516,8 +511,7 @@ Validate plugin setup:
 
 If all checks pass, proceed with analysis.
 Otherwise, report missing components and installation steps.
-```
-
+```yaml
 ### Output Validation
 
 Validate command execution results:
@@ -536,8 +530,7 @@ Validate output:
 - File count: !`find dist -type f | wc -l`
 
 Report build status and any validation failures.
-```
-
+```yaml
 ### Graceful Error Handling
 
 Handle errors gracefully with helpful messages:

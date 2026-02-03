@@ -6,10 +6,9 @@
 
 ## The Error
 
-```
+```text
 [Error: You cannot use different slug names for the same dynamic path ('paramName1' !== 'paramName2').]
-```
-
+```diff
 This error is a **HARD BLOCKER**. The Next.js dev server will refuse to start.
 
 ---
@@ -21,24 +20,29 @@ When you have dynamic route segments at the same path level with **different par
 ### ❌ EXAMPLES OF VIOLATIONS (THESE WILL BREAK THE APP)
 
 **Violation 1: Different param names in API vs pages**
-```
+
+```text
 ✗ frontend/src/app/api/projects/[id]/route.ts
 ✗ frontend/src/app/[projectId]/page.tsx
 ```
+
 **Error:** `'id' !== 'projectId'`
 
 **Violation 2: Duplicate routes with different param names**
-```
+
+```text
 ✗ frontend/src/app/admin/tables/[table]/[id]/page.tsx
 ✗ frontend/src/app/admin/tables/[table]/[recordId]/page.tsx
-```
+```text
 **Error:** `'id' !== 'recordId'`
 
 **Violation 3: Mixed naming in nested routes**
-```
+
+```text
 ✗ frontend/src/app/users/[userId]/page.tsx
 ✗ frontend/src/app/users/[id]/edit/page.tsx
 ```
+
 **Error:** `'userId' !== 'id'`
 
 ---
@@ -49,11 +53,10 @@ When you have dynamic route segments at the same path level with **different par
 
 Pick ONE naming convention for each resource type and use it EVERYWHERE:
 
-```
+```text
 ✓ frontend/src/app/api/projects/[projectId]/route.ts
 ✓ frontend/src/app/[projectId]/page.tsx
-```
-
+```typescript
 ### Solution 2: Delete Duplicates
 
 If you have two routes with different names, one is likely obsolete:
@@ -65,8 +68,7 @@ ls -la frontend/src/app/admin/tables/[table]/
 # Check which is newer/correct
 # Delete the obsolete one
 rm -rf frontend/src/app/admin/tables/[table]/[id]/
-```
-
+```typescript
 ---
 
 ## 📋 PROJECT STANDARDS (ENFORCE THESE)
@@ -98,6 +100,7 @@ find frontend/src/app -path "*project*" | grep '\[' | sort
 ```
 
 **Look for:**
+
 1. Existing parameter names (`[projectId]`, `[id]`, etc.)
 2. Choose the MOST SPECIFIC name that already exists
 3. If creating a new resource type, choose a specific name (NOT `[id]`)
@@ -146,8 +149,7 @@ for route in $ROUTES; do
 done
 
 echo "✅ No route conflicts found"
-```
-
+```text
 **Add to `.git/hooks/pre-commit`:**
 ```bash
 #!/bin/bash
@@ -159,16 +161,19 @@ bash scripts/check-route-conflicts.sh || exit 1
 ## 📚 HISTORICAL INCIDENTS (LEARN FROM THESE)
 
 ### Incident 1: 2026-01-10 - `api/projects/[id]` vs `[projectId]`
+
 - **Cause:** Agent created API route with `[id]` instead of existing `[projectId]`
 - **Impact:** Dev server failed to start
 - **Fix:** Renamed `api/projects/[id]` → `api/projects/[projectId]`
 
 ### Incident 2: 2026-01-10 - `admin/tables/[table]/[id]` vs `[recordId]`
+
 - **Cause:** Duplicate route created during refactor
 - **Impact:** Dev server failed to start
 - **Fix:** Deleted obsolete `[id]` directory, kept `[recordId]`
 
 ### Incident 3: (This violation)
+
 - **Cause:** [To be filled when this happens again]
 
 ---
@@ -191,9 +196,11 @@ bash scripts/check-route-conflicts.sh || exit 1
 
 1. **STOP IMMEDIATELY** - Do not create more routes
 2. **Find the conflict:**
+
    ```bash
    find frontend/src/app -type d -name "[*]" | sort | uniq -c
    ```
+
 3. **Identify duplicates:** Look for same parent path with different param names
 4. **Choose correct version:** Check which is newer/more complete
 5. **Delete obsolete:** Remove the old/duplicate route
