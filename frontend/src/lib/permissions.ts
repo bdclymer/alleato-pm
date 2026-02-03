@@ -107,7 +107,7 @@ export async function loadUserPermissions(
   projectId: number,
   userId?: string
 ): Promise<UserPermissions | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (!userId) {
     const { data: { user } } = await supabase.auth.getUser();
@@ -157,14 +157,17 @@ export async function loadUserPermissions(
     .eq("person_id", personId)
     .maybeSingle();
 
-  const template = membership?.permission_template ? {
-    id: membership.permission_template.id,
-    name: membership.permission_template.name,
-    rules: membership.permission_template.rules_json as Record<PermissionModule, PermissionLevel[]>
+  const rawTemplate = Array.isArray(membership?.permission_template)
+    ? membership.permission_template[0]
+    : membership?.permission_template;
+  const template = rawTemplate ? {
+    id: rawTemplate.id,
+    name: rawTemplate.name,
+    rules: rawTemplate.rules_json as Record<PermissionModule, PermissionLevel[]>
   } : undefined;
 
   return {
-    userId,
+    userId: userId!,
     personId,
     projectId,
     template,
@@ -186,7 +189,7 @@ export async function loadUserPermissions(
  * Get all available permission templates
  */
 export async function getPermissionTemplates(): Promise<PermissionTemplate[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("permission_templates")
@@ -210,7 +213,7 @@ export async function assignPermissionTemplate(
   personId: string,
   templateId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase
     .from("project_directory_memberships")
@@ -237,7 +240,7 @@ export async function setPermissionOverride(
   module: PermissionModule,
   level: PermissionLevel
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // For directory permissions, use the existing user_directory_permissions table
   if (module === "directory") {
@@ -273,7 +276,7 @@ export async function removePermissionOverride(
   personId: string,
   module: PermissionModule
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (module === "directory") {
     const { error } = await supabase

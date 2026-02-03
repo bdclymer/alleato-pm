@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Edit, Trash2, Download, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,10 @@ import { ExportDialog } from "@/components/commitments/ExportDialog";
 import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
 import { formatCurrency } from "@/config/tables";
 import { formatDate } from "@/lib/table-config/formatters";
+import {
+  useCommitmentDetail,
+  commitmentKeys,
+} from "@/hooks/use-commitments-query";
 
 type CommitmentDetail = Commitment & {
   project_id?: number;
@@ -198,55 +203,36 @@ export default function CommitmentDetailPage() {
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const commitmentId = params.commitmentId as string;
+  const queryClient = useQueryClient();
 
-  const [commitment, setCommitment] = useState<CommitmentDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+
+  // Use React Query for cached, deduplicated data fetching
+  const {
+    data: rawData,
+    isLoading,
+    error: queryError,
+    refetch: fetchCommitment,
+  } = useCommitmentDetail(commitmentId);
+
+  // Normalize the fetched data - memoize to avoid reprocessing on every render
+  const commitment = useMemo(() => {
+    if (!rawData) return null;
+    return normalizeCommitment(rawData);
+  }, [rawData]);
+
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : "Failed to fetch commitment"
+    : !commitment && !isLoading
+      ? "Commitment not found"
+      : null;
 
   useProjectTitle(
     commitment ? `${commitment.number} - ${commitment.title}` : "Loading...",
   );
-
-  // Fetch commitment data
-  const fetchCommitment = useCallback(async () => {
-    if (!commitmentId) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/commitments/${commitmentId}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Commitment not found");
-        }
-        throw new Error("Failed to fetch commitment details");
-      }
-
-      const data = await response.json();
-      const payload =
-        data && typeof data === "object" && "data" in data ? data.data : data;
-      const normalized = normalizeCommitment(payload);
-
-      if (!normalized || !normalized.id) {
-        throw new Error("Commitment not found");
-      }
-
-      setCommitment(normalized);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch commitment",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [commitmentId]);
-
-  useEffect(() => {
-    fetchCommitment();
-  }, [fetchCommitment]);
 
   // Action handlers
   const handleBack = useCallback(() => {
@@ -277,6 +263,10 @@ export default function CommitmentDetailPage() {
         throw new Error(error.message || "Failed to delete commitment");
       }
 
+      // Invalidate caches after deletion
+      queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+      queryClient.removeQueries({ queryKey: commitmentKeys.detail(commitmentId) });
+
       toast.success("Commitment deleted successfully");
       router.push(`/${projectId}/commitments`);
     } catch (error) {
@@ -284,7 +274,7 @@ export default function CommitmentDetailPage() {
         error instanceof Error ? error.message : "Failed to delete commitment",
       );
     }
-  }, [commitment, commitmentId, projectId, router]);
+  }, [commitment, commitmentId, projectId, router, queryClient]);
 
   const handleExport = useCallback(() => {
     setIsExportDialogOpen(true);
@@ -297,14 +287,43 @@ export default function CommitmentDetailPage() {
   if (isLoading) {
     return (
       <Stack>
-        <div className="flex items-center justify-between mb-4">
-          <Skeleton className="h-8 w-64" />
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-16" />
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-16" />
+          </div>
         </div>
+        {/* Tab bar skeleton */}
+        <Skeleton className="h-10 w-full max-w-[600px]" />
+        {/* Content skeleton */}
         <Card>
-          <CardContent className="space-y-4 pt-6">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full" />
           </CardContent>
         </Card>
       </Stack>
@@ -695,7 +714,7 @@ export default function CommitmentDetailPage() {
             projectId={projectId}
             commitmentId={commitment.id}
             commitmentType={commitment.type}
-            onImportComplete={fetchCommitment}
+            onImportComplete={() => void fetchCommitment()}
           />
         </TabsContent>
 

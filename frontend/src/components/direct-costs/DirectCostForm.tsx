@@ -130,9 +130,8 @@ export function DirectCostForm({
 
   // Form setup
   const form = useForm<any>({
-    // @ts-ignore - Complex conditional Zod schema types
     resolver: zodResolver(
-      mode === 'create' ? DirectCostCreateSchema : DirectCostUpdateSchema
+      (mode === 'create' ? DirectCostCreateSchema : DirectCostUpdateSchema) as any
     ),
     defaultValues: (initialData || {
       cost_type: 'Expense',

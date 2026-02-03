@@ -22,7 +22,36 @@ const DEFAULT_SETTINGS = {
 
 /**
  * GET /api/commitments/[id]/advanced-settings
- * Retrieves the advanced settings for a specific commitment
+ *
+ * Retrieves the advanced configuration settings for a specific commitment.
+ * Settings are stored in the `advanced_settings` JSONB column on the
+ * subcontracts or purchase_orders table. If no custom settings exist,
+ * default settings are returned.
+ *
+ * @route GET /api/commitments/[id]/advanced-settings
+ * @param {string} id - Commitment UUID
+ *
+ * @returns {object} 200 - Settings object:
+ *   { data: {
+ *       enable_invoices: boolean,
+ *       enable_comments: boolean,
+ *       enable_payments: boolean,
+ *       enable_completed_work_retainage: boolean,
+ *       enable_stored_materials_retainage: boolean,
+ *       show_cost_codes_on_pdf: boolean,
+ *       allow_overbilling: boolean,
+ *       enable_subcontractor_sov: boolean,
+ *       enable_always_editable_sov: boolean,
+ *       enable_financial_markup: boolean,
+ *       show_markup_criteria_on_pdf: boolean,
+ *       send_invoice_approval_notifications: boolean,
+ *       send_payment_notifications: boolean,
+ *       default_retainage_percent: number,
+ *       billing_period: string
+ *   } }
+ * @returns {object} 404 - Commitment not found
+ *
+ * @note Always returns 200 with defaults on database errors to ensure UI stability
  */
 export async function GET(
   _request: Request,
@@ -77,7 +106,28 @@ export async function GET(
 
 /**
  * PUT /api/commitments/[id]/advanced-settings
- * Updates the advanced settings for a specific commitment
+ *
+ * Updates the advanced configuration settings for a specific commitment.
+ * The provided settings are merged with defaults to ensure all required
+ * keys are present, then stored in the `advanced_settings` JSONB column.
+ *
+ * @route PUT /api/commitments/[id]/advanced-settings
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object} Partial or full settings object. Any subset of:
+ *   enable_invoices, enable_comments, enable_payments,
+ *   enable_completed_work_retainage, enable_stored_materials_retainage,
+ *   show_cost_codes_on_pdf, allow_overbilling, enable_subcontractor_sov,
+ *   enable_always_editable_sov, enable_financial_markup,
+ *   show_markup_criteria_on_pdf, send_invoice_approval_notifications,
+ *   send_payment_notifications, default_retainage_percent, billing_period
+ *
+ * @returns {object} 200 - { data: MergedSettings, message: "Settings saved successfully" }
+ * @returns {object} 200 - { data: MergedSettings, warning: "..." } if column doesn't exist yet
+ * @returns {object} 400 - Database update error
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
  */
 export async function PUT(
   request: Request,

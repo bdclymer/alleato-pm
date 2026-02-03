@@ -44,11 +44,11 @@ export type UnitType = (typeof UnitTypes)[number];
 
 // Numeric validation - accepts both strings and numbers from form inputs
 const positiveNumber = z.coerce
-  .number({ invalid_type_error: 'Must be a number' })
+  .number()
   .positive('Must be a positive number');
 
 const nonNegativeNumber = z.coerce
-  .number({ invalid_type_error: 'Must be a number' })
+  .number()
   .min(0, 'Must be zero or positive');
 
 // Optional string transformation following existing pattern

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { Upload, X, FileText, Download, Loader2 } from "lucide-react";
 import {
   Card,
@@ -22,7 +22,7 @@ interface AttachmentsTabProps {
   commitmentId: string;
 }
 
-export function AttachmentsTab({ commitmentId }: AttachmentsTabProps) {
+export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: AttachmentsTabProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -280,4 +280,6 @@ export function AttachmentsTab({ commitmentId }: AttachmentsTabProps) {
       </CardContent>
     </Card>
   );
-}
+})
+
+AttachmentsTab.displayName = "AttachmentsTab"

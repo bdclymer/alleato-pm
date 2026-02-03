@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (isAuthError(authResult)) return authResult;
 
     // Load user permissions
-    const permissions = await loadUserPermissions(projectIdNum, authResult.user.id);
+    const permissions = await loadUserPermissions(projectIdNum, authResult.membership.authUserId);
 
     if (!permissions) {
       return NextResponse.json(

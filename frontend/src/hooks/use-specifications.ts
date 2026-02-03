@@ -7,9 +7,11 @@ import type {
   SpecificationWithAreas,
   SpecificationFilters,
   SpecificationListResponse,
+} from "@/types/specifications.types";
+import type {
   UploadSpecificationFormData,
   EditSpecificationFormData,
-} from "@/types/specifications.types";
+} from "@/lib/schemas/specification-schemas";
 
 /**
  * React Query hook for fetching specifications list

@@ -21,7 +21,18 @@ const updateChangeOrderSchema = z.object({
 
 /**
  * GET /api/commitments/[id]/change-orders/[changeOrderId]
- * Get a specific change order for a commitment
+ *
+ * Retrieves a single change order by ID, verifying it belongs to the
+ * specified commitment (contract_id match).
+ *
+ * @route GET /api/commitments/[id]/change-orders/[changeOrderId]
+ * @param {string} id - Commitment UUID (contract_id)
+ * @param {string} changeOrderId - Change order UUID
+ *
+ * @returns {object} 200 - Change order details: { data: ChangeOrderRecord }
+ * @returns {object} 404 - Change order not found (PGRST116)
+ * @returns {object} 400 - Database query error
+ * @returns {object} 500 - Internal server error
  */
 export async function GET(
   _request: Request,
@@ -65,7 +76,28 @@ export async function GET(
 
 /**
  * PUT /api/commitments/[id]/change-orders/[changeOrderId]
- * Update a change order
+ *
+ * Updates a specific change order. Validates request body against
+ * updateChangeOrderSchema (Zod). If the status is changed to "approved",
+ * the approved_date and approved_by fields are automatically set.
+ *
+ * @route PUT /api/commitments/[id]/change-orders/[changeOrderId]
+ * @param {string} id - Commitment UUID (contract_id)
+ * @param {string} changeOrderId - Change order UUID
+ *
+ * @requestBody {object} All fields optional:
+ *   - change_order_number {string} - CO number (max 100 chars)
+ *   - description {string} - CO description (max 2000 chars)
+ *   - amount {number} - Dollar amount
+ *   - status {string} - One of: draft, pending, approved, executed, void
+ *   - requested_date {string|null} - ISO date string
+ *   - requested_by {string|null} - UUID of requesting user
+ *
+ * @returns {object} 200 - Updated change order: { data: ChangeOrderRecord }
+ * @returns {object} 400 - Validation error or database error
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Change order not found
+ * @returns {object} 500 - Internal server error
  */
 export async function PUT(
   request: Request,
@@ -154,7 +186,20 @@ export async function PUT(
 
 /**
  * DELETE /api/commitments/[id]/change-orders/[changeOrderId]
- * Delete a change order
+ *
+ * Permanently deletes a change order. Only draft change orders can be deleted.
+ * Change orders with any other status must first be changed to "draft" before
+ * deletion is allowed.
+ *
+ * @route DELETE /api/commitments/[id]/change-orders/[changeOrderId]
+ * @param {string} id - Commitment UUID (contract_id)
+ * @param {string} changeOrderId - Change order UUID
+ *
+ * @returns {object} 200 - { success: true, message: "Change order deleted successfully" }
+ * @returns {object} 400 - Cannot delete non-draft change order
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Change order not found
+ * @returns {object} 500 - Internal server error
  */
 export async function DELETE(
   _request: Request,

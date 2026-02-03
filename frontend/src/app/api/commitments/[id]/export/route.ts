@@ -53,10 +53,33 @@ interface CommitmentData {
   updated_at: string;
 }
 
-// =============================================================================
-// POST - Export Commitment
-// =============================================================================
-
+/**
+ * POST /api/commitments/[id]/export
+ *
+ * Exports a single commitment's data in CSV, Excel, or PDF format.
+ * Supports multiple export templates (standard, financial, summary) and
+ * configurable inclusion of SOV items, change orders, and invoices.
+ *
+ * - CSV: Returns text/csv with commitment details and optional SOV table
+ * - Excel: Returns XLSX workbook with Summary sheet and optional SOV sheet
+ * - PDF: Returns HTML document with print-ready layout (auto-triggers print dialog)
+ *
+ * @route POST /api/commitments/[id]/export
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object}
+ *   - format {string} [default="pdf"] - Export format: "csv", "excel", or "pdf"
+ *   - template {string} [default="standard"] - Template: "standard", "financial", or "summary"
+ *   - include_sov_items {boolean} [default=true] - Include SOV line items
+ *   - include_change_orders {boolean} [default=true] - Include change orders
+ *   - include_invoices {boolean} [default=false] - Include invoice data
+ *
+ * @returns {Blob} 200 - File download with appropriate Content-Type and Content-Disposition headers
+ * @returns {object} 400 - Unsupported export format
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Export generation error
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

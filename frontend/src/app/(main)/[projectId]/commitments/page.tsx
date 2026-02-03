@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { Plus, Download, ChevronDown } from "lucide-react";
-import { toast } from "sonner";
 import {
   GenericDataTable,
   type GenericTableConfig,
@@ -16,8 +15,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
+import {
+  useCommitmentsList,
+  useDeleteCommitment,
+  type CommitmentListItem,
+} from "@/hooks/use-commitments-query";
+
+// =============================================================================
+// Table Configuration (static - defined outside component to avoid recreation)
+// =============================================================================
 
 const config: GenericTableConfig = {
   title: "Commitments",
@@ -86,7 +95,6 @@ const config: GenericTableConfig = {
         defaultVariant: "outline",
       },
     },
-    // Phase 5: ERP Status column
     {
       id: "erp_status",
       label: "ERP Status",
@@ -103,7 +111,6 @@ const config: GenericTableConfig = {
         defaultVariant: "outline",
       },
     },
-    // Phase 5: SSOV Status column
     {
       id: "ssov_status",
       label: "SSOV Status",
@@ -131,7 +138,6 @@ const config: GenericTableConfig = {
         prefix: "$",
       },
     },
-    // Phase 5: Change Order aggregation columns
     {
       id: "approved_change_orders",
       label: "Approved COs",
@@ -172,7 +178,6 @@ const config: GenericTableConfig = {
         prefix: "$",
       },
     },
-    // Phase 5: Invoice aggregation columns
     {
       id: "invoiced_amount",
       label: "Invoiced Amount",
@@ -193,7 +198,6 @@ const config: GenericTableConfig = {
         prefix: "$",
       },
     },
-    // Phase 5: Payment aggregation columns
     {
       id: "payments_issued",
       label: "Payments Issued",
@@ -204,7 +208,6 @@ const config: GenericTableConfig = {
         prefix: "$",
       },
     },
-    // Phase 5: Calculated fields
     {
       id: "percent_paid",
       label: "% Paid",
@@ -242,7 +245,6 @@ const config: GenericTableConfig = {
         falseLabel: "No",
       },
     },
-    // Phase 5: Private column
     {
       id: "is_private",
       label: "Private",
@@ -300,7 +302,6 @@ const config: GenericTableConfig = {
         { value: "false", label: "No" },
       ],
     },
-    // Phase 5: ERP Status filter
     {
       id: "erp_status",
       label: "ERP Status",
@@ -312,7 +313,6 @@ const config: GenericTableConfig = {
         { value: "not_synced", label: "Not Synced" },
       ],
     },
-    // Phase 5: SSOV Status filter
     {
       id: "ssov_status",
       label: "SSOV Status",
@@ -325,7 +325,6 @@ const config: GenericTableConfig = {
         { value: "not_applicable", label: "N/A" },
       ],
     },
-    // Phase 5: Private filter
     {
       id: "is_private",
       label: "Private",
@@ -338,31 +337,89 @@ const config: GenericTableConfig = {
   ],
 };
 
-interface CommitmentRow {
-  id: string;
-  number: string;
-  title: string | null;
-  type: string;
-  status: string;
-  executed: boolean;
-  original_amount: number;
-  revised_contract_amount: number;
-  billed_to_date: number;
-  balance_to_finish: number;
-  contract_company_id: string | null;
+// Table config with title/description removed for rendering (static reference)
+const tableRenderConfig = { ...config, title: undefined, description: undefined };
+
+// =============================================================================
+// Currency formatter (module-level singleton)
+// =============================================================================
+
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+function formatCurrency(value: number) {
+  return currencyFormatter.format(value);
+}
+
+// =============================================================================
+// Skeleton Loading Component
+// =============================================================================
+
+function CommitmentsListSkeleton() {
+  return (
+    <TableLayout>
+      {/* Header skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Skeleton className="h-9 w-48" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-28" />
+        </div>
+      </div>
+
+      {/* Summary cards skeleton */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-7 w-32" />
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs skeleton */}
+      <div className="flex space-x-8 border-b">
+        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-10 w-28" />
+      </div>
+
+      {/* Table skeleton */}
+      <div className="mt-6 space-y-3">
+        {/* Table header */}
+        <div className="flex gap-4 px-4">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        {/* Table rows */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex gap-4 px-4 py-3 border-b">
+            <Skeleton className="h-5 w-16" />
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-24" />
+          </div>
+        ))}
+      </div>
+    </TableLayout>
+  );
+}
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+interface CommitmentRow extends CommitmentListItem {
   contract_company_name?: string | null;
-  created_at: string;
-  // Phase 5 enhancement fields
-  erp_status: string | null;
-  ssov_status: string | null;
-  approved_change_orders: number;
-  pending_change_orders: number;
-  draft_change_orders: number;
-  invoiced_amount: number;
-  payments_issued: number;
-  percent_paid: number;
-  remaining_balance: number;
-  is_private: boolean;
   [key: string]: unknown;
 }
 
@@ -372,128 +429,107 @@ export default function ProjectCommitmentsPage() {
   const pathname = usePathname();
   const projectId = params.projectId as string;
 
-  const [commitments, setCommitments] = useState<CommitmentRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
-  const fetchCommitments = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(
-        `/api/commitments?projectId=${projectId}&limit=500`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch commitments");
-      }
-      const result = await response.json();
-      const rows: CommitmentRow[] = (result.data || []).map((c: any) => ({
-        ...c,
-        contract_company_name: c.contract_company?.name || null,
-      }));
-      setCommitments(rows);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load commitments",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId]);
+  // Use React Query for data fetching with caching and deduplication
+  const { data: response, isLoading, error } = useCommitmentsList(projectId);
+  const deleteCommitment = useDeleteCommitment(projectId);
 
-  useEffect(() => {
-    fetchCommitments();
-  }, [fetchCommitments]);
+  // Memoize the row data transformation to avoid recomputing on every render
+  const commitments: CommitmentRow[] = useMemo(() => {
+    if (!response?.data) return [];
+    return response.data.map((c) => ({
+      ...c,
+      contract_company_name: c.contract_company?.name || null,
+    }));
+  }, [response?.data]);
 
-  // Compute summary totals
-  const totalOriginal = commitments.reduce(
-    (sum, c) => sum + (c.original_amount || 0),
-    0,
+  // Memoize summary totals - only recalculate when commitments change
+  const summaryTotals = useMemo(() => {
+    const totalOriginal = commitments.reduce(
+      (sum, c) => sum + (c.original_amount || 0),
+      0,
+    );
+    const totalRevised = commitments.reduce(
+      (sum, c) => sum + (c.revised_contract_amount || 0),
+      0,
+    );
+    const totalInvoiced = commitments.reduce(
+      (sum, c) => sum + (c.invoiced_amount || c.billed_to_date || 0),
+      0,
+    );
+    const totalBalance = commitments.reduce(
+      (sum, c) => sum + (c.balance_to_finish || 0),
+      0,
+    );
+    const percentInvoiced =
+      totalRevised > 0
+        ? Math.round((totalInvoiced / totalRevised) * 100)
+        : 0;
+
+    return {
+      totalOriginal,
+      totalRevised,
+      totalInvoiced,
+      totalBalance,
+      percentInvoiced,
+    };
+  }, [commitments]);
+
+  // Memoize tabs to prevent recreation on every render
+  const tabs = useMemo(
+    () => [
+      {
+        label: "Commitments",
+        href: `/${projectId}/commitments`,
+        count: response?.meta?.total || commitments.length,
+      },
+      {
+        label: "Recycle Bin",
+        href: `/${projectId}/commitments/recycle-bin`,
+      },
+    ],
+    [projectId, response?.meta?.total, commitments.length],
   );
-  const totalRevised = commitments.reduce(
-    (sum, c) => sum + (c.revised_contract_amount || 0),
-    0,
-  );
-  const totalInvoiced = commitments.reduce(
-    (sum, c) => sum + (c.invoiced_amount || c.billed_to_date || 0),
-    0,
-  );
-  const totalBalance = commitments.reduce(
-    (sum, c) => sum + (c.balance_to_finish || 0),
-    0,
-  );
-  // Calculate percent invoiced for overall progress
-  const percentInvoiced = totalRevised > 0
-    ? Math.round((totalInvoiced / totalRevised) * 100)
-    : 0;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const tabs = [
-    {
-      label: "Commitments",
-      href: `/${projectId}/commitments`,
-      count: commitments.length,
-    },
-    {
-      label: "Recycle Bin",
-      href: `/${projectId}/commitments/recycle-bin`,
-    },
-  ];
-
-  const handleExport = () => {
+  // Stable callback references
+  const handleExport = useCallback(() => {
     setIsExportDialogOpen(true);
-  };
+  }, []);
 
-  const handleCreateSubcontract = () => {
+  const handleCreateSubcontract = useCallback(() => {
     router.push(`/${projectId}/commitments/new?type=subcontract`);
-  };
+  }, [router, projectId]);
 
-  const handleCreatePurchaseOrder = () => {
+  const handleCreatePurchaseOrder = useCallback(() => {
     router.push(`/${projectId}/commitments/new?type=purchase_order`);
-  };
+  }, [router, projectId]);
 
   const handleDeleteCommitment = useCallback(
     async (id: string | number) => {
       try {
-        const response = await fetch(`/api/commitments/${id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message || "Failed to delete commitment",
-          );
-        }
-
-        toast.success("Commitment deleted successfully");
-        await fetchCommitments();
+        await deleteCommitment.mutateAsync(String(id));
         return {};
       } catch (err) {
         const message =
-          err instanceof Error
-            ? err.message
-            : "Failed to delete commitment";
-        toast.error(message);
+          err instanceof Error ? err.message : "Failed to delete commitment";
         return { error: message };
       }
     },
-    [fetchCommitments],
+    [deleteCommitment],
   );
+
+  // Show skeleton during initial load
+  if (isLoading && !response) {
+    return <CommitmentsListSkeleton />;
+  }
 
   if (error) {
     return (
       <TableLayout>
         <div className="text-center text-destructive p-6">
-          Error loading commitments: {error}
+          Error loading commitments:{" "}
+          {error instanceof Error ? error.message : "Unknown error"}
         </div>
       </TableLayout>
     );
@@ -554,28 +590,28 @@ export default function ProjectCommitmentsPage() {
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">Original Amount</p>
           <p className="text-xl font-semibold mt-1">
-            {formatCurrency(totalOriginal)}
+            {formatCurrency(summaryTotals.totalOriginal)}
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">Revised Amount</p>
           <p className="text-xl font-semibold mt-1">
-            {formatCurrency(totalRevised)}
+            {formatCurrency(summaryTotals.totalRevised)}
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">Invoiced to Date</p>
           <p className="text-xl font-semibold mt-1 text-green-600 dark:text-green-400">
-            {formatCurrency(totalInvoiced)}
+            {formatCurrency(summaryTotals.totalInvoiced)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {percentInvoiced}% of revised
+            {summaryTotals.percentInvoiced}% of revised
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
           <p className="text-sm text-muted-foreground">Balance to Finish</p>
           <p className="text-xl font-semibold mt-1">
-            {formatCurrency(totalBalance)}
+            {formatCurrency(summaryTotals.totalBalance)}
           </p>
         </div>
       </div>
@@ -622,19 +658,11 @@ export default function ProjectCommitmentsPage() {
 
       {/* Table */}
       <div className="mt-6">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">
-              Loading commitments...
-            </div>
-          </div>
-        ) : (
-          <GenericDataTable
-            data={commitments}
-            config={{ ...config, title: undefined, description: undefined }}
-            onDeleteRow={handleDeleteCommitment}
-          />
-        )}
+        <GenericDataTable
+          data={commitments}
+          config={tableRenderConfig}
+          onDeleteRow={handleDeleteCommitment}
+        />
       </div>
 
       {/* Export Dialog */}

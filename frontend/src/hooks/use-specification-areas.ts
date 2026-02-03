@@ -2,10 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type {
-  AreaWithSectionCount,
-  SpecificationAreaFormData,
-} from "@/types/specifications.types";
+import type { AreaWithSectionCount } from "@/types/specifications.types";
+import type { SpecificationAreaFormData } from "@/lib/schemas/specification-schemas";
 
 /**
  * React Query hook for fetching specification areas

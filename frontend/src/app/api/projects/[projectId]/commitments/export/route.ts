@@ -16,10 +16,45 @@ import {
   type CommitmentDetailForPDF,
 } from '@/lib/schemas/commitment-export-schema';
 
-// =============================================================================
-// POST - Export Commitments
-// =============================================================================
-
+/**
+ * POST /api/projects/[projectId]/commitments/export
+ *
+ * Exports commitments data for an entire project in CSV, Excel, or PDF format.
+ * Supports filtering by type, status, company, and search text. Validates
+ * request body against CommitmentExportSchema (Zod).
+ *
+ * Three export formats:
+ * - CSV: Text file with configurable template columns
+ * - Excel: XLSX workbook with auto-sized columns
+ * - PDF: HTML document with print-ready layout (auto-triggers print)
+ *
+ * Three template options:
+ * - "standard" - All fields including dates, ERP status, privacy
+ * - "financial" - Financial-focused with detailed amounts and percentages
+ * - "summary" - Compact view with number, title, type, company, status, amount, balance
+ *
+ * For individual commitment PDF export, pass `commitmentId` in the body to
+ * generate a detailed single-commitment report with SOV items.
+ *
+ * @route POST /api/projects/[projectId]/commitments/export
+ * @param {string} projectId - Project ID (integer)
+ *
+ * @requestBody {object} Validated by CommitmentExportSchema:
+ *   - format {string} (required) - Export format: "csv", "excel", or "pdf"
+ *   - template {string} [default="standard"] - Template: "standard", "financial", "summary"
+ *   - commitmentId {string} [optional] - For individual PDF export
+ *   - filters {object} [optional]:
+ *     - type {string} - "subcontract", "purchase_order", or "all"
+ *     - status {string} - Filter by status
+ *     - companyId {string} - Filter by company
+ *     - search {string} - Search in number/title
+ *
+ * @returns {Blob} 200 - File download with appropriate Content-Type and Content-Disposition
+ * @returns {object} 400 - Invalid parameters or unsupported format
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - No commitments found matching filters
+ * @returns {object} 500 - Export generation error
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }

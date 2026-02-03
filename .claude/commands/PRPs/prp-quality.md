@@ -1,4 +1,5 @@
 ---
+name: PRP Quality Validation
 description: "Validate PRP quality before execution - ensures 8/10+ confidence score for one-pass success"
 argument-hint: "<path/to/prp.md>"
 ---

@@ -420,7 +420,7 @@ export function EnhancedDevPanel() {
                             key={index}
                             className="text-xs bg-muted px-2 py-1 rounded block"
                           >
-                            {endpointFn(params.projectId)}
+                            {endpointFn(Array.isArray(params.projectId) ? params.projectId[0] : params.projectId)}
                           </code>
                         ))}
                       </div>

@@ -22,7 +22,25 @@ interface UpdatePayload {
 
 /**
  * GET /api/projects/[projectId]/commitments/[commitmentId]/line-items
- * Fetches all SOV line items for a commitment
+ *
+ * Fetches all Schedule of Values (SOV) line items for a commitment.
+ * Determines the commitment type from the `commitments_unified` view,
+ * then queries the appropriate SOV table (subcontract_sov_items or
+ * purchase_order_sov_items).
+ *
+ * @route GET /api/projects/[projectId]/commitments/[commitmentId]/line-items
+ * @param {string} projectId - Project ID (integer)
+ * @param {string} commitmentId - Commitment UUID
+ *
+ * @returns {object} 200 - {
+ *     success: true,
+ *     data: Array<SOVLineItem>,
+ *     commitmentType: "subcontract" | "purchase_order"
+ *   }
+ * @returns {object} 400 - Invalid project ID or database query error
+ * @returns {object} 401/403 - Unauthorized or insufficient project access
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -93,9 +111,39 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * PUT /api/projects/[projectId]/commitments/[commitmentId]/line-items
- * Updates all SOV line items for a commitment (upsert strategy)
- * This endpoint handles creating new items, updating existing items,
- * and deleting items that are no longer in the list
+ *
+ * Batch updates all SOV line items for a commitment using an upsert strategy:
+ * 1. Fetches existing line item IDs
+ * 2. Deletes items no longer present in the submitted list
+ * 3. Updates existing items (matched by ID)
+ * 4. Inserts new items (no ID or ID not in existing set)
+ *
+ * @route PUT /api/projects/[projectId]/commitments/[commitmentId]/line-items
+ * @param {string} projectId - Project ID (integer)
+ * @param {string} commitmentId - Commitment UUID
+ *
+ * @requestBody {object}
+ *   - lineItems {Array<LineItemInput>} (required) - Full list of line items:
+ *     - id {string} [optional] - Existing item ID (omit for new items)
+ *     - line_number {number|null} - Line number (auto-assigned from index if null)
+ *     - budget_code {string|null} - Budget/cost code
+ *     - description {string|null} - Line item description
+ *     - amount {number|null} - Dollar amount
+ *     - billed_to_date {number|null} - Amount billed so far
+ *   - commitmentType {string} [optional] - "subcontract" or "purchase_order"
+ *     (auto-detected from commitments_unified if not provided)
+ *
+ * @returns {object} 200 - {
+ *     success: true,
+ *     savedCount: number,
+ *     deletedCount: number,
+ *     totalAmount: number,
+ *     errors?: string[],
+ *     message: string
+ *   }
+ * @returns {object} 400 - Invalid project ID, missing lineItems array, or DB errors
+ * @returns {object} 401/403 - Unauthorized or insufficient project access
+ * @returns {object} 500 - Internal server error
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {

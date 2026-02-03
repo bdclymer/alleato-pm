@@ -102,7 +102,7 @@ export const addRevisionSchema = z.object({
 
   notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
 
-  notify_subscribers: z.boolean().default(true),
+  notify_subscribers: z.boolean(),
 });
 
 export type AddRevisionFormData = z.infer<typeof addRevisionSchema>;

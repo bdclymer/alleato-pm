@@ -55,7 +55,7 @@ export class SpecificationService {
         .select(
           `
           *,
-          current_revision:specification_section_revisions!specification_sections_current_revision_id_fkey(*),
+          current_revision:specification_section_revisions!fk_sections_current_revision(*),
           area_count:specification_area_sections(count),
           subscriber_count:specification_subscribers(count)
         `,
@@ -173,7 +173,7 @@ export class SpecificationService {
         .select(
           `
           *,
-          current_revision:specification_section_revisions!specification_sections_current_revision_id_fkey(*),
+          current_revision:specification_section_revisions!fk_sections_current_revision(*),
           areas:specification_area_sections(
             area:specification_areas(*)
           )

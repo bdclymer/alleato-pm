@@ -259,11 +259,9 @@ export function ContractForm({
 
       try {
         setLoadingCostCodes(true);
-        // @ts-expect-error - createClient type mismatch
         const supabaseClient = createClient();
 
         // Fetch cost codes from Supabase
-        // @ts-expect-error - Conditional supabase client type
         const { data, error } = await supabaseClient.from("cost_codes")
           .select("id, title, status, division_title")
           .eq("status", "Active")
@@ -358,10 +356,8 @@ export function ContractForm({
 
       if (newCompany) {
         // Add the company to the project directory
-        // @ts-expect-error - createClient type mismatch
         const supabaseClient = createClient();
 
-        // @ts-expect-error - Conditional supabase client type
         const { error: projectCompanyError } = await supabaseClient
           .from("project_companies")
           .insert({

@@ -45,10 +45,38 @@ interface CommitmentData {
   }>;
 }
 
-// =============================================================================
-// POST - Send Commitment Email
-// =============================================================================
-
+/**
+ * POST /api/commitments/[id]/email
+ *
+ * Sends commitment details via email to specified recipients.
+ * Generates an HTML email containing commitment information, financial summary,
+ * and optional SOV line items. Supports optional PDF attachment flag.
+ *
+ * Email activity is logged to the `email_logs` table (non-blocking).
+ *
+ * @route POST /api/commitments/[id]/email
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object}
+ *   - recipients {Array<{email: string, name: string}>} (required) - At least one recipient
+ *   - subject {string} (required) - Email subject line
+ *   - message {string} [optional] - Custom message to include in the email body
+ *   - attach_pdf {boolean} [default=true] - Whether to attach a PDF copy
+ *   - include_sov_items {boolean} [default=true] - Include SOV breakdown in email
+ *
+ * @returns {object} 200 - {
+ *     success: true,
+ *     message: "Email sent to N recipient(s)",
+ *     recipients: string[]
+ *   }
+ * @returns {object} 400 - Missing recipients, invalid subject, or invalid email address
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Email sending error
+ *
+ * @note Currently logs email but actual sending requires integration with an
+ *   email service (SendGrid, AWS SES, Resend, Postmark).
+ */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

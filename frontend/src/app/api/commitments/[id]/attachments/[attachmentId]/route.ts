@@ -1,6 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+/**
+ * GET /api/commitments/[id]/attachments/[attachmentId]
+ *
+ * Retrieves metadata for a specific attachment belonging to a commitment.
+ * Verifies the attachment belongs to the commitment (attached_to_id and
+ * attached_to_table checks).
+ *
+ * @route GET /api/commitments/[id]/attachments/[attachmentId]
+ * @param {string} id - Commitment UUID
+ * @param {string} attachmentId - Attachment UUID
+ *
+ * @returns {object} 200 - { data: { id, file_name, url, uploaded_at, uploaded_by } }
+ * @returns {object} 404 - Attachment not found
+ * @returns {object} 500 - Internal server error
+ */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string; attachmentId: string }> },
@@ -40,6 +55,23 @@ export async function GET(
   }
 }
 
+/**
+ * DELETE /api/commitments/[id]/attachments/[attachmentId]
+ *
+ * Deletes a specific attachment from a commitment. Performs two-step deletion:
+ * 1. Removes the file from Supabase Storage (non-blocking on failure)
+ * 2. Deletes the attachment record from the database
+ *
+ * @route DELETE /api/commitments/[id]/attachments/[attachmentId]
+ * @param {string} id - Commitment UUID
+ * @param {string} attachmentId - Attachment UUID
+ *
+ * @returns {object} 200 - { message: "Attachment deleted successfully" }
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Attachment not found
+ * @returns {object} 400 - Database deletion error
+ * @returns {object} 500 - Internal server error
+ */
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; attachmentId: string }> },

@@ -33,7 +33,29 @@ const createCommitmentChangeOrderSchema = z.object({
 
 /**
  * GET /api/commitments/[id]/change-orders
- * List all change orders for a specific commitment
+ *
+ * Retrieves all change orders associated with a specific commitment.
+ * Queries the `contract_change_orders` table where contract_id matches.
+ * Results are ordered by created_at descending (newest first).
+ *
+ * @route GET /api/commitments/[id]/change-orders
+ * @param {string} id - Commitment UUID (used as contract_id)
+ *
+ * @returns {object} 200 - Change orders with aggregated totals:
+ *   {
+ *     data: Array<{
+ *       id, number, title, status, amount, requested_date,
+ *       requested_by, approved_date, approved_by, rejection_reason,
+ *       created_at, updated_at
+ *     }>,
+ *     meta: {
+ *       total_count: number,
+ *       total_amount: number,
+ *       approved_amount: number
+ *     }
+ *   }
+ * @returns {object} 400 - Database query error
+ * @returns {object} 500 - Internal server error
  */
 export async function GET(
   request: Request,
@@ -123,7 +145,26 @@ export async function GET(
 
 /**
  * POST /api/commitments/[id]/change-orders
- * Create a new change order for a specific commitment
+ *
+ * Creates a new change order for a specific commitment. The request body
+ * is validated against a Zod schema (createCommitmentChangeOrderSchema).
+ *
+ * @route POST /api/commitments/[id]/change-orders
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object} Validated fields:
+ *   - change_order_number {string} (required) - Unique CO number (max 100 chars)
+ *   - description {string} (required) - CO description (max 2000 chars)
+ *   - amount {number} (required) - Change order dollar amount
+ *   - status {string} [default="draft"] - One of: draft, pending, approved, executed, void
+ *   - requested_date {string} [optional] - ISO date string
+ *   - requested_by {string} [optional] - UUID of requesting user
+ *
+ * @returns {object} 201 - Created change order with formatted fields
+ * @returns {object} 400 - Validation error or duplicate CO number (23505)
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
  */
 export async function POST(
   request: Request,

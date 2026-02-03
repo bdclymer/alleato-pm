@@ -30,8 +30,37 @@ const getRelationValue = <T,>(value: T | T[] | null | undefined): T | null => {
 };
 
 /**
- * POST /api/projects/[id]/commitments/[commitmentId]/line-items/import
- * Imports budget lines into commitment SOV line items.
+ * POST /api/projects/[projectId]/commitments/[commitmentId]/line-items/import
+ *
+ * Imports budget line items into a commitment's SOV (Schedule of Values).
+ * Currently supports "budget" as the import source. Reads from the `budget_lines`
+ * table, joining cost_codes and cost_code_types for descriptions, and creates
+ * corresponding records in the `commitment_line_items` table.
+ *
+ * Line numbers are auto-assigned starting after the highest existing line number.
+ * Maximum 500 line items per import operation.
+ *
+ * @route POST /api/projects/[projectId]/commitments/[commitmentId]/line-items/import
+ * @param {string} projectId - Project ID (integer)
+ * @param {string} commitmentId - Commitment UUID
+ *
+ * @requestBody {object}
+ *   - source {string} (required) - Import source, currently only "budget" is supported
+ *   - lineItemIds {string[]} [optional] - Specific budget line IDs to import.
+ *     If omitted, all budget lines for the project are imported.
+ *
+ * @returns {object} 200 - {
+ *     success: true,
+ *     importedCount: number,
+ *     totalRows: number,
+ *     skipped?: string[],  // Duplicate line numbers
+ *     errors?: string[],   // Insert errors
+ *     message: string
+ *   }
+ * @returns {object} 400 - Invalid source, no budget lines found, or exceeds 500 limit
+ * @returns {object} 401/403 - Unauthorized or insufficient project access
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {

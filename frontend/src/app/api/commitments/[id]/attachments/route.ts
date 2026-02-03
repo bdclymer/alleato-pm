@@ -16,7 +16,24 @@ const createAttachmentSchema = z.object({
 
 /**
  * GET /api/commitments/[id]/attachments
- * Returns all attachments for a commitment
+ *
+ * Returns all attachments for a commitment, ordered by upload date (newest first).
+ * Uses the generic `attachments` table with attached_to_table="commitments".
+ * Includes uploader information and generated download/self links.
+ *
+ * @route GET /api/commitments/[id]/attachments
+ * @param {string} id - Commitment UUID
+ *
+ * @returns {object} 200 - {
+ *     data: Array<{
+ *       id, commitmentId, fileName, url, uploadedBy, uploadedAt,
+ *       downloadUrl, _links: { self, download }
+ *     }>,
+ *     _links: { self, commitment }
+ *   }
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 400 - Database query error
+ * @returns {object} 500 - Internal server error
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
@@ -90,7 +107,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 /**
  * POST /api/commitments/[id]/attachments
- * Uploads a new attachment to a commitment
+ *
+ * Uploads a new file attachment to a commitment. The file is stored in
+ * Supabase Storage under `project-files/commitments/{projectId}/{commitmentId}/`.
+ * A record is created in the generic `attachments` table.
+ *
+ * @route POST /api/commitments/[id]/attachments
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {FormData}
+ *   - file {File} (required) - The file to upload
+ *
+ * @returns {object} 201 - Uploaded attachment details:
+ *   { id, commitmentId, fileName, url, uploadedBy, uploadedAt,
+ *     publicUrl, downloadUrl, _links }
+ * @returns {object} 400 - No file provided, validation error, or upload/database error
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
+ *
+ * @note On database insert failure, the uploaded storage file is cleaned up
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
@@ -243,7 +279,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/commitments/[id]/attachments
- * Deletes multiple attachments (bulk delete)
+ *
+ * Bulk deletes multiple attachments from a commitment. Accepts an array of
+ * attachment IDs in the request body. Deletes from both Supabase Storage and
+ * the database. Updates the commitment's modification timestamp.
+ *
+ * @route DELETE /api/commitments/[id]/attachments
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object}
+ *   - attachmentIds {string[]} (required) - Array of attachment UUIDs to delete
+ *
+ * @returns {object} 200 - { message: "N attachment(s) deleted successfully" }
+ * @returns {object} 400 - Missing/invalid attachmentIds array or database error
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {

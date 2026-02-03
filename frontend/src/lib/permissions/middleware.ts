@@ -29,7 +29,7 @@ export async function checkProjectPermission(
   request?: NextRequest
 ): Promise<PermissionCheckResult> {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, memo } from "react";
 import { ArrowUpDown, Receipt, TrendingUp, DollarSign, Percent } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -44,7 +44,7 @@ interface InvoicesTabProps {
   commitmentId: string;
 }
 
-export function InvoicesTab({ commitmentId }: InvoicesTabProps) {
+export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesTabProps) {
   const [summary, setSummary] = useState<InvoiceSummary | null>(null);
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +99,8 @@ export function InvoicesTab({ commitmentId }: InvoicesTabProps) {
     fetchInvoiceData();
   }, [commitmentId]);
 
-  const columns: ColumnDef<InvoiceLineItem>[] = [
+  // Memoize columns to prevent recreation on every render
+  const columns: ColumnDef<InvoiceLineItem>[] = useMemo(() => [
     {
       accessorKey: "line_number",
       header: "#",
@@ -185,7 +186,7 @@ export function InvoicesTab({ commitmentId }: InvoicesTabProps) {
       ),
       size: 140,
     },
-  ];
+  ], []);
 
   if (isLoading) {
     return (
@@ -323,4 +324,6 @@ export function InvoicesTab({ commitmentId }: InvoicesTabProps) {
       )}
     </div>
   );
-}
+})
+
+InvoicesTab.displayName = "InvoicesTab"

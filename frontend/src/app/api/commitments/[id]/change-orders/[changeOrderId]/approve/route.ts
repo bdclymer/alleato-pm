@@ -3,10 +3,35 @@ import { NextResponse } from "next/server";
 
 /**
  * POST /api/commitments/[id]/change-orders/[changeOrderId]/approve
- * Approve a change order and update the commitment's revised amount
+ *
+ * Approves a pending or draft change order. Sets the status to "approved",
+ * records the approval timestamp and approving user. After approval,
+ * recalculates commitment change order totals by status.
  *
  * The revised contract amount is automatically calculated as:
  * Original Amount + Sum of All Approved Change Orders
+ *
+ * @route POST /api/commitments/[id]/change-orders/[changeOrderId]/approve
+ * @param {string} id - Commitment UUID (contract_id)
+ * @param {string} changeOrderId - Change order UUID to approve
+ *
+ * @returns {object} 200 - Approval result:
+ *   {
+ *     success: true,
+ *     message: "Change order approved successfully",
+ *     data: {
+ *       changeOrder: ApprovedChangeOrderRecord,
+ *       totals: { approved: number, pending: number, draft: number, total: number }
+ *     }
+ *   }
+ * @returns {object} 400 - Already approved/executed, or invalid status for approval
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Change order not found or doesn't belong to commitment
+ * @returns {object} 500 - Internal server error
+ *
+ * @businessRule Only change orders with status "pending" or "draft" can be approved
+ * @businessRule Already approved/executed change orders return 400
+ * @businessRule Void change orders cannot be approved
  */
 export async function POST(
   _request: Request,

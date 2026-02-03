@@ -3,6 +3,31 @@ import { NextResponse } from "next/server";
 import { commitmentSchema } from "@/lib/schemas/financial-schemas";
 import type { ZodError } from "@/app/api/types";
 
+/**
+ * GET /api/commitments/[id]
+ *
+ * Retrieves complete details for a single commitment including:
+ * - Base record data (from subcontracts or purchase_orders table)
+ * - Contract company information (joined from companies table)
+ * - Financial totals from the *_with_totals view
+ * - SOV line items ordered by line_number
+ * - Change order totals aggregated by status (approved, pending, draft, void)
+ * - Calculated revised contract amount (original + approved change orders)
+ *
+ * The commitment type is first resolved from the `commitments_unified` view
+ * to determine which underlying table to query.
+ *
+ * @route GET /api/commitments/[id]
+ * @param {string} id - Commitment UUID
+ *
+ * @returns {object} 200 - Full commitment details with nested data:
+ *   { data: { ...commitment, type, original_amount, approved_change_orders,
+ *     revised_contract_amount, billed_to_date, balance_to_finish,
+ *     line_items, change_order_totals } }
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 400 - Database query error
+ * @returns {object} 500 - Internal server error
+ */
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -37,17 +62,54 @@ export async function GET(
       ? "subcontracts_with_totals"
       : "purchase_orders_with_totals";
 
-    // Fetch base record with company join
-    const { data, error } = await supabase
-      .from(tableName)
-      .select(
-        `
-        *,
-        contract_company:companies!contract_company_id(*)
-      `,
-      )
-      .eq("id", id)
-      .single();
+    // Performance optimization: Run all detail queries in parallel
+    // instead of sequentially (Phase 9)
+    const [baseResult, totalsResult, sovResult, coResult] = await Promise.all([
+      // Fetch base record with company join (select needed columns only)
+      supabase
+        .from(tableName)
+        .select(
+          `
+          id, project_id, contract_number, title, description, status, executed,
+          contract_company_id, start_date, estimated_completion_date,
+          actual_completion_date, contract_date, signed_contract_received_date,
+          issued_on_date, default_retainage_percent, accounting_method,
+          is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
+          invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
+          inclusions, exclusions,
+          contract_company:companies!contract_company_id(id, name, type)
+        `,
+        )
+        .eq("id", id)
+        .single(),
+
+      // Fetch financial totals from _with_totals view
+      (supabase as any)
+        .from(totalsViewName)
+        .select(
+          "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
+        )
+        .eq("id", id)
+        .single(),
+
+      // Fetch SOV line items (select needed columns)
+      (supabase as any)
+        .from(sovTableName)
+        .select("id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order")
+        .eq(sovFkColumn, id)
+        .order("line_number", { ascending: true }),
+
+      // Fetch change order totals by status (only need status + amount)
+      supabase
+        .from("contract_change_orders")
+        .select("status, amount")
+        .eq("contract_id", id),
+    ]);
+
+    const { data, error } = baseResult;
+    const { data: totalsData } = totalsResult;
+    const { data: sovItems } = sovResult;
+    const { data: changeOrders } = coResult;
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -58,28 +120,6 @@ export async function GET(
       }
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-
-    // Fetch financial totals from _with_totals view
-    const { data: totalsData } = await (supabase as any)
-      .from(totalsViewName)
-      .select(
-        "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
-      )
-      .eq("id", id)
-      .single();
-
-    // Fetch SOV line items
-    const { data: sovItems } = await (supabase as any)
-      .from(sovTableName)
-      .select("*")
-      .eq(sovFkColumn, id)
-      .order("line_number", { ascending: true });
-
-    // Fetch change order totals by status
-    const { data: changeOrders } = await supabase
-      .from("contract_change_orders")
-      .select("status, amount")
-      .eq("contract_id", id);
 
     // Calculate change order totals by status
     const changeOrderTotals = {
@@ -130,7 +170,12 @@ export async function GET(
       change_order_totals: changeOrderTotals,
     };
 
-    return NextResponse.json({ data: responseData });
+    // Add cache headers for detail data (5 seconds, revalidate in background)
+    return NextResponse.json({ data: responseData }, {
+      headers: {
+        "Cache-Control": "private, max-age=5, stale-while-revalidate=30",
+      },
+    });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json(
@@ -145,6 +190,27 @@ export async function GET(
   }
 }
 
+/**
+ * PUT /api/commitments/[id]
+ *
+ * Updates an existing commitment. Validates the request body against the
+ * commitmentSchema (Zod). The commitment type is resolved from the
+ * `commitments_unified` view and the appropriate table (subcontracts or
+ * purchase_orders) is updated.
+ *
+ * @route PUT /api/commitments/[id]
+ * @param {string} id - Commitment UUID
+ *
+ * @requestBody {object} - Partial commitment fields validated by commitmentSchema.
+ *   Fields include: title, status, description, contract_company_id,
+ *   start_date, estimated_completion_date, default_retainage_percent, etc.
+ *
+ * @returns {object} 200 - Updated commitment with company and assignee joins
+ * @returns {object} 400 - Validation error (Zod) or database error
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 500 - Internal server error
+ */
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },

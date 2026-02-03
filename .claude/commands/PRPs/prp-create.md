@@ -24,30 +24,75 @@ Create a comprehensive TypeScript PRP that enables **one-pass implementation suc
 
 > During the research process, create clear tasks and spawn as many agents and subagents as needed using the batch tools. The deeper research we do here the better the PRP will be. we optminize for chance of success and not for speed.
 
-### 0. MANDATORY: Supabase Types Generation & Review (CRITICAL - DO THIS FIRST)
+### 0. MANDATORY: Supabase Schema Review (CRITICAL - DO THIS FIRST)
 
-#### Step 1: Generate Supabase Types
+#### Purpose
 
-**BEFORE ANY CODE ANALYSIS OR WRITING**, you MUST generate and review current Supabase types:
+**BEFORE ANY CODE ANALYSIS OR WRITING**, you MUST review the current database schema for tables relevant to this feature. Use the Supabase MCP or CLI to query only the schemas you need — do NOT generate the full types file upfront (it's too large and wastes tokens).
 
-```bash
-# Generate fresh Supabase types
-npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
-```
+#### Step 1: Identify Feature-Relevant Tables
 
-#### Step 2: READ the generated types file
+Determine which tables are relevant to this feature. Think about:
+
+- Tables the feature will read from or write to
+- Tables with foreign key relationships to those tables
+- Any new tables that need to be created
+
+#### Step 2: Query Schema for Relevant Tables Only
+
+Use **one** of these approaches (Supabase MCP preferred):
+
+**Option A: Supabase MCP (preferred — lowest token cost)**
 
 ```sql
-frontend/src/types/database.types.ts
+-- Query column details for specific tables
+SELECT table_name, column_name, data_type, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN ('table1', 'table2', 'table3')
+ORDER BY table_name, ordinal_position;
+
+-- Query foreign key relationships for those tables
+SELECT
+  tc.table_name,
+  kcu.column_name,
+  ccu.table_name AS foreign_table_name,
+  ccu.column_name AS foreign_column_name
+FROM information_schema.table_constraints AS tc
+JOIN information_schema.key_column_usage AS kcu
+  ON tc.constraint_name = kcu.constraint_name
+JOIN information_schema.constraint_column_usage AS ccu
+  ON ccu.constraint_name = tc.constraint_name
+WHERE tc.constraint_type = 'FOREIGN KEY'
+  AND tc.table_schema = 'public'
+  AND (tc.table_name IN ('table1', 'table2') OR ccu.table_name IN ('table1', 'table2'));
+```
+
+**Option B: Supabase CLI (if MCP is unavailable)**
+
+```bash
+# List all tables (lightweight — just names)
+npx supabase db dump --schema public --data-only=false 2>/dev/null | grep "CREATE TABLE"
+
+# Or query specific tables via psql
+npx supabase db execute "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'your_table' ORDER BY ordinal_position;"
+```
+
+**Option C: Read existing types file (if recently generated)**
+
+If `frontend/src/types/database.types.ts` exists and was recently updated, search it for only the relevant table definitions instead of reading the entire file:
+
+```bash
+grep -A 30 "your_table_name:" frontend/src/types/database.types.ts
 ```
 
 #### Step 3: Complete Required Analysis
 
-- [ ] Identify ALL tables that exist in the database
-- [ ] For tables related to this feature, document:
-  - Column names and their TypeScript types
-  - Which columns are nullable (type | null)
-  - Primary key type (number = INTEGER, string = UUID)
+- [ ] Identify ALL tables relevant to this feature
+- [ ] For each relevant table, document:
+  - Column names and their types
+  - Which columns are nullable
+  - Primary key type (INTEGER vs UUID)
   - Foreign key relationships and their types
 - [ ] **CRITICAL**: Verify FK column types match PK types:
   - `projects.id` is `number` → any `project_id` FK must be `INTEGER`
@@ -58,7 +103,7 @@ frontend/src/types/database.types.ts
 
 Include a "Database Schema" section in the PRP with:
 
-- Current table structures from database.types.ts
+- Current table structures for all relevant tables (from MCP/CLI query results)
 - FK type requirements (INTEGER vs UUID)
 - Any schema changes needed for this feature
 
@@ -67,6 +112,7 @@ Include a "Database Schema" section in the PRP with:
 - Prevents UUID/INTEGER type mismatches (caused 3+ bugs)
 - Ensures code matches actual database schema
 - Catches missing tables/columns before coding starts
+- Queries only relevant tables instead of generating all types (saves significant tokens)
 
 ---
 
@@ -366,9 +412,9 @@ Generate `prp-{feature-name}.html` for browser viewing:
 
 ### Mandatory Prerequisites (MUST BE COMPLETED FIRST)
 
-- [ ] **Supabase types generated and reviewed** (Step 0 completed)
-  - [ ] database.types.ts read and analyzed
-  - [ ] All relevant table structures documented in PRP
+- [ ] **Supabase schema reviewed via MCP/CLI** (Step 0 completed)
+  - [ ] Relevant table schemas queried and analyzed
+  - [ ] All feature-related table structures documented in PRP
   - [ ] FK type requirements identified (INTEGER vs UUID)
   - [ ] "Database Schema" section added to PRP context
 - [ ] **Pattern review completed** (Step 1 completed)
@@ -385,7 +431,7 @@ Generate `prp-{feature-name}.html` for browser viewing:
 - [ ] Implementation tasks include exact TypeScript naming and placement guidance
 - [ ] Validation commands are TypeScript/React-specific and verified working
 - [ ] TypeScript interface definitions and component prop types are specified
-- [ ] Database schema section includes FK type requirements from database.types.ts
+- [ ] Database schema section includes FK type requirements from schema queries
 - [ ] Known pitfalls section includes prevention rules from pattern analysis
 
 ### Template Structure Compliance
@@ -418,9 +464,9 @@ Before marking PRP creation complete, verify:
 
 ### Mandatory Prerequisites Completed
 
-- [ ] **Step 0: Supabase types generated and reviewed**
-  - [ ] `npx supabase gen types...` command executed
-  - [ ] `database.types.ts` file read and analyzed
+- [ ] **Step 0: Supabase schema reviewed via MCP/CLI**
+  - [ ] Relevant table schemas queried (via MCP, CLI, or existing types file)
+  - [ ] Feature-related tables analyzed for columns, types, and relationships
   - [ ] Database Schema section added to PRP
   - [ ] FK type requirements (INTEGER vs UUID) documented
 

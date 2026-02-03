@@ -40,7 +40,6 @@ export default function RedocPage() {
             hideDownloadButton: false,
             hideHostname: false,
             showExtensions: true,
-            showCommonExtensions: true,
             menuToggle: true,
             pathInMiddlePanel: true,
             scrollYOffset: 78,

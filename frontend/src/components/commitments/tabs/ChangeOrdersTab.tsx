@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, memo } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { DataTable } from '@/components/tables/DataTable'
@@ -39,7 +39,7 @@ interface ChangeOrdersTabProps {
   projectId: number
 }
 
-export function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProps) {
+export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProps) {
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
   const [totals, setTotals] = useState<ChangeOrderTotals>({ approved: 0, pending: 0, draft: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(true)
@@ -104,7 +104,8 @@ export function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProp
     fetchChangeOrders()
   }, [commitmentId])
 
-  const columns: ColumnDef<ChangeOrder>[] = [
+  // Memoize columns to prevent recreation on every render
+  const columns: ColumnDef<ChangeOrder>[] = useMemo(() => [
     {
       accessorKey: 'number',
       header: ({ column }) => (
@@ -167,7 +168,7 @@ export function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProp
       ),
       cell: ({ row }) => <Text>{formatDate(row.original.created_at)}</Text>,
     },
-  ]
+  ], [projectId]);
 
   if (isLoading) {
     return (
@@ -299,4 +300,6 @@ export function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProp
       </Card>
     </div>
   )
-}
+})
+
+ChangeOrdersTab.displayName = "ChangeOrdersTab"

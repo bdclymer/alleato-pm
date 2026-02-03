@@ -3,15 +3,36 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/commitments/[id]/invoices
- * List invoice data for a specific commitment (subcontract or purchase order)
  *
- * For commitments (subcontracts/purchase orders), invoice data comes from
- * the SOV line items' billed_to_date column. Each SOV item represents a
- * line that can be invoiced, and billed_to_date tracks what has been invoiced.
+ * Retrieves invoice/billing data for a specific commitment (subcontract or purchase order).
  *
- * Returns:
- * - Invoice summary with total invoiced amount
- * - Breakdown by SOV line item showing what has been billed
+ * For commitments, invoice data is derived from the SOV line items' billed_to_date
+ * column rather than separate invoice records. Each SOV item represents a
+ * line that can be invoiced, and billed_to_date tracks cumulative billing.
+ *
+ * @route GET /api/commitments/[id]/invoices
+ * @param {string} id - Commitment UUID
+ *
+ * @returns {object} 200 - Invoice data with structure:
+ *   {
+ *     summary: {
+ *       total_contract_amount: number,
+ *       total_invoiced: number,
+ *       remaining_to_invoice: number,
+ *       percent_invoiced: number,
+ *       total_paid: number,
+ *       remaining_balance: number
+ *     },
+ *     line_items: Array<{
+ *       id, line_number, budget_code, description,
+ *       scheduled_value, billed_to_date, remaining_amount, percent_complete
+ *     }>,
+ *     data: Array<{ id, number, date, amount, paid_amount, status }> // Legacy format
+ *   }
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Commitment not found
+ * @returns {object} 400 - Database query error
+ * @returns {object} 500 - Internal server error
  */
 export async function GET(
   request: Request,
@@ -142,8 +163,25 @@ export async function GET(
 
 /**
  * POST /api/commitments/[id]/invoices
- * Create a new invoice for a commitment
- * Body: { invoice_number?, period_start?, period_end?, status?, billing_period_id? }
+ *
+ * Creates a new invoice record for a commitment. The invoice is stored in the
+ * `owner_invoices` table linked to the commitment's contract_id.
+ *
+ * @route POST /api/commitments/[id]/invoices
+ * @param {string} id - Commitment UUID (used as contract_id)
+ *
+ * @requestBody {object}
+ *   - invoice_number {string} [optional] - Custom invoice number
+ *   - period_start {string} [optional] - Billing period start date (ISO)
+ *   - period_end {string} [optional] - Billing period end date (ISO)
+ *   - status {string} [default="draft"] - Invoice status
+ *   - billing_period_id {string} [optional] - Associated billing period ID
+ *
+ * @returns {object} 201 - Created invoice: { data: InvoiceRecord }
+ * @returns {object} 401 - Unauthorized (no user session)
+ * @returns {object} 404 - Contract not found
+ * @returns {object} 400 - Database insert error
+ * @returns {object} 500 - Internal server error
  */
 export async function POST(
   request: Request,

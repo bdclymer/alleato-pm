@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import type {
   RevisionListResponse,
   RevisionWithUploader,
-  AddRevisionFormData,
 } from "@/types/specifications.types";
+import type { AddRevisionFormData } from "@/lib/schemas/specification-schemas";
 
 /**
  * React Query hook for fetching specification revisions

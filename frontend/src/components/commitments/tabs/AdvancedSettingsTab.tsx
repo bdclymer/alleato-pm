@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { toast } from "sonner";
 import { Save, Loader2 } from "lucide-react";
 
@@ -75,7 +75,7 @@ const DEFAULT_SETTINGS: CommitmentAdvancedSettings = {
   billing_period: "monthly",
 };
 
-export function AdvancedSettingsTab({
+export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
   commitmentId,
   commitmentType = "subcontract",
 }: AdvancedSettingsTabProps) {
@@ -519,4 +519,4 @@ export function AdvancedSettingsTab({
       </div>
     </div>
   );
-}
+});
