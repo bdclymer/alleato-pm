@@ -469,10 +469,15 @@ export function ProjectHomeClient({
 
           {/* Right Column */}
           <div className="space-y-6">
+
             {/* Activity Summary */}
-            <div>
-              <h3 className="text-sm font-medium text-brand mb-5">Activity</h3>
-              <div className="space-y-4">
+            <SectionCard
+              title="Activity"
+              open={true}
+              viewAllHref={`/${project.id}/documents`}
+            >
+              <div className="space-y-0">
+
                 <Link
                   href={`/${project.id}/rfis`}
                   className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
@@ -506,8 +511,10 @@ export function ProjectHomeClient({
                     </span>
                   )}
                 </Link>
+
               </div>
-            </div>
+
+            </SectionCard>
 
             {/* Files Summary */}
             <SectionCard
