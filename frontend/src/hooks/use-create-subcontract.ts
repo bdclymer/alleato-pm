@@ -38,8 +38,9 @@ function mapFormToPayload(
     exclusions: data.exclusions || null,
     dates: data.dates,
     privacy: data.privacy,
+    accountingMethod: data.accountingMethod || "amount_based",
     sov: data.sov || [],
-    invoiceContacts: data.invoiceContacts || [],
+    invoiceContactIds: data.invoiceContactIds || [],
   };
 }
 

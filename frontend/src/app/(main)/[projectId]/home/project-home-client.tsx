@@ -32,7 +32,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { PageShell } from "@/components/layout/page-shell";
 import { SectionCard } from "@/components/ui/section-card";
 import { MetricCard, MetricGrid } from "@/components/ui/metric-card";
 import { InlineTeamMemberForm } from "@/components/project-home/inline-team-member-form";
@@ -560,7 +559,7 @@ export function ProjectHomeClient({
               {showAddTeamMemberForm && (
                 <div className="mb-4 pb-4 border-b border-neutral-100">
                   <InlineTeamMemberForm
-                    projectId={String(project.id)}
+                    projectId={project.id}
                     existingMembers={parseTeamMembers()}
                     onSave={handleSaveTeamMembers}
                     onCancel={() => setShowAddTeamMemberForm(false)}

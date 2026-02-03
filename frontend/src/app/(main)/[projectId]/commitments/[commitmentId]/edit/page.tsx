@@ -179,30 +179,44 @@ export default function EditCommitmentPage() {
     );
   }
 
+  // Helper to convert empty strings to undefined
+  const toDateOrUndefined = (value: string | null | undefined) =>
+    value && value.trim() !== "" ? value : undefined;
+
   // Map API response to form initial data
   const subcontractInitialData = {
     contractNumber: commitmentData.contract_number || "",
     title: commitmentData.title || "",
     contractCompanyId: commitmentData.contract_company_id || "",
     status: commitmentData.status || "Draft",
-    executed: commitmentData.executed || false,
+    executed: commitmentData.executed ?? false,
+    accountingMethod: commitmentData.accounting_method || "amount_based",
     description: commitmentData.description || "",
     inclusions: commitmentData.inclusions || "",
     exclusions: commitmentData.exclusions || "",
     defaultRetainagePercent:
       commitmentData.default_retainage_percent || undefined,
     dates: {
-      startDate: commitmentData.start_date || "",
-      estimatedCompletionDate:
-        commitmentData.estimated_completion_date || "",
-      actualCompletionDate: commitmentData.actual_completion_date || "",
-      contractDate: commitmentData.contract_date || "",
+      startDate: toDateOrUndefined(commitmentData.start_date),
+      estimatedCompletionDate: toDateOrUndefined(
+        commitmentData.estimated_completion_date
+      ),
+      actualCompletionDate: toDateOrUndefined(
+        commitmentData.actual_completion_date
+      ),
+      contractDate: toDateOrUndefined(commitmentData.contract_date),
+      signedContractReceivedDate: toDateOrUndefined(
+        commitmentData.signed_contract_received_date
+      ),
+      issuedOnDate: toDateOrUndefined(commitmentData.issued_on_date),
     },
     privacy: {
       isPrivate: commitmentData.is_private ?? true,
+      nonAdminUserIds: commitmentData.non_admin_user_ids || [],
       allowNonAdminViewSovItems:
         commitmentData.allow_non_admin_view_sov_items ?? false,
     },
+    invoiceContactIds: commitmentData.invoice_contact_ids || [],
     sovLines: (commitmentData.line_items || []).map((item: any) => ({
       budgetCode: item.budget_code || "",
       description: item.description || "",
@@ -220,9 +234,10 @@ export default function EditCommitmentPage() {
     paymentTerms: commitmentData.payment_terms || "",
     dates: {
       ...subcontractInitialData.dates,
-      deliveryDate: commitmentData.delivery_date || "",
-      signedPoReceivedDate:
-        commitmentData.signed_po_received_date || "",
+      deliveryDate: toDateOrUndefined(commitmentData.delivery_date),
+      signedPoReceivedDate: toDateOrUndefined(
+        commitmentData.signed_po_received_date
+      ),
     },
     sovLines: (commitmentData.line_items || []).map((item: any) => ({
       budgetCode: item.budget_code || "",

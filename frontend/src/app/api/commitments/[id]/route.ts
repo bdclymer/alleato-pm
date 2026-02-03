@@ -75,20 +75,59 @@ export async function GET(
       .eq(sovFkColumn, id)
       .order("line_number", { ascending: true });
 
+    // Fetch change order totals by status
+    const { data: changeOrders } = await supabase
+      .from("contract_change_orders")
+      .select("status, amount")
+      .eq("contract_id", id);
+
+    // Calculate change order totals by status
+    const changeOrderTotals = {
+      approved: 0,
+      pending: 0,
+      draft: 0,
+      executed: 0,
+      void: 0,
+      total: 0,
+    };
+
+    if (changeOrders && changeOrders.length > 0) {
+      for (const co of changeOrders) {
+        const amount = Number(co.amount) || 0;
+        const status = (co.status || "draft").toLowerCase();
+        changeOrderTotals.total += amount;
+
+        if (status === "approved" || status === "executed") {
+          changeOrderTotals.approved += amount;
+        } else if (status === "pending") {
+          changeOrderTotals.pending += amount;
+        } else if (status === "draft") {
+          changeOrderTotals.draft += amount;
+        } else if (status === "void") {
+          changeOrderTotals.void += amount;
+        }
+      }
+    }
+
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;
     const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
-    const balanceToFinish = Number(totalsData?.total_amount_remaining) || 0;
+    // Revised amount = original + approved change orders
+    const revisedAmount = originalAmount + changeOrderTotals.approved;
+    const balanceToFinish = revisedAmount - billedToDate;
 
     const responseData = {
       ...data,
       type: unifiedData.commitment_type,
       original_amount: originalAmount,
-      approved_change_orders: 0,
-      revised_contract_amount: originalAmount,
+      approved_change_orders: changeOrderTotals.approved,
+      pending_change_orders: changeOrderTotals.pending,
+      draft_change_orders: changeOrderTotals.draft,
+      revised_contract_amount: revisedAmount,
       billed_to_date: billedToDate,
       balance_to_finish: balanceToFinish,
       sov_line_count: Number(totalsData?.sov_line_count) || 0,
       line_items: sovItems || [],
+      change_order_totals: changeOrderTotals,
     };
 
     return NextResponse.json({ data: responseData });
@@ -191,6 +230,15 @@ export async function PUT(
   }
 }
 
+/**
+ * DELETE /api/commitments/[id]
+ * Soft delete commitment (move to recycle bin by setting deleted_at timestamp)
+ *
+ * This performs a soft delete - the commitment is not permanently removed
+ * and can be restored using POST /api/commitments/[id]/restore
+ *
+ * For permanent deletion, use DELETE /api/commitments/[id]/permanent-delete
+ */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -210,14 +258,25 @@ export async function DELETE(
     // Determine the commitment type from the unified view
     const { data: unifiedData, error: unifiedError } = await supabase
       .from("commitments_unified")
-      .select("commitment_type")
+      .select("commitment_type, deleted_at")
       .eq("id", id)
       .single();
 
     if (unifiedError || !unifiedData) {
       return NextResponse.json(
-        { error: "Commitment not found" },
+        { error: "COMMITMENT_NOT_FOUND", message: "Commitment does not exist" },
         { status: 404 },
+      );
+    }
+
+    // Check if already soft-deleted
+    if (unifiedData.deleted_at) {
+      return NextResponse.json(
+        {
+          error: "ALREADY_DELETED",
+          message: "Commitment is already deleted",
+        },
+        { status: 400 },
       );
     }
 
@@ -227,17 +286,30 @@ export async function DELETE(
         ? "subcontracts"
         : "purchase_orders";
 
-    // Soft delete commitment (set deleted_at)
+    // Soft delete commitment (set deleted_at timestamp)
+    const deletedAt = new Date().toISOString();
     const { error } = await supabase
       .from(tableName)
-      .update({ deleted_at: new Date().toISOString() })
+      .update({
+        deleted_at: deletedAt,
+        updated_at: deletedAt,
+      })
       .eq("id", id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "Commitment deleted successfully" });
+    // Return response matching API specification
+    return NextResponse.json({
+      success: true,
+      message: "Commitment moved to recycle bin",
+      data: {
+        id,
+        deletedAt,
+        canRestore: true,
+      },
+    });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json(

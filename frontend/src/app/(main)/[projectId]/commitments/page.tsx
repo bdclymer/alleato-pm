@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { ExportDialog } from "@/components/commitments/ExportDialog";
 
 const config: GenericTableConfig = {
   title: "Commitments",
@@ -24,6 +25,8 @@ const config: GenericTableConfig = {
   searchFields: ["number", "title", "description"],
   exportFilename: "commitments-export.csv",
   rowClickPath: "/{projectId}/commitments/{id}",
+  enableColumnResize: true,
+  stateStorageKey: "commitments-table-state",
   rowActions: [
     {
       id: "edit",
@@ -83,10 +86,76 @@ const config: GenericTableConfig = {
         defaultVariant: "outline",
       },
     },
+    // Phase 5: ERP Status column
+    {
+      id: "erp_status",
+      label: "ERP Status",
+      defaultVisible: false,
+      type: "badge",
+      renderConfig: {
+        type: "badge",
+        variantMap: {
+          synced: "success",
+          pending: "secondary",
+          error: "destructive",
+          not_synced: "outline",
+        },
+        defaultVariant: "outline",
+      },
+    },
+    // Phase 5: SSOV Status column
+    {
+      id: "ssov_status",
+      label: "SSOV Status",
+      defaultVisible: false,
+      type: "badge",
+      renderConfig: {
+        type: "badge",
+        variantMap: {
+          submitted: "default",
+          approved: "success",
+          pending: "secondary",
+          not_submitted: "outline",
+          not_applicable: "outline",
+        },
+        defaultVariant: "outline",
+      },
+    },
     {
       id: "original_amount",
       label: "Original Amount",
       defaultVisible: true,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    // Phase 5: Change Order aggregation columns
+    {
+      id: "approved_change_orders",
+      label: "Approved COs",
+      defaultVisible: false,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    {
+      id: "pending_change_orders",
+      label: "Pending COs",
+      defaultVisible: false,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    {
+      id: "draft_change_orders",
+      label: "Draft COs",
+      defaultVisible: false,
       type: "number",
       renderConfig: {
         type: "currency",
@@ -103,10 +172,49 @@ const config: GenericTableConfig = {
         prefix: "$",
       },
     },
+    // Phase 5: Invoice aggregation columns
+    {
+      id: "invoiced_amount",
+      label: "Invoiced Amount",
+      defaultVisible: false,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
     {
       id: "billed_to_date",
       label: "Billed to Date",
       defaultVisible: true,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    // Phase 5: Payment aggregation columns
+    {
+      id: "payments_issued",
+      label: "Payments Issued",
+      defaultVisible: false,
+      type: "number",
+      renderConfig: {
+        type: "currency",
+        prefix: "$",
+      },
+    },
+    // Phase 5: Calculated fields
+    {
+      id: "percent_paid",
+      label: "% Paid",
+      defaultVisible: false,
+      type: "number",
+    },
+    {
+      id: "remaining_balance",
+      label: "Remaining Balance",
+      defaultVisible: false,
       type: "number",
       renderConfig: {
         type: "currency",
@@ -126,6 +234,18 @@ const config: GenericTableConfig = {
     {
       id: "executed",
       label: "Executed",
+      defaultVisible: false,
+      type: "boolean",
+      renderConfig: {
+        type: "boolean",
+        trueLabel: "Yes",
+        falseLabel: "No",
+      },
+    },
+    // Phase 5: Private column
+    {
+      id: "is_private",
+      label: "Private",
       defaultVisible: false,
       type: "boolean",
       renderConfig: {
@@ -180,6 +300,41 @@ const config: GenericTableConfig = {
         { value: "false", label: "No" },
       ],
     },
+    // Phase 5: ERP Status filter
+    {
+      id: "erp_status",
+      label: "ERP Status",
+      field: "erp_status",
+      options: [
+        { value: "synced", label: "Synced" },
+        { value: "pending", label: "Pending" },
+        { value: "error", label: "Error" },
+        { value: "not_synced", label: "Not Synced" },
+      ],
+    },
+    // Phase 5: SSOV Status filter
+    {
+      id: "ssov_status",
+      label: "SSOV Status",
+      field: "ssov_status",
+      options: [
+        { value: "submitted", label: "Submitted" },
+        { value: "approved", label: "Approved" },
+        { value: "pending", label: "Pending" },
+        { value: "not_submitted", label: "Not Submitted" },
+        { value: "not_applicable", label: "N/A" },
+      ],
+    },
+    // Phase 5: Private filter
+    {
+      id: "is_private",
+      label: "Private",
+      field: "is_private",
+      options: [
+        { value: "true", label: "Yes" },
+        { value: "false", label: "No" },
+      ],
+    },
   ],
 };
 
@@ -197,6 +352,17 @@ interface CommitmentRow {
   contract_company_id: string | null;
   contract_company_name?: string | null;
   created_at: string;
+  // Phase 5 enhancement fields
+  erp_status: string | null;
+  ssov_status: string | null;
+  approved_change_orders: number;
+  pending_change_orders: number;
+  draft_change_orders: number;
+  invoiced_amount: number;
+  payments_issued: number;
+  percent_paid: number;
+  remaining_balance: number;
+  is_private: boolean;
   [key: string]: unknown;
 }
 
@@ -209,6 +375,7 @@ export default function ProjectCommitmentsPage() {
   const [commitments, setCommitments] = useState<CommitmentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   const fetchCommitments = useCallback(async () => {
     try {
@@ -247,14 +414,18 @@ export default function ProjectCommitmentsPage() {
     (sum, c) => sum + (c.revised_contract_amount || 0),
     0,
   );
-  const totalBilled = commitments.reduce(
-    (sum, c) => sum + (c.billed_to_date || 0),
+  const totalInvoiced = commitments.reduce(
+    (sum, c) => sum + (c.invoiced_amount || c.billed_to_date || 0),
     0,
   );
   const totalBalance = commitments.reduce(
     (sum, c) => sum + (c.balance_to_finish || 0),
     0,
   );
+  // Calculate percent invoiced for overall progress
+  const percentInvoiced = totalRevised > 0
+    ? Math.round((totalInvoiced / totalRevised) * 100)
+    : 0;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -278,7 +449,7 @@ export default function ProjectCommitmentsPage() {
   ];
 
   const handleExport = () => {
-    // CSV export is handled by GenericDataTable
+    setIsExportDialogOpen(true);
   };
 
   const handleCreateSubcontract = () => {
@@ -393,9 +564,12 @@ export default function ProjectCommitmentsPage() {
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Billed to Date</p>
-          <p className="text-xl font-semibold mt-1">
-            {formatCurrency(totalBilled)}
+          <p className="text-sm text-muted-foreground">Invoiced to Date</p>
+          <p className="text-xl font-semibold mt-1 text-green-600 dark:text-green-400">
+            {formatCurrency(totalInvoiced)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {percentInvoiced}% of revised
           </p>
         </div>
         <div className="rounded-lg border bg-card p-4">
@@ -462,6 +636,13 @@ export default function ProjectCommitmentsPage() {
           />
         )}
       </div>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        projectId={projectId}
+      />
     </TableLayout>
   );
 }

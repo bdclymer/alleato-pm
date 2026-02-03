@@ -92,9 +92,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const personId = searchParams.get("person_id");
-    const module = searchParams.get("module");
+    const moduleName = searchParams.get("module");
 
-    if (!personId || !module) {
+    if (!personId || !moduleName) {
       return NextResponse.json(
         { error: "person_id and module query parameters are required" },
         { status: 400 }
@@ -107,7 +107,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       "schedule", "submittals", "rfis", "change_orders"
     ];
 
-    if (!validModules.includes(module as PermissionModule)) {
+    if (!validModules.includes(moduleName as PermissionModule)) {
       return NextResponse.json(
         { error: `Invalid module. Must be one of: ${validModules.join(", ")}` },
         { status: 400 }
@@ -118,7 +118,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const result = await removePermissionOverride(
       projectIdNum,
       personId,
-      module as PermissionModule
+      moduleName as PermissionModule
     );
 
     if (!result.success) {

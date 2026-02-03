@@ -6,16 +6,10 @@ import type {
 /**
  * Generate realistic autofill data for subcontract form testing
  */
-export function generateAutofillData(): CreateSubcontractInput & {
+export function generateAutofillData(): Partial<CreateSubcontractInput> & {
   sovLines?: SovLineItem[];
 } {
   const today = new Date();
-  const formatDate = (date: Date) => {
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${month}/${day}/${year}`;
-  };
 
   const startDate = new Date(today);
   startDate.setDate(today.getDate() + 7); // Start in 7 days
@@ -25,6 +19,8 @@ export function generateAutofillData(): CreateSubcontractInput & {
 
   const contractDate = new Date(today);
   contractDate.setDate(today.getDate() - 3); // Signed 3 days ago
+
+  const issuedOnDate = new Date(today);
 
   const sovLines: SovLineItem[] = [
     {
@@ -76,34 +72,42 @@ export function generateAutofillData(): CreateSubcontractInput & {
     title: "General Construction Services - Phase 1",
     status: "Draft",
     executed: false,
+    accountingMethod: "amount_based",
     defaultRetainagePercent: 10,
     description:
-      "Comprehensive construction services including site preparation, foundation work, structural framing, and interior finishes for the new commercial building project.",
+      "<p>Comprehensive construction services including site preparation, foundation work, structural framing, and interior finishes for the new commercial building project.</p>",
     sov: sovLines,
     sovLines, // Also include as separate property for form state
-    inclusions: `• All labor, materials, and equipment as specified in construction documents
-• Site mobilization and demobilization
-• Temporary site facilities and utilities
-• Project management and supervision
-• Quality control and safety compliance
-• Cleanup and waste removal`,
-    exclusions: `• Architectural and engineering design services
-• Building permits and inspection fees
-• Off-site utility connections
-• Landscaping and site improvements beyond building footprint
-• Owner-furnished equipment and materials
-• Extended warranty coverage beyond standard terms`,
+    inclusions: `<ul>
+<li>All labor, materials, and equipment as specified in construction documents</li>
+<li>Site mobilization and demobilization</li>
+<li>Temporary site facilities and utilities</li>
+<li>Project management and supervision</li>
+<li>Quality control and safety compliance</li>
+<li>Cleanup and waste removal</li>
+</ul>`,
+    exclusions: `<ul>
+<li>Architectural and engineering design services</li>
+<li>Building permits and inspection fees</li>
+<li>Off-site utility connections</li>
+<li>Landscaping and site improvements beyond building footprint</li>
+<li>Owner-furnished equipment and materials</li>
+<li>Extended warranty coverage beyond standard terms</li>
+</ul>`,
     dates: {
-      startDate: formatDate(startDate),
-      estimatedCompletionDate: formatDate(completionDate),
+      startDate: startDate,
+      estimatedCompletionDate: completionDate,
       actualCompletionDate: undefined,
-      contractDate: formatDate(contractDate),
-      signedContractReceivedDate: formatDate(contractDate),
-      issuedOnDate: formatDate(today),
+      contractDate: contractDate,
+      signedContractReceivedDate: contractDate,
+      issuedOnDate: issuedOnDate,
     },
     privacy: {
       isPrivate: true,
+      nonAdminUserIds: [],
       allowNonAdminViewSovItems: false,
     },
+    invoiceContactIds: [],
+    attachments: [],
   };
 }

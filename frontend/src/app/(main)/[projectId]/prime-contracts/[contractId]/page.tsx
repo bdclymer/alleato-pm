@@ -500,14 +500,9 @@ export default function ProjectContractDetailPage() {
       <PageHeader
         title={contract.title}
         description={
-          contract.vendor ? (
-            `Contractor: ${contract.vendor.name}`
-          ) : (
-            <span className="flex items-center gap-2 text-amber-600">
-              <AlertTriangle className="h-4 w-4" />
-              No vendor assigned
-            </span>
-          )
+          contract.vendor
+            ? `Contractor: ${contract.vendor.name}`
+            : "No vendor assigned"
         }
         breadcrumbs={[
           { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },

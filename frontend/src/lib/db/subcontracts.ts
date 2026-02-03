@@ -22,23 +22,24 @@ export interface SubcontractFormData {
   status?: string;
   executed?: boolean;
   defaultRetainagePercent?: number | null;
+  accountingMethod?: string | null;
   description?: string | null;
   inclusions?: string | null;
   exclusions?: string | null;
   dates?: {
-    startDate?: string;
-    estimatedCompletionDate?: string;
-    actualCompletionDate?: string;
-    contractDate?: string;
-    signedContractReceivedDate?: string;
-    issuedOnDate?: string;
+    startDate?: string | Date;
+    estimatedCompletionDate?: string | Date;
+    actualCompletionDate?: string | Date;
+    contractDate?: string | Date;
+    signedContractReceivedDate?: string | Date;
+    issuedOnDate?: string | Date;
   };
   privacy?: {
     isPrivate?: boolean;
     nonAdminUserIds?: string[];
     allowNonAdminViewSovItems?: boolean;
   };
-  invoiceContacts?: string[];
+  invoiceContactIds?: string[];
   sov?: Array<{
     lineNumber?: number;
     changeEventLineItem?: string;
@@ -50,11 +51,21 @@ export interface SubcontractFormData {
 }
 
 /**
- * Convert mm/dd/yyyy to ISO date string (yyyy-mm-dd) for database.
+ * Convert date value to ISO date string (yyyy-mm-dd) for database.
+ * Accepts: Date object, mm/dd/yyyy string, ISO string, or undefined.
  * Returns null if the input is empty or invalid.
  */
-function parseFormDate(dateStr: string | undefined): string | null {
-  if (!dateStr?.trim()) return null;
+function parseFormDate(dateValue: string | Date | undefined): string | null {
+  if (!dateValue) return null;
+
+  // Handle Date objects
+  if (dateValue instanceof Date) {
+    if (isNaN(dateValue.getTime())) return null;
+    return dateValue.toISOString().split("T")[0];
+  }
+
+  const dateStr = dateValue.trim();
+  if (!dateStr) return null;
 
   // Handle mm/dd/yyyy format
   const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -117,7 +128,7 @@ export function mapFormToInsert(
       formData.privacy?.allowNonAdminViewSovItems ?? false,
 
     // Other fields
-    invoice_contact_ids: formData.invoiceContacts || [],
+    invoice_contact_ids: formData.invoiceContactIds || [],
     created_by: userId,
   };
 }

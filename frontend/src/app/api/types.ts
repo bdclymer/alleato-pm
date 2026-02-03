@@ -109,6 +109,18 @@ export interface Commitment {
   revised_contract_amount: number;
   billed_to_date: number;
   balance_to_finish: number;
+  // Phase 5 enhancements - ERP and status fields
+  erp_status: string | null;
+  ssov_status: string | null;
+  // Phase 5 enhancements - Change order aggregations
+  pending_change_orders: number;
+  draft_change_orders: number;
+  // Phase 5 enhancements - Invoice/payment aggregations
+  invoiced_amount: number;
+  payments_issued: number;
+  percent_paid: number;
+  remaining_balance: number;
+  is_private: boolean;
   // Relations (optional - may be joined)
   contract_company?: Company | null;
   assignee?: User;

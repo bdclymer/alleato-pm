@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,18 +15,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, Sparkles, AlertCircle, Loader2 } from "lucide-react";
+import { X, Plus, Sparkles, AlertCircle, Loader2, Info } from "lucide-react";
 import {
   CreateSubcontractSchema,
   type CreateSubcontractInput,
   type SovLineItem,
+  CommitmentStatusValues,
+  AccountingMethodValues,
 } from "@/lib/schemas/create-subcontract-schema";
 import { generateAutofillData } from "@/lib/utils/autofill-subcontract";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RichTextField } from "@/components/forms/RichTextField";
+import { DateField } from "@/components/forms/DateField";
+import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { CostCodeSelector } from "./CostCodeSelector";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCompanies } from "@/hooks/use-companies";
+import { useProjectUsers } from "@/hooks/use-project-users";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -39,6 +51,7 @@ interface CreateSubcontractFormProps {
 }
 
 export function CreateSubcontractForm({
+  projectId,
   onSubmit,
   onCancel,
   initialData,
@@ -54,9 +67,22 @@ export function CreateSubcontractForm({
     Array<{ name: string; size: number; type: string }>
   >([]);
 
-  // Use the companies hook - returns { value: uuid, label: name } options
+  // Use the companies hook
   const { options: companyOptions, isLoading: isLoadingCompanies } =
     useCompanies();
+
+  // Use project users hook for non-admin user selection
+  const { users: projectUsers, isLoading: isLoadingUsers } = useProjectUsers(
+    String(projectId),
+  );
+
+  // Transform project users to options for multi-select
+  const userOptions = React.useMemo(() => {
+    return projectUsers.map((user) => ({
+      value: user.id,
+      label: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || "Unknown User",
+    }));
+  }, [projectUsers]);
 
   const {
     register,
@@ -64,15 +90,18 @@ export function CreateSubcontractForm({
     formState: { errors },
     watch,
     setValue,
+    control,
   } = useForm<CreateSubcontractInput>({
-    resolver: zodResolver(CreateSubcontractSchema) as any,
+    resolver: zodResolver(CreateSubcontractSchema) as never,
     defaultValues: {
       contractNumber: initialData?.contractNumber || "SC-002",
       status: initialData?.status || "Draft",
-      executed: initialData?.executed || false,
+      executed: initialData?.executed ?? false,
+      accountingMethod: initialData?.accountingMethod || "amount_based",
       sov: initialData?.sov || [],
       privacy: initialData?.privacy || {
         isPrivate: true,
+        nonAdminUserIds: [],
         allowNonAdminViewSovItems: false,
       },
       title: initialData?.title || "",
@@ -81,12 +110,36 @@ export function CreateSubcontractForm({
       inclusions: initialData?.inclusions || "",
       exclusions: initialData?.exclusions || "",
       defaultRetainagePercent: initialData?.defaultRetainagePercent,
-      dates: initialData?.dates,
+      dates: initialData?.dates || {
+        startDate: undefined,
+        estimatedCompletionDate: undefined,
+        actualCompletionDate: undefined,
+        contractDate: undefined,
+        signedContractReceivedDate: undefined,
+        issuedOnDate: undefined,
+      },
+      invoiceContactIds: initialData?.invoiceContactIds || [],
+      attachments: [],
     },
   });
 
   const contractCompanyId = watch("contractCompanyId");
   const privacyIsPrivate = watch("privacy.isPrivate") ?? true;
+  const accountingMethod = watch("accountingMethod");
+
+  // Fetch company contacts when a company is selected
+  const { options: invoiceContactOptions, isLoading: isLoadingContacts } =
+    useCompanyContacts({
+      companyId: contractCompanyId,
+      enabled: !!contractCompanyId,
+    });
+
+  // Clear invoice contacts when company changes
+  React.useEffect(() => {
+    if (!contractCompanyId) {
+      setValue("invoiceContactIds", []);
+    }
+  }, [contractCompanyId, setValue]);
 
   const handleAutofill = () => {
     const autofillData = generateAutofillData();
@@ -104,26 +157,26 @@ export function CreateSubcontractForm({
 
     // Set dates
     if (autofillData.dates) {
-      setValue("dates.startDate", autofillData.dates.startDate || "");
+      setValue("dates.startDate", autofillData.dates.startDate || undefined);
       setValue(
         "dates.estimatedCompletionDate",
-        autofillData.dates.estimatedCompletionDate || "",
+        autofillData.dates.estimatedCompletionDate || undefined,
       );
       setValue(
         "dates.actualCompletionDate",
-        autofillData.dates.actualCompletionDate || "",
+        autofillData.dates.actualCompletionDate || undefined,
       );
-      setValue("dates.contractDate", autofillData.dates.contractDate || "");
+      setValue("dates.contractDate", autofillData.dates.contractDate || undefined);
       setValue(
         "dates.signedContractReceivedDate",
-        autofillData.dates.signedContractReceivedDate || "",
+        autofillData.dates.signedContractReceivedDate || undefined,
       );
-      setValue("dates.issuedOnDate", autofillData.dates.issuedOnDate || "");
+      setValue("dates.issuedOnDate", autofillData.dates.issuedOnDate || undefined);
     }
 
     // Set privacy
     if (autofillData.privacy) {
-      setValue("privacy.isPrivate", autofillData.privacy.isPrivate || false);
+      setValue("privacy.isPrivate", autofillData.privacy.isPrivate ?? true);
       setValue(
         "privacy.allowNonAdminViewSovItems",
         autofillData.privacy.allowNonAdminViewSovItems || false,
@@ -202,12 +255,8 @@ export function CreateSubcontractForm({
 
   const totals = calculateSOVTotals();
 
-  const handleFormSubmitWrapper = async (data: CreateSubcontractInput) => {
-    await handleFormSubmit(data);
-  };
-
   return (
-    <form onSubmit={handleSubmit(handleFormSubmitWrapper)} className="space-y-8">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
       {/* Autofill Test Data Button */}
       <div className="flex justify-end">
         <Button
@@ -237,7 +286,7 @@ export function CreateSubcontractForm({
                     <summary className="cursor-pointer text-sm font-medium">
                       View Error Details
                     </summary>
-                      <pre className="mt-2 text-xs bg-destructive/10 p-2 rounded overflow-auto max-h-40">
+                    <pre className="mt-2 text-xs bg-destructive/10 p-2 rounded overflow-auto max-h-40">
                       {JSON.stringify(
                         (errorDetails as Record<string, unknown>).details,
                         null,
@@ -259,25 +308,41 @@ export function CreateSubcontractForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="contractNumber">Contract #</Label>
+            <Label htmlFor="title">
+              Title <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="title"
+              {...register("title")}
+              disabled={isSubmitting}
+              placeholder="Enter contract title"
+            />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="contractNumber">
+              Contract # <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="contractNumber"
               {...register("contractNumber")}
               disabled={isSubmitting}
             />
             {errors.contractNumber && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-destructive">
                 {errors.contractNumber.message}
               </p>
             )}
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="contractCompanyId">
-              Contract Company
-              <button type="button" className="ml-2 text-xs text-muted-foreground">
-                Delete field
-              </button>
+              Contract Company <span className="text-destructive">*</span>
             </Label>
             <Select
               value={watch("contractCompanyId") || ""}
@@ -308,34 +373,42 @@ export function CreateSubcontractForm({
                 )}
               </SelectContent>
             </Select>
+            {errors.contractCompanyId && (
+              <p className="text-sm text-destructive">
+                {errors.contractCompanyId.message}
+              </p>
+            )}
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" {...register("title")} disabled={isSubmitting} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="status">Status*</Label>
+            <Label htmlFor="status">
+              Status <span className="text-destructive">*</span>
+            </Label>
             <Select
               value={watch("status")}
-              onValueChange={(value) => setValue("status", value as "Draft")}
+              onValueChange={(value) =>
+                setValue("status", value as (typeof CommitmentStatusValues)[number])
+              }
               disabled={isSubmitting}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Draft">Draft</SelectItem>
+                {CommitmentStatusValues.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {errors.status && (
-              <p className="text-sm text-red-600">{errors.status.message}</p>
+              <p className="text-sm text-destructive">{errors.status.message}</p>
             )}
           </div>
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
             <div className="flex items-center gap-2">
@@ -343,19 +416,44 @@ export function CreateSubcontractForm({
                 id="defaultRetainagePercent"
                 type="number"
                 step="0.01"
+                min="0"
+                max="100"
                 {...register("defaultRetainagePercent", {
                   valueAsNumber: true,
                 })}
                 disabled={isSubmitting}
                 className="w-full"
+                placeholder="0.00"
               />
               <span className="text-sm text-foreground">%</span>
             </div>
             {errors.defaultRetainagePercent && (
-              <p className="text-sm text-red-600">
+              <p className="text-sm text-destructive">
                 {errors.defaultRetainagePercent.message}
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="accountingMethod">Accounting Method</Label>
+            <Select
+              value={accountingMethod}
+              onValueChange={(value) =>
+                setValue(
+                  "accountingMethod",
+                  value as (typeof AccountingMethodValues)[number],
+                )
+              }
+              disabled={isSubmitting}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="amount_based">Amount-based</SelectItem>
+                <SelectItem value="unit_quantity">Unit/Quantity</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -375,18 +473,24 @@ export function CreateSubcontractForm({
                 htmlFor="executed"
                 className="text-sm font-normal cursor-pointer"
               >
-                Mark as Executed*
+                Mark as Executed
               </Label>
             </div>
           </div>
         </div>
 
-        <RichTextField
-          label="Description"
-          value={watch("description")}
-          onChange={(val) => setValue("description", val, { shouldDirty: true })}
-          disabled={isSubmitting}
-          placeholder="Enter description..."
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <RichTextField
+              label="Description"
+              value={field.value || ""}
+              onChange={field.onChange}
+              disabled={isSubmitting}
+              placeholder="Enter detailed contract description..."
+            />
+          )}
         />
       </section>
 
@@ -414,18 +518,34 @@ export function CreateSubcontractForm({
         </h2>
 
         {/* SOV Accounting Method Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 dark:bg-blue-950 dark:border-blue-800">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-blue-900">
-              This contract&apos;s default accounting method is amount-based
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              This contract&apos;s accounting method is{" "}
+              <strong>
+                {accountingMethod === "amount_based"
+                  ? "amount-based"
+                  : "unit/quantity"}
+              </strong>
             </p>
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={isSubmitting}
+              onClick={() =>
+                setValue(
+                  "accountingMethod",
+                  accountingMethod === "amount_based"
+                    ? "unit_quantity"
+                    : "amount_based",
+                )
+              }
             >
-              Change to Unit/Quantity
+              Change to{" "}
+              {accountingMethod === "amount_based"
+                ? "Unit/Quantity"
+                : "Amount-based"}
             </Button>
           </div>
         </div>
@@ -434,7 +554,6 @@ export function CreateSubcontractForm({
         {sovLines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="text-muted-foreground">
-              {/* Empty state image placeholder */}
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
                 <span className="text-4xl">📊</span>
               </div>
@@ -443,11 +562,7 @@ export function CreateSubcontractForm({
               You Have No Line Items Yet
             </p>
             <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={addSOVLine}
-                disabled={isSubmitting}
-              >
+              <Button type="button" onClick={addSOVLine} disabled={isSubmitting}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Line
               </Button>
@@ -628,20 +743,32 @@ export function CreateSubcontractForm({
         </h2>
 
         <div className="space-y-4">
-          <RichTextField
-            label="Inclusions"
-            value={watch("inclusions")}
-            onChange={(val) => setValue("inclusions", val, { shouldDirty: true })}
-            disabled={isSubmitting}
-            placeholder="Enter inclusions..."
+          <Controller
+            name="inclusions"
+            control={control}
+            render={({ field }) => (
+              <RichTextField
+                label="Inclusions"
+                value={field.value || ""}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+                placeholder="Enter scope inclusions..."
+              />
+            )}
           />
 
-          <RichTextField
-            label="Exclusions"
-            value={watch("exclusions")}
-            onChange={(val) => setValue("exclusions", val, { shouldDirty: true })}
-            disabled={isSubmitting}
-            placeholder="Enter exclusions..."
+          <Controller
+            name="exclusions"
+            control={control}
+            render={({ field }) => (
+              <RichTextField
+                label="Exclusions"
+                value={field.value || ""}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+                placeholder="Enter scope exclusions..."
+              />
+            )}
           />
         </div>
       </section>
@@ -651,107 +778,95 @@ export function CreateSubcontractForm({
         <h2 className="text-lg font-semibold border-b pb-2">Contract Dates</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="dates.startDate">Start Date</Label>
-            <Input
-              id="dates.startDate"
-              type="text"
-              {...register("dates.startDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.startDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.startDate.message}
-              </p>
+          <Controller
+            name="dates.startDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Start Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select start date"
+                error={errors.dates?.startDate?.message}
+              />
             )}
-          </div>
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="dates.estimatedCompletionDate">
-              Estimated Completion Date
-            </Label>
-            <Input
-              id="dates.estimatedCompletionDate"
-              type="text"
-              {...register("dates.estimatedCompletionDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.estimatedCompletionDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.estimatedCompletionDate.message}
-              </p>
+          <Controller
+            name="dates.estimatedCompletionDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Estimated Completion Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select estimated completion"
+                error={errors.dates?.estimatedCompletionDate?.message}
+              />
             )}
-          </div>
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="dates.actualCompletionDate">
-              Actual Completion Date
-            </Label>
-            <Input
-              id="dates.actualCompletionDate"
-              type="text"
-              {...register("dates.actualCompletionDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.actualCompletionDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.actualCompletionDate.message}
-              </p>
+          <Controller
+            name="dates.actualCompletionDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Actual Completion Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select actual completion"
+                error={errors.dates?.actualCompletionDate?.message}
+              />
             )}
-          </div>
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="dates.contractDate">Contract Date</Label>
-            <Input
-              id="dates.contractDate"
-              type="text"
-              {...register("dates.contractDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.contractDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.contractDate.message}
-              </p>
+          <Controller
+            name="dates.contractDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Contract Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select contract date"
+                error={errors.dates?.contractDate?.message}
+              />
             )}
-          </div>
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="dates.signedContractReceivedDate">
-              Signed Contract Received Date
-            </Label>
-            <Input
-              id="dates.signedContractReceivedDate"
-              type="text"
-              {...register("dates.signedContractReceivedDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.signedContractReceivedDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.signedContractReceivedDate.message}
-              </p>
+          <Controller
+            name="dates.signedContractReceivedDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Signed Contract Received Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select signed contract received"
+                error={errors.dates?.signedContractReceivedDate?.message}
+              />
             )}
-          </div>
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="dates.issuedOnDate">Issued On Date</Label>
-            <Input
-              id="dates.issuedOnDate"
-              type="text"
-              {...register("dates.issuedOnDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-            {errors.dates?.issuedOnDate && (
-              <p className="text-sm text-red-600">
-                {errors.dates.issuedOnDate.message}
-              </p>
+          <Controller
+            name="dates.issuedOnDate"
+            control={control}
+            render={({ field }) => (
+              <DateField
+                label="Issued On Date"
+                value={field.value instanceof Date ? field.value : undefined}
+                onChange={(date) => field.onChange(date)}
+                disabled={isSubmitting}
+                placeholder="Select issued on date"
+                error={errors.dates?.issuedOnDate?.message}
+              />
             )}
-          </div>
+          />
         </div>
       </section>
 
@@ -761,83 +876,121 @@ export function CreateSubcontractForm({
           Contract Privacy
         </h2>
 
-        <p className="text-sm text-foreground">
-          Using the privacy setting allows only project admins and the select
-          non-admin users access.
-        </p>
+        <div className="bg-muted/50 rounded-md p-4 text-sm text-muted-foreground">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <p>
+              Using the privacy setting restricts access to only project admins
+              and the select non-admin users specified below.
+            </p>
+          </div>
+        </div>
 
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Checkbox
-              id="privacy.isPrivate"
-              checked={privacyIsPrivate}
-              onCheckedChange={(checked) =>
-                setValue("privacy.isPrivate", checked as boolean)
-              }
-              disabled={isSubmitting}
+            <Controller
+              name="privacy.isPrivate"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="privacy.isPrivate"
+                  checked={field.value}
+                  onCheckedChange={(checked) => field.onChange(checked)}
+                  disabled={isSubmitting}
+                />
+              )}
             />
             <Label htmlFor="privacy.isPrivate" className="text-sm font-normal">
-              Private
+              Private (default)
             </Label>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="privacy.nonAdminUserIds">
-              Access for Non-Admin Users
-              <button type="button" className="ml-2 text-xs text-muted-foreground">
-                Delete field
-              </button>
-            </Label>
-            <Input
-              id="privacy.nonAdminUserIds"
-              disabled={isSubmitting || !privacyIsPrivate}
-              placeholder={
-                privacyIsPrivate
-                  ? "Select users..."
-                  : "Enable Private to use this field"
-              }
-            />
-          </div>
+          {/* Non-Admin Users Access - Only shown when Private is checked */}
+          {privacyIsPrivate && (
+            <>
+              <div className="space-y-2">
+                <Label>Access for Non-Admin Users</Label>
+                <Controller
+                  name="privacy.nonAdminUserIds"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelectField
+                      label=""
+                      options={userOptions}
+                      value={field.value || []}
+                      onChange={(values) => field.onChange(values)}
+                      disabled={isSubmitting || isLoadingUsers}
+                      placeholder={
+                        isLoadingUsers
+                          ? "Loading users..."
+                          : "Select users who can access this contract..."
+                      }
+                    />
+                  )}
+                />
+                <p className="text-sm text-muted-foreground">
+                  These non-admin users will have access to view this contract.
+                </p>
+              </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="privacy.allowNonAdminViewSovItems"
-              checked={watch("privacy.allowNonAdminViewSovItems")}
-              onCheckedChange={(checked) =>
-                setValue(
-                  "privacy.allowNonAdminViewSovItems",
-                  checked as boolean,
-                )
-              }
-              disabled={isSubmitting || !privacyIsPrivate}
-            />
-            <Label
-              htmlFor="privacy.allowNonAdminViewSovItems"
-              className="text-sm font-normal"
-            >
-              Allow these non-admin users to view the SOV items.
-            </Label>
-          </div>
+              <div className="flex items-center space-x-2">
+                <Controller
+                  name="privacy.allowNonAdminViewSovItems"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="privacy.allowNonAdminViewSovItems"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked)}
+                      disabled={isSubmitting}
+                    />
+                  )}
+                />
+                <Label
+                  htmlFor="privacy.allowNonAdminViewSovItems"
+                  className="text-sm font-normal"
+                >
+                  Allow these non-admin users to view the SOV items
+                </Label>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
-      {/* Invoice Contacts Section */}
+      {/* Invoice Contacts Section - Conditional on Company Selection */}
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          Invoice Contacts
-        </h2>
+        <h2 className="text-lg font-semibold border-b pb-2">Invoice Contacts</h2>
 
         {!contractCompanyId ? (
-          <p className="text-sm text-foreground">
-            Please select a Contract Company first
-          </p>
+          <div className="bg-muted/50 rounded-md p-4">
+            <p className="text-sm text-muted-foreground">
+              Please select a Contract Company first to enable invoice contacts
+              selection.
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
-            <Label htmlFor="invoiceContacts">Invoice Contacts</Label>
-            <Input
-              id="invoiceContacts"
-              disabled={isSubmitting}
-              placeholder="Select invoice contacts..."
+            <Controller
+              name="invoiceContactIds"
+              control={control}
+              render={({ field }) => (
+                <MultiSelectField
+                  label="Invoice Contacts"
+                  options={invoiceContactOptions}
+                  value={field.value || []}
+                  onChange={(values) => field.onChange(values)}
+                  disabled={isSubmitting || isLoadingContacts}
+                  placeholder={
+                    isLoadingContacts
+                      ? "Loading contacts..."
+                      : invoiceContactOptions.length === 0
+                        ? "No contacts found for this company"
+                        : "Select contacts who can submit invoices..."
+                  }
+                  hint="These contacts will be able to submit invoices for this contract."
+                />
+              )}
             />
           </div>
         )}
@@ -845,7 +998,9 @@ export function CreateSubcontractForm({
 
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-6 border-t">
-        <p className="text-sm text-foreground">*Required fields</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="text-destructive">*</span> Required fields
+        </p>
         <div className="flex gap-3">
           <Button
             type="button"
@@ -856,7 +1011,16 @@ export function CreateSubcontractForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "edit" ? "Saving..." : "Creating..."}
+              </>
+            ) : mode === "edit" ? (
+              "Save Changes"
+            ) : (
+              "Create"
+            )}
           </Button>
         </div>
       </div>

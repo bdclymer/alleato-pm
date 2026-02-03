@@ -90,9 +90,6 @@ export function EnhancedDevPanel() {
   const pathname = usePathname()
   const supabase = createClient()
 
-  // Only show in development
-  if (process.env.NODE_ENV !== "development") return null
-
   // Listen for console errors
   useEffect(() => {
     const originalError = console.error
@@ -306,6 +303,9 @@ export function EnhancedDevPanel() {
   const pageInsight = featureInsights.find((insight) =>
     routeSegments.some((segment) => insight.match === segment),
   )
+
+  // Only show in development
+  if (process.env.NODE_ENV !== "development") return null
 
   return (
     <Sheet>

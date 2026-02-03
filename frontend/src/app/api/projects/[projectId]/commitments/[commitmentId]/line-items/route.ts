@@ -1,0 +1,250 @@
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+
+interface RouteParams {
+  params: Promise<{ projectId: string; commitmentId: string }>;
+}
+
+interface LineItemInput {
+  id?: string;
+  line_number: number | null;
+  budget_code: string | null;
+  description: string | null;
+  amount: number | null;
+  billed_to_date: number | null;
+}
+
+interface UpdatePayload {
+  lineItems: LineItemInput[];
+  commitmentType?: "subcontract" | "purchase_order" | string;
+}
+
+/**
+ * GET /api/projects/[projectId]/commitments/[commitmentId]/line-items
+ * Fetches all SOV line items for a commitment
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, commitmentId } = await params;
+    const numericProjectId = Number.parseInt(projectId, 10);
+
+    if (Number.isNaN(numericProjectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 },
+      );
+    }
+
+    const authResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
+    // First determine the commitment type
+    const { data: unifiedData, error: unifiedError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
+      .eq("id", commitmentId)
+      .single();
+
+    if (unifiedError || !unifiedData) {
+      return NextResponse.json(
+        { error: "Commitment not found" },
+        { status: 404 },
+      );
+    }
+
+    const isSubcontract = unifiedData.commitment_type === "subcontract";
+    const tableName = isSubcontract
+      ? "subcontract_sov_items"
+      : "purchase_order_sov_items";
+    const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
+
+    const { data: lineItems, error: lineItemsError } = await (supabase as any)
+      .from(tableName)
+      .select("*")
+      .eq(fkColumn, commitmentId)
+      .order("line_number", { ascending: true });
+
+    if (lineItemsError) {
+      return NextResponse.json(
+        { error: "Failed to fetch line items", details: lineItemsError.message },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: lineItems || [],
+      commitmentType: unifiedData.commitment_type,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch line items",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PUT /api/projects/[projectId]/commitments/[commitmentId]/line-items
+ * Updates all SOV line items for a commitment (upsert strategy)
+ * This endpoint handles creating new items, updating existing items,
+ * and deleting items that are no longer in the list
+ */
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, commitmentId } = await params;
+    const numericProjectId = Number.parseInt(projectId, 10);
+
+    if (Number.isNaN(numericProjectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 },
+      );
+    }
+
+    const authResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
+    const body = (await request.json()) as UpdatePayload;
+    const { lineItems, commitmentType: bodyCommitmentType } = body;
+
+    if (!lineItems || !Array.isArray(lineItems)) {
+      return NextResponse.json(
+        { error: "Invalid payload: lineItems array required" },
+        { status: 400 },
+      );
+    }
+
+    // Determine the commitment type if not provided
+    let commitmentType = bodyCommitmentType;
+    if (!commitmentType) {
+      const { data: unifiedData } = await supabase
+        .from("commitments_unified")
+        .select("commitment_type")
+        .eq("id", commitmentId)
+        .single();
+
+      commitmentType = unifiedData?.commitment_type || "subcontract";
+    }
+
+    const isSubcontract = commitmentType === "subcontract";
+    const tableName = isSubcontract
+      ? "subcontract_sov_items"
+      : "purchase_order_sov_items";
+    const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
+
+    // Fetch existing line items
+    const { data: existingItems } = await (supabase as any)
+      .from(tableName)
+      .select("id")
+      .eq(fkColumn, commitmentId);
+
+    const existingIds = new Set<string>((existingItems || []).map((item: { id: string }) => item.id));
+    const newItemIds = new Set<string>(
+      lineItems.filter((item) => item.id).map((item) => item.id as string),
+    );
+
+    // Delete items that are no longer in the list
+    const idsToDelete = [...existingIds].filter((id) => !newItemIds.has(id));
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await (supabase as any)
+        .from(tableName)
+        .delete()
+        .in("id", idsToDelete);
+
+      if (deleteError) {
+        return NextResponse.json(
+          { error: "Failed to delete removed line items", details: deleteError.message },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Upsert line items
+    const upsertedItems: unknown[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < lineItems.length; i++) {
+      const item = lineItems[i];
+      const lineNumber = item.line_number ?? i + 1;
+
+      const itemData = {
+        [fkColumn]: commitmentId,
+        line_number: lineNumber,
+        budget_code: item.budget_code || null,
+        description: item.description || "",
+        amount: item.amount ?? 0,
+        billed_to_date: item.billed_to_date ?? 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (item.id && existingIds.has(item.id)) {
+        // Update existing item
+        const { data: updatedItem, error: updateError } = await (supabase as any)
+          .from(tableName)
+          .update(itemData)
+          .eq("id", item.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          errors.push(`Line ${lineNumber}: ${updateError.message}`);
+          continue;
+        }
+        upsertedItems.push(updatedItem);
+      } else {
+        // Insert new item
+        const { data: insertedItem, error: insertError } = await (supabase as any)
+          .from(tableName)
+          .insert({
+            ...itemData,
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          errors.push(`Line ${lineNumber}: ${insertError.message}`);
+          continue;
+        }
+        upsertedItems.push(insertedItem);
+      }
+    }
+
+    // Calculate total amount for budget impact tracking
+    const totalAmount = lineItems.reduce(
+      (sum, item) => sum + (item.amount ?? 0),
+      0,
+    );
+
+    return NextResponse.json({
+      success: true,
+      savedCount: upsertedItems.length,
+      deletedCount: idsToDelete.length,
+      totalAmount,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully saved ${upsertedItems.length} line items${
+        idsToDelete.length > 0 ? `, deleted ${idsToDelete.length}` : ""
+      }`,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to save line items",
+        details: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500 },
+    );
+  }
+}

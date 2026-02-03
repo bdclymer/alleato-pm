@@ -13,6 +13,7 @@ interface WithTotalsRow {
   executed: boolean | null;
   contract_company_id: string | null;
   company_name: string | null;
+  company_type?: string | null;
   description: string | null;
   start_date?: string | null;
   contract_date: string | null;
@@ -24,6 +25,10 @@ interface WithTotalsRow {
   total_amount_remaining: number | null;
   sov_line_count: number | null;
   deleted_at?: string | null;
+  // Phase 5 enhancement fields
+  erp_status?: string | null;
+  ssov_status?: string | null;
+  is_private?: boolean | null;
 }
 
 function applyFilters(
@@ -60,6 +65,13 @@ function mapRowToCommitment(
   const billedToDate = Number(row.total_billed_to_date) || 0;
   const balanceToFinish = Number(row.total_amount_remaining) || 0;
 
+  // Phase 5: Calculate percent paid and remaining balance
+  // These are placeholders - in future they will come from invoice aggregations
+  const invoicedAmount = billedToDate; // Using billed_to_date as proxy for invoiced
+  const paymentsIssued = 0; // Placeholder - needs invoice payments aggregation
+  const percentPaid = originalAmount > 0 ? (paymentsIssued / originalAmount) * 100 : 0;
+  const remainingBalance = originalAmount - paymentsIssued;
+
   return {
     id: row.id || "",
     project_id: row.project_id || 0,
@@ -87,6 +99,16 @@ function mapRowToCommitment(
     retention_percentage: row.default_retainage_percent,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || new Date().toISOString(),
+    // Phase 5 enhancements
+    erp_status: row.erp_status || null,
+    ssov_status: row.ssov_status || null,
+    pending_change_orders: 0, // Placeholder - needs change order aggregation
+    draft_change_orders: 0, // Placeholder - needs change order aggregation
+    invoiced_amount: invoicedAmount,
+    payments_issued: paymentsIssued,
+    percent_paid: percentPaid,
+    remaining_balance: remainingBalance,
+    is_private: row.is_private ?? true,
   };
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { RedocStandalone } from "redoc";
 import { DashboardLayout } from "@/components/layouts";
 import { PageHeader } from "@/components/layout/page-header-unified";
@@ -14,18 +15,18 @@ export default function RedocPage() {
         description="Explore auth flows, schema details, and every frontend/backend endpoint in one place."
         actions={
           <div className="flex flex-wrap gap-3">
-            <a
+            <Link
               className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               href="/redoc"
             >
               Refresh view
-            </a>
-            <a
+            </Link>
+            <Link
               className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               href="/api-docs"
             >
               Open Swagger UI
-            </a>
+            </Link>
           </div>
         }
         className="pt-4"

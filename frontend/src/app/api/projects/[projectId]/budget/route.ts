@@ -32,10 +32,18 @@ const PENDING_PO_STATUSES = [
   "Received",
 ];
 
+/**
+ * Executed/Approved commitment statuses for Committed Costs calculation
+ * Per Procore: Commitments with executed/approved status count towards committed costs
+ */
+const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete", "Draft"];
+const EXECUTED_PO_STATUSES = ["approved", "executed", "complete", "Draft"];
+
 interface CostAggregation {
   jobToDateCostDetail: number;
   directCosts: number;
   pendingCostChanges: number;
+  committedCosts: number;
 }
 
 interface DirectCostItem {
@@ -80,6 +88,8 @@ export async function GET(
       subcontractSovRes,
       poSovRes,
       changeOrdersRes,
+      executedSubcontractSovRes,
+      executedPoSovRes,
     ] = await Promise.all([
       // Budget lines from materialized view
       supabase
@@ -123,6 +133,22 @@ export async function GET(
         .select("cost_code_id, amount, change_orders!inner(status, project_id)")
         .eq("change_orders.project_id", projectId)
         .like("change_orders.status", "Pending%"),
+
+      // Executed/Approved Subcontract SOV items for Committed Costs
+      supabase
+        .from("subcontract_sov_items")
+        .select("budget_code, amount, subcontracts!inner(status, project_id)")
+        .eq("subcontracts.project_id", projectId)
+        .in("subcontracts.status", EXECUTED_SUBCONTRACT_STATUSES),
+
+      // Executed/Approved PO SOV items for Committed Costs
+      supabase
+        .from("purchase_order_sov_items")
+        .select(
+          "budget_code, amount, purchase_orders!inner(status, project_id)",
+        )
+        .eq("purchase_orders.project_id", projectId)
+        .in("purchase_orders.status", EXECUTED_PO_STATUSES),
     ]);
 
     if (budgetLinesRes.error) {
@@ -139,6 +165,7 @@ export async function GET(
           jobToDateCostDetail: 0,
           directCosts: 0,
           pendingCostChanges: 0,
+          committedCosts: 0,
         };
       }
     };
@@ -193,6 +220,23 @@ export async function GET(
       costsByCode[codeId].pendingCostChanges += item.amount || 0;
     }
 
+    // SOURCE 4: Committed Costs from Executed Subcontracts
+    // Per Procore: Committed Costs = Sum of SOV amounts from executed/approved commitments
+    for (const item of (executedSubcontractSovRes.data || []) as SOVItem[]) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      ensureCostEntry(codeId);
+      costsByCode[codeId].committedCosts += item.amount || 0;
+    }
+
+    // SOURCE 4: Committed Costs from Executed Purchase Orders
+    for (const item of (executedPoSovRes.data || []) as SOVItem[]) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      ensureCostEntry(codeId);
+      costsByCode[codeId].committedCosts += item.amount || 0;
+    }
+
     // Transform to frontend format with real cost data
     const lineItems = (budgetLinesRes.data || []).map(
       (item: Record<string, unknown>) => {
@@ -212,6 +256,7 @@ export async function GET(
           jobToDateCostDetail: 0,
           directCosts: 0,
           pendingCostChanges: 0,
+          committedCosts: 0,
         };
 
         // Core budget values
@@ -254,9 +299,9 @@ export async function GET(
           directCosts: costData.directCosts,
           pendingChanges: costData.pendingCostChanges,
           projectedBudget: revisedBudget,
-          committedCosts: 0, // TODO: Calculate from executed commitments
+          committedCosts: costData.committedCosts,
           pendingCostChanges: costData.pendingCostChanges,
-          projectedCosts: costData.directCosts + costData.pendingCostChanges,
+          projectedCosts: costData.directCosts + costData.committedCosts + costData.pendingCostChanges,
           forecastToComplete,
           estimatedCostAtCompletion,
           projectedOverUnder,

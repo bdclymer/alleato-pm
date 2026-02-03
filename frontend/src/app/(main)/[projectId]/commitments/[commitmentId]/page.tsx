@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -23,12 +23,25 @@ import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
 import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
+import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
+import { ExportDialog } from "@/components/commitments/ExportDialog";
+import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
 import { formatCurrency } from "@/config/tables";
 import { formatDate } from "@/lib/table-config/formatters";
 
 type CommitmentDetail = Commitment & {
   project_id?: number;
   type?: "subcontract" | "purchase_order" | string;
+  pending_change_orders?: number;
+  draft_change_orders?: number;
+  change_order_totals?: {
+    approved: number;
+    pending: number;
+    draft: number;
+    executed: number;
+    void: number;
+    total: number;
+  };
   line_items?: Array<{
     id: string;
     line_number?: number | null;
@@ -165,6 +178,12 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
         : new Date().toISOString(),
     project_id: typeof record.project_id === "number" ? record.project_id : undefined,
     type: typeof record.type === "string" ? record.type : undefined,
+    pending_change_orders: Number(record.pending_change_orders ?? 0),
+    draft_change_orders: Number(record.draft_change_orders ?? 0),
+    change_order_totals:
+      record.change_order_totals && typeof record.change_order_totals === "object"
+        ? (record.change_order_totals as CommitmentDetail["change_order_totals"])
+        : undefined,
     line_items,
   };
 };
@@ -183,6 +202,8 @@ export default function CommitmentDetailPage() {
   const [commitment, setCommitment] = useState<CommitmentDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
 
   useProjectTitle(
     commitment ? `${commitment.number} - ${commitment.title}` : "Loading...",
@@ -266,7 +287,11 @@ export default function CommitmentDetailPage() {
   }, [commitment, commitmentId, projectId, router]);
 
   const handleExport = useCallback(() => {
-    toast.info("Export functionality coming soon");
+    setIsExportDialogOpen(true);
+  }, []);
+
+  const handleEmail = useCallback(() => {
+    setIsEmailDialogOpen(true);
   }, []);
 
   if (isLoading) {
@@ -326,6 +351,10 @@ export default function CommitmentDetailPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
+          <Button variant="ghost" size="sm" onClick={handleEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            Email
+          </Button>
           <Button variant="ghost" size="sm" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export
@@ -355,6 +384,7 @@ export default function CommitmentDetailPage() {
           <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="attachments">Attachments</TabsTrigger>
+          <TabsTrigger value="advanced-settings">Advanced Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -425,15 +455,17 @@ export default function CommitmentDetailPage() {
                   <Text size="sm" tone="muted">
                     Approved Change Orders
                   </Text>
-                  <Text size="lg" weight="medium">
-                    {formatCurrency(commitment.approved_change_orders || 0)}
+                  <Text size="lg" weight="medium" className="text-green-600">
+                    {commitment.approved_change_orders
+                      ? `+${formatCurrency(commitment.approved_change_orders)}`
+                      : formatCurrency(0)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
                   <Text size="sm" tone="muted">
                     Revised Amount
                   </Text>
-                  <Text size="lg" weight="medium">
+                  <Text size="lg" weight="bold">
                     {formatCurrency(commitment.revised_contract_amount || 0)}
                   </Text>
                 </Stack>
@@ -443,16 +475,79 @@ export default function CommitmentDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Progress</CardTitle>
+              <CardTitle>Change Order Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Stack gap="xs">
                   <Text size="sm" tone="muted">
-                    Billed to Date
+                    Approved / Executed
                   </Text>
-                  <Text size="lg" weight="medium">
+                  <Text size="lg" weight="medium" className="text-green-600">
+                    {formatCurrency(commitment.approved_change_orders || 0)}
+                  </Text>
+                  <Text size="xs" tone="muted">
+                    Included in revised amount
+                  </Text>
+                </Stack>
+                <Stack gap="xs">
+                  <Text size="sm" tone="muted">
+                    Pending Approval
+                  </Text>
+                  <Text size="lg" weight="medium" className="text-amber-600">
+                    {formatCurrency(commitment.pending_change_orders || 0)}
+                  </Text>
+                  <Text size="xs" tone="muted">
+                    Awaiting approval
+                  </Text>
+                </Stack>
+                <Stack gap="xs">
+                  <Text size="sm" tone="muted">
+                    Draft
+                  </Text>
+                  <Text size="lg" weight="medium" className="text-gray-500">
+                    {formatCurrency(commitment.draft_change_orders || 0)}
+                  </Text>
+                  <Text size="xs" tone="muted">
+                    Not yet submitted
+                  </Text>
+                </Stack>
+                <Stack gap="xs">
+                  <Text size="sm" tone="muted">
+                    Potential Total
+                  </Text>
+                  <Text size="lg" weight="medium" className="text-blue-600">
+                    {formatCurrency(
+                      (commitment.approved_change_orders || 0) +
+                        (commitment.pending_change_orders || 0) +
+                        (commitment.draft_change_orders || 0)
+                    )}
+                  </Text>
+                  <Text size="xs" tone="muted">
+                    If all COs approved
+                  </Text>
+                </Stack>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Invoice Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Stack gap="xs">
+                  <Text size="sm" tone="muted">
+                    Invoiced to Date
+                  </Text>
+                  <Text size="lg" weight="medium" className="text-green-600">
                     {formatCurrency(commitment.billed_to_date || 0)}
+                  </Text>
+                  <Text size="xs" tone="muted">
+                    {commitment.revised_contract_amount
+                      ? `${Math.round(((commitment.billed_to_date || 0) / commitment.revised_contract_amount) * 100)}% of contract`
+                      : "—"}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -463,6 +558,18 @@ export default function CommitmentDetailPage() {
                     {commitment.retention_percentage
                       ? `${commitment.retention_percentage}%`
                       : "—"}
+                  </Text>
+                </Stack>
+                <Stack gap="xs">
+                  <Text size="sm" tone="muted">
+                    Retention Amount
+                  </Text>
+                  <Text size="lg" weight="medium" className="text-amber-600">
+                    {commitment.retention_percentage && commitment.billed_to_date
+                      ? formatCurrency(
+                          (commitment.billed_to_date * commitment.retention_percentage) / 100
+                        )
+                      : formatCurrency(0)}
                   </Text>
                 </Stack>
                 <Stack gap="xs">
@@ -587,6 +694,7 @@ export default function CommitmentDetailPage() {
             lineItems={commitment.line_items || []}
             projectId={projectId}
             commitmentId={commitment.id}
+            commitmentType={commitment.type}
             onImportComplete={fetchCommitment}
           />
         </TabsContent>
@@ -602,7 +710,34 @@ export default function CommitmentDetailPage() {
         <TabsContent value="attachments">
           <AttachmentsTab commitmentId={commitment.id} />
         </TabsContent>
+
+        <TabsContent value="advanced-settings">
+          <AdvancedSettingsTab
+            commitmentId={commitment.id}
+            commitmentType={commitment.type}
+          />
+        </TabsContent>
       </Tabs>
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        projectId={String(projectId)}
+        commitmentId={commitment.id}
+        commitmentNumber={commitment.number}
+      />
+
+      {/* Email Dialog */}
+      <EmailCommitmentDialog
+        open={isEmailDialogOpen}
+        onOpenChange={setIsEmailDialogOpen}
+        commitmentId={commitment.id}
+        commitmentNumber={commitment.number}
+        commitmentTitle={commitment.title}
+        companyId={commitment.contract_company_id}
+        companyName={commitment.contract_company?.name}
+      />
     </Stack>
   );
 }

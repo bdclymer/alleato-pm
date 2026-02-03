@@ -5,15 +5,42 @@ import {
   optionalPositiveNumber,
 } from "./common";
 
-const dateString = z
-  .string()
-  .trim()
+/**
+ * Commitment Status enum values matching Procore
+ */
+export const CommitmentStatusValues = [
+  "Draft",
+  "Out for Signature",
+  "Pending",
+  "Approved",
+  "Complete",
+  "Void",
+] as const;
+
+export type CommitmentStatus = (typeof CommitmentStatusValues)[number];
+
+/**
+ * Accounting Method options
+ */
+export const AccountingMethodValues = ["amount_based", "unit_quantity"] as const;
+export type AccountingMethod = (typeof AccountingMethodValues)[number];
+
+/**
+ * Date validation - accepts Date objects or ISO strings
+ */
+const optionalDate = z
+  .union([z.date(), z.string().datetime().optional(), z.string().optional()])
   .optional()
-  // DOM only shows placeholder; keep permissive. You can tighten later.
-  .refine((v) => !v || /^\d{2}\/\d{2}\/\d{4}$/.test(v), {
-    message: "Use mm/dd/yyyy",
+  .transform((val) => {
+    if (!val) return undefined;
+    if (val instanceof Date) return val;
+    if (typeof val === "string" && val.trim() === "") return undefined;
+    return val;
   });
 
+/**
+ * SOV Line Item schema for Subcontracts
+ */
 export const SovLineItemSchema = z.object({
   lineNumber: optionalNumber, // maps to '#'
   changeEventLineItem: z.string().trim().optional(),
@@ -25,19 +52,56 @@ export const SovLineItemSchema = z.object({
   // amountRemaining = amount - billedToDate
 });
 
+/**
+ * Privacy settings schema
+ */
+export const PrivacySettingsSchema = z.object({
+  isPrivate: z.boolean(),
+  nonAdminUserIds: z.array(z.string()).optional(),
+  allowNonAdminViewSovItems: z.boolean(),
+});
+
+/**
+ * Contract dates schema
+ */
+export const ContractDatesSchema = z.object({
+  startDate: optionalDate,
+  estimatedCompletionDate: optionalDate,
+  actualCompletionDate: optionalDate,
+  contractDate: optionalDate,
+  signedContractReceivedDate: optionalDate,
+  issuedOnDate: optionalDate,
+});
+
+/**
+ * Main Create Subcontract schema with enhanced validation
+ */
 export const CreateSubcontractSchema = z.object({
-  contractNumber: z.string().trim().optional(),
-  contractCompanyId: z.string().trim().optional(),
-  title: z.string().trim().optional(),
+  // Required fields
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(255, "Title must be 255 characters or less"),
+  status: z.enum(CommitmentStatusValues),
+  contractCompanyId: z.string().min(1, "Please select a company"),
 
-  status: z.enum(["Draft"]).optional(), // only option visible in captured DOM
-  executed: z.boolean().optional(), // required (starred)
+  // Auto-generated but editable
+  contractNumber: z
+    .string()
+    .min(1, "Contract number is required")
+    .max(50, "Contract number must be 50 characters or less"),
 
+  // Optional fields with validation
+  executed: z.boolean(),
   defaultRetainagePercent: optionalPercent,
+  accountingMethod: z.enum(AccountingMethodValues),
 
-  description: z.string().optional(), // rich text content as string
+  // Rich text fields (stored as HTML)
+  description: z.string().optional(),
+  inclusions: z.string().optional(),
+  exclusions: z.string().optional(),
 
-  // Attachments: DOM shows file input + attach modal; keep as metadata list for now
+  // Attachments
   attachments: z
     .array(
       z.object({
@@ -48,32 +112,28 @@ export const CreateSubcontractSchema = z.object({
     )
     .optional(),
 
+  // Schedule of Values
   sov: z.array(SovLineItemSchema).optional(),
 
-  inclusions: z.string().optional(),
-  exclusions: z.string().optional(),
+  // Contract dates
+  dates: ContractDatesSchema.optional(),
 
-  dates: z
-    .object({
-      startDate: dateString,
-      estimatedCompletionDate: dateString,
-      actualCompletionDate: dateString,
-      contractDate: dateString,
-      signedContractReceivedDate: dateString,
-      issuedOnDate: dateString,
-    })
-    .optional(),
+  // Privacy & access control
+  privacy: PrivacySettingsSchema.optional(),
 
-  privacy: z
-    .object({
-      isPrivate: z.boolean().optional(),
-      nonAdminUserIds: z.array(z.string()).optional(),
-      allowNonAdminViewSovItems: z.boolean().optional(),
-    })
-    .optional(),
+  // Invoice contacts (only valid after company selection)
+  invoiceContactIds: z.array(z.string()).optional(),
+});
 
-  invoiceContacts: z.array(z.string()).optional(),
+/**
+ * Edit Subcontract schema - all fields optional except id
+ */
+export const EditSubcontractSchema = CreateSubcontractSchema.partial().extend({
+  id: z.string().uuid(),
 });
 
 export type CreateSubcontractInput = z.infer<typeof CreateSubcontractSchema>;
+export type EditSubcontractInput = z.infer<typeof EditSubcontractSchema>;
 export type SovLineItem = z.infer<typeof SovLineItemSchema>;
+export type PrivacySettings = z.infer<typeof PrivacySettingsSchema>;
+export type ContractDates = z.infer<typeof ContractDatesSchema>;
