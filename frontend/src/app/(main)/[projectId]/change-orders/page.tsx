@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { TableLayout } from "@/components/layouts";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { Button } from "@/components/ui/button";
 import { ChangeOrdersClient } from "./change-orders-client";
@@ -20,27 +21,39 @@ export default async function ProjectChangeOrdersPage({
 
   if (error) {
     return (
-      <TableLayout>
-        <div className="text-center text-destructive p-6">
-          Error loading change orders. Please try again later.
-        </div>
-      </TableLayout>
+      <>
+        <PageHeader
+          title="Change Orders"
+          description="Track and manage contract change orders"
+        />
+        <PageContainer>
+          <div className="text-center text-destructive p-6">
+            Error loading change orders. Please try again later.
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
   const changeOrderRows = changeOrders || [];
 
   return (
-    <TableLayout>
-      <div className="flex items-center justify-end">
-        <Button asChild data-testid="change-orders-create-button">
-          <Link href={`/${projectId}/change-orders/new`}>Create Change Order</Link>
-        </Button>
-      </div>
-      <ChangeOrdersClient
-        projectId={projectId}
-        changeOrders={changeOrderRows}
+    <>
+      <PageHeader
+        title="Change Orders"
+        description="Track and manage contract change orders"
+        actions={
+          <Button asChild size="sm" data-testid="change-orders-create-button">
+            <Link href={`/${projectId}/change-orders/new`}>Create Change Order</Link>
+          </Button>
+        }
       />
-    </TableLayout>
+      <PageContainer className="space-y-6">
+        <ChangeOrdersClient
+          projectId={projectId}
+          changeOrders={changeOrderRows}
+        />
+      </PageContainer>
+    </>
   );
 }

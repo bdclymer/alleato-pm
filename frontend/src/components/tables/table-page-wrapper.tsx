@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/design-system";
+import { PageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 interface TablePageWrapperProps {

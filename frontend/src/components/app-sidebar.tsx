@@ -35,7 +35,7 @@ import {
 } from "@/lib/navigation-config"
 import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
 
-import { NavUser } from "@/components/nav-user"
+import { NavUser } from "@/components/nav/nav-user"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()

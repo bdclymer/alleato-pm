@@ -39,6 +39,7 @@ import { InlineTeamMemberForm } from "@/components/project-home/inline-team-memb
 import { DirectorySummary } from "@/components/project-home/directory-summary";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { InfoSection } from "./info-section";
+import { MeetingsSection } from "./meetings-section";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
@@ -488,19 +489,9 @@ export function ProjectHomeClient({
               maxItems={5}
             />
 
-            <InfoSection
-              title="Meetings"
-              icon={Video}
-              items={meetings.slice(0, 5).map((meeting) => ({
-                id: meeting.id,
-                title: meeting.title || "Untitled Meeting",
-                subtitle: meeting.date
-                  ? `${format(new Date(meeting.date), "MMM d, yyyy")}${meeting.duration_minutes ? ` · ${meeting.duration_minutes} min` : ""}`
-                  : undefined,
-                href: `/${project.id}/meetings`,
-              }))}
-              viewAllHref={`/${project.id}/meetings`}
-              emptyMessage="No meetings yet"
+            <MeetingsSection
+              meetings={meetings}
+              projectId={project.id}
               maxItems={5}
             />
           </div>

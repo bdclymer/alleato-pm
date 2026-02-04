@@ -138,8 +138,11 @@ test.describe("Specifications Feature", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Open status filter
-    await page.getByRole("combobox").first().click();
+    // Wait for page to load
+    await expect(page.getByRole("heading", { name: "Specifications" }).first()).toBeVisible();
+
+    // Open status filter (target the combobox showing "All statuses", not the project selector)
+    await page.locator('button[role="combobox"]').filter({ hasText: "All statuses" }).click();
 
     // Select "Active"
     await page.getByRole("option", { name: "Active" }).click();
@@ -150,8 +153,8 @@ test.describe("Specifications Feature", () => {
     // Should see active specifications (including our test)
     await expect(page.getByText(TEST_TITLE)).toBeVisible();
 
-    // Switch to "Archived"
-    await page.getByRole("combobox").first().click();
+    // Switch to "Archived" (status trigger now shows "Active")
+    await page.locator('button[role="combobox"]').filter({ hasText: "Active" }).click();
     await page.getByRole("option", { name: "Archived" }).click();
     await page.waitForTimeout(500);
 
@@ -326,10 +329,18 @@ test.describe("Specifications Feature", () => {
     // Wait for dialog to open
     await expect(page.getByRole("dialog")).toBeVisible();
 
-    // Try to submit without filling required fields
-    await page.getByRole("button", { name: /upload specification/i, exact: false }).last().click();
+    // Submit button should be disabled when no file is selected
+    const submitButton = page.getByRole("button", { name: /upload specification/i, exact: false }).last();
+    await expect(submitButton).toBeDisabled();
 
-    // Should see validation errors (form should not submit)
+    // Fill in section number and title but no file
+    await page.getByLabel(/section number/i).fill("00 00 00");
+    await page.getByLabel(/title/i).fill("Validation Test");
+
+    // Submit button should still be disabled (no file)
+    await expect(submitButton).toBeDisabled();
+
+    // Dialog should still be visible (form was not submitted)
     await expect(page.getByRole("dialog")).toBeVisible();
 
     // Cancel the dialog

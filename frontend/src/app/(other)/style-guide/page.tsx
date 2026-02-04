@@ -11,13 +11,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  PageHeader,
-  SectionHeader,
-  StatCard,
-  ContentCard,
-  EmptyState,
-} from "@/components/design-system";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/layout/page-header-unified";
+import { SectionHeader } from "@/components/ui/section-header";
+import { MetricCard } from "@/components/ui/metric-card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function StyleGuidePage() {
   return (
@@ -175,15 +173,14 @@ export default function StyleGuidePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard label="Total Meetings" value={42} icon={Calendar} />
-            <StatCard
+            <MetricCard label="Total Meetings" value={42} />
+            <MetricCard
               label="Active Tasks"
               value={18}
-              icon={FileText}
-              trend={{ value: "+12%", positive: true }}
+              change={{ value: 12, type: "positive" }}
             />
-            <StatCard label="With Recordings" value={35} icon={Video} />
-            <StatCard label="Avg. Participants" value={8} icon={User} />
+            <MetricCard label="With Recordings" value={35} />
+            <MetricCard label="Avg. Participants" value={8} />
           </div>
         </section>
 
@@ -199,24 +196,26 @@ export default function StyleGuidePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ContentCard
-              title="Project Kickoff Meeting"
-              description="Discussed project timeline, deliverables, and team responsibilities. Key decisions made regarding technology stack and architecture."
-              metadata={[
-                { icon: Calendar, label: "Dec 15, 2024" },
-                { icon: User, label: "8 participants" },
-                { icon: Clock, label: "45 minutes" },
-              ]}
-              badge="Complete"
-            />
-            <ContentCard
-              title="Budget Review Session"
-              description="Quarterly budget review with detailed analysis of spending patterns and forecast adjustments."
-              metadata={[
-                { icon: Calendar, label: "Dec 12, 2024" },
-                { icon: User, label: "5 participants" },
-              ]}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Kickoff Meeting</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Discussed project timeline, deliverables, and team responsibilities. Key decisions made regarding technology stack and architecture.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget Review Session</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Quarterly budget review with detailed analysis of spending patterns and forecast adjustments.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -379,7 +378,7 @@ export default function StyleGuidePage() {
           </div>
 
           <EmptyState
-            icon={Calendar}
+            icon={<Calendar className="h-12 w-12" />}
             title="No meetings found"
             description="No meeting records for this project yet. Meetings will appear here once they are uploaded or synced from your meeting platform."
           />

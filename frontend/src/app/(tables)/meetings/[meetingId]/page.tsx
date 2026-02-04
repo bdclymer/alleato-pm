@@ -12,8 +12,10 @@ import {
   ListTodo,
   Sparkles,
 } from 'lucide-react'
-import { SectionHeader } from '@/components/design-system'
+import { SectionHeader } from '@/components/ui/section-header'
 import { FormattedTranscript } from '@/app/(main)/[projectId]/meetings/formatted-transcript'
+import { parseTranscriptSections } from '@/app/(main)/[projectId]/meetings/[meetingId]/parse-transcript-sections'
+import { MarkdownSummary } from '@/app/(main)/[projectId]/meetings/[meetingId]/markdown-summary'
 import type { Database } from '@/types/database.types'
 import { DashboardLayout } from '@/components/layouts'
 import { PageHeader } from '@/components/layout'
@@ -25,6 +27,27 @@ type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & 
 
 type DocumentMetadata = Database['public']['Tables']['document_metadata']['Row'] & {
   duration?: number
+}
+
+/**
+ * Format an email address into a display name.
+ * e.g. "bclymer@alleatogroup.com" -> "B. Clymer"
+ * e.g. "tony@ibexdevgroup.com" -> "Tony"
+ */
+function formatParticipantName(email: string): string {
+  const localPart = email.split('@')[0]
+  if (!localPart) return email
+
+  // Handle formats like "first.last" or "firstlast"
+  const parts = localPart.split(/[._-]/)
+  if (parts.length >= 2) {
+    const firstName = parts[0].charAt(0).toUpperCase() + '.'
+    const lastName = parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1).toLowerCase()
+    return `${firstName} ${lastName}`
+  }
+
+  // Single name - just capitalize it
+  return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase()
 }
 
 interface PageProps {
@@ -113,17 +136,13 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const storageUrl = meeting.url || meeting.source
 
   if (storageUrl && storageUrl.includes('supabase.co/storage')) {
-    // Try to fetch from Supabase Storage first
     try {
       const response = await fetch(storageUrl)
       if (response.ok) {
         transcriptContent = await response.text()
-      } else {
-        }
-    } catch (error) {
-
-      console.error("Failed to process meeting data:", error);
-
+      }
+    } catch (err) {
+      console.error("Failed to fetch transcript from storage:", err)
     }
   }
 
@@ -137,6 +156,11 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       meeting.participants?.split(',').map((p: string) => p.trim()) || []
     ),
   ]
+
+  // Parse the transcript content into sections
+  const parsedSections = transcriptContent
+    ? parseTranscriptSections(transcriptContent)
+    : null
 
   return (
     <>
@@ -195,6 +219,24 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             </div>
           )}
         </div>
+
+        {/* Gist Section */}
+        {parsedSections?.gist && (
+          <div className="border border-neutral-200 bg-background p-6 mb-6">
+            <SectionHeader className="mb-4">Meeting Overview</SectionHeader>
+            <p className="text-sm text-neutral-700 leading-relaxed">
+              {parsedSections.gist}
+            </p>
+          </div>
+        )}
+
+        {/* Summary Section */}
+        {parsedSections?.summary && (
+          <div className="border border-neutral-200 bg-background p-6 mb-6">
+            <SectionHeader className="mb-4">Summary</SectionHeader>
+            <MarkdownSummary content={parsedSections.summary} />
+          </div>
+        )}
 
         {/* Meeting Outcomes */}
         {(allDecisions.length > 0 ||
@@ -363,7 +405,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                                     key={idx}
                                     className="flex items-start gap-2 text-sm text-neutral-700"
                                   >
-                                    <span className="text-green-700">✓</span>
+                                    <span className="text-green-700">&#10003;</span>
                                     <span>{String(text)}</span>
                                   </li>
                                 )
@@ -392,7 +434,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                                   key={idx}
                                   className="flex items-start gap-2 text-sm text-neutral-700"
                                 >
-                                  <span className="text-blue-700">→</span>
+                                  <span className="text-blue-700">&rarr;</span>
                                   <span>{String(text)}</span>
                                 </li>
                               )
@@ -420,7 +462,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                                   key={idx}
                                   className="flex items-start gap-2 text-sm text-neutral-700"
                                 >
-                                  <span className="text-amber-700">⚠</span>
+                                  <span className="text-amber-700">&#9888;</span>
                                   <span>{String(text)}</span>
                                 </li>
                               )
@@ -449,7 +491,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                                     key={idx}
                                     className="flex items-start gap-2 text-sm text-neutral-700"
                                   >
-                                    <span className="text-purple-700">✨</span>
+                                    <span className="text-purple-700">&#10024;</span>
                                     <span>{String(text)}</span>
                                   </li>
                                 )
@@ -466,9 +508,9 @@ export default async function MeetingDetailPage({ params }: PageProps) {
         )}
 
         {/* Full Transcript */}
-        {transcriptContent && (
+        {parsedSections?.transcript && (
           <div className="mb-20 max-w-6xl">
-            <FormattedTranscript content={transcriptContent} />
+            <FormattedTranscript content={parsedSections.transcript} />
           </div>
         )}
 
@@ -493,18 +535,39 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           {/* Attendees */}
           {participantsList.length > 0 && (
             <div className="border border-neutral-200 bg-background p-6">
-              <SectionHeader count={participantsList.length} className="mb-4">
-                Attendees
+              <SectionHeader className="mb-4">
+                Attendees ({participantsList.length})
               </SectionHeader>
               <div className="flex flex-wrap gap-2">
                 {participantsList.map((participant, index) => (
                   <span
                     key={`attendee-${meeting.id}-${participant}-${index}`}
                     className="px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 text-neutral-700 rounded-sm"
+                    title={participant}
                   >
-                    {participant}
+                    {formatParticipantName(participant)}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Keywords Section */}
+          {parsedSections?.keywords && (
+            <div className="border border-neutral-200 bg-background p-6">
+              <SectionHeader className="mb-4">Topics</SectionHeader>
+              <div className="flex flex-wrap gap-2">
+                {parsedSections.keywords.split(',').map((keyword, index) => {
+                  const trimmedKeyword = keyword.trim()
+                  return (
+                    <span
+                      key={`keyword-${trimmedKeyword}-${index}`}
+                      className="px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 text-neutral-700 rounded-sm"
+                    >
+                      {trimmedKeyword}
+                    </span>
+                  )
+                })}
               </div>
             </div>
           )}

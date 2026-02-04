@@ -13,8 +13,7 @@ import {
   Pencil,
 } from "lucide-react";
 
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -117,7 +116,7 @@ export default function SpecificationDetailPage() {
   if (specLoading) {
     return (
       <>
-        <PageHeader title="Loading..." description="Loading specification details" />
+        <ProjectPageHeader title="Loading..." description="Loading specification details" />
         <PageContainer>
           <Card className="p-6">
             <p className="text-muted-foreground">Loading...</p>
@@ -130,7 +129,7 @@ export default function SpecificationDetailPage() {
   if (!specification) {
     return (
       <>
-        <PageHeader title="Not Found" description="Specification not found" />
+        <ProjectPageHeader title="Not Found" description="Specification not found" />
         <PageContainer>
           <Card className="p-6">
             <p className="text-muted-foreground">Specification not found</p>
@@ -147,7 +146,7 @@ export default function SpecificationDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={specification.title}
         description={`Section ${specification.section_number}`}
         actions={

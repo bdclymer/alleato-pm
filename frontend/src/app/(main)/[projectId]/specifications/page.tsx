@@ -5,8 +5,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
 
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +52,7 @@ export default function ProjectSpecificationsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Specifications"
         description="Manage project specifications and revisions"
         actions={

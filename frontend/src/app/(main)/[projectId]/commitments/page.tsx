@@ -1,13 +1,12 @@
 "use client";
 
 import { useMemo, useCallback, useState } from "react";
-import { useParams, useRouter, usePathname } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Plus, Download, ChevronDown } from "lucide-react";
 import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
-import { TableLayout } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { PageContainer, PageTabs } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
 import {
   useCommitmentsList,
@@ -341,76 +341,37 @@ const config: GenericTableConfig = {
 const tableRenderConfig = { ...config, title: undefined, description: undefined };
 
 // =============================================================================
-// Currency formatter (module-level singleton)
-// =============================================================================
-
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
-function formatCurrency(value: number) {
-  return currencyFormatter.format(value);
-}
-
-// =============================================================================
 // Skeleton Loading Component
 // =============================================================================
 
 function CommitmentsListSkeleton() {
   return (
-    <TableLayout>
-      {/* Header skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <Skeleton className="h-9 w-48" />
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-24" />
-          <Skeleton className="h-9 w-28" />
-        </div>
-      </div>
-
-      {/* Summary cards skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border bg-card p-4 space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-7 w-32" />
+    <>
+      <PageHeader title="Commitments" description="Manage purchase orders and subcontracts" />
+      <PageContainer className="space-y-6">
+        {/* Table skeleton */}
+        <div className="space-y-3">
+          <div className="flex gap-4 px-4">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-28" />
           </div>
-        ))}
-      </div>
-
-      {/* Tabs skeleton */}
-      <div className="flex space-x-8 border-b">
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-10 w-28" />
-      </div>
-
-      {/* Table skeleton */}
-      <div className="mt-6 space-y-3">
-        {/* Table header */}
-        <div className="flex gap-4 px-4">
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-4 w-28" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex gap-4 px-4 py-3 border-b">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          ))}
         </div>
-        {/* Table rows */}
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex gap-4 px-4 py-3 border-b">
-            <Skeleton className="h-5 w-16" />
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-5 w-24" />
-          </div>
-        ))}
-      </div>
-    </TableLayout>
+      </PageContainer>
+    </>
   );
 }
 
@@ -426,7 +387,6 @@ interface CommitmentRow extends CommitmentListItem {
 export default function ProjectCommitmentsPage() {
   const params = useParams();
   const router = useRouter();
-  const pathname = usePathname();
   const projectId = params.projectId as string;
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -463,38 +423,6 @@ export default function ProjectCommitmentsPage() {
       contract_company_name: c.contract_company?.name || null,
     }));
   }, [response?.data]);
-
-  // Memoize summary totals - only recalculate when commitments change
-  const summaryTotals = useMemo(() => {
-    const totalOriginal = commitments.reduce(
-      (sum, c) => sum + (c.original_amount || 0),
-      0,
-    );
-    const totalRevised = commitments.reduce(
-      (sum, c) => sum + (c.revised_contract_amount || 0),
-      0,
-    );
-    const totalInvoiced = commitments.reduce(
-      (sum, c) => sum + (c.invoiced_amount || c.billed_to_date || 0),
-      0,
-    );
-    const totalBalance = commitments.reduce(
-      (sum, c) => sum + (c.balance_to_finish || 0),
-      0,
-    );
-    const percentInvoiced =
-      totalRevised > 0
-        ? Math.round((totalInvoiced / totalRevised) * 100)
-        : 0;
-
-    return {
-      totalOriginal,
-      totalRevised,
-      totalInvoiced,
-      totalBalance,
-      percentInvoiced,
-    };
-  }, [commitments]);
 
   // Memoize tabs to prevent recreation on every render
   const tabs = useMemo(
@@ -546,144 +474,64 @@ export default function ProjectCommitmentsPage() {
 
   if (error) {
     return (
-      <TableLayout>
-        <div className="text-center text-destructive p-6">
-          Error loading commitments:{" "}
-          {error instanceof Error ? error.message : "Unknown error"}
-        </div>
-      </TableLayout>
+      <>
+        <PageHeader title="Commitments" description="Manage purchase orders and subcontracts" />
+        <PageContainer>
+          <div className="text-center text-destructive p-6">
+            Error loading commitments:{" "}
+            {error instanceof Error ? error.message : "Unknown error"}
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
   return (
-    <TableLayout>
-      {/* Header with Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Commitments
-        </h1>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2">
-          <div className="flex gap-2">
+    <>
+      <PageHeader
+        title="Commitments"
+        description="Manage purchase orders and subcontracts"
+        actions={
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleExport}
-              className="flex-1 sm:flex-initial"
             >
-              <Download className="h-4 w-4 sm:mr-2" />
-              <span className="hidden xs:inline">Export</span>
+              <Download className="h-4 w-4 mr-2" />
+              Export
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                router.push(`/${projectId}/commitments/recycle-bin`)
-              }
-              className="flex-1 sm:flex-initial hidden sm:flex"
-            >
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleCreateSubcontract}>
+                  Subcontract
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
+                  Purchase Order
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+        }
+      />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" className="flex-1 sm:flex-initial">
-                <Plus className="h-4 w-4 mr-2" />
-                Create
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleCreateSubcontract}>
-                Subcontract
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
-                Purchase Order
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      <PageTabs tabs={tabs} />
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Original Amount</p>
-          <p className="text-xl font-semibold mt-1">
-            {formatCurrency(summaryTotals.totalOriginal)}
-          </p>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Revised Amount</p>
-          <p className="text-xl font-semibold mt-1">
-            {formatCurrency(summaryTotals.totalRevised)}
-          </p>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Invoiced to Date</p>
-          <p className="text-xl font-semibold mt-1 text-green-600 dark:text-green-400">
-            {formatCurrency(summaryTotals.totalInvoiced)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {summaryTotals.percentInvoiced}% of revised
-          </p>
-        </div>
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">Balance to Finish</p>
-          <p className="text-xl font-semibold mt-1">
-            {formatCurrency(summaryTotals.totalBalance)}
-          </p>
-        </div>
-      </div>
-
-      {/* Underline Tabs */}
-      <div className="overflow-x-auto -mb-px">
-        <nav
-          className="flex space-x-6 sm:space-x-8 border-b min-w-max px-1"
-          aria-label="Tabs"
-        >
-          {tabs.map((tab) => {
-            const isActive = pathname === tab.href;
-            return (
-              <button
-                key={tab.href}
-                type="button"
-                onClick={() => router.push(tab.href)}
-                className={cn(
-                  "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-smooth whitespace-nowrap touch-target",
-                  isActive
-                    ? "border-brand text-brand"
-                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs font-medium",
-                      isActive
-                        ? "bg-brand/10 text-brand"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Table */}
-      <div className="mt-6">
+      <PageContainer className="space-y-6">
+        {/* Table */}
         <GenericDataTable
           data={commitments}
           config={dynamicTableConfig}
           onDeleteRow={handleDeleteCommitment}
         />
-      </div>
+      </PageContainer>
 
       {/* Export Dialog */}
       <ExportDialog
@@ -691,6 +539,6 @@ export default function ProjectCommitmentsPage() {
         onOpenChange={setIsExportDialogOpen}
         projectId={projectId}
       />
-    </TableLayout>
+    </>
   );
 }

@@ -22,8 +22,6 @@ export function ChangeOrdersClient({
   const router = useRouter();
 
   const config: GenericTableConfig = {
-    title: "Change Orders",
-    description: "Manage contract change orders and modifications",
     searchFields: ["co_number", "title", "description"],
     exportFilename: "change-orders-export.csv",
     editConfig: {

@@ -1,6 +1,6 @@
 import { Calendar, Clock } from "lucide-react";
 
-import { EmptyState } from "@/components/design-system";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
@@ -68,7 +68,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
         {/* Meetings Table */}
         {!meetings || meetings.length === 0 ? (
           <EmptyState
-            icon={Calendar}
+            icon={<Calendar className="h-12 w-12" />}
             title="No meetings found"
             description="No meeting records for this project yet. Meetings will appear here once they are uploaded or synced from your meeting platform."
           />

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { TableLayout } from "@/components/layouts";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { Button } from "@/components/ui/button";
 import { DirectCostsClient } from "./direct-costs-client";
@@ -24,11 +25,17 @@ export default async function ProjectDirectCostsPage({
 
   if (error) {
     return (
-      <TableLayout>
-        <div className="text-center text-destructive p-6">
-          Error loading direct costs. Please try again later.
-        </div>
-      </TableLayout>
+      <>
+        <PageHeader
+          title="Direct Costs"
+          description="Track direct project expenses and invoices"
+        />
+        <PageContainer>
+          <div className="text-center text-destructive p-6">
+            Error loading direct costs. Please try again later.
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
@@ -48,16 +55,22 @@ export default async function ProjectDirectCostsPage({
   }));
 
   return (
-    <TableLayout>
-      <div className="flex items-center justify-end">
-        <Button asChild data-testid="direct-costs-create-button">
-          <Link href={`/${projectId}/direct-costs/new`}>Add Direct Cost</Link>
-        </Button>
-      </div>
-      <DirectCostsClient
-        projectId={projectId}
-        directCosts={directCostRows}
+    <>
+      <PageHeader
+        title="Direct Costs"
+        description="Track direct project expenses and invoices"
+        actions={
+          <Button asChild size="sm" data-testid="direct-costs-create-button">
+            <Link href={`/${projectId}/direct-costs/new`}>Add Direct Cost</Link>
+          </Button>
+        }
       />
-    </TableLayout>
+      <PageContainer className="space-y-6">
+        <DirectCostsClient
+          projectId={projectId}
+          directCosts={directCostRows}
+        />
+      </PageContainer>
+    </>
   );
 }

@@ -36,8 +36,6 @@ export function DirectCostsClient({
   const router = useRouter();
 
   const config: GenericTableConfig = {
-    title: "Direct Costs",
-    description: "Track project direct costs including expenses, work orders, and equipment",
     searchFields: ["description", "invoice_number"],
     exportFilename: "direct-costs-export.csv",
     editConfig: {

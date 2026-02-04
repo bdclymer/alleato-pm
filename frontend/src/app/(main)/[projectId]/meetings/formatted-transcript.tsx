@@ -2,7 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { SectionHeader } from "@/components/design-system";
+import { SectionHeader } from "@/components/ui/section-header";
 
 interface FormattedTranscriptProps {
   content: string;
@@ -65,16 +65,31 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
 
           // Lists
           ul: ({ children }) => (
-            <ul className="list-disc list-inside text-sm text-neutral-700 leading-relaxed mb-4 space-y-1">
+            <ul className="text-sm text-neutral-700 leading-relaxed mb-4 space-y-2">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-inside text-sm text-neutral-700 leading-relaxed mb-4 space-y-1">
+            <ol className="list-decimal list-inside text-sm text-neutral-700 leading-relaxed mb-4 space-y-2">
               {children}
             </ol>
           ),
-          li: ({ children }) => <li className="ml-4">{children}</li>,
+          li: ({ children }) => {
+            // Skip empty list items
+            const childArray = Array.isArray(children) ? children : [children];
+            const hasContent = childArray.some((child) => {
+              if (typeof child === "string") return child.trim().length > 0;
+              return child != null;
+            });
+            if (!hasContent) return null;
+
+            return (
+              <li className="flex items-start gap-3 ml-1">
+                <span className="text-brand mt-0.5 shrink-0">•</span>
+                <span>{children}</span>
+              </li>
+            );
+          },
 
           // Emphasis
           strong: ({ children }) => (

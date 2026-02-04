@@ -11,7 +11,7 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Info } from "lucide-react";
+import { Loader2, ArrowLeft, Info, Upload, ImageIcon, X } from "lucide-react";
 import { AppShell } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
@@ -359,16 +359,14 @@ const formSections: FormSection[] = [
         label: "Project Logo",
         control: "file",
         accept: ACCEPTED_IMAGE_TYPES,
-        description: "Supported: JPG, PNG, JPEG, TIF/TIFF, BMP.",
-        colSpan: "full",
+        description: "Square image recommended",
       },
       {
         name: "project_photo",
         label: "Project Photo",
         control: "file",
         accept: ACCEPTED_IMAGE_TYPES,
-        description: "Supported: JPG, PNG, JPEG, TIF/TIFF, BMP.",
-        colSpan: "full",
+        description: "Landscape image recommended",
       },
     ],
   },
@@ -952,17 +950,65 @@ function CreateProjectForm() {
     }
 
     if (field.control === "file") {
+      const file =
+        typeof File !== "undefined" && formField.value instanceof File
+          ? formField.value
+          : null;
+      const inputId = `${fieldId}-file-input`;
+
       return (
-        <Input
-          {...ariaProps}
-          key={`${String(field.name)}-${fileResetKey}`}
-          type="file"
-          accept={field.accept}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            formField.onChange(file ?? undefined);
-          }}
-        />
+        <div key={`${String(field.name)}-${fileResetKey}`}>
+          <input
+            id={inputId}
+            type="file"
+            accept={field.accept}
+            className="sr-only"
+            onChange={(event) => {
+              const selected = event.target.files?.[0];
+              formField.onChange(selected ?? undefined);
+            }}
+          />
+          {file ? (
+            <div className="flex items-center gap-3 rounded-lg border border-input bg-background px-4 py-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024).toFixed(0)} KB
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  formField.onChange(undefined);
+                  setFileResetKey((k) => k + 1);
+                }}
+                className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label
+              htmlFor={inputId}
+              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 px-4 py-8 cursor-pointer hover:border-muted-foreground/40 hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <Upload className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">
+                  Click to upload
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  JPG, PNG, TIFF, or BMP
+                </p>
+              </div>
+            </label>
+          )}
+        </div>
       );
     }
 

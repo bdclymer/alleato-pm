@@ -11,7 +11,7 @@ import {
   ListTodo,
   Sparkles,
 } from "lucide-react";
-import { SectionHeader } from "@/components/design-system";
+import { SectionHeader } from "@/components/ui/section-header";
 import { format } from "date-fns";
 import type { ReactNode } from "react";
 

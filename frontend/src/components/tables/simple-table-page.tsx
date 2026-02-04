@@ -3,7 +3,7 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
-import { PageHeader } from "@/components/design-system";
+import { PageHeader } from "@/components/layout";
 
 interface SimpleTablePageProps {
   tableName: string;

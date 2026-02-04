@@ -25,7 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/tables/DataTable";
-import { StatCard } from "@/components/design-system/stat-card";
+import { MetricCard } from "@/components/ui/metric-card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -335,10 +335,10 @@ export default function DirectoryUsersPage() {
         <div className="space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Users" value={users.length} />
-            <StatCard label="Active" value={activeUsers} />
-            <StatCard label="Pending Invites" value={pendingUsers} />
-            <StatCard
+            <MetricCard label="Total Users" value={users.length} />
+            <MetricCard label="Active" value={activeUsers} />
+            <MetricCard label="Pending Invites" value={pendingUsers} />
+            <MetricCard
               label="Permission Templates"
               value={
                 new Set(

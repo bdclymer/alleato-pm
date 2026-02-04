@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDistanceToNow, format } from "date-fns";
-import { PageHeader } from "@/components/design-system";
+import { PageHeader } from "@/components/layout/page-header-unified";
 
 import { FileText, Clock, Tag, Users, Calendar, Filter } from "lucide-react";
 

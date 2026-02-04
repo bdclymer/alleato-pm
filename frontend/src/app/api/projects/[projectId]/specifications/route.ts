@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationService } from "@/services/SpecificationService";
 import {
   uploadSpecificationSchema,
@@ -97,10 +98,14 @@ export async function POST(
     // Validate with Zod
     const validated = uploadSpecificationSchema.parse(uploadData);
 
-    const service = new SpecificationService(supabase);
+    // Use service role client for write operations (bypasses RLS)
+    // Auth is already verified above via cookie-based client
+    const serviceClient = createServiceClient();
+    const service = new SpecificationService(serviceClient);
     const result = await service.create(projectId, validated, user.id);
 
     if (result.error) {
+      console.error("[Specifications POST] Service error:", JSON.stringify(result.error));
       const statusCode =
         result.error.type === "FILE_TOO_LARGE" ||
         result.error.type === "INVALID_FILE_TYPE"
@@ -114,6 +119,7 @@ export async function POST(
 
     return NextResponse.json(result.data, { status: 201 });
   } catch (err) {
+    console.error("[Specifications POST] Caught exception:", err);
     if (err instanceof Error && err.name === "ZodError") {
       return NextResponse.json(
         { error: "Validation failed", details: err.message },

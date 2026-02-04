@@ -10,7 +10,7 @@ import {
   ListTodo,
   Sparkles,
 } from 'lucide-react';
-import { SectionHeader } from '@/components/design-system';
+import { SectionHeader } from '@/components/ui/section-header';
 import { FormattedTranscript } from '../formatted-transcript';
 import { parseTranscriptSections } from './parse-transcript-sections';
 import { MarkdownSummary } from './markdown-summary';
@@ -19,6 +19,27 @@ import { getProjectInfo } from '@/lib/supabase/project-fetcher';
 import type { Database } from '@/types/database.types';
 import { DashboardLayout } from '@/components/layouts';
 import { PageHeader } from '@/components/layout';
+
+/**
+ * Format an email address into a display name.
+ * e.g. "bclymer@alleatogroup.com" -> "B. Clymer"
+ * e.g. "tony@ibexdevgroup.com" -> "Tony"
+ */
+function formatParticipantName(email: string): string {
+  const localPart = email.split('@')[0];
+  if (!localPart) return email;
+
+  // Handle formats like "first.last" or "firstlast"
+  const parts = localPart.split(/[._-]/);
+  if (parts.length >= 2) {
+    const firstName = parts[0].charAt(0).toUpperCase() + '.';
+    const lastName = parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1).toLowerCase();
+    return `${firstName} ${lastName}`;
+  }
+
+  // Single name - just capitalize it
+  return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
+}
 
 // Extended types to handle fields that may exist in DB but not in generated types
 type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & {
@@ -521,16 +542,17 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
           {/* Attendees - Moved to bottom, more compact */}
           {participantsList.length > 0 && (
             <div className="border border-neutral-200 bg-background p-6">
-              <SectionHeader count={participantsList.length} className="mb-4">
-                Attendees
+              <SectionHeader className="mb-4">
+                Attendees ({participantsList.length})
               </SectionHeader>
               <div className="flex flex-wrap gap-2">
                 {participantsList.map((participant, index) => (
                   <span
                     key={`attendee-${meeting.id}-${participant}-${index}`}
                     className="px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 text-neutral-700 rounded-sm"
+                    title={participant}
                   >
-                    {participant}
+                    {formatParticipantName(participant)}
                   </span>
                 ))}
               </div>

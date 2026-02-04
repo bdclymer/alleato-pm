@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { PageHeader } from "@/components/design-system";
+import { PageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout";
 
 interface ProjectToolPageProps {
@@ -28,8 +28,7 @@ export function ProjectToolPage({
   return (
     <>
       <PageHeader
-        project={project}
-        client={client}
+        preHeading={project || client ? { project, client } : undefined}
         title={title}
         description={description}
         actions={actions}
