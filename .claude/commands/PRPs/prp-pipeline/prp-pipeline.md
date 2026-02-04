@@ -1,211 +1,276 @@
-# README - PRP Pipeline
+---
+description: "Automated PRP pipeline — auto-detects workflow, runs all phases with gate checks, retries on failure"
+argument-hint: "<feature-name>"
+---
 
-## Which Workflow Do I Use?
+# PRP Pipeline Orchestrator
 
-| Situation | Workflow |
-|-----------|----------|
-| Building a brand new feature from scratch | **Workflow A: New Feature** |
-| Feature has existing code but is broken or incomplete | **Workflow B: Fix / Complete** |
-| Just need to run and fix tests for an existing feature | Run `/prp-test <feature>` directly |
-| **Want hands-off automation (recommended)** | **`/prp-pipeline <feature-name>`** |
+## Feature: $ARGUMENTS
+
+You are the PRP Pipeline Orchestrator. Your job is to run the full PRP workflow **hands-off** — detect the right workflow, execute each phase via sub-agents, enforce gate checks between phases, retry once on failure, and produce a final summary.
 
 ---
 
-## Automated: `/prp-pipeline <feature-name>`
+## Step 0: Setup & Workflow Detection
 
-**One command, no babysitting.** Auto-detects whether to run Workflow A or B, then executes all phases using separate sub-agents with gate checks between each.
+### 0a. Resolve Feature Name
 
 ```
-You run:     /prp-pipeline punch-list
-             ↓
-Orchestrator detects: no existing code → Workflow A
-             ↓
-Phase 1:     Sub-agent runs /prp-create        → gate: PRP file exists?
-Phase 2:     Sub-agent runs /prp-quality        → gate: score ≥ 8/10?
-Phase 3:     Sub-agent runs /prp-execute        → gate: TASKS.md complete, tsc clean?
-Phase 4:     Sub-agent runs /prp-test           → gate: all tests passing?
-Phase 5:     Sub-agent runs /prp-validate       → gate: PASSED?
-             ↓
-Pipeline complete — summary report produced
+FEATURE = "$ARGUMENTS"
+PRP_DIR = "docs-ai/contents/docs/PRPs/${FEATURE}"
+PRP_FILE = "${PRP_DIR}/prp-${FEATURE}.md"
+FIX_PRP_FILE = "${PRP_DIR}/prp-${FEATURE}-fix.md"
+TASKS_FILE = "${PRP_DIR}/TASKS.md"
 ```
 
-**On failure:** Each phase gets one automatic retry with the error context. If it still fails after retry, the pipeline stops and reports what went wrong.
+If `$ARGUMENTS` is empty, **stop immediately** and ask the user: "What feature should I build? Usage: `/prp-pipeline <feature-name>`"
 
----
+### 0b. Detect Workflow
 
-## Workflow A: New Feature
+Search the codebase for existing artifacts related to this feature:
 
-Use when there is no existing code for this feature.
+1. Check for existing page files: `frontend/src/app/(main)/[projectId]/${FEATURE}/` or similar kebab-case variants
+2. Check for existing API routes: `frontend/src/app/api/projects/[projectId]/${FEATURE}/` or similar
+3. Check for existing hooks: `frontend/src/hooks/use-${FEATURE}*`
+4. Check for existing services: `frontend/src/services/${FEATURE}*`
+5. Check for existing database tables (grep database.types.ts for the snake_case version)
+6. Check for existing PRP docs in `${PRP_DIR}/`
 
-```plain text
-Step 1    /prp-create <feature-name>
-          ↓
-Step 2    /prp-quality <path/to/prp.md>
-          ↓
-Step 3    /prp-execute <path/to/prp.md>
-          ↓
-Step 4    /prp-test <feature-name>
-          ↓
-Step 5    /prp-validate <path/to/prp.md>
-```
+**Decision logic:**
 
-### Step 1: `/prp-create <feature-name>`
+- If **3+ existing artifacts found** (pages, routes, hooks, services, or DB tables) → **Workflow B** (Fix/Complete)
+- If **existing PRP + TASKS.md found but code is missing/incomplete** → **Workflow B** (Fix/Complete)
+- Otherwise → **Workflow A** (New Feature)
 
-**What it does:** Researches the codebase and creates a comprehensive PRP document.
-
-- Generates fresh Supabase types and reviews the database schema
-- Reads the incident log for past mistakes related to this feature type
-- Checks for Procore crawl data in `docs-ai/contents/docs/PRPs/<feature>/crawl/`
-- Explores the codebase for similar features to use as patterns
-- Produces three files in `docs-ai/contents/docs/PRPs/<feature>/`:
-  - `prp-<feature>.md` — the full PRP document
-  - `TASKS.md` — implementation checklist (live tracker)
-  - `prp-<feature>.html` — browser-viewable version
-
-**Output:** PRP document ready for quality review.
-
-### Step 2: `/prp-quality <path/to/prp.md>`
-
-**What it does:** Validates the PRP is complete enough for one-pass implementation.
-
-- Checks all template sections are filled (Goal, Why, What, Context, Tasks, Validation)
-- Runs the "No Prior Knowledge" test
-- Verifies file references exist and URLs are accessible
-- Scores 1-10 on context completeness, information density, implementation readiness, validation quality
-- Minimum 8/10 required to proceed
-
-**Output:** APPROVED (proceed to Step 3) or NEEDS REVISION (fix and re-run Step 2).
-
-### Step 3: `/prp-execute <path/to/prp.md>`
-
-**What it does:** Implements the feature following the PRP.
-
-- Reads TASKS.md, CLAUDE.md, and all relevant project rules
-- Uses `/create-feature` scaffold for new CRUD entities (never writes from scratch)
-- Generates Supabase types before any database code
-- Follows PRP task order, updates TASKS.md after each completed task
-- Runs progressive validation (TypeScript, lint, route checks, query tests)
-- Writes E2E tests meeting project standards (Create, Read, Edit, Delete, Validation)
-
-**Output:** Implemented feature code with TASKS.md updated. Tests are written but not yet run.
-
-### Step 4: `/prp-test <feature-name>`
-
-**What it does:** Runs ALL tests, fixes failures, re-runs until everything passes.
-
-- Starts the dev server
-- Runs TypeScript compilation and lint
-- Runs route conflict check
-- Runs Playwright E2E tests with actual output shown
-- If any test fails: diagnoses, fixes, re-runs (up to 3 attempts per failure)
-- Verifies E2E tests meet standards (not smoke tests)
-- Runs production build
-
-**Output:** All tests passing with actual Playwright output in the conversation. Fix history documented.
-
-### Step 5: `/prp-validate <path/to/prp.md>`
-
-**What it does:** Final verification that everything is complete and correct.
-
-- Checks TASKS.md — all tasks must be marked `[x]`
-- Runs TypeScript, lint, route check, Supabase types freshness, production build
-- Tests Supabase queries with actual `node -e` execution
-- Confirms `/prp-test` was already run (does NOT run tests itself)
-- Verifies E2E test coverage meets CRUD standards
-- Checks code pattern compliance (page headers, route naming, file organization)
-- Produces structured validation report
-
-**Output:** Validation report with PASSED / FAILED status and confidence score.
-
----
-
-## Workflow B: Fix / Complete Existing Feature
-
-Use when the feature has existing code that is broken, incomplete, or both.
+**Announce the decision clearly:**
 
 ```
-Step 1    /prp-audit <feature-name>
-          ↓
-Step 2    /prp-execute <path/to/fix-prp.md>
-          ↓
-Step 3    /prp-test <feature-name>
-          ↓
-Step 4    /prp-validate <path/to/fix-prp.md>
+PIPELINE: Detected [Workflow A: New Feature / Workflow B: Fix/Complete]
+Reason: [what was found or not found]
+Starting pipeline for feature: ${FEATURE}
 ```
 
-### Step 1: `/prp-audit <feature-name>`
+---
 
-**What it does:** Audits the existing code to find what works, what's broken, and what's missing.
+## Workflow A: New Feature Pipeline
 
-- Discovers all existing artifacts (pages, routes, components, hooks, tests, PRP docs, DB tables)
-- Runs every validation check (TypeScript, lint, routes, query tests, E2E tests, dev server)
-- Categorizes everything into Working / Broken / Missing
-- Generates a targeted fix PRP (`prp-<feature>-fix.md`) that only covers gaps
-- Generates TASKS.md with only fix/completion tasks (nothing for what already works)
+Execute these phases **sequentially**. Each phase MUST pass its gate before the next phase starts.
 
-**Output:** Gap analysis + targeted fix PRP + TASKS.md. No `/prp-quality` needed — the audit itself is the quality check.
+### Phase 1: Create PRP
 
-### Step 2: `/prp-execute <path/to/fix-prp.md>`
+**Action:** Use the Skill tool to invoke `prp-create` with argument `${FEATURE}`.
 
-**Same as Workflow A Step 3**, but with fix PRP behavior:
+```
+Skill: prp-create
+Args: ${FEATURE}
+```
 
-- Reads the "Working (DO NOT TOUCH)" section and leaves those files alone
-- Uses existing working code as pattern reference instead of scaffolds
-- Only creates new files if explicitly called for in the "Missing" section
-- Focuses on fixing broken items first, then building missing items
+**Gate check after completion:**
+- [ ] File exists: `${PRP_FILE}`
+- [ ] File exists: `${TASKS_FILE}`
+- [ ] PRP file is non-empty (> 100 lines)
+- [ ] TASKS.md contains checkbox items (`- [ ]`)
 
-### Step 3: `/prp-test <feature-name>`
+**On gate failure:** Retry Phase 1 once. If still failing, STOP the pipeline and report:
+```
+PIPELINE FAILED at Phase 1 (Create PRP)
+Gate failures: [list what failed]
+Manual fix needed before re-running /prp-pipeline ${FEATURE}
+```
 
-**Same as Workflow A Step 4.** Runs all tests, fixes failures, re-runs until passing.
+### Phase 2: Quality Check
 
-### Step 4: `/prp-validate <path/to/fix-prp.md>`
+**Action:** Use the Skill tool to invoke `prp-quality` with the PRP path.
 
-**Same as Workflow A Step 5.** Final verification.
+```
+Skill: prp-quality
+Args: ${PRP_FILE}
+```
+
+**Gate check after completion:**
+- [ ] Quality report was produced
+- [ ] Overall confidence score >= 8/10
+- [ ] Status is "APPROVED" (not "REJECTED" or "NEEDS REVISION")
+
+**On gate failure (score < 8 or NEEDS REVISION):**
+1. Read the quality report's "Critical Issues" and "Medium Priority Issues"
+2. Fix the PRP file directly — address each critical issue
+3. Re-run Phase 2 (quality check) once more
+4. If still below 8/10 after retry, STOP and report:
+```
+PIPELINE FAILED at Phase 2 (Quality Check)
+Score: X/10 (minimum 8 required)
+Unresolved issues: [list from quality report]
+Fix the PRP manually, then run: /prp-quality ${PRP_FILE}
+```
+
+### Phase 3: Execute Implementation
+
+**Action:** Use the Skill tool to invoke `prp-execute` with the PRP path.
+
+```
+Skill: prp-execute
+Args: ${PRP_FILE}
+```
+
+**Gate check after completion:**
+- [ ] TASKS.md has been updated (checked items `- [x]` exist)
+- [ ] At least 80% of tasks in TASKS.md are marked complete
+- [ ] TypeScript compiles: run `npm run typecheck --prefix frontend` and confirm 0 errors
+- [ ] No route conflicts: run `npm run check:routes` (if script exists)
+
+**On gate failure:** Retry Phase 3 once with context about what failed. If still failing, STOP and report:
+```
+PIPELINE FAILED at Phase 3 (Execute)
+Gate failures: [list what failed]
+TASKS.md progress: X/Y tasks complete
+TypeScript errors: [count]
+Route conflicts: [details if any]
+```
+
+### Phase 4: Test
+
+**Action:** Use the Skill tool to invoke `prp-test` with the feature name.
+
+```
+Skill: prp-test
+Args: ${FEATURE}
+```
+
+**Gate check after completion:**
+- [ ] TypeScript compilation passes (0 errors)
+- [ ] Lint passes
+- [ ] Playwright E2E tests pass (or no test failures remain)
+- [ ] Production build succeeds: `npm run build --prefix frontend`
+
+**On gate failure:** Retry Phase 4 once (the test command already includes fix-and-retry loops internally). If still failing, STOP and report:
+```
+PIPELINE FAILED at Phase 4 (Test)
+Failing tests: [list]
+TypeScript errors: [count]
+Build status: [pass/fail]
+Fix failures manually, then run: /prp-test ${FEATURE}
+```
+
+### Phase 5: Validate
+
+**Action:** Use the Skill tool to invoke `prp-validate` with the PRP path and feature name.
+
+```
+Skill: prp-validate
+Args: ${PRP_FILE} --feature ${FEATURE}
+```
+
+**Gate check after completion:**
+- [ ] Validation report status is "PASS"
+- [ ] Confidence score >= 8/10
+- [ ] No critical issues listed
+
+**On gate failure:** Retry Phase 5 once. If the validation identifies execution gaps, loop back to Phase 3 (Execute) once to fix them, then re-validate. If still failing after the loop, STOP and report:
+```
+PIPELINE FAILED at Phase 5 (Validate)
+Status: FAIL
+Critical issues: [list]
+Confidence: X/10
+```
 
 ---
 
-## Command Quick Reference
+## Workflow B: Fix/Complete Pipeline
 
-| Command | Purpose | Input | Output |
-|---------|---------|-------|--------|
-| **`/prp-pipeline`** | **Full automated workflow** | **Feature name** | **Everything — hands-off** |
-| `/prp-create` | Research + write PRP | Feature name | PRP + TASKS.md + HTML |
-| `/prp-quality` | Validate PRP completeness | Path to PRP | APPROVED or NEEDS REVISION |
-| `/prp-audit` | Audit existing feature | Feature name | Gap analysis + fix PRP + TASKS.md |
-| `/prp-execute` | Implement from PRP | Path to PRP | Working code + updated TASKS.md |
-| `/prp-test` | Run tests + fix failures | Feature name | All tests passing |
-| `/prp-validate` | Final verification | Path to PRP | Validation report |
+Execute these phases **sequentially**.
+
+### Phase 1: Audit
+
+**Action:** Use the Skill tool to invoke `prp-audit` with the feature name.
+
+```
+Skill: prp-audit
+Args: ${FEATURE}
+```
+
+**Gate check after completion:**
+- [ ] Fix PRP exists: `${FIX_PRP_FILE}` (or updated `${PRP_FILE}`)
+- [ ] TASKS.md exists with fix/completion tasks
+- [ ] Audit report categorizes items into Working / Broken / Missing
+
+**On gate failure:** Retry Phase 1 once. If still failing, STOP and report.
+
+### Phase 2: Execute Fixes
+
+**Action:** Use the Skill tool to invoke `prp-execute` with the fix PRP path.
+
+Determine which PRP to use:
+- If `${FIX_PRP_FILE}` exists, use it
+- Otherwise use `${PRP_FILE}`
+
+```
+Skill: prp-execute
+Args: [chosen PRP path]
+```
+
+**Gate check:** Same as Workflow A Phase 3.
+
+**On gate failure:** Same retry logic as Workflow A Phase 3.
+
+### Phase 3: Test
+
+**Action and gates:** Same as Workflow A Phase 4.
+
+### Phase 4: Validate
+
+**Action and gates:** Same as Workflow A Phase 5 (use the fix PRP path if it exists).
 
 ---
 
-## File Locations
+## Pipeline Summary Report
 
-| File | Location |
-|------|----------|
-| PRP documents | `docs-ai/contents/docs/PRPs/<feature>/` |
-| TASKS.md | `docs-ai/contents/docs/PRPs/<feature>/TASKS.md` |
-| Crawl data | `docs-ai/contents/docs/PRPs/<feature>/crawl/` |
-| Fix PRPs | `docs-ai/contents/docs/PRPs/<feature>/prp-<feature>-fix.md` |
-| Scaffolds | `.claude/scaffolds/crud-resource/` |
-| PRP template | `.claude/templates/prp_template.md` |
-| Tasks template | `.claude/templates/tasks_template.md` |
-| Incident log | `docs-ai/contents/docs/patterns/INCIDENT-LOG.md` |
-| Pattern files | `docs-ai/contents/docs/patterns/` |
-| Project rules | `.claude/rules/` |
-| E2E tests | `frontend/tests/e2e/` |
-| Playwright auth | `frontend/tests/.auth/user.json` |
+After the final phase completes (success or failure), produce this summary:
+
+```markdown
+# PRP Pipeline Summary
+
+**Feature:** ${FEATURE}
+**Workflow:** [A: New Feature / B: Fix/Complete]
+**Status:** [COMPLETED / FAILED at Phase N]
+**Duration:** [phases completed] / [total phases]
+
+## Phase Results
+
+| Phase | Command | Status | Details |
+|-------|---------|--------|---------|
+| 1 | /prp-create (or /prp-audit) | Pass/Fail | [brief] |
+| 2 | /prp-quality (or /prp-execute) | Pass/Fail | [brief] |
+| 3 | /prp-execute (or /prp-test) | Pass/Fail | [brief] |
+| 4 | /prp-test (or /prp-validate) | Pass/Fail | [brief] |
+| 5 | /prp-validate | Pass/Fail | [brief] |
+
+## Artifacts Produced
+
+- PRP: ${PRP_FILE}
+- Tasks: ${TASKS_FILE}
+- Tests: frontend/tests/e2e/${FEATURE}*.spec.ts
+- Validation: ${PRP_DIR}/verification/
+
+## Retries
+
+[List any phases that needed retry and what was fixed]
+
+## Next Steps
+
+[If completed: "Feature is ready for manual review and PR creation."]
+[If failed: "Fix the issues listed above, then re-run: /prp-pipeline ${FEATURE}"]
+```
 
 ---
 
-## Rules That Apply to All Commands
+## Orchestration Rules
 
-These are enforced by CLAUDE.md and `.claude/rules/`. Every command inherits them.
-
-1. **Supabase Types Gate** — Run `npm run db:types` before any database code
-2. **Route Naming Gate** — Use `[projectId]`, `[contractId]`, etc. Never `[id]`
-3. **Scaffolding Gate** — Use `/create-feature` for new CRUD entities
-4. **Authentication Gate** — Playwright auth is automatic. Never ask user to log in
-5. **Next.js Cache Gate** — Clear `.next` cache when creating new routes
-6. **Root Cause Gate** — Gather runtime evidence before modifying code
-7. **E2E Testing Standards** — Tests must be real CRUD workflows, not smoke tests
-8. **Use Available Tools** — Use MCP/CLI tools, don't tell user to run things manually
+1. **Sequential execution only** — never run phases in parallel. Each phase depends on the previous.
+2. **One retry per phase** — if a phase fails its gate, retry once with error context. Two failures = pipeline stop.
+3. **Validate-Execute loop** — if Phase 5 (validate) fails due to execution gaps, loop back to Phase 3 once.
+4. **Use Skill tool** — invoke each phase command via the Skill tool, not by copy-pasting the command text.
+5. **Gate checks are mandatory** — never skip a gate check. Run the actual verification commands.
+6. **Report progress** — after each phase, announce the result before moving to the next phase.
+7. **Respect CLAUDE.md rules** — all mandatory gates (Supabase types, route naming, auth, etc.) apply to every phase.
+8. **No manual intervention** — the pipeline should run without asking the user to do anything. Use available tools for everything.

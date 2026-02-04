@@ -44,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 
 import { useDeleteSpecification } from "@/hooks/use-specifications";
 import type { SpecificationWithRevision } from "@/types/specifications.types";
+import { toast } from "sonner";
 
 interface SpecificationListTableProps {
   projectId: string;
@@ -72,6 +73,23 @@ export function SpecificationListTable({
       setDeleteId(null);
     } catch (error) {
       // Error already handled by mutation
+    }
+  };
+
+  const handleDownload = async (specId: number, revisionId: number) => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/specifications/${specId}/revisions/${revisionId}/download`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate download URL");
+      }
+
+      const { url } = await response.json();
+      window.open(url, "_blank");
+    } catch (error) {
+      toast.error("Failed to download file");
     }
   };
 
@@ -193,7 +211,7 @@ export function SpecificationListTable({
                       {spec.current_revision && (
                         <DropdownMenuItem
                           onClick={() =>
-                            window.open(spec.current_revision!.file_url, "_blank")
+                            handleDownload(spec.id, spec.current_revision!.id)
                           }
                         >
                           <Download className="mr-2 h-4 w-4" />

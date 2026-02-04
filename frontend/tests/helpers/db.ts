@@ -256,6 +256,94 @@ export async function deleteProject(projectId: number) {
   }
 }
 
+// =============================================================================
+// Meeting Helpers
+// =============================================================================
+
+export async function createMeeting(
+  projectId: number,
+  title: string,
+  opts?: { date?: string; participants?: string; category?: string }
+) {
+  const id = crypto.randomUUID();
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .insert({
+      id,
+      title,
+      type: "meeting",
+      project_id: projectId,
+      date: opts?.date || new Date().toISOString(),
+      participants: opts?.participants || null,
+      category: opts?.category || null,
+      status: "complete",
+      access_level: "private",
+      source: "e2e-test",
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create meeting: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteMeetingsByProject(projectId: number) {
+  // Delete associated segments first
+  const { data: meetings } = await supabase
+    .from("document_metadata")
+    .select("id")
+    .eq("project_id", projectId)
+    .eq("type", "meeting")
+    .eq("source", "e2e-test");
+
+  if (meetings && meetings.length > 0) {
+    const meetingIds = meetings.map((m) => m.id);
+    await supabase
+      .from("meeting_segments")
+      .delete()
+      .in("metadata_id", meetingIds);
+
+    await supabase
+      .from("document_metadata")
+      .delete()
+      .in("id", meetingIds);
+  }
+}
+
+export async function deleteMeeting(meetingId: string) {
+  await supabase
+    .from("meeting_segments")
+    .delete()
+    .eq("metadata_id", meetingId);
+
+  const { error } = await supabase
+    .from("document_metadata")
+    .delete()
+    .eq("id", meetingId);
+
+  if (error) {
+    throw new Error(`Failed to delete meeting: ${error.message}`);
+  }
+}
+
+export async function listMeetingsForProject(projectId: number) {
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("type", "meeting")
+    .order("date", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to list meetings: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
 export async function fetchLineItems(changeEventId: number) {
   const supabase = getAdminClient();
   const { data, error } = await supabase

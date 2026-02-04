@@ -26,7 +26,8 @@ async function navigateToCommitments(
   projectId: string = TEST_PROJECT_ID,
 ) {
   await page.goto(`${BASE_URL}/${projectId}/commitments`);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
+  await expect(page.getByRole("heading", { name: "Commitments" })).toBeVisible({ timeout: 30000 });
 }
 
 async function getFirstCommitmentId(page: Page): Promise<string | null> {
@@ -70,7 +71,8 @@ test.describe("Commitments - Edit Workflow", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}`,
     );
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Find and click Edit button
     const editButton = page.getByRole("link", { name: /Edit/i }).first();
@@ -96,8 +98,8 @@ test.describe("Commitments - Edit Workflow", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}/edit`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Verify form fields are populated (not empty)
     const titleInput = page.locator(
@@ -132,8 +134,8 @@ test.describe("Commitments - Edit Workflow", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}/edit`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Get current title value
     const titleInput = page.locator(
@@ -175,8 +177,8 @@ test.describe("Commitments - Edit Workflow", () => {
       await page.goto(
         `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}/edit`,
       );
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(2000);
+      await page.waitForLoadState("domcontentloaded");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
       const restoreInput = page.locator(
         'input[name="title"], #title',
@@ -205,8 +207,8 @@ test.describe("Commitments - Edit Workflow", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}/edit`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Click cancel button
     const cancelButton = page.getByRole("button", { name: /Cancel/i });
@@ -239,8 +241,8 @@ test.describe("Commitments - Edit Workflow", () => {
     // Should show loading skeleton initially
     const skeleton = page.locator('[class*="skeleton"], [class*="Skeleton"]');
     // Loading may flash quickly, just verify page eventually loads
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Form should be visible after loading
     const form = page.locator("form");
@@ -261,8 +263,8 @@ test.describe("Commitments - Edit Workflow", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}/edit`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Verify breadcrumbs show Commitments > [number] > Edit
     await expect(page.locator('text="Commitments"').first()).toBeVisible({
@@ -347,8 +349,8 @@ test.describe("Commitments - Financial Data Display", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${commitmentId}`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30000 });
 
     // Detail page should show financial summary
     const financialLabels = [
@@ -381,13 +383,10 @@ test.describe("Commitments - Settings Page", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/settings`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
-
-    // Verify settings page loaded
+    await page.waitForLoadState("domcontentloaded");
     await expect(
       page.locator("text=Commitment Settings").first(),
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 30000 });
 
     // Verify tabs
     const tabs = ["General", "Distribution", "Defaults", "Billing"];
@@ -402,8 +401,10 @@ test.describe("Commitments - Settings Page", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/settings`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.locator("text=Commitment Settings").first(),
+    ).toBeVisible({ timeout: 30000 });
 
     // Click Distribution tab
     const distributionTab = page
@@ -438,8 +439,10 @@ test.describe("Commitments - Settings Page", () => {
     await page.goto(
       `${BASE_URL}/${TEST_PROJECT_ID}/commitments/settings`,
     );
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.locator("text=Commitment Settings").first(),
+    ).toBeVisible({ timeout: 30000 });
 
     // Click back button
     const backButton = page.getByRole("button", { name: /Back/i }).first();

@@ -24,6 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import type { Database } from "@/types/database.types";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
@@ -75,7 +76,12 @@ export function EditMeetingModal({
         .order("name")
         .limit(10);
 
-      if (!error && data) {
+      if (error) {
+        console.error("Failed to search projects:", error);
+        toast.error("Failed to search projects");
+        return;
+      }
+      if (data) {
         setProjectOptions(data as unknown as typeof projectOptions);
       }
     };
@@ -130,8 +136,8 @@ export function EditMeetingModal({
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      // TODO: Replace with proper toast notification
-      alert("Failed to update meeting. Please try again.");
+      console.error("Failed to update meeting:", error);
+      toast.error("Failed to update meeting. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -369,35 +369,51 @@ export function ProjectsTable({
                 const project = row.original;
                 const projectHref = `/${project.id}/home`;
                 return (
-                  <Link
+                  <div
                     key={row.id}
-                    href={projectHref}
-                    className="group block bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300 text-left"
-                    onClick={() => onProjectClick?.(project)}
+                    className="group relative bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300"
                   >
-                    <div className="mb-3 flex items-start justify-between gap-3">
-                      <h3 className="text-base font-semibold text-foreground transition-colors duration-300 line-clamp-2 leading-tight">
-                        {project.name}
-                      </h3>
-                      {project.phase && (
-                        <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-                          {project.phase}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="text-xs text-muted-foreground font-medium">
-                        Job #{project.jobNumber}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProject(project);
+                        setIsEditDialogOpen(true);
+                      }}
+                      className="absolute top-3 right-3 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all duration-200"
+                      aria-label={`Edit ${project.name}`}
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                    <Link
+                      href={projectHref}
+                      className="block text-left"
+                      onClick={() => onProjectClick?.(project)}
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-3 pr-6">
+                        <h3 className="text-base font-semibold text-foreground transition-colors duration-300 line-clamp-2 leading-tight">
+                          {project.name}
+                        </h3>
+                        {project.phase && (
+                          <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
+                            {project.phase}
+                          </span>
+                        )}
                       </div>
 
-                      {project.client && (
-                        <div className="text-sm text-foreground/80 truncate">
-                          {project.client}
+                      <div className="space-y-2">
+                        <div className="text-xs text-muted-foreground font-medium">
+                          Job #{project.jobNumber}
                         </div>
-                      )}
-                    </div>
-                  </Link>
+
+                        {project.client && (
+                          <div className="text-sm text-foreground/80 truncate">
+                            {project.client}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
                 );
               })
             ) : (

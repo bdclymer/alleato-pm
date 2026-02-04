@@ -17,8 +17,8 @@ const TEST_PROJECT_ID = '67';
 // Helper function to navigate to configure page
 async function navigateToConfigure(page: Page, projectId: string = TEST_PROJECT_ID) {
   await page.goto(`/${projectId}/commitments/configure`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.locator('text=Commitment Settings')).toBeVisible({ timeout: 30000 });
 }
 
 // Helper function to take screenshots

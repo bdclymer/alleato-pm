@@ -18,7 +18,8 @@ const TEST_PROJECT_ID = '67';
 // Helper function to navigate to commitments page
 async function navigateToCommitments(page: Page, projectId: string = TEST_PROJECT_ID) {
   await page.goto(`/${projectId}/commitments`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 }
 
 // Helper function to navigate to recycle bin
@@ -521,8 +522,8 @@ test.describe('Recycle Bin - Empty State', () => {
   test('should display empty state when no deleted commitments', async ({ page }) => {
     // Navigate to a project that might have no deleted commitments
     await page.goto(`/999/commitments/recycled`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText('Recycle Bin')).toBeVisible({ timeout: 30000 });
 
     // Look for empty message
     const emptyMessage = page.locator('text=No deleted commitments found');

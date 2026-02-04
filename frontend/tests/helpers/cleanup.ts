@@ -1,10 +1,12 @@
 import {
   deleteChangeOrdersByProject,
+  deleteMeetingsByProject,
   deleteProject,
   deleteProjectMembers,
 } from "./db";
 
 export async function cleanupProjectArtifacts(projectId: number) {
+  await deleteMeetingsByProject(projectId);
   await deleteChangeOrdersByProject(projectId);
   await deleteProjectMembers(projectId);
   await deleteProject(projectId);

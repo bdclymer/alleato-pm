@@ -27,7 +27,8 @@ async function login(page: Page) {
 // Helper function to navigate to commitments page
 async function navigateToCommitments(page: Page, projectId: string = TEST_PROJECT_ID) {
   await page.goto(`${BASE_URL}/${projectId}/commitments`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 }
 
 // Helper function to take screenshots
@@ -276,7 +277,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display subcontract form with all fields', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Verify form fields are visible
     await expect(page.locator('label:has-text("Commitment Number")')).toBeVisible({ timeout: 10000 });
@@ -290,7 +292,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display commitment number input', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     const numberInput = page.locator('#number, input[name="number"]');
     await expect(numberInput).toBeVisible({ timeout: 10000 });
@@ -300,7 +303,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display company dropdown', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Find company select
     const companySelect = page.locator('#contract_company_id, [name="contract_company_id"]').first();
@@ -316,7 +320,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display status dropdown with options', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Find and click status select
     const statusTrigger = page.locator('button:has-text("Draft")').first();
@@ -338,7 +343,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display accounting method dropdown', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     await expect(page.locator('label:has-text("Accounting Method")')).toBeVisible({ timeout: 5000 });
 
@@ -347,7 +353,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display optional date fields', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Check for date fields
     const dateLabels = ['Executed Date', 'Start Date', 'Substantial Completion Date'];
@@ -363,7 +370,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display description textarea', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     await expect(page.locator('label:has-text("Description")')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('textarea#description, textarea[name="description"]')).toBeVisible();
@@ -373,7 +381,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should display private checkbox', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Look for private checkbox
     const privateCheckbox = page.locator('input[type="checkbox"], [role="checkbox"]').first();
@@ -384,7 +393,8 @@ test.describe('Commitments - Subcontract Form', () => {
 
   test('should have Cancel and Submit buttons', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     await expect(page.getByRole('button', { name: /Cancel/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Create|Save|Submit/i })).toBeVisible();
@@ -400,7 +410,8 @@ test.describe('Commitments - Purchase Order Form', () => {
 
   test('should display purchase order form', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=purchase_order`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Purchase Order|New Commitment|Create Purchase Order/i })).toBeVisible({ timeout: 30000 });
 
     // Verify form is displayed
     await expect(page.locator('label:has-text("Commitment Number")')).toBeVisible({ timeout: 10000 });
@@ -410,7 +421,8 @@ test.describe('Commitments - Purchase Order Form', () => {
 
   test('should have same fields as subcontract form', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=purchase_order`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Purchase Order|New Commitment|Create Purchase Order/i })).toBeVisible({ timeout: 30000 });
 
     // Verify common fields
     await expect(page.locator('label:has-text("Title")')).toBeVisible();
@@ -428,7 +440,8 @@ test.describe('Commitments - Form Validation', () => {
 
   test('should show validation errors for required fields', async ({ page }) => {
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Try to submit empty form
     const submitButton = page.getByRole('button', { name: /Create|Save|Submit/i });
@@ -572,7 +585,8 @@ test.describe('Commitments - API Integration', () => {
 
     // Navigate to non-existent project
     await page.goto(`${BASE_URL}/999999/commitments`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
     await page.waitForTimeout(2000);
 
     await takeScreenshot(page, '36-commitments-error-handling');
@@ -585,7 +599,8 @@ test.describe('Commitments - Empty State', () => {
 
     // Navigate to a project that might have no commitments
     await page.goto(`${BASE_URL}/999/commitments`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
     await page.waitForTimeout(2000);
 
     await takeScreenshot(page, '37-commitments-empty-state');
@@ -658,7 +673,8 @@ test.describe('Commitments - Dev AutoFill', () => {
   test('should display Dev AutoFill button in form', async ({ page }) => {
     await login(page);
     await page.goto(`${BASE_URL}/${TEST_PROJECT_ID}/commitments/new?type=subcontract`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: /New Subcontract|New Commitment|Create Subcontract/i })).toBeVisible({ timeout: 30000 });
 
     // Look for Dev AutoFill button (only in dev mode)
     const autoFillButton = page.getByRole('button', { name: /Auto.*Fill|Dev/i });
@@ -696,7 +712,8 @@ test.describe('Commitments - Loading States', () => {
     // Check for loading text
     const loadingText = page.locator('text=Loading commitments...');
     // It might flash quickly, so we just check if page loads correctly
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 
     await takeScreenshot(page, '44-commitments-loaded');
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type HTMLAttributes } from "react";
+import { useState, useRef, useEffect, type HTMLAttributes } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -209,7 +209,7 @@ const createProjectSchema = z.object({
   stage: z.string().optional(),
   phase: z.string().optional(),
   name: z.string().min(1, { message: "Project name is required" }),
-  project_number: z.string().optional(),
+  project_number: z.string().min(1, { message: "Job number is required" }),
   description: z.string().optional(),
   work_scope: z.string().optional(),
   project_sector: z.string().optional(),
@@ -217,23 +217,21 @@ const createProjectSchema = z.object({
   project_logo: z.any().optional(),
   project_photo: z.any().optional(),
   square_footage: optionalNumeric,
-  total_value: requiredCurrency,
+  total_value: optionalNumeric,
   project_code: z.string().optional(),
   project_type: z.string().optional(),
   active: z.boolean().optional().default(true),
-  country: z.string().min(1, { message: "Country is required" }),
-  street_address: z.string().min(1, { message: "Street address is required" }),
-  city: z.string().min(1, { message: "City is required" }),
+  country: z.string().optional(),
+  street_address: z.string().optional(),
+  city: z.string().optional(),
   state: z.string().optional(),
   postal_code: z.string().optional(),
-  timezone: z.string().min(1, { message: "Timezone is required" }),
+  timezone: z.string().optional(),
   phone: z.string().optional(),
   region: z.string().optional(),
   office: z.string().optional(),
-  start_date: z.string().min(1, { message: "Start date is required" }),
-  completion_date: z
-    .string()
-    .min(1, { message: "Completion date is required" }),
+  start_date: z.string().optional(),
+  completion_date: z.string().optional(),
   erp_sync: z.boolean().optional().default(true),
   test_project: z.boolean().optional().default(false),
 });
@@ -248,7 +246,9 @@ type FieldControl =
   | "number"
   | "date"
   | "checkbox"
-  | "file";
+  | "file"
+  | "formatted-number"
+  | "currency";
 
 interface FieldDefinition {
   name: FieldName;
@@ -306,20 +306,18 @@ const formSections: FormSection[] = [
         name: "name",
         label: "Project Name",
         control: "text",
-        placeholder: "Goodwill Bart Distribution Center",
         required: true,
       },
       {
         name: "project_number",
-        label: "Project Number",
+        label: "Job Number",
         control: "text",
-        placeholder: "24-104",
+        required: true,
       },
       {
         name: "description",
         label: "Description",
         control: "textarea",
-        placeholder: "Provide a brief overview of the project scope.",
         colSpan: "full",
       },
       {
@@ -382,23 +380,19 @@ const formSections: FormSection[] = [
       {
         name: "square_footage",
         label: "Square Footage",
-        control: "number",
-        placeholder: "250000",
-        step: "1000",
+        control: "formatted-number",
+        placeholder: "25,000",
       },
       {
         name: "total_value",
         label: "Total Value",
-        control: "number",
-        placeholder: "2500000",
-        step: "1000",
-        required: true,
+        control: "currency",
+        placeholder: "$0.00",
       },
       {
         name: "project_code",
         label: "Code",
         control: "text",
-        placeholder: "GW-BART",
       },
       {
         name: "project_type",
@@ -433,22 +427,17 @@ const formSections: FormSection[] = [
         label: "Country",
         control: "select",
         options: COUNTRY_OPTIONS,
-        required: true,
       },
       {
         name: "street_address",
         label: "Street Address",
         control: "text",
-        placeholder: "940 N Marr Road",
-        required: true,
         colSpan: "full",
       },
       {
         name: "city",
         label: "City",
         control: "text",
-        placeholder: "Columbus",
-        required: true,
       },
       {
         name: "state",
@@ -461,7 +450,6 @@ const formSections: FormSection[] = [
         name: "postal_code",
         label: "Zip Code",
         control: "text",
-        placeholder: "47201",
         inputMode: "numeric",
       },
       {
@@ -469,14 +457,12 @@ const formSections: FormSection[] = [
         label: "Timezone",
         control: "select",
         options: TIMEZONE_OPTIONS,
-        required: true,
       },
       {
         name: "phone",
         label: "Phone",
         control: "text",
         inputType: "tel",
-        placeholder: "(555) 123-4567",
       },
       {
         name: "region",
@@ -504,15 +490,11 @@ const formSections: FormSection[] = [
         name: "start_date",
         label: "Start Date",
         control: "date",
-        required: true,
-        placeholder: "mm/dd/yyyy",
       },
       {
         name: "completion_date",
         label: "Completion Date",
         control: "date",
-        required: true,
-        placeholder: "mm/dd/yyyy",
       },
     ],
   },
@@ -571,7 +553,7 @@ const defaultValues: DefaultValues<CreateProjectFormValues> = {
   active: true,
   country: "United States",
   street_address: "",
-  city: "Test",
+  city: "",
   state: undefined,
   postal_code: "",
   timezone: "America/New_York",
@@ -586,6 +568,129 @@ const defaultValues: DefaultValues<CreateProjectFormValues> = {
 
 const getFileName = (value: unknown) =>
   typeof File !== "undefined" && value instanceof File ? value.name : null;
+
+const formatNumberWithCommas = (value: number | string | undefined | null): string => {
+  if (value === undefined || value === null || value === "") return "";
+  const num = typeof value === "string" ? Number(value.replace(/,/g, "")) : value;
+  if (Number.isNaN(num)) return "";
+  return num.toLocaleString("en-US");
+};
+
+const formatCurrency = (value: number | string | undefined | null): string => {
+  if (value === undefined || value === null || value === "") return "";
+  const num = typeof value === "string" ? Number(value.replace(/[$,]/g, "")) : value;
+  if (Number.isNaN(num)) return "";
+  return num.toLocaleString("en-US", { style: "currency", currency: "USD" });
+};
+
+const parseFormattedNumber = (value: string): number | undefined => {
+  const cleaned = value.replace(/[$,]/g, "");
+  if (cleaned === "") return undefined;
+  const num = Number(cleaned);
+  return Number.isNaN(num) ? undefined : num;
+};
+
+/**
+ * Input that formats numbers with commas as you type while preserving cursor position.
+ * On blur, applies the full format (e.g. currency prefix).
+ */
+function FormattedNumberInput({
+  ariaProps,
+  placeholder,
+  value,
+  onChange,
+  format,
+  inputMode = "numeric",
+}: {
+  ariaProps: Record<string, string>;
+  placeholder?: string;
+  value: number | undefined | null;
+  onChange: (v: number | undefined) => void;
+  format: (v: number | string | undefined | null) => string;
+  inputMode?: "numeric" | "decimal";
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [displayValue, setDisplayValue] = useState(() => format(value));
+  const [isFocused, setIsFocused] = useState(false);
+  const cursorRef = useRef<number | null>(null);
+
+  // Sync from form state when not focused (auto-fill, reset, initial load)
+  const formattedFromForm = format(value);
+  if (!isFocused && displayValue !== formattedFromForm) {
+    setDisplayValue(formattedFromForm);
+  }
+
+  // Restore cursor position after formatting changes the display value
+  useEffect(() => {
+    if (cursorRef.current != null && inputRef.current) {
+      inputRef.current.setSelectionRange(cursorRef.current, cursorRef.current);
+      cursorRef.current = null;
+    }
+  });
+
+  // Format with commas only (no $ prefix) for while-typing display
+  const formatWhileTyping = (raw: string): string => {
+    const cleaned = raw.replace(/[^0-9.]/g, "");
+    if (cleaned === "") return "";
+    // Split on decimal point to only format the integer part
+    const parts = cleaned.split(".");
+    const intPart = parts[0];
+    const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (parts.length > 1) {
+      return `${formatted}.${parts[1]}`;
+    }
+    return formatted;
+  };
+
+  return (
+    <Input
+      {...ariaProps}
+      ref={inputRef}
+      type="text"
+      inputMode={inputMode}
+      placeholder={placeholder}
+      value={displayValue}
+      onFocus={() => {
+        setIsFocused(true);
+        // Show comma-formatted number on focus (strip $ but keep commas)
+        if (value != null) {
+          setDisplayValue(formatWhileTyping(String(value)));
+        }
+      }}
+      onChange={(event) => {
+        const raw = event.target.value;
+        const cursorPos = event.target.selectionStart ?? 0;
+
+        // Count commas before cursor in old value
+        const oldCommasBefore = (displayValue.slice(0, cursorPos).match(/,/g) || []).length;
+
+        const formatted = formatWhileTyping(raw);
+
+        // Count commas before equivalent cursor position in new value
+        // The cursor position in the raw string (minus old commas) tells us where the digit cursor is
+        const digitPos = cursorPos - oldCommasBefore;
+        let newCursor = 0;
+        let digits = 0;
+        for (let i = 0; i < formatted.length; i++) {
+          if (digits === digitPos) break;
+          if (formatted[i] !== ",") digits++;
+          newCursor = i + 1;
+        }
+        cursorRef.current = newCursor;
+
+        setDisplayValue(formatted);
+        const parsed = parseFormattedNumber(formatted);
+        onChange(parsed);
+      }}
+      onBlur={() => {
+        const parsed = parseFormattedNumber(displayValue);
+        onChange(parsed);
+        setDisplayValue(format(parsed));
+        setIsFocused(false);
+      }}
+    />
+  );
+}
 
 export default function CreateProjectPage() {
   return (
@@ -667,7 +772,7 @@ function CreateProjectForm() {
         archived: !values.active,
         "start date": values.start_date,
         "est completion": values.completion_date,
-        "est revenue": values.total_value,
+        "est revenue": values.total_value ?? null,
         // Add new columns directly to payload
         work_scope: values.work_scope || null,
         project_sector: values.project_sector || null,
@@ -790,6 +895,31 @@ function CreateProjectForm() {
             ))}
           </SelectContent>
         </Select>
+      );
+    }
+
+    if (field.control === "formatted-number") {
+      return (
+        <FormattedNumberInput
+          ariaProps={ariaProps}
+          placeholder={field.placeholder}
+          value={formField.value}
+          onChange={formField.onChange}
+          format={formatNumberWithCommas}
+        />
+      );
+    }
+
+    if (field.control === "currency") {
+      return (
+        <FormattedNumberInput
+          ariaProps={ariaProps}
+          placeholder={field.placeholder}
+          value={formField.value}
+          onChange={formField.onChange}
+          format={formatCurrency}
+          inputMode="decimal"
+        />
       );
     }
 

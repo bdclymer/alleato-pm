@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header-unified";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 
 import { MeetingsTableWrapper } from "./meetings-table-wrapper";
+import { MeetingsActions } from "./meetings-actions";
 
 interface PageProps {
   params: Promise<{ projectId: string }>;
@@ -24,7 +25,8 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
     .order("date", { ascending: false });
 
   if (error) {
-    }
+    console.error("Failed to fetch meetings:", error);
+  }
 
   // Calculate meeting statistics
   const totalMeetings = meetings?.length || 0;
@@ -41,7 +43,10 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
 
   return (
     <>
-      <PageHeader title="Meetings" />
+      <PageHeader
+        title="Meetings"
+        actions={<MeetingsActions projectId={projectId} />}
+      />
 
       <PageContainer>
         {/* Meeting Statistics */}

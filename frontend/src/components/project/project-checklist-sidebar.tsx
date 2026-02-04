@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { CheckCircle2, Circle, ChevronRight } from "lucide-react"
+import { CheckCircle2, Circle, ChevronRight, ExternalLink } from "lucide-react"
+import Link from "next/link"
 import {
   Slideover,
   SlideoverContent,
@@ -14,13 +15,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { useProjectChecklist } from "@/hooks/use-project-checklist"
 
 interface ChecklistItem {
   id: string
   title: string
   description?: string
-  completed: boolean
   category: string
+  href: string
 }
 
 interface ProjectChecklistSidebarProps {
@@ -29,62 +31,62 @@ interface ProjectChecklistSidebarProps {
   className?: string
 }
 
-const INITIAL_CHECKLIST_ITEMS: ChecklistItem[] = [
+const getChecklistItems = (projectId: string): ChecklistItem[] => [
   {
     id: "setup-team",
     title: "Set up project team",
     description: "Add team members and assign roles",
-    completed: false,
     category: "Setup",
+    href: `/${projectId}/directory`,
   },
   {
     id: "configure-budget",
     title: "Configure budget",
     description: "Set up budget line items and allocations",
-    completed: false,
     category: "Setup",
+    href: `/${projectId}/budget`,
   },
   {
     id: "add-contracts",
     title: "Add contracts",
     description: "Upload and manage project contracts",
-    completed: false,
     category: "Setup",
+    href: `/${projectId}/commitments`,
   },
   {
     id: "create-schedule",
     title: "Create project schedule",
     description: "Set up timeline and milestones",
-    completed: false,
     category: "Planning",
+    href: `/${projectId}/schedule`,
   },
   {
     id: "upload-drawings",
     title: "Upload drawings",
     description: "Add architectural and engineering drawings",
-    completed: false,
     category: "Documentation",
+    href: `/${projectId}/drawings`,
   },
   {
-    id: "configure-permissions",
-    title: "Configure permissions",
-    description: "Set up access control for team members",
-    completed: false,
-    category: "Security",
+    id: "setup-rfis",
+    title: "Set up RFIs",
+    description: "Configure RFI workflow and templates",
+    category: "Documentation",
+    href: `/${projectId}/rfis`,
   },
   {
-    id: "setup-notifications",
-    title: "Set up notifications",
-    description: "Configure alerts and email notifications",
-    completed: false,
-    category: "Settings",
+    id: "setup-change-orders",
+    title: "Set up change orders",
+    description: "Configure change order tracking",
+    category: "Financial",
+    href: `/${projectId}/change-orders`,
   },
   {
-    id: "review-compliance",
-    title: "Review compliance requirements",
-    description: "Ensure all regulatory requirements are met",
-    completed: false,
-    category: "Compliance",
+    id: "setup-submittals",
+    title: "Set up submittals",
+    description: "Configure submittal workflow",
+    category: "Documentation",
+    href: `/${projectId}/submittals`,
   },
 ]
 
@@ -94,51 +96,31 @@ export function ProjectChecklistSidebar({
   className,
 }: ProjectChecklistSidebarProps) {
   const [open, setOpen] = React.useState(false)
-  const [checklist, setChecklist] = React.useState<ChecklistItem[]>(() => {
-    // Load saved checklist from localStorage
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`project-checklist-${projectId}`)
-      if (saved) {
-        try {
-          return JSON.parse(saved)
-        } catch (e) {
-          console.error("Failed to parse saved checklist:", e)
-        }
-      }
-    }
-    return INITIAL_CHECKLIST_ITEMS
-  })
+  const { data: checklistStatus, isLoading } = useProjectChecklist(projectId)
 
-  // Save checklist to localStorage when it changes
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        `project-checklist-${projectId}`,
-        JSON.stringify(checklist)
-      )
-    }
-  }, [checklist, projectId])
+  const checklistItems = React.useMemo(
+    () => getChecklistItems(projectId),
+    [projectId]
+  )
 
-  const toggleItem = (itemId: string) => {
-    setChecklist((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, completed: !item.completed } : item
-      )
-    )
-  }
+  const completedCount = React.useMemo(() => {
+    if (!checklistStatus) return 0
+    return Object.values(checklistStatus).filter(Boolean).length
+  }, [checklistStatus])
 
-  const completedCount = checklist.filter((item) => item.completed).length
-  const totalCount = checklist.length
+  const totalCount = checklistItems.length
   const progressPercentage = (completedCount / totalCount) * 100
 
   // Group items by category
-  const groupedItems = checklist.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = []
-    }
-    acc[item.category].push(item)
-    return acc
-  }, {} as Record<string, ChecklistItem[]>)
+  const groupedItems = React.useMemo(() => {
+    return checklistItems.reduce((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = []
+      }
+      acc[item.category].push(item)
+      return acc
+    }, {} as Record<string, ChecklistItem[]>)
+  }, [checklistItems])
 
   return (
     <Slideover open={open} onOpenChange={setOpen}>
@@ -169,49 +151,62 @@ export function ProjectChecklistSidebar({
           </div>
         </SlideoverHeader>
         <SlideoverBody>
-          <div className="space-y-6">
-            {Object.entries(groupedItems).map(([category, items]) => (
-              <div key={category} className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground">
-                  {category}
-                </h3>
-                <div className="space-y-1">
-                  {items.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleItem(item.id)}
-                      className={cn(
-                        "group flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors",
-                        "hover:bg-accent/50",
-                        item.completed && "opacity-60"
-                      )}
-                    >
-                      {item.completed ? (
-                        <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <Circle className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
-                      )}
-                      <div className="flex-1 space-y-1">
-                        <div
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-muted-foreground">
+                Loading checklist...
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedItems).map(([category, items]) => (
+                <div key={category} className="space-y-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground">
+                    {category}
+                  </h3>
+                  <div className="space-y-1">
+                    {items.map((item) => {
+                      const isCompleted = checklistStatus?.[item.id as keyof typeof checklistStatus] ?? false
+                      return (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
                           className={cn(
-                            "text-sm font-medium leading-none",
-                            item.completed && "line-through"
+                            "group flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors",
+                            "hover:bg-accent/50",
+                            isCompleted && "opacity-60"
                           )}
                         >
-                          {item.title}
-                        </div>
-                        {item.description && (
-                          <div className="text-xs text-muted-foreground">
-                            {item.description}
+                          {isCompleted ? (
+                            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <Circle className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
+                          )}
+                          <div className="flex-1 space-y-1">
+                            <div
+                              className={cn(
+                                "text-sm font-medium leading-none flex items-center gap-2",
+                                isCompleted && "line-through"
+                              )}
+                            >
+                              <span>{item.title}</span>
+                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            {item.description && (
+                              <div className="text-xs text-muted-foreground">
+                                {item.description}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                        </Link>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </SlideoverBody>
       </SlideoverContent>
     </Slideover>

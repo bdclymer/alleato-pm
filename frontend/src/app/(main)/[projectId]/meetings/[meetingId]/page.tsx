@@ -124,11 +124,10 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
       if (response.ok) {
         transcriptContent = await response.text();
       } else {
-        }
+        console.error("Failed to fetch transcript from storage, status:", response.status);
+      }
     } catch (error) {
-
-      console.error("Failed to process meeting data:", error);
-
+      console.error("Failed to fetch transcript from storage:", error);
     }
   }
 
@@ -155,7 +154,7 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
         description={meeting.summary || undefined}
         breadcrumbs={[
           { label: 'Projects', href: '/projects' },
-          { label: 'Project', href: `/${projectId}` },
+          { label: project?.name || 'Project', href: `/${projectId}/home` },
           { label: 'Meetings', href: `/${projectId}/meetings` },
           { label: meeting.title || 'Meeting' },
         ]}

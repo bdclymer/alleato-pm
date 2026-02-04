@@ -18,8 +18,8 @@ const TEST_PROJECT_ID = '67';
 // Helper function to navigate to commitments page
 async function navigateToCommitments(page: Page, projectId: string = TEST_PROJECT_ID) {
   await page.goto(`/${projectId}/commitments`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000); // Allow table to fully render
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 }
 
 // Helper function to take screenshots
@@ -317,8 +317,8 @@ test.describe('Commitments List Page - Column Visibility', () => {
 
     // Reload page
     await page.reload();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 
     // Check if column preference persisted (state stored in localStorage)
     await takeScreenshot(page, '18-column-persistence-check');
@@ -603,8 +603,8 @@ test.describe('Commitments List Page - Loading States', () => {
   test('should show empty state when no commitments', async ({ page }) => {
     // Navigate to a project with no commitments (using non-existent project)
     await page.goto('/999999/commitments');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Commitments' })).toBeVisible({ timeout: 30000 });
 
     await takeScreenshot(page, '39-empty-or-error-state');
   });

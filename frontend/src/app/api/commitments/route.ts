@@ -8,7 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * Columns selected from *_with_totals views.
  * Only fetch columns needed for the list page to reduce payload size.
  */
-const LIST_COLUMNS = [
+/**
+ * Shared columns that exist on both *_with_totals views.
+ */
+const BASE_LIST_COLUMNS = [
   "id",
   "project_id",
   "contract_number",
@@ -19,7 +22,6 @@ const LIST_COLUMNS = [
   "company_name",
   "company_type",
   "description",
-  "start_date",
   "contract_date",
   "default_retainage_percent",
   "created_at",
@@ -29,7 +31,11 @@ const LIST_COLUMNS = [
   "total_amount_remaining",
   "sov_line_count",
   "is_private",
-].join(",");
+];
+
+/** subcontracts_with_totals has start_date; purchase_orders_with_totals does not */
+const SC_LIST_COLUMNS = [...BASE_LIST_COLUMNS, "start_date"].join(",");
+const PO_LIST_COLUMNS = BASE_LIST_COLUMNS.join(",");
 
 interface WithTotalsRow {
   id: string | null;
@@ -51,7 +57,6 @@ interface WithTotalsRow {
   total_billed_to_date: number | null;
   total_amount_remaining: number | null;
   sov_line_count: number | null;
-  deleted_at?: string | null;
   erp_status?: string | null;
   ssov_status?: string | null;
   is_private?: boolean | null;
@@ -224,10 +229,23 @@ export async function GET(request: Request) {
     }> => {
       if (type && type !== "subcontract") return { data: [], count: 0 };
 
+      // The view doesn't expose deleted_at, so we fetch active IDs from the base table first
+      let baseQuery = (supabase as any)
+        .from("subcontracts")
+        .select("id")
+        .is("deleted_at", null);
+      if (filters.projectId) {
+        baseQuery = baseQuery.eq("project_id", parseInt(filters.projectId, 10));
+      }
+      const { data: activeRows } = await baseQuery;
+      const activeIds = (activeRows || []).map((r: { id: string }) => r.id);
+
+      if (activeIds.length === 0) return { data: [], count: 0 };
+
       let query = (supabase as any)
         .from("subcontracts_with_totals")
-        .select(LIST_COLUMNS, { count: "exact" })
-        .is("deleted_at", null)
+        .select(SC_LIST_COLUMNS, { count: "exact" })
+        .in("id", activeIds)
         .order("created_at", { ascending: false });
 
       query = applyFilters(query, filters);
@@ -249,10 +267,23 @@ export async function GET(request: Request) {
     }> => {
       if (type && type !== "purchase_order") return { data: [], count: 0 };
 
+      // The view doesn't expose deleted_at, so fetch active IDs from base table first
+      let poBaseQuery = (supabase as any)
+        .from("purchase_orders")
+        .select("id")
+        .is("deleted_at", null);
+      if (filters.projectId) {
+        poBaseQuery = poBaseQuery.eq("project_id", parseInt(filters.projectId, 10));
+      }
+      const { data: poActiveRows } = await poBaseQuery;
+      const poActiveIds = (poActiveRows || []).map((r: { id: string }) => r.id);
+
+      if (poActiveIds.length === 0) return { data: [], count: 0 };
+
       let query = (supabase as any)
         .from("purchase_orders_with_totals")
-        .select(LIST_COLUMNS, { count: "exact" })
-        .is("deleted_at", null)
+        .select(PO_LIST_COLUMNS, { count: "exact" })
+        .in("id", poActiveIds)
         .order("created_at", { ascending: false });
 
       query = applyFilters(query, filters);

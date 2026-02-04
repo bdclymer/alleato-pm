@@ -311,13 +311,15 @@ export function SiteHeader() {
     crumbs.push({ label: "Projects", href: "/" });
 
     segments.forEach((segment, index) => {
-      const href = `/${segments.slice(0, index + 1).join("/")}`;
+      let href = `/${segments.slice(0, index + 1).join("/")}`;
       let label: string;
 
       // Check if this segment is a project ID (numeric)
       if (index === 0 && /^\d+$/.test(segment)) {
         // This is a project ID - use the project name if available
         label = currentProject?.name || `Project ${segment}`;
+        // /[projectId] alone is not a valid route, link to project home
+        href = `/${segment}/home`;
       } else {
         // Try to find a matching tool name first
         const allTools = [

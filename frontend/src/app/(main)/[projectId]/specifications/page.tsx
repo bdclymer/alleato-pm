@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Search } from "lucide-react";
 
-import { ProjectToolPage } from "@/components/layout/project-tool-page";
+import { PageContainer } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,16 +52,18 @@ export default function ProjectSpecificationsPage() {
   const totalPages = Math.ceil(totalCount / 25);
 
   return (
-    <ProjectToolPage
-      title="Specifications"
-      description="Manage project specifications and revisions"
-      actions={
-        <SpecificationUploadDialog projectId={projectId}>
-          <Button>Upload Specification</Button>
-        </SpecificationUploadDialog>
-      }
-    >
-      <div className="space-y-4">
+    <>
+      <PageHeader
+        title="Specifications"
+        description="Manage project specifications and revisions"
+        actions={
+          <SpecificationUploadDialog projectId={projectId}>
+            <Button>Upload Specification</Button>
+          </SpecificationUploadDialog>
+        }
+      />
+      <PageContainer>
+        <div className="space-y-4">
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
@@ -170,6 +173,7 @@ export default function ProjectSpecificationsPage() {
         open={!!editingSpec}
         onOpenChange={(open) => !open && setEditingSpec(null)}
       />
-    </ProjectToolPage>
+      </PageContainer>
+    </>
   );
 }

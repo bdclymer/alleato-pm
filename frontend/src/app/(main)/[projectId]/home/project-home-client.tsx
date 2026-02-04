@@ -25,6 +25,7 @@ import {
   Target,
   Zap,
   Video,
+  Pencil,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,6 +39,8 @@ import { InlineTeamMemberForm } from "@/components/project-home/inline-team-memb
 import { DirectorySummary } from "@/components/project-home/directory-summary";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { InfoSection } from "./info-section";
+import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
+import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 
@@ -182,6 +185,32 @@ export function ProjectHomeClient({
 }: ProjectHomeClientProps) {
   const router = useRouter();
 
+  // Edit project dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+  // Map database project to portfolio Project type for EditProjectDialog
+  const portfolioProject: PortfolioProject = {
+    id: String(project.id),
+    name: project.name || "",
+    projectNumber: project["job number"] || "",
+    jobNumber: project["job number"] || "",
+    client: (project as any).client || "",
+    address: (project as any).street_address || "",
+    city: (project as any).city || "",
+    state: (project as any).state || "",
+    zip: (project as any).postal_code || "",
+    phone: (project as any).phone || "",
+    status: project.archived ? "Inactive" : "Active",
+    stage: (project as any).stage || "",
+    type: (project as any).project_type || "",
+    phase: project.phase || "",
+    category: (project as any).category || "",
+    startDate: (project as any)["start date"] || null,
+    estRevenue: (project as any)["est revenue"] || null,
+    estProfit: (project as any)["est profit"] || null,
+    notes: (project as any).description || "",
+  };
+
   // Section open states
   const [isTeamOpen, setIsTeamOpen] = React.useState(true);
   const [isCommitmentsOpen, setIsCommitmentsOpen] = React.useState(true);
@@ -323,6 +352,15 @@ export function ProjectHomeClient({
 
             {/* Actions */}
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2"
+                onClick={() => setIsEditDialogOpen(true)}
+              >
+                <Pencil className="h-4 w-4" />
+                Edit Project
+              </Button>
               <ProjectChecklistSidebar
                 projectId={String(project.id)}
                 projectName={project.name || project["job number"] || "Project"}
@@ -643,6 +681,14 @@ export function ProjectHomeClient({
           </div>
         </div>
       </div>
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={portfolioProject}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={() => router.refresh()}
+      />
     </div>
   );
 }

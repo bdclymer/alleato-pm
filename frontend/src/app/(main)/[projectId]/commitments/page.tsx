@@ -431,6 +431,26 @@ export default function ProjectCommitmentsPage() {
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
+  // Create table config with dynamic edit onClick handler
+  const dynamicTableConfig = useMemo(
+    () => ({
+      ...tableRenderConfig,
+      rowActions: tableRenderConfig.rowActions?.map((action) =>
+        action.id === "edit"
+          ? {
+              ...action,
+              onClick: (row: Record<string, unknown>) => {
+                router.push(
+                  `/${projectId}/commitments/${row.id}/edit`,
+                );
+              },
+            }
+          : action,
+      ),
+    }),
+    [router, projectId],
+  );
+
   // Use React Query for data fetching with caching and deduplication
   const { data: response, isLoading, error } = useCommitmentsList(projectId);
   const deleteCommitment = useDeleteCommitment(projectId);
@@ -660,7 +680,7 @@ export default function ProjectCommitmentsPage() {
       <div className="mt-6">
         <GenericDataTable
           data={commitments}
-          config={tableRenderConfig}
+          config={dynamicTableConfig}
           onDeleteRow={handleDeleteCommitment}
         />
       </div>

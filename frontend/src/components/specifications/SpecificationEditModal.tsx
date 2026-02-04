@@ -37,11 +37,11 @@ import {
   editSpecificationSchema,
   type EditSpecificationFormData,
 } from "@/lib/schemas/specification-schemas";
-import type { SpecificationWithRevision } from "@/types/specifications.types";
+import type { SpecificationSection } from "@/types/specifications.types";
 
 interface SpecificationEditModalProps {
   projectId: string;
-  specification: SpecificationWithRevision | null;
+  specification: SpecificationSection | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -63,7 +63,7 @@ export function SpecificationEditModal({
       section_number: specification?.section_number || "",
       title: specification?.title || "",
       description: specification?.description || "",
-      status: (specification?.status as any) || "active",
+      status: (specification?.status as "active" | "archived" | "superseded") || "active",
     },
   });
 
@@ -74,7 +74,7 @@ export function SpecificationEditModal({
         section_number: specification.section_number,
         title: specification.title,
         description: specification.description || "",
-        status: specification.status as any,
+        status: specification.status as "active" | "archived" | "superseded",
       });
     }
   }, [specification, form]);

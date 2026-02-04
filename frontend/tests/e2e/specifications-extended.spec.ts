@@ -233,14 +233,8 @@ test.describe("Specifications - Revision Management", () => {
     // Find revision history section
     await expect(page.getByRole("heading", { name: "Revision History" })).toBeVisible();
 
-    // Current revision should be marked (look for badge or indicator)
-    const currentRevIndicator = page.locator('[data-current="true"]').or(
-      page.locator('text=/current/i').first()
-    );
-    await expect(currentRevIndicator).toBeVisible();
-
-    // Note: Setting a different revision as current would require UI elements
-    // that may not exist yet (set as current button). This test verifies display.
+    // Current revision should be marked with a "Current" badge
+    await expect(page.getByText("Current").first()).toBeVisible();
   });
 
   test("should download revision", async ({ page }) => {
@@ -263,22 +257,20 @@ test.describe("Specifications - Revision Management", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications/${testSectionId}`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Find a non-current revision row
-    const revisionRows = page.getByRole("row").filter({ hasText: /rev 1/i });
+    // Find a non-current revision row (one that has a trash icon button instead of "Current" badge)
+    // The detail page renders direct icon buttons for download and delete (not dropdown menus)
+    const revisionRow = page.getByRole("row").filter({ hasText: /rev 1/i });
 
-    // Open actions menu for the old revision
-    const menuButton = revisionRows.getByRole("button", { name: /actions|menu/i }).first();
-    await menuButton.click();
+    // Click the delete (trash) button in the non-current revision row
+    const deleteButton = revisionRow.locator('button:has(svg.text-red-600)');
+    await deleteButton.click();
 
-    // Click delete
-    await page.getByRole("menuitem", { name: /delete/i }).click();
-
-    // Confirm deletion
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await page.getByRole("button", { name: /delete|confirm/i }).last().click();
+    // Confirm deletion in the alert dialog
+    await expect(page.getByRole("alertdialog")).toBeVisible();
+    await page.getByRole("button", { name: /delete/i }).last().click();
 
     await expect(
-      page.getByText(/revision.*deleted|removed/i)
+      page.getByText(/revision.*deleted/i)
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -286,20 +278,14 @@ test.describe("Specifications - Revision Management", () => {
     await page.goto(`/${TEST_PROJECT_ID}/specifications/${testSectionId}`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Find the current revision row
-    const currentRevRow = page.locator('[data-current="true"]').or(
-      page.getByRole("row").filter({ hasText: /current/i })
-    );
+    // Find the current revision row (the one with "Current" badge)
+    const currentRevRow = page.getByRole("row").filter({ hasText: "Current" });
 
-    // Delete button should be disabled or not present
-    const deleteButton = currentRevRow.getByRole("button", { name: /delete/i });
-
-    // Check if button exists and is disabled
+    // The UI hides the delete button for current revisions (no trash icon rendered)
+    // Verify there is no red trash button in the current revision row
+    const deleteButton = currentRevRow.locator('button:has(svg.text-red-600)');
     const deleteCount = await deleteButton.count();
-    if (deleteCount > 0) {
-      await expect(deleteButton).toBeDisabled();
-    }
-    // If button doesn't exist at all, that's also valid (implicit prevention)
+    expect(deleteCount).toBe(0);
   });
 });
 

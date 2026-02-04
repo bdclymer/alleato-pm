@@ -424,8 +424,8 @@ export function ScheduleOfValuesTab({
                           <TooltipTrigger asChild>
                             <div>
                               <Select
-                                value={item.budget_code ?? ""}
-                                onValueChange={(value) => updateItem(item.id, "budget_code", value)}
+                                value={item.budget_code || "none"}
+                                onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
                                 disabled={costCodesLoading}
                               >
                                 <SelectTrigger
@@ -435,7 +435,7 @@ export function ScheduleOfValuesTab({
                                   <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="">No budget code</SelectItem>
+                                  <SelectItem value="none">No budget code</SelectItem>
                                   {costCodeOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
                                       {option.label}

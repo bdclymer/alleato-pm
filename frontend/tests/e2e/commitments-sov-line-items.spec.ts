@@ -94,15 +94,15 @@ async function setupMockRoutes(page: Page) {
 // Helper function to navigate to SOV tab
 async function navigateToSOVTab(page: Page) {
   await page.goto(`/${TEST_PROJECT_ID}/commitments/${TEST_COMMITMENT_ID}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByText('Schedule of Values').first()).toBeVisible({ timeout: 30000 });
 
   // Click on SOV or Schedule of Values tab
   const sovTab = page.locator('[role="tab"]').filter({ hasText: /SOV|Schedule/i });
   if (await sovTab.isVisible({ timeout: 5000 })) {
     await sovTab.click();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByText('Schedule of Values').first()).toBeVisible({ timeout: 30000 });
   }
 }
 
