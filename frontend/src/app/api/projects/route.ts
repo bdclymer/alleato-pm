@@ -148,6 +148,34 @@ export async function POST(request: NextRequest) {
       return apiErrorResponse(error);
     }
 
+    // Auto-add the creator as a project member with admin permissions
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (authLink?.person_id) {
+      // Find the "Project Admin" permission template (or any admin-level system template)
+      const { data: adminTemplate } = await supabase
+        .from("permission_templates")
+        .select("id")
+        .eq("is_system", true)
+        .ilike("name", "%admin%")
+        .maybeSingle();
+
+      await supabase
+        .from("project_directory_memberships")
+        .insert({
+          person_id: authLink.person_id,
+          project_id: data.id,
+          user_type: "internal",
+          status: "active",
+          role: "Project Admin",
+          permission_template_id: adminTemplate?.id ?? null,
+        });
+    }
+
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
