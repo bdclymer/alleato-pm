@@ -1037,12 +1037,12 @@ export default function ProjectContractDetailPage() {
                       {changeOrders.map((co) => (
                         <TableRow key={co.id}>
                           <TableCell className="font-medium">
-                            {co.change_order_number}
+                            {co.co_number || "--"}
                           </TableCell>
                           <TableCell>{co.description}</TableCell>
                           <TableCell className="text-right">
-                            <span className={co.amount < 0 ? "text-red-600" : ""}>
-                              {formatCurrency(co.amount)}
+                            <span className={(co.amount ?? 0) < 0 ? "text-red-600" : ""}>
+                              {formatCurrency(co.amount ?? 0)}
                             </span>
                           </TableCell>
                           <TableCell>
@@ -1055,15 +1055,15 @@ export default function ProjectContractDetailPage() {
                                     : "destructive"
                               }
                             >
-                              {co.status.charAt(0).toUpperCase() + co.status.slice(1)}
+                              {co.status ? co.status.charAt(0).toUpperCase() + co.status.slice(1) : "--"}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {new Date(co.requested_date).toLocaleDateString()}
+                            {co.created_at ? new Date(co.created_at).toLocaleDateString() : "--"}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {co.approved_date
-                              ? new Date(co.approved_date).toLocaleDateString()
+                            {co.approved_at
+                              ? new Date(co.approved_at).toLocaleDateString()
                               : "--"}
                           </TableCell>
                         </TableRow>
@@ -1074,7 +1074,7 @@ export default function ProjectContractDetailPage() {
                         <TableCell colSpan={2}>Total Change Orders</TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(
-                            changeOrders.reduce((sum, co) => sum + co.amount, 0),
+                            changeOrders.reduce((sum, co) => sum + (co.amount ?? 0), 0),
                           )}
                         </TableCell>
                         <TableCell colSpan={3}></TableCell>

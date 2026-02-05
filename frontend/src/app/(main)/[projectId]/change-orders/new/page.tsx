@@ -89,20 +89,6 @@ export default function NewChangeOrderPage() {
   // Line items state
   const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
 
-  // Calculate total from line items
-  const lineItemsTotal = lineItems.reduce((sum, item) => {
-    return sum + (item.quantity || 0) * (item.unit_price || 0);
-  }, 0);
-
-  // Check if there's a conflict between manual amount and line items
-  const manualAmount = form.watch("amount");
-  const hasAmountConflict = lineItems.length > 0 && manualAmount > 0 && Math.abs(manualAmount - lineItemsTotal) > 0.01;
-
-  // Fetch users for designated reviewer picker
-  const { users, options: userOptions, isLoading: isLoadingUsers } = useUsers({
-    personType: "user", // Only fetch users (employees), not contacts
-  });
-
   const form = useForm<ChangeOrderFormValues>({
     resolver: zodResolver(createChangeOrderSchema) as any,
     defaultValues: {
@@ -117,6 +103,20 @@ export default function NewChangeOrderPage() {
       is_private: false,
       designated_reviewer_id: null,
     },
+  });
+
+  // Calculate total from line items
+  const lineItemsTotal = lineItems.reduce((sum, item) => {
+    return sum + (item.quantity || 0) * (item.unit_price || 0);
+  }, 0);
+
+  // Check if there's a conflict between manual amount and line items
+  const manualAmount = form.watch("amount");
+  const hasAmountConflict = lineItems.length > 0 && manualAmount > 0 && Math.abs(manualAmount - lineItemsTotal) > 0.01;
+
+  // Fetch users for designated reviewer picker
+  const { users, options: userOptions, isLoading: isLoadingUsers } = useUsers({
+    personType: "user", // Only fetch users (employees), not contacts
   });
 
   // Fetch available contracts (prime contracts + commitments) for the project
