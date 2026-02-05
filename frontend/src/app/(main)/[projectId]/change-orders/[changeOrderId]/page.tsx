@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useCallback, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { ApprovalWorkflow } from "@/components/domain/change-orders/ApprovalWorkflow";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   approved: "default",
@@ -83,12 +85,24 @@ export default function ChangeOrderDetailPage() {
   const [changeOrder, setChangeOrder] = useState<ChangeOrder | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserCanApprove, setCurrentUserCanApprove] = useState(false);
 
-  // Fetch change order data
+  // Fetch change order data and current user
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+
+        // Get current user from Supabase auth
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+
+        // Fetch change order
         const response = await fetch(`/api/projects/${projectId}/change-orders/${changeOrderId}`);
 
         if (!response.ok) {
@@ -97,6 +111,13 @@ export default function ChangeOrderDetailPage() {
 
         const data = await response.json();
         setChangeOrder(data);
+
+        // Check if current user is the designated reviewer
+        if (user && data.designated_reviewer_id === user.id) {
+          setCurrentUserCanApprove(true);
+        } else {
+          setCurrentUserCanApprove(false);
+        }
 
         // Fetch contract if exists
         if (data.contract_id) {
@@ -114,6 +135,47 @@ export default function ChangeOrderDetailPage() {
     };
 
     fetchData();
+  }, [projectId, changeOrderId]);
+
+  // Refetch function to reload data after approval/rejection
+  const refetchData = useCallback(async () => {
+    try {
+      // Get current user from Supabase auth
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+
+      // Fetch change order
+      const response = await fetch(`/api/projects/${projectId}/change-orders/${changeOrderId}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch change order");
+      }
+
+      const data = await response.json();
+      setChangeOrder(data);
+
+      // Check if current user is the designated reviewer
+      if (user && data.designated_reviewer_id === user.id) {
+        setCurrentUserCanApprove(true);
+      } else {
+        setCurrentUserCanApprove(false);
+      }
+
+      // Fetch contract if exists
+      if (data.contract_id) {
+        const contractResponse = await fetch(`/api/contracts/${data.contract_id}`);
+        if (contractResponse.ok) {
+          const contractData = await contractResponse.json();
+          setContract(contractData);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load change order");
+    }
   }, [projectId, changeOrderId]);
 
   const handleBack = useCallback(() => {
@@ -149,57 +211,6 @@ export default function ChangeOrderDetailPage() {
     }
   }, [changeOrder, projectId, changeOrderId, router]);
 
-  const handleApprove = useCallback(async () => {
-    if (!changeOrder) return;
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/change-orders/${changeOrderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "approved",
-          approved_at: new Date().toISOString(),
-          approved_by: "current_user", // TODO: Get from auth context
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to approve change order");
-      }
-
-      toast.success("Change order approved");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to approve");
-    }
-  }, [changeOrder, projectId, changeOrderId, router]);
-
-  const handleReject = useCallback(async () => {
-    if (!changeOrder) return;
-
-    const reason = prompt("Enter rejection reason:");
-    if (!reason) return;
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/change-orders/${changeOrderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "rejected",
-          rejection_reason: reason,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to reject change order");
-      }
-
-      toast.success("Change order rejected");
-      router.refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to reject");
-    }
-  }, [changeOrder, projectId, changeOrderId, router]);
 
   const handleExecute = useCallback(async () => {
     if (!changeOrder) return;
@@ -301,6 +312,46 @@ export default function ChangeOrderDetailPage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
+
+            {/* Quick Approve/Reject buttons - visible only to reviewer when status is pending */}
+            {currentUserCanApprove &&
+              (changeOrder.status === "pending" || changeOrder.status === "submitted") && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Scroll to Reviews tab
+                    const reviewsTab = document.querySelector('[value="reviews"]');
+                    if (reviewsTab instanceof HTMLElement) {
+                      reviewsTab.click();
+                    }
+                    toast.info("Use the approval workflow in the Reviews tab below");
+                  }}
+                  className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Reject
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    // Scroll to Reviews tab
+                    const reviewsTab = document.querySelector('[value="reviews"]');
+                    if (reviewsTab instanceof HTMLElement) {
+                      reviewsTab.click();
+                    }
+                    toast.info("Use the approval workflow in the Reviews tab below");
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Approve
+                </Button>
+              </>
+            )}
+
             <Button variant="default" size="sm" onClick={handleEdit}>
               <Edit className="mr-2 h-4 w-4" />
               Edit
@@ -312,19 +363,6 @@ export default function ChangeOrderDetailPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {changeOrder.status === "pending" && (
-                  <>
-                    <DropdownMenuItem onClick={handleApprove}>
-                      <Check className="mr-2 h-4 w-4" />
-                      Approve
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleReject}>
-                      <X className="mr-2 h-4 w-4" />
-                      Reject
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
                 {changeOrder.status === "approved" && (
                   <>
                     <DropdownMenuItem onClick={handleExecute}>
@@ -546,24 +584,24 @@ export default function ChangeOrderDetailPage() {
 
           {/* Reviews Tab */}
           <TabsContent value="reviews">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {changeOrder.designated_reviewer_id && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Designated Reviewer</span>
-                      <span className="text-sm">{changeOrder.designated_reviewer_id}</span>
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-4">
-                    Detailed review history coming soon
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <ApprovalWorkflow
+              changeOrder={{
+                id: changeOrderId,
+                status: changeOrder.status || "draft",
+                contract_id: changeOrder.contract_id?.toString() || "",
+                project_id: parseInt(projectId),
+                designated_reviewer_id: changeOrder.designated_reviewer_id,
+                approved_at: changeOrder.approved_at,
+                approved_by: changeOrder.approved_by,
+                rejection_reason: changeOrder.rejection_reason,
+                submitted_at: changeOrder.submitted_at,
+              }}
+              currentUserCanApprove={currentUserCanApprove}
+              reviewerName={changeOrder.designated_reviewer_id || undefined}
+              reviewerEmail={undefined}
+              onApprovalSuccess={refetchData}
+              onRejectionSuccess={refetchData}
+            />
           </TabsContent>
 
           {/* History Tab */}
