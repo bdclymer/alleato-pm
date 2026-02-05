@@ -24,10 +24,47 @@ import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
+type PrimeContractChangeOrderRow =
+  Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
+type ContractChangeOrderRow =
+  Database["public"]["Tables"]["contract_change_orders"]["Row"];
+
+// Unified change order type that can represent data from any of the three tables
+type UnifiedChangeOrder =
+  | (ChangeOrderRow & {
+      contractType: "general";
+      normalizedNumber: string | null;
+      normalizedTitle: string | null;
+      normalizedDescription: string | null;
+      normalizedStatus: string | null;
+      normalizedAmount: number | null;
+      normalizedCreatedAt: string | null;
+      normalizedDueDate: string | null;
+    })
+  | (Omit<PrimeContractChangeOrderRow, "contracts"> & {
+      contractType: "prime";
+      normalizedNumber: string | null;
+      normalizedTitle: string;
+      normalizedDescription: null;
+      normalizedStatus: string | null;
+      normalizedAmount: number | null;
+      normalizedCreatedAt: string | null;
+      normalizedDueDate: null;
+    })
+  | (Omit<ContractChangeOrderRow, "prime_contracts"> & {
+      contractType: "commitment";
+      normalizedNumber: string;
+      normalizedTitle: null;
+      normalizedDescription: string;
+      normalizedStatus: string;
+      normalizedAmount: number;
+      normalizedCreatedAt: string;
+      normalizedDueDate: null;
+    });
 
 interface ChangeOrdersClientProps {
   projectId: string;
-  changeOrders: ChangeOrderRow[];
+  changeOrders: UnifiedChangeOrder[];
 }
 
 export function ChangeOrdersClient({
@@ -39,6 +76,9 @@ export function ChangeOrdersClient({
   const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "all");
+  const [contractTypeTab, setContractTypeTab] = useState(
+    searchParams.get("contractType") || "all"
+  );
 
   // Filter state
   const [searchText, setSearchText] = useState("");
@@ -54,14 +94,25 @@ export function ChangeOrdersClient({
     } else {
       params.set("status", activeTab);
     }
+    if (contractTypeTab === "all") {
+      params.delete("contractType");
+    } else {
+      params.set("contractType", contractTypeTab);
+    }
     const newUrl = params.toString() ? `${pathname}?${params}` : pathname;
     router.push(newUrl, { scroll: false });
-  }, [activeTab, pathname, router, searchParams]);
+  }, [activeTab, contractTypeTab, pathname, router, searchParams]);
 
   // Get unique reviewers for filter dropdown
   const uniqueReviewers = useMemo(() => {
     const reviewers = changeOrders
-      .map((co) => co.designated_reviewer_id)
+      .filter((co) => co.contractType === "general") // Only general change orders have reviewers
+      .map((co) => {
+        if (co.contractType === "general") {
+          return co.designated_reviewer_id;
+        }
+        return null;
+      })
       .filter((id): id is string => !!id);
     return Array.from(new Set(reviewers));
   }, [changeOrders]);
@@ -70,16 +121,23 @@ export function ChangeOrdersClient({
   const filteredChangeOrders = useMemo(() => {
     let result = changeOrders;
 
-    // Tab filter
+    // Contract type filter
+    if (contractTypeTab !== "all") {
+      result = result.filter((co) => co.contractType === contractTypeTab);
+    }
+
+    // Status tab filter
     if (activeTab !== "all") {
       result = result.filter((co) => {
+        const status = co.normalizedStatus;
+        if (!status) return false;
         if (activeTab === "pending") {
-          return co.status === "pending" || co.status === "submitted";
+          return status === "pending" || status === "submitted";
         }
         if (activeTab === "approved") {
-          return co.status === "approved" || co.status === "executed";
+          return status === "approved" || status === "executed";
         }
-        return co.status === activeTab;
+        return status === activeTab;
       });
     }
 
@@ -88,35 +146,41 @@ export function ChangeOrdersClient({
       const search = searchText.toLowerCase();
       result = result.filter((co) => {
         return (
-          co.co_number?.toLowerCase().includes(search) ||
-          co.title?.toLowerCase().includes(search) ||
-          co.description?.toLowerCase().includes(search)
+          co.normalizedNumber?.toLowerCase().includes(search) ||
+          co.normalizedTitle?.toLowerCase().includes(search) ||
+          co.normalizedDescription?.toLowerCase().includes(search)
         );
       });
     }
 
-    // Reviewer filter
+    // Reviewer filter (only applies to general change orders)
     if (reviewerFilter !== "all") {
-      result = result.filter((co) => co.designated_reviewer_id === reviewerFilter);
+      result = result.filter((co) => {
+        if (co.contractType === "general") {
+          return co.designated_reviewer_id === reviewerFilter;
+        }
+        return false;
+      });
     }
 
-    // Due date range filter
+    // Due date range filter (only general change orders have due dates)
     if (dueDateFrom) {
       result = result.filter((co) => {
-        if (!co.due_date) return false;
-        return new Date(co.due_date) >= new Date(dueDateFrom);
+        if (!co.normalizedDueDate) return false;
+        return new Date(co.normalizedDueDate) >= new Date(dueDateFrom);
       });
     }
     if (dueDateTo) {
       result = result.filter((co) => {
-        if (!co.due_date) return false;
-        return new Date(co.due_date) <= new Date(dueDateTo);
+        if (!co.normalizedDueDate) return false;
+        return new Date(co.normalizedDueDate) <= new Date(dueDateTo);
       });
     }
 
     return result;
   }, [
     changeOrders,
+    contractTypeTab,
     activeTab,
     searchText,
     reviewerFilter,
@@ -124,13 +188,19 @@ export function ChangeOrdersClient({
     dueDateTo,
   ]);
 
-  // Calculate summary statistics
+  // Calculate summary statistics based on current contract type filter
   const summary = useMemo(() => {
-    return changeOrders.reduce(
-      (acc, co) => {
-        const amount = co.amount || 0;
+    const dataToSummarize =
+      contractTypeTab === "all"
+        ? changeOrders
+        : changeOrders.filter((co) => co.contractType === contractTypeTab);
 
-        switch (co.status) {
+    return dataToSummarize.reduce(
+      (acc, co) => {
+        const amount = co.normalizedAmount || 0;
+        const status = co.normalizedStatus;
+
+        switch (status) {
           case "pending":
           case "submitted":
             acc.pending.count++;
@@ -164,7 +234,7 @@ export function ChangeOrdersClient({
         total: { count: 0, amount: 0 },
       }
     );
-  }, [changeOrders]);
+  }, [changeOrders, contractTypeTab]);
 
   const config: GenericTableConfig = {
     searchFields: ["co_number", "title", "description"],
@@ -523,37 +593,93 @@ export function ChangeOrdersClient({
         </CardContent>
       </Card>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">
-            All ({changeOrders.length})
-          </TabsTrigger>
-          <TabsTrigger value="draft">
-            Draft ({summary.draft.count})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending ({summary.pending.count})
-          </TabsTrigger>
-          <TabsTrigger value="approved">
-            Approved ({summary.approved.count})
-          </TabsTrigger>
-          <TabsTrigger value="rejected">
-            Rejected ({summary.rejected.count})
-          </TabsTrigger>
-          <TabsTrigger value="executed">
-            Executed ({changeOrders.filter(co => co.status === "executed").length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Contract Type Tabs */}
+      <div className="space-y-4">
+        <Tabs
+          value={contractTypeTab}
+          onValueChange={setContractTypeTab}
+          className="space-y-4"
+        >
+          <div className="border-b">
+            <TabsList className="bg-transparent border-0">
+              <TabsTrigger
+                value="all"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
+              >
+                All (
+                {changeOrders.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="prime"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
+              >
+                Prime Contract (
+                {changeOrders.filter((co) => co.contractType === "prime").length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="commitment"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
+              >
+                Commitments (
+                {
+                  changeOrders.filter((co) => co.contractType === "commitment")
+                    .length
+                }
+                )
+              </TabsTrigger>
+              <TabsTrigger
+                value="general"
+                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
+              >
+                General (
+                {changeOrders.filter((co) => co.contractType === "general").length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </Tabs>
 
-        <TabsContent value={activeTab} className="space-y-4">
-          <GenericDataTable
-            data={filteredChangeOrders}
-            config={config}
-            onDeleteRow={handleDeleteRow}
-          />
-        </TabsContent>
-      </Tabs>
+        {/* Status Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="all">
+              All ({summary.total.count})
+            </TabsTrigger>
+            <TabsTrigger value="draft">Draft ({summary.draft.count})</TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending ({summary.pending.count})
+            </TabsTrigger>
+            <TabsTrigger value="approved">
+              Approved ({summary.approved.count})
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Rejected ({summary.rejected.count})
+            </TabsTrigger>
+            <TabsTrigger value="executed">
+              Executed (
+              {
+                (contractTypeTab === "all"
+                  ? changeOrders
+                  : changeOrders.filter(
+                      (co) => co.contractType === contractTypeTab
+                    )
+                ).filter((co) => {
+                  const status = co.normalizedStatus;
+                  return status === "executed";
+                }).length
+              }
+              )
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={activeTab} className="space-y-4">
+            <GenericDataTable
+              data={filteredChangeOrders}
+              config={config}
+              onDeleteRow={handleDeleteRow}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
