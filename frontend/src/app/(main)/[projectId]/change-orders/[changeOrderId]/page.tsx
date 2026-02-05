@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -98,6 +98,11 @@ export default function ChangeOrderDetailPage() {
 
   // Line items state
   const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [lineItemsLoaded, setLineItemsLoaded] = useState(false);
 
@@ -367,6 +372,100 @@ export default function ChangeOrderDetailPage() {
     [changeOrder]
   );
 
+  // Fetch attachments
+  const fetchAttachments = useCallback(async () => {
+    if (attachmentsLoaded) return;
+
+    try {
+      setAttachmentsLoading(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/change-orders/${changeOrderId}/attachments`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch attachments");
+      }
+
+      const result = await response.json();
+      setAttachments(result.data || []);
+      setAttachmentsLoaded(true);
+    } catch (err) {
+      console.error("Failed to fetch attachments:", err);
+      toast.error("Failed to load attachments");
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  }, [projectId, changeOrderId, attachmentsLoaded]);
+
+  // Handle file selection for upload
+  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch(
+          `/api/projects/${projectId}/change-orders/${changeOrderId}/attachments`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `Failed to upload ${file.name}`);
+        }
+
+        toast.success(`${file.name} uploaded successfully`);
+      } catch (err) {
+        console.error(`Error uploading ${file.name}:`, err);
+        toast.error(err instanceof Error ? err.message : `Failed to upload ${file.name}`);
+      }
+    }
+
+    // Refresh attachments list
+    setAttachmentsLoaded(false);
+    await fetchAttachments();
+
+    // Reset the input
+    event.target.value = "";
+  }, [projectId, changeOrderId, fetchAttachments]);
+
+  // Handle attachment deletion
+  const handleAttachmentDelete = useCallback(async (attachmentId: string) => {
+    if (!confirm("Are you sure you want to delete this attachment?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/change-orders/${changeOrderId}/attachments/${attachmentId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete attachment");
+      }
+
+      toast.success("Attachment deleted successfully");
+
+      // Refresh attachments list
+      setAttachmentsLoaded(false);
+      await fetchAttachments();
+    } catch (err) {
+      console.error("Error deleting attachment:", err);
+      toast.error("Failed to delete attachment");
+    }
+  }, [projectId, changeOrderId, fetchAttachments]);
+
   if (isLoading) {
     return (
       <>
@@ -584,6 +683,10 @@ export default function ChangeOrderDetailPage() {
             // Auto-fetch line items when tab is selected
             if (value === "line-items" && !lineItemsLoaded && !lineItemsLoading) {
               fetchLineItems();
+            }
+            // Auto-fetch attachments when tab is selected
+            if (value === "attachments" && !attachmentsLoaded && !attachmentsLoading) {
+              fetchAttachments();
             }
           }}
         >
@@ -804,17 +907,134 @@ export default function ChangeOrderDetailPage() {
           </TabsContent>
 
           {/* Attachments Tab */}
-          <TabsContent value="attachments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Attachments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Attachments functionality coming soon
-                </p>
-              </CardContent>
-            </Card>
+          <TabsContent value="attachments" className="space-y-4">
+            {attachmentsLoading ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-center py-8">
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Upload Zone */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Upload Attachments</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => document.getElementById("attachment-upload")?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Choose Files
+                      </Button>
+                      <input
+                        id="attachment-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Max 50MB per file • PDF, DOC, XLS, JPG, PNG
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Attachments List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      Existing Attachments
+                      {attachments.length > 0 && (
+                        <span className="ml-2 text-sm font-normal text-muted-foreground">
+                          ({attachments.length})
+                        </span>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {!attachmentsLoaded && (
+                      <div className="text-center py-8">
+                        <Button onClick={fetchAttachments} variant="outline">
+                          Load Attachments
+                        </Button>
+                      </div>
+                    )}
+
+                    {attachmentsLoaded && attachments.length === 0 && (
+                      <div className="text-center py-8">
+                        <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          No attachments yet. Upload files using the form above.
+                        </p>
+                      </div>
+                    )}
+
+                    {attachmentsLoaded && attachments.length > 0 && (
+                      <div className="space-y-2">
+                        {attachments.map((attachment) => (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <FileText className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">
+                                {attachment.fileName}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>
+                                  {(attachment.fileSize / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                                <span>•</span>
+                                <span>
+                                  {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                </span>
+                                {attachment.uploadedBy && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{attachment.uploadedBy.email}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                              >
+                                <a
+                                  href={`/api/projects/${projectId}/change-orders/${changeOrderId}/attachments/${attachment.id}/download`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </a>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAttachmentDelete(attachment.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </TabsContent>
 
           {/* Reviews Tab */}

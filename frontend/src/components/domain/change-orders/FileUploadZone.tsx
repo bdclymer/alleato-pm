@@ -134,7 +134,7 @@ export function FileUploadZone({
 
       // Upload to Supabase storage
       const { data, error } = await supabase.storage
-        .from("project-attachments")
+        .from("project-files")
         .upload(storagePath, file, {
           cacheControl: "3600",
           upsert: false,
