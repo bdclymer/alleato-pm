@@ -9,7 +9,19 @@ import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Search, Calendar, Filter, X } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
 
@@ -28,6 +40,12 @@ export function ChangeOrdersClient({
 
   const [activeTab, setActiveTab] = useState(searchParams.get("status") || "all");
 
+  // Filter state
+  const [searchText, setSearchText] = useState("");
+  const [reviewerFilter, setReviewerFilter] = useState("all");
+  const [dueDateFrom, setDueDateFrom] = useState<string>("");
+  const [dueDateTo, setDueDateTo] = useState<string>("");
+
   // Update URL when tab changes
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
@@ -40,21 +58,71 @@ export function ChangeOrdersClient({
     router.push(newUrl, { scroll: false });
   }, [activeTab, pathname, router, searchParams]);
 
-  // Filter data based on active tab
+  // Get unique reviewers for filter dropdown
+  const uniqueReviewers = useMemo(() => {
+    const reviewers = changeOrders
+      .map((co) => co.designated_reviewer_id)
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(reviewers));
+  }, [changeOrders]);
+
+  // Filter data based on active tab and additional filters
   const filteredChangeOrders = useMemo(() => {
-    if (activeTab === "all") {
-      return changeOrders;
+    let result = changeOrders;
+
+    // Tab filter
+    if (activeTab !== "all") {
+      result = result.filter((co) => {
+        if (activeTab === "pending") {
+          return co.status === "pending" || co.status === "submitted";
+        }
+        if (activeTab === "approved") {
+          return co.status === "approved" || co.status === "executed";
+        }
+        return co.status === activeTab;
+      });
     }
-    return changeOrders.filter((co) => {
-      if (activeTab === "pending") {
-        return co.status === "pending" || co.status === "submitted";
-      }
-      if (activeTab === "approved") {
-        return co.status === "approved" || co.status === "executed";
-      }
-      return co.status === activeTab;
-    });
-  }, [changeOrders, activeTab]);
+
+    // Text search filter
+    if (searchText.trim()) {
+      const search = searchText.toLowerCase();
+      result = result.filter((co) => {
+        return (
+          co.co_number?.toLowerCase().includes(search) ||
+          co.title?.toLowerCase().includes(search) ||
+          co.description?.toLowerCase().includes(search)
+        );
+      });
+    }
+
+    // Reviewer filter
+    if (reviewerFilter !== "all") {
+      result = result.filter((co) => co.designated_reviewer_id === reviewerFilter);
+    }
+
+    // Due date range filter
+    if (dueDateFrom) {
+      result = result.filter((co) => {
+        if (!co.due_date) return false;
+        return new Date(co.due_date) >= new Date(dueDateFrom);
+      });
+    }
+    if (dueDateTo) {
+      result = result.filter((co) => {
+        if (!co.due_date) return false;
+        return new Date(co.due_date) <= new Date(dueDateTo);
+      });
+    }
+
+    return result;
+  }, [
+    changeOrders,
+    activeTab,
+    searchText,
+    reviewerFilter,
+    dueDateFrom,
+    dueDateTo,
+  ]);
 
   // Calculate summary statistics
   const summary = useMemo(() => {
@@ -161,7 +229,8 @@ export function ChangeOrdersClient({
         type: "number",
         renderConfig: {
           type: "currency",
-          currency: "USD",
+          prefix: "$",
+          showDecimals: true,
         },
       },
       {
@@ -245,6 +314,24 @@ export function ChangeOrdersClient({
     }).format(amount);
   };
 
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchText.trim()) count++;
+    if (reviewerFilter !== "all") count++;
+    if (dueDateFrom) count++;
+    if (dueDateTo) count++;
+    return count;
+  }, [searchText, reviewerFilter, dueDateFrom, dueDateTo]);
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchText("");
+    setReviewerFilter("all");
+    setDueDateFrom("");
+    setDueDateTo("");
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -294,6 +381,147 @@ export function ChangeOrdersClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Filter Bar */}
+      <Card className="bg-muted/40">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">Filters</h3>
+              {activeFiltersCount > 0 && (
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </div>
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearFilters}
+                className="h-7 text-xs"
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                Clear All
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Search Input */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Number, title, description..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            </div>
+
+            {/* Reviewer Filter */}
+            <div className="space-y-1.5">
+              <Label className="text-xs">Reviewer</Label>
+              <Select value={reviewerFilter} onValueChange={setReviewerFilter}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="All Reviewers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reviewers</SelectItem>
+                  {uniqueReviewers.map((reviewer) => (
+                    <SelectItem key={reviewer} value={reviewer}>
+                      {reviewer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Due Date From */}
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Due Date From
+              </Label>
+              <Input
+                type="date"
+                value={dueDateFrom}
+                onChange={(e) => setDueDateFrom(e.target.value)}
+                className="h-9"
+              />
+            </div>
+
+            {/* Due Date To */}
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Due Date To
+              </Label>
+              <Input
+                type="date"
+                value={dueDateTo}
+                onChange={(e) => setDueDateTo(e.target.value)}
+                className="h-9"
+              />
+            </div>
+          </div>
+
+          {/* Active Filter Pills */}
+          {activeFiltersCount > 0 && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Active filters:
+                </span>
+                {searchText.trim() && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchText("")}
+                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                  >
+                    Search: {searchText}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {reviewerFilter !== "all" && (
+                  <button
+                    type="button"
+                    onClick={() => setReviewerFilter("all")}
+                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                  >
+                    Reviewer: {reviewerFilter}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {dueDateFrom && (
+                  <button
+                    type="button"
+                    onClick={() => setDueDateFrom("")}
+                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                  >
+                    From: {new Date(dueDateFrom).toLocaleDateString()}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {dueDateTo && (
+                  <button
+                    type="button"
+                    onClick={() => setDueDateTo("")}
+                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
+                  >
+                    To: {new Date(dueDateTo).toLocaleDateString()}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
