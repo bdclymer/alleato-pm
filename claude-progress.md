@@ -1,3 +1,59 @@
+## Session 12 - 2026-02-05
+
+### Tasks Completed This Session
+✅ **Task 416**: Create line items API routes for project-level change orders
+
+### Current Progress
+- **Task completion**: 57.5% (23 of 40 tasks completed) 🎉
+- **Test pass rate**: 73.7% (14 of 19 tests passing)
+- **Epics completed**: 5 of 10
+- **Current Epic**: Epic 52: Line Items Management (1 of 4 tasks complete)
+
+### Files Created This Session
+- `frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/line-items/route.ts` - GET/POST routes for line items
+- `frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/line-items/[lineItemId]/route.ts` - PUT/DELETE routes for individual line items
+
+### Files Modified This Session
+- `frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/validation.ts` - Added line item Zod schemas
+
+### Key Implementation Details
+
+**Task 416 - Line Items API Routes:**
+- **GET /line-items**: List all line items for a change order
+  - Includes cost code, cost type, and sub job details via joins
+  - Verifies change order belongs to project (403 if not)
+  - Returns formatted camelCase response with _links
+- **POST /line-items**: Create new line item
+  - Validates cost_code_id and cost_type_id exist
+  - Optional sub_job_id validation
+  - Automatically recalculates change order total amount
+  - Authentication required
+- **PUT /line-items/[lineItemId]**: Update line item
+  - Partial update support (only provided fields)
+  - FK validation for cost codes, cost types, sub jobs
+  - Recalculates change order total on amount changes
+  - Returns updated item with full relations
+- **DELETE /line-items/[lineItemId]**: Delete line item
+  - Removes line item from database
+  - Recalculates change order total amount
+  - Returns 204 No Content on success
+- **Validation schemas**:
+  - `createLineItemSchema`: cost_code_id (required), cost_type_id (required), description (optional), amount (default 0), sub_job_id (optional)
+  - `updateLineItemSchema`: All fields optional for partial updates
+- **Total amount recalculation**:
+  - After every create/update/delete operation
+  - Sums all line item amounts
+  - Updates change_order.amount field
+  - Ensures change order total stays in sync with line items
+
+### Git Commits
+1. `e408017f` - Add line items API routes for project-level change orders
+
+### Next Task
+- **Task 417**: Create LineItemsTable component for editing line items
+
+---
+
 ## Session 11 - 2026-02-05
 
 ### Tasks Completed This Session
