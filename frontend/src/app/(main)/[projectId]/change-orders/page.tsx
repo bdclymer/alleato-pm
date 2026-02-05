@@ -3,6 +3,7 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { Button } from "@/components/ui/button";
 import { ChangeOrdersClient } from "./change-orders-client";
+import { ExportDropdown } from "@/components/domain/change-orders/ExportDropdown";
 
 export default async function ProjectChangeOrdersPage({
   params,
@@ -105,9 +106,14 @@ export default async function ProjectChangeOrdersPage({
         title="Change Orders"
         description="Track and manage contract change orders"
         actions={
-          <Button asChild size="sm" data-testid="change-orders-create-button">
-            <Link href={`/${projectId}/change-orders/new`}>Create Change Order</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ExportDropdown projectId={projectId} />
+            <Button asChild size="sm" data-testid="change-orders-create-button">
+              <Link href={`/${projectId}/change-orders/new`}>
+                Create Change Order
+              </Link>
+            </Button>
+          </div>
         }
       />
       <PageContainer className="space-y-6">
