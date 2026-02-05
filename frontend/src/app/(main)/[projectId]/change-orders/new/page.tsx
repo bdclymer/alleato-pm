@@ -2,21 +2,17 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { z } from "zod";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,37 +20,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
-const changeOrderFormSchema = z.object({
+/**
+ * Form schema for creating change orders
+ * Matches the changeOrderSchema from financial-schemas.ts
+ */
+const createChangeOrderSchema = z.object({
   co_number: z.string().min(1, "Change order number is required"),
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  status: z.enum(["draft", "pending", "approved", "executed", "rejected", "void"]),
-  contract_id: z.number().optional().nullable(),
-  amount: z.number(),
+  status: z.enum(["draft", "pending", "approved", "executed", "rejected", "void"]).default("draft"),
+  contract_id: z.number().int().positive().optional().nullable(),
+  amount: z.number().default(0),
   due_date: z.string().optional().nullable(),
-  is_private: z.boolean(),
+  is_private: z.boolean().default(false),
+  designated_reviewer_id: z.string().optional().nullable(),
+  // Future Procore-aligned fields (not yet in schema but mentioned in spec)
+  scope: z.enum(["in_scope", "out_of_scope"]).optional(),
+  schedule_impact: z.enum(["yes", "no", "unknown"]).optional(),
 });
 
-type ChangeOrderFormValues = z.infer<typeof changeOrderFormSchema>;
+type ChangeOrderFormValues = z.infer<typeof createChangeOrderSchema>;
 
 interface ContractOption {
   id: number;
   contract_number: string | null;
+  contract_name: string | null;
 }
 
-export default function NewProjectChangeOrderPage() {
+/**
+ * Helper to format date for input
+ */
+function formatDateForInput(dateStr: string | null): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toISOString().split("T")[0];
+}
+
+export default function NewChangeOrderPage() {
   const router = useRouter();
   const params = useParams();
-  const projectId = parseInt(params.projectId as string, 10);
+  const projectId = params.projectId as string;
+  const numericProjectId = parseInt(projectId, 10);
 
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [contracts, setContracts] = useState<ContractOption[]>([]);
+  const [isLoadingContracts, setIsLoadingContracts] = useState(true);
 
   const form = useForm<ChangeOrderFormValues>({
-    resolver: zodResolver(changeOrderFormSchema),
+    resolver: zodResolver(createChangeOrderSchema) as any,
     defaultValues: {
       co_number: "",
       title: "",
@@ -64,61 +87,69 @@ export default function NewProjectChangeOrderPage() {
       amount: 0,
       due_date: null,
       is_private: false,
+      designated_reviewer_id: null,
     },
   });
 
+  // Fetch available contracts for the project
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("contracts")
-      .select("id, contract_number")
-      .eq("project_id", projectId)
-      .order("contract_number")
-      .then(({ data }) => {
-        if (data) setContracts(data);
-      });
-  }, [projectId]);
+    const fetchContracts = async () => {
+      if (isNaN(numericProjectId)) return;
 
-  const onSubmit: SubmitHandler<ChangeOrderFormValues> = async (values) => {
+      try {
+        setIsLoadingContracts(true);
+        const response = await fetch(`/api/contracts?projectId=${numericProjectId}`);
+
+        if (response.ok) {
+          const data = await response.json();
+          setContracts(data);
+        }
+      } catch (error) {
+        console.error("Failed to load contracts:", error);
+      } finally {
+        setIsLoadingContracts(false);
+      }
+    };
+
+    fetchContracts();
+  }, [numericProjectId]);
+
+  const handleSubmit = async (data: ChangeOrderFormValues) => {
+    setIsSubmitting(true);
+
     try {
-      setSubmitting(true);
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // Remove fields that aren't in the API schema yet
+      const { scope, schedule_impact, ...apiData } = data;
 
-      const now = new Date().toISOString();
-      const isSubmitted = values.status !== "draft";
+      const response = await fetch(`/api/projects/${projectId}/change-orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiData),
+      });
 
-      const { data, error } = await supabase
-        .from("change_orders")
-        .insert({
-          project_id: projectId,
-          co_number: values.co_number,
-          title: values.title,
-          description: values.description || null,
-          status: values.status,
-          contract_id: values.contract_id || null,
-          amount: values.amount,
-          due_date: values.due_date || null,
-          is_private: values.is_private,
-          submitted_at: isSubmitted ? now : null,
-          submitted_by: isSubmitted ? (user?.id ?? null) : null,
-        })
-        .select("id")
-        .single();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
 
-      if (error || !data) {
-        toast.error(error?.message || "Failed to create change order");
-        return;
+        // Handle validation errors
+        if (errorData.issues) {
+          errorData.issues.forEach((issue: any) => {
+            toast.error(`${issue.path.join(".")}: ${issue.message}`);
+          });
+          throw new Error("Validation failed");
+        }
+
+        throw new Error(errorData.error || "Failed to create change order");
       }
 
-      toast.success("Change order created");
-      router.push(`/${projectId}/change-orders/${data.id}`);
-    } catch {
-      toast.error("Unexpected error creating change order");
+      const createdChangeOrder = await response.json();
+      toast.success("Change order created successfully");
+      router.push(`/${projectId}/change-orders/${createdChangeOrder.id}`);
+    } catch (error) {
+      if (error instanceof Error && error.message !== "Validation failed") {
+        toast.error(error.message);
+      }
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -126,176 +157,284 @@ export default function NewProjectChangeOrderPage() {
     router.push(`/${projectId}/change-orders`);
   };
 
+  if (isNaN(numericProjectId)) {
+    return (
+      <>
+        <ProjectPageHeader
+          title="Error"
+          description="Invalid project ID"
+        />
+        <PageContainer>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-destructive">Invalid project ID provided</p>
+            </CardContent>
+          </Card>
+        </PageContainer>
+      </>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-8">
-        <Button variant="ghost" onClick={handleCancel} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Change Orders
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">New Change Order</h1>
-        <p className="text-muted-foreground">
-          Create a new project change order
-        </p>
-      </div>
-
-      <Card className="max-w-4xl">
-        <CardHeader>
-          <CardTitle>Change Order Details</CardTitle>
-          <CardDescription>
-            Capture the required details for the change order before submission.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="co_number">Change Order #*</Label>
-                  <Input
-                    id="co_number"
-                    placeholder="CO-001"
-                    data-testid="change-order-number"
-                    {...form.register("co_number")}
+    <>
+      <ProjectPageHeader
+        title="New Change Order"
+        description="Create a new change order for this project"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSubmitting}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button size="sm" onClick={form.handleSubmit(handleSubmit)} disabled={isSubmitting}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSubmitting ? "Creating..." : "Create Change Order"}
+            </Button>
+          </div>
+        }
+      />
+      <PageContainer>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            {/* Basic Information Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="co_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Change Order Number *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="CO-001" data-testid="change-order-number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  {form.formState.errors.co_number && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.co_number.message}
-                    </p>
+
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="change-order-status">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="executed">Executed</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="void">Void</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Owner-requested modification"
+                          data-testid="change-order-title"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title*</Label>
-                  <Input
-                    id="title"
-                    placeholder="Owner-requested modification"
-                    data-testid="change-order-title"
-                    {...form.register("title")}
-                  />
-                  {form.formState.errors.title && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.title.message}
-                    </p>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Describe the scope and justification..."
+                          rows={4}
+                          data-testid="change-order-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    rows={4}
-                    placeholder="Describe the scope and justification"
-                    data-testid="change-order-description"
-                    {...form.register("description")}
+            {/* Contract & Financial Details Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Contract & Financial Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="contract_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Associated Contract</FormLabel>
+                      <Select
+                        value={field.value?.toString() || "none"}
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? null : parseInt(value, 10))
+                        }
+                        disabled={isLoadingContracts}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="change-order-contract">
+                            <SelectValue placeholder={isLoadingContracts ? "Loading..." : "Select contract"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No contract</SelectItem>
+                          {contracts.map((contract) => (
+                            <SelectItem key={contract.id} value={contract.id.toString()}>
+                              {contract.contract_number || contract.contract_name || `Contract #${contract.id}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select the prime contract or commitment this change order affects
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...field}
+                            value={field.value || 0}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            placeholder="0.00"
+                            data-testid="change-order-amount"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="due_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value ? formatDateForInput(field.value) : ""}
+                            data-testid="change-order-due-date"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Status*</Label>
-                  <Select
-                    value={form.watch("status") || "draft"}
-                    onValueChange={(value) =>
-                      form.setValue(
-                        "status",
-                        value as ChangeOrderFormValues["status"],
-                      )
-                    }
-                  >
-                    <SelectTrigger data-testid="change-order-status">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="executed">Executed</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                      <SelectItem value="void">Void</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Workflow & Review Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Workflow & Review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="designated_reviewer_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designated Reviewer</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value || ""}
+                          placeholder="Reviewer user ID or email"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        User ID of the person designated to review and approve this change order
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                {contracts.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Contract</Label>
-                    <Select
-                      value={form.watch("contract_id")?.toString() || "none"}
-                      onValueChange={(value) =>
-                        form.setValue(
-                          "contract_id",
-                          value === "none" ? null : Number(value),
-                        )
-                      }
-                    >
-                      <SelectTrigger data-testid="change-order-contract">
-                        <SelectValue placeholder="Select contract" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No contract</SelectItem>
-                        {contracts.map((c) => (
-                          <SelectItem key={c.id} value={c.id.toString()}>
-                            {c.contract_number || `Contract #${c.id}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                <FormField
+                  control={form.control}
+                  name="is_private"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Private Change Order</FormLabel>
+                        <FormDescription>
+                          Restrict visibility to authorized users only
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount ($)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    data-testid="change-order-amount"
-                    {...form.register("amount", { valueAsNumber: true })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="due_date">Due Date</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    data-testid="change-order-due-date"
-                    {...form.register("due_date")}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    id="is_private"
-                    type="checkbox"
-                    className="rounded border-input"
-                    {...form.register("is_private")}
-                  />
-                  <Label htmlFor="is_private" className="text-sm font-normal">
-                    Private (only visible to admins)
-                  </Label>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={handleCancel}>
+            {/* Form Actions */}
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={submitting}
-                data-testid="change-order-submit"
-              >
-                {submitting ? "Creating..." : "Create Change Order"}
+              <Button type="submit" disabled={isSubmitting} data-testid="change-order-submit">
+                <Save className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Creating..." : "Create Change Order"}
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+        </Form>
+      </PageContainer>
+    </>
   );
 }
