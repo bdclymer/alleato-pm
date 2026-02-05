@@ -16,9 +16,25 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { projectId, changeOrderId } = await params;
     const supabase = await createClient();
 
+    // Fetch change order with full relations
     const { data, error } = await supabase
       .from("change_orders")
-      .select("*")
+      .select(
+        `
+        *,
+        contracts:contract_id (
+          id,
+          contract_number,
+          contract_name,
+          contract_type
+        ),
+        change_events:change_event_id (
+          id,
+          title,
+          status
+        )
+      `
+      )
       .eq("project_id", Number(projectId))
       .eq("id", Number(changeOrderId))
       .single();

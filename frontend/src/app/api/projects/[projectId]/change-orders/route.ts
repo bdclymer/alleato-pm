@@ -27,10 +27,25 @@ export async function GET(
     const status = searchParams.get("status");
     const search = searchParams.get("search");
     const contractId = searchParams.get("contractId");
+    const contractType = searchParams.get("contractType");
+    const isPrivate = searchParams.get("isPrivate");
+    const reviewerId = searchParams.get("reviewerId");
 
+    // Build query with contract relations
     let query = supabase
       .from("change_orders")
-      .select("*", { count: "exact" })
+      .select(
+        `
+        *,
+        contracts:contract_id (
+          id,
+          contract_number,
+          contract_name,
+          contract_type
+        )
+      `,
+        { count: "exact" }
+      )
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false });
 
@@ -42,9 +57,22 @@ export async function GET(
       query = query.eq("status", status);
     }
 
+    if (isPrivate !== null && isPrivate !== undefined) {
+      query = query.eq("is_private", isPrivate === "true");
+    }
+
+    if (reviewerId) {
+      query = query.eq("designated_reviewer_id", reviewerId);
+    }
+
+    if (contractType && contractId === null) {
+      // Filter by contract type via join
+      query = query.eq("contracts.contract_type", contractType);
+    }
+
     if (search) {
       query = query.or(
-        `co_number.ilike.%${search}%,title.ilike.%${search}%`,
+        `co_number.ilike.%${search}%,title.ilike.%${search}%,description.ilike.%${search}%`,
       );
     }
 

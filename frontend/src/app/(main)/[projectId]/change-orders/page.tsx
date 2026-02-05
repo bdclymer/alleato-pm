@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { Button } from "@/components/ui/button";
 import { ChangeOrdersClient } from "./change-orders-client";
@@ -22,7 +21,7 @@ export default async function ProjectChangeOrdersPage({
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Change Orders"
           description="Track and manage contract change orders"
         />
@@ -39,7 +38,7 @@ export default async function ProjectChangeOrdersPage({
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Change Orders"
         description="Track and manage contract change orders"
         actions={
