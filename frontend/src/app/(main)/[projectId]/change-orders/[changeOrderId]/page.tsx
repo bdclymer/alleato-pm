@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,6 +101,15 @@ export default function ChangeOrderDetailPage() {
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [lineItemsLoaded, setLineItemsLoaded] = useState(false);
 
+  // Change event state (for converted change orders)
+  const [changeEvent, setChangeEvent] = useState<{
+    id: string;
+    event_number: string;
+    title: string;
+    status: string;
+  } | null>(null);
+  const [isLoadingChangeEvent, setIsLoadingChangeEvent] = useState(false);
+
   // Fetch change order data and current user
   useEffect(() => {
     const fetchData = async () => {
@@ -144,6 +154,29 @@ export default function ChangeOrderDetailPage() {
           if (contractResponse.ok) {
             const contractData = await contractResponse.json();
             setContract(contractData);
+          }
+        }
+
+        // Fetch change event if this was converted from one
+        if (data.change_event_id) {
+          setIsLoadingChangeEvent(true);
+          try {
+            const changeEventResponse = await fetch(
+              `/api/projects/${projectId}/change-events/${data.change_event_id}`
+            );
+            if (changeEventResponse.ok) {
+              const changeEventData = await changeEventResponse.json();
+              setChangeEvent({
+                id: changeEventData.id,
+                event_number: changeEventData.event_number || "N/A",
+                title: changeEventData.title || "Untitled",
+                status: changeEventData.status || "unknown",
+              });
+            }
+          } catch (err) {
+            console.error("Failed to fetch change event:", err);
+          } finally {
+            setIsLoadingChangeEvent(false);
           }
         }
       } catch (err) {
@@ -650,15 +683,55 @@ export default function ChangeOrderDetailPage() {
             )}
 
             {changeOrder.change_event_id && (
-              <Card>
+              <Card className="border-blue-200 bg-blue-50/50">
                 <CardHeader>
-                  <CardTitle className="text-base">Related Change Event</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    Source Change Event
+                    <Link
+                      href={`/${projectId}/change-events/${changeOrder.change_event_id}`}
+                      className="ml-auto"
+                    >
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="h-3 w-3 mr-2" />
+                        View Change Event
+                      </Button>
+                    </Link>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Change Event ID</span>
-                    <span className="text-sm font-mono">{changeOrder.change_event_id}</span>
-                  </div>
+                <CardContent className="space-y-3">
+                  {isLoadingChangeEvent ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  ) : changeEvent ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Event Number</span>
+                        <span className="text-sm font-medium">{changeEvent.event_number}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Title</span>
+                        <span className="text-sm font-medium">{changeEvent.title}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Status</span>
+                        <Badge variant={changeEvent.status === "converted" ? "default" : "secondary"}>
+                          {changeEvent.status}
+                        </Badge>
+                      </div>
+                      <div className="pt-2 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          This change order was created by converting change event{" "}
+                          <span className="font-mono">{changeEvent.event_number}</span>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Change Event ID</span>
+                      <span className="text-sm font-mono">{changeOrder.change_event_id}</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
