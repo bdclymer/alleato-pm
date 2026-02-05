@@ -21,6 +21,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { ApprovalWorkflow } from "@/components/domain/change-orders/ApprovalWorkflow";
+import {
+  isActionAvailable,
+  isIrreversibleAction,
+  getActionWarning,
+} from "@/lib/change-orders/status-transitions";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   approved: "default",
@@ -87,6 +92,7 @@ export default function ChangeOrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserCanApprove, setCurrentUserCanApprove] = useState(false);
+  const [currentUserIsCreator, setCurrentUserIsCreator] = useState(false);
 
   // Fetch change order data and current user
   useEffect(() => {
@@ -117,6 +123,13 @@ export default function ChangeOrderDetailPage() {
           setCurrentUserCanApprove(true);
         } else {
           setCurrentUserCanApprove(false);
+        }
+
+        // Check if current user is the creator (submitted_by)
+        if (user && data.submitted_by === user.id) {
+          setCurrentUserIsCreator(true);
+        } else {
+          setCurrentUserIsCreator(false);
         }
 
         // Fetch contract if exists
@@ -163,6 +176,13 @@ export default function ChangeOrderDetailPage() {
         setCurrentUserCanApprove(true);
       } else {
         setCurrentUserCanApprove(false);
+      }
+
+      // Check if current user is the creator (submitted_by)
+      if (user && data.submitted_by === user.id) {
+        setCurrentUserIsCreator(true);
+      } else {
+        setCurrentUserIsCreator(false);
       }
 
       // Fetch contract if exists
@@ -215,6 +235,12 @@ export default function ChangeOrderDetailPage() {
   const handleExecute = useCallback(async () => {
     if (!changeOrder) return;
 
+    // Show warning for irreversible action
+    const warning = getActionWarning("execute");
+    if (warning && !confirm(warning)) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/projects/${projectId}/change-orders/${changeOrderId}`, {
         method: "PATCH",
@@ -228,12 +254,12 @@ export default function ChangeOrderDetailPage() {
         throw new Error("Failed to execute change order");
       }
 
-      toast.success("Change order executed");
-      router.refresh();
+      toast.success("Change order executed successfully");
+      await refetchData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to execute");
     }
-  }, [changeOrder, projectId, changeOrderId, router]);
+  }, [changeOrder, projectId, changeOrderId, refetchData]);
 
   const handleGeneratePDF = useCallback(() => {
     toast.info("PDF generation coming soon");
@@ -313,9 +339,8 @@ export default function ChangeOrderDetailPage() {
               Back
             </Button>
 
-            {/* Quick Approve/Reject buttons - visible only to reviewer when status is pending */}
-            {currentUserCanApprove &&
-              (changeOrder.status === "pending" || changeOrder.status === "submitted") && (
+            {/* Quick Approve/Reject buttons - visible only to reviewer when action is available */}
+            {isActionAvailable(changeOrder.status || "", "approve", currentUserIsCreator, currentUserCanApprove) && (
               <>
                 <Button
                   variant="outline"
@@ -329,6 +354,7 @@ export default function ChangeOrderDetailPage() {
                     toast.info("Use the approval workflow in the Reviews tab below");
                   }}
                   className="border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400"
+                  disabled={!isActionAvailable(changeOrder.status || "", "reject", currentUserIsCreator, currentUserCanApprove)}
                 >
                   <X className="mr-2 h-4 w-4" />
                   Reject
@@ -352,10 +378,12 @@ export default function ChangeOrderDetailPage() {
               </>
             )}
 
-            <Button variant="default" size="sm" onClick={handleEdit}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
+            {isActionAvailable(changeOrder.status || "", "edit", currentUserIsCreator, currentUserCanApprove) && (
+              <Button variant="default" size="sm" onClick={handleEdit}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -363,7 +391,7 @@ export default function ChangeOrderDetailPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {changeOrder.status === "approved" && (
+                {isActionAvailable(changeOrder.status || "", "execute", currentUserIsCreator, currentUserCanApprove) && (
                   <>
                     <DropdownMenuItem onClick={handleExecute}>
                       <Check className="mr-2 h-4 w-4" />
@@ -382,14 +410,18 @@ export default function ChangeOrderDetailPage() {
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+                {isActionAvailable(changeOrder.status || "", "delete", currentUserIsCreator, currentUserCanApprove) && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleDelete}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
