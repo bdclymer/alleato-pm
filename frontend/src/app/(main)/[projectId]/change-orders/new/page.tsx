@@ -40,7 +40,8 @@ const createChangeOrderSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   status: z.enum(["draft", "pending", "approved", "executed", "rejected", "void"]).default("draft"),
-  contract_id: z.number().int().positive().optional().nullable(),
+  contract_id: z.string().min(1, "Contract is required"), // Now required!
+  change_order_type: z.enum(["prime_contract", "commitment"]).optional(),
   amount: z.number().default(0),
   due_date: z.string().optional().nullable(),
   is_private: z.boolean().default(false),
@@ -53,9 +54,12 @@ const createChangeOrderSchema = z.object({
 type ChangeOrderFormValues = z.infer<typeof createChangeOrderSchema>;
 
 interface ContractOption {
-  id: number;
-  contract_number: string | null;
-  contract_name: string | null;
+  id: string;
+  contract_number: string;
+  title: string | null;
+  company_name: string | null;
+  contract_type: "prime_contract" | "commitment";
+  commitment_type?: string | null; // For commitments: subcontract, purchase_order, service_order
 }
 
 /**
@@ -83,7 +87,8 @@ export default function NewChangeOrderPage() {
       title: "",
       description: "",
       status: "draft",
-      contract_id: null,
+      contract_id: "",
+      change_order_type: undefined,
       amount: 0,
       due_date: null,
       is_private: false,
@@ -91,28 +96,63 @@ export default function NewChangeOrderPage() {
     },
   });
 
-  // Fetch available contracts for the project
+  // Fetch available contracts (prime contracts + commitments) for the project
   useEffect(() => {
     const fetchContracts = async () => {
       if (isNaN(numericProjectId)) return;
 
       try {
         setIsLoadingContracts(true);
-        const response = await fetch(`/api/contracts?projectId=${numericProjectId}`);
 
-        if (response.ok) {
-          const data = await response.json();
-          setContracts(data);
+        // Fetch both prime contracts and commitments in parallel
+        const [primeContractsRes, commitmentsRes] = await Promise.all([
+          fetch(`/api/projects/${projectId}/contracts`),
+          fetch(`/api/commitments?project_id=${projectId}`),
+        ]);
+
+        const allContracts: ContractOption[] = [];
+
+        // Process prime contracts
+        if (primeContractsRes.ok) {
+          const primeContracts = await primeContractsRes.json();
+          const primeOptions: ContractOption[] = primeContracts.map((contract: any) => ({
+            id: contract.id,
+            contract_number: contract.contract_number,
+            title: contract.title,
+            company_name: contract.vendor?.name || contract.client?.name || null,
+            contract_type: "prime_contract" as const,
+          }));
+          allContracts.push(...primeOptions);
         }
+
+        // Process commitments
+        if (commitmentsRes.ok) {
+          const commitmentsData = await commitmentsRes.json();
+          // Handle both array and paginated response
+          const commitments = Array.isArray(commitmentsData) ? commitmentsData : commitmentsData.items || [];
+
+          const commitmentOptions: ContractOption[] = commitments.map((commitment: any) => ({
+            id: commitment.id,
+            contract_number: commitment.number || commitment.contract_number || "N/A",
+            title: commitment.title,
+            company_name: commitment.contract_company?.name || null,
+            contract_type: "commitment" as const,
+            commitment_type: commitment.type || null, // "subcontract" or "purchase_order"
+          }));
+          allContracts.push(...commitmentOptions);
+        }
+
+        setContracts(allContracts);
       } catch (error) {
         console.error("Failed to load contracts:", error);
+        toast.error("Failed to load contracts");
       } finally {
         setIsLoadingContracts(false);
       }
     };
 
     fetchContracts();
-  }, [numericProjectId]);
+  }, [numericProjectId, projectId]);
 
   const handleSubmit = async (data: ChangeOrderFormValues) => {
     setIsSubmitting(true);
@@ -293,36 +333,108 @@ export default function NewChangeOrderPage() {
                 <FormField
                   control={form.control}
                   name="contract_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Associated Contract</FormLabel>
-                      <Select
-                        value={field.value?.toString() || "none"}
-                        onValueChange={(value) =>
-                          field.onChange(value === "none" ? null : parseInt(value, 10))
-                        }
-                        disabled={isLoadingContracts}
-                      >
-                        <FormControl>
-                          <SelectTrigger data-testid="change-order-contract">
-                            <SelectValue placeholder={isLoadingContracts ? "Loading..." : "Select contract"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No contract</SelectItem>
-                          {contracts.map((contract) => (
-                            <SelectItem key={contract.id} value={contract.id.toString()}>
-                              {contract.contract_number || contract.contract_name || `Contract #${contract.id}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Select the prime contract or commitment this change order affects
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    // Group contracts by type
+                    const primeContracts = contracts.filter(c => c.contract_type === "prime_contract");
+                    const commitments = contracts.filter(c => c.contract_type === "commitment");
+                    const selectedContract = contracts.find(c => c.id === field.value);
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Associated Contract *</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Auto-populate change_order_type based on selected contract
+                            const selectedContract = contracts.find(c => c.id === value);
+                            if (selectedContract) {
+                              form.setValue("change_order_type", selectedContract.contract_type);
+                            }
+                          }}
+                          disabled={isLoadingContracts}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="change-order-contract">
+                              <SelectValue placeholder={isLoadingContracts ? "Loading contracts..." : "Select a contract"}>
+                                {selectedContract && (
+                                  <span className="flex items-center gap-2">
+                                    <span className="font-medium">{selectedContract.contract_number}</span>
+                                    {selectedContract.title && <span className="text-muted-foreground">• {selectedContract.title}</span>}
+                                    {selectedContract.company_name && <span className="text-muted-foreground text-sm">({selectedContract.company_name})</span>}
+                                  </span>
+                                )}
+                              </SelectValue>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {/* Prime Contracts Group */}
+                            {primeContracts.length > 0 && (
+                              <>
+                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                  Prime Contracts
+                                </div>
+                                {primeContracts.map((contract) => (
+                                  <SelectItem key={contract.id} value={contract.id}>
+                                    <div className="flex flex-col gap-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{contract.contract_number}</span>
+                                        {contract.title && <span className="text-muted-foreground">• {contract.title}</span>}
+                                      </div>
+                                      {contract.company_name && (
+                                        <span className="text-xs text-muted-foreground">{contract.company_name}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </>
+                            )}
+
+                            {/* Commitments Group */}
+                            {commitments.length > 0 && (
+                              <>
+                                {primeContracts.length > 0 && (
+                                  <div className="my-1 border-t" />
+                                )}
+                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                  Commitments
+                                </div>
+                                {commitments.map((contract) => (
+                                  <SelectItem key={contract.id} value={contract.id}>
+                                    <div className="flex flex-col gap-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{contract.contract_number}</span>
+                                        {contract.title && <span className="text-muted-foreground">• {contract.title}</span>}
+                                        {contract.commitment_type && (
+                                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted">
+                                            {contract.commitment_type.replace("_", " ")}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {contract.company_name && (
+                                        <span className="text-xs text-muted-foreground">{contract.company_name}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </>
+                            )}
+
+                            {/* No contracts available */}
+                            {contracts.length === 0 && !isLoadingContracts && (
+                              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                                No contracts found for this project
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select the prime contract or commitment this change order affects
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
