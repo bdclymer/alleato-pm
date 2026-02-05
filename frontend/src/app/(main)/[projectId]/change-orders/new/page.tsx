@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -480,6 +482,79 @@ export default function NewChangeOrderPage() {
                             data-testid="change-order-due-date"
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Scope & Schedule Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Scope & Schedule Impact</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="scope"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Scope</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value || ""}
+                            onValueChange={field.onChange}
+                            className="flex flex-col space-y-1"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="in_scope" id="in_scope" />
+                              <Label htmlFor="in_scope" className="font-normal cursor-pointer">
+                                In Scope
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="out_of_scope" id="out_of_scope" />
+                              <Label htmlFor="out_of_scope" className="font-normal cursor-pointer">
+                                Out of Scope
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormDescription>
+                          Is this change within the original project scope?
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="schedule_impact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schedule Impact</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="change-order-schedule-impact">
+                              <SelectValue placeholder="Select impact" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="yes">Yes - Impacts Schedule</SelectItem>
+                            <SelectItem value="no">No - No Impact</SelectItem>
+                            <SelectItem value="unknown">Unknown</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Will this change affect the project schedule?
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
