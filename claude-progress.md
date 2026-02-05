@@ -2,11 +2,12 @@
 
 ### Tasks Completed This Session
 ✅ **Task 409**: Add designated reviewer picker to creation form
+✅ **Task 410**: Add scope and schedule impact fields to creation form
 
 ### Current Progress
-- **Task completion**: 42.5% (17 of 40 tasks completed)
+- **Task completion**: 45.0% (18 of 40 tasks completed)
 - **Test pass rate**: 52.6% (10 of 19 tests passing)
-- **Epics completed**: 3 of 10
+- **Epics completed**: 4 of 10 ⭐ Just completed Epic 4: Change Order Creation Form!
 
 ---
 
@@ -18,10 +19,11 @@
 ### Files Modified/Created This Session
 
 **Modified:**
-- `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` - Added designated reviewer picker
+- `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` - Added reviewer picker, scope & schedule fields
 
 **Created:**
 - `frontend/tests/e2e/change-order-reviewer-picker.spec.ts` - E2E tests for reviewer picker
+- `frontend/tests/e2e/change-order-scope-schedule.spec.ts` - E2E tests for scope/schedule fields
 
 ### Key Implementation Details
 
@@ -34,11 +36,21 @@
 - Follows existing form patterns (matches contract picker style)
 - Created comprehensive E2E test coverage
 
+**Task 410 - Scope & Schedule Impact Fields:**
+- Added new "Scope & Schedule Impact" card section
+- Scope field: RadioGroup with "In Scope" / "Out of Scope" options
+- Schedule Impact: Select dropdown (Yes/No/Unknown)
+- Both fields optional to match Procore's flexible workflow
+- Imported RadioGroup and Label UI components
+- Added helpful field descriptions
+- E2E test coverage for all field interactions
+
 ### Git Commits
 1. `a82b2c0a` - Add designated reviewer picker to change order creation form
+2. `ed211d0c` - Add scope and schedule impact fields to creation form
 
 ### Next Task
-- **Task 410**: Add scope and schedule impact fields to creation form
+- **Task 411**: Create ChangeOrderReviewerResponse component (starting new epic: Approval & Rejection Workflow)
 
 ---
 
