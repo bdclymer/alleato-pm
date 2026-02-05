@@ -27,20 +27,10 @@ export async function GET(
     const dateTo = searchParams.get("dateTo");
     const includeLineItems = searchParams.get("includeLineItems") === "true";
 
-    // Build query with contract relations
+    // Build query - note: contract relations are fetched separately to avoid PostgREST relationship issues
     let query = supabase
       .from("change_orders")
-      .select(
-        `
-        *,
-        contracts:contract_id (
-          id,
-          contract_number,
-          contract_name,
-          contract_type
-        )
-      `,
-      )
+      .select("*")
       .eq("project_id", numericProjectId)
       .order("co_number", { ascending: true });
 
@@ -65,6 +55,35 @@ export async function GET(
 
     if (error) {
       return apiErrorResponse(error);
+    }
+
+    // Fetch contracts separately to avoid relationship lookup issues
+    let contractsMap: Record<number, any> = {};
+    if (changeOrders && changeOrders.length > 0) {
+      const contractIds = [
+        ...new Set(
+          changeOrders
+            .map((co) => co.contract_id)
+            .filter((id): id is number => id !== null),
+        ),
+      ];
+
+      if (contractIds.length > 0) {
+        const { data: contracts } = await supabase
+          .from("contracts")
+          .select("id, contract_number, contract_name, contract_type")
+          .in("id", contractIds);
+
+        if (contracts) {
+          contractsMap = contracts.reduce(
+            (acc, contract) => {
+              acc[contract.id] = contract;
+              return acc;
+            },
+            {} as Record<number, any>,
+          );
+        }
+      }
     }
 
     // Handle empty results
@@ -129,8 +148,9 @@ export async function GET(
 
     // Data rows
     for (const co of changeOrders) {
-      const contractType = co.contracts?.contract_type || "";
-      const contractName = co.contracts?.contract_name || "";
+      const contract = co.contract_id ? contractsMap[co.contract_id] : null;
+      const contractType = contract?.contract_type || "";
+      const contractName = contract?.contract_name || "";
       const designatedReviewer = co.designated_reviewer_id || "";
       const createdBy = co.submitted_by || "";
       const lineItemsCount = lineItemsMap[co.id]?.length || 0;
