@@ -1,14 +1,48 @@
+## Session 8 - 2026-02-05
+
+### Tasks Completed This Session
+✅ **Task 409**: Add designated reviewer picker to creation form
+
+### Current Progress
+- **Task completion**: 42.5% (17 of 40 tasks completed)
+- **Test pass rate**: 52.6% (10 of 19 tests passing)
+- **Epics completed**: 3 of 10
+
+---
+
 ## Session 7 - 2026-02-05
 
 ### Tasks Completed This Session
 ✅ **Task 408**: Add enhanced contract picker to change order creation form
 
-### Current Progress
-- **Task completion**: 40.0% (16 of 40 tasks completed)
-- **Test pass rate**: 52.6% (10 of 19 tests passing)
-- **Epics completed**: 3 of 10
-
 ### Files Modified/Created This Session
+
+**Modified:**
+- `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` - Added designated reviewer picker
+
+**Created:**
+- `frontend/tests/e2e/change-order-reviewer-picker.spec.ts` - E2E tests for reviewer picker
+
+### Key Implementation Details
+
+**Task 409 - Designated Reviewer Picker:**
+- Integrated `useUsers` hook to fetch project users
+- Replaced text input with Select component for better UX
+- Displays user full name, email, and job title in dropdown
+- Shows loading state while fetching users
+- Includes "No reviewer selected" option for clearing selection
+- Follows existing form patterns (matches contract picker style)
+- Created comprehensive E2E test coverage
+
+### Git Commits
+1. `a82b2c0a` - Add designated reviewer picker to change order creation form
+
+### Next Task
+- **Task 410**: Add scope and schedule impact fields to creation form
+
+---
+
+## Previous Session Files
 
 **Modified:**
 - `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` - Enhanced contract picker with grouped display
