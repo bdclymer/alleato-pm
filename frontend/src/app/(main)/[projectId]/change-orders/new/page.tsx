@@ -33,6 +33,9 @@ import {
 } from "@/components/ui/form";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { useUsers } from "@/hooks/use-users";
+import { LineItemsTable, type ChangeOrderLineItem } from "@/components/domain/change-orders/LineItemsTable";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 /**
  * Form schema for creating change orders
@@ -82,6 +85,18 @@ export default function NewChangeOrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contracts, setContracts] = useState<ContractOption[]>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(true);
+
+  // Line items state
+  const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
+
+  // Calculate total from line items
+  const lineItemsTotal = lineItems.reduce((sum, item) => {
+    return sum + (item.quantity || 0) * (item.unit_price || 0);
+  }, 0);
+
+  // Check if there's a conflict between manual amount and line items
+  const manualAmount = form.watch("amount");
+  const hasAmountConflict = lineItems.length > 0 && manualAmount > 0 && Math.abs(manualAmount - lineItemsTotal) > 0.01;
 
   // Fetch users for designated reviewer picker
   const { users, options: userOptions, isLoading: isLoadingUsers } = useUsers({
@@ -169,10 +184,16 @@ export default function NewChangeOrderPage() {
       // Remove fields that aren't in the API schema yet
       const { scope, schedule_impact, ...apiData } = data;
 
+      // If line items exist, use their total as the amount
+      const finalAmount = lineItems.length > 0 ? lineItemsTotal : data.amount;
+
       const response = await fetch(`/api/projects/${projectId}/change-orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apiData),
+        body: JSON.stringify({
+          ...apiData,
+          amount: finalAmount,
+        }),
       });
 
       if (!response.ok) {
@@ -190,6 +211,37 @@ export default function NewChangeOrderPage() {
       }
 
       const createdChangeOrder = await response.json();
+
+      // Create line items if any exist (separate API call)
+      if (lineItems.length > 0) {
+        const lineItemPromises = lineItems.map(async (item) => {
+          // Transform to API format (database uses 'amount' instead of qty/unit_price)
+          const lineItemData = {
+            cost_code_id: item.cost_code_id,
+            cost_type_id: "00000000-0000-0000-0000-000000000001", // TODO: Get from form or default
+            description: item.description,
+            amount: (item.quantity || 0) * (item.unit_price || 0),
+          };
+
+          const response = await fetch(
+            `/api/projects/${projectId}/change-orders/${createdChangeOrder.id}/line-items`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(lineItemData),
+            }
+          );
+
+          if (!response.ok) {
+            console.error("Failed to create line item:", await response.text());
+          }
+
+          return response;
+        });
+
+        await Promise.all(lineItemPromises);
+      }
+
       toast.success("Change order created successfully");
       router.push(`/${projectId}/change-orders/${createdChangeOrder.id}`);
     } catch (error) {
@@ -487,6 +539,56 @@ export default function NewChangeOrderPage() {
                     )}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Line Items Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Line Items</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1.5">
+                  Add detailed line items with cost codes and quantities. The change order total will be calculated from these items.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Warning about amount conflict */}
+                {hasAmountConflict && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Amount Mismatch:</strong> You've entered a manual amount of{" "}
+                      <strong>${manualAmount.toFixed(2)}</strong>, but your line items total{" "}
+                      <strong>${lineItemsTotal.toFixed(2)}</strong>. The line items total will be used when you submit.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Line Items Table */}
+                <LineItemsTable
+                  lineItems={lineItems}
+                  onChange={setLineItems}
+                  readOnly={false}
+                  showTotals={true}
+                />
+
+                {/* Display calculated total */}
+                {lineItems.length > 0 && (
+                  <div className="flex justify-end items-center gap-3 pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">
+                      Change Order Total (from line items):
+                    </span>
+                    <span className="text-2xl font-bold">
+                      ${lineItemsTotal.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {lineItems.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No line items added yet. You can add line items now or later from the detail page.
+                    {manualAmount > 0 && ` The manual amount of $${manualAmount.toFixed(2)} will be used.`}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
