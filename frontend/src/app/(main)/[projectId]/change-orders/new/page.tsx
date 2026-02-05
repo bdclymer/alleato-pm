@@ -30,6 +30,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { useUsers } from "@/hooks/use-users";
 
 /**
  * Form schema for creating change orders
@@ -79,6 +80,11 @@ export default function NewChangeOrderPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contracts, setContracts] = useState<ContractOption[]>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(true);
+
+  // Fetch users for designated reviewer picker
+  const { users, options: userOptions, isLoading: isLoadingUsers } = useUsers({
+    personType: "user", // Only fetch users (employees), not contacts
+  });
 
   const form = useForm<ChangeOrderFormValues>({
     resolver: zodResolver(createChangeOrderSchema) as any,
@@ -491,22 +497,74 @@ export default function NewChangeOrderPage() {
                 <FormField
                   control={form.control}
                   name="designated_reviewer_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Designated Reviewer</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
+                  render={({ field }) => {
+                    const selectedUser = users.find(u => u.id === field.value);
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Designated Reviewer</FormLabel>
+                        <Select
                           value={field.value || ""}
-                          placeholder="Reviewer user ID or email"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        User ID of the person designated to review and approve this change order
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                          onValueChange={field.onChange}
+                          disabled={isLoadingUsers}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="change-order-reviewer">
+                              <SelectValue placeholder={isLoadingUsers ? "Loading users..." : "Select a reviewer"}>
+                                {selectedUser && (
+                                  <span className="flex items-center gap-2">
+                                    <span className="font-medium">
+                                      {selectedUser.first_name} {selectedUser.last_name}
+                                    </span>
+                                    {selectedUser.email && (
+                                      <span className="text-muted-foreground text-sm">({selectedUser.email})</span>
+                                    )}
+                                  </span>
+                                )}
+                              </SelectValue>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {/* Clear selection option */}
+                            <SelectItem value="">
+                              <span className="text-muted-foreground">No reviewer selected</span>
+                            </SelectItem>
+
+                            {/* User options */}
+                            {userOptions.map((option) => {
+                              const user = users.find(u => u.id === option.value);
+                              return (
+                                <SelectItem key={option.value} value={option.value}>
+                                  <div className="flex flex-col gap-0.5">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">{option.label}</span>
+                                      {user?.job_title && (
+                                        <span className="text-xs text-muted-foreground">• {user.job_title}</span>
+                                      )}
+                                    </div>
+                                    {option.email && (
+                                      <span className="text-xs text-muted-foreground">{option.email}</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+
+                            {/* No users available */}
+                            {userOptions.length === 0 && !isLoadingUsers && (
+                              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                                No users found
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select the person designated to review and approve this change order
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
