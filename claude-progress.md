@@ -1,3 +1,45 @@
+## Session 11 - 2026-02-05
+
+### Tasks Completed This Session
+✅ **Task 413**: Wire approval actions to change order detail page
+
+### Current Progress
+- **Task completion**: 52.5% (21 of 40 tasks completed) 🎉
+- **Test pass rate**: 63.2% (12 of 19 tests passing)
+- **Epics completed**: 4 of 10
+- **Current Epic**: Epic 51: Approval & Rejection Workflow (3 of 4 tasks complete)
+
+### Files Modified This Session
+- `frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/page.tsx` - Integrated ApprovalWorkflow component
+
+### Key Implementation Details
+
+**Task 413 - Wire Approval Actions to Detail Page:**
+- **ApprovalWorkflow integration**:
+  - Added ApprovalWorkflow component to Reviews tab
+  - Shows approval timeline with color-coded status
+  - Embeds ChangeOrderReviewerResponse for active tier
+  - Displays review history when available
+- **Quick action buttons in header**:
+  - Added green "Approve" and red "Reject" buttons
+  - Visible only to designated reviewer when status is pending/submitted
+  - Click handler navigates to Reviews tab
+  - Shows toast notification to guide user
+- **Page data refresh**:
+  - Created refetchData callback function
+  - Passed to ApprovalWorkflow as onApprovalSuccess and onRejectionSuccess
+  - Updates change order data without full page reload
+- **Current user approval check**:
+  - Fetches current user from Supabase auth on mount
+  - Compares user.id with designated_reviewer_id
+  - Sets currentUserCanApprove state flag
+- **Cleanup**:
+  - Removed old handleApprove and handleReject functions
+  - Removed Approve/Reject from dropdown menu
+  - All approval actions now go through ApprovalWorkflow component
+
+---
+
 ## Session 10 - 2026-02-05
 
 ### Tasks Completed This Session
