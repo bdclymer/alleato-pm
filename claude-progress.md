@@ -2,15 +2,18 @@
 
 ### Tasks Completed This Session
 ✅ **Task 413**: Wire approval actions to change order detail page
+✅ **Task 414**: Implement status transition validation on frontend
 
 ### Current Progress
-- **Task completion**: 52.5% (21 of 40 tasks completed) 🎉
-- **Test pass rate**: 63.2% (12 of 19 tests passing)
-- **Epics completed**: 4 of 10
-- **Current Epic**: Epic 51: Approval & Rejection Workflow (3 of 4 tasks complete)
+- **Task completion**: 55.0% (22 of 40 tasks completed) 🎉
+- **Test pass rate**: 68.4% (13 of 19 tests passing)
+- **Epics completed**: 5 of 10 ✅ **Epic 51: Approval & Rejection Workflow - COMPLETE!**
+
+### Files Created This Session
+- `frontend/src/lib/change-orders/status-transitions.ts` - Status transition validation utility
 
 ### Files Modified This Session
-- `frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/page.tsx` - Integrated ApprovalWorkflow component
+- `frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/page.tsx` - Integrated ApprovalWorkflow and status validation
 
 ### Key Implementation Details
 
@@ -37,6 +40,30 @@
   - Removed old handleApprove and handleReject functions
   - Removed Approve/Reject from dropdown menu
   - All approval actions now go through ApprovalWorkflow component
+
+**Task 414 - Status Transition Validation:**
+- **Created status-transitions utility** (`frontend/src/lib/change-orders/status-transitions.ts`):
+  - `isActionAvailable()` - Check if action is available based on status and user role
+  - `isIrreversibleAction()` - Identify actions that cannot be undone (approve, execute, withdraw)
+  - `getActionWarning()` - Get warning messages for irreversible actions
+  - `getNextStatus()` - Determine next status after performing an action
+  - `getStatusLabel()` and `getActionLabel()` - User-friendly labels for UI
+  - Defines valid status transitions: draft → submitted → pending → approved/rejected → executed
+- **Updated change order detail page**:
+  - Added `currentUserIsCreator` state flag (checks submitted_by field)
+  - Button visibility controlled by `isActionAvailable()` function
+  - Approve/Reject: Only for reviewers when status is pending/submitted
+  - Edit: Only for creators when status is draft/rejected
+  - Execute: Only when status is approved
+  - Delete: Only for creators when status is draft/rejected
+- **Added warning dialogs**:
+  - Execute action shows confirmation dialog before proceeding
+  - Uses `getActionWarning()` to provide context-specific warnings
+  - Prevents accidental irreversible actions
+- **Improved action flow**:
+  - Execute action now calls refetchData() after success for immediate UI update
+  - All actions properly validated against current status and user role
+  - Clear separation between creator-initiated and reviewer-initiated actions
 
 ---
 
