@@ -26,6 +26,7 @@ import {
   isIrreversibleAction,
   getActionWarning,
 } from "@/lib/change-orders/status-transitions";
+import { LineItemsTable, type ChangeOrderLineItem } from "@/components/domain/change-orders/LineItemsTable";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   approved: "default",
@@ -94,6 +95,11 @@ export default function ChangeOrderDetailPage() {
   const [currentUserCanApprove, setCurrentUserCanApprove] = useState(false);
   const [currentUserIsCreator, setCurrentUserIsCreator] = useState(false);
 
+  // Line items state
+  const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
+  const [lineItemsLoading, setLineItemsLoading] = useState(false);
+  const [lineItemsLoaded, setLineItemsLoaded] = useState(false);
+
   // Fetch change order data and current user
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +155,44 @@ export default function ChangeOrderDetailPage() {
 
     fetchData();
   }, [projectId, changeOrderId]);
+
+  // Fetch line items
+  const fetchLineItems = useCallback(async () => {
+    if (lineItemsLoaded) return; // Only fetch once
+
+    try {
+      setLineItemsLoading(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/change-orders/${changeOrderId}/line-items`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch line items");
+      }
+
+      const result = await response.json();
+
+      // Transform API response to match LineItemsTable interface
+      // NOTE: Current database schema stores only 'amount' (total), not qty/unit_price breakdown
+      // So we're treating each line as a lump sum (qty=1, unit_price=amount)
+      const transformedItems: ChangeOrderLineItem[] = (result.data || []).map((item: any) => ({
+        id: item.id?.toString(),
+        description: item.description || "",
+        cost_code_id: item.costCodeId?.toString() || null,
+        quantity: 1, // Database schema doesn't have quantity field - treating as lump sum
+        unit_of_measure: "LS", // Lump sum by default
+        unit_price: item.amount || 0, // Database 'amount' field maps to unit_price
+      }));
+
+      setLineItems(transformedItems);
+      setLineItemsLoaded(true);
+    } catch (err) {
+      console.error("Failed to fetch line items:", err);
+      toast.error("Failed to load line items");
+    } finally {
+      setLineItemsLoading(false);
+    }
+  }, [projectId, changeOrderId, lineItemsLoaded]);
 
   // Refetch function to reload data after approval/rejection
   const refetchData = useCallback(async () => {
@@ -264,6 +308,31 @@ export default function ChangeOrderDetailPage() {
   const handleGeneratePDF = useCallback(() => {
     toast.info("PDF generation coming soon");
   }, []);
+
+  // Handle line items changes (batch save approach)
+  const handleLineItemsChange = useCallback(
+    async (updatedItems: ChangeOrderLineItem[]) => {
+      setLineItems(updatedItems);
+
+      // Calculate new total from line items
+      const newTotal = updatedItems.reduce((sum, item) => {
+        return sum + (item.quantity || 0) * (item.unit_price || 0);
+      }, 0);
+
+      // Update the change order amount in local state
+      if (changeOrder) {
+        setChangeOrder({
+          ...changeOrder,
+          amount: newTotal,
+        });
+      }
+
+      // TODO: Implement auto-save or batch save
+      // For now, we'll just update local state
+      // A "Save" button could be added to persist changes
+    },
+    [changeOrder]
+  );
 
   if (isLoading) {
     return (
@@ -475,7 +544,16 @@ export default function ChangeOrderDetailPage() {
         </div>
 
         {/* Tabbed Content */}
-        <Tabs defaultValue="general" className="space-y-4">
+        <Tabs
+          defaultValue="general"
+          className="space-y-4"
+          onValueChange={(value) => {
+            // Auto-fetch line items when tab is selected
+            if (value === "line-items" && !lineItemsLoaded && !lineItemsLoading) {
+              fetchLineItems();
+            }
+          }}
+        >
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="line-items">Line Items</TabsTrigger>
@@ -587,17 +665,69 @@ export default function ChangeOrderDetailPage() {
           </TabsContent>
 
           {/* Line Items Tab */}
-          <TabsContent value="line-items">
-            <Card>
-              <CardHeader>
-                <CardTitle>Line Items</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Line items functionality coming soon
-                </p>
-              </CardContent>
-            </Card>
+          <TabsContent value="line-items" className="space-y-4">
+            {lineItemsLoading ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-center py-8">
+                    <Skeleton className="h-64 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Check if user can edit based on status */}
+                {!lineItemsLoaded && (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="text-center py-8">
+                        <Button onClick={fetchLineItems} variant="outline">
+                          Load Line Items
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {lineItemsLoaded && (
+                  <div className="space-y-4">
+                    {/* Show LineItemsTable component */}
+                    <LineItemsTable
+                      lineItems={lineItems}
+                      onChange={handleLineItemsChange}
+                      readOnly={
+                        changeOrder?.status === "approved" ||
+                        changeOrder?.status === "executed" ||
+                        changeOrder?.status === "void" ||
+                        changeOrder?.status === "rejected"
+                      }
+                      showTotals={true}
+                    />
+
+                    {/* Instructions based on mode */}
+                    {changeOrder?.status === "draft" || changeOrder?.status === "pending" ? (
+                      <Card className="bg-blue-50 border-blue-200">
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-blue-900">
+                            💡 <strong>Tip:</strong> Line item changes update the change order total
+                            automatically. Changes are saved when you edit individual fields.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card className="bg-muted/30">
+                        <CardContent className="pt-4">
+                          <p className="text-sm text-muted-foreground">
+                            This change order is in <strong>{changeOrder?.status}</strong> status and
+                            cannot be edited. Line items are shown in read-only mode.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
           </TabsContent>
 
           {/* Attachments Tab */}
