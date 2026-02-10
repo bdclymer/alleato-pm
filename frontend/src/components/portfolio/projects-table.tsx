@@ -147,12 +147,14 @@ export function ProjectsTable({
             e.stopPropagation();
             onProjectClick?.(row.original);
           }}
-          className="font-medium text-primary hover:text-primary/90 transition-colors duration-200 text-left group-hover:underline"
+          className="font-medium text-primary hover:text-primary/90 transition-colors duration-200 text-left group-hover:underline truncate max-w-[180px]"
         >
           {row.getValue("name")}
         </button>
       ),
-      size: 250,
+      size: 180,
+      minSize: 120,
+      maxSize: 200,
     },
     {
       accessorKey: "jobNumber",
@@ -508,7 +510,86 @@ export function ProjectsTable({
   // List/Table view rendering (default)
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
+      {/* Mobile Card View - shown only on small screens */}
+      <div className="flex-1 overflow-y-auto md:hidden">
+        <div className="divide-y divide-border">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const project = row.original;
+              const phaseColors: Record<string, string> = {
+                current: "bg-blue-50 text-blue-700",
+                bid: "bg-purple-50 text-purple-700",
+                preconstruction: "bg-amber-50 text-amber-700",
+                complete: "bg-green-50 text-green-700",
+              };
+              return (
+                <button
+                  type="button"
+                  key={row.id}
+                  className="w-full p-4 hover:bg-muted/50 transition-colors text-left"
+                  onClick={() => onProjectClick?.(project)}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm text-primary truncate">
+                        {project.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Job #{project.jobNumber}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProject(project);
+                        setIsEditDialogOpen(true);
+                      }}
+                      className="p-1.5 hover:bg-muted rounded-md transition-colors shrink-0"
+                      aria-label="Edit project"
+                    >
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    {project.client && (
+                      <span className="text-muted-foreground">{project.client}</span>
+                    )}
+                    {project.phase && (
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-full font-medium",
+                          phaseColors[project.phase.toLowerCase()] || "bg-muted text-foreground",
+                        )}
+                      >
+                        {project.phase}
+                      </span>
+                    )}
+                    {project.state && (
+                      <span className="text-muted-foreground">{project.state}</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div className="text-sm font-medium text-foreground">No projects found</div>
+              <div className="text-xs text-muted-foreground text-center mt-1">
+                Create a project or adjust your filters
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Table View - hidden on small screens */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto hidden md:block">
         <Table>
           <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
             {table.getHeaderGroups().map((headerGroup) => (

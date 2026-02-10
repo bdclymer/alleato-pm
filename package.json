@@ -34,6 +34,7 @@
     "cache:reset": "npx tsx scripts/cache-monitor.ts reset"
   },
   "devDependencies": {
+    "@playwright/mcp": "^0.0.63",
     "@snaplet/copycat": "^6.0.0",
     "@snaplet/seed": "^0.98.0",
     "@types/node": "^25.1.0",

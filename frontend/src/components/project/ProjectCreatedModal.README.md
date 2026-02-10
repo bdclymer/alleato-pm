@@ -54,7 +54,7 @@ function MyComponent() {
     />
   )
 }
-```yaml
+```
 ## Props
 
 | Prop | Type | Required | Description |
@@ -108,7 +108,7 @@ Update the gradient classes in the `nextSteps` array:
   // Change this gradient:
   color: 'from-blue-500 to-cyan-500'
 }
-```yaml
+```
 ### Adding/Removing Steps
 
 Modify the `nextSteps` array to add or remove timeline items:
@@ -124,7 +124,7 @@ const nextSteps = [
   },
   // ... more steps
 ]
-```yaml
+```
 ### Adjusting Animation Timing
 
 Modify the delay values in the motion components:

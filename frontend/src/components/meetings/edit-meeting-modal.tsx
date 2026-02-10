@@ -60,6 +60,37 @@ export function EditMeetingModal({
     participants: meeting?.participants || "",
   });
 
+  React.useEffect(() => {
+    if (!meeting) {
+      setFormData({
+        title: "",
+        summary: "",
+        status: "",
+        access_level: "",
+        date: "",
+        duration_minutes: null,
+        participants: "",
+      });
+      setSelectedProjectId(null);
+      setProjectSearch("");
+      setShowProjectDropdown(false);
+      return;
+    }
+
+    setFormData({
+      title: meeting.title || "",
+      summary: meeting.summary || "",
+      status: meeting.status || "",
+      access_level: meeting.access_level || "",
+      date: meeting.date ? meeting.date.split("T")[0] : "",
+      duration_minutes: meeting.duration_minutes || null,
+      participants: meeting.participants || "",
+    });
+    setSelectedProjectId(meeting.project_id ?? null);
+    setProjectSearch("");
+    setShowProjectDropdown(false);
+  }, [meeting]);
+
   // Search projects as user types
   React.useEffect(() => {
     const searchProjects = async () => {

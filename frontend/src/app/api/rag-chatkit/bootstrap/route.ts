@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { buildOfflineBootstrapState } from "@/lib/rag-chatkit/offline-data";
 import { isBackendOfflineError, respondWithOfflinePayload } from "../utils";
 
@@ -8,9 +8,8 @@ const PYTHON_BACKEND_URL =
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const response = await fetch(`${PYTHON_BACKEND_URL}/rag-chatkit/bootstrap`);

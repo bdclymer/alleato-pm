@@ -1,18 +1,25 @@
-import { CreateDirectCostForm } from '@/components/direct-costs/CreateDirectCostForm'
+import { CreateDirectCostForm } from "@/components/direct-costs/CreateDirectCostForm";
+import { FormContainer, ProjectPageHeader } from "@/components/layout";
 
 interface PageProps {
   params: Promise<{
-    projectId: string
-  }>
+    projectId: string;
+  }>;
 }
 
 export default async function NewDirectCostPage({ params }: PageProps) {
-  const resolvedParams = await params
-  const projectId = parseInt(resolvedParams.projectId)
+  const resolvedParams = await params;
+  const projectId = parseInt(resolvedParams.projectId);
 
   return (
-    <div className="container mx-auto py-6">
-      <CreateDirectCostForm projectId={projectId} />
-    </div>
-  )
+    <>
+      <ProjectPageHeader
+        title="New Direct Cost"
+        description="Create a new direct cost entry for this project"
+      />
+      <FormContainer maxWidth="xl" withCard={false}>
+        <CreateDirectCostForm projectId={projectId} />
+      </FormContainer>
+    </>
+  );
 }

@@ -30,6 +30,12 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { NumberInput } from '@/components/ui/number-input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group'
 import {
   Select,
   SelectContent,
@@ -37,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { BudgetCodeSelector } from '@/components/budget/budget-code-selector'
 import {
   Table,
   TableBody,
@@ -45,7 +52,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   FormField,
@@ -67,7 +73,6 @@ import {
   Calculator,
   AlertCircle,
   CheckCircle2,
-  Minus,
 } from 'lucide-react'
 import { Text } from '@/components/ui/text'
 import {
@@ -88,6 +93,8 @@ interface BudgetCode {
   code: string
   description: string
   category?: string
+  costType?: string | null
+  fullLabel: string
 }
 
 interface LineItemsManagerProps {
@@ -96,6 +103,7 @@ interface LineItemsManagerProps {
   onAdd: () => void
   onRemove: (index: number) => void
   onUpdate: (index: number, item: DirectCostLineItem) => void
+  onCreateBudgetCode?: () => void
   form: UseFormReturn<DirectCostCreate | DirectCostUpdate>
 }
 
@@ -105,6 +113,7 @@ interface SortableLineItemRowProps {
   budgetCodes: BudgetCode[]
   onRemove: () => void
   onDuplicate: () => void
+  onCreateBudgetCode?: () => void
   form: UseFormReturn<DirectCostCreate | DirectCostUpdate>
   errors?: unknown
   isValid: boolean
@@ -120,6 +129,7 @@ function SortableLineItemRow({
   budgetCodes,
   onRemove,
   onDuplicate,
+  onCreateBudgetCode,
   form,
   errors,
   isValid,
@@ -139,15 +149,12 @@ function SortableLineItemRow({
   }
 
   const lineTotal = (item.quantity || 0) * (item.unit_cost || 0)
-  const selectedBudgetCode = budgetCodes?.find(
-    (bc) => bc.id === item.budget_code_id
-  )
 
   return (
     <TableRow
       ref={setNodeRef}
       className={cn(
-        'group hover:bg-muted/50 transition-colors',
+        'group hover:bg-transparent',
         isDragging && 'opacity-50',
         !!errors && 'bg-destructive/5'
       )}
@@ -158,7 +165,7 @@ function SortableLineItemRow({
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-muted"
+          className="cursor-grab active:cursor-grabbing p-1 rounded"
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -172,44 +179,23 @@ function SortableLineItemRow({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || undefined}
-                >
-                  <SelectTrigger
-                    className={cn(
-                      !!errors && typeof errors === 'object' && errors !== null && 'budget_code_id' in errors && 'border-destructive'
-                    )}
-                  >
-                    <SelectValue placeholder="Select budget code" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {budgetCodes.map((code) => (
-                      <SelectItem key={code.id} value={code.id}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{code.code}</span>
-                          <span className="text-xs text-muted-foreground truncate">
-                            {code.description}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <BudgetCodeSelector
+                  value={field.value || ''}
+                  onValueChange={(value) => field.onChange(value)}
+                  budgetCodes={budgetCodes.map(code => ({
+                    ...code,
+                    costType: code.costType || code.category || null,
+                    fullLabel: code.fullLabel || `${code.code} - ${code.description}`,
+                  }))}
+                  onCreateNew={onCreateBudgetCode}
+                  placeholder="Select budget code..."
+                  error={!!errors && typeof errors === 'object' && errors !== null && 'budget_code_id' in errors}
+                />
               </FormControl>
               <FormMessage className="text-xs" />
             </FormItem>
           )}
         />
-        {selectedBudgetCode && (
-          <div className="mt-1 text-xs text-muted-foreground">
-            {selectedBudgetCode.category && (
-              <Badge variant="outline" className="text-xs">
-                {selectedBudgetCode.category}
-              </Badge>
-            )}
-          </div>
-        )}
       </TableCell>
 
       {/* Description */}
@@ -221,10 +207,9 @@ function SortableLineItemRow({
             <FormItem>
               <FormControl>
                 <Input
-                  placeholder="Line item description"
+                  placeholder="Enter description"
                   {...field}
                   value={field.value || ''}
-                  className="border-none bg-transparent focus-visible:ring-1"
                 />
               </FormControl>
               <FormMessage className="text-xs" />
@@ -234,52 +219,25 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Quantity */}
-      <TableCell className="w-32">
+      <TableCell className="w-24">
         <FormField
           control={form.control}
           name={`line_items.${index}.quantity`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <div className="flex items-center space-x-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => {
-                      const currentValue = Number(field.value) || 0
-                      if (currentValue > 1) {
-                        field.onChange(currentValue - 1)
-                      }
-                    }}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                    className={cn(
-                      'w-16 text-center border-none bg-transparent focus-visible:ring-1',
-                      !!errors && typeof errors === 'object' && errors !== null && 'quantity' in errors && 'text-destructive'
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 w-7 p-0"
-                    onClick={() => {
-                      const currentValue = Number(field.value) || 0
-                      field.onChange(currentValue + 1)
-                    }}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
+                <NumberInput
+                  {...field}
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                  step="1"
+                  formatOnBlur={false}
+                  className={cn(
+                    'w-20',
+                    !!errors && typeof errors === 'object' && errors !== null && 'quantity' in errors && 'text-destructive'
+                  )}
+                  placeholder="Enter qty"
+                />
               </FormControl>
               <FormMessage className="text-xs" />
             </FormItem>
@@ -288,7 +246,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* UOM */}
-      <TableCell className="w-24">
+      <TableCell className="w-32">
         <FormField
           control={form.control}
           name={`line_items.${index}.uom`}
@@ -296,7 +254,7 @@ function SortableLineItemRow({
             <FormItem>
               <FormControl>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="border-none bg-transparent focus:ring-1">
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,23 +280,20 @@ function SortableLineItemRow({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-sm text-muted-foreground">
-                    $
-                  </span>
-                  <Input
+                <InputGroup className={cn(
+                  !!errors && typeof errors === 'object' && errors !== null && 'unit_cost' in errors && 'border-destructive'
+                )}>
+                  <InputGroupAddon>$</InputGroupAddon>
+                  <InputGroupInput
                     type="number"
                     step="0.01"
-                    min="0"
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                    className={cn(
-                      'pl-6 border-none bg-transparent focus-visible:ring-1',
-                      !!errors && typeof errors === 'object' && errors !== null && 'unit_cost' in errors && 'border-destructive'
-                    )}
-                    placeholder="0.00"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
+                    onFocus={(e) => e.target.select()}
+                    placeholder="Enter amount"
                   />
-                </div>
+                </InputGroup>
               </FormControl>
               <FormMessage className="text-xs" />
             </FormItem>
@@ -437,6 +392,7 @@ export function LineItemsManager({
   budgetCodes,
   onAdd,
   onRemove,
+  onCreateBudgetCode,
   form,
 }: LineItemsManagerProps) {
 
@@ -511,30 +467,28 @@ export function LineItemsManager({
   return (
     <div className="space-y-4">
       {/* Line Items Table */}
-      <Card>
-        <CardContent className="p-0">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={items.map((_, index) => `line-item-${index}`)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Table>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={items.map((_, index) => `line-item-${index}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[40px]"></TableHead>
-                    <TableHead className="min-w-48">Budget Code *</TableHead>
-                    <TableHead className="min-w-48">Description</TableHead>
-                    <TableHead className="w-32">Quantity *</TableHead>
-                    <TableHead className="w-24">UOM</TableHead>
-                    <TableHead className="w-32">Unit Cost *</TableHead>
-                    <TableHead className="w-32 text-right">
+                  <TableRow className="bg-muted/50 rounded-sm">
+                    <TableHead className="w-[40px] py-3 rounded-l-sm"></TableHead>
+                    <TableHead className="min-w-48 py-3">Budget Code *</TableHead>
+                    <TableHead className="min-w-48 py-3">Description</TableHead>
+                    <TableHead className="w-32 py-3">Quantity *</TableHead>
+                    <TableHead className="w-32 py-3">UOM</TableHead>
+                    <TableHead className="w-32 py-3">Unit Cost *</TableHead>
+                    <TableHead className="w-32 py-3 text-right">
                       Line Total
                     </TableHead>
-                    <TableHead className="w-24">Actions</TableHead>
+                    <TableHead className="w-12 py-3 rounded-r-sm"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -571,6 +525,7 @@ export function LineItemsManager({
                           budgetCodes={budgetCodes}
                           onRemove={() => onRemove(index)}
                           onDuplicate={() => handleDuplicate(index)}
+                          onCreateBudgetCode={onCreateBudgetCode}
                           form={form}
                           errors={errors}
                           isValid={isValid}
@@ -582,18 +537,15 @@ export function LineItemsManager({
               </Table>
             </SortableContext>
           </DndContext>
-        </CardContent>
-      </Card>
 
       {/* Actions and Total */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Button
             type="button"
-            variant="outline"
             size="sm"
             onClick={onAdd}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-brand text-white hover:bg-brand-hover"
           >
             <Plus className="h-4 w-4" />
             Add Line Item
@@ -619,60 +571,6 @@ export function LineItemsManager({
         </div>
       </div>
 
-      {/* Line Items Summary */}
-      {items.length > 1 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-          <Card className="p-4">
-            <div className="flex items-center space-x-2">
-              <Calculator className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Line Items</div>
-                <div className="text-lg font-semibold">{items.length}</div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-mono text-muted-foreground">
-                $
-              </span>
-              <div>
-                <div className="text-sm font-medium">Avg per Line</div>
-                <div className="text-lg font-semibold">
-                  {formatCurrency(
-                    items.length > 0 ? grandTotal / items.length : 0
-                  )}
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <div className="text-sm font-medium">Valid Lines</div>
-                <div className="text-lg font-semibold">
-                  {
-                    items.filter((_, index) => {
-                      const errors = form.formState.errors.line_items?.[index]
-                      return (
-                        !errors &&
-                        !!form.getValues(
-                          `line_items.${index}.budget_code_id`
-                        ) &&
-                        !!form.getValues(`line_items.${index}.quantity`)
-                      )
-                    }).length
-                  }{' '}
-                  / {items.length}
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   )
 }

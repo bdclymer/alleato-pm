@@ -187,11 +187,21 @@ export default function NewChangeOrderPage() {
       // If line items exist, use their total as the amount
       const finalAmount = lineItems.length > 0 ? lineItemsTotal : data.amount;
 
+      // Convert "__none__" placeholder to null for reviewer field
+      const designated_reviewer_id = apiData.designated_reviewer_id === "__none__"
+        ? null
+        : apiData.designated_reviewer_id;
+
+      // Convert contract_id from string to number for API
+      const contract_id = apiData.contract_id ? Number(apiData.contract_id) : null;
+
       const response = await fetch(`/api/projects/${projectId}/change-orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...apiData,
+          contract_id,
+          designated_reviewer_id,
           amount: finalAmount,
         }),
       });
@@ -703,7 +713,7 @@ export default function NewChangeOrderPage() {
                           </FormControl>
                           <SelectContent>
                             {/* Clear selection option */}
-                            <SelectItem value="">
+                            <SelectItem value="__none__">
                               <span className="text-muted-foreground">No reviewer selected</span>
                             </SelectItem>
 
@@ -750,10 +760,14 @@ export default function NewChangeOrderPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        <Checkbox
+                          id="is_private"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Private Change Order</FormLabel>
+                        <FormLabel htmlFor="is_private">Private Change Order</FormLabel>
                         <FormDescription>
                           Restrict visibility to authorized users only
                         </FormDescription>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationAreaService } from "@/services/SpecificationAreaService";
 import {
   specificationAreaSchema,
@@ -15,17 +16,14 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> },
 ) {
   const { projectId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new SpecificationAreaService(supabase);
+  // Use service role client for data queries (bypasses RLS)
+  const serviceClient = createServiceClient();
+  const service = new SpecificationAreaService(serviceClient);
   const result = await service.listAreas(projectId);
 
   if (result.error) {
@@ -44,12 +42,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> },
 ) {
   const { projectId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -61,7 +54,9 @@ export async function POST(
     const validated: SpecificationAreaFormData =
       specificationAreaSchema.parse(body);
 
-    const service = new SpecificationAreaService(supabase);
+    // Use service role client for write operations (bypasses RLS)
+    const serviceClient = createServiceClient();
+    const service = new SpecificationAreaService(serviceClient);
     const result = await service.createArea(projectId, validated);
 
     if (result.error) {

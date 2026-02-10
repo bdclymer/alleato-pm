@@ -11,19 +11,7 @@ const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
 setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
 
-  // Reuse existing auth state if cookie is still valid
-  try {
-    const existing = JSON.parse(fs.readFileSync(authFile, "utf-8"));
-    const cookie = existing.cookies?.find((c: { name: string }) =>
-      c.name.includes("auth-token")
-    );
-    if (cookie && cookie.expires > Date.now() / 1000) {
-      console.log("Reusing valid auth state (cookie not expired)");
-      return;
-    }
-  } catch {
-    // No valid auth file, proceed with fresh login
-  }
+  // Always re-login to ensure a fresh session for each run.
 
   // Use the real login page
   console.log(`Logging in via ${url}/auth/login as ${TEST_EMAIL}`);

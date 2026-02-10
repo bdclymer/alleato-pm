@@ -7,56 +7,14 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  commitmentListResponseSchema,
+  type CommitmentListResponse,
+} from "@/lib/validation/commitments";
 
 // =============================================================================
 // Types
 // =============================================================================
-
-export interface CommitmentListItem {
-  id: string;
-  project_id: number;
-  number: string;
-  title: string | null;
-  type: string;
-  status: string;
-  executed: boolean;
-  original_amount: number;
-  revised_contract_amount: number;
-  billed_to_date: number;
-  balance_to_finish: number;
-  contract_company_id: string | null;
-  contract_company: {
-    id: string;
-    name: string;
-    type?: string;
-  } | null;
-  description: string | null;
-  start_date: string | null;
-  executed_date: string | null;
-  retention_percentage: number | null;
-  created_at: string;
-  updated_at: string;
-  erp_status: string | null;
-  ssov_status: string | null;
-  approved_change_orders: number;
-  pending_change_orders: number;
-  draft_change_orders: number;
-  invoiced_amount: number;
-  payments_issued: number;
-  percent_paid: number;
-  remaining_balance: number;
-  is_private: boolean;
-}
-
-export interface CommitmentListResponse {
-  data: CommitmentListItem[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
 
 export interface CommitmentListFilters {
   page?: number;
@@ -121,7 +79,12 @@ export function useCommitmentsList(
         const error = await response.json().catch(() => ({}));
         throw new Error(error.error || "Failed to fetch commitments");
       }
-      return response.json();
+      const data = await response.json();
+      const parsed = commitmentListResponseSchema.safeParse(data);
+      if (!parsed.success) {
+        throw new Error("Failed to parse commitments response");
+      }
+      return parsed.data;
     },
     enabled: !!projectId,
     staleTime: 30 * 1000, // 30 seconds - commitments change infrequently

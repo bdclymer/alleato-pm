@@ -7,7 +7,7 @@ import {
 } from "@/components/tables/generic-table-factory";
 import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -188,50 +188,47 @@ export function ChangeOrdersClient({
     dueDateTo,
   ]);
 
-  // Calculate summary statistics based on current contract type filter
-  const summary = useMemo(() => {
-    const dataToSummarize =
+  // Calculate status counts based on current contract type filter
+  const statusCounts = useMemo(() => {
+    const dataToCount =
       contractTypeTab === "all"
         ? changeOrders
         : changeOrders.filter((co) => co.contractType === contractTypeTab);
 
-    return dataToSummarize.reduce(
+    return dataToCount.reduce(
       (acc, co) => {
-        const amount = co.normalizedAmount || 0;
         const status = co.normalizedStatus;
 
         switch (status) {
           case "pending":
           case "submitted":
-            acc.pending.count++;
-            acc.pending.amount += amount;
+            acc.pending++;
             break;
           case "approved":
+            acc.approved++;
+            break;
           case "executed":
-            acc.approved.count++;
-            acc.approved.amount += amount;
+            acc.executed++;
             break;
           case "rejected":
-            acc.rejected.count++;
-            acc.rejected.amount += amount;
+            acc.rejected++;
             break;
           case "draft":
-            acc.draft.count++;
-            acc.draft.amount += amount;
+            acc.draft++;
             break;
         }
 
-        acc.total.count++;
-        acc.total.amount += amount;
+        acc.total++;
 
         return acc;
       },
       {
-        pending: { count: 0, amount: 0 },
-        approved: { count: 0, amount: 0 },
-        rejected: { count: 0, amount: 0 },
-        draft: { count: 0, amount: 0 },
-        total: { count: 0, amount: 0 },
+        pending: 0,
+        approved: 0,
+        executed: 0,
+        rejected: 0,
+        draft: 0,
+        total: 0,
       }
     );
   }, [changeOrders, contractTypeTab]);
@@ -377,12 +374,6 @@ export function ChangeOrdersClient({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {
@@ -404,54 +395,6 @@ export function ChangeOrdersClient({
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Draft</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.draft.count}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(summary.draft.amount)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.pending.count}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(summary.pending.amount)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.approved.count}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(summary.approved.amount)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.rejected.count}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(summary.rejected.amount)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filter Bar */}
       <Card className="bg-muted/40">
         <CardContent className="pt-6">
@@ -642,32 +585,20 @@ export function ChangeOrdersClient({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="all">
-              All ({summary.total.count})
+              All ({statusCounts.total})
             </TabsTrigger>
-            <TabsTrigger value="draft">Draft ({summary.draft.count})</TabsTrigger>
+            <TabsTrigger value="draft">Draft ({statusCounts.draft})</TabsTrigger>
             <TabsTrigger value="pending">
-              Pending ({summary.pending.count})
+              Pending ({statusCounts.pending})
             </TabsTrigger>
             <TabsTrigger value="approved">
-              Approved ({summary.approved.count})
+              Approved ({statusCounts.approved})
             </TabsTrigger>
             <TabsTrigger value="rejected">
-              Rejected ({summary.rejected.count})
+              Rejected ({statusCounts.rejected})
             </TabsTrigger>
             <TabsTrigger value="executed">
-              Executed (
-              {
-                (contractTypeTab === "all"
-                  ? changeOrders
-                  : changeOrders.filter(
-                      (co) => co.contractType === contractTypeTab
-                    )
-                ).filter((co) => {
-                  const status = co.normalizedStatus;
-                  return status === "executed";
-                }).length
-              }
-              )
+              Executed ({statusCounts.executed})
             </TabsTrigger>
           </TabsList>
 

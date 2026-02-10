@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactElement, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
@@ -12,13 +14,16 @@ import Footer from "@/components/layout/Footer";
 export default function MainLayout({
   children,
 }: {
-  children: React.ReactNode;
-}) {
+  children: ReactNode;
+}): ReactElement {
+  const pathname = usePathname();
+  const hideSiteHeader = pathname === "/team-chat";
+
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset className="overflow-hidden">
-        <SiteHeader />
+        {!hideSiteHeader && <SiteHeader />}
         <main className="flex flex-1 flex-col gap-4 pl-4 pt-4 pb-4 overflow-auto min-w-0">
           {children}
         </main>

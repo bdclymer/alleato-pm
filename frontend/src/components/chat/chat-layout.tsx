@@ -28,7 +28,7 @@ export function ChatLayout({ username, onUsernameChange }: ChatLayoutProps) {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[hsl(var(--chat-bg))] text-[hsl(var(--chat-text))]">
+    <div className="flex h-full min-h-0 bg-[hsl(var(--chat-bg))] text-[hsl(var(--chat-text))]">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <ChatSidebar

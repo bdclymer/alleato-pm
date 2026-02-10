@@ -1,15 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type {
   ProjectCompany,
-  CompanyListResponse,
   CompanyCreateDTO,
   CompanyUpdateDTO,
   CompanyFilters,
 } from "@/services/companyService";
+import {
+  CompanyListResponseSchema,
+  ProjectCompanySchema,
+  type CompanyListResponse as CompanyListResponseParsed,
+  type ProjectCompanyResponse,
+} from "@/lib/validation/companies";
+import { safeParse } from "@/lib/validation/schemas";
 
 interface UseProjectCompaniesResult {
   companies: ProjectCompany[];
-  pagination: CompanyListResponse["pagination"] | null;
+  pagination: CompanyListResponseParsed["pagination"] | null;
   isLoading: boolean;
   isFetching: boolean;
   error: Error | null;
@@ -20,7 +26,7 @@ export function useProjectCompanies(
   projectId: string,
   filters: CompanyFilters = {},
 ): UseProjectCompaniesResult {
-  const query = useQuery<CompanyListResponse, Error>({
+  const query = useQuery<CompanyListResponseParsed, Error>({
     queryKey: ["project-companies", projectId, filters],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -46,7 +52,12 @@ export function useProjectCompanies(
         }
         throw new Error(errorMessage);
       }
-      return response.json();
+      const payload = await response.json();
+      const parsed = safeParse(CompanyListResponseSchema, payload);
+      if (!parsed.success) {
+        throw new Error("Invalid companies response from server");
+      }
+      return parsed.data;
     },
     enabled: !!projectId,
   });
@@ -72,7 +83,7 @@ export function useProjectCompany(
   projectId: string,
   companyId: string | null,
 ): UseProjectCompanyResult {
-  const query = useQuery<ProjectCompany, Error>({
+  const query = useQuery<ProjectCompanyResponse, Error>({
     queryKey: ["project-company", projectId, companyId],
     queryFn: async () => {
       const response = await fetch(
@@ -89,7 +100,12 @@ export function useProjectCompany(
         }
         throw new Error(errorMessage);
       }
-      return response.json();
+      const payload = await response.json();
+      const parsed = safeParse(ProjectCompanySchema, payload);
+      if (!parsed.success) {
+        throw new Error("Invalid company response from server");
+      }
+      return parsed.data;
     },
     enabled: !!projectId && !!companyId,
   });
@@ -126,7 +142,12 @@ export function useCreateProjectCompany(projectId: string) {
         }
         throw new Error(errorMessage);
       }
-      return response.json();
+      const payload = await response.json();
+      const parsed = safeParse(ProjectCompanySchema, payload);
+      if (!parsed.success) {
+        throw new Error("Invalid company response from server");
+      }
+      return parsed.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -166,7 +187,12 @@ export function useUpdateProjectCompany(projectId: string) {
         }
         throw new Error(errorMessage);
       }
-      return response.json();
+      const payload = await response.json();
+      const parsed = safeParse(ProjectCompanySchema, payload);
+      if (!parsed.success) {
+        throw new Error("Invalid company response from server");
+      }
+      return parsed.data;
     },
     onSuccess: (_, { companyId }) => {
       queryClient.invalidateQueries({

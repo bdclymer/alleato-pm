@@ -1,0 +1,210 @@
+"use client";
+
+import * as React from "react";
+import type { ViewMode } from "./table-toolbar";
+
+export type FilterValue = string | number | boolean | null | undefined;
+
+export interface UnifiedTableStateOptions {
+  entityKey: string;
+  searchParams: ReadonlyURLSearchParams;
+  pathname: string;
+  router: { replace: (url: string) => void };
+  defaults: {
+    view: ViewMode;
+    page: number;
+    perPage: number;
+    search?: string;
+    sortBy?: string | null;
+    sortDirection?: "asc" | "desc";
+    filters: Record<string, FilterValue>;
+  };
+}
+
+export interface UnifiedTableState {
+  searchInput: string;
+  debouncedSearch: string;
+  currentView: ViewMode;
+  activeFilters: Record<string, FilterValue>;
+  page: number;
+  perPage: number;
+  visibleColumns: string[];
+  selectedIds: string[];
+  detailParam: string | null;
+  sortBy: string | null;
+  sortDirection: "asc" | "desc";
+  setSearchInput: (value: string) => void;
+  setCurrentView: (view: ViewMode) => void;
+  setActiveFilters: React.Dispatch<React.SetStateAction<Record<string, FilterValue>>>;
+  setPage: (page: number) => void;
+  setPerPage: (perPage: number) => void;
+  setVisibleColumns: React.Dispatch<React.SetStateAction<string[]>>;
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setSortBy: (value: string | null) => void;
+  setSortDirection: (value: "asc" | "desc") => void;
+  setSearchParams: (updates: Record<string, string | null>) => void;
+}
+
+export function useUnifiedTableState({
+  entityKey,
+  searchParams,
+  pathname,
+  router,
+  defaults,
+}: UnifiedTableStateOptions): UnifiedTableState {
+  const initialSearch = searchParams.get("search") ?? defaults.search ?? "";
+  const initialView = (searchParams.get("view") as ViewMode) ?? defaults.view;
+  const initialPage = Number(searchParams.get("page") ?? String(defaults.page));
+  const initialPerPage = Number(
+    searchParams.get("per_page") ?? String(defaults.perPage),
+  );
+  const initialSortBy = searchParams.get("sort") ?? defaults.sortBy ?? null;
+  const initialSortDirection =
+    (searchParams.get("sort_dir") as "asc" | "desc") ??
+    defaults.sortDirection ??
+    "asc";
+
+  const [searchInput, setSearchInput] = React.useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = React.useState(initialSearch);
+  const [currentView, setCurrentView] = React.useState<ViewMode>(initialView);
+  const [activeFilters, setActiveFilters] = React.useState<Record<string, FilterValue>>(
+    defaults.filters,
+  );
+  const [page, setPage] = React.useState(
+    Number.isFinite(initialPage) && initialPage > 0 ? initialPage : defaults.page,
+  );
+  const [perPage, setPerPage] = React.useState(
+    Number.isFinite(initialPerPage) && initialPerPage > 0
+      ? Math.min(initialPerPage, 150)
+      : defaults.perPage,
+  );
+  const [visibleColumns, setVisibleColumns] = React.useState<string[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+    const stored = window.localStorage.getItem(`${entityKey}:visibleColumns`);
+    if (!stored) return [];
+    try {
+      return JSON.parse(stored) as string[];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [sortBy, setSortBy] = React.useState<string | null>(initialSortBy);
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
+    initialSortDirection === "desc" ? "desc" : "asc",
+  );
+  const lastSearchParamsRef = React.useRef<string>(searchParams.toString());
+
+  const detailParam = searchParams.get("detail");
+
+  const setSearchParams = (updates: Record<string, string | null>) => {
+    const paramsCopy = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (!value) {
+        paramsCopy.delete(key);
+      } else {
+        paramsCopy.set(key, value);
+      }
+    });
+    const queryString = paramsCopy.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname);
+  };
+
+  React.useEffect(() => {
+    if (!visibleColumns.length) return;
+    window.localStorage.setItem(
+      `${entityKey}:visibleColumns`,
+      JSON.stringify(visibleColumns),
+    );
+  }, [entityKey, visibleColumns]);
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
+  React.useEffect(() => {
+    const currentSearch = searchParams.get("search") ?? "";
+    if (debouncedSearch !== currentSearch) {
+      const paramsCopy = new URLSearchParams(searchParams.toString());
+      if (debouncedSearch) {
+        paramsCopy.set("search", debouncedSearch);
+      } else {
+        paramsCopy.delete("search");
+      }
+      paramsCopy.set("page", "1");
+      const queryString = paramsCopy.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname);
+      lastSearchParamsRef.current = queryString;
+      setPage(1);
+    }
+  }, [debouncedSearch, pathname, router, searchParams]);
+
+  React.useEffect(() => {
+    const nextParamsString = searchParams.toString();
+    if (nextParamsString === lastSearchParamsRef.current) {
+      return;
+    }
+    lastSearchParamsRef.current = nextParamsString;
+
+    const nextView = (searchParams.get("view") as ViewMode) ?? defaults.view;
+    const nextSearch = searchParams.get("search") ?? defaults.search ?? "";
+    const nextPage = Number(searchParams.get("page") ?? String(defaults.page));
+    const nextPerPage = Number(
+      searchParams.get("per_page") ?? String(defaults.perPage),
+    );
+    const nextSortBy = searchParams.get("sort") ?? defaults.sortBy ?? null;
+    const nextSortDirection =
+      (searchParams.get("sort_dir") as "asc" | "desc") ??
+      defaults.sortDirection ??
+      "asc";
+
+    const viewValue: ViewMode =
+      nextView === "card" || nextView === "list" ? nextView : defaults.view;
+
+    setCurrentView((prev) => (prev === viewValue ? prev : viewValue));
+    setSearchInput((prev) => (prev === nextSearch ? prev : nextSearch));
+    setDebouncedSearch((prev) => (prev === nextSearch ? prev : nextSearch));
+
+    const normalizedPage =
+      Number.isFinite(nextPage) && nextPage > 0 ? nextPage : defaults.page;
+    const normalizedPerPage =
+      Number.isFinite(nextPerPage) && nextPerPage > 0
+        ? Math.min(nextPerPage, 150)
+        : defaults.perPage;
+    setPage((prev) => (prev === normalizedPage ? prev : normalizedPage));
+    setPerPage((prev) => (prev === normalizedPerPage ? prev : normalizedPerPage));
+    setSortBy((prev) => (prev === nextSortBy ? prev : nextSortBy));
+    setSortDirection((prev) =>
+      prev === nextSortDirection ? prev : nextSortDirection === "desc" ? "desc" : "asc",
+    );
+  }, [defaults.page, defaults.perPage, defaults.search, defaults.view, searchParams]);
+
+  return {
+    searchInput,
+    debouncedSearch,
+    currentView,
+    activeFilters,
+    page,
+    perPage,
+    visibleColumns,
+    selectedIds,
+    detailParam,
+    sortBy,
+    sortDirection,
+    setSearchInput,
+    setCurrentView,
+    setActiveFilters,
+    setPage,
+    setPerPage,
+    setVisibleColumns,
+    setSelectedIds,
+    setSortBy,
+    setSortDirection,
+    setSearchParams,
+  };
+}

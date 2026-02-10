@@ -16,7 +16,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     const { projectId, changeOrderId } = await params;
     const supabase = await createClient();
 
-    // Fetch change order with full relations
+    // Fetch change order with contract relation
+    // Note: change_event_id column exists but has no FK constraint, so we can't join
     const { data, error } = await supabase
       .from("change_orders")
       .select(
@@ -25,11 +26,6 @@ export async function GET(request: Request, { params }: RouteParams) {
         contracts:contract_id (
           id,
           contract_number,
-          contract_name,
-          contract_type
-        ),
-        change_events:change_event_id (
-          id,
           title,
           status
         )

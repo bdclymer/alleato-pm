@@ -71,11 +71,9 @@ function NumberInput({
       onBlur={handleBlur}
       className={cn(
         // Enhanced styling for better UX
-        "tabular-nums text-right",
+        "tabular-nums text-right !bg-transparent",
         "focus:ring-2 focus:ring-brand/20 focus:border-brand",
         "transition-all duration-200",
-        // Ensure consistent height across all forms
-        "h-10",
         className
       )}
       {...props}

@@ -29,7 +29,8 @@ export function MegaMenuToolItem({
           e.preventDefault();
           return;
         }
-        onClick();
+        // Don't call onClick() here - let the navigation happen via Link
+        // The auto-close effect in useHeaderNav will close the panel on route change
       }}
       className={cn(
         "flex items-start gap-3 rounded-md px-3 py-2 text-sm transition-colors",

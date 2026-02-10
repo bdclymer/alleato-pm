@@ -56,9 +56,11 @@ export default function ProjectSpecificationsPage() {
         title="Specifications"
         description="Manage project specifications and revisions"
         actions={
-          <SpecificationUploadDialog projectId={projectId}>
-            <Button>Upload Specification</Button>
-          </SpecificationUploadDialog>
+          <div className="flex flex-wrap gap-2">
+            <SpecificationUploadDialog projectId={projectId}>
+              <Button>Upload Specification</Button>
+            </SpecificationUploadDialog>
+          </div>
         }
       />
       <PageContainer>

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -15,13 +16,18 @@ interface Tab {
 interface PageTabsProps {
   tabs: Tab[];
   className?: string;
+  variant?: "default" | "inline";
 }
 
 /**
  * PageTabs - Site-standard tab navigation with border-bottom style
  * Matches PageHeader alignment: px-4 sm:px-6 lg:px-8
  */
-export function PageTabs({ tabs, className }: PageTabsProps) {
+export function PageTabs({
+  tabs,
+  className,
+  variant = "default",
+}: PageTabsProps): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,13 +37,23 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
   const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
   const hasExactHrefMatch = tabs.some((tab) => tab.href === currentPath);
 
+  const wrapperClasses =
+    variant === "inline"
+      ? "flex items-center"
+      : "px-4 sm:px-6 lg:px-8";
+  const navClasses =
+    variant === "inline"
+      ? "-mb-px flex overflow-x-auto border-b border-border"
+      : "-mb-px flex overflow-x-auto border-b border-border";
+  const buttonClasses =
+    variant === "inline"
+      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-2 text-sm font-medium transition-colors"
+      : "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors";
+
   return (
-    <div className={cn("px-4 sm:px-6 lg:px-8", className)}>
-      <nav
-        className="-mb-px flex overflow-x-auto border-b border-border"
-        aria-label="Tabs"
-      >
-        <div className="flex min-w-max space-x-6 md:space-x-8">
+    <div className={cn(wrapperClasses, className)}>
+      <nav className={navClasses} aria-label="Tabs">
+        <div className="flex min-w-max space-x-4 md:space-x-6">
           {tabs.map((tab) => {
             const isActive =
               tab.isActive ??
@@ -53,7 +69,7 @@ export function PageTabs({ tabs, className }: PageTabsProps) {
                 aria-label={tab.label}
                 data-testid={tab.testId}
                 className={cn(
-                  "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                  buttonClasses,
                   isActive
                     ? "border-brand text-brand"
                     : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",

@@ -42,17 +42,25 @@ export default function ContactDetailsPage() {
       try {
         const supabase = createClient();
 
-        // Fetch contact with company
+        // Fetch contact
         const { data: contactData, error: contactError } = await supabase
           .from("people")
-          .select(`
-            *,
-            company:companies(*)
-          `)
+          .select("*")
           .eq("id", contactId)
           .single();
 
         if (contactError) throw contactError;
+
+        // Fetch company separately if contact has a company_id
+        let company: Company | null = null;
+        if (contactData.company_id) {
+          const { data: companyData } = await supabase
+            .from("companies")
+            .select("*")
+            .eq("id", contactData.company_id)
+            .single();
+          company = companyData;
+        }
 
         // Fetch project memberships with permissions
         const { data: memberships, error: membershipError } = await supabase
@@ -69,6 +77,7 @@ export default function ContactDetailsPage() {
 
         setContact({
           ...contactData,
+          company,
           memberships: memberships || [],
         });
       } catch (err) {

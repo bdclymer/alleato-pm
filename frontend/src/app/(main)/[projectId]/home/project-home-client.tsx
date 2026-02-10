@@ -498,177 +498,173 @@ export function ProjectHomeClient({
 
           {/* Right Column */}
           <div className="space-y-6">
-
-            {/* Activity Summary */}
-            <SectionCard
-              title="Activity"
-              open={true}
-              viewAllHref={`/${project.id}/documents`}
-            >
-              <div className="space-y-0">
-
-                <Link
-                  href={`/${project.id}/rfis`}
-                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Activity className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                      RFIs
-                    </span>
-                  </div>
-                  {activeRFIs > 0 && (
-                    <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-                      {activeRFIs}
-                    </span>
-                  )}
-                </Link>
-
-                <Link
-                  href={`/${project.id}/meetings`}
-                  className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                      Meetings
-                    </span>
-                  </div>
-                  {meetings.length > 0 && (
-                    <span className="text-xs text-neutral-500 font-medium">
-                      {meetings.length}
-                    </span>
-                  )}
-                </Link>
-
-              </div>
-
-            </SectionCard>
-
-            {/* Files Summary */}
-            <SectionCard
-              title="Files"
-              open={true}
-              viewAllHref={`/${project.id}/documents`}
-            >
-              <div className="space-y-0">
-                <Link
-                  href={`/${project.id}/specifications`}
-                  className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
-                >
-                  <FileText className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                    Specifications
-                  </span>
-                </Link>
-
-                <Link
-                  href={`/${project.id}/drawings`}
-                  className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
-                >
-                  <BarChart3 className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                    Drawings
-                  </span>
-                </Link>
-
-                <Link
-                  href={`/${project.id}/photos`}
-                  className="flex items-center gap-3 py-2 hover:bg-neutral-50 transition-colors group"
-                >
-                  <Target className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                  <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                    Photos
-                  </span>
-                </Link>
-              </div>
-            </SectionCard>
-
-            <SectionCard
-              title="Project Team"
-              open={isTeamOpen}
-              onOpenChange={setIsTeamOpen}
-              viewAllHref={`/${project.id}/directory/users`}
-              onAdd={() => setShowAddTeamMemberForm(true)}
-              addLabel="Add Member"
-            >
-              {showAddTeamMemberForm && (
-                <div className="mb-4 pb-4 border-b border-neutral-100">
-                  <InlineTeamMemberForm
-                    projectId={project.id}
-                    existingMembers={parseTeamMembers()}
-                    onSave={handleSaveTeamMembers}
-                    onCancel={() => setShowAddTeamMemberForm(false)}
-                  />
-                </div>
-              )}
-
-              {project.team_members &&
-              Array.isArray(project.team_members) &&
-              project.team_members.length > 0 ? (
+            <div>
+              <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
+              {/* Activity Summary */}
+              <SectionCard
+                title="Activity"
+                open={true}
+                viewAllHref={`/${project.id}/documents`}
+              >
                 <div className="space-y-0">
-                  {project.team_members.slice(0, 6).map((member, index) => {
-                    const parsedMember =
-                      typeof member === "string"
-                        ? (() => {
-                            try {
-                              return JSON.parse(member);
-                            } catch {
-                              return {
-                                name: member,
-                                role: "Role not specified",
-                              };
-                            }
-                          })()
-                        : member;
+                  {/* RFIs */}
+                  <Link
+                    href={`/${project.id}/rfis`}
+                    className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Activity className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                      <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                        RFIs
+                      </span>
+                    </div>
+                    {activeRFIs > 0 && (
+                      <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                        {activeRFIs}
+                      </span>
+                    )}
+                  </Link>
+                  {/* Meetings */}
+                  <Link
+                    href={`/${project.id}/meetings`}
+                    className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                      <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                        Meetings
+                      </span>
+                    </div>
+                    {meetings.length > 0 && (
+                      <span className="text-xs text-neutral-500 font-medium">
+                        {meetings.length}
+                      </span>
+                    )}
+                  </Link>
 
-                    const memberName = parsedMember?.name || "Team Member";
-                    const memberRole =
-                      parsedMember?.role || "Role not specified";
-                    const initials = String(memberName)
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase();
+                  <Link
+                    href={`/${project.id}/specifications`}
+                    className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
+                  >
+                    <FileText className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                      Specifications
+                    </span>
+                  </Link>
 
-                    return (
-                      <div
-                        key={`team-${project.id}-${index}`}
-                        className="flex items-center gap-3 py-2 border-b border-neutral-100/60 last:border-0"
-                      >
-                        <Avatar className="h-7 w-7 border border-neutral-200/80">
-                          <AvatarImage
-                            src="/alleato-favicon.png"
-                            alt={String(memberName)}
-                          />
-                          <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-neutral-900 truncate">
-                            {String(memberName)}
-                          </p>
-                          <p className="text-xs text-neutral-500 truncate">
-                            {String(memberRole)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  <Link
+                    href={`/${project.id}/drawings`}
+                    className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
+                  >
+                    <BarChart3 className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                      Drawings
+                    </span>
+                  </Link>
+
+                  <Link
+                    href={`/${project.id}/photos`}
+                    className="flex items-center gap-3 py-2 hover:bg-neutral-50 transition-colors group"
+                  >
+                    <Target className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                      Photos
+                    </span>
+                  </Link>
                 </div>
-              ) : (
-                <SectionCard.Empty
-                  message="No team members yet"
-                  description="Add team members to get started"
-                  actionLabel="Add Team Member"
-                  onAction={() => setShowAddTeamMemberForm(true)}
-                />
-              )}
-            </SectionCard>
+              </SectionCard>
+            </div>
 
-            <DirectorySummary projectId={String(project.id)} />
+            <div>
+              <h3 className="text-lg font-semibold mb-6">Directory</h3>
+              <div className="space-y-6">
+                <SectionCard
+                  title="Project Team"
+                  open={isTeamOpen}
+                  onOpenChange={setIsTeamOpen}
+                  viewAllHref={`/${project.id}/directory/users`}
+                  onAdd={() => setShowAddTeamMemberForm(true)}
+                  addLabel="Add Member"
+                >
+                  {showAddTeamMemberForm && (
+                    <div className="mb-4 pb-4 border-b border-neutral-100">
+                      <InlineTeamMemberForm
+                        projectId={project.id}
+                        existingMembers={parseTeamMembers()}
+                        onSave={handleSaveTeamMembers}
+                        onCancel={() => setShowAddTeamMemberForm(false)}
+                      />
+                    </div>
+                  )}
+
+                  {project.team_members &&
+                  Array.isArray(project.team_members) &&
+                  project.team_members.length > 0 ? (
+                    <div className="space-y-0">
+                      {project.team_members.slice(0, 6).map((member, index) => {
+                        const parsedMember =
+                          typeof member === "string"
+                            ? (() => {
+                                try {
+                                  return JSON.parse(member);
+                                } catch {
+                                  return {
+                                    name: member,
+                                    role: "Role not specified",
+                                  };
+                                }
+                              })()
+                            : member;
+
+                        const memberName = parsedMember?.name || "Team Member";
+                        const memberRole =
+                          parsedMember?.role || "Role not specified";
+                        const initials = String(memberName)
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase();
+
+                        return (
+                          <div
+                            key={`team-${project.id}-${index}`}
+                            className="flex items-center gap-3 py-2 border-b border-neutral-100/60 last:border-0"
+                          >
+                            <Avatar className="h-7 w-7 border border-neutral-200/80">
+                              <AvatarImage
+                                src="/alleato-favicon.png"
+                                alt={String(memberName)}
+                              />
+                              <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-neutral-900 truncate">
+                                {String(memberName)}
+                              </p>
+                              <p className="text-xs text-neutral-500 truncate">
+                                {String(memberRole)}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <SectionCard.Empty
+                      message="No team members yet"
+                      description="Add team members to get started"
+                      actionLabel="Add Team Member"
+                      onAction={() => setShowAddTeamMemberForm(true)}
+                    />
+                  )}
+                </SectionCard>
+
+                <DirectorySummary projectId={String(project.id)} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

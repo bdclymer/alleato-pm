@@ -6,7 +6,7 @@
 
 ```tsx
 import { ProjectCreatedModal } from '@/components/project/ProjectCreatedModal'
-```yaml
+```
 ### 2. Add State Management
 
 ```tsx
@@ -15,7 +15,7 @@ const [createdProject, setCreatedProject] = useState<{
   id: string
   name: string
 } | null>(null)
-```yaml
+```
 ### 3. Trigger After Project Creation
 
 ```tsx
@@ -34,7 +34,7 @@ const handleProjectCreated = async (formData) => {
   })
   setShowSuccessModal(true)
 }
-```bash
+```
 ### 4. Render the Modal
 
 ```tsx
@@ -106,7 +106,7 @@ function CreateProjectPage() {
     </>
   )
 }
-```yaml
+```
 ### Pattern 2: API Route Handler
 
 Use this pattern when creating projects via API:
@@ -136,7 +136,7 @@ const handleCreate = async () => {
   })
   setShowSuccessModal(true)
 }
-```yaml
+```
 ### Pattern 3: Mutation Hook (React Query)
 
 Use this pattern with React Query mutations:
@@ -177,7 +177,7 @@ function CreateProjectPage() {
     </>
   )
 }
-```yaml
+```
 ## Customization Examples
 
 ### Changing Next Steps
@@ -209,7 +209,7 @@ transition={{ delay: 0.6 + index * 0.05 }}  // Reduced from 0.08
 
 // Make entrance spring more bouncy
 transition={{ delay: 0.2, duration: 0.5, ease: [0.34, 1.96, 0.64, 1] }}
-```markdown
+```
 ### Changing Colors
 
 ```tsx
@@ -221,7 +221,7 @@ className="bg-gradient-to-br from-blue-400 to-cyan-500"
 
 // Update construction mark color
 className="text-blue-500/20"
-```yaml
+```
 ### Adding Analytics Tracking
 
 ```tsx
@@ -241,7 +241,7 @@ const handleStepClick = (stepTitle: string) => {
     onClose()
   }}
 >
-```typescript
+```
 ## Common Issues & Solutions
 
 ### Issue 1: Modal Doesn't Appear
@@ -278,7 +278,7 @@ const handleModalClose = () => {
   setShowModal(false)
   router.push(`/${createdProject.id}/home`)
 }
-```javascript
+```
 ### Issue 3: Modal Appears Multiple Times
 
 **Problem**: Modal shows again after closing
@@ -290,7 +290,7 @@ const handleClose = () => {
   setShowModal(false)
   setCreatedProject(null)  // Clear project data
 }
-```typescript
+```
 ### Issue 4: Links Don't Work
 
 **Problem**: Clicking timeline items doesn't navigate
@@ -303,7 +303,7 @@ projectId={project.id}
 
 // ✅ Correct - string type
 projectId={String(project.id)}
-```markdown
+```
 ### Issue 5: Animations Lag
 
 **Problem**: Animations are choppy or slow
@@ -319,7 +319,7 @@ And verify no conflicting CSS animations:
 ```tsx
 // Remove any conflicting transition classes
 className="transition-all"  // Remove this if present
-```javascript
+```
 ## Testing Checklist
 
 Before deploying, verify:
@@ -354,7 +354,7 @@ const ProjectCreatedModal = dynamic(
   () => import('@/components/project/ProjectCreatedModal').then(mod => mod.ProjectCreatedModal),
   { ssr: false }
 )
-```javascript
+```
 ### 2. Reduce Animation Complexity
 
 For slower devices, simplify animations:
@@ -366,7 +366,7 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
   initial={reducedMotion ? {} : { opacity: 0, scale: 0.95 }}
   animate={reducedMotion ? {} : { opacity: 1, scale: 1 }}
 >
-```markdown
+```
 ### 3. Optimize Images
 
 If you add project images/logos to the modal:

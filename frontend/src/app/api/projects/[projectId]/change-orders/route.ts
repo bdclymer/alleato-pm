@@ -40,8 +40,8 @@ export async function GET(
         contracts:contract_id (
           id,
           contract_number,
-          contract_name,
-          contract_type
+          title,
+          status
         )
       `,
         { count: "exact" }
@@ -65,10 +65,8 @@ export async function GET(
       query = query.eq("designated_reviewer_id", reviewerId);
     }
 
-    if (contractType && contractId === null) {
-      // Filter by contract type via join
-      query = query.eq("contracts.contract_type", contractType);
-    }
+    // Note: contract_type filter removed - contracts table doesn't have this column
+    // Contract type filtering would need to use a different approach if needed
 
     if (search) {
       query = query.or(

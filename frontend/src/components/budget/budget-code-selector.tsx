@@ -1,8 +1,6 @@
 import * as React from "react"
-import { Search, Plus, ChevronDown } from "lucide-react"
+import { Plus, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { BudgetButton } from "./budget-button"
 import {
   Popover,
   PopoverContent,
@@ -105,14 +103,16 @@ function BudgetCodeSelector({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <button
+          type="button"
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between font-normal h-10",
-            error && "border-red-500",
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
+            "focus-visible:border-neutral-400 focus-visible:outline-none",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            error && "border-destructive",
             !selectedCode && "text-muted-foreground",
             className
           )}
@@ -126,7 +126,7 @@ function BudgetCodeSelector({
             }
           </span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>

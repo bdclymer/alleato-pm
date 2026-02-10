@@ -92,7 +92,7 @@ npx playwright test -g "should reject oversized files"
 
 # Run headed (see browser)
 npm run test:headed
-```sql
+```
 ## Test Data Cleanup
 
 All tests follow proper cleanup patterns:
@@ -128,7 +128,7 @@ await fileInput.setInputFiles({
   mimeType: "application/pdf",
   buffer: Buffer.from("%PDF-1.4 content"),
 });
-```javascript
+```
 ### Large File Creation
 
 ```typescript
@@ -137,7 +137,7 @@ function createLargePDFBuffer(): Buffer {
   const padding = Buffer.alloc(contentSize, "A");
   return Buffer.concat([Buffer.from("%PDF-1.4\n"), padding, Buffer.from("%%EOF\n")]);
 }
-```javascript
+```
 ### Toast Dismissal
 
 ```typescript
@@ -158,7 +158,7 @@ const sections = Array.from({ length: 35 }, (_, i) => ({
   section_number: `99 88 ${String(i).padStart(2, "0")}`,
   title: `Pagination Test Spec ${i + 1}`,
 }));
-```markdown
+```
 ## Known Issues / Future Improvements
 
 1. **Multi-area assignment** - UI may not support multiple areas yet
@@ -179,7 +179,7 @@ const sections = Array.from({ length: 35 }, (_, i) => ({
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-```markdown
+```
 ## Test Execution Time
 
 - **specifications.spec.ts**: ~45-60 seconds

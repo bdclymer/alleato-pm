@@ -119,10 +119,10 @@ export function PortfolioFilters({
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search projects..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 h-10 text-sm"
+            className="pl-9 h-9 text-sm"
           />
         </div>
 
@@ -132,32 +132,32 @@ export function PortfolioFilters({
             <Button
               variant="outline"
               size="sm"
-              className="relative h-10 shrink-0 px-3 border-border hover:border-border/80"
+              className="relative h-9 shrink-0 px-2.5 border-border hover:border-border/80"
             >
               <SlidersHorizontal className="w-4 h-4" />
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand text-2xs font-bold text-white">
+                <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                   {activeFiltersCount}
                 </span>
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh]">
-            <SheetHeader>
-              <SheetTitle>Filters & Views</SheetTitle>
-              <SheetDescription>
+          <SheetContent side="bottom" className="h-[70vh] flex flex-col">
+            <SheetHeader className="pb-2">
+              <SheetTitle className="text-base">Filters & Views</SheetTitle>
+              <SheetDescription className="text-xs">
                 Filter projects and change view type
               </SheetDescription>
             </SheetHeader>
 
-            <div className="mt-6 space-y-6">
+            <div className="flex-1 overflow-y-auto -mx-6 px-6 pb-6 space-y-5">
               {/* View Type Selection */}
               {!hideViewToggle && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     View Type
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {viewTypes.map((type) => {
                       const Icon = type.icon;
                       return (
@@ -168,15 +168,15 @@ export function PortfolioFilters({
                             onViewTypeChange(type.value);
                           }}
                           className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg border-2 transition-all",
+                            "flex flex-col items-center gap-1 p-2 rounded-lg border transition-all",
                             viewType === type.value
                               ? "border-brand bg-brand/5 text-brand"
-                              : "border-border text-foreground hover:border-border",
+                              : "border-border text-muted-foreground hover:text-foreground hover:border-border",
                           )}
                         >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-sm font-medium">
-                            {type.label}
+                          <Icon className="w-4 h-4" />
+                          <span className="text-[10px] font-medium">
+                            {type.label.split(" ")[0]}
                           </span>
                         </button>
                       );
@@ -186,12 +186,12 @@ export function PortfolioFilters({
               )}
 
               {/* Client Filter */}
-              {onClientFilterChange && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">
+              {onClientFilterChange && clientOptions && clientOptions.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Client
                   </h3>
-                  <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {clientOptions?.map((client) => (
                       <button
                         type="button"
@@ -202,16 +202,13 @@ export function PortfolioFilters({
                           );
                         }}
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border transition-all",
+                          "px-3 py-1.5 text-xs rounded-full border transition-all",
                           clientFilter === client
-                            ? "border-brand bg-brand/5 text-brand font-medium"
-                            : "border-border text-foreground hover:border-border",
+                            ? "border-brand bg-brand/10 text-brand font-medium"
+                            : "border-border text-foreground hover:border-border/80",
                         )}
                       >
-                        <span>{client}</span>
-                        {clientFilter === client && (
-                          <div className="w-2 h-2 rounded-full bg-brand" />
-                        )}
+                        {client}
                       </button>
                     ))}
                   </div>
@@ -220,23 +217,20 @@ export function PortfolioFilters({
 
               {/* Phase Filter */}
               {onPhaseFilterChange && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">Phase</h3>
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase</h3>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
                       onClick={() => onPhaseFilterChange(null)}
                       className={cn(
-                        "w-full flex items-center justify-between p-3 rounded-lg border transition-all",
+                        "px-3 py-1.5 text-xs rounded-full border transition-all",
                         !phaseFilter
-                          ? "border-brand bg-brand/5 text-brand font-medium"
-                          : "border-border text-foreground hover:border-border",
+                          ? "border-brand bg-brand/10 text-brand font-medium"
+                          : "border-border text-foreground hover:border-border/80",
                       )}
                     >
-                      <span>All Phases</span>
-                      {!phaseFilter && (
-                        <div className="w-2 h-2 rounded-full bg-brand" />
-                      )}
+                      All
                     </button>
                     {phaseOptions?.map((phase) => (
                       <button
@@ -244,16 +238,13 @@ export function PortfolioFilters({
                         key={phase}
                         onClick={() => onPhaseFilterChange(phase)}
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border transition-all capitalize",
+                          "px-3 py-1.5 text-xs rounded-full border transition-all capitalize",
                           phaseFilter === phase
-                            ? "border-brand bg-brand/5 text-brand font-medium"
-                            : "border-border text-foreground hover:border-border",
+                            ? "border-brand bg-brand/10 text-brand font-medium"
+                            : "border-border text-foreground hover:border-border/80",
                         )}
                       >
-                        <span>{phase}</span>
-                        {phaseFilter === phase && (
-                          <div className="w-2 h-2 rounded-full bg-brand" />
-                        )}
+                        {phase}
                       </button>
                     ))}
                   </div>
@@ -261,12 +252,12 @@ export function PortfolioFilters({
               )}
 
               {/* Category Filter */}
-              {onCategoryFilterChange && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-foreground">
+              {onCategoryFilterChange && categoryOptions && categoryOptions.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Category
                   </h3>
-                  <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {categoryOptions?.map((category) => (
                       <button
                         type="button"
@@ -277,16 +268,13 @@ export function PortfolioFilters({
                           );
                         }}
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border transition-all",
+                          "px-3 py-1.5 text-xs rounded-full border transition-all",
                           categoryFilter === category
-                            ? "border-brand bg-brand/5 text-brand font-medium"
-                            : "border-border text-foreground hover:border-border",
+                            ? "border-brand bg-brand/10 text-brand font-medium"
+                            : "border-border text-foreground hover:border-border/80",
                         )}
                       >
-                        <span>{category}</span>
-                        {categoryFilter === category && (
-                          <div className="w-2 h-2 rounded-full bg-brand" />
-                        )}
+                        {category}
                       </button>
                     ))}
                   </div>
@@ -297,14 +285,15 @@ export function PortfolioFilters({
               {activeFiltersCount > 0 && (
                 <Button
                   variant="outline"
+                  size="sm"
                   className="w-full"
                   onClick={() => {
                     onClearFilters?.();
                     setFilterSheetOpen(false);
                   }}
                 >
-                  <X className="w-4 h-4 mr-2" />
-                  Clear All Filters
+                  <X className="w-3.5 h-3.5 mr-1.5" />
+                  Clear Filters
                 </Button>
               )}
             </div>

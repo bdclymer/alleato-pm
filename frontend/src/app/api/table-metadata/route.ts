@@ -1,9 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // Use service client since table_metadata is public reference data
+    // that should be accessible regardless of auth status
+    const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from("table_metadata")

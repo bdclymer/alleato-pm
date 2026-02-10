@@ -46,6 +46,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [meetingTitle, setMeetingTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -117,6 +118,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const breadcrumbs = useMemo(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const crumbs: Breadcrumb[] = [];
+    const isMeetingDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "meetings";
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -129,6 +134,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
       if (index === 0 && /^\d+$/.test(segment)) {
         label = currentProject?.name || `Project ${segment}`;
         href = `/${segment}/home`;
+      } else if (isMeetingDetailRoute && index === 2) {
+        label = meetingTitle || "Meeting";
       } else {
         // Try to find a matching tool name
         const allTools: HeaderNavigationTool[] = [
@@ -171,7 +178,51 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, currentProject]);
+  }, [pathname, currentProject, meetingTitle]);
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isMeetingDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "meetings";
+
+    if (!isMeetingDetailRoute) {
+      setMeetingTitle(null);
+      return;
+    }
+
+    const meetingId = segments[2];
+    if (!meetingId || meetingId === "new") {
+      setMeetingTitle(null);
+      return;
+    }
+
+    let isActive = true;
+    const fetchMeetingTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${segments[0]}/meetings/${meetingId}`
+        );
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const title = data?.data?.title;
+        if (isActive) {
+          setMeetingTitle(typeof title === "string" ? title : null);
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchMeetingTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
 
   // Auto-close panels on route change
   useEffect(() => {

@@ -35,20 +35,36 @@ export default function DirectoryClientsPage() {
   const fetchClients = React.useCallback(async () => {
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("project_companies")
-        .select(
-          `
-          *,
-          company:companies(*),
-          primary_contact:people!project_companies_primary_contact_id_fkey(*)
-        `,
-        )
-        .eq("company_type", "client")
-        .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setClients(data || []);
+      // Fetch project_companies, companies, and people separately to avoid FK join issues
+      const [projectCompaniesResult, companiesResult, peopleResult] = await Promise.all([
+        supabase
+          .from("project_companies")
+          .select("*")
+          .eq("company_type", "client")
+          .order("created_at", { ascending: false }),
+        supabase.from("companies").select("*"),
+        supabase.from("people").select("*"),
+      ]);
+
+      if (projectCompaniesResult.error) throw projectCompaniesResult.error;
+
+      // Create lookup maps
+      const companiesMap = new Map(
+        (companiesResult.data || []).map((c) => [c.id, c])
+      );
+      const peopleMap = new Map(
+        (peopleResult.data || []).map((p) => [p.id, p])
+      );
+
+      // Join the data
+      const clientsWithDetails = (projectCompaniesResult.data || []).map((pc) => ({
+        ...pc,
+        company: pc.company_id ? companiesMap.get(pc.company_id) || null : null,
+        primary_contact: pc.primary_contact_id ? peopleMap.get(pc.primary_contact_id) || null : null,
+      }));
+
+      setClients(clientsWithDetails);
     } catch (err) {
       setError(err as Error);
     } finally {
