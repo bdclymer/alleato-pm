@@ -38,3 +38,26 @@ export type CreateChangeOrderInput = z.infer<typeof createChangeOrderSchema>;
 export type UpdateChangeOrderInput = z.infer<typeof updateChangeOrderSchema>;
 export type ApproveChangeOrderInput = z.infer<typeof approveChangeOrderSchema>;
 export type RejectChangeOrderInput = z.infer<typeof rejectChangeOrderSchema>;
+
+/**
+ * Validation schemas for Change Order Line Items
+ */
+
+export const createLineItemSchema = z.object({
+  cost_code_id: z.string().uuid(),
+  cost_type_id: z.string().uuid(),
+  description: z.string().max(1000).optional(),
+  amount: z.number().default(0),
+  sub_job_id: z.string().uuid().optional().nullable(),
+});
+
+export const updateLineItemSchema = z.object({
+  cost_code_id: z.string().uuid().optional(),
+  cost_type_id: z.string().uuid().optional(),
+  description: z.string().max(1000).optional().nullable(),
+  amount: z.number().optional(),
+  sub_job_id: z.string().uuid().optional().nullable(),
+});
+
+export type CreateLineItemInput = z.infer<typeof createLineItemSchema>;
+export type UpdateLineItemInput = z.infer<typeof updateLineItemSchema>;

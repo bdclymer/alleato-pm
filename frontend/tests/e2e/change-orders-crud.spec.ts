@@ -82,6 +82,13 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page
       .locator('[data-testid="change-order-description"]')
       .fill("Created by Playwright E2E test");
+
+    // Wait for contracts to load and select one (required field)
+    await page.locator('[data-testid="change-order-contract"]').click();
+    await page.waitForTimeout(500); // Wait for dropdown to open
+    // Click first available contract option
+    await page.locator('[role="option"]').first().click();
+
     await page
       .locator('[data-testid="change-order-amount"]')
       .fill("12500.50");
@@ -90,7 +97,7 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page.locator('[data-testid="change-order-submit"]').click();
 
     // Should show success toast
-    await expect(page.getByText("Change order created")).toBeVisible({
+    await expect(page.getByText("Change order created successfully")).toBeVisible({
       timeout: 15000,
     });
 
@@ -104,7 +111,8 @@ test.describe("Change Orders – Full CRUD E2E", () => {
       timeout: 15000,
     });
     await expect(page.getByText("E2E Test Change Order")).toBeVisible();
-    await expect(page.getByText("$12,500.50")).toBeVisible();
+    // Use first() to avoid strict mode violation when amount appears in multiple places
+    await expect(page.getByText("$12,500.50").first()).toBeVisible();
 
     // Verify in database
     const cos = await listChangeOrdersForProject(PROJECT_ID);
@@ -192,6 +200,12 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page
       .locator('[data-testid="change-order-title"]')
       .fill("Flags Test CO");
+
+    // Wait for contracts to load and select one (required field)
+    await page.locator('[data-testid="change-order-contract"]').click();
+    await page.waitForTimeout(500); // Wait for dropdown to open
+    await page.locator('[role="option"]').first().click();
+
     await page
       .locator('[data-testid="change-order-amount"]')
       .fill("5000");
@@ -208,7 +222,7 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page.locator('[data-testid="change-order-submit"]').click();
 
     // Verify toast
-    await expect(page.getByText("Change order created")).toBeVisible({
+    await expect(page.getByText("Change order created successfully")).toBeVisible({
       timeout: 15000,
     });
 
@@ -225,8 +239,8 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page.goto(`/${PROJECT_ID}/change-orders/new`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Click Cancel
-    await page.getByRole("button", { name: "Cancel" }).click();
+    // Click Cancel (use the form-level cancel button, not the header one)
+    await page.locator("form").getByRole("button", { name: "Cancel" }).click();
 
     // Should navigate back to list
     await expect(page).toHaveURL(

@@ -83,6 +83,7 @@ const adminTools = [
   { name: "Crawled Pages", path: "/crawled-pages", icon: IconWorldWww, requiresProject: false },
   { name: "AI Chat", path: "/chat-rag", icon: IconMessageChatbot, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: IconBook, requiresProject: false },
+  { name: "FM Global", path: "/fm-global", icon: IconTable, requiresProject: false },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

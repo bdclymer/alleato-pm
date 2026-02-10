@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
@@ -7,11 +8,11 @@ export async function PATCH(
 ) {
   try {
     const { projectId } = await params;
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const supabase = createServiceClient();
     const body = await request.json();
 
     // Ensure team_members is properly formatted as an array of objects
@@ -33,7 +34,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from("projects")
       .update(body)
-      .eq("id", projectId)
+      .eq("id", Number(projectId))
       .select()
       .single();
 
@@ -59,16 +60,16 @@ export async function GET(
 ) {
   try {
     const { projectId } = await params;
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("id", projectId)
+      .eq("id", Number(projectId))
       .single();
 
     if (error) {

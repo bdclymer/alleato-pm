@@ -38,18 +38,30 @@ export default function DirectoryContactsPage() {
     try {
       const supabase = createClient();
 
-      // Fetch people with their auth user and admin status
-      const { data: peopleData, error: peopleError } = await supabase
-        .from("people")
-        .select(
-          `
-          *,
-          company:companies(*)
-        `
-        )
-        .order("last_name", { ascending: true });
+      // Fetch people and companies separately to avoid PostgREST schema cache issues
+      const [peopleResult, companiesResult] = await Promise.all([
+        supabase
+          .from("people")
+          .select("*")
+          .order("last_name", { ascending: true }),
+        supabase
+          .from("companies")
+          .select("*"),
+      ]);
 
-      if (peopleError) throw peopleError;
+      if (peopleResult.error) throw peopleResult.error;
+      if (companiesResult.error) throw companiesResult.error;
+
+      // Create a map of companies by ID for fast lookup
+      const companiesMap = new Map(
+        (companiesResult.data || []).map((c) => [c.id, c])
+      );
+
+      // Join people with their companies
+      const peopleData = (peopleResult.data || []).map((person) => ({
+        ...person,
+        company: person.company_id ? companiesMap.get(person.company_id) || null : null,
+      }));
 
       // For each person, try to get their auth_user_id and admin status
       const contactsWithAuth = await Promise.all(

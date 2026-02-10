@@ -8,24 +8,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Before starting ANY task, check:** `.claude/PREVENTION-CHECKLIST.md`
 
-**Quick Reference - Top 4 Time Wasters:**
+**Quick Reference - Top 5 Time Wasters:**
 
-1. **NEXT.JS CACHE** (Wasted: 90+ min across 3 incidents)
+1. **SUPABASE PACKAGE CONFLICTS** (CRITICAL - blocks dev server)
+   - NEVER install both `@supabase/auth-helpers-nextjs` (deprecated) AND `@supabase/ssr` (current)
+   - Check: `npm list | grep "auth-helpers"` before Supabase work
+   - If found: Remove immediately, clean reinstall
+   - See: `.claude/rules/SUPABASE-PACKAGE-CONFLICTS.md`
+
+2. **NEXT.JS CACHE** (Wasted: 90+ min across 3 incidents)
    - Creating new route? → Clear `.next` cache FIRST, test SECOND, debug LAST
    - See 404? → `rm -rf .next` before debugging code
    - Protocol: `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md`
 
-2. **SUPABASE TYPES** (Wasted: 40+ min)
+3. **SUPABASE TYPES** (Wasted: 40+ min)
    - Database code? → Run `npm run db:types` FIRST
    - Read `database.types.ts` to verify tables/columns/FK types
    - NEVER assume schema from memory
 
-3. **ROUTE NAMING** (3 incidents, blocks dev server)
+4. **ROUTE NAMING** (3 incidents, blocks dev server)
    - Use `[projectId]`, `[companyId]`, `[contractId]`
    - NEVER use generic `[id]` (causes conflicts)
    - Run `npm run check:routes` after creating routes
 
-4. **ROOT CAUSE ANALYSIS** (Wasted: 60+ min)
+5. **ROOT CAUSE ANALYSIS** (Wasted: 60+ min)
    - Gather runtime evidence FIRST (errors, console, query results)
    - State root cause with evidence
    - ONLY THEN modify code (not before)

@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/layout/site-header";
+import { SiteHeader } from "@/components/header";
 import Footer from "@/components/layout/Footer";
 
 /**

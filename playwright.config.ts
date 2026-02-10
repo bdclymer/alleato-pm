@@ -1,4 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Read environment variables from file.
@@ -27,6 +29,11 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     // baseURL: 'http://localhost:3000',
+
+    /* Reuse auth state when available to avoid repeated logins. */
+    storageState: fs.existsSync(path.join(__dirname, 'tests/.auth/user.json'))
+      ? 'tests/.auth/user.json'
+      : undefined,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

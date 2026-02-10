@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
+import type { ReactElement } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,131 +17,216 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
-import { PageContainer, PageTabs } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
-import { GenericDataTable } from "@/components/tables/generic-table-factory";
-import { contractsTableConfig } from "@/config/tables/contracts.config";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import {
+  buildPrimeContractTableColumns,
+  primeContractColumns,
+  primeContractDefaultVisibleColumns,
+  primeContractFilters,
+  renderPrimeContractCard,
+  renderPrimeContractList,
+  renderPrimeContractRowActions,
+} from "@/features/prime-contracts/prime-contracts-table-config";
+import {
+  primeContractsSchema,
+  type PrimeContract,
+} from "@/lib/validation/prime-contracts";
 
-// Prime Contract interface matching the schema with calculated financial fields
-interface Contract {
-  id: string;
-  project_id: number;
-  contract_number: string;
-  title: string;
-  client_id: number | null;
-  vendor_id: string | null; // Deprecated but kept for backward compatibility
-  description: string | null;
-  status: "draft" | "out_for_bid" | "out_for_signature" | "approved" | "complete" | "terminated";
-  executed: boolean;
-  executed_at: string | null;
-  original_contract_value: number;
-  revised_contract_value: number;
-  start_date: string | null;
-  end_date: string | null;
-  retention_percentage: number | null;
-  payment_terms: string | null;
-  billing_schedule: string | null;
-  created_by: string | null;
-  created_at: string;
-  updated_at: string;
-  // Joined relations
-  client?: {
-    id: number;
-    name: string;
-  } | null;
-  // Calculated fields from contract_financial_summary_mv
-  approved_change_orders: number;
-  pending_change_orders: number;
-  draft_change_orders: number;
-  invoiced: number;
-  payments_received: number;
-  remaining_balance: number;
-}
+const EMPTY_FILTERS: Record<string, FilterValue> = {
+  status: undefined,
+};
 
-export default function ProjectContractsPage() {
+type FilterState = Record<string, FilterValue>;
+
+type ContractStatus = NonNullable<PrimeContract["status"]>;
+
+export default function ProjectContractsPage(): ReactElement {
   const router = useRouter();
-  const params = useParams();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const projectId = parseInt(params.projectId as string, 10);
-  const statusFilter = searchParams.get("status") || "all";
+  const params = useParams<{ projectId: string }>();
+  const projectId = params.projectId ?? "";
 
   useProjectTitle("Prime Contracts");
 
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const initialStatus = searchParams.get("status") ?? "";
+  const initialFilters: FilterState = {
+    status: initialStatus || undefined,
+  };
 
-  // Fetch contracts
-  useEffect(() => {
+  const tableState = useUnifiedTableState({
+    entityKey: "prime-contracts",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "contract_number",
+      sortDirection: "asc",
+      filters: initialFilters,
+    },
+  });
+
+  const [contracts, setContracts] = React.useState<PrimeContract[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [contractToDelete, setContractToDelete] = React.useState<PrimeContract | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  React.useEffect(() => {
+    const nextStatus = searchParams.get("status") ?? "";
+    const normalizedStatus = nextStatus || undefined;
+
+    tableState.setActiveFilters((prev) => {
+      if (prev.status === normalizedStatus) return prev;
+      return { status: normalizedStatus };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  React.useEffect(() => {
+    if (tableState.visibleColumns.length === 0) {
+      tableState.setVisibleColumns(primeContractDefaultVisibleColumns);
+    }
+  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+
+  React.useEffect(() => {
     const fetchContracts = async () => {
       if (!projectId) return;
 
       try {
+        setIsLoading(true);
+        setError(null);
         const response = await fetch(`/api/projects/${projectId}/contracts`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
-        setContracts(data || []);
+        const json = await response.json();
+        const parsed = primeContractsSchema.safeParse(json);
+        if (!parsed.success) {
+          throw new Error("Failed to parse contracts response");
+        }
+
+        setContracts(parsed.data);
       } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load contracts";
+        setError(err instanceof Error ? err : new Error(message));
         toast.error("Failed to load contracts");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchContracts();
   }, [projectId]);
 
-  // Filter contracts by status
-  const filteredContracts = useMemo(() => {
-    if (statusFilter === "all") return contracts;
-    return contracts.filter((contract) => contract.status === statusFilter);
-  }, [contracts, statusFilter]);
+  const activeFilters = tableState.activeFilters as FilterState;
 
-  // Transform contracts for GenericDataTable (flatten client - financial fields come from API)
-  const tableData = useMemo(() => {
-    return filteredContracts.map((contract) => ({
-      ...contract,
-      client_name: contract.client?.name || null,
-    }));
-  }, [filteredContracts]);
+  const statusFilter = activeFilters.status as ContractStatus | undefined;
+  const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
 
-  // Handle delete with confirmation dialog
-  const handleDeleteRow = useCallback(async (id: string | number): Promise<{ error?: string }> => {
-    const contract = contracts.find(c => c.id === String(id));
-    if (contract) {
-      setContractToDelete(contract);
-      setDeleteDialogOpen(true);
+  const filteredContracts = contracts.filter((contract) => {
+    if (statusFilter && contract.status !== statusFilter) return false;
+    if (!searchTerm) return true;
+
+    const fields = [
+      contract.contract_number ?? "",
+      contract.title ?? "",
+      contract.client?.name ?? "",
+    ];
+
+    return fields.some((field) => field.toLowerCase().includes(searchTerm));
+  });
+
+  const tableColumns = buildPrimeContractTableColumns();
+  const sortedContracts = React.useMemo(() => {
+    if (!tableState.sortBy) return filteredContracts;
+    const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);
+    const getSortValue = sortColumn?.sortValue;
+    if (!getSortValue) return filteredContracts;
+
+    const sorted = [...filteredContracts].sort((a, b) => {
+      const valueA = getSortValue(a);
+      const valueB = getSortValue(b);
+
+      if (valueA == null && valueB == null) return 0;
+      if (valueA == null) return tableState.sortDirection === "asc" ? -1 : 1;
+      if (valueB == null) return tableState.sortDirection === "asc" ? 1 : -1;
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return tableState.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+
+      const comparison = String(valueA).localeCompare(String(valueB));
+      return tableState.sortDirection === "asc" ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredContracts, tableColumns, tableState.sortBy, tableState.sortDirection]);
+
+  const totalItems = filteredContracts.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / tableState.perPage));
+  const pageStart = (tableState.page - 1) * tableState.perPage;
+  const pageEnd = pageStart + tableState.perPage;
+  const pagedContracts = sortedContracts.slice(pageStart, pageEnd);
+
+  React.useEffect(() => {
+    if (tableState.page > totalPages) {
+      tableState.setPage(1);
+      tableState.setSearchParams({ page: "1" });
     }
-    // Return empty - actual deletion happens in confirmDelete
-    return {};
-  }, [contracts]);
+  }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
-  const confirmDelete = async () => {
+  const handleFilterChange = (nextFilters: FilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const handleRowClick = (item: PrimeContract) => {
+    router.push(`/${projectId}/prime-contracts/${item.id}`);
+  };
+
+  const handleEdit = (item: PrimeContract) => {
+    router.push(`/${projectId}/prime-contracts/${item.id}/edit`);
+  };
+
+  const handleDeleteIntent = (item: PrimeContract) => {
+    setContractToDelete(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!contractToDelete) return;
 
     setIsDeleting(true);
     try {
       const response = await fetch(
         `/api/projects/${projectId}/contracts/${contractToDelete.id}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         toast.error(data.error || "Failed to delete contract");
         return;
       }
 
-      // Remove from local state
-      setContracts(prev => prev.filter(c => c.id !== contractToDelete.id));
+      setContracts((prev) => prev.filter((item) => item.id !== contractToDelete.id));
       toast.success(`Contract "${contractToDelete.title}" deleted successfully`);
     } catch (err) {
       toast.error("Failed to delete contract");
@@ -151,91 +237,178 @@ export default function ProjectContractsPage() {
     }
   };
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    return filteredContracts.reduce(
-      (acc, contract) => ({
-        original: acc.original + (contract.original_contract_value || 0),
-        revised: acc.revised + (contract.revised_contract_value || 0),
-      }),
-      { original: 0, revised: 0 },
-    );
-  }, [filteredContracts]);
+  const handleExport = () => {
+    if (filteredContracts.length === 0) {
+      toast.info("No contracts to export");
+      return;
+    }
 
-  // Table configuration with row click and delete
-  const tableConfig = useMemo(
-    () => ({
-      ...contractsTableConfig,
-      rowClickPath: `/${projectId}/prime-contracts/{id}`,
-      onDelete: true,
-    }),
-    [projectId],
-  );
+    const tableColumns = buildPrimeContractTableColumns();
+    const visibleColumns = tableColumns.filter((column) =>
+      tableState.visibleColumns.includes(column.id),
+    );
+
+    const headers = visibleColumns.map((column) => column.label);
+    const rows = filteredContracts.map((contract) =>
+      visibleColumns
+        .map((column) =>
+          column.csvValue ? column.csvValue(contract) : String(column.render(contract) ?? ""),
+        )
+        .join(","),
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `prime-contracts-${tableState.page}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(pagedContracts.map((item) => item.id));
+    } else {
+      tableState.setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+    } else {
+      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
+  };
+
+  const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+
+  const approvedCount = contracts.filter((contract) => contract.status === "approved").length;
+  const completeCount = contracts.filter((contract) => contract.status === "complete").length;
+
+  const tabs = [
+    {
+      label: "All Contracts",
+      href: `/${projectId}/prime-contracts`,
+      count: contracts.length,
+      isActive: !statusFilter,
+    },
+    {
+      label: "Approved",
+      href: `/${projectId}/prime-contracts?status=approved`,
+      count: approvedCount,
+      isActive: statusFilter === "approved",
+    },
+    {
+      label: "Complete",
+      href: `/${projectId}/prime-contracts?status=complete`,
+      count: completeCount,
+      isActive: statusFilter === "complete",
+    },
+  ];
 
   return (
     <>
-      <PageHeader
-        title="Prime Contracts"
-        description="Manage prime contracts and owner agreements"
-        showExportButton={false}
-        actions={
-          <Button
-            size="sm"
-            onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Contract
-          </Button>
-        }
-      />
-
-      {/* Tabs */}
-      <PageTabs
-        tabs={[
-          {
-            label: "All Contracts",
-            href: `/${projectId}/prime-contracts`,
-            count: contracts.length,
-          },
-          {
-            label: "Active",
-            href: `/${projectId}/prime-contracts?status=active`,
-          },
-          {
-            label: "Completed",
-            href: `/${projectId}/prime-contracts?status=completed`,
-          },
-        ]}
-      />
-
-      <PageContainer className="space-y-6">
-        {/* Contracts Table */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Text tone="muted">Loading contracts...</Text>
-          </div>
-        ) : tableData.length === 0 ? (
-          <div className="text-center py-12">
-            <Text tone="muted" className="mb-4">No contracts found</Text>
-            <Button
-              onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
-            >
+      <UnifiedTablePage
+        header={{
+          title: "Prime Contracts",
+          description: "Manage prime contracts and owner agreements",
+          actions: (
+            <Button size="sm" onClick={() => router.push(`/${projectId}/prime-contracts/new`)}>
               <Plus className="h-4 w-4 mr-2" />
+              New Contract
+            </Button>
+          ),
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems,
+          filteredItems: totalItems,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search contracts...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: primeContractFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: primeContractColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          onExport: handleExport,
+        }}
+        data={{
+          items: pagedContracts,
+          isLoading,
+          error: error ?? undefined,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          onRowClick: handleRowClick,
+          rowActions: (item) =>
+            renderPrimeContractRowActions(item, handleEdit, handleDeleteIntent),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        views={{
+          card: (item) => renderPrimeContractCard(item, handleRowClick),
+          list: (item) => renderPrimeContractList(item, handleRowClick),
+        }}
+        emptyState={{
+          title: "No contracts found",
+          description: "You have not added any prime contracts yet.",
+          filteredDescription: "Try adjusting your search or filters",
+          isFiltered,
+          action: (
+            <Button size="sm" onClick={() => router.push(`/${projectId}/prime-contracts/new`)}>
               Create your first contract
             </Button>
-          </div>
-        ) : (
-          <GenericDataTable
-            data={tableData}
-            config={tableConfig}
-            onDeleteRow={handleDeleteRow}
-          />
-        )}
-      </PageContainer>
+          ),
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: (nextPage) => {
+            tableState.setPage(nextPage);
+            tableState.setSearchParams({ page: String(nextPage) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            const parsed = Number(nextPerPage);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            tableState.setPerPage(parsed);
+            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+      />
 
-      {/* //TODO: Delete confirmation dialog should use a component - MKH */}
-
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -244,7 +417,8 @@ export default function ProjectContractsPage() {
               Are you sure you want to delete contract{" "}
               <strong>{contractToDelete?.contract_number}</strong> -{" "}
               <strong>{contractToDelete?.title}</strong>?
-              <br /><br />
+              <br />
+              <br />
               This action cannot be undone. Any associated line items and change orders
               must be deleted first.
             </AlertDialogDescription>
@@ -252,7 +426,7 @@ export default function ProjectContractsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              onClick={handleDeleteConfirm}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

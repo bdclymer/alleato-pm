@@ -6,7 +6,6 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,12 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, Plus } from "lucide-react";
 import { useDeleteRfi } from "@/hooks/use-rfis";
-import {
-  RFI_STATUS_OPTIONS,
-  RFI_STATUS_VARIANT_MAP,
-} from "@/lib/schemas/rfi-schema";
+import { RFI_STATUS_OPTIONS } from "@/lib/schemas/rfi-schema";
 import type { RFI } from "@/types/database-extensions";
-import type { RfiStatus } from "@/types/database-extensions";
 
 type RfiTableRow = {
   id: string;
@@ -70,15 +65,6 @@ export function RfisClient({ rfis, projectId }: RfisClientProps) {
     [rfis],
   );
 
-  const statusCounts = useMemo(
-    () => ({
-      draft: tableRows.filter((r) => r.statusKey === "draft").length,
-      open: tableRows.filter((r) => r.statusKey === "open").length,
-      pending: tableRows.filter((r) => r.statusKey === "pending").length,
-      closed: tableRows.filter((r) => r.statusKey === "closed").length,
-    }),
-    [tableRows],
-  );
 
   const tableConfig = useMemo<GenericTableConfig>(
     () => ({
@@ -216,50 +202,6 @@ export function RfisClient({ rfis, projectId }: RfisClientProps) {
             <DropdownMenuItem>PDF</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-
-      {/* Status summary cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Draft
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statusCounts.draft}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Open
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statusCounts.open}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statusCounts.pending}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Closed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{statusCounts.closed}</div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Table */}

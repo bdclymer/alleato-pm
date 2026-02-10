@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationService } from "@/services/SpecificationService";
 import {
@@ -17,12 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> },
 ) {
   const { projectId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -45,7 +40,9 @@ export async function GET(
       : undefined,
   };
 
-  const service = new SpecificationService(supabase);
+  // Use service role client for data queries (bypasses RLS)
+  const serviceClient = createServiceClient();
+  const service = new SpecificationService(serviceClient);
   const result = await service.list(projectId, filters);
 
   if (result.error) {
@@ -67,12 +64,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> },
 ) {
   const { projectId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -105,7 +97,6 @@ export async function POST(
     const result = await service.create(projectId, validated, user.id);
 
     if (result.error) {
-      console.error("[Specifications POST] Service error:", JSON.stringify(result.error));
       const statusCode =
         result.error.type === "FILE_TOO_LARGE" ||
         result.error.type === "INVALID_FILE_TYPE"
@@ -119,7 +110,6 @@ export async function POST(
 
     return NextResponse.json(result.data, { status: 201 });
   } catch (err) {
-    console.error("[Specifications POST] Caught exception:", err);
     if (err instanceof Error && err.name === "ZodError") {
       return NextResponse.json(
         { error: "Validation failed", details: err.message },

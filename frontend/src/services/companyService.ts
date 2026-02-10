@@ -55,6 +55,7 @@ export interface CompanyCreateDTO {
   city?: string;
   state?: string;
   zip?: string;
+  website?: string;
   business_phone?: string;
   email_address?: string;
   erp_vendor_id?: string;
@@ -72,6 +73,7 @@ export interface CompanyUpdateDTO {
   city?: string;
   state?: string;
   zip?: string;
+  website?: string;
   business_phone?: string;
   email_address?: string;
   primary_contact_id?: string;
@@ -130,14 +132,37 @@ export class CompanyService {
       query = query.eq("company_type", company_type);
     }
 
-    // Apply search on joined company name
-    // Note: We need to do client-side filtering for the company.name search
-    // or handle it differently since Supabase doesn't support ilike on nested fields in the same query
+    // Apply search across company name, email, and phone
+    if (search) {
+      const { data: matchingCompanies, error: companySearchError } =
+        await this.supabase
+          .from("companies")
+          .select("id")
+          .ilike("name", `%${search}%`);
+
+      if (companySearchError) throw companySearchError;
+
+      const matchingIds = (matchingCompanies || []).map((row) => row.id);
+      const searchFilter = [
+        matchingIds.length > 0
+          ? `company_id.in.(${matchingIds.join(",")})`
+          : null,
+        `email_address.ilike.%${search}%`,
+        `business_phone.ilike.%${search}%`,
+      ]
+        .filter(Boolean)
+        .join(",");
+
+      query = query.or(searchFilter);
+    }
 
     // Apply sorting
     const [sortField, sortDirection = "asc"] = sort.split(":");
     if (sortField === "name") {
-      // Sort by company.name - handled client-side
+      query = query.order("name", {
+        ascending: sortDirection === "asc",
+        foreignTable: "companies",
+      });
     } else {
       query = query.order(sortField, { ascending: sortDirection === "asc" });
     }
@@ -150,15 +175,15 @@ export class CompanyService {
     if (error) throw error;
 
     // Transform and add user counts
+    const projectCompanies = (data || []) as ProjectCompany[];
+
     const companiesWithDetails = await Promise.all(
-      (data || []).map(async (pc: any) => {
-        // Get user count for this company in this project
+      projectCompanies.map(async (pc) => {
         const userCount = await this.getCompanyUserCount(
           projectIdNum,
           pc.company_id,
         );
 
-        // Get primary contact if exists
         let primaryContact = null;
         if (pc.primary_contact_id) {
           const { data: contact } = await this.supabase
@@ -177,36 +202,14 @@ export class CompanyService {
       }),
     );
 
-    // Apply search filter client-side if needed
-    let filteredData = companiesWithDetails;
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredData = companiesWithDetails.filter(
-        (pc) =>
-          pc.company?.name?.toLowerCase().includes(searchLower) ||
-          pc.email_address?.toLowerCase().includes(searchLower) ||
-          pc.business_phone?.includes(search),
-      );
-    }
-
-    // Sort by company name if that's the sort field
-    if (sortField === "name") {
-      filteredData.sort((a, b) => {
-        const nameA = a.company?.name || "";
-        const nameB = b.company?.name || "";
-        const cmp = nameA.localeCompare(nameB);
-        return sortDirection === "asc" ? cmp : -cmp;
-      });
-    }
-
     return {
-      data: filteredData,
+      data: companiesWithDetails,
       pagination: {
         current_page: page,
         per_page,
-        total: search ? filteredData.length : count || 0,
+        total: count || 0,
         total_pages: Math.ceil(
-          (search ? filteredData.length : count || 0) / per_page,
+          (count || 0) / per_page,
         ),
       },
     };
@@ -284,6 +287,8 @@ export class CompanyService {
         address: data.address,
         city: data.city,
         state: data.state,
+        zip: data.zip,
+        website: data.website,
       })
       .select()
       .single();
@@ -335,6 +340,8 @@ export class CompanyService {
     if (data.address !== undefined) globalFields.address = data.address;
     if (data.city !== undefined) globalFields.city = data.city;
     if (data.state !== undefined) globalFields.state = data.state;
+    if (data.zip !== undefined) globalFields.zip = data.zip;
+    if (data.website !== undefined) globalFields.website = data.website;
 
     if (Object.keys(globalFields).length > 0) {
       // Get the company_id first

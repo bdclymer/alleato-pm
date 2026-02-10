@@ -2,8 +2,8 @@ import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const TEST_PROJECT_ID = "31";
 const TEST_SECTION_NUMBER = "99 99 99";
@@ -163,6 +163,9 @@ test.describe("Specifications Feature", () => {
   });
 
   test("should view specification detail page", async ({ page }) => {
+    // Wait for auth rate limiter to reset after previous tests
+    await page.waitForTimeout(2000);
+
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
@@ -179,15 +182,15 @@ test.describe("Specifications Feature", () => {
     ).toBeVisible({ timeout: 5000 });
 
     // Verify detail page content
-    await expect(page.getByText(TEST_SECTION_NUMBER)).toBeVisible();
+    await expect(page.getByText(TEST_SECTION_NUMBER, { exact: true })).toBeVisible();
     await expect(page.getByText("E2E test specification description")).toBeVisible();
 
     // Verify current revision section
     await expect(page.getByText(/current revision/i)).toBeVisible();
-    await expect(page.getByText(/rev 1/i)).toBeVisible();
+    await expect(page.getByText(/rev 1/i).first()).toBeVisible();
 
     // Verify revision history section
-    await expect(page.getByRole("heading", { name: "Revision History" })).toBeVisible();
+    await expect(page.getByText("Revision History")).toBeVisible();
     await expect(page.getByText("test-spec.pdf")).toBeVisible();
   });
 
@@ -196,8 +199,14 @@ test.describe("Specifications Feature", () => {
       test.skip(true, "Test section ID not available");
     }
 
+    // Wait for auth rate limiter to reset after previous tests
+    await page.waitForTimeout(3000);
+
     await page.goto(`/${TEST_PROJECT_ID}/specifications/${testSectionId}`);
     await page.waitForLoadState("domcontentloaded");
+
+    // Wait for detail page to load
+    await expect(page.getByRole("heading", { name: TEST_TITLE })).toBeVisible({ timeout: 10000 });
 
     // Click "Add Revision" button
     await page.getByRole("button", { name: /add revision/i }).click();
@@ -233,7 +242,7 @@ test.describe("Specifications Feature", () => {
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
 
     // Verify new revision appears in history
-    await expect(page.getByText(/rev 2/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/rev 2/i).first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText("test-spec-v2.pdf")).toBeVisible();
     await expect(page.getByText("E2E test revision")).toBeVisible();
   });
@@ -243,8 +252,14 @@ test.describe("Specifications Feature", () => {
       test.skip(true, "Test section ID not available");
     }
 
+    // Wait for auth rate limiter to reset after previous tests
+    await page.waitForTimeout(3000);
+
     await page.goto(`/${TEST_PROJECT_ID}/specifications/${testSectionId}`);
     await page.waitForLoadState("domcontentloaded");
+
+    // Wait for detail page to load
+    await expect(page.getByRole("heading", { name: TEST_TITLE })).toBeVisible({ timeout: 10000 });
 
     // Click edit button
     await page.getByRole("button", { name: /edit/i }).click();
@@ -285,23 +300,26 @@ test.describe("Specifications Feature", () => {
       test.skip(true, "Test section ID not available");
     }
 
+    // Wait for auth rate limiter to reset after previous tests
+    await page.waitForTimeout(3000);
+
     await page.goto(`/${TEST_PROJECT_ID}/specifications`);
     await page.waitForLoadState("domcontentloaded");
 
-    // Find the test specification row and open its menu
-    const row = page.getByRole("row").filter({ hasText: TEST_TITLE });
+    // Find the test specification row (title was updated by edit test)
+    const row = page.getByRole("row").filter({ hasText: TEST_TITLE + " (Updated)" });
     const menuButton = row.getByRole("button", { name: /open menu/i });
     await menuButton.click();
 
     // Click delete option
     await page.getByRole("menuitem", { name: /delete/i }).click();
 
-    // Wait for confirmation dialog
-    await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Are you sure?" })).toBeVisible();
+    // Wait for confirmation dialog (AlertDialog uses role="alertdialog")
+    await expect(page.getByRole("alertdialog")).toBeVisible();
+    await expect(page.getByText("Are you sure?")).toBeVisible();
 
     // Confirm deletion
-    await page.getByRole("button", { name: /delete/i, exact: false }).last().click();
+    await page.getByRole("alertdialog").getByRole("button", { name: /delete/i }).click();
 
     // Wait for success toast
     await expect(
@@ -310,10 +328,10 @@ test.describe("Specifications Feature", () => {
     ).toBeVisible({ timeout: 10000 });
 
     // Wait for dialog to close
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("alertdialog")).not.toBeVisible({ timeout: 5000 });
 
     // Verify specification is no longer in the table
-    await expect(page.getByText(TEST_TITLE)).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(TEST_TITLE + " (Updated)")).not.toBeVisible({ timeout: 5000 });
 
     // Clear testSectionId since it's been deleted
     testSectionId = null;

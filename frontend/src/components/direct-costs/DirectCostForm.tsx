@@ -63,6 +63,7 @@ import {
   AlertCircle,
   Calendar,
   DollarSign,
+  Wand2,
 } from 'lucide-react'
 import { Text } from '@/components/ui/text'
 import { formatCurrency } from '@/lib/table-config/formatters'
@@ -127,6 +128,62 @@ export function DirectCostForm({
   const [autoSaving, setAutoSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [isDirty, setIsDirty] = useState(false)
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
+
+  // Auto-fill button visibility - set to false to hide the button
+  // TODO: Set to false when testing phase is complete
+  const showAutoFill = true
+
+  // Auto-fill function for dev testing
+  const handleAutoFill = async () => {
+    setIsAutoFilling(true)
+    try {
+      // Use first available vendor or employee
+      const vendorId = vendors.length > 0 ? vendors[0].id : null
+      const employeeId = employees.length > 0 ? employees[0].id : null
+      const budgetCodeId = budgetCodes.length > 0 ? budgetCodes[0].id : null
+
+      if (!vendorId && !employeeId) {
+        toast.error('No vendors or employees available - cannot auto-fill')
+        return
+      }
+
+      if (!budgetCodeId) {
+        toast.error('No budget codes available - cannot auto-fill')
+        return
+      }
+
+      // Generate test data
+      const testData = {
+        cost_type: 'Expense' as const,
+        status: 'Draft' as const,
+        date: new Date(),
+        invoice_number: `TEST-${Date.now()}`,
+        description: `Auto-filled test direct cost - ${new Date().toLocaleString()}`,
+        vendor_id: vendorId,
+        employee_id: employeeId || null,
+        terms: 'Net 30',
+        line_items: [
+          {
+            budget_code_id: budgetCodeId,
+            description: 'Test line item',
+            quantity: 1,
+            uom: 'LOT' as const,
+            unit_cost: 100,
+          },
+        ],
+      }
+
+      // Reset form with test data
+      form.reset(testData as any)
+      toast.success('Form auto-filled with test data')
+    } catch (error) {
+      toast.error('Failed to auto-fill form')
+      console.error('Auto-fill error:', error)
+    } finally {
+      setIsAutoFilling(false)
+    }
+  }
 
   // Form setup
   const form = useForm<any>({
@@ -316,7 +373,7 @@ export function DirectCostForm({
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Auto-save indicator */}
       {mode === 'edit' && (
         <AutoSaveIndicator
@@ -434,7 +491,7 @@ export function DirectCostForm({
                       <FormLabel>Invoice Number</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="INV-12345"
+                          placeholder="Enter invoice number"
                           {...field}
                           value={field.value || ''}
                         />
@@ -521,8 +578,6 @@ export function DirectCostForm({
                 />
               </div>
 
-              <Separator />
-
               {/* Description */}
               <FormField
                 control={form.control}
@@ -552,7 +607,7 @@ export function DirectCostForm({
                     <FormLabel>Payment Terms</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Net 30"
+                        placeholder="Enter payment terms"
                         {...field}
                         value={field.value || ''}
                       />
@@ -648,10 +703,18 @@ export function DirectCostForm({
             <CardContent>
               <LineItemsManager
                 items={fields as any}
-                budgetCodes={budgetCodes}
+                budgetCodes={budgetCodes.map(bc => ({
+                  ...bc,
+                  costType: bc.category || null,
+                  fullLabel: `${bc.code} - ${bc.description}`,
+                }))}
                 onAdd={handleAddLineItem}
                 onRemove={handleRemoveLineItem}
                 onUpdate={handleUpdateLineItem}
+                onCreateBudgetCode={() => {
+                  // TODO: Open budget code creation modal
+                  toast.info('Create budget code feature coming soon')
+                }}
                 form={form as never}
               />
 
@@ -690,7 +753,7 @@ export function DirectCostForm({
           </Card>
 
           {/* Grand Total + Actions */}
-          <div className="flex items-center justify-between border-t pt-6">
+          <div className="flex items-center justify-between pt-6">
             <div className="flex items-center space-x-2">
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel}>
@@ -705,6 +768,19 @@ export function DirectCostForm({
               >
                 Back to List
               </Button>
+              {/* Auto-Fill Button */}
+              {showAutoFill && (
+                <button
+                  type="button"
+                  onClick={handleAutoFill}
+                  disabled={isAutoFilling || isLoadingOptions}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30 disabled:opacity-50"
+                  title="Development only: Fill form with test data"
+                >
+                  <Wand2 className="w-4 h-4" />
+                  {isAutoFilling ? 'Filling...' : 'Auto-Fill'}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">

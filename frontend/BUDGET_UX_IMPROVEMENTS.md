@@ -122,7 +122,7 @@ Replace number inputs in existing components (already completed):
 
 // After
 <NumberInput placeholder="Amount *" clearZeroOnFocus={true} autoSelectOnFocus={true} />
-```typescript
+```
 ### Phase 2: Enhanced Components (Gradual)
 Replace existing modals and forms with enhanced versions:
 
@@ -150,7 +150,7 @@ import { NumberInput } from "@/components/ui/number-input"
   autoSelectOnFocus={true}
   className="h-10"
 />
-```typescript
+```
 ### BudgetButton Component
 
 ```tsx
@@ -159,7 +159,7 @@ import { BudgetButton } from "@/components/budget/budget-button"
 <BudgetButton intent="primary" onClick={handleSave}>
   Save Changes
 </BudgetButton>
-```typescript
+```
 ### BudgetFormField Component
 ```tsx
 import { BudgetFormField } from "@/components/budget/budget-form-field"

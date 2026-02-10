@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationRevisionService } from "@/services/SpecificationRevisionService";
 import {
   addRevisionSchema,
@@ -15,17 +16,14 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; sectionId: string }> },
 ) {
   const { projectId, sectionId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new SpecificationRevisionService(supabase);
+  // Use service role client for data queries (bypasses RLS)
+  const serviceClient = createServiceClient();
+  const service = new SpecificationRevisionService(serviceClient);
   const result = await service.listRevisions(projectId, sectionId);
 
   if (result.error) {
@@ -47,12 +45,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string; sectionId: string }> },
 ) {
   const { projectId, sectionId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -70,7 +63,9 @@ export async function POST(
     // Validate with Zod
     const validated = addRevisionSchema.parse(revisionData);
 
-    const service = new SpecificationRevisionService(supabase);
+    // Use service role client for write operations (bypasses RLS)
+    const serviceClient = createServiceClient();
+    const service = new SpecificationRevisionService(serviceClient);
     const result = await service.addRevision(
       projectId,
       sectionId,

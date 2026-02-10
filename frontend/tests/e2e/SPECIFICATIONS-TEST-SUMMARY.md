@@ -153,7 +153,7 @@ frontend/tests/fixtures/
 ├── test-drawing-1.pdf         (324 bytes - valid PDF)
 ├── test-drawing-2.pdf         (324 bytes - valid PDF)
 └── invalid-file.txt           (32 bytes - non-PDF)
-```markdown
+```
 ### Generated Test Data
 
 - **Large PDFs**: Generated in-memory (52MB) for size validation
@@ -167,7 +167,7 @@ frontend/tests/fixtures/
 test.beforeAll()  → Create test data (specs, areas, revisions)
 test.afterAll()   → Delete test data by ID
 test.afterEach()  → Cleanup per-test resources
-```markdown
+```
 **Cleanup guarantees:**
 - No test data left behind
 - Tests can run multiple times
@@ -264,7 +264,7 @@ npx playwright test tests/e2e/specifications.spec.ts
 
 # Extended suite
 npx playwright test tests/e2e/specifications-extended.spec.ts
-```markdown
+```
 ### Specific Test Categories
 
 ```bash
@@ -276,7 +276,7 @@ npx playwright test -g "Revision Management"
 
 # Edge cases only
 npx playwright test -g "Edge Cases"
-```markdown
+```
 ### Debug Mode
 
 ```bash

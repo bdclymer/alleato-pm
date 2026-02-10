@@ -7,7 +7,6 @@ import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +29,6 @@ import {
   Filter,
   Layers,
   Search,
-  FileText,
-  CheckCircle2,
-  Clock,
 } from "lucide-react";
 import { DrawingLogTable } from "@/components/drawings/DrawingLogTable";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
@@ -56,21 +52,7 @@ export default function ProjectDrawingsPage() {
   const { data: areas = [] } = useDrawingAreas(projectId);
   const deleteDrawing = useDeleteDrawing(projectId);
 
-  // Compute stats from real data
-  const totalDrawings = drawingsData?.total_count || 0;
   const drawings: DrawingLogTableRow[] = drawingsData?.drawings || [];
-
-  const publishedCount = drawings.filter(
-    (d) => d.status === "approved"
-  ).length;
-  const draftCount = drawings.filter(
-    (d) => d.status === "draft" || d.status === "under_review"
-  ).length;
-
-  // Get unique disciplines from actual data
-  const uniqueDisciplines = Array.from(
-    new Set(drawings.map((d) => d.discipline).filter(Boolean))
-  );
 
   const handleClearFilters = () => {
     setFilters({
@@ -134,45 +116,6 @@ export default function ProjectDrawingsPage() {
       />
       <PageContainer>
         <div className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Drawings</p>
-                  <p className="text-2xl font-bold">{totalDrawings}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Published</p>
-                  <p className="text-2xl font-bold">{publishedCount}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
-                  <Clock className="h-5 w-5 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">In Review</p>
-                  <p className="text-2xl font-bold">{draftCount}</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
           {/* Drawing Areas Sidebar + Main Content */}
           <div className="grid gap-4 lg:grid-cols-[220px,1fr]">
             {/* Drawing Areas Sidebar */}

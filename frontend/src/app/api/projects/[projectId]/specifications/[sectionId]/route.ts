@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationService } from "@/services/SpecificationService";
 import {
   editSpecificationSchema,
@@ -15,17 +16,14 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string; sectionId: string }> },
 ) {
   const { projectId, sectionId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new SpecificationService(supabase);
+  // Use service role client for data queries (bypasses RLS)
+  const serviceClient = createServiceClient();
+  const service = new SpecificationService(serviceClient);
   const result = await service.getById(projectId, sectionId);
 
   if (result.error) {
@@ -47,12 +45,7 @@ export async function PATCH(
   { params }: { params: Promise<{ projectId: string; sectionId: string }> },
 ) {
   const { projectId, sectionId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -64,7 +57,9 @@ export async function PATCH(
     const validated: EditSpecificationFormData =
       editSpecificationSchema.parse(body);
 
-    const service = new SpecificationService(supabase);
+    // Use service role client for write operations (bypasses RLS)
+    const serviceClient = createServiceClient();
+    const service = new SpecificationService(serviceClient);
     const result = await service.update(projectId, sectionId, validated, user.id);
 
     if (result.error) {
@@ -102,17 +97,14 @@ export async function DELETE(
   { params }: { params: Promise<{ projectId: string; sectionId: string }> },
 ) {
   const { projectId, sectionId } = await params;
-  const supabase = await createClient();
-
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new SpecificationService(supabase);
+  // Use service role client for write operations (bypasses RLS)
+  const serviceClient = createServiceClient();
+  const service = new SpecificationService(serviceClient);
   const result = await service.delete(projectId, sectionId);
 
   if (result.error) {

@@ -1,0 +1,279 @@
+import * as React from "react";
+import type { ReactElement } from "react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type {
+  ColumnConfig,
+  FilterConfig,
+  TableColumn,
+} from "@/components/tables/unified";
+import type { PrimeContract } from "@/lib/validation/prime-contracts";
+
+const STATUS_LABELS: Record<
+  NonNullable<PrimeContract["status"]>,
+  string
+> = {
+  draft: "Draft",
+  out_for_bid: "Out for Bid",
+  out_for_signature: "Out for Signature",
+  approved: "Approved",
+  complete: "Complete",
+  terminated: "Terminated",
+};
+
+type Variant = "default" | "secondary" | "outline" | "destructive";
+
+export const primeContractColumns: ColumnConfig[] = [
+  { id: "contract_number", label: "Number", alwaysVisible: true },
+  { id: "client_name", label: "Owner/Client", defaultVisible: true },
+  { id: "title", label: "Title", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "executed", label: "Executed", defaultVisible: true },
+  { id: "original_contract_value", label: "Original Amount", defaultVisible: true },
+  { id: "approved_change_orders", label: "Approved COs", defaultVisible: true },
+  { id: "revised_contract_value", label: "Revised Amount", defaultVisible: true },
+  { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
+  { id: "draft_change_orders", label: "Draft COs", defaultVisible: true },
+  { id: "invoiced", label: "Invoiced", defaultVisible: true },
+  { id: "payments_received", label: "Payments Received", defaultVisible: false },
+  { id: "remaining_balance", label: "Remaining Balance", defaultVisible: false },
+  { id: "start_date", label: "Start Date", defaultVisible: false },
+  { id: "end_date", label: "End Date", defaultVisible: false },
+];
+
+export const primeContractFilters: FilterConfig[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: Object.entries(STATUS_LABELS).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  },
+];
+
+export const primeContractDefaultVisibleColumns = primeContractColumns
+  .filter((column) => column.defaultVisible !== false)
+  .map((column) => column.id);
+
+function getStatusVariant(status: PrimeContract["status"]): Variant {
+  switch (status) {
+    case "approved":
+      return "default";
+    case "complete":
+      return "outline";
+    case "terminated":
+      return "destructive";
+    case "out_for_bid":
+    case "out_for_signature":
+      return "secondary";
+    default:
+      return "secondary";
+  }
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "-";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
+}
+
+function sortValueForDate(value: string | null | undefined): number {
+  if (!value) return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
+  return [
+    {
+      ...primeContractColumns[0],
+      render: (item) => <span className="font-medium">{item.contract_number ?? "-"}</span>,
+      csvValue: (item) => item.contract_number ?? "",
+      sortValue: (item) => item.contract_number ?? "",
+    },
+    {
+      ...primeContractColumns[1],
+      render: (item) => (
+        <span className="text-muted-foreground">{item.client?.name ?? "-"}</span>
+      ),
+      csvValue: (item) => item.client?.name ?? "",
+      sortValue: (item) => item.client?.name ?? "",
+    },
+    {
+      ...primeContractColumns[2],
+      render: (item) => <span>{item.title ?? "-"}</span>,
+      csvValue: (item) => item.title ?? "",
+      sortValue: (item) => item.title ?? "",
+    },
+    {
+      ...primeContractColumns[3],
+      render: (item) => (
+        <Badge variant={getStatusVariant(item.status ?? null)}>
+          {item.status ? STATUS_LABELS[item.status] : "-"}
+        </Badge>
+      ),
+      csvValue: (item) => (item.status ? STATUS_LABELS[item.status] : ""),
+      sortValue: (item) => item.status ?? "",
+    },
+    {
+      ...primeContractColumns[4],
+      render: (item) => <span>{item.executed ? "Yes" : "No"}</span>,
+      csvValue: (item) => (item.executed ? "Yes" : "No"),
+      sortValue: (item) => (item.executed ? 1 : 0),
+    },
+    {
+      ...primeContractColumns[5],
+      render: (item) => <span>{formatCurrency(item.original_contract_value)}</span>,
+      csvValue: (item) => String(item.original_contract_value ?? ""),
+      sortValue: (item) => item.original_contract_value ?? 0,
+    },
+    {
+      ...primeContractColumns[6],
+      render: (item) => <span>{formatCurrency(item.approved_change_orders)}</span>,
+      csvValue: (item) => String(item.approved_change_orders ?? ""),
+      sortValue: (item) => item.approved_change_orders ?? 0,
+    },
+    {
+      ...primeContractColumns[7],
+      render: (item) => <span>{formatCurrency(item.revised_contract_value)}</span>,
+      csvValue: (item) => String(item.revised_contract_value ?? ""),
+      sortValue: (item) => item.revised_contract_value ?? 0,
+    },
+    {
+      ...primeContractColumns[8],
+      render: (item) => <span>{formatCurrency(item.pending_change_orders)}</span>,
+      csvValue: (item) => String(item.pending_change_orders ?? ""),
+      sortValue: (item) => item.pending_change_orders ?? 0,
+    },
+    {
+      ...primeContractColumns[9],
+      render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
+      csvValue: (item) => String(item.draft_change_orders ?? ""),
+      sortValue: (item) => item.draft_change_orders ?? 0,
+    },
+    {
+      ...primeContractColumns[10],
+      render: (item) => <span>{formatCurrency(item.invoiced)}</span>,
+      csvValue: (item) => String(item.invoiced ?? ""),
+      sortValue: (item) => item.invoiced ?? 0,
+    },
+    {
+      ...primeContractColumns[11],
+      render: (item) => <span>{formatCurrency(item.payments_received)}</span>,
+      csvValue: (item) => String(item.payments_received ?? ""),
+      sortValue: (item) => item.payments_received ?? 0,
+    },
+    {
+      ...primeContractColumns[12],
+      render: (item) => <span>{formatCurrency(item.remaining_balance)}</span>,
+      csvValue: (item) => String(item.remaining_balance ?? ""),
+      sortValue: (item) => item.remaining_balance ?? 0,
+    },
+    {
+      ...primeContractColumns[13],
+      render: (item) => <span>{formatDate(item.start_date)}</span>,
+      csvValue: (item) => item.start_date ?? "",
+      sortValue: (item) => sortValueForDate(item.start_date),
+    },
+    {
+      ...primeContractColumns[14],
+      render: (item) => <span>{formatDate(item.end_date)}</span>,
+      csvValue: (item) => item.end_date ?? "",
+      sortValue: (item) => sortValueForDate(item.end_date),
+    },
+  ];
+}
+
+export function renderPrimeContractRowActions(
+  item: PrimeContract,
+  onEdit: (contract: PrimeContract) => void,
+  onDelete: (contract: PrimeContract) => void,
+): ReactElement {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onEdit(item)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => onDelete(item)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function renderPrimeContractCard(
+  item: PrimeContract,
+  onClick: (contract: PrimeContract) => void,
+): ReactElement {
+  return (
+    <div
+      className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => onClick(item)}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <p className="text-xs uppercase text-muted-foreground">{item.contract_number ?? "-"}</p>
+          <h3 className="font-medium">{item.title ?? "Untitled Contract"}</h3>
+        </div>
+        <Badge variant={getStatusVariant(item.status ?? null)}>
+          {item.status ? STATUS_LABELS[item.status] : "-"}
+        </Badge>
+      </div>
+      <p className="text-sm text-muted-foreground">{item.client?.name ?? "Owner"}</p>
+      <p className="text-sm text-muted-foreground mt-2">
+        Revised: {formatCurrency(item.revised_contract_value)}
+      </p>
+    </div>
+  );
+}
+
+export function renderPrimeContractList(
+  item: PrimeContract,
+  onClick: (contract: PrimeContract) => void,
+): ReactElement {
+  return (
+    <div
+      className="flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={() => onClick(item)}
+    >
+      <div>
+        <p className="text-sm font-medium">{item.contract_number ?? "-"}</p>
+        <p className="text-xs text-muted-foreground">{item.title ?? "Untitled Contract"}</p>
+      </div>
+      <Badge variant={getStatusVariant(item.status ?? null)}>
+        {item.status ? STATUS_LABELS[item.status] : "-"}
+      </Badge>
+    </div>
+  );
+}

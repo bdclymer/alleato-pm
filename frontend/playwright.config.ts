@@ -52,7 +52,9 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: BASE_URL,
+        storageState: 'tests/.auth/user.json',
       },
+      dependencies: ['setup'],
     },
     {
       name: 'no-auth',

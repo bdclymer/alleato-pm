@@ -36,13 +36,16 @@ export function ChatSidebar({
       <div className="p-4 border-b border-[hsl(var(--chat-border))]">
         <div className="flex items-center gap-2">
           <Image
-            src="/Alleato-Group-Logo_Light.png"
+            src="/Alleato-Group-Logo_Dark.png"
             alt="Alleato"
             width={100}
             height={28}
             className="object-contain"
           />
         </div>
+        <h1 className="mt-2 text-sm font-semibold text-[hsl(var(--chat-text))]">
+          Team Chat
+        </h1>
       </div>
 
       <ScrollArea className="flex-1">

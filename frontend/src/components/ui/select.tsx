@@ -27,17 +27,24 @@ function SelectValue({
 function SelectTrigger({
   className,
   size = "default",
+  variant = "default",
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
+  variant?: "default" | "inline";
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
+      data-variant={variant}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-primary aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex min-w-0 items-center justify-between rounded-md border bg-background text-sm shadow-xs transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-primary aria-invalid:border-destructive flex min-w-0 items-center justify-between rounded-md text-sm transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        // Variant-specific styles
+        variant === "inline"
+          ? "border-0 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-ring"
+          : "border-input dark:bg-input/30 border bg-transparent shadow-xs focus-visible:border-neutral-400 focus-visible:outline-none",
         // Size-specific styles
         size === "sm"
           ? "h-8 gap-1.5 px-3"
