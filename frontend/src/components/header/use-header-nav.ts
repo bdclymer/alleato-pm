@@ -37,6 +37,8 @@ interface UseHeaderNavReturn {
   handleProjectSelect: (projectId: number) => void;
 }
 
+const meetingTitleCache = new Map<string, string>();
+
 export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname();
   const router = useRouter();
@@ -197,6 +199,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       return;
     }
 
+    const cachedTitle = meetingTitleCache.get(meetingId);
+    if (cachedTitle) {
+      setMeetingTitle(cachedTitle);
+      return;
+    }
+
     let isActive = true;
     const fetchMeetingTitle = async () => {
       try {
@@ -211,7 +219,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const data = await response.json();
         const title = data?.data?.title;
         if (isActive) {
-          setMeetingTitle(typeof title === "string" ? title : null);
+          if (typeof title === "string" && title.length > 0) {
+            meetingTitleCache.set(meetingId, title);
+            setMeetingTitle(title);
+          } else {
+            setMeetingTitle(null);
+          }
         }
       } catch {
         // Best-effort only; fallback label remains

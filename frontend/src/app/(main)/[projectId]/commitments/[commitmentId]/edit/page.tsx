@@ -132,6 +132,16 @@ const toCommitmentDetail = (raw: unknown): CommitmentDetail | null => {
   };
 };
 
+type PurchaseOrderStatus = CreatePurchaseOrderInput["status"];
+type SubcontractStatus = CreateSubcontractInput["status"];
+type PurchaseOrderAccountingMethod = CreatePurchaseOrderInput["accountingMethod"];
+type SubcontractAccountingMethod = CreateSubcontractInput["accountingMethod"];
+
+type PurchaseOrderStatus = CreatePurchaseOrderInput["status"];
+type SubcontractStatus = CreateSubcontractInput["status"];
+type PurchaseOrderAccountingMethod = CreatePurchaseOrderInput["accountingMethod"];
+type SubcontractAccountingMethod = CreateSubcontractInput["accountingMethod"];
+
 export default function EditCommitmentPage(): ReactElement {
   const router = useRouter();
   const params = useParams();
@@ -161,7 +171,10 @@ export default function EditCommitmentPage(): ReactElement {
         ? "Commitment not found"
         : null;
 
-  const normalizeStatus = (rawStatus: unknown, typeHint?: string) => {
+  const normalizeStatus = (
+    rawStatus: unknown,
+    typeHint?: string,
+  ): PurchaseOrderStatus | SubcontractStatus | undefined => {
     if (typeof rawStatus !== "string") {
       return undefined;
     }
@@ -172,7 +185,10 @@ export default function EditCommitmentPage(): ReactElement {
       .replace(/_/g, " ");
 
     if (typeHint === "purchase_order") {
-      const purchaseOrderMap: Record<string, string> = {
+      const purchaseOrderMap: Record<
+        string,
+        PurchaseOrderStatus | undefined
+      > = {
         draft: "Draft",
         approved: "Approved",
         sent: "Sent",
@@ -180,10 +196,10 @@ export default function EditCommitmentPage(): ReactElement {
         complete: "Completed",
         completed: "Completed",
       };
-      return purchaseOrderMap[normalized] ?? undefined;
+      return purchaseOrderMap[normalized];
     }
 
-    const subcontractMap: Record<string, string> = {
+    const subcontractMap: Record<string, SubcontractStatus | undefined> = {
       draft: "Draft",
       "out for signature": "Out for Signature",
       pending: "Pending",
@@ -191,13 +207,13 @@ export default function EditCommitmentPage(): ReactElement {
       complete: "Complete",
       void: "Void",
     };
-    return subcontractMap[normalized] ?? undefined;
+    return subcontractMap[normalized];
   };
 
   const normalizeAccountingMethod = (
     rawMethod: unknown,
     typeHint?: string,
-  ) => {
+  ): PurchaseOrderAccountingMethod | SubcontractAccountingMethod | undefined => {
     if (typeof rawMethod !== "string") {
       return undefined;
     }
@@ -367,13 +383,20 @@ export default function EditCommitmentPage(): ReactElement {
     commitmentType,
   );
 
-  const subcontractInitialData = {
+  const subcontractInitialData: Partial<CreateSubcontractInput> & {
+    sovLines: {
+      budgetCode: string;
+      description: string;
+      amount: number;
+    }[];
+  } = {
     contractNumber: commitmentData?.contract_number || "",
     title: commitmentData?.title || "",
     contractCompanyId: commitmentData?.contract_company_id || "",
-    status: normalizedStatus || "Draft",
+    status: (normalizedStatus ?? "Draft") as SubcontractStatus,
     executed: commitmentData?.executed ?? false,
-    accountingMethod: normalizedAccountingMethod || "amount_based",
+    accountingMethod: (normalizedAccountingMethod ??
+      "amount_based") as SubcontractAccountingMethod,
     description: commitmentData?.description || "",
     inclusions: commitmentData?.inclusions || "",
     exclusions: commitmentData?.exclusions || "",
@@ -407,9 +430,20 @@ export default function EditCommitmentPage(): ReactElement {
     })),
   };
 
-  const purchaseOrderInitialData = {
+  const purchaseOrderInitialData: Partial<CreatePurchaseOrderInput> & {
+    sovLines: {
+      budgetCode: string;
+      description: string;
+      amount: number;
+      quantity: number;
+      uom: string;
+      unitCost: number;
+    }[];
+  } = {
     ...subcontractInitialData,
-    accountingMethod: normalizedAccountingMethod || "unit-quantity",
+    status: (normalizedStatus ?? "Draft") as PurchaseOrderStatus,
+    accountingMethod: (normalizedAccountingMethod ??
+      "unit-quantity") as PurchaseOrderAccountingMethod,
     assignedTo: commitmentData?.assigned_to || "",
     billTo: commitmentData?.bill_to || "",
     shipTo: commitmentData?.ship_to || "",
@@ -422,7 +456,7 @@ export default function EditCommitmentPage(): ReactElement {
         commitmentData?.signed_po_received_date
       ),
     },
-    sovLines: (commitmentData.line_items || []).map((item: any) => ({
+    sovLines: (commitmentData.line_items || []).map((item) => ({
       budgetCode: item.budget_code || "",
       description: item.description || "",
       amount: item.amount || 0,

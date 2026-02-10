@@ -695,186 +695,307 @@ export default function ProjectContractDetailPage() {
 
       <TableLayout>
         {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* General Info */}
-            <div className="bg-background">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">General Info</h3>
-                  <p className="text-sm text-muted-foreground">Prime contract details</p>
+          <div className="space-y-8">
+            <section className="rounded-2xl border border-border bg-background shadow-sm">
+              <div className="border-b border-border px-6 py-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      Prime Contract
+                    </p>
+                    <h2 className="text-2xl font-semibold leading-tight">
+                      {contract.title}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span>Contract #{contract.contract_number || contract.id}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span>
+                        {contract.vendor
+                          ? `Contractor: ${contract.vendor.name}`
+                          : "No contractor assigned"}
+                      </span>
+                      <span className="hidden sm:inline">•</span>
+                      <span>{contract.executed ? "Executed" : "Not executed"}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={getStatusBadgeVariant(contract.status)}>
+                      {formatStatusLabel(contract.status)}
+                    </Badge>
+                    {contract.executed ? (
+                      <Badge variant="secondary">Executed</Badge>
+                    ) : (
+                      <Badge variant="outline">Pending Execution</Badge>
+                    )}
+                  </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2"
-                  onClick={() => setGeneralInfoOpen((prev) => !prev)}
-                >
-                  {generalInfoOpen ? "Hide" : "Show"}
-                  <ChevronRight
-                    className={`h-4 w-4 transition-transform ${generalInfoOpen ? "rotate-90" : "rotate-0"}`}
-                  />
-                </Button>
               </div>
-              <div>
-                  <Collapsible open={generalInfoOpen}>
-                    <CollapsibleContent>
-                      <div className="grid grid-cols-3 gap-[var(--group-gap)]">
-                        {/* Row 1 */}
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Contract #</p>
-                          <p className="font-medium">
-                            {contract.contract_number || "--"}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Owner/Client</p>
-                          <p className="font-medium text-blue-600 hover:underline cursor-pointer">
-                            {contract.client?.name || "--"}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Title</p>
-                          <p className="font-medium">{contract.title}</p>
-                        </div>
 
-                        {/* Row 2 */}
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Status</p>
-                          <Badge variant={getStatusBadgeVariant(contract.status)}>
-                            {formatStatusLabel(contract.status)}
-                          </Badge>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Executed</p>
-                          <div className="flex items-center">
-                            {contract.executed ? (
-                              <Check className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Default Retainage</p>
-                          <p className="font-medium">{contract.retention_percentage ?? 0}%</p>
-                        </div>
-
-                        {/* Row 3 */}
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Contractor</p>
-                          <p className="font-medium text-blue-600 hover:underline cursor-pointer">
-                            {contract.vendor?.name || "--"}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-xs text-muted-foreground">Architect/Engineer</p>
-                          <p className="font-medium">--</p>
-                        </div>
-                        <div className="space-y-2 col-span-1" />
-
-                        {/* Row 4 - Full width fields */}
-                        <div className="space-y-2 col-span-3">
-                          <p className="text-xs text-muted-foreground">Description</p>
+              <div className="px-6 py-6">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="space-y-8">
+                    <div className="rounded-xl border border-border bg-muted/10 p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-semibold">Parties & Terms</h3>
                           <p className="text-sm text-muted-foreground">
+                            Primary contract details and responsibilities
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-2"
+                          onClick={() => setGeneralInfoOpen((prev) => !prev)}
+                        >
+                          {generalInfoOpen ? "Hide" : "Show"}
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 transition-transform",
+                              generalInfoOpen ? "rotate-90" : "rotate-0",
+                            )}
+                          />
+                        </Button>
+                      </div>
+                      <Collapsible open={generalInfoOpen}>
+                        <CollapsibleContent>
+                          <dl className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Contract #
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold">
+                                {contract.contract_number || "--"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Owner/Client
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
+                                {contract.client?.name || "--"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Contractor
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
+                                {contract.vendor?.name || "--"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Architect/Engineer
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold">--</dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Default Retainage
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold">
+                                {contract.retention_percentage ?? 0}%
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Payment Terms
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold">
+                                {contract.payment_terms || "--"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                                Billing Schedule
+                              </dt>
+                              <dd className="mt-1 text-sm font-semibold">
+                                {contract.billing_schedule || "--"}
+                              </dd>
+                            </div>
+                          </dl>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-background p-5">
+                      <h3 className="text-base font-semibold">Scope Narrative</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Written description and scope clarifications
+                      </p>
+                      <div className="mt-5 grid gap-6">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Description</p>
+                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                             {contract.description || "--"}
                           </p>
                         </div>
-
-                        {/* Row 5 - Attachments placeholder */}
-                        <div className="space-y-2 col-span-3">
-                          <p className="text-xs text-muted-foreground">Attachments</p>
-                          <p className="text-sm text-muted-foreground">--</p>
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Inclusions</p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {contract.inclusions || "--"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Exclusions</p>
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              {contract.exclusions || "--"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Attachments</p>
+                          <p className="mt-2 text-sm text-muted-foreground">--</p>
                         </div>
                       </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
-              </div>
+                    </div>
+                  </div>
 
-            {/* Contract Summary */}
-            <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Contract Summary</h3>
-                <p className="text-sm text-muted-foreground">Financial overview</p>
-              </div>
-              <div>
-                  <Collapsible open={contractSummaryOpen}>
-                    <CollapsibleTrigger className="sr-only">
-                      Toggle contract summary
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      {/* Financial summary grid matching Procore layout */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {/* Row 1 */}
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Original Contract Amount</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.original_contract_value)}
-                          </p>
+                  <div className="space-y-6">
+                    <div className="rounded-xl border border-border bg-muted/30 p-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-base font-semibold">Financial Snapshot</h3>
+                          <p className="text-sm text-muted-foreground">Current contract position</p>
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Pending Change Orders</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.pending_change_orders)}
-                          </p>
-                        </div>
-
-                        {/* Row 2 */}
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Invoices</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.invoiced_amount)}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Payments Received</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.payments_received)}
-                          </p>
-                        </div>
-
-                        {/* Row 3 */}
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Approved Change Orders</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.approved_change_orders)}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Pending Revised Contract Amount</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.pending_revised_contract_amount)}
-                          </p>
-                        </div>
-
-                        {/* Row 4 */}
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Remaining Balance</p>
-                          <p className="text-lg font-semibold">
-                            {formatCurrency(contract.remaining_balance)}
-                          </p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground">Percent Paid</p>
-                          <p className="text-lg font-semibold">
-                            {contract.percent_paid}%
-                          </p>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-2"
+                          onClick={() => setContractSummaryOpen((prev) => !prev)}
+                        >
+                          {contractSummaryOpen ? "Hide" : "Show"}
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 transition-transform",
+                              contractSummaryOpen ? "rotate-90" : "rotate-0",
+                            )}
+                          />
+                        </Button>
                       </div>
-                    </CollapsibleContent>
-                  </Collapsible>
+                      <Collapsible open={contractSummaryOpen}>
+                        <CollapsibleContent>
+                          <dl className="mt-5 space-y-4 text-sm">
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Original Contract Amount</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.original_contract_value)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Revised Contract Amount</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.revised_contract_value)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Pending Change Orders</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.pending_change_orders)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Approved Change Orders</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.approved_change_orders)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Invoices</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.invoiced_amount)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Payments Received</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.payments_received)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <dt className="text-muted-foreground">Remaining Balance</dt>
+                              <dd className="font-semibold">
+                                {formatCurrency(contract.remaining_balance)}
+                              </dd>
+                            </div>
+                            <div className="flex items-center justify-between border-t border-border pt-4">
+                              <dt className="text-muted-foreground">Percent Paid</dt>
+                              <dd className="text-base font-semibold">{contract.percent_paid}%</dd>
+                            </div>
+                          </dl>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-background p-5">
+                      <h3 className="text-base font-semibold">Key Dates</h3>
+                      <p className="text-sm text-muted-foreground">Contract timeline milestones</p>
+                      <dl className="mt-5 space-y-4 text-sm">
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Start Date</dt>
+                          <dd className="font-medium">
+                            {contract.start_date ? formatDate(contract.start_date) : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Estimated Completion</dt>
+                          <dd className="font-medium">
+                            {contract.end_date ? formatDate(contract.end_date) : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Substantial Completion</dt>
+                          <dd className="font-medium">
+                            {contract.substantial_completion_date
+                              ? formatDate(contract.substantial_completion_date)
+                              : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Actual Completion</dt>
+                          <dd className="font-medium">
+                            {contract.actual_completion_date
+                              ? formatDate(contract.actual_completion_date)
+                              : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Signed Contract Received</dt>
+                          <dd className="font-medium">
+                            {contract.signed_contract_received_date
+                              ? formatDate(contract.signed_contract_received_date)
+                              : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <dt className="text-muted-foreground">Contract Termination</dt>
+                          <dd className="font-medium">
+                            {contract.contract_termination_date
+                              ? formatDate(contract.contract_termination_date)
+                              : "--"}
+                          </dd>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-border pt-4">
+                          <dt className="text-muted-foreground">Created</dt>
+                          <dd className="font-medium">{formatDate(contract.created_at)}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </section>
 
-            {/* Line Items */}
-            <div className="bg-background">
-              <div className="flex items-center justify-between mb-4">
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">Line Items</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <CardTitle>Line Items</CardTitle>
+                  <CardDescription>
                     {lineItems.length} line item
                     {lineItems.length === 1 ? "" : "s"} on this contract
-                  </p>
+                  </CardDescription>
                 </div>
                 <Button
                   variant="outline"
@@ -884,113 +1005,61 @@ export default function ProjectContractDetailPage() {
                   <Plus className="h-4 w-4 mr-2" />
                   Add Line Item
                 </Button>
-              </div>
-              <div>
-                  {lineItemsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Loading line items...
-                    </div>
-                  ) : lineItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                      <p>No line items yet</p>
-                      <p className="text-xs mt-2">
-                        Add line items to track Schedule of Values
-                      </p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Line #</TableHead>
-                          <TableHead>Cost Code</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead className="text-right">Quantity</TableHead>
-                          <TableHead className="text-right">Unit Cost</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {lineItems.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.line_number}</TableCell>
-                            <TableCell>
-                              {item.cost_code?.code
-                                ? `${item.cost_code.code} ${item.cost_code.name}`
-                                : "--"}
-                            </TableCell>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell className="text-right">
-                              {item.quantity}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.unit_cost)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.total_cost)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </div>
-
-            {/* Contract Dates */}
-            <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Contract Dates</h3>
-              </div>
-              <div>
-                  <div className="space-y-[var(--group-gap)]">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Start Date</p>
-                      <p className="text-sm">
-                        {contract.start_date ? formatDate(contract.start_date) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Estimated Completion</p>
-                      <p className="text-sm">
-                        {contract.end_date ? formatDate(contract.end_date) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Substantial Completion</p>
-                      <p className="text-sm">
-                        {contract.substantial_completion_date ? formatDate(contract.substantial_completion_date) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Actual Completion</p>
-                      <p className="text-sm">
-                        {contract.actual_completion_date ? formatDate(contract.actual_completion_date) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Signed Contract Received</p>
-                      <p className="text-sm">
-                        {contract.signed_contract_received_date ? formatDate(contract.signed_contract_received_date) : "--"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Contract Termination</p>
-                      <p className="text-sm">
-                        {contract.contract_termination_date ? formatDate(contract.contract_termination_date) : "--"}
-                      </p>
-                    </div>
-                    <div className="border-t pt-[var(--group-gap)]">
-                      <p className="text-xs text-muted-foreground">Created</p>
-                      <p className="text-sm">{formatDate(contract.created_at)}</p>
-                    </div>
+              </CardHeader>
+              <CardContent>
+                {lineItemsLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading line items...
                   </div>
-                </div>
-              </div>
-            </div>
+                ) : lineItems.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
+                    <p>No line items yet</p>
+                    <p className="text-xs mt-2">
+                      Add line items to track Schedule of Values
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Line #</TableHead>
+                        <TableHead>Cost Code</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Unit Cost</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lineItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.line_number}</TableCell>
+                          <TableCell>
+                            {item.cost_code?.code
+                              ? `${item.cost_code.code} ${item.cost_code.name}`
+                              : "--"}
+                          </TableCell>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell className="text-right">{item.quantity}</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.unit_cost)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.total_cost)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
-        {activeTab === "change-orders" && (
+        
+{activeTab === "change-orders" && (
           <div>
             <div className="bg-background">
               <div className="flex items-center justify-between mb-4">
