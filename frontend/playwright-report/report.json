@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 7
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,7 +20,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 7
         },
         "id": "setup",
         "name": "setup",
@@ -36,7 +36,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 7
         },
         "id": "chromium",
         "name": "chromium",
@@ -52,7 +52,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 7
         },
         "id": "debug",
         "name": "debug",
@@ -68,7 +68,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 7
         },
         "id": "no-auth",
         "name": "no-auth",
@@ -140,7 +140,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 230,
+                  "duration": 244,
                   "errors": [],
                   "stdout": [
                     {
@@ -149,7 +149,7 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-02-04T20:49:15.498Z",
+                  "startTime": "2026-02-05T09:11:23.205Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -171,21 +171,21 @@
       ]
     },
     {
-      "title": "e2e/specifications.spec.ts",
-      "file": "e2e/specifications.spec.ts",
+      "title": "e2e/change-orders-crud.spec.ts",
+      "file": "e2e/change-orders-crud.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Specifications Feature",
-          "file": "e2e/specifications.spec.ts",
-          "line": 12,
+          "title": "Change Orders – Full CRUD E2E",
+          "file": "e2e/change-orders-crud.spec.ts",
+          "line": 16,
           "column": 6,
           "specs": [
             {
-              "title": "should upload a new specification",
-              "ok": false,
+              "title": "List page renders with seeded change orders",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -199,62 +199,678 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 10994,
+                      "duration": 21029,
                       "error": {
-                        "message": "Error: Success toast should appear after upload\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText(/specification.*created.*successfully/i)\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Success toast should appear after upload with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText(/specification.*created.*successfully/i)\u001b[22m\n",
-                        "stack": "Error: Success toast should appear after upload\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText(/specification.*created.*successfully/i)\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Success toast should appear after upload with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText(/specification.*created.*successfully/i)\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/specifications.spec.ts:84:7",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-LIST-001')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-LIST-001')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-LIST-001')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-LIST-001')\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:63:53",
                         "location": {
-                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/specifications.spec.ts",
-                          "column": 7,
-                          "line": 84
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 53,
+                          "line": 63
                         },
-                        "snippet": "  82 |       page.getByText(/specification.*created.*successfully/i),\n  83 |       \"Success toast should appear after upload\"\n> 84 |     ).toBeVisible({ timeout: 10000 });\n     |       ^\n  85 |\n  86 |     // Wait for dialog to close\n  87 |     await expect(page.getByRole(\"dialog\")).not.toBeVisible({ timeout: 5000 });"
+                        "snippet": "  61 |\n  62 |     // Verify both rows appear\n> 63 |     await expect(page.getByText(\"CO-E2E-LIST-001\")).toBeVisible({\n     |                                                     ^\n  64 |       timeout: 15000,\n  65 |     });\n  66 |     await expect(page.getByText(\"CO-E2E-LIST-002\")).toBeVisible();"
                       },
                       "errors": [
                         {
                           "location": {
-                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/specifications.spec.ts",
-                            "column": 7,
-                            "line": 84
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 53,
+                            "line": 63
                           },
-                          "message": "Error: Success toast should appear after upload\n\n\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText(/specification.*created.*successfully/i)\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Success toast should appear after upload with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText(/specification.*created.*successfully/i)\u001b[22m\n\n\n  82 |       page.getByText(/specification.*created.*successfully/i),\n  83 |       \"Success toast should appear after upload\"\n> 84 |     ).toBeVisible({ timeout: 10000 });\n     |       ^\n  85 |\n  86 |     // Wait for dialog to close\n  87 |     await expect(page.getByRole(\"dialog\")).not.toBeVisible({ timeout: 5000 });\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/specifications.spec.ts:84:7"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-LIST-001')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-LIST-001')\u001b[22m\n\n\n  61 |\n  62 |     // Verify both rows appear\n> 63 |     await expect(page.getByText(\"CO-E2E-LIST-001\")).toBeVisible({\n     |                                                     ^\n  64 |       timeout: 15000,\n  65 |     });\n  66 |     await expect(page.getByText(\"CO-E2E-LIST-002\")).toBeVisible();\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:63:53"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-02-04T20:49:16.545Z",
+                      "startTime": "2026-02-05T09:11:24.487Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-specifications-Specifi-8ced2--upload-a-new-specification-chromium/test-failed-1.png"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-04b0b-s-with-seeded-change-orders-chromium/test-failed-1.png"
                         },
                         {
                           "name": "video",
                           "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-specifications-Specifi-8ced2--upload-a-new-specification-chromium/video.webm"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-04b0b-s-with-seeded-change-orders-chromium/video.webm"
                         },
                         {
                           "name": "error-context",
                           "contentType": "text/markdown",
-                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-specifications-Specifi-8ced2--upload-a-new-specification-chromium/error-context.md"
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-04b0b-s-with-seeded-change-orders-chromium/error-context.md"
                         }
                       ],
                       "errorLocation": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/specifications.spec.ts",
-                        "column": 7,
-                        "line": 84
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 53,
+                        "line": 63
+                      }
+                    },
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1424,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-02-05T09:11:46.347Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-04b0b-s-with-seeded-change-orders-chromium-retry1/test-finished-1.png"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-04b0b-s-with-seeded-change-orders-chromium-retry1/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "flaky"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-23332f1f98f2dbab0100",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Create a change order via the form",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 17790,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:93:58",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 58,
+                          "line": 93
+                        },
+                        "snippet": "  91 |\n  92 |     // Should show success toast\n> 93 |     await expect(page.getByText(\"Change order created\")).toBeVisible({\n     |                                                          ^\n  94 |       timeout: 15000,\n  95 |     });\n  96 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 58,
+                            "line": 93
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n\n\n  91 |\n  92 |     // Should show success toast\n> 93 |     await expect(page.getByText(\"Change order created\")).toBeVisible({\n     |                                                          ^\n  94 |       timeout: 15000,\n  95 |     });\n  96 |\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:93:58"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.494Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 58,
+                        "line": 93
+                      }
+                    },
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16979,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:93:58",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 58,
+                          "line": 93
+                        },
+                        "snippet": "  91 |\n  92 |     // Should show success toast\n> 93 |     await expect(page.getByText(\"Change order created\")).toBeVisible({\n     |                                                          ^\n  94 |       timeout: 15000,\n  95 |     });\n  96 |"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 58,
+                            "line": 93
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Change order created')\nExpected: visible\nTimeout: 15000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 15000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Change order created')\u001b[22m\n\n\n  91 |\n  92 |     // Should show success toast\n> 93 |     await expect(page.getByText(\"Change order created\")).toBeVisible({\n     |                                                          ^\n  94 |       timeout: 15000,\n  95 |     });\n  96 |\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:93:58"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-02-05T09:11:43.175Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-ce7d3-a-change-order-via-the-form-chromium-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 58,
+                        "line": 93
                       }
                     }
                   ],
                   "status": "unexpected"
                 }
               ],
-              "id": "46e2acfe105d5b49f61e-f5a821d002188c9fbe56",
-              "file": "e2e/specifications.spec.ts",
-              "line": 43,
+              "id": "e5aed168b92dedb4dc34-44081334bf478667a0f7",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 71,
+              "column": 7
+            },
+            {
+              "title": "Form validation prevents empty required fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 2635,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.492Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-7c150-vents-empty-required-fields-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-2af8021581fb7c0abcba",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "Detail page shows all change order data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 15926,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:145:55",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 55,
+                          "line": 145
+                        },
+                        "snippet": "  143 |\n  144 |     // Verify header content\n> 145 |     await expect(page.getByText(\"CO-E2E-DETAIL-001\")).toBeVisible({\n      |                                                       ^\n  146 |       timeout: 10000,\n  147 |     });\n  148 |     await expect(page.getByText(\"Detail View Test\")).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 55,
+                            "line": 145
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n\n\n  143 |\n  144 |     // Verify header content\n> 145 |     await expect(page.getByText(\"CO-E2E-DETAIL-001\")).toBeVisible({\n      |                                                       ^\n  146 |       timeout: 10000,\n  147 |     });\n  148 |     await expect(page.getByText(\"Detail View Test\")).toBeVisible();\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:145:55"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.488Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 55,
+                        "line": 145
+                      }
+                    },
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 11483,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:145:55",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 55,
+                          "line": 145
+                        },
+                        "snippet": "  143 |\n  144 |     // Verify header content\n> 145 |     await expect(page.getByText(\"CO-E2E-DETAIL-001\")).toBeVisible({\n      |                                                       ^\n  146 |       timeout: 10000,\n  147 |     });\n  148 |     await expect(page.getByText(\"Detail View Test\")).toBeVisible();"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 55,
+                            "line": 145
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('CO-E2E-DETAIL-001')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByText('CO-E2E-DETAIL-001')\u001b[22m\n\n\n  143 |\n  144 |     // Verify header content\n> 145 |     await expect(page.getByText(\"CO-E2E-DETAIL-001\")).toBeVisible({\n      |                                                       ^\n  146 |       timeout: 10000,\n  147 |     });\n  148 |     await expect(page.getByText(\"Detail View Test\")).toBeVisible();\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:145:55"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-02-05T09:11:41.210Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-52223-shows-all-change-order-data-chromium-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 55,
+                        "line": 145
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-41845b28523cf0c09c9c",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 131,
+              "column": 7
+            },
+            {
+              "title": "Back button navigates from detail to list page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 4,
+                      "status": "passed",
+                      "duration": 8260,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.485Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-7bef4-es-from-detail-to-list-page-chromium/test-finished-1.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-20ae69aa0b0968cc49c4",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 163,
+              "column": 7
+            },
+            {
+              "title": "Create form sets due date and private flag",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 5,
+                      "status": "timedOut",
+                      "duration": 60790,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 39,
+                            "line": 205
+                          },
+                          "message": "Error: locator.check: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#is_private')\u001b[22m\n\n\n  203 |\n  204 |     // Set private flag\n> 205 |     await page.locator(\"#is_private\").check();\n      |                                       ^\n  206 |\n  207 |     // Submit\n  208 |     await page.locator('[data-testid=\"change-order-submit\"]').click();\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:205:39"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.492Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium/error-context.md"
+                        }
+                      ]
+                    },
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "timedOut",
+                      "duration": 60890,
+                      "error": {
+                        "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m",
+                        "stack": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                      },
+                      "errors": [
+                        {
+                          "message": "\u001b[31mTest timeout of 60000ms exceeded.\u001b[39m"
+                        },
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 39,
+                            "line": 205
+                          },
+                          "message": "Error: locator.check: Test timeout of 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#is_private')\u001b[22m\n\n\n  203 |\n  204 |     // Set private flag\n> 205 |     await page.locator(\"#is_private\").check();\n      |                                       ^\n  206 |\n  207 |     // Submit\n  208 |     await page.locator('[data-testid=\"change-order-submit\"]').click();\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:205:39"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-02-05T09:12:26.160Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-72326-s-due-date-and-private-flag-chromium-retry1/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-5d68ae1f0b65d5a13060",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Cancel button returns to list page",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 2586,
+                      "error": {
+                        "message": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n",
+                        "stack": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:229:56",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 56,
+                          "line": 229
+                        },
+                        "snippet": "  227 |\n  228 |     // Click Cancel\n> 229 |     await page.getByRole(\"button\", { name: \"Cancel\" }).click();\n      |                                                        ^\n  230 |\n  231 |     // Should navigate back to list\n  232 |     await expect(page).toHaveURL("
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 56,
+                            "line": 229
+                          },
+                          "message": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n\n\n  227 |\n  228 |     // Click Cancel\n> 229 |     await page.getByRole(\"button\", { name: \"Cancel\" }).click();\n      |                                                        ^\n  230 |\n  231 |     // Should navigate back to list\n  232 |     await expect(page).toHaveURL(\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:229:56"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-02-05T09:11:24.491Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium/error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 56,
+                        "line": 229
+                      }
+                    },
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 2595,
+                      "error": {
+                        "message": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n",
+                        "stack": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:229:56",
+                        "location": {
+                          "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                          "column": 56,
+                          "line": 229
+                        },
+                        "snippet": "  227 |\n  228 |     // Click Cancel\n> 229 |     await page.getByRole(\"button\", { name: \"Cancel\" }).click();\n      |                                                        ^\n  230 |\n  231 |     // Should navigate back to list\n  232 |     await expect(page).toHaveURL("
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                            "column": 56,
+                            "line": 229
+                          },
+                          "message": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: 'Cancel' }) resolved to 2 elements:\n    1) <button data-size=\"sm\" data-slot=\"button\" data-variant=\"ghost\" class=\"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5\">…</button> aka getByRole('button', { name: 'Cancel' }).first()\n    2) <button type=\"button\" data-slot=\"button\" data-size=\"default\" data-variant=\"outline\" class=\"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-smooth disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-ring-brand active:scale-[0.98] hover-lift border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-50 hover:border-neutral-400 shad…>Cancel</button> aka locator('form').getByRole('button', { name: 'Cancel' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Cancel' })\u001b[22m\n\n\n  227 |\n  228 |     // Click Cancel\n> 229 |     await page.getByRole(\"button\", { name: \"Cancel\" }).click();\n      |                                                        ^\n  230 |\n  231 |     // Should navigate back to list\n  232 |     await expect(page).toHaveURL(\n    at /Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts:229:56"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 1,
+                      "startTime": "2026-02-05T09:11:28.285Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium-retry1/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium-retry1/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium-retry1/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/e2e-change-orders-crud-Cha-455fc-button-returns-to-list-page-chromium-retry1/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests/e2e/change-orders-crud.spec.ts",
+                        "column": 56,
+                        "line": 229
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "e5aed168b92dedb4dc34-95b61ac69df185a53866",
+              "file": "e2e/change-orders-crud.spec.ts",
+              "line": 224,
               "column": 7
             }
           ]
@@ -264,11 +880,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-04T20:49:14.586Z",
-    "duration": 13360.030999999999,
-    "expected": 1,
+    "startTime": "2026-02-05T09:11:21.375Z",
+    "duration": 126576.348,
+    "expected": 3,
     "skipped": 0,
-    "unexpected": 1,
-    "flaky": 0
+    "unexpected": 4,
+    "flaky": 1
   }
 }
