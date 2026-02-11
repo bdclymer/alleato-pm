@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { GET, POST } from "../route";
 import { mockProject } from "@/test-utils/mocks";
+import { getApiRouteUser } from "@/lib/supabase/server";
+
+const mockGetApiRouteUser = getApiRouteUser as jest.MockedFunction<typeof getApiRouteUser>;
 
 // Create a thenable mock that can be both chained and awaited
 const createMockQuery = (resolveValue: {
@@ -56,17 +59,14 @@ jest.mock("@/lib/supabase/service", () => ({
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(() => Promise.resolve(mockAuthClient)),
+  getApiRouteUser: jest.fn(() => Promise.resolve({ id: 'test-user-id', email: 'test@example.com' })),
 }));
 
 describe("/api/projects", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset auth mock
-    mockAuthClient.auth.getUser.mockClear();
-    mockAuthClient.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'test-user-id', email: 'test@example.com' } },
-      error: null
-    });
+    mockGetApiRouteUser.mockResolvedValue({ id: 'test-user-id', email: 'test@example.com' });
   });
 
   describe("GET", () => {
@@ -270,10 +270,7 @@ describe("/api/projects", () => {
     });
 
     it("returns 401 when user is not authenticated", async () => {
-      mockAuthClient.auth.getUser.mockResolvedValueOnce({
-        data: { user: null },
-        error: null
-      });
+      mockGetApiRouteUser.mockResolvedValueOnce(null);
 
       const request = new NextRequest("http://localhost:3000/api/projects");
       const response = await GET(request);
@@ -422,10 +419,7 @@ describe("/api/projects", () => {
     });
 
     it("returns 401 when user is not authenticated", async () => {
-      mockAuthClient.auth.getUser.mockResolvedValueOnce({
-        data: { user: null },
-        error: null
-      });
+      mockGetApiRouteUser.mockResolvedValueOnce(null);
 
       const request = new NextRequest("http://localhost:3000/api/projects", {
         method: "POST",
