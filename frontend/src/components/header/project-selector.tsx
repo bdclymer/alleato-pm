@@ -62,13 +62,13 @@ export function ProjectSelector({
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Recent Projects</SelectLabel>
+          <SelectLabel>Projects</SelectLabel>
           {loadingProjects ? (
             <div className="py-2 px-2 text-center text-sm text-muted-foreground">
               Loading...
             </div>
           ) : projects.length > 0 ? (
-            projects.slice(0, 10).map((project) => (
+            projects.map((project) => (
               <SelectItem
                 key={project.id}
                 value={project.id.toString()}

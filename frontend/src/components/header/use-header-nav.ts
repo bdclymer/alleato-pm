@@ -247,20 +247,15 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const fetchCurrentProject = async () => {
       if (projectId) {
         try {
-          const response = await fetch(`/api/projects`);
+          const response = await fetch(`/api/projects/${projectId}`);
           if (!response.ok) return;
 
           const contentType = response.headers.get("content-type") || "";
           if (!contentType.includes("application/json")) return;
 
-          const data = await response.json();
-          if (data?.data?.length) {
-            const project = data.data.find(
-              (p: Project) => p.id === projectId
-            );
-            if (project) {
-              setCurrentProject(project);
-            }
+          const project = (await response.json()) as Project;
+          if (project?.id === projectId) {
+            setCurrentProject(project);
           }
         } catch {
           // Silently fail - project name is optional
@@ -277,16 +272,32 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const fetchProjects = useCallback(async () => {
     setLoadingProjects(true);
     try {
-      const response = await fetch("/api/projects?limit=10&archived=false");
-      if (!response.ok) return;
+      const allProjects: Project[] = [];
+      let page = 1;
+      let totalPages = 1;
 
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.includes("application/json")) return;
+      while (page <= totalPages) {
+        const response = await fetch(
+          `/api/projects?limit=100&page=${page}&archived=false`,
+        );
+        if (!response.ok) return;
 
-      const data = await response.json();
-      if (data?.data) {
-        setProjects(data.data);
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const result = await response.json();
+        const pageProjects = Array.isArray(result?.data) ? result.data : [];
+        allProjects.push(...pageProjects);
+
+        const apiTotalPages =
+          typeof result?.meta?.totalPages === "number"
+            ? result.meta.totalPages
+            : 1;
+        totalPages = Math.max(apiTotalPages, 1);
+        page += 1;
       }
+
+      setProjects(allProjects);
     } catch {
       // Silently fail
     } finally {

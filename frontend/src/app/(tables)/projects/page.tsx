@@ -55,57 +55,90 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams();
+        const baseParams = new URLSearchParams();
 
-        // Add filters to params
-        if (searchQuery) params.append("search", searchQuery);
-        if (statusFilter === "active") params.append("archived", "false");
-        else if (statusFilter === "inactive") params.append("archived", "true");
+        if (searchQuery) baseParams.append("search", searchQuery);
+        if (statusFilter === "active") baseParams.append("archived", "false");
+        else if (statusFilter === "inactive")
+          baseParams.append("archived", "true");
 
-        const response = await fetch(`/api/projects?${params.toString()}`);
-        const result = await parseProjectsResponse(response);
+        const allProjectRows: Record<string, unknown>[] = [];
+        let page = 1;
+        let totalPages = 1;
 
-        if (!result) {
-          setProjects([]);
-          return;
+        while (page <= totalPages) {
+          const pagedParams = new URLSearchParams(baseParams);
+          pagedParams.set("page", String(page));
+          pagedParams.set("limit", "100");
+
+          const response = await fetch(`/api/projects?${pagedParams.toString()}`);
+          const result = await parseProjectsResponse(response);
+
+          if (!result || !response.ok) {
+            console.error(
+              "Failed to fetch projects:",
+              result?.error || response.statusText,
+            );
+            setProjects([]);
+            return;
+          }
+
+          const pageRows = Array.isArray(result.data) ? result.data : [];
+          allProjectRows.push(...pageRows);
+          const apiTotalPages =
+            typeof result.meta?.totalPages === "number"
+              ? result.meta.totalPages
+              : 1;
+          totalPages = Math.max(apiTotalPages, 1);
+          page += 1;
         }
 
-        if (response.ok) {
-          // Map Supabase data to our Project interface
-          const mappedProjects: Project[] = (result.data || []).map(
-            (p: any) => ({
-              id: p.id.toString(),
-              name: p.name || "Untitled Project",
-              jobNumber: p["job number"] || p.id.toString(),
-              client: p.client || "",
-              startDate: p["start date"] || null,
-              state: p.state || "",
-              phase: p.phase || "",
-              estRevenue: p["est revenue"] || null,
-              estProfit: p["est profit"] || null,
-              category: p.category || "",
+        const toStringValue = (value: unknown, fallback = ""): string => {
+          if (typeof value === "string") return value;
+          if (typeof value === "number") return String(value);
+          return fallback;
+        };
+        const toNullableString = (value: unknown): string | null =>
+          typeof value === "string" ? value : null;
+        const toNullableNumber = (value: unknown): number | null =>
+          typeof value === "number" ? value : null;
+
+        const mappedProjects: Project[] = allProjectRows.map(
+          (p: Record<string, unknown>) => {
+            const address = toStringValue(p.address);
+            const phase = toStringValue(p.phase);
+            const category = toStringValue(p.category);
+
+            return {
+              id: toStringValue(p.id, "0"),
+              name: toStringValue(p.name, "Untitled Project"),
+              jobNumber: toStringValue(p["job number"], toStringValue(p.id, "0")),
+              client: toStringValue(p.client),
+              startDate: toNullableString(p["start date"]),
+              state: toStringValue(p.state),
+              phase,
+              estRevenue: toNullableNumber(p["est revenue"]),
+              estProfit: toNullableNumber(p["est profit"]),
+              category,
               // Legacy fields for backward compatibility
-              projectNumber: p["job number"] || p.id.toString(),
-              address: p.address || "",
-              city: p.address ? p.address.split(",")[0] || "" : "",
+              projectNumber: toStringValue(
+                p["job number"],
+                toStringValue(p.id, "0"),
+              ),
+              address,
+              city: address ? address.split(",")[0] || "" : "",
               zip: "",
               phone: "",
               status: p.archived ? "Inactive" : "Active",
-              stage: p.phase || "Unknown",
-              type: p.category || "General",
-              notes: p.summary || "",
+              stage: phase || "Unknown",
+              type: category || "General",
+              notes: toStringValue(p.summary),
               isFlagged: false,
-            }),
-          );
+            };
+          },
+        );
 
-          setProjects(mappedProjects);
-        } else {
-          console.error(
-            "Failed to fetch projects:",
-            result?.error || response.statusText,
-          );
-          setProjects([]);
-        }
+        setProjects(mappedProjects);
       } catch (error) {
         console.error("Error fetching projects:", error);
       } finally {
@@ -164,11 +197,11 @@ export default function ProjectsPage() {
   };
 
   const handleSettingsClick = () => {
-    console.log("Settings clicked");
+    // TODO: implement settings
   };
 
   const handleExport = (format: "pdf" | "csv") => {
-    console.log("Export to", format);
+    // TODO: implement export
   };
 
   const handleClearFilters = () => {
@@ -180,12 +213,10 @@ export default function ProjectsPage() {
   };
 
   const handleProjectClick = (project: Project) => {
-    console.log("Project clicked:", project.id, project.name);
     router.push(`/${project.id}/home`);
   };
 
   const handleCreateProject = () => {
-    console.log("Create project clicked");
     router.push("/project-form");
   };
 
@@ -208,7 +239,7 @@ export default function ProjectsPage() {
       }
 
       const result = await response.json();
-      console.log("Test project created:", result);
+      void result;
 
       // Refresh projects list
       const params = new URLSearchParams();
