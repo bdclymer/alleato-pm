@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 /**
  * Budget Setup Page E2E Tests
@@ -21,7 +27,12 @@ test.use({
 const PROJECT_ID = '67';
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
-test.describe('Budget Setup Page', () => {
+test.describe.skip('Budget Setup Page', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to the budget setup page
     await page.goto(`/${PROJECT_ID}/budget/setup`);

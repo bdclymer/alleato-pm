@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal";
 import {
   Card,
   CardContent,
@@ -131,6 +133,15 @@ interface Contract {
   percent_paid: number;
 }
 
+interface BudgetCode {
+  id: string;
+  code: string;
+  description: string;
+  costType: string | null;
+  fullLabel: string;
+  costTypeId?: string | null;
+}
+
 export default function ProjectContractDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -161,8 +172,13 @@ export default function ProjectContractDetailPage() {
     quantity: "1",
     unitCost: "0",
     unitOfMeasure: "",
+    budgetCodeId: "",
   });
   const [isSubmittingLineItem, setIsSubmittingLineItem] = useState(false);
+  const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
+  const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
+    useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -224,6 +240,34 @@ export default function ProjectContractDetailPage() {
 
     fetchLineItems();
   }, [contract, contractId, projectId]);
+
+  useEffect(() => {
+    const fetchBudgetCodes = async () => {
+      if (!projectId) return;
+
+      try {
+        setBudgetCodesLoading(true);
+        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData?.error || "Failed to load budget codes");
+        }
+
+        const { budgetCodes: codes } = (await response.json()) as {
+          budgetCodes: BudgetCode[];
+        };
+
+        setBudgetCodes(codes || []);
+      } catch (err) {
+        setBudgetCodes([]);
+      } finally {
+        setBudgetCodesLoading(false);
+      }
+    };
+
+    fetchBudgetCodes();
+  }, [projectId]);
 
   useEffect(() => {
     const fetchChangeOrders = async () => {
@@ -337,6 +381,20 @@ export default function ProjectContractDetailPage() {
       return;
     }
 
+    const selectedBudgetCode = budgetCodes.find(
+      (code) => code.id === lineItemForm.budgetCodeId,
+    );
+    const parsedCostCodeId = selectedBudgetCode?.code
+      ? Number.parseInt(selectedBudgetCode.code, 10)
+      : null;
+
+    if (selectedBudgetCode?.code && Number.isNaN(parsedCostCodeId)) {
+      alert(
+        "Selected budget code could not be applied. Please choose a valid budget code.",
+      );
+      return;
+    }
+
     setIsSubmittingLineItem(true);
     try {
       const response = await fetch(
@@ -350,7 +408,7 @@ export default function ProjectContractDetailPage() {
             quantity: parseFloat(lineItemForm.quantity) || 0,
             unit_cost: parseFloat(lineItemForm.unitCost) || 0,
             unit_of_measure: lineItemForm.unitOfMeasure || null,
-            cost_code_id: null,
+            cost_code_id: parsedCostCodeId,
           }),
         }
       );
@@ -376,12 +434,28 @@ export default function ProjectContractDetailPage() {
         quantity: "1",
         unitCost: "0",
         unitOfMeasure: "",
+        budgetCodeId: "",
       });
       setShowAddLineItemDialog(false);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to create line item");
     } finally {
       setIsSubmittingLineItem(false);
+    }
+  };
+
+  const handleBudgetCodeCreated = async (budgetCodeId: string) => {
+    try {
+      setBudgetCodesLoading(true);
+      const response = await fetch(`/api/projects/${projectId}/budget-codes`);
+      if (!response.ok) return;
+      const { budgetCodes: codes } = (await response.json()) as {
+        budgetCodes: BudgetCode[];
+      };
+      setBudgetCodes(codes || []);
+      setLineItemForm((prev) => ({ ...prev, budgetCodeId }));
+    } finally {
+      setBudgetCodesLoading(false);
     }
   };
 
@@ -991,9 +1065,9 @@ export default function ProjectContractDetailPage() {
             <Card className="shadow-sm">
               <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Line Items</CardTitle>
+                  <CardTitle>Schedule of Values</CardTitle>
                   <CardDescription>
-                    {lineItems.length} line item
+                    {lineItems.length} SOV line
                     {lineItems.length === 1 ? "" : "s"} on this contract
                   </CardDescription>
                 </div>
@@ -1003,20 +1077,20 @@ export default function ProjectContractDetailPage() {
                   onClick={() => setShowAddLineItemDialog(true)}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Line Item
+                  Add SOV Line
                 </Button>
               </CardHeader>
               <CardContent>
                 {lineItemsLoading ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    Loading line items...
+                    Loading schedule of values...
                   </div>
                 ) : lineItems.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                    <p>No line items yet</p>
+                    <p>No SOV lines yet</p>
                     <p className="text-xs mt-2">
-                      Add line items to track Schedule of Values
+                      Add SOV lines with budget codes to track the contract value
                     </p>
                   </div>
                 ) : (
@@ -1024,11 +1098,12 @@ export default function ProjectContractDetailPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Line #</TableHead>
-                        <TableHead>Cost Code</TableHead>
+                        <TableHead>Budget Code</TableHead>
                         <TableHead>Description</TableHead>
+                        <TableHead>UOM</TableHead>
                         <TableHead className="text-right">Quantity</TableHead>
                         <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1041,6 +1116,7 @@ export default function ProjectContractDetailPage() {
                               : "--"}
                           </TableCell>
                           <TableCell>{item.description}</TableCell>
+                          <TableCell>{item.unit_of_measure || "--"}</TableCell>
                           <TableCell className="text-right">{item.quantity}</TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(item.unit_cost)}
@@ -1520,13 +1596,26 @@ export default function ProjectContractDetailPage() {
       <Dialog open={showAddLineItemDialog} onOpenChange={setShowAddLineItemDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add Line Item</DialogTitle>
+            <DialogTitle>Add Schedule of Values Line</DialogTitle>
             <DialogDescription>
-              Add a new line item to the Schedule of Values for this contract.
+              Add a new line to the Schedule of Values for this contract.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Budget Code</Label>
+              <BudgetCodeSelector
+                value={lineItemForm.budgetCodeId}
+                onValueChange={(value) =>
+                  setLineItemForm((prev) => ({ ...prev, budgetCodeId: value }))
+                }
+                budgetCodes={budgetCodes}
+                loading={budgetCodesLoading}
+                onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                placeholder="Select budget code..."
+              />
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="line-number">
                 Line Number <span className="text-destructive">*</span>
@@ -1623,11 +1712,18 @@ export default function ProjectContractDetailPage() {
               Cancel
             </Button>
             <Button onClick={handleAddLineItem} disabled={isSubmittingLineItem}>
-              {isSubmittingLineItem ? "Adding..." : "Add Line Item"}
+              {isSubmittingLineItem ? "Adding..." : "Add SOV Line"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CreateBudgetCodeModal
+        open={showCreateBudgetCodeModal}
+        onOpenChange={setShowCreateBudgetCodeModal}
+        projectId={projectId}
+        onSuccess={handleBudgetCodeCreated}
+      />
     </>
   );
 }

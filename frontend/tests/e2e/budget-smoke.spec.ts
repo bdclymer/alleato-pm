@@ -1,9 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-const projectId = 24105;
+
+
+let projectId: number;
+
 const costCodeId = '03-3000';
 
-test.describe('Budget end-to-end smoke', () => {
+test.describe.skip('Budget end-to-end smoke', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('creates a line item via API and validates UI', async ({ page }) => {
     // Ensure auth/session is established
     await page.goto('/');

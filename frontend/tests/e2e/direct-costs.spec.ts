@@ -15,7 +15,7 @@
  * @see .agents/patterns/solutions/auth-fixture-pattern.md
  */
 
-import { test, expect, Page, safeNavigate, waitForDataLoad } from '../fixtures';
+import { test, expect, Page, safeNavigate, waitForDataLoad } from '../fixtures/index';
 import { TestDataManager, TestDataGenerators } from '../helpers/test-data';
 import path from 'path';
 

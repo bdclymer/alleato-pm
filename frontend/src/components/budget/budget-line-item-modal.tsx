@@ -51,6 +51,7 @@ interface BudgetCode {
   id: string;
   code: string;
   costType: string | null;
+  costTypeId: string | null;
   description: string;
   fullLabel: string;
 }
@@ -410,7 +411,7 @@ export function BudgetLineItemModal({
 
         return {
           costCodeId: budgetCode?.code || row.budgetCodeId,
-          costType: budgetCode?.costType || null,
+          costType: budgetCode?.costTypeId || null,
           qty: row.qty,
           uom: row.uom,
           unitCost: row.unitCost,

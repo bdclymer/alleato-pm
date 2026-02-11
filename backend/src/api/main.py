@@ -908,3 +908,15 @@ try:
     logger.info("Admin endpoints loaded successfully")
 except ImportError as e:
     logger.warning(f"Admin endpoints not available: {e}")
+
+# === YokeFlow Agent Platform ===
+# Mount YokeFlow API as a sub-application at /yokeflow
+try:
+    from src.yokeflow.api.router import initialize_yokeflow
+    yokeflow_app = initialize_yokeflow()
+    app.mount("/yokeflow", yokeflow_app)
+    logger.info("YokeFlow agent platform mounted at /yokeflow")
+except ImportError as e:
+    logger.warning(f"YokeFlow agent platform not available: {e}")
+except Exception as e:
+    logger.warning(f"Failed to initialize YokeFlow: {e}")

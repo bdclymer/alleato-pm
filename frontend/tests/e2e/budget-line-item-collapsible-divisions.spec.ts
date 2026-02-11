@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Line Item - Collapsible Divisions', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Line Item - Collapsible Divisions', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('should display divisions collapsed by default and expand on click', async ({ page }) => {
     // Navigate to the budget line item creation page with a project ID
     await page.goto('http://localhost:3000/budget/line-item/new?projectId=47');

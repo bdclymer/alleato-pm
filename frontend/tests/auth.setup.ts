@@ -1,6 +1,7 @@
 import { test as setup } from "@playwright/test";
 import path from "path";
 import fs from "fs";
+import { createSupabaseAdminClient } from "./helpers/supabase";
 
 const authFile = path.join(__dirname, ".auth/user.json");
 
@@ -10,6 +11,23 @@ const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
 
 setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: userList } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  const existingUser = userList?.users?.find(
+    (user) => user.email === TEST_EMAIL,
+  );
+
+  if (!existingUser) {
+    await supabaseAdmin.auth.admin.createUser({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      email_confirm: true,
+    });
+  }
 
   // Always re-login to ensure a fresh session for each run.
 
@@ -28,19 +46,14 @@ setup("authenticate", async ({ page, baseURL }) => {
   // Submit
   await loginButton.click();
 
-  // Wait for the auth cookie to appear (don't depend on redirect)
-  // The login form calls signInWithPassword which sets the cookie
-  // even if the post-login redirect fails
-  let authCookie = null;
-  for (let i = 0; i < 20; i++) {
-    await page.waitForTimeout(500);
-    const cookies = await page.context().cookies();
-    authCookie = cookies.find((c) => c.name.includes("auth-token"));
-    if (authCookie) break;
-  }
+  // Wait for a logged-in UI element to confirm session
+  const userMenuButton = page.getByRole("button", { name: /open user menu/i });
+  const hasLoggedInUI = await userMenuButton
+    .waitFor({ state: "visible", timeout: 20000 })
+    .then(() => true)
+    .catch(() => false);
 
-  if (!authCookie) {
-    // Grab any error text from the page for diagnostics
+  if (!hasLoggedInUI) {
     const errorText = await page
       .locator("text=Invalid email")
       .textContent()
@@ -50,8 +63,8 @@ setup("authenticate", async ({ page, baseURL }) => {
       .textContent()
       .catch(() => null);
     throw new Error(
-      `Auth failed - no auth cookie after 10s. ` +
-        `Page text: ${errorText ?? successText ?? "unknown state"}`
+      `Auth failed - login UI did not appear. ` +
+        `Page text: ${errorText ?? successText ?? "unknown state"}`,
     );
   }
 

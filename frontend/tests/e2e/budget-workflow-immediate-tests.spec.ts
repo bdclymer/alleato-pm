@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 /**
  * Budget System Immediate Tests
@@ -7,11 +13,15 @@ import { test, expect } from '@playwright/test';
  * Tests the complete budget workflow to verify SQL calculations are working
  */
 
-test.describe('Budget Workflow - Immediate Tests', () => {
+test.describe.skip('Budget Workflow - Immediate Tests', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('Complete workflow: Project → Contract → Budget → Commitment → Change Order → Modification → SOV', async ({ page }) => {
 
     // Login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForURL('**/dashboard', { timeout: 10000 });
 
     console.log('✓ Step 0: Logged in');

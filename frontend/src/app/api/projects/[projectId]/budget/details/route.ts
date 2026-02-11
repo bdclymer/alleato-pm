@@ -17,6 +17,8 @@ type CostCodeRef = {
   title: string | null;
 };
 
+const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
+
 /**
  * GET /api/projects/[projectId]/budget/details
  *
@@ -70,8 +72,11 @@ export async function GET(
       .eq("project_id", projectIdNum);
 
     if (budgetError) {
-      } else {
-      }
+      return NextResponse.json(
+        { error: "Failed to load budget lines" },
+        { status: 500 },
+      );
+    }
 
     if (!budgetError && budgetLines) {
       budgetLines.forEach((line) => {
@@ -213,6 +218,46 @@ export async function GET(
       });
     }
 
+    // 4b. Fetch Pending Prime Contract Change Orders
+    const { data: pendingContractCOs, error: pendingContractCOsError } =
+      await supabase
+        .from("change_order_lines")
+        .select(
+          `
+        id,
+        amount,
+        description,
+        cost_code_id,
+        change_orders!inner (
+          status,
+          change_order_number,
+          project_id
+        )
+      `,
+        )
+        .eq("change_orders.project_id", projectIdNum)
+        .like("change_orders.status", "Pending%");
+
+    if (!pendingContractCOsError && pendingContractCOs) {
+      pendingContractCOs.forEach((co) => {
+        const changeOrder = co.change_orders as unknown as {
+          change_order_number: string;
+        };
+
+        details.push({
+          id: `pending-contract-co-${co.id}`,
+          budgetCode: co.cost_code_id || "",
+          budgetCodeDescription: "",
+          item: changeOrder
+            ? `CO ${changeOrder.change_order_number}`
+            : "",
+          detailType: "budget_changes" as DetailType,
+          description: co.description || "",
+          pendingBudgetChanges: Number(co.amount) || 0,
+        });
+      });
+    }
+
     // 5. Fetch Subcontract SOV Items (committed costs)
     const { data: subcontractSovItems, error: subcontractsError } =
       await supabase
@@ -233,7 +278,7 @@ export async function GET(
         )
       `,
         )
-        .in("subcontracts.status", ["approved", "complete", "Draft"])
+        .in("subcontracts.status", ["approved", "complete"])
         .eq("subcontracts.project_id", projectIdNum);
 
     if (!subcontractsError && subcontractSovItems) {
@@ -275,7 +320,7 @@ export async function GET(
         )
       `,
       )
-      .in("purchase_orders.status", ["approved", "complete", "Draft"])
+      .in("purchase_orders.status", ["approved", "complete"])
       .eq("purchase_orders.project_id", projectIdNum);
 
     if (!poError && poSovItems) {
@@ -389,28 +434,58 @@ export async function GET(
     }
 
     // 8. Fetch Direct Costs (approved)
-    const { data: directCosts, error: directCostsError } = await supabase
-      .from("direct_costs")
-      .select(
-        `
+    const { data: directCostLineItems, error: directCostsError } =
+      await supabase
+        .from("direct_cost_line_items")
+        .select(
+          `
         id,
-        total_amount,
+        budget_code_id,
+        line_total,
+        quantity,
+        unit_cost,
         description,
-        vendor_id
+        direct_costs!inner (
+          cost_type,
+          status,
+          project_id,
+          vendor_id,
+          invoice_number,
+          date,
+          vendors (
+            name
+          )
+        )
       `,
-      )
-      .eq("project_id", projectIdNum);
+        )
+        .eq("direct_costs.project_id", projectIdNum)
+        .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES);
 
-    if (!directCostsError && directCosts) {
-      directCosts.forEach((cost) => {
+    if (!directCostsError && directCostLineItems) {
+      directCostLineItems.forEach((line) => {
+        const directCost = line.direct_costs as
+          | {
+              vendor_id: string | null;
+              vendors: { name: string } | null;
+              invoice_number: string | null;
+              date: string | null;
+            }
+          | null;
+
+        const amount =
+          (line.line_total as number | null) ??
+          ((line.quantity as number | null) || 0) *
+            ((line.unit_cost as number | null) || 0);
+
         details.push({
-          id: `direct-cost-${cost.id}`,
-          budgetCode: "",
+          id: `direct-cost-${line.id}`,
+          budgetCode: line.budget_code_id || "",
           budgetCodeDescription: "",
-          vendor: cost.vendor_id || "",
+          vendor: directCost?.vendors?.name || directCost?.vendor_id || "",
+          item: directCost?.invoice_number || "",
           detailType: "direct_costs" as DetailType,
-          description: cost.description || "",
-          directCosts: Number(cost.total_amount) || 0,
+          description: line.description || "",
+          directCosts: Number(amount) || 0,
         });
       });
     }
@@ -421,8 +496,10 @@ export async function GET(
       string,
       {
         revisedBudget: number;
+        pendingBudgetChanges: number;
         committedCosts: number;
         directCosts: number;
+        projectedBudget: number;
       }
     >();
 
@@ -430,8 +507,10 @@ export async function GET(
       if (!budgetLineMap.has(detail.budgetCode)) {
         budgetLineMap.set(detail.budgetCode, {
           revisedBudget: 0,
+          pendingBudgetChanges: 0,
           committedCosts: 0,
           directCosts: 0,
+          projectedBudget: 0,
         });
       }
 
@@ -442,6 +521,7 @@ export async function GET(
       }
       if (detail.detailType === "budget_changes") {
         summary.revisedBudget += detail.budgetChanges || 0;
+        summary.pendingBudgetChanges += detail.pendingBudgetChanges || 0;
       }
       if (detail.detailType === "prime_contract_change_orders") {
         summary.revisedBudget += detail.approvedCOs || 0;
@@ -456,8 +536,11 @@ export async function GET(
 
     // Add Forecast to Complete rows
     budgetLineMap.forEach((summary, budgetCode) => {
+      summary.projectedBudget =
+        summary.revisedBudget + summary.pendingBudgetChanges;
       const forecastToComplete =
-        summary.revisedBudget - (summary.committedCosts + summary.directCosts);
+        summary.projectedBudget -
+        (summary.committedCosts + summary.directCosts);
 
       details.push({
         id: `forecast-${budgetCode}`,

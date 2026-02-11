@@ -1,15 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Setup - Autopopulation and Quantity Default', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Setup - Autopopulation and Quantity Default', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to dev login first to authenticate
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForLoadState('networkidle');
   });
 
   test('should autopopulate budget code and set qty to 1 when creating new budget code', async ({ page }) => {
     // Navigate to budget setup page for project 67
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for page to load
@@ -130,7 +140,7 @@ test.describe('Budget Setup - Autopopulation and Quantity Default', () => {
 
   test('should autopopulate budget code and set qty to 1 when selecting existing budget code', async ({ page }) => {
     // Navigate to budget setup page for project 67
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for page to load
@@ -179,7 +189,7 @@ test.describe('Budget Setup - Autopopulation and Quantity Default', () => {
 
   test('should preserve manually entered qty when selecting budget code', async ({ page }) => {
     // Navigate to budget setup page for project 67
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for page to load
@@ -220,7 +230,7 @@ test.describe('Budget Setup - Autopopulation and Quantity Default', () => {
 
   test('should calculate amount when qty and unit cost are entered', async ({ page }) => {
     // Navigate to budget setup page for project 67
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for page to load
@@ -273,7 +283,7 @@ test.describe('Budget Setup - Autopopulation and Quantity Default', () => {
 
   test('should add and remove rows correctly', async ({ page }) => {
     // Navigate to budget setup page for project 67
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for page to load

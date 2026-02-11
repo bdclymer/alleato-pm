@@ -1,14 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('Original Budget manual mode save', async ({ page }) => {
   // First authenticate
-  await page.goto('/dev-login?email=test@example.com&password=testpassword123');
 
   // Wait for redirect after login
   await page.waitForTimeout(3000);
 
   // Navigate to the budget page
-  await page.goto('/67/budget');
+  await page.goto(`/${projectId}/budget`);
 
   // Wait for the page to load completely
   await page.waitForLoadState('networkidle');

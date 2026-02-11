@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 /**
  * E2E Tests for Budget Details Tab
@@ -6,7 +12,12 @@ import { test, expect } from '@playwright/test';
  * Tests the Budget Detail tab functionality following Procore Standard Budget View
  */
 
-test.describe('Budget Details Tab', () => {
+test.describe.skip('Budget Details Tab', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   // Use a known project ID (we'll use project 118 from the database)
   const projectId = '118';
 

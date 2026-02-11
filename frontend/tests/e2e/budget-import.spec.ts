@@ -1,9 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
 import * as XLSX from 'xlsx';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Import', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Import', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   const projectId = '67';
 
   test.beforeEach(async ({ page }) => {

@@ -1,6 +1,17 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe("Budget Screenshots", () => {
+
+
+let projectId: number;
+
+test.describe.skip("Budget Screenshots", () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test("Take budget page screenshots", async ({ page }) => {
     // Go to budget page
     await page.goto("http://localhost:3000/34/budget");

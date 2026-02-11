@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Procore Budget Page Verification', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Procore Budget Page Verification', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Login to Procore
     await page.goto('https://login.procore.com/');

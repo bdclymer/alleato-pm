@@ -6,7 +6,7 @@
  *
  * @see frontend/tests/fixtures/index.ts for auth setup
  */
-import { test, expect } from '../fixtures';
+import { test, expect } from '../fixtures/index';
 import { TestDataManager, TestDataGenerators } from '../helpers/test-data';
 
 const PROJECT_ID = 67;

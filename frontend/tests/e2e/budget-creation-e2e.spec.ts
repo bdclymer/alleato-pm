@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { test, expect } from "@playwright/test";
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 const getBaseUrl = () =>
   process.env.PLAYWRIGHT_BASE_URL ||
@@ -23,13 +29,17 @@ const formatCurrency = (value: number) =>
 
 test.use({ video: "on" });
 
-test.describe("Budget creation workflow", () => {
+test.describe.skip("Budget creation workflow", () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test("creates a budget and validates commitments impact", async ({ page }) => {
     ensureScreenshotsDir();
     const baseUrl = getBaseUrl();
 
     await page.goto(
-      `${baseUrl}/dev-login?email=test@example.com&password=testpassword123`,
     );
     await page.waitForLoadState("networkidle");
 

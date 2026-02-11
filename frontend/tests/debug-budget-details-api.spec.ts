@@ -1,11 +1,23 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('debug budget details API', async ({ page }) => {
   // Listen for network responses
   const apiResponses: { url: string; status: number; body: unknown }[] = [];
 
   page.on('response', async (response) => {
-    if (response.url().includes('/api/projects/67/budget/details')) {
+    if (response.url().includes(`/api/projects/${projectId}/budget/details`)) {
       try {
         const body = await response.json();
         apiResponses.push({
@@ -21,7 +33,7 @@ test('debug budget details API', async ({ page }) => {
   });
 
   // Navigate to budget details tab
-  await page.goto('/67/budget?tab=budget-details');
+  await page.goto(`/${projectId}/budget?tab=budget-details`);
 
   // Wait for API call to complete
   await page.waitForTimeout(3000);

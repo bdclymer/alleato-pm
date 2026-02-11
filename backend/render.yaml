@@ -21,3 +21,10 @@ services:
         value: true
       - key: CORS_ORIGINS
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app
+      # YokeFlow Agent Platform
+      - key: DATABASE_URL
+        sync: false  # PostgreSQL connection string for YokeFlow
+      - key: CLAUDE_CODE_OAUTH_TOKEN
+        sync: false  # Claude SDK authentication token
+      - key: UI_PASSWORD
+        sync: false  # Optional: Set to enable YokeFlow authentication

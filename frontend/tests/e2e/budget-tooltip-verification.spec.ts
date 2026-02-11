@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Tooltip Verification', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Tooltip Verification', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('should display updated tooltips correctly', async ({ page }) => {
     await page.goto('/118/budget');
 

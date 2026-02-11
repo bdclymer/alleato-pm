@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Line Item Creation - Full E2E', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Line Item Creation - Full E2E', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('should create a budget line item and see it in the budget table', async ({ page }) => {
     // Navigate to project budget page
     await page.goto('http://localhost:3001/1/budget');

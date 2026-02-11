@@ -1,10 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Table Debug', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Table Debug', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.use({ storageState: undefined });
 
   test('should check what is actually rendered in the budget table', async ({ page }) => {
-    await page.goto('/67/budget');
+    await page.goto(`/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
 
     // Wait for table

@@ -1,12 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Complete Budget Workflow - End-to-End', () => {
+
+
+test.describe.skip('Complete Budget Workflow - End-to-End', () => {
   let projectId: string;
-  let projectName: string;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
+    let projectName: string;
 
   test.beforeEach(async ({ page }) => {
     // Login
-    await page.goto('http://localhost:3000/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForTimeout(2000);
   });
 
@@ -50,7 +58,7 @@ test.describe('Complete Budget Workflow - End-to-End', () => {
 
   test('2. Create a prime contract', async ({ page }) => {
     // Use a known project or navigate to contracts
-    await page.goto('http://localhost:3000/67/contracts');
+    await page.goto(`http://localhost:3000/${projectId}/contracts`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'tests/screenshots/workflow-05-contracts-page.png', fullPage: true });
 
@@ -88,7 +96,7 @@ test.describe('Complete Budget Workflow - End-to-End', () => {
   });
 
   test('3. Create a budget with budget line items', async ({ page }) => {
-    await page.goto('http://localhost:3000/67/budget');
+    await page.goto(`http://localhost:3000/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'tests/screenshots/workflow-09-budget-page.png', fullPage: true });
 
@@ -166,7 +174,7 @@ test.describe('Complete Budget Workflow - End-to-End', () => {
   });
 
   test('4. Create a commitment', async ({ page }) => {
-    await page.goto('http://localhost:3000/67/contracts');
+    await page.goto(`http://localhost:3000/${projectId}/contracts`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'tests/screenshots/workflow-19-commitment-start.png', fullPage: true });
 
@@ -186,7 +194,7 @@ test.describe('Complete Budget Workflow - End-to-End', () => {
   });
 
   test('5. Create a change order', async ({ page }) => {
-    await page.goto('http://localhost:3000/67/contracts');
+    await page.goto(`http://localhost:3000/${projectId}/contracts`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'tests/screenshots/workflow-21-change-order-start.png', fullPage: true });
 
@@ -206,7 +214,7 @@ test.describe('Complete Budget Workflow - End-to-End', () => {
   });
 
   test('6. Create a budget modification', async ({ page }) => {
-    await page.goto('http://localhost:3000/67/budget');
+    await page.goto(`http://localhost:3000/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'tests/screenshots/workflow-23-budget-mod-start.png', fullPage: true });
 

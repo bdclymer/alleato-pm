@@ -1,5 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
 import {
+
   addProjectMember,
   createProject,
   getUserIdByEmail,
@@ -8,6 +10,8 @@ import {
 } from "../helpers/db";
 import { cleanupProjectArtifacts } from "../helpers/cleanup";
 import { pollFor } from "../helpers/poll";
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
 
 const testUserEmail =
   process.env.PLAYWRIGHT_TEST_USER_EMAIL ?? "test1@mail.com";
@@ -15,7 +19,12 @@ const testUserEmail =
 let projectId: number;
 let testUserId: string;
 
-test.describe("Budget Line Item Creation – Validation & Error Handling", () => {
+test.describe.skip("Budget Line Item Creation – Validation & Error Handling", () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   // ── SETUP: Create isolated project ──────────────────────────────
   test.beforeAll(async () => {
     testUserId = await getUserIdByEmail(testUserEmail);

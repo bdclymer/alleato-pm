@@ -37,17 +37,24 @@ interface BootstrappedProject {
  */
 export async function createTestProject(
   page: Page,
-  options: BootstrapOptions = {}
+  options: BootstrapOptions = {},
+  requestOverride?: {
+    post: (url: string, options?: { data?: unknown }) => Promise<{ ok: () => boolean; status: () => number; text: () => Promise<string>; json: () => Promise<unknown> }>;
+  }
 ): Promise<BootstrappedProject> {
   const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  const requestClient = requestOverride ?? page.request;
 
-  const response = await page.request.post(`${baseUrl}/api/projects/bootstrap`, {
+  const response = await requestClient.post(`${baseUrl}/api/projects/bootstrap`, {
     data: options,
   });
 
-  expect(response.ok()).toBeTruthy();
+  if (!response.ok()) {
+    const errorText = await response.text();
+    throw new Error(`Bootstrap failed: ${response.status()} ${errorText}`);
+  }
 
-  const data = await response.json();
+  const data = (await response.json()) as BootstrappedProject;
 
   // Verify project was created successfully
   expect(data.project).toBeDefined();
@@ -55,7 +62,7 @@ export async function createTestProject(
   expect(data.contract).toBeDefined();
   expect(data.budgetCodes.length).toBeGreaterThan(0);
 
-  return data as BootstrappedProject;
+  return data;
 }
 
 /**

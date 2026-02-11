@@ -1,10 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
 import path from 'path';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 const TEST_PROJECT_ID = '118';
 const BASE_URL = `${process.env.BASE_URL || 'http://localhost:3000'}/${TEST_PROJECT_ID}/budget`;
 
-test.describe('Budget Feature Verification - Simple Tests', () => {
+test.describe.skip('Budget Feature Verification - Simple Tests', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Load authentication
     const authFile = path.join(__dirname, '../.auth/user.json');

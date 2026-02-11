@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
 
     // Fetch change history
     const { data: changes, error: changesError } = await supabase
-      .from("budget_line_changes")
+      .from("budget_line_history")
       .select(
         `
         id,
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
           cost_code_id,
           description,
           cost_codes (
-            code,
-            name
+            id,
+            title
           )
         ),
         users:changed_by (
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
     // Format changes for display
     const formattedChanges = (changes || []).map((change) => {
       const budgetLine = change.budget_lines as unknown as {
-        cost_codes: { code: string; name: string } | null;
+        cost_codes: { id: string; title: string | null } | null;
         description: string;
       } | null;
 
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
         oldValue: change.old_value,
         newValue: change.new_value,
         costCode: budgetLine?.cost_codes
-          ? `${budgetLine.cost_codes.code} - ${budgetLine.cost_codes.name}`
+          ? `${budgetLine.cost_codes.id} - ${budgetLine.cost_codes.title ?? ""}`
           : null,
         description: budgetLine?.description || null,
       };

@@ -1,12 +1,23 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Original Budget Modal', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Original Budget Modal', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   // Use without auth for debugging
   test.use({ storageState: undefined });
 
   test.beforeEach(async ({ page }) => {
     // Navigate to budget page
-    await page.goto('/67/budget');
+    await page.goto(`/${projectId}/budget`);
 
     // Wait for page to load
     await page.waitForLoadState('networkidle');

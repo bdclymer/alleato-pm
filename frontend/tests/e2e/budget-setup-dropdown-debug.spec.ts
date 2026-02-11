@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Setup Dropdown Investigation', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Setup Dropdown Investigation', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('investigate cost code titles not showing in dropdown', async ({ page }) => {
     // Enable console logging to capture the warn messages
     const consoleLogs: Array<{ type: string; text: string; args: unknown[] }> = [];
@@ -21,7 +32,7 @@ test.describe('Budget Setup Dropdown Investigation', () => {
     });
 
     // Navigate to the budget setup page with a longer timeout
-    await page.goto('http://localhost:3003/67/budget/setup', { timeout: 60000, waitUntil: 'domcontentloaded' });
+    await page.goto(`http://localhost:3003/${projectId}/budget/setup`, { timeout: 60000, waitUntil: 'domcontentloaded' });
 
     // Wait for the loading message to disappear
     await page.waitForSelector('text=Loading project cost codes...', { state: 'hidden', timeout: 15000 });

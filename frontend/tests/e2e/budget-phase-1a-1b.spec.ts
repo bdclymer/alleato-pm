@@ -1,4 +1,10 @@
-import { test, expect, Page, APIRequestContext } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 /**
  * Phase 1A & 1B E2E Tests
@@ -18,7 +24,6 @@ const TEST_PROJECT_ID = '67'; // Use an existing project with budget data
 
 // Helper function to login
 async function login(page: Page) {
-  await page.goto(`/dev-login?email=test@example.com&password=testpassword123`);
   await page.waitForLoadState('networkidle');
   await page.waitForURL('**/', { timeout: 15000 });
 }
@@ -113,6 +118,11 @@ async function getBudgetLinesViaAPI(
 // TEST SUITE 1: Budget Modifications Workflow
 // ============================================================================
 test.describe('Phase 1A - Budget Modifications Workflow', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     await login(page);
   });

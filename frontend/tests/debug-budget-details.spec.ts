@@ -1,8 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('debug budget details tab', async ({ page }) => {
   // Navigate to budget details tab
-  await page.goto('/67/budget?tab=budget-details');
+  await page.goto(`/${projectId}/budget?tab=budget-details`);
 
   // Wait for page to load
   await page.waitForTimeout(2000);

@@ -22,8 +22,8 @@ COPY entrypoint.py ./entrypoint.py
 # Create directories for scripts and workers if needed
 RUN mkdir -p src/workers/scripts && chmod +x entrypoint.py
 
-# Set Python path to include src directories
-ENV PYTHONPATH=/app:/app/src:/app/src/services:/app/src/workers
+# Set Python path to include src directories (including YokeFlow)
+ENV PYTHONPATH=/app:/app/src:/app/src/services:/app/src/workers:/app/src/yokeflow
 
 # Set Python to run in unbuffered mode for better logging
 ENV PYTHONUNBUFFERED=1

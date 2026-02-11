@@ -1,9 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Setup Wizard - Cost Code Type Display', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Setup Wizard - Cost Code Type Display', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to dev login first to authenticate
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     // Wait for redirect to complete
     await page.waitForURL('http://localhost:3000/', { timeout: 10000 });
   });

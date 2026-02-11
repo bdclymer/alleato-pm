@@ -1,10 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
 import path from 'path';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
 
 const TEST_PROJECT_ID = '118';
 const BASE_URL = `${process.env.BASE_URL || 'http://localhost:3005'}/api/projects/${TEST_PROJECT_ID}/budget/views`;
 
-test.describe('Budget Views API - Phase 2a', () => {
+test.describe.skip('Budget Views API - Phase 2a', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   let authCookies: string;
   let createdViewId: string | null = null;
 

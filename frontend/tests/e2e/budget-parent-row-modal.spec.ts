@@ -1,11 +1,22 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Parent Row Modal', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Parent Row Modal', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.use({ storageState: undefined });
 
   test('should open modal when clicking parent row Original Budget cell', async ({ page }) => {
     // Navigate to budget page
-    await page.goto('/67/budget');
+    await page.goto(`/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
 
     // Wait for table to load
@@ -68,7 +79,7 @@ test.describe('Budget Parent Row Modal', () => {
   });
 
   test('should style parent row cells differently from child cells', async ({ page }) => {
-    await page.goto('/67/budget');
+    await page.goto(`/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('table', { timeout: 10000 });
 

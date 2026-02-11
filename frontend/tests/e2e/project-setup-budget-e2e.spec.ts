@@ -1,6 +1,17 @@
-import { expect, test } from '@playwright/test'
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Project Setup - Budget Creation E2E', () => {
+
+
+let projectId: number;
+import { expect, test } from '../fixtures/index'
+
+test.describe.skip('Project Setup - Budget Creation E2E', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
 test.use({ storageState: '../../../tests/.auth/user.json' })
   test('should complete full budget setup flow in project wizard', async ({ page }) => {
     // Navigate to project setup page

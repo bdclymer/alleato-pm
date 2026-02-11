@@ -471,17 +471,18 @@ function BudgetPageContent() {
           if (lineItem.costCode) {
             // User provided a cost code - try to match it
             const matchingCode = budgetCodes.find(
-              (c: { code: string; id: string }) => c.code === lineItem.costCode || c.id === lineItem.costCode
+              (c: { code: string; id: string }) =>
+                c.code === lineItem.costCode || c.id === lineItem.costCode,
             );
             if (matchingCode) {
-              costCodeId = matchingCode.id;
+              costCodeId = matchingCode.code;
             } else {
               // Try using the provided code directly (it might be a valid cost_code id)
               costCodeId = lineItem.costCode;
             }
           } else if (budgetCodes.length > 0) {
             // No cost code provided but budget codes exist - use the first one
-            costCodeId = budgetCodes[0].id;
+            costCodeId = budgetCodes[0].code;
           }
         }
       } catch {

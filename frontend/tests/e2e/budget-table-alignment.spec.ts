@@ -1,9 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Table Alignment Verification', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Table Alignment Verification', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('grand totals row aligns with column headers', async ({ page }) => {
     // Navigate to budget page
-    await page.goto('http://localhost:3000/67/budget');
+    await page.goto(`http://localhost:3000/${projectId}/budget`);
     await page.waitForLoadState('networkidle');
 
     // Take screenshot of budget table

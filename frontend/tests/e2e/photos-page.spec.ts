@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Buffer } from "node:buffer";
-import { expect, test } from "../fixtures";
+import { expect, test } from "../fixtures/index";
 
 const PROJECT_ID = 118;
 const BUCKET = "photos";

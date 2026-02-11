@@ -1,15 +1,24 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('verify budget tabs work', async ({ page }) => {
   // Navigate to main budget tab
-  await page.goto('/67/budget');
+  await page.goto(`/${projectId}/budget`);
   await page.waitForTimeout(2000);
 
   // Take screenshot of main budget tab
   await page.screenshot({ path: 'budget-main-tab.png', fullPage: true });
 
   // Navigate to budget details tab
-  await page.goto('/67/budget?tab=budget-details');
+  await page.goto(`/${projectId}/budget?tab=budget-details`);
   await page.waitForTimeout(2000);
 
   // Take screenshot of budget details tab

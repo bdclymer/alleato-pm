@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures';
+import { test, expect } from '../fixtures/index';
 
 type BootstrapResponse = {
   project?: { id: number };

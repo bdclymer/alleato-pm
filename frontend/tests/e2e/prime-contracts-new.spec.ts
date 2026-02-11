@@ -1,5 +1,5 @@
 import path from "path";
-import { test, expect } from "../fixtures";
+import { test, expect } from "../fixtures/index";
 import {
   deletePrimeContractCascade,
   fetchContractAttachments,

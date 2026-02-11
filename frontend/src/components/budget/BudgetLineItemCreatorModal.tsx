@@ -4,7 +4,6 @@ import * as React from "react";
 import { Plus, X, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import {
   Select,
@@ -103,6 +102,7 @@ export function BudgetLineItemCreatorModal({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
   const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
+  const [pendingRowIndex, setPendingRowIndex] = React.useState<number | null>(null);
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
@@ -140,8 +140,15 @@ export function BudgetLineItemCreatorModal({
       ]);
       setSearchQuery("");
       setOpenPopoverId(null);
+      setPendingRowIndex(null);
     }
   }, [isOpen]);
+
+  React.useEffect(() => {
+    if (!showCreateCodeModal) {
+      setPendingRowIndex(null);
+    }
+  }, [showCreateCodeModal]);
 
   // Fetch budget codes
   React.useEffect(() => {
@@ -305,6 +312,7 @@ export function BudgetLineItemCreatorModal({
     });
   };
 
+
   // Calculate total amount across all rows
   const calculateTotal = (): number => {
     return rows.reduce((sum, row) => {
@@ -374,7 +382,51 @@ export function BudgetLineItemCreatorModal({
 
       const { budgetCode: createdCode } = await response.json();
 
-      setBudgetCodes([...budgetCodes, createdCode]);
+      setBudgetCodes((prev) => [...prev, createdCode]);
+      setRows((prev) => {
+        if (pendingRowIndex !== null && prev[pendingRowIndex]) {
+          return prev.map((row, i) =>
+            i === pendingRowIndex
+              ? {
+                  ...row,
+                  budgetCodeId: createdCode.id,
+                  budgetCodeLabel: createdCode.fullLabel,
+                  costCodeId: createdCode.code,
+                  costTypeId: createdCode.costTypeId,
+                }
+              : row,
+          );
+        }
+
+        const firstEmptyIndex = prev.findIndex((row) => !row.budgetCodeId);
+        if (firstEmptyIndex >= 0) {
+          return prev.map((row, i) =>
+            i === firstEmptyIndex
+              ? {
+                  ...row,
+                  budgetCodeId: createdCode.id,
+                  budgetCodeLabel: createdCode.fullLabel,
+                  costCodeId: createdCode.code,
+                  costTypeId: createdCode.costTypeId,
+                }
+              : row,
+          );
+        }
+
+        return [
+          ...prev,
+          {
+            budgetCodeId: createdCode.id,
+            budgetCodeLabel: createdCode.fullLabel,
+            costCodeId: createdCode.code,
+            costTypeId: createdCode.costTypeId,
+            qty: "",
+            uom: "",
+            unitCost: "",
+            amount: "0.00",
+          },
+        ];
+      });
       setShowCreateCodeModal(false);
       setNewCodeData({ costCodeId: "", costType: "L" });
       toast.success("Budget code created successfully");
@@ -605,9 +657,10 @@ export function BudgetLineItemCreatorModal({
                                     <CommandItem
                                       onSelect={() => {
                                         setOpenPopoverId(null);
+                                        setPendingRowIndex(index);
                                         setShowCreateCodeModal(true);
                                       }}
-                                      className="text-brand"
+                                      className=""
                                     >
                                       <Plus className="mr-2 h-4 w-4" />
                                       Create New Budget Code
@@ -673,6 +726,7 @@ export function BudgetLineItemCreatorModal({
                             className="h-10 bg-background"
                             disabled={isCreating}
                             clearZeroOnFocus={true}
+                            currency={true}
                           />
                         </div>
 
@@ -686,11 +740,12 @@ export function BudgetLineItemCreatorModal({
                               step="0.01"
                               value={row.amount}
                               onChange={(e) => handleRowChange(index, "amount", e.target.value)}
-                              placeholder="Amount *"
+                              placeholder="$0.00"
                               className="h-10 font-medium bg-background flex-1"
                               disabled={isCreating}
                               clearZeroOnFocus={true}
                               autoSelectOnFocus={true}
+                              currency={true}
                             />
                             {rows.length > 1 && (
                               <Button
@@ -726,17 +781,17 @@ export function BudgetLineItemCreatorModal({
               </div>
 
               {/* Footer with Running Total */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-foreground">
                     {rows.length} line item{rows.length !== 1 ? "s" : ""}
                   </span>
-                  <span className="text-gray-400">•</span>
+                  <span className="text-muted-foreground">•</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">Total Amount</span>
-                    <span className="text-2xl font-bold text-blue-900">
-                      ${formatCurrency(calculateTotal().toString())}
-                    </span>
+                    <span className="text-sm font-medium text-foreground">Total Amount</span>
+                              <span className="text-2xl font-bold text-foreground">
+                                ${formatCurrency(calculateTotal().toString())}
+                              </span>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -750,7 +805,7 @@ export function BudgetLineItemCreatorModal({
                   <Button
                     onClick={handleCreate}
                     disabled={isCreating || rows.every((r) => !r.costCodeId)}
-                    className="bg-brand hover:bg-brand/90 min-w-[140px]"
+                    className="min-w-[140px]"
                   >
                     {isCreating ? (
                       <span className="flex items-center gap-2">
@@ -824,7 +879,7 @@ export function BudgetLineItemCreatorModal({
                                 className={cn(
                                   "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
                                   newCodeData.costCodeId === costCode.id &&
-                                    "bg-brand/10 text-brand font-medium"
+                                    "bg-muted text-foreground font-medium"
                                 )}
                               >
                                 {costCode.id} – {costCode.title}
@@ -884,7 +939,6 @@ export function BudgetLineItemCreatorModal({
               type="button"
               onClick={handleCreateBudgetCode}
               disabled={!newCodeData.costCodeId || !newCodeData.costType}
-              className="bg-brand hover:bg-brand/90"
             >
               Create Budget Code
             </Button>

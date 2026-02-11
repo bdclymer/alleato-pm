@@ -1,9 +1,17 @@
-import { test, expect } from '@playwright/test'
+import { createTestProject } from '../helpers/bootstrap';
+import { test, expect } from '../fixtures/index'
 
-test.describe('Project Setup Wizard - Budget Save Fix', () => {
+
+test.describe.skip('Project Setup Wizard - Budget Save Fix', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+    projectId = project.project.id;
+  });
+
   test('should complete full project setup wizard including budget save', async ({ page }) => {
     // Login first using dev login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 

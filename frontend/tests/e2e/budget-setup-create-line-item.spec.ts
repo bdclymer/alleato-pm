@@ -1,15 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Setup - Create Line Item', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Setup - Create Line Item', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to dev login first to authenticate
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForURL(/\/\d+\/home/, { timeout: 10000 });
   });
 
   test('should create a budget line item successfully', async ({ page }) => {
     // Navigate to the budget setup page (now authenticated)
-    await page.goto('http://localhost:3000/67/budget/setup', { timeout: 60000 });
+    await page.goto(`http://localhost:3000/${projectId}/budget/setup`, { timeout: 60000 });
 
     // Wait for the loading to complete
     await page.waitForSelector('text=Loading project cost codes...', { state: 'hidden', timeout: 15000 });
@@ -56,7 +66,7 @@ test.describe('Budget Setup - Create Line Item', () => {
 
   test('should show error if no budget code selected', async ({ page }) => {
     // Navigate to budget setup page (already authenticated via beforeEach)
-    await page.goto('http://localhost:3000/67/budget/setup', { timeout: 60000 });
+    await page.goto(`http://localhost:3000/${projectId}/budget/setup`, { timeout: 60000 });
     await page.waitForSelector('text=Loading project cost codes...', { state: 'hidden', timeout: 15000 });
 
     // Fill in amount without selecting budget code

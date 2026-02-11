@@ -1,6 +1,17 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Setup Dropdown - Verify Fix', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Setup Dropdown - Verify Fix', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('verify cost code titles are showing in dropdown', async ({ page }) => {
     // Capture all console messages to see the data
     const allConsoleLogs: Array<{ type: string; args: unknown[] }> = [];
@@ -17,7 +28,7 @@ test.describe('Budget Setup Dropdown - Verify Fix', () => {
     });
 
     // Navigate and wait for page load
-    const response = await page.goto('http://localhost:3000/67/budget/setup', {
+    const response = await page.goto(`http://localhost:3000/${projectId}/budget/setup`, {
       waitUntil: 'domcontentloaded',
       timeout: 30000
     });

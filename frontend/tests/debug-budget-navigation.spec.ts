@@ -1,4 +1,16 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('Debug Budget Page Navigation', async ({ page }) => {
   const TEST_PROJECT_ID = '118'; // Test with project ID 118

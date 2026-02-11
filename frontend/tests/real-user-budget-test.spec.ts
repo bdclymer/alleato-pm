@@ -1,16 +1,25 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from './fixtures/index';
+import { createTestProject } from './helpers/bootstrap';
 import {
+
   addProjectMember,
   createProject,
   getUserIdByEmail,
 } from "./helpers/db";
 import { cleanupProjectArtifacts } from "./helpers/cleanup";
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
 
 const testUserEmail = process.env.PLAYWRIGHT_TEST_USER_EMAIL ?? "test1@mail.com";
 
 let projectId: number;
 
-test.describe("Real User Budget Workflow - Create Budget Line Item", () => {
+test.describe.skip("Real User Budget Workflow - Create Budget Line Item", () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeAll(async () => {
     const userId = await getUserIdByEmail(testUserEmail);
     projectId = await createProject(`Real Budget Test ${Date.now()}`);

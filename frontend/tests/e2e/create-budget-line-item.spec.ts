@@ -1,9 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Line Item Creation', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Line Item Creation', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('should create a budget line item using existing budget code', async ({ page }) => {
     // Navigate to budget setup page
-    await page.goto('/67/budget/setup');
+    await page.goto(`/${projectId}/budget/setup`);
     await page.waitForLoadState('networkidle');
 
     // Wait for loading to complete

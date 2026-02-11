@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Line Item Creation Debug', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Line Item Creation Debug', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('debug budget line item creation error', async ({ page }) => {
     // Set up request interception to log API calls
     page.on('request', request => {

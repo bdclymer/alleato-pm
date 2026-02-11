@@ -1,6 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Page - Basic Load and API Verification', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Page - Basic Load and API Verification', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('budget page loads successfully and API returns data', async ({ page }) => {
     // Set up response listener before navigation - must match exactly
     const responsePromise = page.waitForResponse(

@@ -43,6 +43,7 @@ interface BudgetCode {
   id: string;
   code: string;
   costType: string | null;
+  costTypeId: string | null;
   description: string;
   fullLabel: string;
 }
@@ -71,6 +72,7 @@ export function BudgetLineItemForm({
   const [loading, setLoading] = useState(false);
   const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(true);
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
 
   // Cost codes from Supabase
   const [availableCostCodes, setAvailableCostCodes] = useState<
@@ -120,6 +122,12 @@ export function BudgetLineItemForm({
   // Budget Code selector state
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!showCreateCodeModal) {
+      setPendingRowId(null);
+    }
+  }, [showCreateCodeModal]);
 
   // Fetch cost codes from Supabase when create code modal opens
   useEffect(() => {
@@ -256,26 +264,25 @@ export function BudgetLineItemForm({
         budgetCode: BudgetCode;
       };
 
-      setBudgetCodes([...budgetCodes, budgetCode]);
+      setBudgetCodes((prev) => [...prev, budgetCode]);
 
-      // Autopopulate the newly created budget code in the first empty row or create a new row
-      const firstEmptyRow = rows.find((row) => !row.budgetCodeId);
+      setRows((prev) => {
+        const targetRow =
+          (pendingRowId && prev.find((row) => row.id === pendingRowId)) ||
+          prev.find((row) => !row.budgetCodeId);
 
-      if (firstEmptyRow) {
-        // Populate the first empty row with the new budget code
-        setRows(
-          rows.map((row) =>
-            row.id === firstEmptyRow.id
+        if (targetRow) {
+          return prev.map((row) =>
+            row.id === targetRow.id
               ? {
                   ...row,
                   budgetCodeId: budgetCode.id,
                   budgetCodeLabel: budgetCode.fullLabel,
                 }
               : row,
-          ),
-        );
-      } else {
-        // All rows are filled, add a new row with the budget code
+          );
+        }
+
         const newRow: BudgetLineItemRow = {
           id: Date.now().toString(),
           budgetCodeId: budgetCode.id,
@@ -285,8 +292,8 @@ export function BudgetLineItemForm({
           unitCost: "",
           amount: "0.00",
         };
-        setRows([...rows, newRow]);
-      }
+        return [...prev, newRow];
+      });
 
       setShowCreateCodeModal(false);
       setNewCodeData({ costCodeId: "", costType: "R" });
@@ -340,6 +347,7 @@ export function BudgetLineItemForm({
     );
   };
 
+
   const addRow = () => {
     const newRow: BudgetLineItemRow = {
       id: Date.now().toString(),
@@ -381,7 +389,7 @@ export function BudgetLineItemForm({
 
         return {
           costCodeId: budgetCode?.code || row.budgetCodeId,
-          costType: budgetCode?.costType || null,
+          costType: budgetCode?.costTypeId || null,
           qty: row.qty,
           uom: row.uom,
           unitCost: row.unitCost,
@@ -526,6 +534,7 @@ export function BudgetLineItemForm({
                                   <CommandItem
                                     onSelect={() => {
                                       setOpenPopoverId(null);
+                                      setPendingRowId(row.id);
                                       setShowCreateCodeModal(true);
                                     }}
                                     className="text-link"
@@ -598,6 +607,7 @@ export function BudgetLineItemForm({
                           placeholder="Unit cost"
                           className="h-9"
                           clearZeroOnFocus={true}
+                          currency={true}
                         />
                       </td>
 
@@ -608,10 +618,11 @@ export function BudgetLineItemForm({
                           onChange={(e) =>
                             handleRowChange(row.id, "amount", e.target.value)
                           }
-                          placeholder="Amount *"
+                          placeholder="$0.00"
                           className="h-9 font-medium"
                           clearZeroOnFocus={true}
                           autoSelectOnFocus={true}
+                          currency={true}
                         />
                       </td>
 

@@ -1,15 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Line Item Page - Debug Issues', () => {
+
+
+let projectId: number;
+
+test.describe.skip('Budget Line Item Page - Debug Issues', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test.beforeEach(async ({ page }) => {
     // Login
-    await page.goto('http://localhost:3000/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForTimeout(2000);
   });
 
   test('should display budget line item creation page and verify dropdown options', async ({ page }) => {
     // Navigate to budget line item creation page for project 67
-    await page.goto('http://localhost:3000/67/budget/line-item/new');
+    await page.goto(`http://localhost:3000/${projectId}/budget/line-item/new`);
     await page.waitForLoadState('networkidle');
 
     // Take initial screenshot
@@ -101,7 +111,7 @@ test.describe('Budget Line Item Page - Debug Issues', () => {
 
   test('should verify API response for budget codes', async ({ page }) => {
     // Intercept the API call
-    const apiResponse = await page.request.get('http://localhost:3000/api/projects/67/budget-codes');
+    const apiResponse = await page.request.get(`http://localhost:3000/api/projects/${projectId}/budget-codes`);
     const responseBody = await apiResponse.json();
 
     console.log('API Response:', JSON.stringify(responseBody, null, 2));

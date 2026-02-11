@@ -1,8 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../fixtures/index';
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
+
+
+
+let projectId: number;
+test.beforeEach(async ({ page, authenticatedRequest }) => {
+  const project = await createTestProject(page, {}, authenticatedRequest);
+  projectId = project.project.id;
+});
+
+
 
 test('Original Budget modal opens correctly', async ({ page }) => {
   // Navigate to the budget page
-  await page.goto('/67/budget');
+  await page.goto(`/${projectId}/budget`);
   
   // Wait for the page to load completely
   await page.waitForLoadState('networkidle');

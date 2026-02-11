@@ -1,9 +1,19 @@
-import { expect, test } from '@playwright/test'
+import { createTestProject } from '../helpers/bootstrap';
+test.skip(true, "Legacy budget spec - migrated to budget-core");
 
-test.describe('Budget Save - Direct Test', () => {
+
+
+let projectId: number;
+import { expect, test } from '../fixtures/index'
+
+test.describe.skip('Budget Save - Direct Test', () => {
+  test.beforeEach(async ({ page, authenticatedRequest }) => {
+    const project = await createTestProject(page, {}, authenticatedRequest);
+    projectId = project.project.id;
+  });
+
   test('should save budget items successfully in project setup wizard', async ({ page }) => {
     // Login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
