@@ -19,17 +19,17 @@ async function getRecentSubmissions(): Promise<FmGlobalSubmissionSummary[]> {
     return [];
   }
 
-  return (data ?? []).map((submission) => {
-    const parsed =
-      submission.user_input &&
-      fmGlobalSpecInputSchema.safeParse(submission.user_input);
+  return (data ?? []).map((submission): FmGlobalSubmissionSummary => {
+    const parsed = submission.user_input
+      ? fmGlobalSpecInputSchema.safeParse(submission.user_input)
+      : null;
 
     return {
       id: submission.id,
-      created_at: submission.created_at,
-      user_input: parsed?.success ? parsed.data : null,
+      created_at: submission.created_at ?? null,
+      user_input: parsed?.success === true ? parsed.data : null,
       matched_table_ids: submission.matched_table_ids ?? null,
-      selected_configuration: submission.selected_configuration ?? null,
+      selected_configuration: (submission.selected_configuration as Record<string, unknown>) ?? null,
     };
   });
 }

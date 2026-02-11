@@ -63,7 +63,7 @@ export function useProjectCompanies(
   });
 
   return {
-    companies: query.data?.data || [],
+    companies: (query.data?.data || []) as ProjectCompany[],
     pagination: query.data?.pagination || null,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
@@ -111,7 +111,7 @@ export function useProjectCompany(
   });
 
   return {
-    company: query.data || null,
+    company: (query.data || null) as ProjectCompany | null,
     isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,

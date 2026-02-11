@@ -20,22 +20,29 @@ const JTD_COST_TYPES = [
 
 // Cost types that count towards Direct Costs (excludes Subcontractor Invoice)
 const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
 
-interface DirectCostLineItem {
+interface DirectCostWithRelations {
   id: string;
-  projectId: string;
-  project_id: number;
-  cost_code_id: string | null;
-  amount: number;
-  cost_type: string | null;
-  approved: boolean | null;
-  approved_at: string | null;
-  approved_by: string | null;
-  description: string;
-  vendor_name: string | null;
-  invoice_number: string | null;
-  transaction_date: string;
-  created_at: string | null;
+  budget_code_id: string | null;
+  line_total: number | null;
+  quantity: number | null;
+  unit_cost: number | null;
+  description: string | null;
+  direct_costs:
+    | {
+        cost_type: string | null;
+        status: string | null;
+        vendor_id: string | null;
+        invoice_number: string | null;
+        date: string | null;
+        vendors:
+          | {
+              name: string;
+            }[]
+          | null;
+      }[]
+    | null;
 }
 
 interface CostBreakdown {
@@ -92,22 +99,34 @@ export async function GET(
     // Build query for direct_cost_line_items
     let query = supabase
       .from("direct_cost_line_items")
-      .select("*")
-      .eq("project_id", parseInt(projectId, 10))
-      .order("transaction_date", { ascending: false });
+      .select(
+        `
+        id,
+        budget_code_id,
+        line_total,
+        quantity,
+        unit_cost,
+        description,
+        direct_costs!inner(
+          cost_type,
+          status,
+          project_id,
+          vendor_id,
+          invoice_number,
+          date,
+          vendors (
+            name
+          )
+        )
+      `,
+      )
+      .eq("direct_costs.project_id", projectIdNum)
+      .order("direct_costs.date", { ascending: false });
 
     // Filter by cost_code_id if budgetLineId was provided
     if (costCodeId) {
-      query = query.eq("cost_code_id", costCodeId);
+      query = query.eq("budget_code_id", costCodeId);
     }
-
-    // Filter by approval status if requested
-    if (statusFilter === "approved") {
-      query = query.eq("approved", true);
-    } else if (statusFilter === "pending") {
-      query = query.or("approved.eq.false,approved.is.null");
-    }
-    // 'all' or undefined = no filter
 
     const { data: costs, error } = await query;
 
@@ -130,10 +149,27 @@ export async function GET(
       "Subcontractor Invoice": 0,
     };
 
-    for (const cost of (costs || []) as DirectCostLineItem[]) {
-      const costType = cost.cost_type || "Invoice";
-      const amount = cost.amount || 0;
-      const isApproved = cost.approved === true;
+    const isApprovedStatus = (status: string | null) =>
+      status ? APPROVED_DIRECT_COST_STATUSES.includes(status) : false;
+
+    const filteredCosts = (costs || []).filter((cost: DirectCostWithRelations) => {
+      const directCost = cost.direct_costs?.[0];
+      const status = directCost?.status || null;
+      if (statusFilter === "approved") {
+        return isApprovedStatus(status);
+      }
+      if (statusFilter === "pending") {
+        return !isApprovedStatus(status);
+      }
+      return true;
+    });
+
+    for (const cost of filteredCosts as DirectCostWithRelations[]) {
+      const directCost = cost.direct_costs?.[0];
+      const costType = directCost?.cost_type || "Invoice";
+      const amount =
+        cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
+      const isApproved = isApprovedStatus(directCost?.status || null);
 
       if (isApproved) {
         // Job to Date Cost Detail = ALL approved types (includes Subcontractor Invoice)
@@ -157,19 +193,34 @@ export async function GET(
     }
 
     // Transform costs for frontend
-    const transformedCosts = (costs || []).map((cost: DirectCostLineItem) => ({
-      id: cost.id,
-      description: cost.description,
-      amount: cost.amount,
-      costType: cost.cost_type,
-      vendor: cost.vendor_name,
-      invoiceNumber: cost.invoice_number,
-      transactionDate: cost.transaction_date,
-      approved: cost.approved,
-      approvedAt: cost.approved_at,
-      approvedBy: cost.approved_by,
-      costCodeId: cost.cost_code_id,
-    }));
+    const transformedCosts = (filteredCosts || []).map(
+      (cost: DirectCostWithRelations) => {
+        const directCost = cost.direct_costs?.[0];
+        const amount =
+          cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
+        const status = isApprovedStatus(directCost?.status || null)
+          ? "approved"
+          : "pending";
+        const vendor = directCost?.vendors?.[0]?.name || null;
+
+        return {
+          id: cost.id,
+          description: cost.description || "",
+          amount,
+          costType: directCost?.cost_type || null,
+          vendor,
+          invoiceNumber: directCost?.invoice_number || null,
+          transactionDate: directCost?.date || null,
+          approved: status === "approved",
+          approvedAt: null,
+          approvedBy: null,
+          costCodeId: cost.budget_code_id,
+          status,
+          payments: 0,
+          incurredDate: directCost?.date || null,
+        };
+      },
+    );
 
     return NextResponse.json({
       costs: transformedCosts,
@@ -177,7 +228,7 @@ export async function GET(
         jobToDateCostDetail,
         directCosts,
         pendingCosts,
-        count: costs?.length || 0,
+        count: transformedCosts.length,
       },
       breakdown,
       meta: {

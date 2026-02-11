@@ -19,6 +19,7 @@ const JTD_COST_TYPES = [
  * Per Procore: Invoice, Expense, Payroll only
  */
 const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
 
 /**
  * Pending commitment statuses for Pending Cost Changes calculation
@@ -36,21 +37,29 @@ const PENDING_PO_STATUSES = [
  * Executed/Approved commitment statuses for Committed Costs calculation
  * Per Procore: Commitments with executed/approved status count towards committed costs
  */
-const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete", "Draft"];
-const EXECUTED_PO_STATUSES = ["approved", "executed", "complete", "Draft"];
+const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete"];
+const EXECUTED_PO_STATUSES = ["approved", "executed", "complete"];
 
 interface CostAggregation {
   jobToDateCostDetail: number;
   directCosts: number;
   pendingCostChanges: number;
   committedCosts: number;
+  pendingBudgetChanges: number;
 }
 
-interface DirectCostItem {
-  cost_code_id: string | null;
-  amount: number;
-  cost_type: string | null;
-  approved: boolean | null;
+interface DirectCostWithRelations {
+  budget_code_id: string | null;
+  line_total: number | null;
+  quantity: number | null;
+  unit_cost: number | null;
+  direct_costs:
+    | {
+        cost_type: string | null;
+        status: string | null;
+        project_id: number | null;
+      }[]
+    | null;
 }
 
 interface SOVItem {
@@ -59,6 +68,11 @@ interface SOVItem {
 }
 
 interface ChangeOrderLineItem {
+  cost_code_id: string | null;
+  amount: number | null;
+}
+
+interface CommitmentChangeOrderLineItem {
   cost_code_id: string | null;
   amount: number | null;
 }
@@ -87,9 +101,11 @@ export async function GET(
       directCostsRes,
       subcontractSovRes,
       poSovRes,
-      changeOrdersRes,
+      pendingPrimeChangeOrdersRes,
       executedSubcontractSovRes,
       executedPoSovRes,
+      pendingCommitmentCOsRes,
+      approvedCommitmentCOsRes,
     ] = await Promise.all([
       // Budget lines from materialized view
       supabase
@@ -108,14 +124,27 @@ export async function GET(
       // Direct costs for JTD and Direct Cost calculations
       supabase
         .from("direct_cost_line_items")
-        .select("cost_code_id, amount, cost_type, approved")
-        .eq("project_id", projectIdNum),
+        .select(
+          `
+          budget_code_id,
+          line_total,
+          quantity,
+          unit_cost,
+          direct_costs!inner(
+            cost_type,
+            status,
+            project_id
+          )
+        `,
+        )
+        .eq("direct_costs.project_id", projectIdNum)
+        .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
 
       // Subcontract SOV items with pending status for Pending Cost Changes
       supabase
         .from("subcontract_sov_items")
         .select("budget_code, amount, subcontracts!inner(status, project_id)")
-        .eq("subcontracts.project_id", projectId)
+        .eq("subcontracts.project_id", projectIdNum)
         .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES),
 
       // PO SOV items with pending statuses for Pending Cost Changes
@@ -124,21 +153,21 @@ export async function GET(
         .select(
           "budget_code, amount, purchase_orders!inner(status, project_id)",
         )
-        .eq("purchase_orders.project_id", projectId)
+        .eq("purchase_orders.project_id", projectIdNum)
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
       // Pending change orders for Pending Cost Changes
       supabase
         .from("change_order_lines")
         .select("cost_code_id, amount, change_orders!inner(status, project_id)")
-        .eq("change_orders.project_id", projectId)
+        .eq("change_orders.project_id", projectIdNum)
         .like("change_orders.status", "Pending%"),
 
       // Executed/Approved Subcontract SOV items for Committed Costs
       supabase
         .from("subcontract_sov_items")
         .select("budget_code, amount, subcontracts!inner(status, project_id)")
-        .eq("subcontracts.project_id", projectId)
+        .eq("subcontracts.project_id", projectIdNum)
         .in("subcontracts.status", EXECUTED_SUBCONTRACT_STATUSES),
 
       // Executed/Approved PO SOV items for Committed Costs
@@ -147,8 +176,40 @@ export async function GET(
         .select(
           "budget_code, amount, purchase_orders!inner(status, project_id)",
         )
-        .eq("purchase_orders.project_id", projectId)
+        .eq("purchase_orders.project_id", projectIdNum)
         .in("purchase_orders.status", EXECUTED_PO_STATUSES),
+
+      // Pending commitment change orders for Pending Cost Changes
+      supabase
+        .from("commitment_change_order_lines")
+        .select(
+          `
+          cost_code_id,
+          amount,
+          commitment_change_orders!inner(
+            status,
+            commitments!inner(project_id)
+          )
+        `,
+        )
+        .eq("commitment_change_orders.commitments.project_id", projectIdNum)
+        .like("commitment_change_orders.status", "Pending%"),
+
+      // Approved commitment change orders for Committed Costs
+      supabase
+        .from("commitment_change_order_lines")
+        .select(
+          `
+          cost_code_id,
+          amount,
+          commitment_change_orders!inner(
+            status,
+            commitments!inner(project_id)
+          )
+        `,
+        )
+        .eq("commitment_change_orders.commitments.project_id", projectIdNum)
+        .eq("commitment_change_orders.status", "approved"),
     ]);
 
     if (budgetLinesRes.error) {
@@ -166,6 +227,7 @@ export async function GET(
           directCosts: 0,
           pendingCostChanges: 0,
           committedCosts: 0,
+          pendingBudgetChanges: 0,
         };
       }
     };
@@ -174,16 +236,16 @@ export async function GET(
     // Per Procore:
     // - JTD Cost Detail = ALL approved types including Subcontractor Invoice
     // - Direct Costs = Approved types EXCLUDING Subcontractor Invoice
-    for (const cost of (directCostsRes.data || []) as DirectCostItem[]) {
-      const codeId = cost.cost_code_id;
+    for (const cost of (directCostsRes.data || []) as DirectCostWithRelations[]) {
+      const codeId = cost.budget_code_id;
       if (!codeId) continue;
 
       ensureCostEntry(codeId);
 
-      if (cost.approved !== true) continue;
-
-      const costType = cost.cost_type || "Invoice";
-      const amount = cost.amount || 0;
+      const directCost = cost.direct_costs?.[0];
+      const costType = directCost?.cost_type || "Invoice";
+      const amount =
+        cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
 
       // Job to Date = ALL approved types (includes Subcontractor Invoice)
       if (JTD_COST_TYPES.includes(costType)) {
@@ -212,8 +274,16 @@ export async function GET(
       costsByCode[codeId].pendingCostChanges += item.amount || 0;
     }
 
-    // SOURCE 3: Pending Cost Changes from Change Orders
-    for (const item of (changeOrdersRes.data || []) as ChangeOrderLineItem[]) {
+    // SOURCE 3: Pending Budget Changes from Prime Contract Change Orders
+    for (const item of (pendingPrimeChangeOrdersRes.data || []) as ChangeOrderLineItem[]) {
+      const codeId = item.cost_code_id;
+      if (!codeId) continue;
+      ensureCostEntry(codeId);
+      costsByCode[codeId].pendingBudgetChanges += item.amount || 0;
+    }
+
+    // SOURCE 3: Pending Cost Changes from Commitment Change Orders
+    for (const item of (pendingCommitmentCOsRes.data || []) as CommitmentChangeOrderLineItem[]) {
       const codeId = item.cost_code_id;
       if (!codeId) continue;
       ensureCostEntry(codeId);
@@ -232,6 +302,14 @@ export async function GET(
     // SOURCE 4: Committed Costs from Executed Purchase Orders
     for (const item of (executedPoSovRes.data || []) as SOVItem[]) {
       const codeId = item.budget_code;
+      if (!codeId) continue;
+      ensureCostEntry(codeId);
+      costsByCode[codeId].committedCosts += item.amount || 0;
+    }
+
+    // SOURCE 4: Committed Costs from Approved Commitment Change Orders
+    for (const item of (approvedCommitmentCOsRes.data || []) as CommitmentChangeOrderLineItem[]) {
+      const codeId = item.cost_code_id;
       if (!codeId) continue;
       ensureCostEntry(codeId);
       costsByCode[codeId].committedCosts += item.amount || 0;
@@ -257,6 +335,7 @@ export async function GET(
           directCosts: 0,
           pendingCostChanges: 0,
           committedCosts: 0,
+          pendingBudgetChanges: 0,
         };
 
         // Core budget values
@@ -268,13 +347,14 @@ export async function GET(
         const revisedBudget = parseFloat(item.revised_budget as string) || 0;
 
         // Calculated fields
-        const forecastToComplete = Math.max(
-          0,
-          revisedBudget - costData.jobToDateCostDetail,
-        );
-        const estimatedCostAtCompletion =
-          costData.jobToDateCostDetail + forecastToComplete;
-        const projectedOverUnder = revisedBudget - estimatedCostAtCompletion;
+        const projectedBudget = revisedBudget + costData.pendingBudgetChanges;
+        const projectedCosts =
+          costData.directCosts +
+          costData.committedCosts +
+          costData.pendingCostChanges;
+        const forecastToComplete = Math.max(0, projectedBudget - projectedCosts);
+        const estimatedCostAtCompletion = projectedCosts + forecastToComplete;
+        const projectedOverUnder = projectedBudget - estimatedCostAtCompletion;
 
         return {
           id: item.id as string,
@@ -297,11 +377,11 @@ export async function GET(
           // Cost tracking fields with real data
           jobToDateCostDetail: costData.jobToDateCostDetail,
           directCosts: costData.directCosts,
-          pendingChanges: costData.pendingCostChanges,
-          projectedBudget: revisedBudget,
+          pendingChanges: costData.pendingBudgetChanges,
+          projectedBudget,
           committedCosts: costData.committedCosts,
           pendingCostChanges: costData.pendingCostChanges,
-          projectedCosts: costData.directCosts + costData.committedCosts + costData.pendingCostChanges,
+          projectedCosts,
           forecastToComplete,
           estimatedCostAtCompletion,
           projectedOverUnder,
@@ -499,7 +579,7 @@ export async function POST(
         const { data: newBudgetLine, error: blError } = await supabase
           .from("budget_lines")
           .insert({
-            project_id: projectId,
+            project_id: projectIdNum,
             cost_code_id: item.costCodeId,
             cost_type_id: item.costTypeId ?? null,
             sub_job_id: null,
@@ -522,20 +602,25 @@ export async function POST(
       results.push(budgetLine);
     }
 
-    // Calculate total budget from created line items and update project
-    const totalBudget = normalizedLineItems.reduce(
-      (sum, item) => sum + item.amount,
+    // Recalculate total budget from all budget lines for the project
+    const { data: allBudgetLines, error: totalsError } = await supabase
+      .from("budget_lines")
+      .select("original_amount")
+      .eq("project_id", projectIdNum);
+
+    const totalBudget = (allBudgetLines || []).reduce(
+      (sum, line) => sum + (Number(line.original_amount) || 0),
       0,
     );
 
-    if (totalBudget > 0) {
+    if (!totalsError) {
       const { error: projectUpdateError } = await supabase
         .from("projects")
         .update({
           original_budget: totalBudget,
           current_budget: totalBudget,
         })
-        .eq("id", projectId);
+        .eq("id", projectIdNum);
 
       if (projectUpdateError) {
         // Don't fail the request - line items were created successfully

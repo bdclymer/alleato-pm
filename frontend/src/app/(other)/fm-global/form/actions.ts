@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
+import type { Json } from "@/types/database.types";
 import {
   fmGlobalFigureSchema,
   fmGlobalMatchSchema,
@@ -66,7 +67,7 @@ function pickBestConfig(
 }
 
 function normalizeMatchResults(
-  results: FmGlobalMatchResult[],
+  results: unknown[],
 ): FmGlobalMatchResult[] {
   return results.map((result) => fmGlobalMatchSchema.parse(result));
 }
@@ -87,7 +88,7 @@ async function fetchMatchResults(
     p_asrs_type: input.asrs_type,
     p_system_type: input.system_type,
     p_ceiling_height_ft: input.ceiling_height_ft,
-    p_commodity_class: input.commodity_class ?? null,
+    p_commodity_class: input.commodity_class ?? undefined,
     p_tolerance_ft: input.tolerance_ft,
   });
 
@@ -110,7 +111,7 @@ async function fetchKFactorMatches(
     p_asrs_type: input.asrs_type,
     p_system_type: input.system_type,
     p_ceiling_height_ft: Math.round(input.ceiling_height_ft),
-    p_commodity_class: input.commodity_class ?? null,
+    p_commodity_class: input.commodity_class ?? undefined,
     p_k_factor: input.k_factor,
   });
 
@@ -327,10 +328,10 @@ async function persistSubmission(
   const { data, error } = await supabase
     .from("fm_form_submissions")
     .insert({
-      user_input: input,
-      parsed_requirements: input,
+      user_input: input as unknown as Json,
+      parsed_requirements: input as unknown as Json,
       matched_table_ids: tableIds,
-      recommendations,
+      recommendations: recommendations as unknown as Json,
       similarity_scores: null,
     })
     .select("id")
@@ -509,7 +510,7 @@ export async function selectFmGlobalConfiguration(
   const { error } = await supabase
     .from("fm_form_submissions")
     .update({
-      selected_configuration: selectedConfiguration,
+      selected_configuration: selectedConfiguration as Json,
     })
     .eq("id", submissionId);
 

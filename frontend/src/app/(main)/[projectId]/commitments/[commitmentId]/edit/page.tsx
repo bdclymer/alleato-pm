@@ -14,8 +14,14 @@ import { FormContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
-import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
+import type {
+  CreatePurchaseOrderInput,
+  PurchaseOrderSovLineItem,
+} from "@/lib/schemas/create-purchase-order-schema";
+import type {
+  CreateSubcontractInput,
+  SovLineItem,
+} from "@/lib/schemas/create-subcontract-schema";
 import { useCommitmentDetail } from "@/hooks/use-commitments-query";
 
 type CommitmentLineItem = {
@@ -131,11 +137,6 @@ const toCommitmentDetail = (raw: unknown): CommitmentDetail | null => {
     commitment_type: asString(raw.commitment_type),
   };
 };
-
-type PurchaseOrderStatus = CreatePurchaseOrderInput["status"];
-type SubcontractStatus = CreateSubcontractInput["status"];
-type PurchaseOrderAccountingMethod = CreatePurchaseOrderInput["accountingMethod"];
-type SubcontractAccountingMethod = CreateSubcontractInput["accountingMethod"];
 
 type PurchaseOrderStatus = CreatePurchaseOrderInput["status"];
 type SubcontractStatus = CreateSubcontractInput["status"];
@@ -384,16 +385,12 @@ export default function EditCommitmentPage(): ReactElement {
   );
 
   const subcontractInitialData: Partial<CreateSubcontractInput> & {
-    sovLines: {
-      budgetCode: string;
-      description: string;
-      amount: number;
-    }[];
+    sovLines?: SovLineItem[];
   } = {
     contractNumber: commitmentData?.contract_number || "",
     title: commitmentData?.title || "",
     contractCompanyId: commitmentData?.contract_company_id || "",
-    status: (normalizedStatus ?? "Draft") as SubcontractStatus,
+    status: (normalizedStatus as SubcontractStatus | undefined) ?? ("Draft" as const),
     executed: commitmentData?.executed ?? false,
     accountingMethod: (normalizedAccountingMethod ??
       "amount_based") as SubcontractAccountingMethod,
@@ -423,25 +420,24 @@ export default function EditCommitmentPage(): ReactElement {
         commitmentData?.allow_non_admin_view_sov_items ?? false,
     },
     invoiceContactIds: commitmentData?.invoice_contact_ids || [],
-    sovLines: (commitmentData?.line_items || []).map((item) => ({
-      budgetCode: item.budget_code || "",
-      description: item.description || "",
-      amount: item.amount || 0,
+    sovLines: (commitmentData?.line_items || []).map((item, index) => ({
+      lineNumber: index + 1,
+      budgetCode: item.budget_code || undefined,
+      description: item.description || undefined,
+      amount: item.amount || undefined,
+      billedToDate: undefined,
+      changeEventLineItem: undefined,
     })),
   };
 
   const purchaseOrderInitialData: Partial<CreatePurchaseOrderInput> & {
-    sovLines: {
-      budgetCode: string;
-      description: string;
-      amount: number;
-      quantity: number;
-      uom: string;
-      unitCost: number;
-    }[];
+    sovLines?: PurchaseOrderSovLineItem[];
   } = {
-    ...subcontractInitialData,
-    status: (normalizedStatus ?? "Draft") as PurchaseOrderStatus,
+    contractNumber: commitmentData?.contract_number || "",
+    title: commitmentData?.title || "",
+    contractCompanyId: commitmentData?.contract_company_id || "",
+    status: (normalizedStatus as PurchaseOrderStatus | undefined) ?? ("Draft" as const),
+    executed: commitmentData?.executed ?? false,
     accountingMethod: (normalizedAccountingMethod ??
       "unit-quantity") as PurchaseOrderAccountingMethod,
     assignedTo: commitmentData?.assigned_to || "",
@@ -450,19 +446,30 @@ export default function EditCommitmentPage(): ReactElement {
     shipVia: commitmentData?.ship_via || "",
     paymentTerms: commitmentData?.payment_terms || "",
     dates: {
-      ...subcontractInitialData.dates,
+      contractDate: toDateOrUndefined(commitmentData?.contract_date),
       deliveryDate: toDateOrUndefined(commitmentData?.delivery_date),
       signedPoReceivedDate: toDateOrUndefined(
         commitmentData?.signed_po_received_date
       ),
+      issuedOnDate: toDateOrUndefined(commitmentData?.issued_on_date),
     },
-    sovLines: (commitmentData.line_items || []).map((item) => ({
-      budgetCode: item.budget_code || "",
-      description: item.description || "",
-      amount: item.amount || 0,
-      quantity: item.quantity || 1,
-      uom: item.uom || "EA",
-      unitCost: item.unit_cost || 0,
+    privacy: {
+      isPrivate: commitmentData?.is_private ?? true,
+      nonAdminUserIds: commitmentData?.non_admin_user_ids || [],
+      allowNonAdminViewSovItems:
+        commitmentData?.allow_non_admin_view_sov_items ?? false,
+    },
+    invoiceContactIds: commitmentData?.invoice_contact_ids || [],
+    sovLines: (commitmentData.line_items || []).map((item, index) => ({
+      lineNumber: index + 1,
+      budgetCode: item.budget_code || undefined,
+      description: item.description || undefined,
+      amount: item.amount || 0, // required field
+      quantity: item.quantity || undefined,
+      uom: item.uom || undefined,
+      unitCost: item.unit_cost || undefined,
+      billedToDate: undefined,
+      changeEventLineItem: undefined,
     })),
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
@@ -9,6 +9,7 @@ import type { ContractFormData } from "@/components/domain/contracts/ContractFor
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
 
 interface Contract {
   id: string;
@@ -46,22 +47,29 @@ export default function EditContractPage() {
   const contractId = params.contractId as string;
 
   const [contract, setContract] = useState<Contract | null>(null);
-  const [lineItems, setLineItems] = useState<any[]>([]);
+  const [lineItems, setLineItems] = useState<ContractLineItemWithCostCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchContractAndLineItems = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
 
         // Fetch contract data
         const contractResponse = await fetch(
           `/api/projects/${projectId}/contracts/${contractId}`,
+          { credentials: "include" },
         );
 
         if (!contractResponse.ok) {
-          throw new Error("Failed to load contract");
+          const errorData = await contractResponse.json().catch(() => ({}));
+          throw new Error(
+            errorData?.error ||
+              `Failed to load contract (status ${contractResponse.status})`,
+          );
         }
 
         const contractData = await contractResponse.json();
@@ -70,6 +78,7 @@ export default function EditContractPage() {
         // Fetch line items (SOV)
         const lineItemsResponse = await fetch(
           `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+          { credentials: "include" },
         );
 
         if (lineItemsResponse.ok) {
@@ -77,8 +86,9 @@ export default function EditContractPage() {
           setLineItems(lineItemsData || []);
         }
       } catch (err) {
-        alert("Failed to load contract");
-        router.push(`/${projectId}/prime-contracts`);
+        const message =
+          err instanceof Error ? err.message : "Failed to load contract";
+        setLoadError(message);
       } finally {
         setLoading(false);
       }
@@ -89,13 +99,19 @@ export default function EditContractPage() {
     }
   }, [contractId, projectId, router]);
 
+  const existingCostCodeByLineId = useMemo(() => {
+    return new Map(
+      lineItems.map((item) => [item.id, item.cost_code_id ?? null]),
+    );
+  }, [lineItems]);
+
   const handleSubmit = async (data: ContractFormData) => {
     setIsSaving(true);
     try {
       const response = await fetch(
         `/api/projects/${projectId}/contracts/${contractId}`,
         {
-          method: "PATCH",
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contract_number: data.number,
@@ -130,8 +146,113 @@ export default function EditContractPage() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to update contract");
+      }
+
+      const budgetCodesResponse = await fetch(
+        `/api/projects/${projectId}/budget-codes`,
+        { credentials: "include" },
+      );
+
+      const budgetCodesPayload = budgetCodesResponse.ok
+        ? await budgetCodesResponse.json().catch(() => ({ budgetCodes: [] }))
+        : { budgetCodes: [] };
+
+      const budgetCodeIdToCostCode = new Map(
+        (budgetCodesPayload.budgetCodes || []).map(
+          (code: { id: string; code: string }) => [code.id, code.code],
+        ),
+      );
+
+      const sovItems = data.sovItems || [];
+      const itemsToPersist = sovItems.map((item, index) => {
+        const budgetCodeId = item.budgetCodeId || "";
+        const budgetCodeValue = budgetCodeIdToCostCode.get(budgetCodeId);
+        const fallbackCostCode = existingCostCodeByLineId.get(item.id) ?? null;
+        const parsedCostCodeId = budgetCodeValue
+          ? Number.parseInt(budgetCodeValue as string, 10)
+          : fallbackCostCode;
+        const costCodeId =
+          parsedCostCodeId !== null && Number.isNaN(parsedCostCodeId)
+            ? null
+            : parsedCostCodeId;
+
+        const quantity =
+          data.accountingMethod === "unit_quantity"
+            ? item.quantity ?? 0
+            : 1;
+        const unitCost =
+          data.accountingMethod === "unit_quantity"
+            ? item.unitCost ?? 0
+            : item.amount || 0;
+
+        return {
+          id: item.id,
+          line_number: index + 1,
+          description: item.description || `Line ${index + 1}`,
+          cost_code_id: costCodeId,
+          quantity,
+          unit_cost: unitCost,
+          unit_of_measure: item.unitOfMeasure || null,
+        };
+      });
+
+      const existingIds = new Set(lineItems.map((item) => item.id));
+      const incomingIds = new Set(itemsToPersist.map((item) => item.id));
+
+      const updates = itemsToPersist.filter((item) => existingIds.has(item.id));
+      const creates = itemsToPersist.filter((item) => !existingIds.has(item.id));
+      const deletions = lineItems
+        .filter((item) => !incomingIds.has(item.id))
+        .map((item) => item.id);
+
+      const updateResponses = await Promise.all([
+        ...updates.map((item) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                line_number: item.line_number,
+                description: item.description,
+                cost_code_id: item.cost_code_id,
+                quantity: item.quantity,
+                unit_cost: item.unit_cost,
+                unit_of_measure: item.unit_of_measure,
+              }),
+            },
+          ),
+        ),
+        ...creates.map((item) =>
+          fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description,
+              cost_code_id: item.cost_code_id,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              unit_of_measure: item.unit_of_measure,
+            }),
+          }),
+        ),
+        ...deletions.map((lineItemId) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
+            {
+              method: "DELETE",
+            },
+          ),
+        ),
+      ]);
+
+      const firstFailure = updateResponses.find((res) => !res.ok);
+      if (firstFailure) {
+        const errorData = await firstFailure.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update SOV line items");
       }
 
       router.push(`/${projectId}/prime-contracts/${contractId}`);
@@ -167,6 +288,38 @@ export default function EditContractPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <>
+        <PageHeader
+          title="Edit Contract"
+          breadcrumbs={[
+            { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
+            { label: "Edit Contract" },
+          ]}
+        />
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          <Card>
+            <CardContent className="p-8 space-y-4">
+              <p className="text-sm text-destructive">{loadError}</p>
+              <div className="flex items-center gap-2">
+                <Button onClick={() => window.location.reload()}>
+                  Retry
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push(`/${projectId}/prime-contracts`)}
+                >
+                  Back to Contracts
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
   if (!contract) {
     return null;
   }
@@ -174,7 +327,7 @@ export default function EditContractPage() {
   // Convert line items to SOV format
   const sovItems = lineItems.map((item) => ({
     id: item.id,
-    budgetCodeId: item.cost_code_id,
+    budgetCodeId: "",
     budgetCodeLabel: item.cost_code
       ? `${item.cost_code.code} ${item.cost_code.name}`
       : undefined,
@@ -182,9 +335,9 @@ export default function EditContractPage() {
     amount: item.total_cost,
     quantity: item.quantity,
     unitCost: item.unit_cost,
-    unitOfMeasure: item.unit_of_measure,
-    billedToDate: item.billed_to_date || 0,
-    amountRemaining: item.total_cost - (item.billed_to_date || 0),
+    unitOfMeasure: item.unit_of_measure ?? undefined,
+    billedToDate: 0,
+    amountRemaining: item.total_cost,
   }));
 
   const initialData: Partial<ContractFormData> = {

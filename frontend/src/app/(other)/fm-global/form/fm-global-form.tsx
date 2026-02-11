@@ -286,17 +286,30 @@ function getInputFields(
   formState: FormState,
   onFormChange: (state: FormState) => void,
 ): InputFieldProps[] {
-  return inputFieldDefinitions.map((definition) => ({
-    id: definition.id,
-    label: definition.label,
-    value: formState[definition.stateKey] as string,
-    placeholder: definition.placeholder,
-    type: definition.type,
-    min: definition.min,
-    step: definition.step,
-    onChange: (value) =>
-      onFormChange({ ...formState, [definition.stateKey]: value }),
-  }));
+  return inputFieldDefinitions.map((definition) => {
+    const field: InputFieldProps = {
+      id: definition.id,
+      label: definition.label,
+      value: formState[definition.stateKey] as string,
+      onChange: (value) =>
+        onFormChange({ ...formState, [definition.stateKey]: value }),
+    };
+
+    if ('placeholder' in definition) {
+      field.placeholder = definition.placeholder;
+    }
+    if ('type' in definition) {
+      field.type = definition.type;
+    }
+    if ('min' in definition) {
+      field.min = definition.min;
+    }
+    if ('step' in definition) {
+      field.step = definition.step;
+    }
+
+    return field;
+  });
 }
 
 function FormFields({

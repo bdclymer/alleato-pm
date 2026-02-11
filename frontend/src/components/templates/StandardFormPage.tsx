@@ -73,8 +73,8 @@ const formSchema = z.object({
 
   // Optional fields
   description: z.string().optional(),
-  amount: z.coerce.number().min(0, "Amount must be positive").optional(),
-  status: z.string().default("draft"),
+  amount: z.number().min(0, "Amount must be positive").optional(),
+  status: z.string(),
   notes: z.string().optional(),
 });
 
@@ -113,7 +113,7 @@ export default function StandardFormPage() {
       type: "",
       date: new Date().toISOString().split("T")[0],
       description: "",
-      amount: 0,
+      amount: undefined,
       status: "draft",
       notes: "",
     },
@@ -262,6 +262,11 @@ export default function StandardFormPage() {
                             min="0"
                             placeholder="0.00"
                             {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value ? parseFloat(value) : undefined);
+                            }}
                           />
                         </FormControl>
                         <FormMessage />

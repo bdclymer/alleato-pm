@@ -24,10 +24,10 @@ export interface ProjectCompany {
   logo_url: string | null;
   created_at: string | null;
   updated_at: string | null;
-  // Joined data
-  company?: Company;
+  // Joined data - can be null when not joined
+  company?: Company | null;
   primary_contact?: Person | null;
-  user_count?: number;
+  user_count?: number | null;
 }
 
 export interface CompanyListResponse {

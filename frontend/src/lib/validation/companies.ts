@@ -43,7 +43,7 @@ export const ProjectCompanySchema = z
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),
     company: CompanySchema.optional().nullable(),
-    primary_contact: z.record(z.unknown()).optional().nullable(),
+    primary_contact: z.record(z.string(), z.unknown()).optional().nullable(),
     user_count: z.number().int().optional().nullable(),
   })
   .passthrough();

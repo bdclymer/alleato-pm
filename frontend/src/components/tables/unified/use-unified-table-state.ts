@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { ViewMode } from "./table-toolbar";
 
-export type FilterValue = string | number | boolean | null | undefined;
+export type FilterValue = string | number | boolean | string[] | null | undefined;
 
 export interface UnifiedTableStateOptions {
   entityKey: string;
@@ -166,9 +167,9 @@ export function useUnifiedTableState({
     const viewValue: ViewMode =
       nextView === "card" || nextView === "list" ? nextView : defaults.view;
 
-    setCurrentView((prev) => (prev === viewValue ? prev : viewValue));
-    setSearchInput((prev) => (prev === nextSearch ? prev : nextSearch));
-    setDebouncedSearch((prev) => (prev === nextSearch ? prev : nextSearch));
+    setCurrentView((prev: ViewMode) => (prev === viewValue ? prev : viewValue));
+    setSearchInput((prev: string) => (prev === nextSearch ? prev : nextSearch));
+    setDebouncedSearch((prev: string) => (prev === nextSearch ? prev : nextSearch));
 
     const normalizedPage =
       Number.isFinite(nextPage) && nextPage > 0 ? nextPage : defaults.page;

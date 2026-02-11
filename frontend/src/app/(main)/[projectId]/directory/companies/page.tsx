@@ -389,15 +389,19 @@ export default function ProjectDirectoryCompaniesPage(): ReactElement {
       <DetailPanel
         open={Boolean(detailParam)}
         onOpenChange={handlePanelOpenChange}
-        item={selectedItem}
+        item={selectedItem as unknown as Record<string, unknown> | null}
         title={
           detailMode === "create"
             ? "New Company"
             : String(getCompanyNestedValue(selectedItem ?? null, "company.name") || "Company")
         }
         fields={companyDetailFields}
-        onSave={handleSave}
-        onDelete={detailMode === "edit" ? handleDelete : undefined}
+        onSave={handleSave as unknown as (data: Partial<Record<string, unknown>>) => Promise<void>}
+        onDelete={
+          detailMode === "edit"
+            ? (handleDelete as unknown as (item: Record<string, unknown>) => Promise<void>)
+            : undefined
+        }
         onNavigate={detailMode === "edit" ? handleNavigate : undefined}
         canNavigatePrev={detailMode === "edit" && canNavigatePrev}
         canNavigateNext={detailMode === "edit" && canNavigateNext}

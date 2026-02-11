@@ -3,6 +3,31 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 
+// Cost types that count towards Job to Date (all approved)
+const JTD_COST_TYPES = [
+  "Invoice",
+  "Expense",
+  "Payroll",
+  "Subcontractor Invoice",
+];
+
+// Cost types that count towards Direct Costs (excludes Subcontractor Invoice)
+const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
+
+// Pending commitment statuses for Pending Cost Changes calculation
+const PENDING_SUBCONTRACT_STATUSES = ["Out For Signature"];
+const PENDING_PO_STATUSES = [
+  "Processing",
+  "Submitted",
+  "Partially Received",
+  "Received",
+];
+
+// Executed/Approved commitment statuses for Committed Costs calculation
+const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete"];
+const EXECUTED_PO_STATUSES = ["approved", "executed", "complete"];
+
 interface ExportBudgetRow {
   "Cost Code": string;
   "Cost Type": string;
@@ -57,6 +82,13 @@ export async function GET(
     const [
       budgetLinesRes,
       directCostsRes,
+      subcontractSovRes,
+      poSovRes,
+      pendingPrimeChangeOrdersRes,
+      executedSubcontractSovRes,
+      executedPoSovRes,
+      pendingCommitmentCOsRes,
+      approvedCommitmentCOsRes,
     ] = await Promise.all([
       // Budget lines from materialized view
       supabase
@@ -69,14 +101,98 @@ export async function GET(
           sub_job:sub_jobs(code, name)
         `,
         )
-        .eq("project_id", Number(projectId))
+        .eq("project_id", numericProjectId)
         .order("cost_code_id", { ascending: true }),
 
       // Direct costs for calculations
       supabase
         .from("direct_cost_line_items")
-        .select("budget_code_id, amount, cost_type, approved")
-        .eq("project_id", Number(projectId)),
+        .select(
+          `
+          budget_code_id,
+          line_total,
+          quantity,
+          unit_cost,
+          direct_costs!inner(
+            cost_type,
+            status,
+            project_id
+          )
+        `,
+        )
+        .eq("direct_costs.project_id", numericProjectId)
+        .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
+
+      // Subcontract SOV items with pending status for Pending Cost Changes
+      supabase
+        .from("subcontract_sov_items")
+        .select("budget_code, amount, subcontracts!inner(status, project_id)")
+        .eq("subcontracts.project_id", numericProjectId)
+        .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES),
+
+      // PO SOV items with pending statuses for Pending Cost Changes
+      supabase
+        .from("purchase_order_sov_items")
+        .select(
+          "budget_code, amount, purchase_orders!inner(status, project_id)",
+        )
+        .eq("purchase_orders.project_id", numericProjectId)
+        .in("purchase_orders.status", PENDING_PO_STATUSES),
+
+      // Pending change orders for Pending Budget Changes
+      supabase
+        .from("change_order_lines")
+        .select("cost_code_id, amount, change_orders!inner(status, project_id)")
+        .eq("change_orders.project_id", numericProjectId)
+        .like("change_orders.status", "Pending%"),
+
+      // Executed/Approved Subcontract SOV items for Committed Costs
+      supabase
+        .from("subcontract_sov_items")
+        .select("budget_code, amount, subcontracts!inner(status, project_id)")
+        .eq("subcontracts.project_id", numericProjectId)
+        .in("subcontracts.status", EXECUTED_SUBCONTRACT_STATUSES),
+
+      // Executed/Approved PO SOV items for Committed Costs
+      supabase
+        .from("purchase_order_sov_items")
+        .select(
+          "budget_code, amount, purchase_orders!inner(status, project_id)",
+        )
+        .eq("purchase_orders.project_id", numericProjectId)
+        .in("purchase_orders.status", EXECUTED_PO_STATUSES),
+
+      // Pending commitment change orders for Pending Cost Changes
+      supabase
+        .from("commitment_change_order_lines")
+        .select(
+          `
+          cost_code_id,
+          amount,
+          commitment_change_orders!inner(
+            status,
+            commitments!inner(project_id)
+          )
+        `,
+        )
+        .eq("commitment_change_orders.commitments.project_id", numericProjectId)
+        .like("commitment_change_orders.status", "Pending%"),
+
+      // Approved commitment change orders for Committed Costs
+      supabase
+        .from("commitment_change_order_lines")
+        .select(
+          `
+          cost_code_id,
+          amount,
+          commitment_change_orders!inner(
+            status,
+            commitments!inner(project_id)
+          )
+        `,
+        )
+        .eq("commitment_change_orders.commitments.project_id", numericProjectId)
+        .eq("commitment_change_orders.status", "approved"),
     ]);
 
     if (budgetLinesRes.error) {
@@ -91,31 +207,34 @@ export async function GET(
       jobToDateCostDetail: number;
       directCosts: number;
       pendingCostChanges: number;
+      committedCosts: number;
+      pendingBudgetChanges: number;
     }> = {};
 
     // Process direct costs
-    const JTD_COST_TYPES = ["Invoice", "Expense", "Payroll", "Subcontractor Invoice"];
-    const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
-
     for (const cost of (directCostsRes.data || []) as unknown as Array<{
       budget_code_id: string | null;
-      amount: number;
-      cost_type: string | null;
-      approved: boolean | null;
+      line_total: number | null;
+      quantity: number | null;
+      unit_cost: number | null;
+      direct_costs: { cost_type: string | null; status: string | null } | null;
     }>) {
       const codeId = cost.budget_code_id;
-      if (!codeId || !cost.approved) continue;
+      if (!codeId) continue;
 
       if (!costsByCode[codeId]) {
         costsByCode[codeId] = {
           jobToDateCostDetail: 0,
           directCosts: 0,
           pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
         };
       }
 
-      const costType = cost.cost_type || "Invoice";
-      const amount = cost.amount || 0;
+      const costType = cost.direct_costs?.cost_type || "Invoice";
+      const amount =
+        cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
 
       if (JTD_COST_TYPES.includes(costType)) {
         costsByCode[codeId].jobToDateCostDetail += amount;
@@ -124,6 +243,139 @@ export async function GET(
       if (DIRECT_COST_TYPES.includes(costType)) {
         costsByCode[codeId].directCosts += amount;
       }
+    }
+
+    // Pending Cost Changes from Subcontracts
+    for (const item of (subcontractSovRes.data || []) as Array<{
+      budget_code: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].pendingCostChanges += item.amount || 0;
+    }
+
+    // Pending Cost Changes from Purchase Orders
+    for (const item of (poSovRes.data || []) as Array<{
+      budget_code: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].pendingCostChanges += item.amount || 0;
+    }
+
+    // Pending Budget Changes from Prime Contract Change Orders
+    for (const item of (pendingPrimeChangeOrdersRes.data || []) as Array<{
+      cost_code_id: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.cost_code_id;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].pendingBudgetChanges += item.amount || 0;
+    }
+
+    // Pending Cost Changes from Commitment Change Orders
+    for (const item of (pendingCommitmentCOsRes.data || []) as Array<{
+      cost_code_id: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.cost_code_id;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].pendingCostChanges += item.amount || 0;
+    }
+
+    // Committed Costs from Executed Subcontracts
+    for (const item of (executedSubcontractSovRes.data || []) as Array<{
+      budget_code: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].committedCosts += item.amount || 0;
+    }
+
+    // Committed Costs from Executed Purchase Orders
+    for (const item of (executedPoSovRes.data || []) as Array<{
+      budget_code: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.budget_code;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].committedCosts += item.amount || 0;
+    }
+
+    // Committed Costs from Approved Commitment Change Orders
+    for (const item of (approvedCommitmentCOsRes.data || []) as Array<{
+      cost_code_id: string | null;
+      amount: number | null;
+    }>) {
+      const codeId = item.cost_code_id;
+      if (!codeId) continue;
+      if (!costsByCode[codeId]) {
+        costsByCode[codeId] = {
+          jobToDateCostDetail: 0,
+          directCosts: 0,
+          pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
+        };
+      }
+      costsByCode[codeId].committedCosts += item.amount || 0;
     }
 
     // Transform to export format
@@ -142,6 +394,8 @@ export async function GET(
           jobToDateCostDetail: 0,
           directCosts: 0,
           pendingCostChanges: 0,
+          committedCosts: 0,
+          pendingBudgetChanges: 0,
         };
 
         // Core budget values
@@ -151,9 +405,14 @@ export async function GET(
         const revisedBudget = parseFloat(item.revised_budget as string) || 0;
 
         // Calculated fields
-        const forecastToComplete = Math.max(0, revisedBudget - costData.jobToDateCostDetail);
-        const estimatedCostAtCompletion = costData.jobToDateCostDetail + forecastToComplete;
-        const projectedOverUnder = revisedBudget - estimatedCostAtCompletion;
+        const projectedBudget = revisedBudget + costData.pendingBudgetChanges;
+        const projectedCosts =
+          costData.directCosts +
+          costData.committedCosts +
+          costData.pendingCostChanges;
+        const forecastToComplete = Math.max(0, projectedBudget - projectedCosts);
+        const estimatedCostAtCompletion = projectedCosts + forecastToComplete;
+        const projectedOverUnder = projectedBudget - estimatedCostAtCompletion;
 
         return {
           "Cost Code": costCodeId,
@@ -169,8 +428,8 @@ export async function GET(
           "Revised Budget": revisedBudget,
           "Job to Date Cost": costData.jobToDateCostDetail,
           "Direct Costs": costData.directCosts,
-          "Pending Changes": costData.pendingCostChanges,
-          "Committed Costs": 0, // TODO: Calculate from executed commitments
+          "Pending Changes": costData.pendingBudgetChanges,
+          "Committed Costs": costData.committedCosts,
           "Forecast to Complete": forecastToComplete,
           "Estimated Cost at Completion": estimatedCostAtCompletion,
           "Projected Over/Under": projectedOverUnder,
@@ -182,7 +441,7 @@ export async function GET(
     const { data: project } = await supabase
       .from("projects")
       .select("name")
-      .eq("id", Number(projectId))
+      .eq("id", numericProjectId)
       .single();
 
     const projectName = project?.name || `Project-${projectId}`;

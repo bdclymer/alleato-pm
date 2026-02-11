@@ -1,10 +1,10 @@
 "use client";
 
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 import { ChatLayout } from "@/components/chat/chat-layout";
 
-const chatTheme: CSSProperties = {
+const chatTheme = {
   "--chat-bg": "0 0% 100%",
   "--chat-panel": "0 0% 98%",
   "--chat-panel-2": "0 0% 96%",
@@ -14,7 +14,7 @@ const chatTheme: CSSProperties = {
   "--chat-accent": "var(--brand)",
   "--chat-accent-2": "var(--brand)",
   "--chat-hover": "0 0% 94%",
-};
+} as React.CSSProperties;
 
 export default function TeamChatPage(): ReactElement {
   const [username, setUsername] = useState(

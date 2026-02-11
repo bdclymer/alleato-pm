@@ -160,7 +160,12 @@ function getNestedValue(
   obj: Record<string, unknown> | null,
   path: string,
 ): unknown {
-  return path.split(".").reduce((acc, part) => acc?.[part], obj ?? null);
+  return path.split(".").reduce((acc: unknown, part: string) => {
+    if (acc && typeof acc === "object" && part in acc) {
+      return (acc as Record<string, unknown>)[part];
+    }
+    return undefined;
+  }, obj ?? null);
 }
 
 // Set nested value in object

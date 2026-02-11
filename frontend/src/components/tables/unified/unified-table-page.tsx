@@ -52,8 +52,8 @@ export interface UnifiedTablePageProps<T> {
     onViewChange: (view: ViewMode) => void;
     enabledViews?: ViewMode[];
     filters?: FilterConfig[];
-    activeFilters: Record<string, string | number | boolean | null | undefined>;
-    onFilterChange: (filters: Record<string, string | number | boolean | null | undefined>) => void;
+    activeFilters: Record<string, string | number | boolean | string[] | null | undefined>;
+    onFilterChange: (filters: Record<string, string | number | boolean | string[] | null | undefined>) => void;
     onClearFilters: () => void;
     columns: ColumnConfig[];
     visibleColumns: string[];
@@ -297,21 +297,27 @@ export function UnifiedTablePage<T>({
 
         {showTable && toolbar.currentView === "card" && views?.card && (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedItems.map((item) => (
-              <React.Fragment key={table.getRowId(item)}>
-                {views.card(item)}
-              </React.Fragment>
-            ))}
+            {sortedItems.map((item) => {
+              const CardView = views.card;
+              return (
+                <React.Fragment key={table.getRowId(item)}>
+                  {CardView ? CardView(item) : null}
+                </React.Fragment>
+              );
+            })}
           </div>
         )}
 
         {showTable && toolbar.currentView === "list" && views?.list && (
           <div className="mt-4 space-y-1">
-            {sortedItems.map((item) => (
-              <React.Fragment key={table.getRowId(item)}>
-                {views.list(item)}
-              </React.Fragment>
-            ))}
+            {sortedItems.map((item) => {
+              const ListView = views.list;
+              return (
+                <React.Fragment key={table.getRowId(item)}>
+                  {ListView ? ListView(item) : null}
+                </React.Fragment>
+              );
+            })}
           </div>
         )}
 
