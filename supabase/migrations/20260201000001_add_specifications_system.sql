@@ -1,3 +1,12 @@
+-- Drop existing objects first (idempotent)
+DROP TABLE IF EXISTS specification_subscribers CASCADE;
+DROP TABLE IF EXISTS specification_area_sections CASCADE;
+DROP TABLE IF EXISTS specification_areas CASCADE;
+DROP TABLE IF EXISTS specification_section_revisions CASCADE;
+DROP TABLE IF EXISTS specification_sections CASCADE;
+DROP FUNCTION IF EXISTS create_specification_revision CASCADE;
+DROP FUNCTION IF EXISTS update_specification_sections_updated_at CASCADE;
+DROP FUNCTION IF EXISTS update_specification_areas_updated_at CASCADE;
 -- =============================================================================
 -- Specifications Management System
 -- Complete migration for specification documents with revision tracking,
@@ -192,9 +201,9 @@ CREATE POLICY "Users can view specifications in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_sections.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -204,9 +213,9 @@ CREATE POLICY "Users can insert specifications with write access"
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_sections.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -216,9 +225,9 @@ CREATE POLICY "Users can update specifications in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_sections.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -228,9 +237,9 @@ CREATE POLICY "Users can delete specifications in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_sections.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -242,9 +251,9 @@ CREATE POLICY "Users can view revisions in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_section_revisions.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -255,9 +264,9 @@ CREATE POLICY "Users can insert revisions in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_section_revisions.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -268,9 +277,9 @@ CREATE POLICY "Users can update revisions in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_section_revisions.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -281,9 +290,9 @@ CREATE POLICY "Users can delete revisions in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_section_revisions.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -294,9 +303,9 @@ CREATE POLICY "Users can view areas in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_areas.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -306,9 +315,9 @@ CREATE POLICY "Users can insert areas in their projects"
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_areas.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -318,9 +327,9 @@ CREATE POLICY "Users can update areas in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_areas.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -330,9 +339,9 @@ CREATE POLICY "Users can delete areas in their projects"
     USING (
         EXISTS (
             SELECT 1 FROM project_directory_memberships pdm
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE pdm.project_id = specification_areas.project_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -344,9 +353,9 @@ CREATE POLICY "Users can view area_sections in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_area_sections.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -357,9 +366,9 @@ CREATE POLICY "Users can insert area_sections in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_area_sections.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -370,9 +379,9 @@ CREATE POLICY "Users can delete area_sections in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_area_sections.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -384,9 +393,9 @@ CREATE POLICY "Users can view subscribers in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_subscribers.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -397,9 +406,9 @@ CREATE POLICY "Users can insert subscribers in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_subscribers.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
@@ -410,9 +419,9 @@ CREATE POLICY "Users can delete subscribers in their projects"
         EXISTS (
             SELECT 1 FROM specification_sections ss
             JOIN project_directory_memberships pdm ON pdm.project_id = ss.project_id
-            JOIN people p ON p.id = pdm.person_id
+            JOIN users_auth ua ON ua.person_id = pdm.person_id
             WHERE ss.id = specification_subscribers.section_id
-            AND p.auth_user_id = auth.uid()
+            AND ua.auth_user_id = auth.uid()
             AND pdm.status = 'active'
         )
     );
