@@ -1,25 +1,30 @@
-name: generate-types
+name: DB Migration Check
+
 on:
   pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'frontend/src/types/database.types.ts'
 
 jobs:
-  build:
+  check-types:
+    name: Verify Types Match Schema
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest # better: pin this once stable
+          version: latest
 
       - run: supabase init
       - run: supabase db start
 
-      - name: Verify generated types match Postgres schema
+      - name: Verify generated types match schema
         run: |
           supabase gen types typescript --local > frontend/src/types/database.types.ts
           if ! git diff --ignore-space-at-eol --exit-code --quiet frontend/src/types/database.types.ts; then
-            echo "Detected uncommitted changes after build. See diff below:"
+            echo "::error::Generated types don't match committed types. Run: supabase gen types typescript --local > frontend/src/types/database.types.ts"
             git diff -- frontend/src/types/database.types.ts
             exit 1
           fi
