@@ -130,9 +130,8 @@ export function DirectCostForm({
   const [isDirty, setIsDirty] = useState(false)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
 
-  // Auto-fill button visibility - set to false to hide the button
-  // TODO: Set to false when testing phase is complete
-  const showAutoFill = true
+  // Auto-fill button visibility - only shown in development
+  const showAutoFill = process.env.NODE_ENV === 'development'
 
   // Auto-fill function for dev testing
   const handleAutoFill = async () => {

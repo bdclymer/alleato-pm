@@ -65,9 +65,10 @@ export function useDevAutoFill<T extends Record<string, any>>(
     // Call the callback if provided
     onAutoFill?.();
 
-    console.log(
-      `[DevAutoFill] Filled ${Object.keys(data).length} fields for ${formType} form`,
-    );
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.log(`[DevAutoFill] Filled ${Object.keys(data).length} fields for ${formType} form`);
+    }
   }, [formType, setValue, onAutoFill]);
 
   /**
@@ -122,7 +123,10 @@ export function DevAutoFillButton({
   const handleClick = () => {
     const data = getAutoFillData(formType);
     onAutoFill(data);
-    console.log(`[DevAutoFill] Generated data for ${formType} form`);
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.log(`[DevAutoFill] Generated data for ${formType} form`);
+    }
   };
 
   return (

@@ -68,15 +68,19 @@ from chatkit.types import (
 from chatkit.store import NotFoundError
 
 from src.api.server import (
-    AirlineAgentChatContext,
-    AirlineAgentContext,
-    cancellation_agent,
+    ProjectChatContext,
+    ProjectContext,
+    budget_agent,
+    change_order_agent,
     create_initial_context,
-    faq_agent,
-    flight_status_agent,
-    seat_booking_agent,
+    rfi_agent,
+    submittal_agent,
     triage_agent,
 )
+
+# Backwards-compatible aliases for any other references in this file
+AirlineAgentChatContext = ProjectChatContext
+AirlineAgentContext = ProjectContext
 from src.services.memory_store import MemoryStore
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
@@ -130,7 +134,7 @@ try:
 except ImportError as e:
     RAG_AVAILABLE = False
     print(f"Warning: RAG workflow not available. Error: {e}")
-    print("Continuing with airline demo only.")
+    print("Continuing with base chatkit only.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -189,10 +193,10 @@ def _get_agent_by_name(name: str):
     """Return the agent object by name."""
     agents = {
         triage_agent.name: triage_agent,
-        faq_agent.name: faq_agent,
-        seat_booking_agent.name: seat_booking_agent,
-        flight_status_agent.name: flight_status_agent,
-        cancellation_agent.name: cancellation_agent,
+        budget_agent.name: budget_agent,
+        change_order_agent.name: change_order_agent,
+        rfi_agent.name: rfi_agent,
+        submittal_agent.name: submittal_agent,
     }
     return agents.get(name, triage_agent)
 
@@ -225,10 +229,10 @@ def _build_agents_list() -> List[Dict[str, Any]]:
 
     return [
         make_agent_dict(triage_agent),
-        make_agent_dict(faq_agent),
-        make_agent_dict(seat_booking_agent),
-        make_agent_dict(flight_status_agent),
-        make_agent_dict(cancellation_agent),
+        make_agent_dict(budget_agent),
+        make_agent_dict(change_order_agent),
+        make_agent_dict(rfi_agent),
+        make_agent_dict(submittal_agent),
     ]
 
 
@@ -261,7 +265,7 @@ class ConversationState:
     guardrails: List[GuardrailCheck] = field(default_factory=list)
 
 
-class AirlineServer(ChatKitServer[dict[str, Any]]):
+class ProjectServer(ChatKitServer[dict[str, Any]]):
     def __init__(self) -> None:
         self.store = MemoryStore()
         super().__init__(self.store)
@@ -450,7 +454,7 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
                     )
                 )
             state.guardrails = checks
-            refusal = "Sorry, I can only answer questions related to airline travel."
+            refusal = "Sorry, I can only answer questions related to construction project management."
             state.input_items.append({"role": "assistant", "content": refusal})
             yield ThreadItemDoneEvent(
                 item=AssistantMessageItem(
@@ -515,10 +519,10 @@ class AirlineServer(ChatKitServer[dict[str, Any]]):
         }
 
 
-server = AirlineServer()
+server = ProjectServer()
 
 
-def get_server() -> AirlineServer:
+def get_server() -> ProjectServer:
     return server
 
 
@@ -532,11 +536,11 @@ def get_ingestion_pipeline(
     return FirefliesIngestionPipeline(store)
 
 
-@app.post("/chatkit", tags=["Airline Demo"], summary="ChatKit endpoint for airline demo")
+@app.post("/chatkit", tags=["Construction PM"], summary="ChatKit endpoint for construction PM")
 async def chatkit_endpoint(
-    request: Request, server: AirlineServer = Depends(get_server)
+    request: Request, server: ProjectServer = Depends(get_server)
 ) -> Response:
-    """Process ChatKit protocol messages for the airline demo chatbot."""
+    """Process ChatKit protocol messages for the construction PM chatbot."""
     payload = await request.body()
     result = await server.process(payload, {"request": request})
     if isinstance(result, StreamingResult):
@@ -546,20 +550,20 @@ async def chatkit_endpoint(
     return Response(content=result)
 
 
-@app.get("/chatkit/state", tags=["Airline Demo"], summary="Get airline chat state")
+@app.get("/chatkit/state", tags=["Construction PM"], summary="Get construction PM chat state")
 async def chatkit_state(
     thread_id: str = Query(..., description="ChatKit thread identifier"),
-    server: AirlineServer = Depends(get_server),
+    server: ProjectServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    """Get the current state of an airline chat conversation."""
+    """Get the current state of an construction PM chat conversation."""
     return await server.snapshot(thread_id, {"request": None})
 
 
-@app.get("/chatkit/bootstrap", tags=["Airline Demo"], summary="Bootstrap airline chat")
+@app.get("/chatkit/bootstrap", tags=["Construction PM"], summary="Bootstrap construction PM chat")
 async def chatkit_bootstrap(
-    server: AirlineServer = Depends(get_server),
+    server: ProjectServer = Depends(get_server),
 ) -> Dict[str, Any]:
-    """Initialize a new airline chat session with default state."""
+    """Initialize a new construction PM chat session with default state."""
     return await server.snapshot(None, {"request": None})
 
 
@@ -811,7 +815,11 @@ def _build_chat_reply(
 
 @app.get("/api/projects", tags=["Projects"], summary="List all projects")
 def list_projects_api(store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[str, Any]:
-    """Retrieve a list of all projects from the RAG store."""
+    """Retrieve a list of all projects from the RAG store.
+    
+    Returns:
+        Dict with 'projects' key containing list of project objects.
+    """
     return {"projects": store.list_projects()}
 
 
@@ -828,7 +836,11 @@ def project_detail_api(project_id: int, store: SupabaseRagStore = Depends(get_ra
 
 @app.post("/api/chat", tags=["RAG Chat"], summary="Simple chat endpoint")
 def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[str, Any]:
-    """Process a chat message and return relevant information from the knowledge base."""
+    """Process a chat message and return relevant information from the knowledge base.
+    
+    Performs keyword-based search against ingested transcript chunks and returns
+    matching sources along with related tasks and insights.
+    """
     if not payload.message.strip():
         raise HTTPException(status_code=422, detail="Message cannot be empty")
     return _build_chat_reply(payload.message, store=store, project_id=payload.project_id, limit=payload.limit)
@@ -895,6 +907,12 @@ def ingest_fireflies_endpoint(
     - Transcript chunks for semantic search
     - Action items and tasks
     - Key insights and decisions
+    
+    Args:
+        payload: IngestRequest with path to transcript file, optional project_id, and dry_run flag.
+        
+    Returns:
+        Dict with ingestion result details.
     """
     result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
     return {"result": result.__dict__}
