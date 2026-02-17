@@ -8,9 +8,6 @@ test('tasks page fixed verification', async ({ page }) => {
       consoleErrors.push(`[ERROR] ${msg.text()}`);
     }
   });
-
-  // Navigate to dev-login
-  await page.goto('/dev-login?email=test@example.com&password=testpassword123');
   await page.waitForTimeout(2000);
 
   // Navigate to tasks page

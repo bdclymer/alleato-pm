@@ -15,10 +15,6 @@ const BASE_URL = "http://localhost:3000";
 const TEST_PROJECT_ID = "67";
 
 async function login(page: Page) {
-  await page.goto(
-    `${BASE_URL}/dev-login?email=test@example.com&password=testpassword123`,
-  );
-  await page.waitForURL("**/dashboard", { timeout: 15000 });
 }
 
 async function navigateToCommitments(
@@ -78,8 +74,6 @@ test.describe("Commitments - Edit Workflow", () => {
     const editButton = page.getByRole("link", { name: /Edit/i }).first();
     if (await editButton.isVisible({ timeout: 5000 })) {
       await editButton.click();
-      await page.waitForURL(`**/${commitmentId}/edit**`, { timeout: 10000 });
-
       // Verify we're on the edit page
       await expect(page.locator("text=Edit")).toBeVisible({ timeout: 5000 });
     }

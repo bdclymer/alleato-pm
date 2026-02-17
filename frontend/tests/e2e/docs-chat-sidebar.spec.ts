@@ -3,8 +3,6 @@ import { test, expect } from '@playwright/test';
 test.describe('Procore Docs Chat Sidebar', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to the home page
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
-    await page.waitForURL('/');
   });
 
   test('should open chat sidebar when floating button is clicked', async ({ page }) => {

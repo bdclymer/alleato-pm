@@ -2,8 +2,6 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Project Home Summary Update', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to dev login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL(/\/\d+\/home/, { timeout: 10000 })
   })
 

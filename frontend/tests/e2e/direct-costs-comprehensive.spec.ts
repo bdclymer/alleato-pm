@@ -20,10 +20,8 @@ const TEST_PROJECT_ID = '67'; // Use an existing project ID
 
 // Helper function to login
 async function login(page: Page) {
-  await page.goto(`/dev-login?email=test@example.com&password=testpassword123`);
   await page.waitForLoadState('networkidle');
   // Dev-login redirects to '/' by default
-  await page.waitForURL('**/', { timeout: 15000 });
 }
 
 // Helper function to navigate to direct costs page
@@ -76,7 +74,7 @@ test.describe('Direct Costs - Authentication & Authorization', () => {
 
     // Should redirect to auth page or show unauthorized
     const url = page.url();
-    expect(url.includes('/auth') || url.includes('/login') || url.includes('/dev-login')).toBeTruthy();
+    expect(url.includes('/auth') || url.includes('/login')).toBeTruthy();
 
     await takeScreenshot(page, '01-unauthorized-redirect');
   });

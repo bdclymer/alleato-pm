@@ -10,15 +10,7 @@ const TEST_EMAIL = process.env.PAGE_TITLE_TEST_EMAIL || 'test@example.com'
 const TEST_PASSWORD =
   process.env.PAGE_TITLE_TEST_PASSWORD || 'testpassword123'
 
-async function authenticate(page: Page) {
-  const loginUrl = new URL(
-    `/dev-login?email=${encodeURIComponent(TEST_EMAIL)}&password=${encodeURIComponent(TEST_PASSWORD)}`,
-    BASE_URL
-  ).toString()
-
-  await page.goto(loginUrl)
-  await page.waitForLoadState('networkidle')
-}
+// Auth is handled by storageState in playwright.config.ts
 
 async function visitProjectPage(page: Page, path: string) {
   const url = new URL(`/${PROJECT_ID}/${path}`, BASE_URL).toString()
@@ -29,9 +21,7 @@ async function visitProjectPage(page: Page, path: string) {
 }
 
 test.describe('Page Title Verification', () => {
-  test.beforeEach(async ({ page }) => {
-    await authenticate(page)
-  })
+  // Auth handled by storageState
 
   test('Budget page should show format "Budget - Project - [project name]"', async ({ page }) => {
     const title = await visitProjectPage(page, 'budget')

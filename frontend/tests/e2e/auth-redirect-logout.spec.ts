@@ -11,9 +11,6 @@ test.describe('Authentication Flow', () => {
   })
 
   test('logout redirects to login page', async ({ page }) => {
-    // First login using dev-login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
-
     // Wait for redirect to homepage
     await page.waitForURL('/', { timeout: 10000 })
 

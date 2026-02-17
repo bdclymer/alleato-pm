@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Project Directory Setup', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForLoadState('networkidle')
   })
 

@@ -5,8 +5,6 @@ test.describe('Project Setup - Document Upload', () => {
   let projectId: string;
 
   test.beforeEach(async ({ page }) => {
-    // Login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
     await page.waitForURL(/\/(portfolio|\/\d+\/home)/);
 
     // Go to setup wizard

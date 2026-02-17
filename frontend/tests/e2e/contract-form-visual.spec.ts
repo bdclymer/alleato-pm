@@ -1,15 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 // Visual check for the contract form matching Procore's layout
-// This test bypasses auth by using dev-login
 
 const projectId = 68;
 
 test.describe('Contract Form Visual', () => {
   test.beforeEach(async ({ page }) => {
-    // Login first using dev-login route
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
-    await page.waitForURL('**/*', { timeout: 10000 });
     await page.waitForTimeout(2000);
   });
 

@@ -57,8 +57,6 @@ test.describe('Mobile Responsiveness Tests', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('/', { timeout: 10000 })
   })
 
@@ -100,8 +98,6 @@ test.describe('Desktop Responsiveness Tests', () => {
   test.use({ viewport: DESKTOP_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('/', { timeout: 10000 })
   })
 
@@ -140,8 +136,6 @@ test.describe('Desktop Responsiveness Tests', () => {
 
 test.describe('Responsive Layout Transitions', () => {
   test('Layout adapts between mobile and desktop breakpoints', async ({ page }) => {
-    // Login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('/', { timeout: 10000 })
 
     await page.goto('/profile')
@@ -189,7 +183,6 @@ test.describe('Critical UI Elements - Mobile', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('/', { timeout: 10000 })
   })
 
@@ -255,7 +248,6 @@ test.describe('Form Elements - Mobile', () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('/', { timeout: 10000 })
   })
 

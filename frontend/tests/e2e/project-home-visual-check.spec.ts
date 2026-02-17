@@ -9,8 +9,6 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Project Home - Visual Verification', () => {
   test('should display all editable project fields', async ({ page }) => {
-    // Navigate to dev login
-    await page.goto('http://localhost:3000/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('http://localhost:3000/', { timeout: 10000 })
 
     // Navigate to project home page (project ID 34)
@@ -70,8 +68,6 @@ test.describe('Project Home - Visual Verification', () => {
   })
 
   test('should show edit mode when clicking a field', async ({ page }) => {
-    // Navigate to dev login
-    await page.goto('http://localhost:3000/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('http://localhost:3000/', { timeout: 10000 })
 
     // Navigate to project home page

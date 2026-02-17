@@ -2,9 +2,6 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Tasks Page Verification', () => {
   test('should verify tasks page structure and headers', async ({ page }) => {
-    // Navigate to dev login
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
-
     // Wait for navigation to complete
     await page.waitForLoadState('networkidle');
 

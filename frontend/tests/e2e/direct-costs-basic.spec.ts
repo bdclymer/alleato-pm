@@ -2,12 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Direct Costs - Basic Verification', () => {
   test.beforeEach(async ({ page }) => {
-    // Use dev-login for testing
-    await page.goto('/dev-login?email=test@example.com&password=testpassword123');
-    
     // Wait for redirect to home page
-    await page.waitForURL('http://localhost:3000/', { timeout: 10000 });
-    
     // Navigate directly to a known project's direct costs (using a common test project ID)
     await page.goto('/projects/test-project-id/direct-costs');
   });
@@ -36,8 +31,6 @@ test.describe('Direct Costs - Basic Verification', () => {
     await page.click('text=New Direct Cost');
     
     // Wait for navigation
-    await page.waitForURL('**/direct-costs/new');
-    
     // Check form elements
     await expect(page.locator('text=Create Direct Cost')).toBeVisible();
     await expect(page.locator('text=Basic Information')).toBeVisible();

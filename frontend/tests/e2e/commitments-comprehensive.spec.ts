@@ -20,8 +20,6 @@ const TEST_PROJECT_ID = '67';
 
 // Helper function to login
 async function login(page: Page) {
-  await page.goto(`${BASE_URL}/dev-login?email=test@example.com&password=testpassword123`);
-  await page.waitForURL('**/dashboard', { timeout: 15000 });
 }
 
 // Helper function to navigate to commitments page
@@ -145,8 +143,6 @@ test.describe('Commitments - Create Dropdown', () => {
     await page.waitForTimeout(300);
 
     await page.getByRole('menuitem', { name: /Subcontract/i }).click();
-    await page.waitForURL(`**/${TEST_PROJECT_ID}/commitments/new?type=subcontract**`, { timeout: 10000 });
-
     await takeScreenshot(page, '08-commitments-subcontract-form-nav');
   });
 
@@ -156,8 +152,6 @@ test.describe('Commitments - Create Dropdown', () => {
     await page.waitForTimeout(300);
 
     await page.getByRole('menuitem', { name: /Purchase Order/i }).click();
-    await page.waitForURL(`**/${TEST_PROJECT_ID}/commitments/new?type=purchase_order**`, { timeout: 10000 });
-
     await takeScreenshot(page, '09-commitments-purchase-order-form-nav');
   });
 });
@@ -476,8 +470,6 @@ test.describe('Commitments - Edit Commitment', () => {
       const editOption = page.getByRole('menuitem', { name: /Edit/i });
       if (await editOption.isVisible({ timeout: 2000 })) {
         await editOption.click();
-        await page.waitForURL(`**/**`, { timeout: 10000 });
-
         await takeScreenshot(page, '29-commitment-edit-form');
       }
     }

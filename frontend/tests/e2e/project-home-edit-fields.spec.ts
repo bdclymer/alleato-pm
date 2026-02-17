@@ -17,8 +17,6 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Project Home - Inline Field Editing', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to dev login
-    await page.goto('http://localhost:3000/dev-login?email=test@example.com&password=testpassword123')
     await page.waitForURL('http://localhost:3000/', { timeout: 10000 })
 
     // Navigate to project home page (project ID 34)
