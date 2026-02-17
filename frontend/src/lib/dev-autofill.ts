@@ -9,9 +9,7 @@
 
 import { copycat } from "@snaplet/copycat";
 
-// Auto-fill enabled in all environments during testing phase
-// TODO: Revert to `process.env.NODE_ENV !== "production"` after testing phase
-export const isDevelopment = true;
+export const isDevelopment = process.env.NODE_ENV !== "production";
 
 /**
  * Generate fake data for common field types
