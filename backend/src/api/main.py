@@ -811,7 +811,11 @@ def _build_chat_reply(
 
 @app.get("/api/projects", tags=["Projects"], summary="List all projects")
 def list_projects_api(store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[str, Any]:
-    """Retrieve a list of all projects from the RAG store."""
+    """Retrieve a list of all projects from the RAG store.
+    
+    Returns:
+        Dict with 'projects' key containing list of project objects.
+    """
     return {"projects": store.list_projects()}
 
 
@@ -828,7 +832,11 @@ def project_detail_api(project_id: int, store: SupabaseRagStore = Depends(get_ra
 
 @app.post("/api/chat", tags=["RAG Chat"], summary="Simple chat endpoint")
 def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag_store)) -> Dict[str, Any]:
-    """Process a chat message and return relevant information from the knowledge base."""
+    """Process a chat message and return relevant information from the knowledge base.
+    
+    Performs keyword-based search against ingested transcript chunks and returns
+    matching sources along with related tasks and insights.
+    """
     if not payload.message.strip():
         raise HTTPException(status_code=422, detail="Message cannot be empty")
     return _build_chat_reply(payload.message, store=store, project_id=payload.project_id, limit=payload.limit)
@@ -895,6 +903,12 @@ def ingest_fireflies_endpoint(
     - Transcript chunks for semantic search
     - Action items and tasks
     - Key insights and decisions
+    
+    Args:
+        payload: IngestRequest with path to transcript file, optional project_id, and dry_run flag.
+        
+    Returns:
+        Dict with ingestion result details.
     """
     result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
     return {"result": result.__dict__}
