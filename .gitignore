@@ -80,3 +80,6 @@ openai-cs-agents-demo/
 
 # YokeFlow
 YokeFlow/
+
+# Test artifacts
+frontend/tests/test-results-*

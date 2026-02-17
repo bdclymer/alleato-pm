@@ -520,8 +520,7 @@ export class SpecificationRevisionService {
 
     // Future: Send notifications via notification service
     // For now, this is a placeholder for the notification integration
-    console.log(
-      `Would notify ${subscribers.length} subscribers about revision ${revisionId}`,
-    );
+    // TODO: Send notifications via notification service
+    // Placeholder for notification integration
   }
 }
