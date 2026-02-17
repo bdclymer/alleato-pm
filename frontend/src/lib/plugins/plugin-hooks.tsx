@@ -255,7 +255,7 @@ export function usePluginNotifications() {
   useEffect(() => {
     const handleNotification = ({ message, type }: any) => {
       // Integrate with your app's notification system
-      console.log(`[${type.toUpperCase()}] ${message}`);
+      // Integrate with app notification system when available
     };
 
     pluginManager.on("ui:notification", handleNotification);
