@@ -8,39 +8,30 @@ const supabase = createClient(
 );
 
 (async () => {
-  console.log('Checking test user project membership...\n');
+  console.info('Checking test user project membership...\n');
 
   // Get test user from auth state
   const authState = JSON.parse(fs.readFileSync('tests/.auth/user.json', 'utf8'));
-  console.log('Auth state structure:', Object.keys(authState));
 
-  // Try to find user ID
-  const origins = authState.origins || [];
-  let userId = null;
-
-  for (const origin of origins) {
-    if (origin.localStorage) {
-      for (const [key, value] of Object.entries(origin.localStorage)) {
-        if (key.includes('supabase.auth.token')) {
-          try {
-            const tokenData = JSON.parse(value);
-            userId = tokenData.user?.id || tokenData.currentSession?.user?.id;
-            if (userId) {
-              console.log('Found user ID:', userId);
-              break;
-            }
-          } catch (e) {
-            // Try next key
-          }
-        }
-      }
-    }
-  }
-
-  if (!userId) {
-    console.log('Could not extract user ID from auth state');
+  // Extract user ID from cookie
+  const authCookie = authState.cookies.find(c => c.name.includes('auth-token'));
+  if (!authCookie) {
+    console.error('ERROR: No auth token cookie found');
     return;
   }
+
+  // Decode the base64 token
+  const tokenValue = authCookie.value.replace('base64-', '');
+  const decoded = JSON.parse(Buffer.from(tokenValue, 'base64').toString('utf-8'));
+  const userId = decoded.user?.id;
+
+  if (!userId) {
+    console.error('ERROR: Could not extract user ID from token');
+    return;
+  }
+
+  console.info('OK: Found user ID:', userId);
+  console.info('  Email:', decoded.user.email);
 
   // Check if user has person record
   const { data: person, error: personError } = await supabase
@@ -50,12 +41,13 @@ const supabase = createClient(
     .single();
 
   if (personError) {
-    console.log('✗ No person record found for user:', personError.message);
+    console.error('ERROR: No person record found for user:', personError.message);
+    console.error('\nCRITICAL: Test user needs a person record');
     return;
   }
 
-  console.log('✓ Person record found:', person.first_name, person.last_name);
-  console.log('  Person ID:', person.id);
+  console.info('OK: Person record found:', person.first_name, person.last_name);
+  console.info('  Person ID:', person.id);
 
   // Check project memberships
   const { data: memberships, error: memberError } = await supabase
@@ -64,25 +56,26 @@ const supabase = createClient(
     .eq('person_id', person.id);
 
   if (memberError) {
-    console.log('✗ Error checking memberships:', memberError.message);
+    console.error('ERROR: Error checking memberships:', memberError.message);
     return;
   }
 
-  console.log('\nProject Memberships:');
+  console.info('\nProject memberships:');
   if (memberships.length === 0) {
-    console.log('  ✗ NO PROJECT MEMBERSHIPS FOUND');
-    console.log('  This is why uploads fail! User has no project access.');
+    console.error('  ERROR: NO PROJECT MEMBERSHIPS FOUND');
+    console.error('  CRITICAL: This is why uploads fail. User has no project access.');
   } else {
     memberships.forEach(m => {
-      console.log(`  - Project ${m.project_id}: ${m.projects?.name || 'Unknown'}`);
+      console.info(`  - Project ${m.project_id}: ${m.projects?.name || 'Unknown'}`);
     });
 
     const hasProject31 = memberships.some(m => m.project_id === 31);
     if (hasProject31) {
-      console.log('\n✓ User HAS access to project 31');
+      console.info('\nOK: User HAS access to project 31');
     } else {
-      console.log('\n✗ User DOES NOT have access to project 31');
-      console.log('  This is why uploads to project 31 fail!');
+      console.error('\nERROR: User DOES NOT have access to project 31');
+      console.error('  CRITICAL: This is why uploads to project 31 fail');
+      console.error('  Even with RLS policies, uploads need project membership.');
     }
   }
 })();
