@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { buildOfflineBootstrapState } from "@/lib/rag-chatkit/offline-data";
-import { isBackendOfflineError, respondWithOfflinePayload } from "../utils";
+import { isBackendOfflineError } from "../utils";
 
 const PYTHON_BACKEND_URL =
   process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000";
@@ -14,9 +13,17 @@ export async function GET() {
     }
     const response = await fetch(`${PYTHON_BACKEND_URL}/rag-chatkit/bootstrap`);
     if (!response.ok) {
-      return respondWithOfflinePayload(
-        buildOfflineBootstrapState(),
-        `backend-status-${response.status}`,
+      const errorText = await response.text();
+      return NextResponse.json(
+        {
+          error: "RAG Backend Error",
+          message: "RAG backend bootstrap failed.",
+          details:
+            process.env.NODE_ENV === "development"
+              ? errorText.substring(0, 500)
+              : undefined,
+        },
+        { status: response.status },
       );
     }
 
@@ -26,9 +33,13 @@ export async function GET() {
   } catch (error) {
     const err = error as Error;
     if (isBackendOfflineError(error)) {
-      return respondWithOfflinePayload(
-        buildOfflineBootstrapState(),
-        "backend-offline",
+      return NextResponse.json(
+        {
+          error: "RAG Backend Unavailable",
+          message:
+            "The RAG backend is unavailable. Fix backend connectivity before retrying.",
+        },
+        { status: 503 },
       );
     }
 

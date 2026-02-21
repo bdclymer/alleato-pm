@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { RagChatKitPanel } from "@/components/chat/rag-chatkit-panel";
-import { SimpleRagChat } from "@/components/chat/simple-rag-chat";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type RagStatePayload = {
@@ -17,79 +16,90 @@ type RagStatePayload = {
 
 type RagStateResult<T = RagStatePayload> = {
   data: T | null;
-  offline: boolean;
+  errorMessage: string | null;
 };
 
 async function fetchRagBootstrapState(): Promise<RagStateResult> {
   try {
     const res = await fetch("/api/rag-chatkit/bootstrap");
-    const offline = res.headers.get("x-rag-backend-status") === "offline";
     if (!res.ok) {
-      return { data: null, offline };
+      const errorData = (await res.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      return {
+        data: null,
+        errorMessage:
+          errorData?.message || "Unable to initialize AI chat bootstrap state.",
+      };
     }
     const data = (await res.json()) as RagStatePayload;
-    return { data, offline };
+    return { data, errorMessage: null };
   } catch {
-    return { data: null, offline: true };
+    return {
+      data: null,
+      errorMessage: "Unable to connect to the AI backend.",
+    };
   }
 }
 
 async function fetchRagThreadState(threadId: string): Promise<RagStateResult> {
   try {
     const res = await fetch(`/api/rag-chatkit/state?thread_id=${threadId}`);
-    const offline = res.headers.get("x-rag-backend-status") === "offline";
     if (!res.ok) {
-      return { data: null, offline };
+      const errorData = (await res.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+      return {
+        data: null,
+        errorMessage: errorData?.message || "Unable to load AI chat thread state.",
+      };
     }
     const data = (await res.json()) as RagStatePayload;
-    return { data, offline };
+    return { data, errorMessage: null };
   } catch {
-    return { data: null, offline: true };
+    return {
+      data: null,
+      errorMessage: "Unable to connect to the AI backend.",
+    };
   }
 }
 
 export default function RagHome() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [initialThreadId, setInitialThreadId] = useState<string | null>(null);
-  const [isOffline, setIsOffline] = useState(false);
-  const [offlineMessage, setOfflineMessage] = useState<string | null>(null);
+  const [isUnavailable, setIsUnavailable] = useState(false);
+  const [unavailableMessage, setUnavailableMessage] = useState<string | null>(
+    null,
+  );
   const [bootstrapReady, setBootstrapReady] = useState(false);
 
   const hydrateState = useCallback(
     async (id: string | null) => {
-      if (!id || isOffline) return;
-      const { data, offline } = await fetchRagThreadState(id);
-      if (offline) {
-        setIsOffline(true);
-        setOfflineMessage(
-          data?.context?.notice ||
-            "The realtime AI backend is offline. Showing demo mode instead.",
-        );
+      if (!id || isUnavailable) return;
+      const { data, errorMessage } = await fetchRagThreadState(id);
+      if (errorMessage) {
+        setIsUnavailable(true);
+        setUnavailableMessage(errorMessage);
         return;
       }
       if (!data) return;
     },
-    [isOffline],
+    [isUnavailable],
   );
 
   useEffect(() => {
-    if (threadId && !isOffline) {
+    if (threadId && !isUnavailable) {
       void hydrateState(threadId);
     }
-  }, [threadId, hydrateState, isOffline]);
+  }, [threadId, hydrateState, isUnavailable]);
 
   useEffect(() => {
     (async () => {
-      const { data: bootstrap, offline } = await fetchRagBootstrapState();
-      if (
-        !bootstrap ||
-        offline ||
-        bootstrap?.context?.backend_status === "offline"
-      ) {
-        setIsOffline(true);
-        setOfflineMessage(
-          bootstrap?.context?.notice ||
-            "The Alleato AI backend is currently offline. You can continue in demo mode below.",
+      const { data: bootstrap, errorMessage } = await fetchRagBootstrapState();
+      if (!bootstrap || errorMessage) {
+        setIsUnavailable(true);
+        setUnavailableMessage(
+          errorMessage || "The Alleato AI backend is currently unavailable.",
         );
         setBootstrapReady(true);
         return;
@@ -106,12 +116,12 @@ export default function RagHome() {
   }, []);
 
   const handleResponseEnd = useCallback(() => {
-    if (!isOffline) {
+    if (!isUnavailable) {
       void hydrateState(threadId);
     }
-  }, [hydrateState, threadId, isOffline]);
+  }, [hydrateState, threadId, isUnavailable]);
 
-  if (isOffline) {
+  if (isUnavailable) {
     return (
       <div
         className="flex w-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6"
@@ -121,13 +131,10 @@ export default function RagHome() {
           <Alert>
             <AlertTitle>Alleato AI backend unavailable</AlertTitle>
             <AlertDescription>
-              {offlineMessage ||
-                "Real-time ChatKit responses are paused while the backend restarts. Use the simplified RAG chat to continue exploring."}
+              {unavailableMessage ||
+                "AI chat is disabled until backend connectivity is restored."}
             </AlertDescription>
           </Alert>
-          <div className="flex-1 overflow-hidden rounded-xl border bg-background">
-            <SimpleRagChat placeholder="Demo mode – ask about any project update" />
-          </div>
         </div>
       </div>
     );

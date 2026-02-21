@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "runId": "2026-02-21T08-13-22-994Z",
+  "runLabel": "",
+  "baseUrl": "http://localhost:3002",
+  "projectId": "67",
+  "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/direct-costs-workflow/runs/2026-02-21T08-13-22-994Z",
+  "invoiceNumber": "AUTO-DC-1771661602995",
+  "createdRecordVisible": true,
+  "timestamp": "2026-02-21T08:13:46.062Z"
+}

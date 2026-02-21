@@ -11,8 +11,11 @@ const { chromium } = require('playwright');
     logs.push(msg.text());
   });
 
-  // Log in first
-  await page.goto('http://localhost:3002/dev-login?email=test@example.com&password=testpassword123');
+  // Log in using real auth form
+  await page.goto('http://localhost:3002/auth/login');
+  await page.fill('#email', 'test@example.com');
+  await page.fill('#password', 'testpassword123');
+  await page.click('button:has-text("Login")');
   await page.waitForTimeout(2000);
 
   // Go to companies page

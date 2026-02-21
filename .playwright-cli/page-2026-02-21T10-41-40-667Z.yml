@@ -1,0 +1,144 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - link "Alleato Alleato" [ref=e6] [cursor=pointer]:
+        - /url: /
+        - img "Alleato" [ref=e7]
+        - generic [ref=e8]: Alleato
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - generic [ref=e11]: Core Tools
+          - list [ref=e13]:
+            - listitem [ref=e14]:
+              - link "Projects" [ref=e15] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e16]:
+              - link "Home" [ref=e17] [cursor=pointer]:
+                - /url: /67/home
+            - listitem [ref=e18]:
+              - link "Tasks" [ref=e19] [cursor=pointer]:
+                - /url: /67/tasks
+        - generic [ref=e20]:
+          - generic [ref=e21]: Project Management
+          - list [ref=e23]:
+            - listitem [ref=e24]:
+              - link "Punch List" [ref=e25] [cursor=pointer]:
+                - /url: /67/punch-list
+            - listitem [ref=e26]:
+              - link "Meetings" [ref=e27] [cursor=pointer]:
+                - /url: /67/meetings
+            - listitem [ref=e28]:
+              - link "Daily Log" [ref=e29] [cursor=pointer]:
+                - /url: /67/daily-log
+        - generic [ref=e30]:
+          - generic [ref=e31]: Admin Tools
+          - list [ref=e33]:
+            - listitem [ref=e34]:
+              - link "Docs Chat" [ref=e35] [cursor=pointer]:
+                - /url: /docs
+      - button "Toggle Sidebar" [ref=e36]
+    - main [ref=e37]:
+      - generic [ref=e39]:
+        - button "Toggle sidebar" [ref=e40] [cursor=pointer]:
+          - img
+        - img "Alleato" [ref=e41]
+        - generic [ref=e42]:
+          - link "Projects" [ref=e44] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - link "Project 67" [ref=e48] [cursor=pointer]:
+              - /url: /67/home
+          - generic [ref=e49]:
+            - img [ref=e50]
+            - generic [ref=e52]: Prime Contracts
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - combobox [ref=e55] [cursor=pointer]:
+              - generic: Select Project
+              - img
+            - combobox [ref=e56]
+            - generic [ref=e58]: Prime Contracts
+          - navigation [ref=e59]:
+            - button "Planning" [ref=e60] [cursor=pointer]:
+              - text: Planning
+              - img [ref=e61]
+            - button "Finance" [ref=e63] [cursor=pointer]:
+              - text: Finance
+              - img [ref=e64]
+            - button "Company" [ref=e66] [cursor=pointer]:
+              - text: Company
+              - img [ref=e67]
+          - button "Settings and admin tools" [ref=e69] [cursor=pointer]:
+            - img
+          - button [ref=e70] [cursor=pointer]:
+            - img
+          - button "Open user menu" [ref=e71] [cursor=pointer]:
+            - generic [ref=e73]: US
+      - main [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e78]:
+            - generic [ref=e79]:
+              - heading "Prime Contracts" [level=1] [ref=e81]
+              - paragraph [ref=e82]: Manage prime contracts and owner agreements
+            - button "New Contract" [ref=e84] [cursor=pointer]:
+              - img
+              - text: New Contract
+          - generic [ref=e86]:
+            - navigation "Tabs" [ref=e88]:
+              - generic [ref=e89]:
+                - button "All Contracts" [ref=e90] [cursor=pointer]:
+                  - generic [ref=e91]: All Contracts
+                  - generic [ref=e92]: "0"
+                - button "Approved" [ref=e93] [cursor=pointer]:
+                  - generic [ref=e94]: Approved
+                  - generic [ref=e95]: "0"
+                - button "Complete" [ref=e96] [cursor=pointer]:
+                  - generic [ref=e97]: Complete
+                  - generic [ref=e98]: "0"
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - button [ref=e102] [cursor=pointer]:
+                  - img
+                - generic [ref=e103]:
+                  - button [ref=e104] [cursor=pointer]:
+                    - img
+                  - button [ref=e105] [cursor=pointer]:
+                    - img
+                  - button [ref=e106] [cursor=pointer]:
+                    - img
+              - generic [ref=e107]:
+                - button "Filter" [ref=e108] [cursor=pointer]:
+                  - img
+                  - generic [ref=e109]: Filter
+                - button "Display" [ref=e110] [cursor=pointer]:
+                  - img
+                  - generic [ref=e111]: Display
+                - button [ref=e112] [cursor=pointer]:
+                  - img
+                - generic [ref=e114]: 0 items
+      - generic [ref=e123]:
+        - list [ref=e124]:
+          - listitem [ref=e125]:
+            - link "Docs" [ref=e126] [cursor=pointer]:
+              - /url: docs-ai-nine.vercel.app
+          - listitem [ref=e127]:
+            - link "Tables" [ref=e128] [cursor=pointer]:
+              - /url: /tables-directory
+          - listitem [ref=e129]:
+            - link "Playwright Crawl" [ref=e130] [cursor=pointer]:
+              - /url: /crawled-pages
+          - listitem [ref=e131]:
+            - link "Careers" [ref=e132] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e133]:
+            - link "Help" [ref=e134] [cursor=pointer]:
+              - /url: "#"
+          - listitem [ref=e135]:
+            - link "Privacy" [ref=e136] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e137]: © 2026 Alleato Group. All rights reserved.
+  - region "Notifications alt+T"
+  - button "Open chat" [ref=e138] [cursor=pointer]:
+    - img [ref=e139]
+  - alert [ref=e141]

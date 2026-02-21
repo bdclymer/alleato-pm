@@ -154,25 +154,25 @@ function SortableLineItemRow({
     <TableRow
       ref={setNodeRef}
       className={cn(
-        'group hover:bg-transparent',
+        'group border-b border-border/60 bg-background transition-colors hover:bg-muted/20',
         isDragging && 'opacity-50',
         !!errors && 'bg-destructive/5'
       )}
       style={style}
     >
       {/* Drag handle */}
-      <TableCell className="w-10 p-2">
+      <TableCell className="w-10 p-3 align-top">
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 rounded"
+          className="mt-2 cursor-grab rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
         >
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+          <GripVertical className="h-4 w-4" />
         </div>
       </TableCell>
 
       {/* Budget Code */}
-      <TableCell className="min-w-52">
+      <TableCell className="min-w-72 p-3 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.budget_code_id`}
@@ -199,7 +199,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Description */}
-      <TableCell className="min-w-52">
+      <TableCell className="min-w-64 p-3 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.description`}
@@ -219,7 +219,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Quantity */}
-      <TableCell className="w-24">
+      <TableCell className="w-36 p-3 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.quantity`}
@@ -233,7 +233,7 @@ function SortableLineItemRow({
                   step="1"
                   formatOnBlur={false}
                   className={cn(
-                    'w-20',
+                    'h-10 w-full text-right',
                     !!errors && typeof errors === 'object' && errors !== null && 'quantity' in errors && 'text-destructive'
                   )}
                   placeholder="Enter qty"
@@ -246,7 +246,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* UOM */}
-      <TableCell className="w-32">
+      <TableCell className="w-28 p-3 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.uom`}
@@ -254,7 +254,7 @@ function SortableLineItemRow({
             <FormItem>
               <FormControl>
                 <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="h-10 w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,7 +273,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Unit Cost */}
-      <TableCell className="w-32">
+      <TableCell className="w-44 p-3 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.unit_cost`}
@@ -287,6 +287,7 @@ function SortableLineItemRow({
                   <InputGroupInput
                     type="number"
                     step="0.01"
+                    className="h-10 text-right"
                     {...field}
                     value={field.value ?? ''}
                     onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
@@ -302,10 +303,10 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Line Total */}
-      <TableCell className="w-32">
+      <TableCell className="w-40 p-3 align-top">
         <div
           className={cn(
-            'font-medium text-right',
+            'pt-2 text-right text-sm font-semibold',
             lineTotal > 0 ? 'text-foreground' : 'text-muted-foreground'
           )}
         >
@@ -326,8 +327,8 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Actions */}
-      <TableCell className="w-24">
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <TableCell className="w-24 p-3 align-top">
+        <div className="flex items-center justify-end space-x-1 opacity-80 transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -371,7 +372,7 @@ function SortableLineItemRow({
         </div>
 
         {/* Validation indicator */}
-        <div className="mt-1">
+        <div className="mt-2 flex justify-end">
           {isValid ? (
             <CheckCircle2 className="h-3 w-3 text-green-500" />
           ) : errors ? (
@@ -465,7 +466,7 @@ export function LineItemsManager({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Line Items Table */}
       <DndContext
         sensors={sensors}
@@ -476,76 +477,88 @@ export function LineItemsManager({
           items={items.map((_, index) => `line-item-${index}`)}
           strategy={verticalListSortingStrategy}
         >
-          <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 rounded-sm">
-                    <TableHead className="w-[40px] py-3 rounded-l-sm"></TableHead>
-                    <TableHead className="min-w-48 py-3">Budget Code *</TableHead>
-                    <TableHead className="min-w-48 py-3">Description</TableHead>
-                    <TableHead className="w-32 py-3">Quantity *</TableHead>
-                    <TableHead className="w-32 py-3">UOM</TableHead>
-                    <TableHead className="w-32 py-3">Unit Cost *</TableHead>
-                    <TableHead className="w-32 py-3 text-right">
-                      Line Total
-                    </TableHead>
-                    <TableHead className="w-12 py-3 rounded-r-sm"></TableHead>
+          <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/20">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/70 hover:bg-muted/70">
+                  <TableHead className="w-[40px] py-3"></TableHead>
+                  <TableHead className="min-w-72 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                    Budget Code *
+                  </TableHead>
+                  <TableHead className="min-w-64 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                    Description
+                  </TableHead>
+                  <TableHead className="w-36 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                    Quantity *
+                  </TableHead>
+                  <TableHead className="w-28 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                    UOM
+                  </TableHead>
+                  <TableHead className="w-44 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                    Unit Cost *
+                  </TableHead>
+                  <TableHead className="w-40 py-3 text-right text-xs font-semibold tracking-wide text-muted-foreground">
+                    Line Total
+                  </TableHead>
+                  <TableHead className="w-24 py-3"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <Calculator className="h-8 w-8 text-muted-foreground/50" />
+                        <Text>No line items yet</Text>
+                        <Text size="sm">
+                          Click &ldquo;Add Line Item&rdquo; to get started
+                        </Text>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        <div className="flex flex-col items-center space-y-2">
-                          <Calculator className="h-8 w-8 text-muted-foreground/50" />
-                          <Text>No line items yet</Text>
-                          <Text size="sm">
-                            Click &ldquo;Add Line Item&rdquo; to get started
-                          </Text>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    items.map((item, index) => {
-                      const errors = form.formState.errors.line_items?.[index]
-                      const isValid =
-                        !errors &&
-                        !!form.getValues(`line_items.${index}.budget_code_id`) &&
-                        !!form.getValues(`line_items.${index}.quantity`) &&
-                        form.getValues(`line_items.${index}.unit_cost`) !==
-                          undefined
+                ) : (
+                  items.map((item, index) => {
+                    const errors = form.formState.errors.line_items?.[index]
+                    const isValid =
+                      !errors &&
+                      !!form.getValues(`line_items.${index}.budget_code_id`) &&
+                      !!form.getValues(`line_items.${index}.quantity`) &&
+                      form.getValues(`line_items.${index}.unit_cost`) !==
+                        undefined
 
-                      return (
-                        <SortableLineItemRow
-                          key={`line-item-${index}`}
-                          item={item}
-                          index={index}
-                          budgetCodes={budgetCodes}
-                          onRemove={() => onRemove(index)}
-                          onDuplicate={() => handleDuplicate(index)}
-                          onCreateBudgetCode={onCreateBudgetCode}
-                          form={form}
-                          errors={errors}
-                          isValid={isValid}
-                        />
-                      )
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </SortableContext>
-          </DndContext>
+                    return (
+                      <SortableLineItemRow
+                        key={`line-item-${index}`}
+                        item={item}
+                        index={index}
+                        budgetCodes={budgetCodes}
+                        onRemove={() => onRemove(index)}
+                        onDuplicate={() => handleDuplicate(index)}
+                        onCreateBudgetCode={onCreateBudgetCode}
+                        form={form}
+                        errors={errors}
+                        isValid={isValid}
+                      />
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Actions and Total */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
           <Button
             type="button"
-            size="sm"
+            size="default"
             onClick={onAdd}
-            className="flex items-center gap-2 bg-brand text-white hover:bg-brand-hover"
+            className="h-10 gap-2 bg-brand px-4 text-white hover:bg-brand-hover"
           >
             <Plus className="h-4 w-4" />
             Add Line Item
@@ -558,9 +571,9 @@ export function LineItemsManager({
           )}
         </div>
 
-        <div className="text-right">
-          <div className="text-sm text-muted-foreground">Grand Total</div>
-          <div className="text-xl font-semibold">
+        <div className="rounded-lg border border-border/70 bg-background px-4 py-3 text-right">
+          <div className="text-xs font-medium tracking-wide text-muted-foreground">Grand Total</div>
+          <div className="text-2xl font-semibold">
             {formatCurrency(grandTotal)}
           </div>
           {grandTotal > 10000 && (

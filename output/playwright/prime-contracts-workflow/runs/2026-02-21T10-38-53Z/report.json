@@ -1,0 +1,38 @@
+{
+  "runTimestamp": "2026-02-21T10:39:00.088Z",
+  "baseUrl": "http://localhost:3000",
+  "selectedProjectId": null,
+  "requiresAuth": false,
+  "createdContractId": null,
+  "createdContractNumber": null,
+  "steps": [
+    {
+      "name": "Project selection",
+      "status": "blocked",
+      "details": "Could not load form with candidate project IDs",
+      "at": "2026-02-21T10:39:04.266Z"
+    }
+  ],
+  "assertions": [],
+  "urlsVisited": [
+    "http://localhost:3000/67/prime-contracts/new",
+    "http://localhost:3000/60/prime-contracts/new"
+  ],
+  "selectorFallbacksUsed": [],
+  "blockers": [
+    {
+      "blocker": "No usable project ID",
+      "rootCause": "Neither project 67 nor fallback 60 loaded the prime contract form."
+    }
+  ],
+  "artifacts": [
+    "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/prime-contracts-workflow/runs/2026-02-21T10-38-53Z/99-auth-or-project-blocked.png",
+    "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/prime-contracts-workflow/runs/2026-02-21T10-38-53Z/report.json",
+    "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/prime-contracts-workflow/runs/2026-02-21T10-38-53Z/playwright-run-output.txt"
+  ],
+  "cleanup": {
+    "attempted": false,
+    "status": "skipped",
+    "reason": "No contractId created"
+  }
+}

@@ -372,7 +372,7 @@ export function DirectCostForm({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Auto-save indicator */}
       {mode === 'edit' && (
         <AutoSaveIndicator
@@ -382,12 +382,12 @@ export function DirectCostForm({
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
+          <Card className="gap-5 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-5">
+              <CardTitle className="text-xl">Basic Information</CardTitle>
+              <CardDescription className="text-sm">
                 Enter the cost details and select vendor
               </CardDescription>
             </CardHeader>
@@ -692,14 +692,14 @@ export function DirectCostForm({
           </Card>
 
           {/* Line Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Line Items</CardTitle>
-              <CardDescription>
+          <Card className="gap-5 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-5">
+              <CardTitle className="text-xl">Line Items</CardTitle>
+              <CardDescription className="text-sm">
                 Add line items with budget codes, quantities, and costs
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-1">
               <LineItemsManager
                 items={fields as any}
                 budgetCodes={budgetCodes.map(bc => ({
@@ -729,14 +729,14 @@ export function DirectCostForm({
           </Card>
 
           {/* Attachments */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Attachments</CardTitle>
-              <CardDescription>
+          <Card className="gap-5 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-5">
+              <CardTitle className="text-xl">Attachments</CardTitle>
+              <CardDescription className="text-sm">
                 Upload invoices, receipts, and supporting documents (optional)
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-1">
               <AttachmentManager
                 attachments={[]}
                 onUpload={async () => {
@@ -752,71 +752,73 @@ export function DirectCostForm({
           </Card>
 
           {/* Grand Total + Actions */}
-          <div className="flex items-center justify-between pt-6">
-            <div className="flex items-center space-x-2">
-              {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push(`/${projectId}/direct-costs`)}
-              >
-                Back to List
-              </Button>
-              {/* Auto-Fill Button */}
-              {showAutoFill && (
-                <button
-                  type="button"
-                  onClick={handleAutoFill}
-                  disabled={isAutoFilling || isLoadingOptions}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30 disabled:opacity-50"
-                  title="Development only: Fill form with test data"
-                >
-                  <Wand2 className="w-4 h-4" />
-                  {isAutoFilling ? 'Filling...' : 'Auto-Fill'}
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {/* Grand Total */}
-              {grandTotal > 0 && (
-                <div className="flex items-center gap-2 text-right">
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <Text size="sm" tone="muted">
-                      Total Amount
-                    </Text>
-                    <Text size="xl" weight="semibold">
-                      {formatCurrency(grandTotal)}
-                    </Text>
-                  </div>
-                </div>
-              )}
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={isSubmitting || !form.formState.isValid}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Save className="h-4 w-4 mr-2 animate-spin" />
-                    {mode === 'create' ? 'Creating...' : 'Updating...'}
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    {mode === 'create'
-                      ? 'Create Direct Cost'
-                      : 'Update Direct Cost'}
-                  </>
+          <div className="sticky bottom-3 z-10 rounded-xl border border-border/70 bg-background/95 px-4 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-2">
+                {onCancel && (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push(`/${projectId}/direct-costs`)}
+                >
+                  Back to List
+                </Button>
+                {/* Auto-Fill Button */}
+                {showAutoFill && (
+                  <button
+                    type="button"
+                    onClick={handleAutoFill}
+                    disabled={isAutoFilling || isLoadingOptions}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30 disabled:opacity-50"
+                    title="Development only: Fill form with test data"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    {isAutoFilling ? 'Filling...' : 'Auto-Fill'}
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-4 lg:justify-end">
+                {/* Grand Total */}
+                {grandTotal > 0 && (
+                  <div className="flex items-center gap-2 text-right">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Text size="sm" tone="muted">
+                        Total Amount
+                      </Text>
+                      <Text size="xl" weight="semibold">
+                        {formatCurrency(grandTotal)}
+                      </Text>
+                    </div>
+                  </div>
+                )}
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !form.formState.isValid}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Save className="h-4 w-4 mr-2 animate-spin" />
+                      {mode === 'create' ? 'Creating...' : 'Updating...'}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {mode === 'create'
+                        ? 'Create Direct Cost'
+                        : 'Update Direct Cost'}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </form>

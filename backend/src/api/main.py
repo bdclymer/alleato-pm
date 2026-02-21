@@ -104,19 +104,19 @@ try:
     try:
         if use_unified_agent:
             # Use unified agent (no classification)
-            from src.workers.scripts.rag_chatkit_server_unified import RagChatKitServerUnified as RagChatKitServer
+            from src.scripts.rag_chatkit_server_unified import RagChatKitServerUnified as RagChatKitServer
             print("✓ Using UNIFIED AGENT (no classification) - faster, simpler")
         else:
             # Use classified routing (default)
-            from src.workers.scripts.rag_chatkit_server_streaming import RagChatKitServerStreaming as RagChatKitServer
+            from src.scripts.rag_chatkit_server_streaming import RagChatKitServerStreaming as RagChatKitServer
             print("✓ Using CLASSIFIED ROUTING (classification + specialists) - legacy approach")
     except ImportError:
         try:
-            from src.workers.scripts.rag_chatkit_server import RagChatKitServer
+            from src.scripts.rag_chatkit_server import RagChatKitServer
             print("⚠ Using standard RAG server (no streaming)")
         except ImportError:
-            # The module was moved under workers/scripts/, so load it directly via its path
-            rag_server_path = Path(__file__).parent.parent / "workers" / "scripts" / "rag_chatkit_server.py"
+            # Fallback to loading directly from the scripts directory path.
+            rag_server_path = Path(__file__).parent.parent / "scripts" / "rag_chatkit_server.py"
             try:
                 spec = importlib.util.spec_from_file_location("rag_chatkit_server", rag_server_path)
                 if not spec or not spec.loader:
@@ -749,9 +749,36 @@ async def rag_bootstrap():
 
 def _select_keyword(message: str) -> Optional[str]:
     words = re.findall(r"[A-Za-z]+", message.lower())
-    for word in words:
-        if len(word) >= 4:
-            return word
+    stop_words = {
+        "tell",
+        "about",
+        "what",
+        "when",
+        "where",
+        "which",
+        "there",
+        "their",
+        "would",
+        "could",
+        "should",
+        "project",
+        "status",
+        "concerns",
+        "issues",
+        "any",
+        "with",
+        "from",
+        "that",
+        "this",
+        "have",
+        "been",
+        "were",
+        "please",
+    }
+    candidates = [w for w in words if len(w) >= 4 and w not in stop_words]
+    if candidates:
+        # Favor the longest candidate (often project/client names).
+        return sorted(candidates, key=len, reverse=True)[0]
     return None
 
 
@@ -797,6 +824,26 @@ def _build_chat_reply(
         reply_lines.append(
             f"Retrieved {len(sources)} transcript snippets based on the keyword '{keyword or 'recent'}'."
         )
+        reply_lines.append("Top relevant transcript evidence:")
+        for source in sources[:3]:
+            snippet = (source.get("snippet") or "").replace("\n", " ").strip()
+            if snippet:
+                reply_lines.append(f"- {snippet[:180]}")
+
+        concern_terms = ("risk", "delay", "blocked", "issue", "concern", "over budget", "late")
+        concern_hits = sum(
+            1
+            for source in sources
+            if any(term in (source.get("snippet") or "").lower() for term in concern_terms)
+        )
+        if concern_hits > 0:
+            reply_lines.append(
+                f"Potential concerns detected in {concern_hits} of the retrieved snippets. Review those items for schedule/cost risk."
+            )
+        else:
+            reply_lines.append(
+                "No explicit risk language was detected in the retrieved snippets."
+            )
     if not reply_lines:
         reply_lines.append(
             "No relevant transcripts or tasks were found yet. Try ingesting more Fireflies meetings or widening your query."

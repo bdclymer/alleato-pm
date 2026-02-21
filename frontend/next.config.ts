@@ -2,6 +2,11 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Disable automatic package import optimization; it can generate unstable
+    // vendor chunk references for date-fns in webpack dev mode.
+    optimizePackageImports: [],
+  },
   images: {
     remotePatterns: [
       {

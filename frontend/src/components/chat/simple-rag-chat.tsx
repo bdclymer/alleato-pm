@@ -59,11 +59,14 @@ export function SimpleRagChat({
         }),
       });
 
+      const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const backendMessage =
+          data && typeof data === "object" && "message" in data
+            ? String(data.message)
+            : `HTTP ${response.status}`;
+        throw new Error(backendMessage);
       }
-
-      const data = await response.json();
 
       if (data.thread_id && !threadId) {
         setThreadId(data.thread_id);
@@ -81,10 +84,14 @@ export function SimpleRagChat({
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Sorry, I encountered an unexpected error.";
       const errorMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again.",
+        content: `Request failed: ${message}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
