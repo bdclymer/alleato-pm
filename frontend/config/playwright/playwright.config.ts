@@ -26,7 +26,7 @@ export default defineConfig({
       'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',  // Record video but only keep on failure
+    video: 'on',
   },
   timeout: 120000, // 2 minutes for agent responses
   expect: {
