@@ -9,12 +9,14 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 export default defineConfig({
   testDir: '../../tests',
   testMatch: '**/*.spec.{ts,js}',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: process.env.CI ? 4 : 2,
   reporter: [
-    ['html', { outputFolder: '../../tests/playwright-report' }],
+    ['html', { outputFolder: '../../tests/playwright-report', open: 'never' }],
+    ['json', { outputFile: '../../tests/test-results/results.json' }],
+    ...(process.env.CI ? [['github'] as const] : []),
     ['list'],
   ],
   use: {

@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-02-21T12:19:23.656Z",
+    "generatedAt": "2026-02-21T12:50:21.283Z",
     "mode": "latest-per-tool",
     "overall": "PARTIAL",
     "reportCount": 3,
@@ -22,6 +22,7 @@
       "sourceSummary": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
       "tool": "frontend-suite",
       "path": "frontend/playwright-report/report.json",
+      "linkPath": "../../../frontend/playwright-report/index.html",
       "discoveredAt": "2026-02-21T10:56:07.986Z"
     },
     {
@@ -37,6 +38,7 @@
       "sourceSummary": "http://localhost:3000",
       "tool": "direct-costs",
       "path": "output/playwright/direct-costs-workflow/runs/2026-02-21T09-24-16-859Z-attempt-1/report.json",
+      "linkPath": "../direct-costs-workflow/runs/2026-02-21T09-24-16-859Z-attempt-1/report.html",
       "discoveredAt": "2026-02-21T09:24:31.686Z"
     },
     {
@@ -52,6 +54,7 @@
       "sourceSummary": "http://localhost:3000",
       "tool": "prime-contracts",
       "path": "output/playwright/prime-contracts-workflow/runs/2026-02-21T10-40-48Z/report.json",
+      "linkPath": "../prime-contracts-workflow/runs/2026-02-21T10-40-48Z/report.html",
       "discoveredAt": "2026-02-21T10:42:43.069Z"
     }
   ]

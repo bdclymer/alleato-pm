@@ -128,9 +128,8 @@ function classifyNativePlaywrightReport(report) {
   };
 }
 
-function relFromCwd(filePath, cwd) {
-  const rel = path.relative(cwd, filePath);
-  return rel.startsWith("..") ? filePath : rel;
+function toRelativePath(fromDir, targetPath) {
+  return path.relative(fromDir, targetPath).split(path.sep).join("/");
 }
 
 function htmlEscape(value) {
@@ -163,7 +162,7 @@ function buildHtml(summary, reports) {
   <td>${r.partialCount}</td>
   <td>${r.failCount}</td>
   <td>${htmlEscape(r.startedAt || "-")}</td>
-  <td><a href="../${htmlEscape(r.path)}" target="_blank" rel="noreferrer">open report</a></td>
+      <td><a href="${htmlEscape(r.linkPath)}" target="_blank" rel="noreferrer">open report</a></td>
 </tr>`;
     })
     .join("\n");
@@ -245,6 +244,7 @@ function selectLatestPerTool(reports) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const cwd = process.cwd();
+  const outDir = path.join(cwd, "output", "playwright", "dashboard");
   const candidates = walkFiles(cwd).filter((f) => /report\.json$/i.test(f) && f.includes("playwright"));
   const reports = [];
 
@@ -256,7 +256,8 @@ function main() {
     reports.push({
       ...parsed,
       tool: pickToolName(filePath),
-      path: relFromCwd(filePath, cwd),
+      path: toRelativePath(cwd, filePath),
+      linkPath: toRelativePath(outDir, filePath),
       discoveredAt: new Date(fs.statSync(filePath).mtimeMs).toISOString(),
     });
   }
@@ -278,7 +279,6 @@ function main() {
     failReports,
   };
 
-  const outDir = path.join(cwd, "output", "playwright", "dashboard");
   fs.mkdirSync(outDir, { recursive: true });
 
   const jsonPath = path.join(outDir, "dashboard-data.json");

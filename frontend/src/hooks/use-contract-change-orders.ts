@@ -12,6 +12,7 @@ import type {
 export interface ContractChangeOrderTotals {
   approved: number;
   pending: number;
+  draft: number;
   rejected: number;
   total: number;
   count: number;
@@ -20,7 +21,7 @@ export interface ContractChangeOrderTotals {
 interface UseContractChangeOrdersOptions {
   projectId: string;
   contractId: string;
-  status?: "pending" | "approved" | "rejected";
+  status?: "draft" | "pending" | "approved" | "rejected";
   enabled?: boolean;
 }
 
@@ -80,6 +81,7 @@ export function useContractChangeOrders(
   const [totals, setTotals] = useState<ContractChangeOrderTotals>({
     approved: 0,
     pending: 0,
+    draft: 0,
     rejected: 0,
     total: 0,
     count: 0,
@@ -103,6 +105,9 @@ export function useContractChangeOrders(
             case "pending":
               acc.pending += amount;
               break;
+            case "draft":
+              acc.draft += amount;
+              break;
             case "rejected":
               acc.rejected += amount;
               break;
@@ -113,6 +118,7 @@ export function useContractChangeOrders(
         {
           approved: 0,
           pending: 0,
+          draft: 0,
           rejected: 0,
           total: 0,
           count: 0,
@@ -147,6 +153,7 @@ export function useContractChangeOrders(
           setTotals({
             approved: 0,
             pending: 0,
+            draft: 0,
             rejected: 0,
             total: 0,
             count: 0,
@@ -394,7 +401,7 @@ export function useContractChangeOrders(
 export function useContractChangeOrdersByStatus(
   projectId: string,
   contractId: string,
-  status: "pending" | "approved" | "rejected"
+  status: "draft" | "pending" | "approved" | "rejected"
 ) {
   return useContractChangeOrders({
     projectId,
