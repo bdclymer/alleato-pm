@@ -109,7 +109,7 @@
     "tags": [],
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
-    "version": "1.58.1",
+    "version": "1.58.2",
     "workers": 5,
     "webServer": {
       "command": "npm run dev",
@@ -140,7 +140,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3796,
+                  "duration": 6827,
                   "errors": [],
                   "stdout": [
                     {
@@ -152,13 +152,18 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-02-21T14:58:19.137Z",
+                  "startTime": "2026-02-21T22:54:08.004Z",
                   "annotations": [],
                   "attachments": [
                     {
                       "name": "screenshot",
                       "contentType": "image/png",
                       "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
                     }
                   ]
                 }
@@ -168,26 +173,26 @@
           ],
           "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
           "file": "auth.setup.ts",
-          "line": 12,
+          "line": 11,
           "column": 6
         }
       ]
     },
     {
-      "title": "e2e/contracts/prime-contracts-financial-integrity.spec.ts",
-      "file": "e2e/contracts/prime-contracts-financial-integrity.spec.ts",
+      "title": "e2e/change-orders/change-orders-comprehensive.spec.ts",
+      "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Prime Contracts financial integrity",
-          "file": "e2e/contracts/prime-contracts-financial-integrity.spec.ts",
-          "line": 18,
+          "title": "Change Orders - Status Workflow",
+          "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
+          "line": 125,
           "column": 6,
           "specs": [
             {
-              "title": "revised amount includes approved COs only and % paid is consistent",
+              "title": "should approve pending CO and update contract value",
               "ok": true,
               "tags": [],
               "tests": [
@@ -202,25 +207,23 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 21033,
+                      "duration": 5986,
                       "errors": [],
                       "stdout": [],
-                      "stderr": [
-                        {
-                          "text": "CO summary fields did not converge (approved=0, pending=0, draft=0, expectedApproved=300, expectedPending=200, expectedDraft=0)\n"
-                        },
-                        {
-                          "text": "Payments/%Paid summary did not converge (payments_received=0, percent_paid=0, expectedPayments=400, expectedPercent=30.77)\n"
-                        }
-                      ],
+                      "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-02-21T14:58:24.046Z",
+                      "startTime": "2026-02-21T22:54:19.358Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-contracts-prime-contra-c6157-only-and-paid-is-consistent-chromium/test-finished-1.png"
+                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-orders-change-o-6c276-O-and-update-contract-value-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-orders-change-o-6c276-O-and-update-contract-value-chromium/video.webm"
                         }
                       ]
                     }
@@ -228,9 +231,9 @@
                   "status": "expected"
                 }
               ],
-              "id": "5e022422e4e7f9bbc6d6-aaa3984ea5d1b9085909",
-              "file": "e2e/contracts/prime-contracts-financial-integrity.spec.ts",
-              "line": 32,
+              "id": "336398dae1d48adbe7d3-44e980f31b3e400f8394",
+              "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
+              "line": 157,
               "column": 7
             }
           ]
@@ -240,8 +243,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-21T14:58:17.964Z",
-    "duration": 27311.193,
+    "startTime": "2026-02-21T22:54:06.614Z",
+    "duration": 20329.403,
     "expected": 2,
     "skipped": 0,
     "unexpected": 0,

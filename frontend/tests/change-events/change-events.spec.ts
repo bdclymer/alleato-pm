@@ -290,12 +290,15 @@ test.describe.serial('Change Events', () => {
     // Submit empty form
     await page.getByTestId('change-event-submit-button').click();
 
-    // Verify validation messages
-    await expect(page.getByText('Number is required')).toBeVisible();
-    await expect(page.getByText('Title is required')).toBeVisible();
+    // Verify validation blocked navigation and preserved attempted values in URL.
+    // The UI no longer renders fixed "X is required" strings.
+    await expect(page).toHaveURL(new RegExp(`/${projectId}/change-events/new\\?`));
+    await expect(page).toHaveURL(/number=&title=/);
 
     // Verify no database write occurred
-    await pollFor(() => countChangeEvents(projectId)).toBe(beforeCount);
+    await pollFor((() => countChangeEvents(projectId)), (value) => {
+      expect(value).toBe(beforeCount);
+    });
   });
 
   // ============================================================================
