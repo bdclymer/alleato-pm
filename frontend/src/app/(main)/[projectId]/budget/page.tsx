@@ -35,6 +35,7 @@ import { PendingCostChangesModal } from "@/components/budget/modals/PendingCostC
 import { ForecastToCompleteModal } from "@/components/budget/modals/ForecastToCompleteModal";
 import { ImportBudgetModal } from "@/components/budget/ImportBudgetModal";
 import type { BudgetDetailLineItem } from "@/components/budget/budget-details-table";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { BudgetLineItem } from "@/types/budget";
 import {
   AlertDialog,
@@ -61,6 +62,42 @@ import {
 } from "@/lib/budget-filters";
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
+
+function BudgetTableSkeleton() {
+  return (
+    <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
+      {/* Table header skeleton */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/50">
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-4 w-32 ml-4" />
+        <Skeleton className="h-4 w-20 ml-4" />
+        <Skeleton className="h-4 w-28 ml-auto" />
+        <Skeleton className="h-4 w-28" />
+        <Skeleton className="h-4 w-28" />
+      </div>
+      {/* Table rows skeleton */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
+          <Skeleton className="h-4 w-4" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-48 ml-4" />
+          <Skeleton className="h-4 w-12 ml-4" />
+          <Skeleton className="h-5 w-24 ml-auto" />
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-24" />
+        </div>
+      ))}
+      {/* Grand total row skeleton */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-t">
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-5 w-28 ml-auto" />
+        <Skeleton className="h-5 w-28" />
+        <Skeleton className="h-5 w-28" />
+      </div>
+    </div>
+  );
+}
 
 function BudgetPageContent() {
   const router = useRouter();
@@ -594,72 +631,35 @@ function BudgetPageContent() {
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S or Cmd+S: Refresh data
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        handleLineItemSuccess();
-        toast.success("Budget data refreshed", {
-          description: isLocked
-            ? "Data refreshed. Budget remains locked."
-            : "Data refreshed successfully."
-        });
+      // Don't handle shortcuts when typing in inputs/textareas
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        return;
       }
 
-      // Ctrl+E or Cmd+E: Open create line item modal (if not locked)
-      if ((e.ctrlKey || e.metaKey) && e.key === "e") {
-        e.preventDefault();
-        if (isLocked) {
-          toast.error("Budget is locked", {
-            description: "Unlock the budget to add new line items."
-          });
-        } else {
-          toast.info("Opening budget setup", {
-            description: "Redirecting to line item creation..."
-          });
-          router.push(`/${projectId}/budget/setup`);
-        }
-      }
-
-      // Ctrl+M or Cmd+M: Create budget modification (if not locked)
-      if ((e.ctrlKey || e.metaKey) && e.key === "m") {
-        e.preventDefault();
-        if (isLocked) {
-          toast.error("Budget is locked", {
-            description: "Unlock the budget to create modifications."
-          });
-        } else {
-          handleModificationClick();
-          toast.info("Opening modification dialog");
-        }
-      }
-
-      // Ctrl+I or Cmd+I: Import budget data (if not locked)
-      if ((e.ctrlKey || e.metaKey) && e.key === "i") {
-        e.preventDefault();
-        if (isLocked) {
-          toast.error("Budget is locked", {
-            description: "Unlock the budget to import data."
-          });
-        } else {
-          handleImport();
-          toast.info("Opening import dialog");
-        }
-      }
-
-      // Escape: Close any open modals
+      // Escape: Close any open modals (only if one is actually open)
       if (e.key === "Escape") {
-        setShowLineItemModal(false);
-        setShowModificationModal(false);
-        setShowImportModal(false);
-        setShowEditModal(false);
-        setShowDeleteDialog(false);
-        toast.info("Dialog closed");
+        const hasOpenModal =
+          showLineItemModal ||
+          showModificationModal ||
+          showImportModal ||
+          showEditModal ||
+          showDeleteDialog;
+
+        if (hasOpenModal) {
+          setShowLineItemModal(false);
+          setShowModificationModal(false);
+          setShowImportModal(false);
+          setShowEditModal(false);
+          setShowDeleteDialog(false);
+        }
+        return;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLocked, projectId, router, handleLineItemSuccess, handleModificationClick, handleImport]);
+  }, [showLineItemModal, showModificationModal, showImportModal, showEditModal, showDeleteDialog]);
 
   const handleModificationSuccess = () => {
     // Refresh budget data after creating modification
@@ -927,15 +927,11 @@ function BudgetPageContent() {
 
               <Suspense
                 fallback={
-                  <div className="flex items-center justify-center h-full">
-                    Loading...
-                  </div>
+                  <BudgetTableSkeleton />
                 }
               >
                 {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    Loading budget data for project {projectId}...
-                  </div>
+                  <BudgetTableSkeleton />
                 ) : (
                   <>
                     <BudgetTable
@@ -1152,8 +1148,12 @@ export default function ProjectBudgetPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center h-screen">
-          Loading...
+        <div className="flex flex-1 flex-col gap-4 p-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-6 w-20" />
+          </div>
+          <BudgetTableSkeleton />
         </div>
       }
     >
