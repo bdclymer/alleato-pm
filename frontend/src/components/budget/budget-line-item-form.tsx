@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Search, Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Plus, Search, Trash2, ChevronRight, ChevronDown, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface BudgetCode {
   id: string;
@@ -46,6 +47,8 @@ interface BudgetCode {
   costTypeId: string | null;
   description: string;
   fullLabel: string;
+  divisionId: string | null;
+  divisionTitle: string | null;
 }
 
 interface BudgetLineItemRow {
@@ -73,6 +76,9 @@ export function BudgetLineItemForm({
   const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
   const [loadingCodes, setLoadingCodes] = useState(true);
   const [pendingRowId, setPendingRowId] = useState<string | null>(null);
+  const [groupedBudgetCodes, setGroupedBudgetCodes] = useState<
+    Record<string, BudgetCode[]>
+  >({});
 
   // Cost codes from Supabase
   const [availableCostCodes, setAvailableCostCodes] = useState<
@@ -118,16 +124,60 @@ export function BudgetLineItemForm({
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set(),
   );
+  const [expandedBudgetDivisions, setExpandedBudgetDivisions] = useState<
+    Set<string>
+  >(new Set());
 
   // Budget Code selector state
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Track negative amounts for warnings
+  const [negativeAmountRows, setNegativeAmountRows] = useState<Set<string>>(
+    new Set(),
+  );
+
+  // Filter and group budget codes by division (memoized)
+  const filteredCodes = useMemo(
+    () =>
+      budgetCodes.filter((code) =>
+        code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
+    [budgetCodes, searchQuery],
+  );
+
+  const filteredGroupedCodes = useMemo(
+    () =>
+      filteredCodes.reduce(
+        (acc, code) => {
+          const divisionKey = code.divisionTitle || "Other";
+          if (!acc[divisionKey]) {
+            acc[divisionKey] = [];
+          }
+          acc[divisionKey].push(code);
+          return acc;
+        },
+        {} as Record<string, BudgetCode[]>,
+      ),
+    [filteredCodes],
+  );
 
   useEffect(() => {
     if (!showCreateCodeModal) {
       setPendingRowId(null);
     }
   }, [showCreateCodeModal]);
+
+  // Auto-expand divisions when searching
+  useEffect(() => {
+    if (searchQuery) {
+      // Expand all divisions that have matching codes
+      const divisionsWithResults = new Set(
+        Object.keys(filteredGroupedCodes),
+      );
+      setExpandedBudgetDivisions(divisionsWithResults);
+    }
+  }, [searchQuery, filteredGroupedCodes]);
 
   // Fetch cost codes from Supabase when create code modal opens
   useEffect(() => {
@@ -196,8 +246,24 @@ export function BudgetLineItemForm({
         };
 
         setBudgetCodes(budgetCodes || []);
+
+        // Group budget codes by division
+        const grouped = (budgetCodes || []).reduce(
+          (acc, code) => {
+            const divisionKey = code.divisionTitle || "Other";
+            if (!acc[divisionKey]) {
+              acc[divisionKey] = [];
+            }
+            acc[divisionKey].push(code);
+            return acc;
+          },
+          {} as Record<string, BudgetCode[]>,
+        );
+
+        setGroupedBudgetCodes(grouped);
       } catch (error) {
         setBudgetCodes([]);
+        setGroupedBudgetCodes({});
       } finally {
         setLoadingCodes(false);
       }
@@ -220,6 +286,18 @@ export function BudgetLineItemForm({
 
   const toggleDivision = (division: string) => {
     setExpandedDivisions((prev) => {
+      const next = new Set(prev);
+      if (next.has(division)) {
+        next.delete(division);
+      } else {
+        next.add(division);
+      }
+      return next;
+    });
+  };
+
+  const toggleBudgetDivision = (division: string) => {
+    setExpandedBudgetDivisions((prev) => {
       const next = new Set(prev);
       if (next.has(division)) {
         next.delete(division);
@@ -329,22 +407,37 @@ export function BudgetLineItemForm({
     field: keyof BudgetLineItemRow,
     value: string,
   ) => {
-    setRows(
-      rows.map((row) => {
-        if (row.id !== rowId) return row;
+    const updatedRows = rows.map((row) => {
+      if (row.id !== rowId) return row;
 
-        const updatedRow = { ...row, [field]: value };
+      const updatedRow = { ...row, [field]: value };
 
-        if (field === "qty" || field === "unitCost") {
-          updatedRow.amount = calculateAmount(
-            updatedRow.qty,
-            updatedRow.unitCost,
-          );
+      if (field === "qty" || field === "unitCost") {
+        updatedRow.amount = calculateAmount(
+          updatedRow.qty,
+          updatedRow.unitCost,
+        );
+      }
+
+      return updatedRow;
+    });
+
+    setRows(updatedRows);
+
+    // Check for negative amounts
+    const updatedRow = updatedRows.find((r) => r.id === rowId);
+    if (updatedRow) {
+      const amountValue = parseFloat(updatedRow.amount);
+      setNegativeAmountRows((prev) => {
+        const next = new Set(prev);
+        if (amountValue < 0) {
+          next.add(rowId);
+        } else {
+          next.delete(rowId);
         }
-
-        return updatedRow;
-      }),
-    );
+        return next;
+      });
+    }
   };
 
 
@@ -429,10 +522,6 @@ export function BudgetLineItemForm({
     }
   };
 
-  const filteredCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   return (
     <>
       <div className="mb-6">
@@ -501,7 +590,7 @@ export function BudgetLineItemForm({
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[400px] p-0"
+                            className="w-[500px] p-0"
                             align="start"
                           >
                             <Command>
@@ -510,25 +599,50 @@ export function BudgetLineItemForm({
                                 value={searchQuery}
                                 onValueChange={setSearchQuery}
                               />
-                              <CommandList>
+                              <CommandList className="max-h-[400px]">
                                 <CommandEmpty>
                                   {loadingCodes
                                     ? "Loading..."
                                     : "No budget codes found."}
                                 </CommandEmpty>
-                                <CommandGroup>
-                                  {filteredCodes.map((code) => (
-                                    <CommandItem
-                                      key={code.id}
-                                      value={code.fullLabel}
-                                      onSelect={() =>
-                                        handleBudgetCodeSelect(row.id, code)
-                                      }
-                                    >
-                                      {code.fullLabel}
-                                    </CommandItem>
+                                {Object.entries(filteredGroupedCodes)
+                                  .sort(([a], [b]) => a.localeCompare(b))
+                                  .map(([division, codes]) => (
+                                    <div key={division}>
+                                      <div
+                                        className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer sticky top-0 bg-background z-10 border-b"
+                                        onClick={() =>
+                                          toggleBudgetDivision(division)
+                                        }
+                                      >
+                                        <span>{division}</span>
+                                        {expandedBudgetDivisions.has(division) ? (
+                                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                        ) : (
+                                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                        )}
+                                      </div>
+                                      {expandedBudgetDivisions.has(division) && (
+                                        <CommandGroup>
+                                          {codes.map((code) => (
+                                            <CommandItem
+                                              key={code.id}
+                                              value={code.fullLabel}
+                                              onSelect={() =>
+                                                handleBudgetCodeSelect(
+                                                  row.id,
+                                                  code,
+                                                )
+                                              }
+                                              className="pl-8"
+                                            >
+                                              {code.fullLabel}
+                                            </CommandItem>
+                                          ))}
+                                        </CommandGroup>
+                                      )}
+                                    </div>
                                   ))}
-                                </CommandGroup>
                                 <CommandSeparator />
                                 <CommandGroup>
                                   <CommandItem
@@ -612,18 +726,28 @@ export function BudgetLineItemForm({
                       </td>
 
                       <td className="px-4 py-3">
-                        <NumberInput
-                          step="0.01"
-                          value={row.amount}
-                          onChange={(e) =>
-                            handleRowChange(row.id, "amount", e.target.value)
-                          }
-                          placeholder="$0.00"
-                          className="h-9 font-medium"
-                          clearZeroOnFocus={true}
-                          autoSelectOnFocus={true}
-                          currency={true}
-                        />
+                        <div className="space-y-2">
+                          <NumberInput
+                            step="0.01"
+                            value={row.amount}
+                            onChange={(e) =>
+                              handleRowChange(row.id, "amount", e.target.value)
+                            }
+                            placeholder="$0.00"
+                            className="h-9 font-medium"
+                            clearZeroOnFocus={true}
+                            autoSelectOnFocus={true}
+                            currency={true}
+                          />
+                          {negativeAmountRows.has(row.id) && (
+                            <Alert className="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-200">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription className="text-xs">
+                                Negative amounts are unusual. Please verify this is intentional before saving.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-4 py-3">

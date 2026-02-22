@@ -95,7 +95,7 @@ export async function POST(
 
 // DELETE /api/projects/[id]/budget/lock - Unlock the budget
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
 ) {
   try {
@@ -110,6 +110,16 @@ export async function DELETE(
     }
 
     const supabase = await createClient();
+
+    // Parse request body to get preserveLineItems flag
+    let preserveLineItems = true; // Default to preserving line items
+    try {
+      const body = await request.json();
+      preserveLineItems = body.preserveLineItems ?? true;
+    } catch {
+      // If no body or invalid JSON, use default (preserve)
+      preserveLineItems = true;
+    }
 
     // Check if budget is locked
     const { data: project, error: fetchError } = await supabase
@@ -127,6 +137,24 @@ export async function DELETE(
         { error: "Budget is not locked" },
         { status: 400 },
       );
+    }
+
+    // Delete budget line items if requested
+    let deletedCount = 0;
+    if (!preserveLineItems) {
+      const { error: deleteError, count } = await supabase
+        .from("budget_line_items")
+        .delete({ count: "exact" })
+        .eq("project_id", projectIdNum);
+
+      if (deleteError) {
+        return NextResponse.json(
+          { error: `Failed to delete budget line items: ${deleteError.message}` },
+          { status: 500 },
+        );
+      }
+
+      deletedCount = count || 0;
     }
 
     // Unlock the budget - Remove .single() to avoid "Cannot coerce" error
@@ -163,6 +191,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: "Budget unlocked successfully",
+      deletedCount,
       data: {
         budget_locked: updatedProject.budget_locked,
         budget_locked_at: updatedProject.budget_locked_at,

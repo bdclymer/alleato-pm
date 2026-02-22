@@ -11,6 +11,8 @@ type BudgetCodeResponse = {
     costType: string | null;
     costTypeId: string | null;
     fullLabel: string;
+    divisionId: string | null;
+    divisionTitle: string | null;
   }>;
 };
 
@@ -18,9 +20,10 @@ type ProjectBudgetCodeRow = {
   id: string;
   cost_code_id: string;
   cost_type_id: string | null;
-  description: string;
   cost_codes: {
     title: string | null;
+    division_id: string | null;
+    division_title: string | null;
   } | null;
   cost_code_types: {
     id: string | null;
@@ -62,17 +65,16 @@ export async function GET(
 
     const supabase = await createClient();
 
-    // Fetch project_budget_codes for this project (the chart of accounts)
+    // Fetch project_cost_codes for this project (the chart of accounts)
     const { data: projectBudgetCodesData, error: projectBudgetCodesError } =
       await supabase
-        .from("project_budget_codes")
+        .from("project_cost_codes")
         .select(
           `
           id,
           cost_code_id,
           cost_type_id,
-          description,
-          cost_codes ( title ),
+          cost_codes ( title, division_id, division_title ),
           cost_code_types ( id, code, description )
         `,
         )
@@ -98,10 +100,13 @@ export async function GET(
       const costType = row.cost_code_types?.code || null;
       const costTypeDescription = row.cost_code_types?.description || null;
       const costTypeId = row.cost_type_id || null;
-      const costCodeTitle = Array.isArray(row.cost_codes)
-        ? row.cost_codes[0]?.title
-        : row.cost_codes?.title;
-      const description = row.description || costCodeTitle || "";
+      const costCodeData = Array.isArray(row.cost_codes)
+        ? row.cost_codes[0]
+        : row.cost_codes;
+      const costCodeTitle = costCodeData?.title;
+      const description = costCodeTitle || "";
+      const divisionId = costCodeData?.division_id || null;
+      const divisionTitle = costCodeData?.division_title || null;
 
       return {
         id: row.id,
@@ -115,6 +120,8 @@ export async function GET(
           costType,
           costTypeDescription,
         }),
+        divisionId,
+        divisionTitle,
       };
     });
 
@@ -191,25 +198,21 @@ export async function POST(
       }
     }
 
-    // Insert new project_budget_code (the chart of accounts entry)
+    // Insert new project_cost_code (the chart of accounts entry)
     const { data: newProjectBudgetCode, error: insertError } = await supabase
-      .from("project_budget_codes")
+      .from("project_cost_codes")
       .insert({
         project_id: projectIdNum,
         cost_code_id,
         cost_type_id: costTypeUuid,
-        description: description || "",
-        description_mode: "concatenated",
         is_active: true,
-        created_by: user.id,
       })
       .select(
         `
           id,
           cost_code_id,
           cost_type_id,
-          description,
-          cost_codes ( title ),
+          cost_codes ( title, division_id, division_title ),
           cost_code_types ( code, description )
         `,
       )
@@ -236,10 +239,13 @@ export async function POST(
     const costType = typedBudgetCode.cost_code_types?.code || null;
     const costTypeDescription =
       typedBudgetCode.cost_code_types?.description || null;
-    const costCodeTitle = Array.isArray(typedBudgetCode.cost_codes)
-      ? typedBudgetCode.cost_codes[0]?.title
-      : typedBudgetCode.cost_codes?.title;
-    const finalDescription = typedBudgetCode.description || costCodeTitle || "";
+    const costCodeData = Array.isArray(typedBudgetCode.cost_codes)
+      ? typedBudgetCode.cost_codes[0]
+      : typedBudgetCode.cost_codes;
+    const costCodeTitle = costCodeData?.title;
+    const finalDescription = costCodeTitle || "";
+    const divisionId = costCodeData?.division_id || null;
+    const divisionTitle = costCodeData?.division_title || null;
 
     const budgetCode = {
       id: newProjectBudgetCode.id,
@@ -253,6 +259,8 @@ export async function POST(
         costType,
         costTypeDescription,
       }),
+      divisionId,
+      divisionTitle,
     };
 
     return NextResponse.json({ budgetCode });

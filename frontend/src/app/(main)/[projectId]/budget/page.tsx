@@ -20,7 +20,9 @@ import {
   ForecastingTab,
   SnapshotsTab,
   ChangeHistoryTab,
+  BudgetModificationsTab,
 } from "@/components/budget";
+import { UnlockBudgetDialog } from "@/components/budget/unlock-budget-dialog";
 import { BudgetLineItemCreatorModal, type InlineLineItemData } from "@/components/budget/BudgetLineItemCreatorModal";
 import { BudgetLineItemModalAnimated } from "@/components/budget/budget-line-item-modal-animated";
 import { BudgetModificationsModal } from "@/components/budget/modals/BudgetModificationsModal";
@@ -89,6 +91,7 @@ function BudgetPageContent() {
   const [showImportModal, setShowImportModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [showUnlockDialog, setShowUnlockDialog] = React.useState(false);
   const [selectedLineItem, setSelectedLineItem] =
     React.useState<BudgetLineItem | null>(null);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -240,23 +243,36 @@ function BudgetPageContent() {
     }
   };
 
-  const handleUnlockBudget = async () => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/budget/lock`, {
-        method: "DELETE",
-      });
+  const handleUnlockBudget = () => {
+    // Open the unlock dialog instead of immediately unlocking
+    setShowUnlockDialog(true);
+  };
 
-      if (response.ok) {
-        setIsLocked(false);
-        setLockedAt(null);
-        setLockedBy(null);
-        toast.success("Budget unlocked successfully");
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Failed to unlock budget");
+  const handleUnlockSuccess = async () => {
+    // Refetch budget data and lock status after successful unlock
+    setIsLocked(false);
+    setLockedAt(null);
+    setLockedBy(null);
+
+    try {
+      setLoading(true);
+      const [budgetResponse] = await Promise.all([
+        fetch(`/api/projects/${projectId}/budget`),
+        fetchLockStatus(),
+      ]);
+
+      if (budgetResponse.ok) {
+        const budgetDataResponse = await budgetResponse.json();
+        setBudgetData(budgetDataResponse.lineItems || []);
+        setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
       }
-    } catch (error) {
-      toast.error("Failed to unlock budget");
+    } catch (fetchError) {
+      console.error("Failed to refetch budget data after unlock:", fetchError);
+      toast.error("Failed to refresh data after unlock", {
+        description: "Please refresh the page.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -440,13 +456,22 @@ function BudgetPageContent() {
           setBudgetData(budgetDataResponse.lineItems || []);
           setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
         }
+
+        // Also refresh budget details if that tab has been loaded
+        if (detailsRequested) {
+          const detailsResponse = await fetch(`/api/projects/${projectId}/budget/details`);
+          if (detailsResponse.ok) {
+            const detailsDataResponse = await detailsResponse.json();
+            setBudgetDetailsData(detailsDataResponse.lineItems || []);
+          }
+        }
       } catch (error) {
         console.error("Failed to refresh budget data:", error);
         toast.error("Failed to refresh budget", { description: "Please reload the page." });
       }
     };
     fetchData();
-  }, [projectId]);
+  }, [projectId, detailsRequested]);
 
   const handleInlineCreateLineItem = React.useCallback(async (lineItem: {
     costCode?: string;
@@ -820,6 +845,14 @@ function BudgetPageContent() {
           <div className="flex-1 rounded-lg border bg-background shadow-sm">
             <ChangeHistoryTab projectId={projectId} />
           </div>
+        ) : activeTab === "budget-modifications" ? (
+          <div className="flex-1 rounded-lg border bg-background shadow-sm p-6">
+            <BudgetModificationsTab
+              projectId={projectId}
+              onCreateClick={() => setShowModificationModal(true)}
+              refreshTrigger={loading ? 0 : 1}
+            />
+          </div>
         ) : activeTab === "budget-details" ? (
           <>
             <div className="flex items-center justify-between gap-4">
@@ -1103,6 +1136,14 @@ function BudgetPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Unlock Budget Dialog */}
+      <UnlockBudgetDialog
+        open={showUnlockDialog}
+        onOpenChange={setShowUnlockDialog}
+        projectId={projectId}
+        onUnlockSuccess={handleUnlockSuccess}
+      />
     </>
   );
 }
