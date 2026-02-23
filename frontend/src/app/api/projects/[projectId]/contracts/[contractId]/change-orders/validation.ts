@@ -10,9 +10,9 @@ export const createChangeOrderSchema = z.object({
   description: z.string().min(1).max(1000),
   amount: z.number(),
   status: z
-    .enum(["pending", "approved", "rejected"])
+    .enum(["draft", "pending", "approved", "rejected"])
     .optional()
-    .default("pending"),
+    .default("draft"),
   requested_date: z.string().datetime().optional(),
 });
 
@@ -20,7 +20,7 @@ export const updateChangeOrderSchema = z.object({
   change_order_number: z.string().min(1).max(50).optional(),
   description: z.string().min(1).max(1000).optional(),
   amount: z.number().optional(),
-  status: z.enum(["pending", "approved", "rejected"]).optional(),
+  status: z.enum(["draft", "pending", "approved", "rejected"]).optional(),
   approved_by: z.string().uuid().optional().nullable(),
   approved_date: z.string().datetime().optional().nullable(),
   rejection_reason: z.string().max(1000).optional().nullable(),

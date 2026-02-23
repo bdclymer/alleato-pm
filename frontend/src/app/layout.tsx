@@ -7,7 +7,6 @@ import { ProjectProvider } from "@/contexts/project-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
 import { AIChatWidget } from "@/components/chat/ai-chat-widget";
-import { DocsChat } from "@/components/procore-docs/docs-chat";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
 
@@ -62,7 +61,6 @@ export default function RootLayout({
         </QueryProvider>
         <Toaster />
         <AIChatWidget />
-        <DocsChat />
       </body>
     </html>
   );

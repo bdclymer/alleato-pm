@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { buildOfflineSimpleChatResponse } from "@/lib/rag-chatkit/offline-data";
-import { isBackendOfflineError, OFFLINE_HEADERS } from "../rag-chatkit/utils";
+import { isBackendOfflineError } from "../rag-chatkit/utils";
 
 /**
  * Simple RAG Chat API Route
  *
- * This route proxies chat requests to the Python backend's /api/rag-chat-simple endpoint.
+ * This route proxies chat requests to the Python backend's /api/chat endpoint.
  * Unlike the ChatKit endpoint, this returns JSON directly (not streaming SSE).
  *
- * Used by the SimpleRagChat component as a fallback when ChatKit has CORS issues.
+ * Used by the SimpleRagChat component when ChatKit is unavailable.
  */
 
 const PYTHON_BACKEND_URL =
@@ -50,13 +49,13 @@ export async function POST(request: NextRequest) {
       hasHistory: !!(validBody.history && validBody.history.length > 0),
     });
 
-    // Call the simple RAG chat endpoint (non-streaming)
-    const response = await fetch(`${PYTHON_BACKEND_URL}/api/rag-chat-simple`, {
+    // Call the simple backend chat endpoint (non-streaming)
+    const response = await fetch(`${PYTHON_BACKEND_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: validBody.message,
-        history: validBody.history || [],
+        limit: 5,
       }),
     });
 
@@ -69,19 +68,17 @@ export async function POST(request: NextRequest) {
         response.status,
         errorText,
       );
-
-      const fallback = buildOfflineSimpleChatResponse(
-        validBody.message,
-        validBody.thread_id ?? null,
+      return NextResponse.json(
+        {
+          error: "RAG Backend Error",
+          message: "RAG backend returned an error response.",
+          details:
+            process.env.NODE_ENV === "development"
+              ? errorText.substring(0, 500)
+              : undefined,
+        },
+        { status: response.status },
       );
-      fallback.diagnostics = {
-        fallback_reason: `backend-status-${response.status}`,
-      };
-
-      return NextResponse.json(fallback, {
-        status: 200,
-        headers: OFFLINE_HEADERS,
-      });
     }
 
     const data = await response.json();
@@ -89,7 +86,7 @@ export async function POST(request: NextRequest) {
     console.warn("[RAG-Chat API] Success in", elapsed, "ms");
 
     return NextResponse.json({
-      response: data.response,
+      response: data.response || data.reply || "",
       retrieved: data.retrieved || [],
       thread_id: validBody.thread_id || null,
     });
@@ -104,18 +101,15 @@ export async function POST(request: NextRequest) {
 
     console.error("[RAG-Chat API] Error after", elapsed, "ms:", errorMessage);
 
-    // Check if backend is not running
     if (isBackendOfflineError({ code: errorCode, message: errorMessage })) {
-      const fallback = buildOfflineSimpleChatResponse(
-        body?.message || "",
-        body?.thread_id ?? null,
+      return NextResponse.json(
+        {
+          error: "RAG Backend Unavailable",
+          message:
+            "The RAG backend is unavailable. Fix backend connectivity before retrying.",
+        },
+        { status: 503 },
       );
-      fallback.diagnostics = { fallback_reason: "backend-offline" };
-
-      return NextResponse.json(fallback, {
-        status: 200,
-        headers: OFFLINE_HEADERS,
-      });
     }
 
     return NextResponse.json(

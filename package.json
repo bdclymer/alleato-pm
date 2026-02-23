@@ -25,6 +25,10 @@
     "schema:extract": "node scripts/database/generate-schema-from-types.js",
     "schema:docs": "npm run schema:extract && node scripts/database/generate-schema-docs.js",
     "check:routes": "bash scripts/check-route-conflicts.sh",
+    "gen:playwright-prompt": "node scripts/generate-playwright-skill-prompt.cjs",
+    "gen:playwright-prompt:all": "node scripts/generate-playwright-skill-prompts-batch.cjs",
+    "dashboard:playwright": "node scripts/build-playwright-dashboard.cjs",
+    "dashboard:playwright:open": "npm run dashboard:playwright && open output/playwright/dashboard/index.html",
     "lint:md": "markdownlint-cli2",
     "lint:md:fix": "markdownlint-cli2 --fix",
     "cache:verify": "npx tsx scripts/verify-cache-setup.ts",
@@ -35,6 +39,7 @@
   },
   "devDependencies": {
     "@playwright/mcp": "^0.0.63",
+    "@playwright/test": "^1.58.2",
     "@snaplet/copycat": "^6.0.0",
     "@snaplet/seed": "^0.98.0",
     "@types/node": "^25.1.0",

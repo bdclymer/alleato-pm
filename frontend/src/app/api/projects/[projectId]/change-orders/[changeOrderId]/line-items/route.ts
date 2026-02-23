@@ -44,6 +44,7 @@ export async function GET(
     }
 
     // Get line items with related data
+    // Note: cost_codes table has: id, division_id, division_title, title, status
     const { data: lineItems, error } = await supabase
       .from('change_order_lines')
       .select(`
@@ -51,13 +52,13 @@ export async function GET(
         cost_code:cost_codes!cost_code_id(
           id,
           title,
-          full_code,
           division_id,
           division_title
         ),
-        cost_type:cost_types!cost_type_id(
+        cost_type:cost_code_types!cost_type_id(
           id,
-          name
+          code,
+          description
         ),
         sub_job:sub_jobs!sub_job_id(
           id,
@@ -172,7 +173,7 @@ export async function POST(
 
     // Verify cost type exists
     const { data: costType, error: costTypeError } = await supabase
-      .from('cost_types')
+      .from('cost_code_types')
       .select('id')
       .eq('id', validatedData.cost_type_id)
       .single();
@@ -221,9 +222,10 @@ export async function POST(
           division_id,
           division_title
         ),
-        cost_type:cost_types!cost_type_id(
+        cost_type:cost_code_types!cost_type_id(
           id,
-          name
+          code,
+          description
         ),
         sub_job:sub_jobs!sub_job_id(
           id,

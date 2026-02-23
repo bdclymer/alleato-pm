@@ -1,6 +1,5 @@
 import { test as setup } from "@playwright/test";
 import path from "path";
-import fs from "fs";
 import { createSupabaseAdminClient } from "./helpers/supabase";
 
 const authFile = path.join(__dirname, ".auth/user.json");
@@ -27,33 +26,68 @@ setup("authenticate", async ({ page, baseURL }) => {
       password: TEST_PASSWORD,
       email_confirm: true,
     });
+  } else {
+    await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+      password: TEST_PASSWORD,
+      email_confirm: true,
+    });
   }
 
   // Always re-login to ensure a fresh session for each run.
 
-  // Use the real login page
+  // Use the real login page.
   console.log(`Logging in via ${url}/auth/login as ${TEST_EMAIL}`);
-  await page.goto(`${url}/auth/login`);
+  const maxLoginAttempts = 3;
+  let redirected = false;
 
-  // Wait for React to hydrate (Login button becomes visible)
-  const loginButton = page.getByRole("button", { name: /^login$/i });
-  await loginButton.waitFor({ state: "visible", timeout: 15000 });
+  for (let attempt = 1; attempt <= maxLoginAttempts; attempt += 1) {
+    // Navigate with longer timeout to handle Next.js dev mode compilation
+    await page.goto(`${url}/auth/login`, {
+      waitUntil: "networkidle",
+      timeout: 60000, // 60 seconds to allow for route compilation
+    });
 
-  // Fill the login form
-  await page.getByLabel("Email").fill(TEST_EMAIL);
-  await page.getByLabel("Password").fill(TEST_PASSWORD);
+    // Wait for the page structure to load first
+    await page.waitForSelector('form', { state: 'attached', timeout: 15000 });
 
-  // Submit
-  await loginButton.click();
+    // Additional wait for React hydration (Next.js 15 can be slow in dev)
+    await page.waitForTimeout(2000);
 
-  // Wait for a logged-in UI element to confirm session
-  const userMenuButton = page.getByRole("button", { name: /open user menu/i });
-  const hasLoggedInUI = await userMenuButton
-    .waitFor({ state: "visible", timeout: 20000 })
-    .then(() => true)
-    .catch(() => false);
+    // Now find the login button - it should be interactive after hydration
+    const loginButton = page.getByRole("button", { name: /login/i, exact: false });
+    await loginButton.waitFor({ state: "visible", timeout: 15000 });
 
-  if (!hasLoggedInUI) {
+    await page.getByLabel("Email").fill(TEST_EMAIL);
+    await page.getByLabel("Password").fill(TEST_PASSWORD);
+    await loginButton.click();
+
+    redirected = await page
+      .waitForURL((currentUrl) => !currentUrl.pathname.includes("/auth/login"), {
+        timeout: 15000,
+      })
+      .then(() => true)
+      .catch(() => false);
+    if (redirected) {
+      break;
+    }
+
+    const currentUrl = new URL(page.url());
+    const usedNativeFormSubmit =
+      currentUrl.pathname === "/auth/login" &&
+      currentUrl.searchParams.has("email") &&
+      currentUrl.searchParams.has("password");
+
+    if (usedNativeFormSubmit && attempt < maxLoginAttempts) {
+      // Retry when form submits before client-side handlers attach.
+      await page.waitForTimeout(2000);
+      continue;
+    }
+    break;
+  }
+
+  if (!redirected) {
+    const currentUrl = page.url();
+    const bodyText = (await page.locator("body").textContent()) ?? "";
     const errorText = await page
       .locator("text=Invalid email")
       .textContent()
@@ -62,10 +96,18 @@ setup("authenticate", async ({ page, baseURL }) => {
       .locator("text=Login successful")
       .textContent()
       .catch(() => null);
+
     throw new Error(
       `Auth failed - login UI did not appear. ` +
-        `Page text: ${errorText ?? successText ?? "unknown state"}`,
+        `url=${currentUrl}. ` +
+        `Page text: ${errorText ?? successText ?? bodyText.slice(0, 200) ?? "unknown state"}`,
     );
+  }
+
+  const cookies = await page.context().cookies();
+  const hasAuthCookie = cookies.some((cookie) => cookie.name.startsWith("sb-"));
+  if (!hasAuthCookie) {
+    throw new Error("Auth failed - no Supabase auth cookies found after login");
   }
 
   // Save auth state for all subsequent tests

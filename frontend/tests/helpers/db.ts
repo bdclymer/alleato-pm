@@ -28,7 +28,7 @@ export async function getUserIdByEmail(email: string): Promise<string> {
     throw new Error(`Failed to list users: ${error.message}`);
   }
 
-  const user = data.users.find((candidate) => candidate.email === email);
+  const user = data.users.find((candidate: { email?: string }) => candidate.email === email);
 
   if (!user) {
     throw new Error(`No user found for email ${email}`);
@@ -89,8 +89,14 @@ export interface ChangeOrderInput {
   title: string;
   description: string;
   status: string;
+  amount?: number | null;
   submitted_at?: string | null;
   approved_at?: string | null;
+  approved_by?: string | null;
+  submitted_by?: string | null;
+  contract_id?: number | null;
+  change_event_id?: string | null;
+  designated_reviewer_id?: string | null;
 }
 
 export async function createChangeOrder(input: ChangeOrderInput) {
@@ -356,4 +362,355 @@ export async function fetchLineItems(changeEventId: number) {
   }
 
   return data ?? [];
+}
+
+// =============================================================================
+// Schedule Task Helpers
+// =============================================================================
+
+export interface ScheduleTaskInput {
+  project_id: number;
+  name: string;
+  parent_task_id?: string | null;
+  start_date?: string | null;
+  finish_date?: string | null;
+  duration_days?: number | null;
+  percent_complete?: number;
+  status?: string;
+  is_milestone?: boolean;
+  constraint_type?: string | null;
+  constraint_date?: string | null;
+  wbs_code?: string | null;
+  sort_order?: number;
+}
+
+export async function createScheduleTask(input: ScheduleTaskInput) {
+  const { data, error } = await supabase
+    .from("schedule_tasks")
+    .insert(input)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create schedule task: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteScheduleTask(id: string) {
+  const { error } = await supabase
+    .from("schedule_tasks")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete schedule task: ${error.message}`);
+  }
+}
+
+export async function listScheduleTasksForProject(projectId: number) {
+  const { data, error } = await supabase
+    .from("schedule_tasks")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to list schedule tasks: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function deleteScheduleTasksByProject(projectId: number) {
+  const { error } = await supabase
+    .from("schedule_tasks")
+    .delete()
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw new Error(`Failed to delete schedule tasks: ${error.message}`);
+  }
+}
+
+export async function deleteScheduleTestTasks(projectId: number, prefix = "E2E-") {
+  const { error } = await supabase
+    .from("schedule_tasks")
+    .delete()
+    .eq("project_id", projectId)
+    .like("name", `${prefix}%`);
+
+  if (error) {
+    throw new Error(`Failed to delete test schedule tasks: ${error.message}`);
+  }
+}
+
+// =============================================================================
+// Change Order Advanced Helpers
+// =============================================================================
+
+export async function updateChangeOrderStatus(
+  id: number,
+  status: string,
+  additionalFields?: {
+    submitted_at?: string;
+    submitted_by?: string;
+    approved_at?: string;
+    approved_by?: string;
+    rejection_reason?: string | null;
+  }
+) {
+  const { data, error } = await supabase
+    .from("change_orders")
+    .update({
+      status,
+      ...additionalFields,
+    })
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to update change order status: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export interface LineItemInput {
+  change_event_id: string;
+  description?: string | null;
+  quantity?: number | null;
+  unit_cost?: number | null;
+  unit_of_measure?: string | null;
+  cost_rom?: number | null;
+  revenue_rom?: number | null;
+  sort_order?: number;
+}
+
+export async function createChangeOrderLineItem(input: LineItemInput) {
+  const { data, error } = await supabase
+    .from("change_event_line_items")
+    .insert({
+      change_event_id: input.change_event_id,
+      description: input.description,
+      quantity: input.quantity,
+      unit_cost: input.unit_cost,
+      unit_of_measure: input.unit_of_measure,
+      cost_rom: input.cost_rom,
+      revenue_rom: input.revenue_rom,
+      sort_order: input.sort_order ?? 0,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create line item: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function updateChangeOrderLineItem(
+  id: string,
+  updates: Partial<LineItemInput>
+) {
+  const { data, error } = await supabase
+    .from("change_event_line_items")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to update line item: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function deleteChangeOrderLineItem(id: string) {
+  const { error } = await supabase
+    .from("change_event_line_items")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete line item: ${error.message}`);
+  }
+}
+
+export async function deleteChangeOrderLineItems(changeEventId: string) {
+  const { error } = await supabase
+    .from("change_event_line_items")
+    .delete()
+    .eq("change_event_id", changeEventId);
+
+  if (error) {
+    throw new Error(`Failed to delete line items: ${error.message}`);
+  }
+}
+
+// =============================================================================
+// Change Order Lines Helpers (for change_order_lines table)
+// =============================================================================
+
+export interface ChangeOrderLineInput {
+  change_order_id: number;
+  project_id: number;
+  cost_code_id: string;
+  cost_type_id: string;
+  amount?: number;
+  description?: string | null;
+  sub_job_id?: string | null;
+}
+
+export async function createChangeOrderLine(input: ChangeOrderLineInput) {
+  const { data, error } = await supabase
+    .from("change_order_lines")
+    .insert(input)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create change order line: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function fetchChangeOrderLines(changeOrderId: number) {
+  const { data, error } = await supabase
+    .from("change_order_lines")
+    .select("*")
+    .eq("change_order_id", changeOrderId);
+
+  if (error) {
+    throw new Error(`Failed to fetch change order lines: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function deleteChangeOrderLine(id: string) {
+  const { error } = await supabase
+    .from("change_order_lines")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`Failed to delete change order line: ${error.message}`);
+  }
+}
+
+export async function deleteChangeOrderLinesByChangeOrder(changeOrderId: number) {
+  const { error } = await supabase
+    .from("change_order_lines")
+    .delete()
+    .eq("change_order_id", changeOrderId);
+
+  if (error) {
+    throw new Error(`Failed to delete change order lines: ${error.message}`);
+  }
+}
+
+export async function deleteTestChangeOrders(projectId: number, prefix = "CO-E2E-") {
+  const { error } = await supabase
+    .from("change_orders")
+    .delete()
+    .eq("project_id", projectId)
+    .like("co_number", `${prefix}%`);
+
+  if (error) {
+    throw new Error(`Failed to delete test change orders: ${error.message}`);
+  }
+}
+
+/**
+ * Ensures the test user has proper permissions to approve/reject change orders.
+ * Creates users_auth entry and project_directory_membership if missing.
+ */
+export async function ensureTestUserPermissions(
+  authUserId: string,
+  projectId: number,
+  role: "admin" | "editor" | "owner" = "admin"
+): Promise<string> {
+  // Check if users_auth entry exists
+  let { data: userAuth } = await supabase
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", authUserId)
+    .single();
+
+  let personId: string;
+
+  if (!userAuth) {
+    // Create a person for the test user
+    const { data: person, error: personError } = await supabase
+      .from("people")
+      .insert({
+        first_name: "Test",
+        last_name: "User",
+        email: "test1@mail.com",
+        is_active: true,
+      })
+      .select("id")
+      .single();
+
+    if (personError) {
+      // Person might already exist, try to find it
+      const { data: existingPerson } = await supabase
+        .from("people")
+        .select("id")
+        .eq("email", "test1@mail.com")
+        .single();
+
+      if (!existingPerson) {
+        throw new Error(`Failed to create person: ${personError.message}`);
+      }
+      personId = existingPerson.id;
+    } else {
+      personId = person.id;
+    }
+
+    // Create users_auth link
+    await supabase
+      .from("users_auth")
+      .upsert({
+        auth_user_id: authUserId,
+        person_id: personId,
+      });
+  } else {
+    personId = userAuth.person_id;
+  }
+
+  // Ensure project membership exists
+  const { data: membership } = await supabase
+    .from("project_directory_memberships")
+    .select("id, status")
+    .eq("project_id", projectId)
+    .eq("person_id", personId)
+    .single();
+
+  if (!membership) {
+    // Create membership
+    await supabase
+      .from("project_directory_memberships")
+      .insert({
+        project_id: projectId,
+        person_id: personId,
+        role,
+        user_type: "employee",
+        status: "active",
+      });
+  } else if (membership.status !== "active") {
+    // Update to active
+    await supabase
+      .from("project_directory_memberships")
+      .update({ status: "active" })
+      .eq("id", membership.id);
+  }
+
+  return personId;
 }

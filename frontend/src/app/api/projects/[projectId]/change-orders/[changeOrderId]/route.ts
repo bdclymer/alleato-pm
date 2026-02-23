@@ -127,6 +127,69 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
+// PATCH is used for partial updates (e.g., status changes only)
+export async function PATCH(request: Request, { params }: RouteParams) {
+  try {
+    const { projectId, changeOrderId } = await params;
+    const supabase = await createClient();
+    const body = await request.json();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: existing, error: fetchError } = await supabase
+      .from("change_orders")
+      .select("id, status")
+      .eq("project_id", Number(projectId))
+      .eq("id", Number(changeOrderId))
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json(
+        { error: "Change order not found" },
+        { status: 404 },
+      );
+    }
+
+    // Build update object with only provided fields
+    const updateData: ChangeOrderUpdate = {
+      ...body,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Handle status transitions
+    if (body.status === "approved" && existing.status !== "approved") {
+      updateData.approved_at = new Date().toISOString();
+      updateData.approved_by = user.id;
+    }
+
+    if (body.status === "pending" && existing.status === "draft") {
+      updateData.submitted_at = new Date().toISOString();
+      updateData.submitted_by = user.id;
+    }
+
+    const { data, error } = await supabase
+      .from("change_orders")
+      .update(updateData)
+      .eq("project_id", Number(projectId))
+      .eq("id", Number(changeOrderId))
+      .select()
+      .single();
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const { projectId, changeOrderId } = await params;

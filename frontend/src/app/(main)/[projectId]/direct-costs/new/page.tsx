@@ -17,7 +17,7 @@ export default async function NewDirectCostPage({ params }: PageProps) {
         title="New Direct Cost"
         description="Create a new direct cost entry for this project"
       />
-      <FormContainer maxWidth="xl" withCard={false}>
+      <FormContainer maxWidth="xl" withCard={false} className="max-w-7xl">
         <CreateDirectCostForm projectId={projectId} />
       </FormContainer>
     </>

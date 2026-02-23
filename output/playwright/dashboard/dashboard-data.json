@@ -1,0 +1,61 @@
+{
+  "summary": {
+    "generatedAt": "2026-02-21T16:28:13.197Z",
+    "mode": "latest-per-tool",
+    "overall": "PARTIAL",
+    "reportCount": 3,
+    "passReports": 2,
+    "partialReports": 1,
+    "failReports": 0
+  },
+  "reports": [
+    {
+      "kind": "native-playwright",
+      "status": "PASS",
+      "passCount": 7,
+      "partialCount": 0,
+      "failCount": 0,
+      "total": 7,
+      "startedAt": "2026-02-21T16:27:47.653Z",
+      "durationMs": 17781.109,
+      "label": "playwright.config.ts",
+      "sourceSummary": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+      "tool": "frontend-suite",
+      "path": "frontend/playwright-report/report.json",
+      "linkPath": "../../../frontend/playwright-report/report.json",
+      "discoveredAt": "2026-02-21T16:28:05.460Z"
+    },
+    {
+      "kind": "workflow",
+      "status": "PASS",
+      "passCount": 1,
+      "partialCount": 0,
+      "failCount": 0,
+      "total": 1,
+      "startedAt": "2026-02-21T09:24:31.685Z",
+      "durationMs": null,
+      "label": "attempt-1",
+      "sourceSummary": "http://localhost:3000",
+      "tool": "direct-costs",
+      "path": "output/playwright/direct-costs-workflow/runs/2026-02-21T09-24-16-859Z-attempt-1/report.json",
+      "linkPath": "../direct-costs-workflow/runs/2026-02-21T09-24-16-859Z-attempt-1/report.json",
+      "discoveredAt": "2026-02-21T09:24:31.686Z"
+    },
+    {
+      "kind": "workflow",
+      "status": "PARTIAL",
+      "passCount": 19,
+      "partialCount": 4,
+      "failCount": 0,
+      "total": 23,
+      "startedAt": "2026-02-21T10:40:51.442Z",
+      "durationMs": null,
+      "label": "67",
+      "sourceSummary": "http://localhost:3000",
+      "tool": "prime-contracts",
+      "path": "output/playwright/prime-contracts-workflow/runs/2026-02-21T10-40-48Z/report.json",
+      "linkPath": "../prime-contracts-workflow/runs/2026-02-21T10-40-48Z/report.json",
+      "discoveredAt": "2026-02-21T10:42:43.069Z"
+    }
+  ]
+}

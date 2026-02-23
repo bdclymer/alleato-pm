@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "runId": "2026-02-21T04-03-13-950Z",
+  "runLabel": "attempt-5",
+  "baseUrl": "http://localhost:3002",
+  "projectId": "67",
+  "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/direct-costs-workflow/runs/2026-02-21T04-03-13-950Z-attempt-5",
+  "invoiceNumber": "AUTO-DC-1771646593950",
+  "error": "TimeoutError: locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: /direct costs/i }).first() to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3002/67/direct-costs\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3002/67/direct-costs\"\u001b[22m\n",
+  "stack": "locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('heading', { name: /direct costs/i }).first() to be visible\u001b[22m\n\u001b[2m    - waiting for\" http://localhost:3002/67/direct-costs\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://localhost:3002/67/direct-costs\"\u001b[22m\n\n    at waitForDirectCostsList (/Users/meganharrison/Documents/github/alleato-pm/frontend/scripts/manual/browser/direct-costs-workflow.js:46:70)\n    at async run (/Users/meganharrison/Documents/github/alleato-pm/frontend/scripts/manual/browser/direct-costs-workflow.js:134:5)",
+  "timestamp": "2026-02-21T04:03:39.275Z"
+}

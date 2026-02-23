@@ -38,7 +38,7 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
     });
 
     // Verify page title/header
-    const pageTitle = await page.locator('h1, h2').first();
+    const pageTitle = page.getByRole('heading', { name: /change events/i }).first();
     await expect(pageTitle).toBeVisible();
     console.log('Page title:', await pageTitle.textContent());
 

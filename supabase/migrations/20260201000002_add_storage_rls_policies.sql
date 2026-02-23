@@ -1,7 +1,15 @@
 -- Storage RLS Policies for project-files bucket
 
--- Enable RLS on storage.objects (if not already enabled)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on storage.objects when permitted.
+-- Some hosted roles cannot ALTER this table even though policies can still be managed.
+DO $$
+BEGIN
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Skipping ENABLE ROW LEVEL SECURITY on storage.objects (insufficient privilege for current role).';
+END
+$$;
 
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Users can upload project files" ON storage.objects;

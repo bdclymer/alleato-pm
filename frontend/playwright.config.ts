@@ -5,10 +5,6 @@ import path from 'path';
 // Load environment variables from .env.local file in frontend directory
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
-// Environment-based video retention
-const isDebug = process.env.PWDEBUG === '1';
-const keepAllVideos = process.env.PW_VIDEO === 'on';
-
 // Use BASE_URL from .env.local or fallback to localhost
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
@@ -31,7 +27,7 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'on', // Always capture screenshots for verification
-    video: keepAllVideos ? 'on' : isDebug ? 'on' : 'retain-on-failure',
+    video: 'on',
   },
 
   projects: [

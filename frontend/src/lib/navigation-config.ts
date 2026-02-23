@@ -108,6 +108,11 @@ export const financialManagementTools: NavigationTool[] = [
 
 export const adminTools: NavigationTool[] = [
   {
+    name: "Docs Chat",
+    path: "/docs",
+    requiresProject: false,
+  },
+  {
     name: "Document Pipeline",
     path: "/admin/documents/pipeline",
     requiresProject: false,

@@ -1,119 +1,13 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { MessageSquare, X, Minimize2 } from "lucide-react";
-import { RagChatKitPanel } from "@/components/chat/rag-chatkit-panel";
 import { SimpleRagChat } from "@/components/chat/simple-rag-chat";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-type RagStatePayload = {
-  thread_id?: string | null;
-  current_agent?: string;
-  context?: {
-    backend_status?: string;
-    notice?: string;
-    [key: string]: unknown;
-  };
-};
-
-type RagStateResult<T = RagStatePayload> = {
-  data: T | null;
-  offline: boolean;
-};
-
-async function fetchRagBootstrapState(): Promise<RagStateResult> {
-  try {
-    const res = await fetch("/api/rag-chatkit/bootstrap");
-    const offline = res.headers.get("x-rag-backend-status") === "offline";
-    if (!res.ok) {
-      return { data: null, offline };
-    }
-    const data = (await res.json()) as RagStatePayload;
-    return { data, offline };
-  } catch {
-    return { data: null, offline: true };
-  }
-}
-
-async function fetchRagThreadState(threadId: string): Promise<RagStateResult> {
-  try {
-    const res = await fetch(`/api/rag-chatkit/state?thread_id=${threadId}`);
-    const offline = res.headers.get("x-rag-backend-status") === "offline";
-    if (!res.ok) {
-      return { data: null, offline };
-    }
-    const data = (await res.json()) as RagStatePayload;
-    return { data, offline };
-  } catch {
-    return { data: null, offline: true };
-  }
-}
 
 export function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [initialThreadId, setInitialThreadId] = useState<string | null>(null);
-  const [isOffline, setIsOffline] = useState(false);
-  const [offlineMessage, setOfflineMessage] = useState<string | null>(null);
-  const [bootstrapReady, setBootstrapReady] = useState(false);
-
-  const hydrateState = useCallback(
-    async (id: string | null) => {
-      if (!id || isOffline) return;
-      const { data, offline } = await fetchRagThreadState(id);
-      if (offline) {
-        setIsOffline(true);
-        setOfflineMessage(
-          data?.context?.notice ||
-            "The realtime AI backend is offline. Showing demo mode instead.",
-        );
-        return;
-      }
-      if (!data) return;
-    },
-    [isOffline],
-  );
-
-  useEffect(() => {
-    if (threadId && !isOffline) {
-      void hydrateState(threadId);
-    }
-  }, [threadId, hydrateState, isOffline]);
-
-  // Bootstrap on mount
-  useEffect(() => {
-    (async () => {
-      const { data: bootstrap, offline } = await fetchRagBootstrapState();
-      if (
-        !bootstrap ||
-        offline ||
-        bootstrap?.context?.backend_status === "offline"
-      ) {
-        setIsOffline(true);
-        setOfflineMessage(
-          bootstrap?.context?.notice ||
-            "The Alleato AI backend is currently offline. You can continue in demo mode.",
-        );
-        setBootstrapReady(true);
-        return;
-      }
-
-      setInitialThreadId(bootstrap.thread_id || null);
-      setThreadId(bootstrap.thread_id || null);
-      setBootstrapReady(true);
-    })();
-  }, []);
-
-  const handleThreadChange = useCallback((id: string | null) => {
-    setThreadId(id);
-  }, []);
-
-  const handleResponseEnd = useCallback(() => {
-    if (!isOffline) {
-      void hydrateState(threadId);
-    }
-  }, [hydrateState, threadId, isOffline]);
 
   const toggleWidget = () => {
     if (isOpen && !isMinimized) {
@@ -187,31 +81,15 @@ export function AIChatWidget() {
           {/* Chat Content */}
           {!isMinimized && (
             <div className="flex flex-col h-[calc(100%-56px)] overflow-hidden">
-              {!bootstrapReady ? (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-                  Connecting to Alleato AI…
-                </div>
-              ) : isOffline ? (
-                <div className="flex flex-col h-full p-4 gap-4">
-                  <Alert>
-                    <AlertDescription className="text-sm">
-                      {offlineMessage ||
-                        "Real-time responses are paused. Use demo mode to continue."}
-                    </AlertDescription>
-                  </Alert>
-                  <div className="flex-1 overflow-hidden rounded-lg border bg-background">
-                    <SimpleRagChat placeholder="Demo mode – ask about any project update" />
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 overflow-hidden">
-                  <RagChatKitPanel
-                    initialThreadId={initialThreadId}
-                    onThreadChange={handleThreadChange}
-                    onResponseEnd={handleResponseEnd}
-                  />
-                </div>
-              )}
+              <Alert className="m-3 mb-0">
+                <AlertDescription className="text-xs">
+                  This chat uses live backend responses. If the backend is down,
+                  you will see an explicit error.
+                </AlertDescription>
+              </Alert>
+              <div className="flex-1 overflow-hidden rounded-lg m-3 mt-2 border">
+                <SimpleRagChat />
+              </div>
             </div>
           )}
 

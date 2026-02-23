@@ -39,12 +39,12 @@ export function CreateDirectCostForm({ projectId }: CreateDirectCostFormProps) {
     toast.success('Direct cost created successfully')
 
     // Navigate to the detail page for the new direct cost
-    router.push(`/projects/${projectId}/direct-costs/${response.id}`)
+    router.push(`/${projectId}/direct-costs/${response.id}`)
   }
 
   const handleCancel = () => {
     // Navigate back to the list page
-    router.push(`/projects/${projectId}/direct-costs`)
+    router.push(`/${projectId}/direct-costs`)
   }
 
   return (

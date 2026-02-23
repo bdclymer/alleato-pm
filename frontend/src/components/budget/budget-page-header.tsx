@@ -62,16 +62,10 @@ export function BudgetPageHeader({
   onExport,
 }: BudgetPageHeaderProps) {
   const [showLockDialog, setShowLockDialog] = React.useState(false);
-  const [showUnlockDialog, setShowUnlockDialog] = React.useState(false);
 
   const handleLockConfirm = () => {
     onLockBudget?.();
     setShowLockDialog(false);
-  };
-
-  const handleUnlockConfirm = () => {
-    onUnlockBudget?.();
-    setShowUnlockDialog(false);
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -145,7 +139,7 @@ export function BudgetPageHeader({
               Resend to ERP
             </DropdownMenuItem>
             {isLocked ? (
-              <DropdownMenuItem onClick={() => setShowUnlockDialog(true)}>
+              <DropdownMenuItem onClick={onUnlockBudget}>
                 <Unlock className="w-4 h-4 mr-2" />
                 Unlock Budget
               </DropdownMenuItem>
@@ -217,7 +211,7 @@ export function BudgetPageHeader({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowUnlockDialog(true)}
+            onClick={onUnlockBudget}
           >
             <Unlock className="w-4 h-4 mr-2" />
             <span className="hidden lg:inline">Unlock Budget</span>
@@ -334,46 +328,6 @@ export function BudgetPageHeader({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Unlock Budget Confirmation Dialog */}
-      <AlertDialog open={showUnlockDialog} onOpenChange={setShowUnlockDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Unlock className="w-5 h-5" />
-              Unlock Budget
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to unlock the budget for this project?
-              </p>
-              <div className="bg-muted border rounded-md p-3 mt-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-5 h-5 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium">What happens when you unlock:</p>
-                    <ul className="list-disc list-inside mt-1 space-y-1">
-                      <li>
-                        Budget line items can be added, edited, or deleted
-                      </li>
-                      <li>Original budget amounts become editable</li>
-                      <li>
-                        All users with budget permissions can make changes
-                      </li>
-                      <li>Changes will be tracked in the audit log</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUnlockConfirm}>
-              Unlock Budget
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

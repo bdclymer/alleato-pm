@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, X, Search, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, X, Search, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
@@ -37,6 +37,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 interface BudgetCode {
@@ -103,6 +104,7 @@ export function BudgetLineItemCreatorModal({
   const [isCreating, setIsCreating] = React.useState(false);
   const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
   const [pendingRowIndex, setPendingRowIndex] = React.useState<number | null>(null);
+  const [negativeAmountRows, setNegativeAmountRows] = React.useState<Set<number>>(new Set());
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
@@ -141,6 +143,7 @@ export function BudgetLineItemCreatorModal({
       setSearchQuery("");
       setOpenPopoverId(null);
       setPendingRowIndex(null);
+      setNegativeAmountRows(new Set());
     }
   }, [isOpen]);
 
@@ -270,20 +273,35 @@ export function BudgetLineItemCreatorModal({
     field: keyof InlineLineItemData,
     value: string
   ) => {
-    setRows(
-      rows.map((row, i) => {
-        if (i !== index) return row;
+    const updatedRows = rows.map((row, i) => {
+      if (i !== index) return row;
 
-        const updatedRow = { ...row, [field]: value };
+      const updatedRow = { ...row, [field]: value };
 
-        // Auto-calculate amount when qty or unitCost changes
-        if (field === "qty" || field === "unitCost") {
-          updatedRow.amount = calculateAmount(updatedRow.qty, updatedRow.unitCost);
+      // Auto-calculate amount when qty or unitCost changes
+      if (field === "qty" || field === "unitCost") {
+        updatedRow.amount = calculateAmount(updatedRow.qty, updatedRow.unitCost);
+      }
+
+      return updatedRow;
+    });
+
+    setRows(updatedRows);
+
+    // Check for negative amounts
+    const updatedRow = updatedRows[index];
+    if (updatedRow) {
+      const amountValue = parseFloat(updatedRow.amount);
+      setNegativeAmountRows((prev) => {
+        const next = new Set(prev);
+        if (amountValue < 0) {
+          next.add(index);
+        } else {
+          next.delete(index);
         }
-
-        return updatedRow;
-      })
-    );
+        return next;
+      });
+    }
   };
 
   const handleBudgetCodeSelect = (index: number, code: BudgetCode) => {
@@ -351,6 +369,15 @@ export function BudgetLineItemCreatorModal({
   const removeRow = (index: number) => {
     if (rows.length === 1) return;
     setRows(rows.filter((_, i) => i !== index));
+    // Update negative amount tracking for shifted indices
+    setNegativeAmountRows((prev) => {
+      const next = new Set<number>();
+      for (const idx of prev) {
+        if (idx < index) next.add(idx);
+        else if (idx > index) next.add(idx - 1);
+      }
+      return next;
+    });
   };
 
   const handleCreateBudgetCode = async () => {
@@ -760,6 +787,14 @@ export function BudgetLineItemCreatorModal({
                               </Button>
                             )}
                           </div>
+                          {negativeAmountRows.has(index) && (
+                            <Alert className="mt-2 bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-200">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription className="text-xs">
+                                Negative amounts are unusual. Please verify this is intentional before saving.
+                              </AlertDescription>
+                            </Alert>
+                          )}
                         </div>
                       </div>
                     </motion.div>

@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "runId": "2026-02-21T04-13-16-051Z",
+  "runLabel": "",
+  "baseUrl": "http://localhost:3002",
+  "projectId": "67",
+  "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/output/playwright/direct-costs-workflow/runs/2026-02-21T04-13-16-051Z",
+  "invoiceNumber": "AUTO-DC-1771647196052",
+  "error": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/67/direct-costs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/67/direct-costs\", waiting until \"domcontentloaded\"\u001b[22m\n",
+  "stack": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3002/67/direct-costs\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3002/67/direct-costs\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at run (/Users/meganharrison/Documents/github/alleato-pm/frontend/scripts/manual/browser/direct-costs-workflow.js:130:16)",
+  "timestamp": "2026-02-21T04:13:17.087Z"
+}

@@ -14,3 +14,4 @@ export { BudgetViewsManager } from "./BudgetViewsManager";
 export { ForecastingTab } from "./forecasting-tab";
 export { SnapshotsTab } from "./snapshots-tab";
 export { ChangeHistoryTab } from "./change-history-tab";
+export { BudgetModificationsTab } from "./budget-modifications-tab";
