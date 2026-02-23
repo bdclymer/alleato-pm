@@ -12,7 +12,7 @@ Once an MCP server is configured, its tools become available with the prefix `mc
 
 ```text
 mcp__plugin_<plugin-name>_<server-name>__<tool-name>
-```yaml
+```
 ### Examples
 
 **Asana plugin with asana server:**
@@ -33,7 +33,7 @@ mcp__plugin_<plugin-name>_<server-name>__<tool-name>
 
 ```bash
 /mcp
-```yaml
+```
 This shows:
 - All available MCP servers
 - Tools provided by each server
@@ -72,14 +72,14 @@ allowed-tools: [
   "mcp__plugin_asana_asana__asana_get_project"
 ]
 ---
-```markdown
+```
 ### Wildcard (Use Sparingly)
 
 ```markdown
 ---
 allowed-tools: ["mcp__plugin_asana_asana__*"]
 ---
-```yaml
+```
 **Caution:** Only use wildcards if the command truly needs access to all tools from a server.
 
 ### Tool Usage in Command Instructions
@@ -115,7 +115,7 @@ To create a task:
    - Due date
 2. Use mcp__plugin_asana_asana__asana_create_task
 3. Show confirmation with task link
-```yaml
+```
 ## Using Tools in Agents
 
 ### Agent Configuration
@@ -166,7 +166,7 @@ Steps:
 2. Call mcp__plugin_api_server__create_item with validated data
 3. Check for errors
 4. Display confirmation
-```markdown
+```
 ### Pattern 2: Sequential Tools
 
 Chain multiple tool calls:
@@ -177,7 +177,7 @@ Steps:
 2. If not found, create new: mcp__plugin_api_server__create
 3. Add metadata: mcp__plugin_api_server__update_metadata
 4. Return final item ID
-```markdown
+```
 ### Pattern 3: Batch Operations
 
 Multiple calls with same tool:
@@ -189,7 +189,7 @@ Steps:
    - Call mcp__plugin_api_server__update_item
    - Track success/failure
 3. Report results summary
-```markdown
+```
 ### Pattern 4: Error Handling
 
 Graceful error handling:
@@ -235,7 +235,7 @@ Each MCP tool has a schema defining its parameters. View with `/mcp`.
     "required": ["name", "workspace"]
   }
 }
-```yaml
+```
 ### Calling Tools with Parameters
 
 Claude automatically structures tool calls based on schema:
@@ -252,7 +252,7 @@ Claude automatically structures tool calls based on schema:
     due_on: "2025-01-15"
   }
 }
-```markdown
+```
 ### Parameter Validation
 
 **In commands, validate before calling:**
@@ -266,7 +266,7 @@ Steps:
 2. If validation fails, ask user to provide missing data
 3. If validation passes, call MCP tool
 4. Handle tool errors gracefully
-```markdown
+```
 ## Response Handling
 
 ### Success Responses
@@ -291,7 +291,7 @@ Steps:
    - Provide helpful error message
    - Suggest remediation steps
    - Don't expose internal error details to user
-```markdown
+```
 ### Partial Success
 
 ```markdown
@@ -302,7 +302,7 @@ Steps:
    - "Successfully processed 8 of 10 items"
    - "Failed items: [item1, item2] due to [reason]"
    - Suggest retry or manual intervention
-```markdown
+```
 ## Performance Optimization
 
 ### Batching Requests
@@ -316,7 +316,7 @@ Steps:
    - status: "active"
    - limit: 100
 2. Process all results
-```text
+```
 **Avoid: Many individual queries**
 ```markdown
 Steps:
@@ -333,7 +333,7 @@ Steps:
 2. Store results in variable for reuse
 3. Use cached results for subsequent operations
 4. Only re-fetch if data changes
-```markdown
+```
 ### Parallel Tool Calls
 
 When tools don't depend on each other, call in parallel:
@@ -346,7 +346,7 @@ Steps:
    - mcp__plugin_api_server__get_tags
 2. Wait for all to complete
 3. Combine results
-```markdown
+```
 ## Integration Best Practices
 
 ### User Experience
@@ -359,7 +359,7 @@ Steps:
 2. Call mcp__plugin_asana_asana__asana_search_tasks
 3. Show progress: "Found 15 tasks, analyzing..."
 4. Present results
-```text
+```
 **Handle long operations:**
 ```markdown
 Steps:
@@ -378,7 +378,7 @@ Steps:
    1. You're logged into Asana
    2. You have access to workspace 'Engineering'
    3. The project 'Q1 Goals' exists"
-```text
+```
 **Poor error messages:**
 
 ```text
@@ -398,7 +398,7 @@ This command uses the following Asana MCP tools:
 - **asana_update_task**: Update existing task properties
 
 Ensure you're authenticated to Asana before running this command.
-```markdown
+```
 ## Testing Tool Usage
 
 ### Local Testing
@@ -417,7 +417,7 @@ Steps:
 1. Create test data in external service
 2. Run command that queries this data
 3. Verify correct results returned
-```text
+```
 **Test error cases:**
 
 ```markdown
@@ -426,7 +426,7 @@ Steps:
 2. Test with invalid parameters
 3. Test with non-existent resources
 4. Verify graceful error handling
-```text
+```
 **Test edge cases:**
 ```markdown
 Steps:
@@ -463,7 +463,7 @@ Use update_item with item ID and changes...
 
 ## Delete
 Use delete_item with item ID (ask for confirmation first)...
-```markdown
+```
 ### Pattern: Search and Process
 
 ```markdown
@@ -472,7 +472,7 @@ Steps:
 2. **Filter**: Apply additional local filtering if needed
 3. **Transform**: Process each result
 4. **Present**: Format and display to user
-```markdown
+```
 ### Pattern: Multi-Step Workflow
 
 ```markdown

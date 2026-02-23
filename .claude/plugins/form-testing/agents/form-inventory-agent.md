@@ -38,7 +38,7 @@ You are **NOT** a tester. You are a **documentation manager**.
 - **Status:** ✅ Pass
 - **Test Report:** [2026-01-08_14-30 Report](test-runs/2026-01-08_14-30/FORM_TEST_REPORT.md)
 - **Errors Found:** 0
-```markdown
+```
 ### 2. New Form Registration
 
 **When new forms are added to codebase:**
@@ -75,7 +75,7 @@ You are **NOT** a tester. You are a **documentation manager**.
 - **Forms Tested:** 15
 - **Forms Pending:** 13
 - **Pass Rate:** 85% (13/15 passed)
-```markdown
+```
 ### 4. Test History Tracking
 
 **Maintain testing timeline:**
@@ -87,7 +87,7 @@ You are **NOT** a tester. You are a **documentation manager**.
 |------|-------|--------------|------|------|----------|--------|
 | 2026-01-08 | all | 28 | 24 | 4 | 42m | [link] |
 | 2026-01-07 | page | 7 | 7 | 0 | 12m | [link] |
-```markdown
+```
 ## UPDATE PROTOCOL
 
 ### After Test Run Completes

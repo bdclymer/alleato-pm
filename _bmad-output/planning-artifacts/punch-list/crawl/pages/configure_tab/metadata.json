@@ -1,0 +1,243 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/punch_list/configure_tab",
+  "pageName": "configure_tab",
+  "category": "punch-list",
+  "pageId": "configure_tab",
+  "timestamp": "2026-01-12T16:00:17.043Z",
+  "analysis": {
+    "components": {
+      "buttons": 10,
+      "forms": 1,
+      "inputs": 70,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 4,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 31,
+      "statusBadges": 0,
+      "checkboxes": 67,
+      "images": 2,
+      "thumbnails": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Action",
+          "Creator",
+          "Punch Item Manager",
+          "Assignee",
+          "Final Approver",
+          "Distribution Group"
+        ],
+        "rows": 13,
+        "classes": "StyledTable-core-12_20_3__sc-9c7xd-26 fONlin",
+        "id": null
+      }
+    ],
+    "punchItems": [],
+    "statusFilters": [],
+    "title": "Punch List • Goodwill Bart",
+    "h1": "Punch List Settings"
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist",
+      "text": "Punch List",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/settings/general",
+      "text": "General",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/settings/templates",
+      "text": "Templates",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/settings/types",
+      "text": "Types",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/settings/permissions?sort=name",
+      "text": "Permissions",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://support.procore.com/products/procore-imports/punch-list/tutorials/prepare-punch-list-items-for-import-to-the-procore-imports-app",
+      "text": "Punch List Import Template",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://support.procore.com/products/procore-imports/punch-list/tutorials/import-punch-list-items-into-your-project-level-punch-list-tool-procore-imports",
+      "text": "Procore Imports",
+      "classes": "",
+      "id": null,
+      "index": 11
+    }
+  ],
+  "clickables": 10,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu ecRQkK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu ecRQkK",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Download Procore Imports",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 cFRAGY NoOutlineButton-gAFhxG dituor",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 cFRAGY NoOutlineButton-gAFhxG dituor",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledIncrementerButton-core-12_20_3__sc-1782nvg-4 lbgFhN",
+      "type": "button",
+      "classes": "StyledIncrementerButton-core-12_20_3__sc-1782nvg-4 lbgFhN",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "StyledIncrementerButton-core-12_20_3__sc-1782nvg-4 lbgFhN",
+      "type": "button",
+      "classes": "StyledIncrementerButton-core-12_20_3__sc-1782nvg-4 lbgFhN",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Reset to Default",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 fsMShr",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 ccLqmT",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Save Changes",
+      "id": "StyledButton-core-12_20_3__sc-c5bhwh-3 iOJsuI",
+      "type": "button",
+      "classes": "StyledButton-core-12_20_3__sc-c5bhwh-3 iOJsuI",
+      "hasDropdown": false,
+      "index": 9
+    }
+  ],
+  "dropdowns": 6,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_20_3__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_3__sc-17s58xs-2 StyledDropdownTab-core-12_20_3__sc-17s58xs-5 hihHpq jNIuHu ecRQkK",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Select",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 fdxzXM",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Select",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 fdxzXM",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 gwPIxK",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_20_3__sc-1uf5708-29 gwPIxK",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    }
+  ],
+  "tabs": 0,
+  "tabDetails": [],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

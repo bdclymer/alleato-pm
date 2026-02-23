@@ -9,7 +9,7 @@ GIT STATUS:
 
 ```text
 !`git status`
-```bash
+```
 FILES MODIFIED:
 
 ```text
@@ -20,7 +20,7 @@ COMMITS:
 
 ```text
 !`git log --no-decorate origin/HEAD...`
-```bash
+```
 DIFF CONTENT:
 
 ```text

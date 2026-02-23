@@ -46,7 +46,7 @@ All interactive components (Input, Select, Button, DropdownMenu triggers) MUST u
 
 ```text
 border-input  (color from --input CSS variable)
-```markdown
+```
 - ❌ `border` without color specification
 - ❌ `border-gray-*`, `border-neutral-*`
 - ❌ Any hardcoded border color
@@ -64,7 +64,7 @@ rounded-md  (uses --radius token)
 
 ```text
 h-9 (default), h-8 (small)
-```text
+```
 - ❌ `h-10`, `h-7`, `h-[*px]`
 - ❌ Mismatched heights between Select and Input
 
@@ -82,7 +82,7 @@ focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:border-ring
 
 ```text
 shadow-xs (for inputs/selects)
-```text
+```
 - ❌ `shadow-sm`, `shadow`, `shadow-md` for form elements
 - ❌ Inconsistent shadow between Input and Select
 
@@ -99,7 +99,7 @@ bg-background (light) / dark:bg-input/30 (dark)
 
 ```text
 px-3 py-2 (default form elements)
-```text
+```
 - ❌ Inconsistent padding between Input and Select triggers
 
 #### 8. Dropdown/Popover Gap
@@ -137,7 +137,7 @@ rg -n "bg-white" frontend/src/components/ui/
 
 # 8. Check padding consistency
 rg -n "px-[0-9]|py-[0-9]" frontend/src/components/ui/input.tsx frontend/src/components/ui/select.tsx
-```markdown
+```
 ### CORE UI CONSISTENCY MATRIX
 
 When auditing, verify this matrix is TRUE:
@@ -176,7 +176,7 @@ rg -l "Dialog|Modal|Overlay" frontend/src/components/
 
 # Find custom form field wrappers
 rg -l "FormField|FieldWrapper|InputWrapper" frontend/src/components/
-```typescript
+```
 ### Duplicate Detection Rules
 
 - ❌ Multiple components that render `<input>` elements
@@ -207,7 +207,7 @@ border-input, border-border, border-ring
 
 /* Brand (sparingly) */
 bg-brand, text-brand, border-brand
-```markdown
+```
 ### BANNED Patterns
 ```
 
@@ -218,7 +218,7 @@ bg-brand, text-brand, border-brand
 ❌ rgb(), rgba(), hsl(), hsla()
 ❌ bg-[#...], text-[#...] (arbitrary colors)
 
-```diff
+```
 ---
 
 ## PRIORITY 4: USAGE CONSISTENCY (CRITICAL)
@@ -247,7 +247,7 @@ rg -n "className=\"[^\"]*px-[0-9]" frontend/src/components/layout/
 
 # Find dropdown triggers that don't match
 rg -n "DropdownMenuTrigger|SelectTrigger" frontend/src/components/layout/ -A 5
-```html
+```
 ### Common Usage Violations
 
 - ❌ `SelectTrigger` with `h-8` next to `Button` with `h-9`
@@ -268,7 +268,7 @@ When two elements must look identical, ensure:
 // BAD - Custom overrides make them look different
 <SelectTrigger className="h-8 w-[280px]">...</SelectTrigger>
 <Button variant="outline" className="h-8 rounded px-2">...</Button>
-```typescript
+```
 ---
 
 ## PRIORITY 5: PAGES AND COMPONENT USAGE

@@ -19,7 +19,7 @@ export default function SomePage() {
     </div>
   );
 }
-```sql
+```
 **After:**
 ```tsx
 import { TableLayout } from '@/components/layouts';
@@ -43,7 +43,7 @@ export default function SomePage() {
     </>
   );
 }
-```sql
+```
 ### For Form Pages (create/edit forms)
 
 **Before:**
@@ -57,7 +57,7 @@ export default function CreatePage() {
     </div>
   );
 }
-```sql
+```
 **After:**
 ```tsx
 import { FormLayout } from '@/components/layouts';

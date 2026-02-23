@@ -19,20 +19,16 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -65,8 +61,64 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import type { ContractChangeOrder } from "@/types/contract-change-orders";
+// Local type aligned with contract_change_orders DB table (UUID-based, for prime contracts)
+interface PrimeContractCO {
+  id: string;
+  contract_id: string;
+  change_order_number: string;
+  description: string;
+  amount: number;
+  status: string;
+  requested_by: string | null;
+  requested_date: string;
+  approved_by: string | null;
+  approved_date: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
 import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
+
+interface PaymentApplication {
+  id: string;
+  contract_id: string;
+  project_id: number;
+  application_number: string;
+  status: "draft" | "submitted" | "approved" | "rejected";
+  amount: number;
+  retention_amount: number;
+  net_amount: number;
+  period_from: string | null;
+  period_to: string | null;
+  submitted_at: string | null;
+  submitted_by: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Payment {
+  id: string;
+  contract_id: string;
+  project_id: number;
+  payment_application_id: string | null;
+  payment_number: string | null;
+  amount: number;
+  payment_date: string;
+  method: string | null;
+  reference_number: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  payment_application?: {
+    id: string;
+    application_number: string;
+    amount: number;
+    status: string;
+  } | null;
+}
 
 interface VerticalMarkup {
   id: string;
@@ -157,8 +209,34 @@ export default function ProjectContractDetailPage() {
   const [contractSummaryOpen, setContractSummaryOpen] = useState(true);
   const [lineItems, setLineItems] = useState<ContractLineItemWithCostCode[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
-  const [changeOrders, setChangeOrders] = useState<ContractChangeOrder[]>([]);
+  const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
   const [changeOrdersLoading, setChangeOrdersLoading] = useState(false);
+  // Invoice / Payment state
+  const [paymentApplications, setPaymentApplications] = useState<PaymentApplication[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [paymentsReceivedLoading, setPaymentsReceivedLoading] = useState(false);
+  const [showAddInvoiceDialog, setShowAddInvoiceDialog] = useState(false);
+  const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
+  const [invoiceForm, setInvoiceForm] = useState({
+    application_number: "",
+    amount: "",
+    retention_amount: "",
+    period_from: "",
+    period_to: "",
+    notes: "",
+  });
+  const [paymentForm, setPaymentForm] = useState({
+    amount: "",
+    payment_date: "",
+    payment_application_id: "",
+    payment_number: "",
+    method: "",
+    reference_number: "",
+    notes: "",
+  });
+  const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
   const [previewBaseAmount, setPreviewBaseAmount] = useState<string>("10000");
@@ -299,6 +377,183 @@ export default function ProjectContractDetailPage() {
     fetchChangeOrders();
   }, [contract, contractId, projectId]);
 
+  // Fetch payment applications (invoices) when on invoices tab
+  useEffect(() => {
+    if (activeTab !== "invoices" || !contract) return;
+    const fetchPaymentApplications = async () => {
+      try {
+        setPaymentsLoading(true);
+        const response = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/payment-applications`,
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        setPaymentApplications(data || []);
+      } catch (err) {
+        console.error("Failed to load payment applications:", err);
+      } finally {
+        setPaymentsLoading(false);
+      }
+    };
+    fetchPaymentApplications();
+  }, [activeTab, contract, contractId, projectId]);
+
+  // Fetch payments received when on payments tab
+  useEffect(() => {
+    if (activeTab !== "payments" || !contract) return;
+    const fetchPayments = async () => {
+      try {
+        setPaymentsReceivedLoading(true);
+        const response = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/payments`,
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        setPayments(data || []);
+      } catch (err) {
+        console.error("Failed to load payments:", err);
+      } finally {
+        setPaymentsReceivedLoading(false);
+      }
+    };
+    fetchPayments();
+  }, [activeTab, contract, contractId, projectId]);
+
+  const handleCreateInvoice = async () => {
+    if (!invoiceForm.application_number || !invoiceForm.amount) return;
+    try {
+      setIsSubmittingInvoice(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/payment-applications`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            application_number: invoiceForm.application_number,
+            amount: parseFloat(invoiceForm.amount),
+            retention_amount: invoiceForm.retention_amount
+              ? parseFloat(invoiceForm.retention_amount)
+              : 0,
+            period_from: invoiceForm.period_from || null,
+            period_to: invoiceForm.period_to || null,
+            notes: invoiceForm.notes || null,
+          }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error || "Failed to create invoice");
+        return;
+      }
+      const newApp = await response.json();
+      setPaymentApplications((prev) => [...prev, newApp]);
+      setShowAddInvoiceDialog(false);
+      setInvoiceForm({
+        application_number: "",
+        amount: "",
+        retention_amount: "",
+        period_from: "",
+        period_to: "",
+        notes: "",
+      });
+      toast.success("Invoice created successfully");
+      // Refresh contract to update invoiced_amount
+      const contractRes = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+      );
+      if (contractRes.ok) setContract(await contractRes.json());
+    } catch {
+      toast.error("Failed to create invoice");
+    } finally {
+      setIsSubmittingInvoice(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (applicationId: string) => {
+    if (!confirm("Delete this invoice? This cannot be undone.")) return;
+    const response = await fetch(
+      `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${applicationId}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok) {
+      toast.error("Failed to delete invoice");
+      return;
+    }
+    setPaymentApplications((prev) => prev.filter((a) => a.id !== applicationId));
+    toast.success("Invoice deleted");
+    const contractRes = await fetch(
+      `/api/projects/${projectId}/contracts/${contractId}`,
+    );
+    if (contractRes.ok) setContract(await contractRes.json());
+  };
+
+  const handleCreatePayment = async () => {
+    if (!paymentForm.amount || !paymentForm.payment_date) return;
+    try {
+      setIsSubmittingPayment(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/payments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: parseFloat(paymentForm.amount),
+            payment_date: paymentForm.payment_date,
+            payment_application_id: paymentForm.payment_application_id || null,
+            payment_number: paymentForm.payment_number || null,
+            method: paymentForm.method || null,
+            reference_number: paymentForm.reference_number || null,
+            notes: paymentForm.notes || null,
+          }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error || "Failed to record payment");
+        return;
+      }
+      const newPayment = await response.json();
+      setPayments((prev) => [newPayment, ...prev]);
+      setShowAddPaymentDialog(false);
+      setPaymentForm({
+        amount: "",
+        payment_date: "",
+        payment_application_id: "",
+        payment_number: "",
+        method: "",
+        reference_number: "",
+        notes: "",
+      });
+      toast.success("Payment recorded successfully");
+      const contractRes = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+      );
+      if (contractRes.ok) setContract(await contractRes.json());
+    } catch {
+      toast.error("Failed to record payment");
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm("Delete this payment record? This cannot be undone.")) return;
+    const response = await fetch(
+      `/api/projects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok) {
+      toast.error("Failed to delete payment");
+      return;
+    }
+    setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    toast.success("Payment deleted");
+    const contractRes = await fetch(
+      `/api/projects/${projectId}/contracts/${contractId}`,
+    );
+    if (contractRes.ok) setContract(await contractRes.json());
+  };
+
   // Fetch vertical markups for this project
   useEffect(() => {
     const fetchVerticalMarkups = async () => {
@@ -377,7 +632,7 @@ export default function ProjectContractDetailPage() {
 
   const handleAddLineItem = async () => {
     if (!lineItemForm.lineNumber || !lineItemForm.description) {
-      alert("Line number and description are required");
+      toast.error("Line number and description are required");
       return;
     }
 
@@ -389,7 +644,7 @@ export default function ProjectContractDetailPage() {
       : null;
 
     if (selectedBudgetCode?.code && Number.isNaN(parsedCostCodeId)) {
-      alert(
+      toast.error(
         "Selected budget code could not be applied. Please choose a valid budget code.",
       );
       return;
@@ -438,7 +693,7 @@ export default function ProjectContractDetailPage() {
       });
       setShowAddLineItemDialog(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create line item");
+      toast.error(err instanceof Error ? err.message : "Failed to create line item");
     } finally {
       setIsSubmittingLineItem(false);
     }
@@ -769,17 +1024,14 @@ export default function ProjectContractDetailPage() {
 
       <TableLayout>
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            <section className="rounded-2xl border border-border bg-background shadow-sm">
-              <div className="border-b border-border px-6 py-5">
+          <div className="space-y-6 pb-20">
+            <section className="rounded-2xl bg-background">
+              <div className="px-6 pb-4 pt-3">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-1">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       Prime Contract
                     </p>
-                    <h2 className="text-2xl font-semibold leading-tight">
-                      {contract.title}
-                    </h2>
                     <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <span>Contract #{contract.contract_number || contract.id}</span>
                       <span className="hidden sm:inline">•</span>
@@ -805,10 +1057,10 @@ export default function ProjectContractDetailPage() {
                 </div>
               </div>
 
-              <div className="px-6 py-6">
-                <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                  <div className="space-y-8">
-                    <div className="rounded-xl border border-border bg-muted/10 p-5">
+              <div className="px-6 pb-6 pt-8">
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                  <div className="space-y-6">
+                    <div className="rounded-xl bg-muted/40 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="text-base font-semibold">Parties & Terms</h3>
@@ -838,37 +1090,37 @@ export default function ProjectContractDetailPage() {
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Contract #
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold">
-                                {contract.contract_number || "--"}
+                              <dd className="mt-1 text-[15px] font-semibold leading-6">
+                                {contract.contract_number || "Not set"}
                               </dd>
                             </div>
                             <div>
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Owner/Client
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
-                                {contract.client?.name || "--"}
+                              <dd className="mt-1 text-[15px] font-semibold leading-6 text-blue-600 hover:underline cursor-pointer">
+                                {contract.client?.name || "Not set"}
                               </dd>
                             </div>
                             <div>
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Contractor
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold text-blue-600 hover:underline cursor-pointer">
-                                {contract.vendor?.name || "--"}
+                              <dd className="mt-1 text-[15px] font-semibold leading-6 text-blue-600 hover:underline cursor-pointer">
+                                {contract.vendor?.name || "Not set"}
                               </dd>
                             </div>
                             <div>
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Architect/Engineer
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold">--</dd>
+                              <dd className="mt-1 text-[15px] font-semibold leading-6">Not set</dd>
                             </div>
                             <div>
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Default Retainage
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold">
+                              <dd className="mt-1 text-[15px] font-semibold leading-6">
                                 {contract.retention_percentage ?? 0}%
                               </dd>
                             </div>
@@ -876,16 +1128,16 @@ export default function ProjectContractDetailPage() {
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Payment Terms
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold">
-                                {contract.payment_terms || "--"}
+                              <dd className="mt-1 text-[15px] font-semibold leading-6">
+                                {contract.payment_terms || "Not set"}
                               </dd>
                             </div>
                             <div>
                               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                                 Billing Schedule
                               </dt>
-                              <dd className="mt-1 text-sm font-semibold">
-                                {contract.billing_schedule || "--"}
+                              <dd className="mt-1 text-[15px] font-semibold leading-6">
+                                {contract.billing_schedule || "Not set"}
                               </dd>
                             </div>
                           </dl>
@@ -893,7 +1145,7 @@ export default function ProjectContractDetailPage() {
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl border border-border bg-background p-5">
+                    <div className="rounded-xl bg-muted/40 p-5">
                       <h3 className="text-base font-semibold">Scope Narrative</h3>
                       <p className="text-sm text-muted-foreground">
                         Written description and scope clarifications
@@ -901,34 +1153,34 @@ export default function ProjectContractDetailPage() {
                       <div className="mt-5 grid gap-6">
                         <div>
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">Description</p>
-                          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                            {contract.description || "--"}
+                          <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
+                            {contract.description || "Not set"}
                           </p>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2">
                           <div>
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">Inclusions</p>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {contract.inclusions || "--"}
+                            <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
+                              {contract.inclusions || "Not set"}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs uppercase tracking-wide text-muted-foreground">Exclusions</p>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              {contract.exclusions || "--"}
+                            <p className="mt-2 text-[15px] leading-7 text-muted-foreground">
+                              {contract.exclusions || "Not set"}
                             </p>
                           </div>
                         </div>
-                        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+                        <div className="rounded-lg bg-muted/30 p-4">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground">Attachments</p>
-                          <p className="mt-2 text-sm text-muted-foreground">--</p>
+                          <p className="mt-2 text-[15px] text-muted-foreground">Not set</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="rounded-xl border border-border bg-muted/30 p-5">
+                    <div className="rounded-xl bg-muted/40 p-5">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-base font-semibold">Financial Snapshot</h3>
@@ -954,106 +1206,106 @@ export default function ProjectContractDetailPage() {
                           <dl className="mt-5 space-y-4 text-sm">
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Original Contract Amount</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.original_contract_value)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Revised Contract Amount</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.revised_contract_value)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Pending Change Orders</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.pending_change_orders)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Approved Change Orders</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.approved_change_orders)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Invoices</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.invoiced_amount)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Payments Received</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.payments_received)}
                               </dd>
                             </div>
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Remaining Balance</dt>
-                              <dd className="font-semibold">
+                              <dd className="text-right font-semibold tabular-nums">
                                 {formatCurrency(contract.remaining_balance)}
                               </dd>
                             </div>
-                            <div className="flex items-center justify-between border-t border-border pt-4">
+                            <div className="flex items-center justify-between pt-4">
                               <dt className="text-muted-foreground">Percent Paid</dt>
-                              <dd className="text-base font-semibold">{contract.percent_paid}%</dd>
+                              <dd className="text-right text-base font-semibold tabular-nums">{contract.percent_paid}%</dd>
                             </div>
                           </dl>
                         </CollapsibleContent>
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl border border-border bg-background p-5">
+                    <div className="rounded-xl bg-muted/40 p-5">
                       <h3 className="text-base font-semibold">Key Dates</h3>
                       <p className="text-sm text-muted-foreground">Contract timeline milestones</p>
                       <dl className="mt-5 space-y-4 text-sm">
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Start Date</dt>
-                          <dd className="font-medium">
-                            {contract.start_date ? formatDate(contract.start_date) : "--"}
+                          <dd className="text-right font-medium">
+                            {contract.start_date ? formatDate(contract.start_date) : "Not set"}
                           </dd>
                         </div>
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Estimated Completion</dt>
-                          <dd className="font-medium">
-                            {contract.end_date ? formatDate(contract.end_date) : "--"}
+                          <dd className="text-right font-medium">
+                            {contract.end_date ? formatDate(contract.end_date) : "Not set"}
                           </dd>
                         </div>
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Substantial Completion</dt>
-                          <dd className="font-medium">
+                          <dd className="text-right font-medium">
                             {contract.substantial_completion_date
                               ? formatDate(contract.substantial_completion_date)
-                              : "--"}
+                              : "Not set"}
                           </dd>
                         </div>
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Actual Completion</dt>
-                          <dd className="font-medium">
+                          <dd className="text-right font-medium">
                             {contract.actual_completion_date
                               ? formatDate(contract.actual_completion_date)
-                              : "--"}
+                              : "Not set"}
                           </dd>
                         </div>
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Signed Contract Received</dt>
-                          <dd className="font-medium">
+                          <dd className="text-right font-medium">
                             {contract.signed_contract_received_date
                               ? formatDate(contract.signed_contract_received_date)
-                              : "--"}
+                              : "Not set"}
                           </dd>
                         </div>
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Contract Termination</dt>
-                          <dd className="font-medium">
+                          <dd className="text-right font-medium">
                             {contract.contract_termination_date
                               ? formatDate(contract.contract_termination_date)
-                              : "--"}
+                              : "Not set"}
                           </dd>
                         </div>
-                        <div className="flex items-center justify-between border-t border-border pt-4">
+                        <div className="flex items-center justify-between pt-4">
                           <dt className="text-muted-foreground">Created</dt>
-                          <dd className="font-medium">{formatDate(contract.created_at)}</dd>
+                          <dd className="text-right font-medium">{formatDate(contract.created_at)}</dd>
                         </div>
                       </dl>
                     </div>
@@ -1062,25 +1314,21 @@ export default function ProjectContractDetailPage() {
               </div>
             </section>
 
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <section className="rounded-xl bg-muted/40 px-6 py-6">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Schedule of Values</CardTitle>
-                  <CardDescription>
+                  <h3 className="text-base font-semibold">Schedule of Values</h3>
+                  <p className="text-sm text-muted-foreground">
                     {lineItems.length} SOV line
                     {lineItems.length === 1 ? "" : "s"} on this contract
-                  </CardDescription>
+                  </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAddLineItemDialog(true)}
-                >
+                <Button size="sm" onClick={() => setShowAddLineItemDialog(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add SOV Line
                 </Button>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="mt-4">
                 {lineItemsLoading ? (
                   <div className="text-center py-8 text-muted-foreground">
                     Loading schedule of values...
@@ -1129,8 +1377,8 @@ export default function ProjectContractDetailPage() {
                     </TableBody>
                   </Table>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
           </div>
         )}
 
@@ -1182,7 +1430,7 @@ export default function ProjectContractDetailPage() {
                       {changeOrders.map((co) => (
                         <TableRow key={co.id}>
                           <TableCell className="font-medium">
-                            {co.co_number || "--"}
+                            {co.change_order_number || "--"}
                           </TableCell>
                           <TableCell>{co.description}</TableCell>
                           <TableCell className="text-right">
@@ -1207,8 +1455,8 @@ export default function ProjectContractDetailPage() {
                             {co.created_at ? new Date(co.created_at).toLocaleDateString() : "--"}
                           </TableCell>
                           <TableCell className="text-sm">
-                            {co.approved_at
-                              ? new Date(co.approved_at).toLocaleDateString()
+                            {co.approved_date
+                              ? new Date(co.approved_date).toLocaleDateString()
                               : "--"}
                           </TableCell>
                         </TableRow>
@@ -1235,30 +1483,452 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <div>
             <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Invoices</h3>
-                <p className="text-sm text-muted-foreground">Invoices for this contract</p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Invoices</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {paymentApplications.length} invoice{paymentApplications.length === 1 ? "" : "s"} •{" "}
+                    Total invoiced: {formatCurrency(
+                      paymentApplications
+                        .filter((a) => a.status === "approved")
+                        .reduce((sum, a) => sum + a.amount, 0),
+                    )}
+                  </p>
+                </div>
+                <Button size="sm" onClick={() => setShowAddInvoiceDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Invoice
+                </Button>
               </div>
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                <p>Invoices will be displayed here</p>
-              </div>
+
+              {paymentsLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Loading invoices...</p>
+                </div>
+              ) : paymentApplications.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No invoices yet</p>
+                  <p className="text-xs mt-2">Create an invoice to track payment applications</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Application #</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Retention</TableHead>
+                      <TableHead className="text-right">Net</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paymentApplications.map((app) => (
+                      <TableRow key={app.id}>
+                        <TableCell className="font-medium">
+                          {app.application_number}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {app.period_from && app.period_to
+                            ? `${new Date(app.period_from).toLocaleDateString()} – ${new Date(app.period_to).toLocaleDateString()}`
+                            : app.period_from
+                              ? `From ${new Date(app.period_from).toLocaleDateString()}`
+                              : "--"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(app.amount)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {app.retention_amount > 0
+                            ? formatCurrency(app.retention_amount)
+                            : "--"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(app.net_amount ?? app.amount - app.retention_amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              app.status === "approved"
+                                ? "default"
+                                : app.status === "submitted"
+                                  ? "secondary"
+                                  : app.status === "rejected"
+                                    ? "destructive"
+                                    : "outline"
+                            }
+                          >
+                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {app.submitted_at
+                            ? new Date(app.submitted_at).toLocaleDateString()
+                            : "--"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteInvoice(app.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <tfoot>
+                    <TableRow className="bg-muted font-medium">
+                      <TableCell colSpan={2}>Total</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(paymentApplications.reduce((s, a) => s + a.amount, 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(paymentApplications.reduce((s, a) => s + a.retention_amount, 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(
+                          paymentApplications.reduce(
+                            (s, a) => s + (a.net_amount ?? a.amount - a.retention_amount),
+                            0,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell colSpan={3}></TableCell>
+                    </TableRow>
+                  </tfoot>
+                </Table>
+              )}
             </div>
+
+            {/* Add Invoice Dialog */}
+            <Dialog open={showAddInvoiceDialog} onOpenChange={setShowAddInvoiceDialog}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>New Invoice / Payment Application</DialogTitle>
+                  <DialogDescription>
+                    Create a payment application for this prime contract.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-number">Application Number *</Label>
+                      <Input
+                        id="app-number"
+                        placeholder="e.g. 001"
+                        value={invoiceForm.application_number}
+                        onChange={(e) =>
+                          setInvoiceForm((f) => ({ ...f, application_number: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="app-amount">Amount *</Label>
+                      <Input
+                        id="app-amount"
+                        type="number"
+                        placeholder="0.00"
+                        value={invoiceForm.amount}
+                        onChange={(e) =>
+                          setInvoiceForm((f) => ({ ...f, amount: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="app-retention">Retention Amount</Label>
+                    <Input
+                      id="app-retention"
+                      type="number"
+                      placeholder="0.00"
+                      value={invoiceForm.retention_amount}
+                      onChange={(e) =>
+                        setInvoiceForm((f) => ({ ...f, retention_amount: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-period-from">Period From</Label>
+                      <Input
+                        id="app-period-from"
+                        type="date"
+                        value={invoiceForm.period_from}
+                        onChange={(e) =>
+                          setInvoiceForm((f) => ({ ...f, period_from: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="app-period-to">Period To</Label>
+                      <Input
+                        id="app-period-to"
+                        type="date"
+                        value={invoiceForm.period_to}
+                        onChange={(e) =>
+                          setInvoiceForm((f) => ({ ...f, period_to: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="app-notes">Notes</Label>
+                    <Textarea
+                      id="app-notes"
+                      placeholder="Optional notes..."
+                      rows={3}
+                      value={invoiceForm.notes}
+                      onChange={(e) =>
+                        setInvoiceForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddInvoiceDialog(false)}
+                    disabled={isSubmittingInvoice}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateInvoice}
+                    disabled={
+                      isSubmittingInvoice ||
+                      !invoiceForm.application_number ||
+                      !invoiceForm.amount
+                    }
+                  >
+                    {isSubmittingInvoice ? "Creating..." : "Create Invoice"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
         {activeTab === "payments" && (
           <div>
             <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Payments Received</h3>
-                <p className="text-sm text-muted-foreground">Payment history for this contract</p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Payments Received</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
+                    Total received: {formatCurrency(
+                      payments.reduce((sum, p) => sum + p.amount, 0),
+                    )}
+                  </p>
+                </div>
+                <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Record Payment
+                </Button>
               </div>
-              <div className="text-center py-8 text-muted-foreground">
-                <DollarSign className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                <p>Payment history will be displayed here</p>
-              </div>
+
+              {paymentsReceivedLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Loading payments...</p>
+                </div>
+              ) : payments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No payments recorded yet</p>
+                  <p className="text-xs mt-2">Record a payment when funds are received</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Payment #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Reference</TableHead>
+                      <TableHead>Linked Invoice</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.map((pmt) => (
+                      <TableRow key={pmt.id}>
+                        <TableCell className="font-medium">
+                          {pmt.payment_number || "--"}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(pmt.payment_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(pmt.amount)}
+                        </TableCell>
+                        <TableCell className="capitalize text-muted-foreground">
+                          {pmt.method || "--"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {pmt.reference_number || "--"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {pmt.payment_application
+                            ? `App #${pmt.payment_application.application_number}`
+                            : "--"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeletePayment(pmt.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <tfoot>
+                    <TableRow className="bg-muted font-medium">
+                      <TableCell colSpan={2}>Total Received</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(payments.reduce((s, p) => s + p.amount, 0))}
+                      </TableCell>
+                      <TableCell colSpan={4}></TableCell>
+                    </TableRow>
+                  </tfoot>
+                </Table>
+              )}
             </div>
+
+            {/* Record Payment Dialog */}
+            <Dialog open={showAddPaymentDialog} onOpenChange={setShowAddPaymentDialog}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Record Payment Received</DialogTitle>
+                  <DialogDescription>
+                    Log a payment received against this prime contract.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pmt-amount">Amount *</Label>
+                      <Input
+                        id="pmt-amount"
+                        type="number"
+                        placeholder="0.00"
+                        value={paymentForm.amount}
+                        onChange={(e) =>
+                          setPaymentForm((f) => ({ ...f, amount: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pmt-date">Payment Date *</Label>
+                      <Input
+                        id="pmt-date"
+                        type="date"
+                        value={paymentForm.payment_date}
+                        onChange={(e) =>
+                          setPaymentForm((f) => ({ ...f, payment_date: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pmt-method">Method</Label>
+                      <select
+                        id="pmt-method"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                        value={paymentForm.method}
+                        onChange={(e) =>
+                          setPaymentForm((f) => ({ ...f, method: e.target.value }))
+                        }
+                      >
+                        <option value="">Select method</option>
+                        <option value="check">Check</option>
+                        <option value="wire">Wire Transfer</option>
+                        <option value="ach">ACH</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="cash">Cash</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pmt-ref">Reference / Check #</Label>
+                      <Input
+                        id="pmt-ref"
+                        placeholder="e.g. 12345"
+                        value={paymentForm.reference_number}
+                        onChange={(e) =>
+                          setPaymentForm((f) => ({ ...f, reference_number: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  {paymentApplications.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="pmt-app">Linked Invoice (optional)</Label>
+                      <select
+                        id="pmt-app"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                        value={paymentForm.payment_application_id}
+                        onChange={(e) =>
+                          setPaymentForm((f) => ({
+                            ...f,
+                            payment_application_id: e.target.value,
+                          }))
+                        }
+                      >
+                        <option value="">None</option>
+                        {paymentApplications.map((app) => (
+                          <option key={app.id} value={app.id}>
+                            App #{app.application_number} — {formatCurrency(app.amount)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="pmt-notes">Notes</Label>
+                    <Textarea
+                      id="pmt-notes"
+                      placeholder="Optional notes..."
+                      rows={3}
+                      value={paymentForm.notes}
+                      onChange={(e) =>
+                        setPaymentForm((f) => ({ ...f, notes: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAddPaymentDialog(false)}
+                    disabled={isSubmittingPayment}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreatePayment}
+                    disabled={
+                      isSubmittingPayment ||
+                      !paymentForm.amount ||
+                      !paymentForm.payment_date
+                    }
+                  >
+                    {isSubmittingPayment ? "Recording..." : "Record Payment"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 

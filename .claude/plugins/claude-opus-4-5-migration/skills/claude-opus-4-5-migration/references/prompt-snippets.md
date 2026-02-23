@@ -30,7 +30,7 @@ Only apply these snippets if the user explicitly requests them or reports a spec
 - Don't add features, refactor code, or make "improvements" beyond what was asked. A bug fix doesn't need surrounding code cleaned up. A simple feature doesn't need extra configurability.
 - Don't add error handling, fallbacks, or validation for scenarios that can't happen. Trust internal code and framework guarantees. Only validate at system boundaries (user input, external APIs). Don't use backwards-compatibility shims when you can just change the code.
 - Don't create helpers, utilities, or abstractions for one-time operations. Don't design for hypothetical future requirements. The right amount of complexity is the minimum needed for the current task. Reuse existing abstractions where possible and follow the DRY principle.
-```markdown
+```
 ## 3. Code Exploration
 
 **Problem**: Opus 4.5 may propose solutions without reading code or make assumptions about unread files.
@@ -69,7 +69,7 @@ Avoid generic AI-generated aesthetics:
 
 Interpret creatively and make unexpected choices that feel genuinely designed for the context. Vary between light and dark themes, different fonts, different aesthetics. You still tend to converge on common choices (Space Grotesk, for example) across generations. Avoid this: it is critical that you think outside the box!
 </frontend_aesthetics>
-```markdown
+```
 ## 5. Thinking Sensitivity
 
 **Problem**: When extended thinking is not enabled (the default), Opus 4.5 is particularly sensitive to the word "think" and its variants.

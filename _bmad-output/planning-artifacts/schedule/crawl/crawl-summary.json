@@ -1,0 +1,259 @@
+{
+  "module": "scheduling",
+  "generatedAt": "2026-01-27T23:49:12.463Z",
+  "stats": {
+    "pagesCaptured": 1,
+    "pagesWithMetadata": 1,
+    "pagesWithScreenshots": 1,
+    "systemActionsFound": 0,
+    "domainCommandsPromoted": 14
+  },
+  "specArtifacts": {
+    "commands": true,
+    "forms": true,
+    "mutations": true,
+    "schema": true
+  },
+  "commands": [
+    {
+      "key": "add_task",
+      "label": "Add Activity Below",
+      "description": "Add a new task to the schedule"
+    },
+    {
+      "key": "bulk_edit_tasks",
+      "label": "Bulk edit",
+      "description": "Edit multiple scheduling tasks at once"
+    },
+    {
+      "key": "convert_to_milestone",
+      "label": "Convert to milestone",
+      "description": "Convert a task into a milestone"
+    },
+    {
+      "key": "copy_task",
+      "label": "Copy",
+      "description": ""
+    },
+    {
+      "key": "cut_task",
+      "label": "Cut",
+      "description": ""
+    },
+    {
+      "key": "delete_task",
+      "label": "Delete",
+      "description": "Delete one or more tasks"
+    },
+    {
+      "key": "edit_task",
+      "label": "Edit",
+      "description": "Edit a single scheduling task"
+    },
+    {
+      "key": "export_schedule",
+      "label": "Export",
+      "description": "Export scheduling data"
+    },
+    {
+      "key": "import_schedule",
+      "label": "Import",
+      "description": "Import scheduling data"
+    },
+    {
+      "key": "indent_task",
+      "label": "Indent Activity",
+      "description": "Make task a child of previous task"
+    },
+    {
+      "key": "outdent_task",
+      "label": "Outdent Activity",
+      "description": "Promote task to higher hierarchy"
+    },
+    {
+      "key": "paste_task",
+      "label": "Paste",
+      "description": ""
+    },
+    {
+      "key": "scroll_to_task",
+      "label": "Scroll to activity",
+      "description": "Scroll viewport to selected task"
+    },
+    {
+      "key": "set_deadline",
+      "label": "Set deadline to finish date",
+      "description": "Lock task finish date as deadline"
+    }
+  ],
+  "systemActions": [],
+  "uiComponents": {
+    "tables": [],
+    "forms": [],
+    "dropdowns": [
+      {
+        "label": "Scroll to activity",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Bulk edit",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Edit",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Copy",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Cut",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Paste",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Set deadline to finish date",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Add...",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Convert to milestone",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Indent Activity",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Outdent Activity",
+        "page": "scheduling",
+        "type": "context_menu"
+      },
+      {
+        "label": "Delete",
+        "page": "scheduling",
+        "type": "context_menu"
+      }
+    ],
+    "buttons": [],
+    "modals": [
+      {
+        "label": "SearchCmdK",
+        "page": "scheduling"
+      },
+      {
+        "label": "More",
+        "page": "scheduling"
+      },
+      {
+        "label": "Learn More",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "More",
+        "page": "scheduling"
+      },
+      {
+        "label": "Feedback",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      },
+      {
+        "label": "",
+        "page": "scheduling"
+      }
+    ]
+  },
+  "screenshots": {
+    "scheduling": "pages/scheduling/screenshot.png"
+  },
+  "pages": [
+    {
+      "name": "scheduling",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/schedulemgmt",
+      "category": "scheduling",
+      "capturedAt": "2026-01-27T18:58:32.802Z",
+      "hasScreenshot": true,
+      "hasDom": true,
+      "systemActionsCount": 37
+    }
+  ],
+  "paths": {
+    "moduleDir": "procore-crawls/scheduling",
+    "pagesDir": "procore-crawls/scheduling/pages",
+    "reportsDir": "procore-crawls/scheduling/reports",
+    "specDir": "procore-crawls/scheduling/spec"
+  }
+}

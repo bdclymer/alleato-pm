@@ -230,7 +230,7 @@ In crates/foo/planner.rs, define:
     pub trait Planner {
         fn plan(&self, observed: &Observed) -> Vec<Action>;
     }
-```typescript
+```
 ## PLANS_DOC Folder Structure
 Every project MUST conform to the following folder structure (adapt as needed for project type, but do not remove categories). This enforced structure provides predictable discovery paths for agents, reduces ambiguity during autonomous execution, and simplifies onboarding for maintainers by ensuring all components live in consistent, well-defined locations.
 

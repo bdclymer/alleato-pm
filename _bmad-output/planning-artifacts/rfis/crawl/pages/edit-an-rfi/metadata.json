@@ -1,0 +1,1537 @@
+{
+  "url": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/edit-an-rfi",
+  "pageName": "edit-an-rfi",
+  "category": "rfis",
+  "pageId": "edit-an-rfi",
+  "timestamp": "2026-01-11T07:07:34.824Z",
+  "analysis": {
+    "components": {
+      "buttons": 33,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 19,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 35,
+      "statusBadges": 0,
+      "dateFields": 0,
+      "fileAttachments": 0
+    },
+    "tables": [],
+    "rfiElements": {
+      "rfiNumbers": 0,
+      "questionFields": 0,
+      "answerFields": 0,
+      "assigneeFields": 0,
+      "dueDateFields": 0,
+      "statusSelects": 0,
+      "priorityFields": 0,
+      "responsibleParty": 0,
+      "costImpact": 0,
+      "scheduleImpact": 0,
+      "drawings": 0,
+      "specifications": 0
+    },
+    "title": "Edit an RFI",
+    "h1": "Edit an RFI"
+  },
+  "links": 87,
+  "linkDetails": [
+    {
+      "href": "https://v2.support.procore.com/contact-support",
+      "text": "enhanced Webform",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 0
+    },
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": "icon",
+      "isRfiRelated": false,
+      "index": 1
+    },
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": "mobile-icon",
+      "isRfiRelated": false,
+      "index": 2
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/",
+      "text": "Product Manuals",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 3
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/",
+      "text": "Process Guides",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 4
+    },
+    {
+      "href": "https://learn.procore.com/",
+      "text": "Certifications        Get Procore Certified for free with role-based, online training courses",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 5
+    },
+    {
+      "href": "https://v2.support.procore.com/video-library/",
+      "text": "Training Video Library   Search our library of training videos",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 6
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/permissions-matrix/",
+      "text": "Permissions Matrix",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 7
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms/",
+      "text": "Glossary of Terms",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 8
+    },
+    {
+      "href": "https://status.procore.com/",
+      "text": "System Status        View the status of the app",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 9
+    },
+    {
+      "href": "https://community.procore.com/s/",
+      "text": "Community        Ask questions, find ideas and articles, and connect with others",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 10
+    },
+    {
+      "href": "https://www.procore.com/whats-new/en",
+      "text": "Product Updates        Learn about the newest features to see what's coming to the platform",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 11
+    },
+    {
+      "href": "https://developers.procore.com/",
+      "text": "Developers        Build applications on the Procore platform",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 12
+    },
+    {
+      "href": "https://v2.support.procore.com/release-notes/",
+      "text": "Release Notes",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 13
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/",
+      "text": "Product Manuals",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 14
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/",
+      "text": "Process Guides",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 15
+    },
+    {
+      "href": "https://v2.support.procore.com/https://learn.procore.com/",
+      "text": "Certifications",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 16
+    },
+    {
+      "href": "https://v2.support.procore.com/video-library/",
+      "text": "Training Video Library",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 17
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/permissions-matrix/",
+      "text": "Permissions Matrix",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 18
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms/",
+      "text": "Glossary of Terms",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 19
+    },
+    {
+      "href": "https://v2.support.procore.com/https://status.procore.com/",
+      "text": "System Status",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 20
+    },
+    {
+      "href": "https://v2.support.procore.com/https://community.procore.com/s/",
+      "text": "Community",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 21
+    },
+    {
+      "href": "https://v2.support.procore.com/https://www.procore.com/whats-new/en/",
+      "text": "Product Updates",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 22
+    },
+    {
+      "href": "https://v2.support.procore.com/https://developers.procore.com%20/",
+      "text": "Developers",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 23
+    },
+    {
+      "href": "https://v2.support.procore.com/release-notes/",
+      "text": "Release Notes",
+      "classes": "mobile-nav-accordion-button-title",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 24
+    },
+    {
+      "href": "https://en-au.support.procore.com/",
+      "text": "Australia (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 25
+    },
+    {
+      "href": "https://pt-br.support.procore.com/",
+      "text": "Brasil (Português)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 26
+    },
+    {
+      "href": "https://en-ca.support.procore.com/",
+      "text": "Canada (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 27
+    },
+    {
+      "href": "https://fr-ca.support.procore.com/",
+      "text": "Canada (Français)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 28
+    },
+    {
+      "href": "https://de.support.procore.com/",
+      "text": "Deutschland (Deutsch)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 29
+    },
+    {
+      "href": "https://es-es.support.procore.com/",
+      "text": "España (Español)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 30
+    },
+    {
+      "href": "https://fr.support.procore.com/",
+      "text": "France (Français)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 31
+    },
+    {
+      "href": "https://es.support.procore.com/",
+      "text": "Latinoamérica (Español)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 32
+    },
+    {
+      "href": "https://pl-pl.support.procore.com/",
+      "text": "Polska (Polski)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 33
+    },
+    {
+      "href": "https://en-gb.support.procore.com/",
+      "text": "United Kingdom (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 34
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/edit-an-rfi/",
+      "text": "United States (English)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 35
+    },
+    {
+      "href": "https://zh-sg.support.procore.com/",
+      "text": "新加坡 (中文)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 36
+    },
+    {
+      "href": "https://ja-jp.support.procore.com/",
+      "text": "日本 (日本語)",
+      "classes": "astro-zw5levfn",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 37
+    },
+    {
+      "href": "https://en-au.support.procore.com/",
+      "text": "Australia (English)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 38
+    },
+    {
+      "href": "https://pt-br.support.procore.com/",
+      "text": "Brasil (Português)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 39
+    },
+    {
+      "href": "https://en-ca.support.procore.com/",
+      "text": "Canada (English)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 40
+    },
+    {
+      "href": "https://fr-ca.support.procore.com/",
+      "text": "Canada (Français)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 41
+    },
+    {
+      "href": "https://de.support.procore.com/",
+      "text": "Deutschland (Deutsch)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 42
+    },
+    {
+      "href": "https://es-es.support.procore.com/",
+      "text": "España (Español)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 43
+    },
+    {
+      "href": "https://fr.support.procore.com/",
+      "text": "France (Français)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 44
+    },
+    {
+      "href": "https://es.support.procore.com/",
+      "text": "Latinoamérica (Español)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 45
+    },
+    {
+      "href": "https://pl-pl.support.procore.com/",
+      "text": "Polska (Polski)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 46
+    },
+    {
+      "href": "https://en-gb.support.procore.com/",
+      "text": "United Kingdom (English)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 47
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/edit-an-rfi/",
+      "text": "United States (English)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 48
+    },
+    {
+      "href": "https://zh-sg.support.procore.com/",
+      "text": "新加坡 (中文)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 49
+    },
+    {
+      "href": "https://ja-jp.support.procore.com/",
+      "text": "日本 (日本語)",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 50
+    },
+    {
+      "href": "https://v2.support.procore.com/",
+      "text": "Support Home",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 51
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/",
+      "text": "RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 52
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/edit-an-rfi/",
+      "text": "Edit an RFI",
+      "classes": "current-page",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 53
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/permissions",
+      "text": "Required User Permissions",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 54
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/revise-an-rfi",
+      "text": "most recent revision of the RFI",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 55
+    },
+    {
+      "href": "https://support.procore.com/faq/can-i-create-an-rfi-with-a-duplicate-number",
+      "text": "Can I create an RFI with a duplicate number?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 56
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/configure-a-prefix-and-starting-number-for-rfis",
+      "text": "How do I configure a prefix and starting number for a project's RFIs?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 57
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/search-for-and-filter-rfis",
+      "text": "Search for and Filter RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 58
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/designate-the-default-rfi-manager-for-a-projects-rfis",
+      "text": "Designate the Default RFI Manager for a Project's RFIs",
+      "classes": "see-also-link",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 59
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/add-assignees-to-an-rfi-as-an-assignee-on-an-rfi",
+      "text": "Add Assignees to an RFI as an Assignee on an RFI",
+      "classes": "see-also-link",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 60
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-rfi-manager-role",
+      "text": "What is the RFI Manager role?",
+      "classes": "see-also-link",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 61
+    },
+    {
+      "href": "https://www.procore.com/",
+      "text": "Website",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 67
+    },
+    {
+      "href": "https://status.procore.com/",
+      "text": "System Status",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 68
+    },
+    {
+      "href": "https://marketplace.procore.com/",
+      "text": "App Marketplace",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 69
+    },
+    {
+      "href": "https://v2.support.procore.com/contact-support",
+      "text": "Contact Support",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 70
+    },
+    {
+      "href": "https://www.procore.com/legal/privacy",
+      "text": "Privacy Notice",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 73
+    },
+    {
+      "href": "https://www.procore.com/legal/terms-of-service",
+      "text": "Terms of Service",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 74
+    },
+    {
+      "href": "https://www.procore.com/legal/california-consumer-rights",
+      "text": "Do Not Sell Personal Information",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 75
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/configure-a-prefix-and-starting-number-for-rfis",
+      "text": "How do I configure a prefix and starting number for a project's RFIs?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 76
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-how-does-procore-assign-numbers-to-rfis",
+      "text": "How does Procore assign numbers to RFIs?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 77
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-options-do-i-have-for-numbering-rfis-in-procore",
+      "text": "What options do I have for numbering RFIs in Procore?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 78
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/configure-advanced-settings-rfis",
+      "text": "Configure Advanced Settings: RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 79
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-project/tutorials/set-project-working-days",
+      "text": "Set Project Working Days",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 80
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/add-assignees-to-an-rfi-as-an-assignee-on-an-rfi",
+      "text": "Add Assignees to an RFI as an Assignee on an RFI",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 81
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/forward-an-rfi-for-review",
+      "text": "Forward an RFI for Review",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 82
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-rfi-manager-role",
+      "text": "What is the RFI Manager role?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 83
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/designate-the-default-rfi-manager-for-a-projects-rfis",
+      "text": "Designate the Default RFI Manager for a Project's RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 84
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/respond-to-an-rfi",
+      "text": "Respond to an RFI",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 85
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/drawings-project/tutorials/link-items-on-a-drawing",
+      "text": "Link an RFI to a Drawing",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 86
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-where-do-the-selections-in-the-spec-sections-drop-down-list-come-from",
+      "text": "Where do the selections from the 'Specification Sections' drop-down list come from?",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 87
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/admin-project/tutorials/allow-or-disallow-users-to-create-locations-within-a-tool",
+      "text": "Allow or Disallow Users to Create Locations Within a Tool",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 88
+    },
+    {
+      "href": "https://v2.support.procore.com/process-guides/company-administration-work-breakdown-structure-guide/enable-sub-jobs-for-projects",
+      "text": "Enable Sub Jobs on Projects for WBS",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 89
+    },
+    {
+      "href": "https://v2.support.procore.com/glossary-of-terms",
+      "text": "cost code",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 90
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/prime-contracts-project/tutorials/create-a-potential-change-order-for-a-prime-contract",
+      "text": "Create a Potential Change Order for a Prime Contract",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 91
+    },
+    {
+      "href": "https://v2.support.procore.com/product-manuals/rfi-project/tutorials/configure-advanced-settings-rfis",
+      "text": "Configure Settings: RFIs",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": true,
+      "index": 92
+    },
+    {
+      "href": "https://v2.support.procore.com/faq-what-is-the-difference-between-document-management-attachments-and-attachments-from-other-tools",
+      "text": "Document Management",
+      "classes": "",
+      "id": null,
+      "isRfiRelated": false,
+      "index": 93
+    }
+  ],
+  "clickables": 33,
+  "clickableDetails": [
+    {
+      "text": "",
+      "id": "banner-close-button",
+      "type": "button",
+      "classes": "banner-close-button",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "Menu",
+      "id": "mobile-nav-toggle",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "What do you need help with?",
+      "id": "autocomplete-0-label",
+      "type": "button",
+      "classes": "aa-DetachedSearchButton",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Resources",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": true,
+      "index": 3
+    },
+    {
+      "text": "Resources",
+      "id": "mobile-nav-accordion-button",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "United States",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": true,
+      "index": 5
+    },
+    {
+      "text": "United States",
+      "id": "mobile-nav-accordion-button",
+      "type": "button",
+      "classes": "mobile-nav-accordion-button",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Number",
+      "id": "tool-tip-button-1",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Due Date",
+      "id": "tool-tip-button-2",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Subject",
+      "id": "tool-tip-button-3",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Status",
+      "id": "tool-tip-button-4",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Assignees",
+      "id": "tool-tip-button-5",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "RFI Manager",
+      "id": "tool-tip-button-6",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Distribution List",
+      "id": "tool-tip-button-7",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "Created By",
+      "id": "tool-tip-button-8",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "Date Initiated",
+      "id": "tool-tip-button-9",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "Received From",
+      "id": "tool-tip-button-a",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Responsible Contractor",
+      "id": "tool-tip-button-b",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Drawing Number",
+      "id": "tool-tip-button-c",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Spec Section",
+      "id": "tool-tip-button-d",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Location",
+      "id": "tool-tip-button-e",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Sub Job",
+      "id": "tool-tip-button-f",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Schedule Impact",
+      "id": "tool-tip-button-10",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "Cost Code",
+      "id": "tool-tip-button-11",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Cost Impact",
+      "id": "tool-tip-button-12",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "Reference",
+      "id": "tool-tip-button-13",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "Private",
+      "id": "tool-tip-button-14",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "Custom Fields",
+      "id": "tool-tip-button-15",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "Question",
+      "id": "tool-tip-button-16",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "Attach Files",
+      "id": "tool-tip-button-17",
+      "type": "button",
+      "classes": "tool-tip-button",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "",
+      "id": "back-to-top-button",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "About Procore",
+      "id": "footer-accordion-button",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "Downloads",
+      "id": "footer-accordion-button",
+      "type": "button",
+      "classes": "footer-accordion-button",
+      "hasDropdown": false,
+      "index": 32
+    }
+  ],
+  "dropdowns": 75,
+  "dropdownDetails": [
+    {
+      "text": "Menu",
+      "classes": "",
+      "id": "mobile-nav-toggle",
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "What do you need help with?       Product Manuals ",
+      "classes": "web-menu",
+      "id": null,
+      "hasMenu": true,
+      "index": 1
+    },
+    {
+      "text": "What do you need help with?",
+      "classes": "aa-Autocomplete",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Product Manuals    Process Guides       Resources ",
+      "classes": "nav-menu-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 3
+    },
+    {
+      "text": "Resources               Certifications        Get ",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 4
+    },
+    {
+      "text": "Resources",
+      "classes": "",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "Resources",
+      "classes": "top-menu-title menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "Certifications        Get Procore Certified for fr",
+      "classes": "dropdown-content",
+      "id": "menu-resources",
+      "hasMenu": false,
+      "index": 7
+    },
+    {
+      "text": "Certifications        Get Procore Certified for fr",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 8
+    },
+    {
+      "text": "Certifications",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 9
+    },
+    {
+      "text": "Training Video Library   Search our library of tra",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 10
+    },
+    {
+      "text": "Training Video Library",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 11
+    },
+    {
+      "text": "Permissions Matrix",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 12
+    },
+    {
+      "text": "Permissions Matrix",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 13
+    },
+    {
+      "text": "Glossary of Terms",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 14
+    },
+    {
+      "text": "Glossary of Terms",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 15
+    },
+    {
+      "text": "System Status        View the status of the app",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 16
+    },
+    {
+      "text": "System Status",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 17
+    },
+    {
+      "text": "Community        Ask questions, find ideas and art",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 18
+    },
+    {
+      "text": "Community",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 19
+    },
+    {
+      "text": "Product Updates        Learn about the newest feat",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 20
+    },
+    {
+      "text": "Product Updates",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 21
+    },
+    {
+      "text": "Developers        Build applications on the Procor",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 22
+    },
+    {
+      "text": "Developers",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 23
+    },
+    {
+      "text": "Certifications",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 24
+    },
+    {
+      "text": "Training Video Library",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 25
+    },
+    {
+      "text": "Permissions Matrix",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 26
+    },
+    {
+      "text": "Glossary of Terms",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 27
+    },
+    {
+      "text": "System Status",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 28
+    },
+    {
+      "text": "Community",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 29
+    },
+    {
+      "text": "Product Updates",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 30
+    },
+    {
+      "text": "Developers",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 31
+    },
+    {
+      "text": "United States               Australia (English)   ",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 32
+    },
+    {
+      "text": "United States",
+      "classes": "",
+      "id": null,
+      "hasMenu": false,
+      "index": 33
+    },
+    {
+      "text": "United States",
+      "classes": "top-menu-title menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 34
+    },
+    {
+      "text": "Australia (English)          Brasil (Português)   ",
+      "classes": "dropdown-content",
+      "id": "menu-united-states",
+      "hasMenu": false,
+      "index": 35
+    },
+    {
+      "text": "Australia (English)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 36
+    },
+    {
+      "text": "Australia (English)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 37
+    },
+    {
+      "text": "Brasil (Português)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 38
+    },
+    {
+      "text": "Brasil (Português)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 39
+    },
+    {
+      "text": "Canada (English)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 40
+    },
+    {
+      "text": "Canada (English)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 41
+    },
+    {
+      "text": "Canada (Français)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 42
+    },
+    {
+      "text": "Canada (Français)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 43
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 44
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 45
+    },
+    {
+      "text": "España (Español)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 46
+    },
+    {
+      "text": "España (Español)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 47
+    },
+    {
+      "text": "France (Français)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 48
+    },
+    {
+      "text": "France (Français)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 49
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 50
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 51
+    },
+    {
+      "text": "Polska (Polski)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 52
+    },
+    {
+      "text": "Polska (Polski)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 53
+    },
+    {
+      "text": "United Kingdom (English)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 54
+    },
+    {
+      "text": "United Kingdom (English)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 55
+    },
+    {
+      "text": "United States (English)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 56
+    },
+    {
+      "text": "United States (English)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 57
+    },
+    {
+      "text": "新加坡 (中文)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 58
+    },
+    {
+      "text": "新加坡 (中文)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 59
+    },
+    {
+      "text": "日本 (日本語)",
+      "classes": "menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 60
+    },
+    {
+      "text": "日本 (日本語)",
+      "classes": "menu-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 61
+    },
+    {
+      "text": "Australia (English)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 62
+    },
+    {
+      "text": "Brasil (Português)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 63
+    },
+    {
+      "text": "Canada (English)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 64
+    },
+    {
+      "text": "Canada (Français)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 65
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 66
+    },
+    {
+      "text": "España (Español)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 67
+    },
+    {
+      "text": "France (Français)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 68
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 69
+    },
+    {
+      "text": "Polska (Polski)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 70
+    },
+    {
+      "text": "United Kingdom (English)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 71
+    },
+    {
+      "text": "United States (English)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 72
+    },
+    {
+      "text": "新加坡 (中文)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 73
+    },
+    {
+      "text": "日本 (日本語)",
+      "classes": "menu-item-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 74
+    }
+  ],
+  "screenshotPath": "pages/edit-an-rfi/screenshot.png"
+}

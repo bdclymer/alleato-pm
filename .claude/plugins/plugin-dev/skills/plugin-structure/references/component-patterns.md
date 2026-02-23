@@ -39,7 +39,7 @@ commands/
 ├── deploy.md
 ├── review.md
 └── docs.md
-```diff
+```
 **When to use**:
 
 - 5-15 commands total
@@ -80,7 +80,7 @@ workflow-commands/     # Workflow automation
     "./workflow-commands"
   ]
 }
-```diff
+```
 **When to use**:
 - 15+ commands
 - Clear functional categories
@@ -108,7 +108,7 @@ commands/
     ├── config.md
     └── status.md
 
-```text
+```
 **Note**: Claude Code doesn't support nested command discovery automatically. Use custom paths:
 
 ```json
@@ -145,7 +145,7 @@ agents/
 ├── test-generator.md       # Generates tests
 ├── documentation-writer.md # Writes docs
 └── refactorer.md          # Refactors code
-```diff
+```
 **When to use**:
 
 - Agents have distinct, non-overlapping roles
@@ -180,7 +180,7 @@ agents/
 ├── implementation-agent.md # Coding phase
 ├── testing-agent.md       # Testing phase
 └── deployment-agent.md    # Deployment phase
-```diff
+```
 **When to use**:
 
 - Sequential workflows
@@ -229,7 +229,7 @@ skills/
     ├── SKILL.md
     └── scripts/
         └── validate-config.sh
-```diff
+```
 **When to use**:
 
 - Tool-specific expertise
@@ -285,7 +285,7 @@ skills/
     │   └── generate-report.py
     └── assets/
         └── test-template.json
-```diff
+```
 **Resource usage**:
 
 - **SKILL.md**: Overview and when to use resources
@@ -318,7 +318,7 @@ hooks/
   "Stop": [...],
   "SessionStart": [...]
 }
-```diff
+```
 **When to use**:
 - 5-10 hooks total
 - Simple hook logic
@@ -341,7 +341,7 @@ hooks/
     └── context/
         └── load.sh
 
-```bash
+```
 **hooks.json** (combines):
 ```json
 {
@@ -378,7 +378,7 @@ hooks/
     └── workflow/
         ├── notify-team.sh
         └── update-status.sh
-```diff
+```
 **When to use**:
 
 - Many hook scripts
@@ -424,7 +424,7 @@ scripts/
 └── utils/
     ├── log.sh
     └── notify.sh
-```diff
+```
 **When to use**:
 
 - 10+ scripts
@@ -473,14 +473,14 @@ plugin/
 └── lib/
     ├── test-utils.sh
     └── deploy-utils.sh
-```bash
+```
 **Usage in components**:
 
 ```bash
 #!/bin/bash
 source "${CLAUDE_PLUGIN_ROOT}/lib/test-utils.sh"
 run_tests
-```diff
+```
 **Benefits**:
 - Code reuse
 - Consistent behavior
@@ -501,7 +501,7 @@ plugin/
     ├── integrations/ # External services
     └── utils/        # Helper functions
 
-```diff
+```
 **When to use**:
 - Large plugins (100+ files)
 - Multiple developers
@@ -526,7 +526,7 @@ plugin/
         ├── commands/
         └── agents/
 
-```text
+```
 **Manifest**:
 ```json
 {

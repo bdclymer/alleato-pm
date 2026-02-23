@@ -45,7 +45,7 @@ test('data exists in database', async () => {
   const { data } = await supabase.from('people').select('id');
   expect(data.length).toBeGreaterThan(0);
 });
-```javascript
+```
 ---
 
 ## What IS an E2E Test
@@ -78,7 +78,7 @@ test('user creates a new person via the directory form', async ({ page }) => {
   await page.reload();
   await expect(page.getByText('Jane TestUser')).toBeVisible();
 });
-```sql
+```
 ---
 
 ## Cleanup Requirements

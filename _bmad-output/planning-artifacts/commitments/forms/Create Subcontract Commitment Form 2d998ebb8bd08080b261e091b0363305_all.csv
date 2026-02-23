@@ -1,0 +1,30 @@
+﻿Field Label,Description,Field Type,Notes,Required,Value / Logic
+Title,Scope summary / contract name,Text,Not unique,No,Free-text
+Status,Lifecycle state,Select,Controls editability & downstream workflows,Yes,Default: Draft
+Contract Company,Vendor / subcontractor,Select (Company),Must be selected before invoice contacts become available,Yes,FK → companies table
+Contract #,Unique subcontract identifier,Text (readonly / editable),Typically system-generated but editable before save,Yes,Auto-generated (e.g. SC-002)
+Description,Detailed contract description,Rich Text,Stored as rich text,No,HTML / formatted text
+Executed,Indicates contract execution,Checkbox,Often tied to signed document upload,Yes,Boolean
+Default Retainage,Retainage percentage,Number (%),Applied to invoices by default,No,Decimal (e.g. 10%)
+Attachments,Contract documents,File Upload,Supports drag & drop,No,"Files (PDF, images, etc.)"
+Accounting Method,Amount-based vs Unit/Qty,Toggle / Button,Unit/Quantity enables UOM on budget codes,No,Default: Amount-based
+#,Auto-increment,Integer,,Line item number,Order matters
+Change Event Line Item,FK → change_events,Reference,,Linked change event,Optional
+Budget Code,FK → cost_codes,Select,,Cost code,Critical for budget sync
+Description,Free-text,Text,,Line item description,
+Amount,User-entered,Currency,,Line item value,
+Billed to Date,Sum of approved invoices,Currency,,Invoiced total,Read-only
+Amount Remaining,Amount − Billed to Date,Currency,,Remaining balance,Calculated
+Actions,UI controls,Buttons,,Edit/Delete,
+Inclusions,Scope included,Rich Text,,No,Stored as formatted text
+Exclusions,Scope excluded,Rich Text,,No,Stored as formatted text
+Start Date,Contract start,Date,,No,
+Estimated Completion Date,Planned finish,Date,,No,
+Actual Completion Date,Actual finish,Date,,No,Set at closeout
+Contract Date,Date of contract,Date,,No,
+Signed Contract Received Date,Signed doc received,Date,,No,
+Issued On Date,Date issued to vendor,Date,,No,
+Private,Restricts visibility,Checkbox,,No,Default checked
+Access for Non-Admin Users,Explicit access,Multi-Select (Users),,Conditional,Enabled when Private = true
+Allow Non-Admins to View SOV,SOV visibility,Checkbox,,Conditional,Permission control
+Invoice Contacts,Who can invoice,Multi-Select,,Conditional,Enabled after Contract Company selected

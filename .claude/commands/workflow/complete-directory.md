@@ -14,7 +14,7 @@ Finish the directory system implementation based on the verified task list in TA
 
 ```bash
 /complete-directory [component]
-```text
+```
 Examples:
 
 ```text
@@ -39,7 +39,7 @@ Required:
 - [ ] CompanyEditDialog.tsx
 - [ ] DistributionGroupDialog.tsx
 - [ ] PermissionTemplateDialog.tsx
-```yaml
+```
 ### Priority 2: CSV Import (2 days)
 
 ```yaml
@@ -56,7 +56,7 @@ Phase 7 items marked as complete but unverified:
 - Activity tracking
 - Bulk permissions
 - Offline capability
-```markdown
+```
 ### Priority 4: E2E Tests (2 days)
 
 ```diff
@@ -75,7 +75,7 @@ When you run this command, Claude will:
 
    ```text
    /PLANS/directory/files/TASKS-DIRECTORY.md
-   ```text
+   ```
 2. **Focus on unchecked items only**:
    - Items marked `[ ]` need implementation
    - Items marked `[?]` need verification
@@ -104,14 +104,14 @@ When you run this command, Claude will:
 // Use existing PersonEditDialog.tsx as reference
 // Location: frontend/src/components/directory/PersonEditDialog.tsx
 // Pattern: Form dialog with validation and error handling
-```markdown
+```
 ### Import Endpoint Template
 
 ```typescript
 // Reference export endpoint that works:
 // Location: /api/projects/[projectId]/directory/people/export/route.ts
 // Reverse the logic for import with validation
-```markdown
+```
 ## Success Criteria
 
 The task is complete when:

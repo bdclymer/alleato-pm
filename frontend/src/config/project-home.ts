@@ -98,16 +98,6 @@ export const projectTools: ProjectTool[] = [
     category: "project-management",
     isConfigured: true,
   },
-  {
-    id: "tasks",
-    name: "Tasks",
-    description: "Project tasks and to-dos",
-    icon: "CheckSquare",
-    href: "/projects/[projectId]/tasks",
-    category: "project-management",
-    itemCount: 23,
-    isConfigured: true,
-  },
   // Financial Management
   {
     id: "budget",

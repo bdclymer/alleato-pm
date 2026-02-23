@@ -1,0 +1,19 @@
+# Budget Table
+
+| Column                  | description | formula  |
+| --------------------    | ---------------------------- |---------------------------- |
+| title                   |             |          |
+| Original Budget         | Starting budget for the line item at baseline. | Stored value (baseline). |
+| Budget Modifications    | Net budget transfers/adjustments (non-CO) applied to the line item.| SUM(budget_modifications.amount WHERE status='approved') (include transfers in/out as signed amounts). |
+| Approved Change Orders  |  Approved CO dollars impacting this budget line. | SUM(change_order_line_items.amount WHERE change_orders.status='approved') |
+| Revised Budget          |    | original_budget + budget_modifications + approved_change_orders |
+| Job to Date Cost (Detail)|    | SUM(cost_transactions.amount WHERE posted_at &lt;= as_of AND status in ('posted','approved')) |
+| Direct Costs            |    | SUM(direct_cost_line_items.amount WHERE direct_costs.status in ('approved','posted')) |
+| Pending Budget Changes  |    | SUM(budget_modifications.amount WHERE status IN ('draft','pending')) |
+| Projected Budget        |    | revised_budget + pending_budget_changes (+ pending_cos_if_included) |
+| Committed Costs         |    | SUM(commitment_line_items.amount WHERE commitments.status IN ('approved','executed')) |
+| Pending Cost Changes    |    | SUM(pending commitment deltas) + SUM(pending direct cost deltas) (define statuses). |
+| Projected Costs         |    | Common: job_to_date + open_commitments_remaining + forecast_remaining OR committed_costs + direct_costs + pending_cost_changes depending on workflow maturity. |
+| Forecast to Complete    |    | estimated_cost_at_completion - job_to_date_cost |
+| Estimated Cost at Completion |    | If manual: stored forecast_eac. If derived: projected_costs (same thing). Pick one and be consistent. |
+| Projected Over / Under  |    | projected_budget - estimated_cost_at_completion |

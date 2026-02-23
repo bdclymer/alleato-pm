@@ -28,7 +28,7 @@ Claude Code automatically handles the complete OAuth 2.0 flow for SSE and HTTP s
     "url": "https://mcp.example.com/sse"
   }
 }
-```diff
+```
 No additional auth configuration needed! Claude Code handles everything.
 
 ### Supported Services
@@ -51,7 +51,7 @@ This plugin requires the following Asana permissions:
 - Read tasks and projects
 - Create and update tasks
 - Access workspace data
-```bash
+```
 ### Token Storage
 
 Tokens are stored securely by Claude Code:
@@ -97,7 +97,7 @@ Most common for HTTP and WebSocket servers.
     }
   }
 }
-```text
+```
 **Environment variable:**
 ```bash
 export API_TOKEN="your-secret-token-here"
@@ -120,7 +120,7 @@ Alternative to Bearer tokens, often in custom headers.
     }
   }
 }
-```bash
+```
 ### Custom Headers
 
 Services may use custom authentication headers.
@@ -138,7 +138,7 @@ Services may use custom authentication headers.
     }
   }
 }
-```bash
+```
 ### Documenting Token Requirements
 
 Always document in your README:
@@ -169,7 +169,7 @@ The API token needs the following permissions:
 - Write access for creating items
 - Delete access (optional, for cleanup operations)
 \`\`\`
-```bash
+```
 ## Environment Variable Authentication (stdio)
 
 ### Passing Credentials to Server
@@ -197,7 +197,7 @@ For stdio servers, pass credentials via environment variables:
 export DATABASE_URL="postgresql://localhost/mydb"
 export DB_USER="myuser"
 export DB_PASSWORD="mypassword"
-```bash
+```
 ### Documentation Template
 
 ```markdown
@@ -221,7 +221,7 @@ DB_PASSWORD=mypassword
 
 Load with: \`source .env\` or \`export $(cat .env | xargs)\`
 \`\`\`
-```bash
+```
 ## Dynamic Headers
 
 ### Headers Helper Script
@@ -236,7 +236,7 @@ For tokens that change or expire, use a helper script:
     "headersHelper": "${CLAUDE_PLUGIN_ROOT}/scripts/get-headers.sh"
   }
 }
-```bash
+```
 **Script (get-headers.sh):**
 ```bash
 #!/bin/bash
@@ -273,7 +273,7 @@ EOF
     "Authorization": "Bearer ${API_TOKEN}"
   }
 }
-```text
+```
 ✅ **Document required variables in README**
 
 ✅ **Use HTTPS/WSS always**
@@ -293,7 +293,7 @@ EOF
     "Authorization": "Bearer sk-abc123..."  // NEVER!
   }
 }
-```bash
+```
 ❌ **Commit tokens to git**
 
 ❌ **Share tokens in documentation**
@@ -321,7 +321,7 @@ EOF
     }
   }
 }
-```bash
+```
 **Via URL:**
 ```json
 {
@@ -339,7 +339,7 @@ Users set their own workspace:
 ```bash
 export WORKSPACE_ID="my-workspace-123"
 export TENANT_ID="my-company"
-```bash
+```
 ## Authentication Troubleshooting
 
 ### Common Issues
@@ -363,7 +363,7 @@ echo $API_TOKEN
 
 # If empty, set it
 export API_TOKEN="your-token"
-```text
+```
 **Token in wrong format:**
 
 ```json
@@ -372,7 +372,7 @@ export API_TOKEN="your-token"
 
 // Wrong
 "Authorization": "sk-abc123"
-```markdown
+```
 ### Debugging Authentication
 
 **Enable debug mode:**
@@ -395,7 +395,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
      https://api.example.com/mcp/health
 
 # Should return 200 OK
-```markdown
+```
 ## Migration Patterns
 
 ### From Hardcoded to Environment Variables
@@ -407,7 +407,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
     "Authorization": "Bearer sk-hardcoded-token"
   }
 }
-```bash
+```
 **After:**
 
 ```json
@@ -416,7 +416,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
     "Authorization": "Bearer ${API_TOKEN}"
   }
 }
-```bash
+```
 **Migration steps:**
 1. Add environment variable to plugin README
 2. Update configuration to use ${VAR}
@@ -442,7 +442,7 @@ curl -H "Authorization: Bearer $API_TOKEN" \
   "type": "sse",
   "url": "https://mcp.example.com/sse"
 }
-```bash
+```
 **Benefits:**
 - Better security
 - No credential management
@@ -469,7 +469,7 @@ Some enterprise services require client certificates.
     }
   }
 }
-```bash
+```
 ### JWT Tokens
 
 Generate JWT tokens dynamically with headers helper:
@@ -482,7 +482,7 @@ Generate JWT tokens dynamically with headers helper:
 JWT=$(generate-jwt-token)
 
 echo "{\"Authorization\": \"Bearer $JWT\"}"
-```bash
+```
 ```json
 {
   "headersHelper": "${CLAUDE_PLUGIN_ROOT}/scripts/generate-jwt.sh"

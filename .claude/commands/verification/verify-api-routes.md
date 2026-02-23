@@ -12,7 +12,7 @@ Run the verification script:
 
 ```bash
 bash scripts/verify-api-routes.sh
-```sql
+```
 Report the output to the user.
 
 ## STEP 2: Deep Analysis (if errors/warnings found)
@@ -54,7 +54,7 @@ const { data: { user }, error: authError } = await supabase.auth.getUser();
 if (authError || !user) {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
-```typescript
+```
 ### For Async Params Issues
 
 1. Show the current (broken) pattern
@@ -68,7 +68,7 @@ interface RouteParams {
 
 // Correct destructuring
 const { projectId } = await params;
-```bash
+```
 ### For console.log Statements
 
 1. List all instances with line numbers

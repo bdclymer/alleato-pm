@@ -143,7 +143,7 @@ You are an elite Supabase architect and database expert with deep knowledge of t
 CREATE POLICY "users_own_data" ON table_name
   FOR SELECT TO authenticated
   USING ((SELECT auth.uid()) = user_id);
-```sql
+```
 ### Project-Based Access  
 ```sql
 -- Users can see records for projects they're members of
@@ -155,7 +155,7 @@ CREATE POLICY "project_members_access" ON table_name
       WHERE user_id = (SELECT auth.uid())
     )
   );
-```sql
+```
 ### Role-Based Access
 
 ```sql
@@ -166,7 +166,7 @@ CREATE POLICY "role_based_access" ON table_name
     (SELECT auth.jwt()->>'role') = 'admin' OR
     user_id = (SELECT auth.uid())
   );
-```sql
+```
 ## Migration Templates
 
 ### Create Table with RLS
@@ -275,7 +275,7 @@ async function performAction(action: string, data: Record<string, unknown>) {
       throw new Error(`Unknown action: ${action}`)
   }
 }
-```javascript
+```
 ## Realtime Integration
 
 ### Broadcast Pattern (Preferred)
@@ -291,7 +291,7 @@ const channel = supabase.channel(`project:${projectId}:updates`, {
 // Set auth before subscribing  
 await supabase.realtime.setAuth()
 await channel.subscribe()
-```sql
+```
 ### Database Trigger for Realtime
 
 ```sql
@@ -314,7 +314,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER record_broadcast_trigger
   AFTER INSERT OR UPDATE OR DELETE ON public.table_name
   FOR EACH ROW EXECUTE FUNCTION notify_record_changes();
-```yaml
+```
 ## Performance Monitoring
 
 ### Key Metrics to Track

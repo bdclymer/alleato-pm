@@ -43,7 +43,7 @@ else
 fi
 
 [Platform-appropriate implementation...]
-```bash
+```
 **Avoid platform-specific commands:**
 
 ```markdown
@@ -60,7 +60,7 @@ elif command -v clip.exe > /dev/null; then
 else
   echo "Clipboard not available on this platform"
 fi
-```bash
+```
 ### Minimal Dependencies
 
 **Check for required tools:**
@@ -104,7 +104,7 @@ fi
 ✓ All dependencies available
 
 [Continue with command...]
-```text
+```
 **Document optional dependencies:**
 
 ```markdown
@@ -157,7 +157,7 @@ else
 fi
 
 [Adapt behavior based on available features...]
-```bash
+```
 ## User Experience for Unknown Users
 
 ### Clear Onboarding
@@ -196,7 +196,7 @@ if [ ! -f ".claude/command-initialized" ]; then
 fi
 
 [Normal command execution...]
-```bash
+```
 **Progressive feature discovery:**
 
 ```markdown
@@ -216,7 +216,7 @@ You can speed up this command with the --fast flag:
   /command --fast [args]
 
 For more tips: /command tips
-```bash
+```
 ### Comprehensive Error Handling
 
 **Anticipate user mistakes:**
@@ -283,7 +283,7 @@ Checking common issues:
 This information helps debug the issue.
 
 For support, include the above diagnostics.
-```yaml
+```
 ## Distribution Best Practices
 
 ### Namespace Awareness
@@ -313,7 +313,7 @@ Reasoning: Clearest ownership, least likely to conflict
 # Plugin Name Command
 
 [Implementation...]
-```sql
+```
 **Document naming rationale:**
 
 ```markdown
@@ -332,7 +332,7 @@ Final choice balances:
 - Brevity (easy to type)
 - Uniqueness (unlikely conflicts)
 -->
-```sql
+```
 ### Configurability
 
 **User preferences:**
@@ -394,7 +394,7 @@ output: custom.txt
 verbose: true
 ---
 \`\`\`
-```sql
+```
 ### Version Compatibility
 
 **Version checking:**
@@ -437,7 +437,7 @@ fi
 ✓ Version compatible
 
 [Command continues...]
-```bash
+```
 **Deprecation warnings:**
 
 ```markdown
@@ -465,7 +465,7 @@ if [ "$1" = "--old-flag" ]; then
 fi
 
 [Handle both old and new flags during deprecation period...]
-```markdown
+```
 ## Marketplace Presentation
 
 ### Command Discovery
@@ -486,7 +486,7 @@ description: Do the thing
 ---
 
 <!-- BAD: Vague description -->
-```text
+```
 **Searchable keywords:**
 
 ```markdown
@@ -496,7 +496,7 @@ KEYWORDS: security, code-review, quality, validation, audit
 These keywords help users discover this command when searching
 for related functionality in the marketplace.
 -->
-```yaml
+```
 ### Showcase Examples
 
 **Compelling demonstrations:**
@@ -547,7 +547,7 @@ Recommendations:
 Ready to analyze your code...
 
 [Command implementation...]
-```markdown
+```
 ### User Reviews and Feedback
 
 **Feedback mechanism:**
@@ -596,7 +596,7 @@ Privacy-preserving:
 - Aggregate statistics only
 - User opt-out respected
 -->
-```markdown
+```
 ## Quality Standards
 
 ### Professional Polish
@@ -622,7 +622,7 @@ Part of the [Plugin Name] suite
 - Community: https://community.example.com
 
 Powered by Plugin Name v2.1.0
-```bash
+```
 **Attention to detail:**
 
 ```markdown
@@ -635,7 +635,7 @@ Powered by Plugin Name v2.1.0
 ✓ Provide progress indicators
 ✓ Show estimated time remaining
 ✓ Confirm successful operations
-```bash
+```
 ### Reliability
 
 **Idempotency:**
@@ -703,7 +703,7 @@ else
 
   No changes applied. Safe to retry.
 fi
-```markdown
+```
 ## Testing for Distribution
 
 ### Pre-Release Checklist
@@ -748,7 +748,7 @@ Support:
 - [ ] Feedback mechanism
 - [ ] License specified
 -->
-```markdown
+```
 ### Beta Testing
 
 **Beta release approach:**
@@ -789,7 +789,7 @@ Help improve this command:
 **Thank you for beta testing!**
 
 Your feedback helps make this command better.
-```markdown
+```
 ## Maintenance and Updates
 
 ### Update Strategy

@@ -6,7 +6,7 @@ Search and review documented error patterns before taking action.
 
 ```bash
 /check-patterns [category] [keywords]
-```markdown
+```
 ## Categories
 
 - `auth` - Authentication and permission errors

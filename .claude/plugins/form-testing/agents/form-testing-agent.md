@@ -272,7 +272,7 @@ Every error **MUST** be logged in `FORM_ERRORS.md` with this exact format:
 - **Screenshot**: [relative path to screenshot file]
 - **Timestamp**: [ISO 8601 format: 2026-01-08T14:30:00Z]
 - **Test Phase**: Load | Initial State | Validation | Fill | Submission | Error Handling | Accessibility | Modal Behaviors
-```diff
+```
 **Example:**
 
 ```markdown
@@ -294,7 +294,7 @@ Every error **MUST** be logged in `FORM_ERRORS.md` with this exact format:
 - **Screenshot**: screenshots/contact-dialog-validation-errors.png
 - **Timestamp**: 2026-01-08T14:35:22Z
 - **Test Phase**: Validation
-```sql
+```
 ## SEVERITY CLASSIFICATION
 
 ### BLOCKER

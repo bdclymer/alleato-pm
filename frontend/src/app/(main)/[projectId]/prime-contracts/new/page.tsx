@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
 import { PageContainer, FormContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { ContractForm } from "@/components/domain/contracts";
@@ -57,8 +59,8 @@ export default function NewContractPage() {
           contract_termination_date:
             data.contractTerminationDate?.toISOString() || null,
           retention_percentage: data.defaultRetainage || 0,
-          payment_terms: null,
-          billing_schedule: null,
+          payment_terms: data.paymentTerms || null,
+          billing_schedule: data.billingSchedule || null,
           is_private: data.isPrivate || false,
           inclusions: data.inclusions || null,
           exclusions: data.exclusions || null,
@@ -136,7 +138,7 @@ export default function NewContractPage() {
 
       router.push(`/${projectId}/prime-contracts/${newContract.id}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create contract");
+      toast.error(err instanceof Error ? err.message : "Failed to create contract");
     } finally {
       setIsSaving(false);
     }

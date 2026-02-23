@@ -6,7 +6,7 @@ Autonomous fix-and-verify loop that fixes violations without user intervention.
 
 ```bash
 /design-fix-loop [max-iterations]
-```bash
+```
 **Arguments:**
 
 - `max-iterations` - Maximum number of fix cycles (default: 5)

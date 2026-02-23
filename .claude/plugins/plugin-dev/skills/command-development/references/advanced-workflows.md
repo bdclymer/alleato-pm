@@ -53,7 +53,7 @@ Would you like to:
 3. Leave comments only
 
 Reply with your choice and I'll help complete the action.
-```yaml
+```
 **Key features:**
 - Numbered steps for clarity
 - Bash execution for context
@@ -100,7 +100,7 @@ Next steps:
 \`\`\`
 
 State saved. Run `/deploy-test` to continue.
-```yaml
+```
 **Next command** (`/deploy-test`):
 
 ```markdown
@@ -116,7 +116,7 @@ Running tests: !`npm test`
 Updating state to 'tested'...
 
 Tests complete. Run `/deploy-build` to continue.
-```yaml
+```
 **Pattern benefits:**
 - Persistent state across commands
 - Clear workflow progression
@@ -191,7 +191,7 @@ This is a meta-command. After completing each step above,
 I'll compile results and prepare comprehensive review materials.
 
 Starting sequence...
-```bash
+```
 **Individual commands** are simple:
 - `/format-code` - Just formats
 - `/lint-code` - Just lints
@@ -236,7 +236,7 @@ Would you like me to:
 1. Fix highest priority failure
 2. Generate detailed fix plans for all
 3. Create GitHub issues for each
-```yaml
+```
 ### Parallel Execution Pattern
 
 Commands that coordinate multiple simultaneous operations:
@@ -270,7 +270,7 @@ All validations complete. Summary:
 
 Details:
 [Collated results from all checks]
-```yaml
+```
 ## Workflow State Management
 
 ### Using .local.md Files
@@ -322,7 +322,7 @@ Current stage: @.claude/plugin-name-workflow.local.md
 [Parse YAML frontmatter to determine next step]
 
 Next action based on state: [determined action]
-```yaml
+```
 ### Workflow Recovery
 
 Handle interrupted workflows:
@@ -350,7 +350,7 @@ State file: @.claude/plugin-name-workflow.local.md
 3. Abort and clean up
 
 Which would you like? (1/2/3)
-```bash
+```
 ## Workflow Coordination Patterns
 
 ### Cross-Command Communication
@@ -375,7 +375,7 @@ This signals other commands that feature is ready for:
 - Release notes (/release-notes will add)
 
 Feature marked complete.
-```bash
+```
 **Other commands check for flag:**
 
 ```markdown
@@ -421,7 +421,7 @@ Creating deployment lock...
 
 Deployment started. Lock created.
 [Proceed with deployment]
-```yaml
+```
 **Lock cleanup:**
 
 ```markdown
@@ -436,7 +436,7 @@ Removing deployment lock...
 rm .claude/deployment.lock
 
 Ready for next deployment.
-```bash
+```
 ## Advanced Argument Handling
 
 ### Optional Arguments with Defaults
@@ -455,7 +455,7 @@ Deploying ${2:-latest} to ${1:-staging}...
 Note: Using defaults for missing arguments:
 - Environment defaults to 'staging'
 - Version defaults to 'latest'
-```bash
+```
 ### Argument Validation
 
 ```markdown
@@ -501,7 +501,7 @@ case "$1" in
 esac
 
 Deploying to: $ENV
-```bash
+```
 ## Error Handling in Workflows
 
 ### Graceful Failure
@@ -533,7 +533,7 @@ fi
 
 ## Step 2: Build
 [Continue only if Step 1 succeeded]
-```bash
+```
 ### Rollback on Failure
 
 ```markdown
@@ -561,7 +561,7 @@ if [ $? -ne 0 ]; then
 fi
 
 Deployment complete.
-```markdown
+```
 ### Checkpoint Recovery
 
 ```markdown
@@ -649,7 +649,7 @@ timestamp: !`date -u +%Y-%m-%dT%H:%M:%SZ`
 Written to .claude/deployment-state.local.md
 
 Next: Run /deployment-validate
-```yaml
+```
 ### Validation Command
 
 ```markdown
@@ -668,7 +668,7 @@ Running validation...
 Updating state to 'validated'...
 
 Next: Run /deployment-execute
-```yaml
+```
 ### Execution Command
 
 ```markdown
@@ -687,7 +687,7 @@ Deployment complete.
 Updating state to 'completed'...
 
 Cleanup: /deployment-cleanup
-```yaml
+```
 ### Cleanup Command
 
 ```markdown

@@ -1,0 +1,203 @@
+{
+  "parentPage": "new-communication-settings-in-the-emails-tool",
+  "parentUrl": "https://support.procore.com/product-releases/new-releases/new-communication-settings-in-the-emails-tool",
+  "dropdownIndex": 0,
+  "menuItems": [
+    {
+      "text": "América Latina (Español)",
+      "href": "https://es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Australia (English)",
+      "href": "https://en-au.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": "https://pt-br.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (English)",
+      "href": "https://en-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": "https://fr-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": "https://de.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "España (Español)",
+      "href": "https://es-es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "France (Français)",
+      "href": "https://fr.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Polska (Polski) - BETA",
+      "href": "https://pl-pl.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": "https://en-gb.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United States (English)",
+      "href": "https://support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "新加坡（简体中文）",
+      "href": "https://zh-sg.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "日本（日本語）",
+      "href": "https://ja-jp.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "América Latina (Español)",
+      "href": "https://es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Australia (English)",
+      "href": "https://en-au.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": "https://pt-br.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (English)",
+      "href": "https://en-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": "https://fr-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": "https://de.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "España (Español)",
+      "href": "https://es-es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "France (Français)",
+      "href": "https://fr.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Polska (Polski) - BETA",
+      "href": "https://pl-pl.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": "https://en-gb.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United States (English)",
+      "href": "https://support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "新加坡（简体中文）",
+      "href": "https://zh-sg.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "日本（日本語）",
+      "href": "https://ja-jp.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "América Latina (Español)",
+      "href": "https://es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Australia (English)",
+      "href": "https://en-au.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": "https://pt-br.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (English)",
+      "href": "https://en-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": "https://fr-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": "https://de.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "España (Español)",
+      "href": "https://es-es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "France (Français)",
+      "href": "https://fr.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Polska (Polski) - BETA",
+      "href": "https://pl-pl.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": "https://en-gb.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United States (English)",
+      "href": "https://support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "新加坡（简体中文）",
+      "href": "https://zh-sg.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "日本（日本語）",
+      "href": "https://ja-jp.support.procore.com/",
+      "type": "a"
+    }
+  ],
+  "timestamp": "2026-01-12T16:08:58.570Z"
+}

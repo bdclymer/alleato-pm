@@ -50,7 +50,7 @@ A comprehensive, end-to-end workflow command for creating plugins from scratch, 
 # Examples:
 /plugin-dev:create-plugin
 /plugin-dev:create-plugin A plugin for managing database migrations
-```typescript
+```
 Use this workflow for structured, high-quality plugin development from concept to completion.
 
 ## Skills
@@ -201,12 +201,12 @@ Install from claude-code-marketplace:
 
 ```bash
 /plugin install plugin-dev@claude-code-marketplace
-```text
+```
 Or for development, use directly:
 
 ```bash
 cc --plugin-dir /path/to/plugin-dev
-```markdown
+```
 ## Quick Start
 
 ### Creating Your First Plugin
@@ -257,7 +257,7 @@ The plugin-dev toolkit supports your entire plugin development lifecycle:
 └──────────┬──────────┘     test-hook.sh
            │                 hook-linter.sh
 
-```markdown
+```
 ## Features
 
 ### Progressive Disclosure
@@ -282,7 +282,7 @@ The hook-development skill includes production-ready utilities:
 
 # Lint hook scripts for best practices
 ./hook-linter.sh my-hook.sh
-```markdown
+```
 ### Working Examples
 
 Every skill provides working examples:
@@ -338,7 +338,7 @@ All skills follow consistent standards:
 3. "Organize my hooks and configuration files"
    → plugin-structure skill shows best practices
 
-```markdown
+```
 ### Integrating External Services
 
 ```text

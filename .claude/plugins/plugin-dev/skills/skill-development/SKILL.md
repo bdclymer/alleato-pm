@@ -37,7 +37,7 @@ skill-name/
     ├── scripts/          - Executable code (Python/Bash/etc.)
     ├── references/       - Documentation intended to be loaded into context as needed
     └── assets/           - Files used in output (templates, icons, fonts, etc.)
-```sql
+```
 #### SKILL.md (required)
 
 **Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
@@ -141,7 +141,7 @@ For Claude Code plugins, create the skill directory structure:
 ```bash
 mkdir -p plugin-name/skills/skill-name/{references,examples,scripts}
 touch plugin-name/skills/skill-name/SKILL.md
-```yaml
+```
 **Note:** Unlike the generic skill-creator which uses `init_skill.py`, plugin skills are created directly in the plugin's `skills/` directory with a simpler manual structure.
 
 ### Step 4: Edit the Skill
@@ -172,13 +172,13 @@ version: 0.1.0
 
 ```yaml
 description: This skill should be used when the user asks to "create a hook", "add a PreToolUse hook", "validate tool use", "implement prompt-based hooks", or mentions hook events (PreToolUse, PostToolUse, Stop).
-```yaml
+```
 **Bad description examples:**
 ```yaml
 description: Use this skill when working with hooks.  # Wrong person, vague
 description: Load when user needs hook help.  # Not third person
 description: Provides hook guidance.  # No trigger phrases
-```diff
+```
 To complete SKILL.md body, answer the following questions:
 
 1. What is the purpose of the skill, in a few sentences?
@@ -207,7 +207,7 @@ For detailed patterns and techniques, consult:
 
 Working examples in `examples/`:
 - **`example-script.sh`** - Working example
-```markdown
+```
 ### Step 5: Validate and Test
 
 **For plugin skills, validation is different from generic skills:**
@@ -226,7 +226,7 @@ Working examples in `examples/`:
 
 Ask: "Review my skill and check if it follows best practices"
 
-```diff
+```
 The skill-reviewer agent will check description quality, content organization, and progressive disclosure.
 
 ### Step 6: Iterate
@@ -265,7 +265,7 @@ my-plugin/
         ├── examples/
         └── scripts/
 
-```markdown
+```
 ### Auto-Discovery
 
 Claude Code automatically discovers skills:
@@ -378,7 +378,7 @@ Write using verb-first instructions, not second person:
 To create a hook, define the event type.
 Configure the MCP server with authentication.
 Validate settings before use.
-```text
+```
 **Incorrect (second person):**
 
 ```bash
@@ -395,12 +395,12 @@ The frontmatter description must use third person:
 
 ```yaml
 description: This skill should be used when the user asks to "create X", "configure Y"...
-```yaml
+```
 **Incorrect:**
 ```yaml
 description: Use this skill when you want to create X...
 description: Load this skill when user asks...
-```markdown
+```
 ### Objective, Instructional Language
 
 Focus on what to do, not who should do it:
@@ -419,7 +419,7 @@ Validate values before use.
 You can parse the frontmatter...
 Claude should extract fields...
 The user might validate values...
-```yaml
+```
 ## Validation Checklist
 
 Before finalizing a skill:
@@ -469,7 +469,7 @@ Before finalizing a skill:
 
 ```yaml
 description: Provides guidance for working with hooks.
-```text
+```
 **Why bad:** Vague, no specific trigger phrases, not third person
 
 ✅ **Good:**
@@ -486,7 +486,7 @@ description: This skill should be used when the user asks to "create a hook", "a
 ```text
 skill-name/
 └── SKILL.md  (8,000 words - everything in one file)
-```text
+```
 **Why bad:** Bloats context when skill loads, detailed content always loaded
 
 ✅ **Good:**
@@ -509,7 +509,7 @@ skill-name/
 You should start by reading the configuration file.
 You need to validate the input.
 You can use the grep tool to search.
-```text
+```
 **Why bad:** Second person, not imperative form
 
 ✅ **Good:**
@@ -517,7 +517,7 @@ You can use the grep tool to search.
 Start by reading the configuration file.
 Validate the input before processing.
 Use the grep tool to search for patterns.
-```diff
+```
 **Why good:** Imperative form, direct instructions
 
 ### Mistake 4: Missing Resource References
@@ -530,7 +530,7 @@ Use the grep tool to search for patterns.
 [Core content]
 
 [No mention of references/ or examples/]
-```diff
+```
 **Why bad:** Claude doesn't know references exist
 
 ✅ **Good:**
@@ -558,7 +558,7 @@ Use the grep tool to search for patterns.
 ```text
 skill-name/
 └── SKILL.md
-```text
+```
 Good for: Simple knowledge, no complex resources needed
 
 ### Standard Skill (Recommended)

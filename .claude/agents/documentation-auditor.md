@@ -77,7 +77,7 @@ The agent MUST save audit reports in TWO formats:
 ├── audit-YYYY-MM-DD-HHMMSS.json  # Machine-readable report
 ├── audit-YYYY-MM-DD-HHMMSS.md    # Human-readable report
 └── latest.json → audit-YYYY-MM-DD-HHMMSS.json  # Symlink to latest
-```yaml
+```
 ### JSON Report Structure (REQUIRED)
 
 ```json
@@ -114,7 +114,7 @@ The agent MUST save audit reports in TWO formats:
     "files_with_issues": 7
   }
 }
-```yaml
+```
 ### Markdown Report Structure (Human-Readable)
 ```markdown
 # Documentation Audit Report
@@ -183,17 +183,17 @@ When the agent completes an audit, it MUST:
 
    ```bash
    mkdir -p .audit-reports
-   ```text
+   ```
 2. **Generate unique timestamp**:
 
    ```bash
    timestamp=$(date +"%Y-%m-%d-%H%M%S")
-   ```bash
+   ```
 3. **Save JSON report**:
 
    ```bash
    echo "$json_report" > ".audit-reports/audit-${timestamp}.json"
-   ```bash
+   ```
 4. **Save Markdown report**:
 
    ```bash
@@ -205,7 +205,7 @@ When the agent completes an audit, it MUST:
    ```bash
    ln -sf "audit-${timestamp}.json" ".audit-reports/latest.json"
    ln -sf "audit-${timestamp}.md" ".audit-reports/latest.md"
-   ```bash
+   ```
 6. **Provide user feedback**:
 
    ```text
@@ -269,7 +269,7 @@ body: |
   File: [path]
   Issue: [description]
   Suggested Fix: [action]
-```bash
+```
 ### CI/CD Pipeline
 Exit codes:
 - 0: No issues found
@@ -287,7 +287,7 @@ Can be integrated as a VS Code task:
   "args": ["audit-docs", "${workspaceFolder}/docs"],
   "problemMatcher": []
 }
-```markdown
+```
 ## Example Agent Invocation
 
 ```python

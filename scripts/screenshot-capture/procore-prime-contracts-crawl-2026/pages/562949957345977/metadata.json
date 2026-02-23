@@ -1,0 +1,1042 @@
+{
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977",
+  "pageName": "562949957345977",
+  "category": "prime-contracts",
+  "pageId": "562949957345977",
+  "timestamp": "2026-02-23T20:38:29.701Z",
+  "analysis": {
+    "components": {
+      "buttons": 52,
+      "forms": 0,
+      "inputs": 31,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 5,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 97
+    },
+    "tables": [],
+    "formFields": [
+      {
+        "index": 1,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria7958198695-:ras:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 2,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria7958198695-:rav:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 3,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria7958198695-:rb2:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 4,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965517-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 5,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965517-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 6,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965519-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 7,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965519-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 8,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965521-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 9,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965521-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 10,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965523-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 11,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965523-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 12,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965525-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 13,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965525-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 14,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965528-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 15,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965528-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 16,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965530-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 17,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965530-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 18,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965532-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 19,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965532-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 20,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965533-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 21,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965533-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 22,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965534-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 23,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965534-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 24,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965535-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 25,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965535-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 26,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965536-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 27,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965536-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 28,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965537-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 29,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965537-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 30,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965539-column-description",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 31,
+        "type": "text",
+        "name": null,
+        "id": "row-562950063965539-column-amount",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      }
+    ],
+    "title": "Prime Contracts • Goodwill Bart",
+    "h1": "Goodwill Bart - Goodwill Industries of Central Indiana, Llc"
+  },
+  "links": 20,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/tools/opentasks",
+      "text": "",
+      "classes": "LegacyLink-ebFRPk jmnyeO",
+      "id": "company-my-open-items-icon-link",
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts",
+      "text": "Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/emails?create",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/change_orders",
+      "text": "Change Orders (5)",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/invoices",
+      "text": "Invoices (7)",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/payments",
+      "text": "Payments Received (5)",
+      "classes": "",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/emails",
+      "text": "Emails",
+      "classes": "",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/change_history",
+      "text": "Change History",
+      "classes": "",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/financial_markup",
+      "text": "Financial Markup",
+      "classes": "",
+      "id": null,
+      "index": 12
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/advanced_settings",
+      "text": "Advanced Settings",
+      "classes": "",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts/562949957345977/edit",
+      "text": "Edit Contract",
+      "classes": "",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949960492361",
+      "text": "Goodwill Industries of Central Indiana, Llc",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory/edit_vendor/562949956955785",
+      "text": "Alleato Group",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/contracts/opt_out_prime_contracts",
+      "text": "Exit Beta",
+      "classes": "StyledLink-core-12_25_2__sc-jfowrl-0 kPDVob",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 20
+    }
+  ],
+  "clickables": 68,
+  "clickableDetails": [
+    {
+      "text": "Can you tell me when the finish sample transmittal was created? CmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Feedback",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Kickoff",
+      "id": "StyledBox-core-12_33_0__sc-fgsy0p-0 culKqM DockAppButton-jkOOQl kySCXs",
+      "type": "div",
+      "classes": "StyledBox-core-12_33_0__sc-fgsy0p-0 culKqM DockAppButton-jkOOQl kySCXs",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Create",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "General Information",
+      "id": "sc-biptUy fAbfdA",
+      "type": "button",
+      "classes": "sc-biptUy fAbfdA",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "Contract Summary",
+      "id": "sc-biptUy lfZKww",
+      "type": "button",
+      "classes": "sc-biptUy lfZKww",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "Schedule of Values",
+      "id": "sc-biptUy lfZKww",
+      "type": "button",
+      "classes": "sc-biptUy lfZKww",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Inclusions & Exclusions",
+      "id": "sc-biptUy lfZKww",
+      "type": "button",
+      "classes": "sc-biptUy lfZKww",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Contract Dates",
+      "id": "sc-biptUy lfZKww",
+      "type": "button",
+      "classes": "sc-biptUy lfZKww",
+      "hasDropdown": false,
+      "index": 19
+    },
+    {
+      "text": "Contract Privacy",
+      "id": "sc-biptUy lfZKww",
+      "type": "button",
+      "classes": "sc-biptUy lfZKww",
+      "hasDropdown": false,
+      "index": 20
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "hasDropdown": false,
+      "index": 21
+    },
+    {
+      "text": "Edit Contract",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 22
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 23
+    },
+    {
+      "text": "Edit",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 24
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 25
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 26
+    },
+    {
+      "text": "Open Fullscreen",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD",
+      "hasDropdown": false,
+      "index": 27
+    },
+    {
+      "text": "Edit",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 28
+    },
+    {
+      "text": "Add Group",
+      "id": "_select_select__yi7fN_Y29ud",
+      "type": "div",
+      "classes": "_select_select__yi7fN_Y29ud",
+      "hasDropdown": false,
+      "index": 29
+    },
+    {
+      "text": "01.RGeneral Conditions",
+      "id": "row-562950063965517-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 30
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 31
+    },
+    {
+      "text": "02.RExisting Conditions",
+      "id": "row-562950063965519-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 32
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 33
+    },
+    {
+      "text": "06.RWoods & Plastics",
+      "id": "row-562950063965521-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 34
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 35
+    },
+    {
+      "text": "07.RThermal & Moisture",
+      "id": "row-562950063965523-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 36
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 37
+    },
+    {
+      "text": "08.ROpenings",
+      "id": "row-562950063965525-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 38
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 39
+    },
+    {
+      "text": "09.RFinishes",
+      "id": "row-562950063965528-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 40
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 41
+    },
+    {
+      "text": "10.RSpecialties",
+      "id": "row-562950063965530-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 42
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 43
+    },
+    {
+      "text": "21.RFire Suppression",
+      "id": "row-562950063965532-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 44
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 45
+    },
+    {
+      "text": "22.RPlumbing",
+      "id": "row-562950063965533-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 46
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 47
+    },
+    {
+      "text": "23.RHVAC",
+      "id": "row-562950063965534-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 48
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 49
+    },
+    {
+      "text": "26.RElectrical",
+      "id": "row-562950063965535-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 50
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 51
+    },
+    {
+      "text": "28.RElectronic Safety",
+      "id": "row-562950063965536-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 52
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 53
+    },
+    {
+      "text": "55-0050.RInsurance.Contract Revenue",
+      "id": "row-562950063965537-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 54
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 55
+    },
+    {
+      "text": "55-0500.RContractor Fee.Contract Revenue",
+      "id": "row-562950063965539-column-wbs_code",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ StyledTableCellSelect-core-12_25_2__sc-9c7xd-11 hBXWyS select--table",
+      "hasDropdown": false,
+      "index": 56
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cGhZjD StyledSelectClearIcon-core-12_25_2__sc-mr8gwe-5 ibjxBc",
+      "hasDropdown": false,
+      "index": 57
+    },
+    {
+      "text": "Add Line",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 58
+    },
+    {
+      "text": "Import",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "hasDropdown": false,
+      "index": 59
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 60
+    },
+    {
+      "text": "Edit",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 61
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 62
+    },
+    {
+      "text": "Edit",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 63
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 64
+    },
+    {
+      "text": "Edit",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 65
+    },
+    {
+      "text": "Exit Beta",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 ccnuzT",
+      "hasDropdown": false,
+      "index": 66
+    },
+    {
+      "text": "Provide Feedback",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 iwQJxs",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 iwQJxs",
+      "hasDropdown": false,
+      "index": 67
+    }
+  ],
+  "dropdowns": 6,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Create",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    },
+    {
+      "text": "Import",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki StyledDropdownButton-core-12_25_2__sc-ufsy2q-2 khchmV",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    }
+  ],
+  "screenshotPath": "pages/562949957345977/screenshot.png"
+}

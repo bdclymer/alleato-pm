@@ -16,7 +16,7 @@ Systematically test forms with Playwright browser verification, automatic databa
 /test-forms inline           # Test 2 inline forms only
 /test-forms auth             # Test 4 auth forms only
 /test-forms create-project   # Test specific form by name
-```bash
+```
 ## Arguments
 
 - `$ARGUMENTS` - Test scope or specific form name
@@ -155,7 +155,7 @@ Document in `documentation/forms/test-runs/[timestamp]/FORM_ERRORS.md`:
 - **Screenshot**: [path to screenshot]
 - **Timestamp**: [ISO 8601 timestamp]
 - **Tester**: Form Testing Agent (Playwright)
-```markdown
+```
 **Severity Classification:**
 
 - **BLOCKER**: Form cannot be submitted, crashes, or loses data
@@ -225,7 +225,7 @@ Document in `documentation/forms/test-runs/[timestamp]/FORM_ERRORS.md`:
 ## Next Steps
 
 [If errors found, suggest retest or fixes needed]
-```markdown
+```
 ### Phase 6: Update Inventory
 
 **Actions:**
@@ -328,7 +328,7 @@ documentation/forms/
             ├── create-project-error-handling.png
             ├── create-project-accessibility.png
             └── ...
-```markdown
+```
 ## Behavioral Rules
 
 **Agent MUST:**

@@ -72,7 +72,7 @@ Guide the user through creating a complete, high-quality Claude Code plugin from
    | Agents         | 1     | Autonomous validation |
    | Hooks          | 0     | Not needed |
    | MCP            | 1     | Database integration |
-   ```diff
+   ```
 5. Get user confirmation or adjustments
 
 **Output**: Confirmed list of components to create
@@ -137,7 +137,7 @@ Guide the user through creating a complete, high-quality Claude Code plugin from
    mkdir -p plugin-name/commands   # if needed
    mkdir -p plugin-name/agents     # if needed
    mkdir -p plugin-name/hooks      # if needed
-   ```text
+   ```
 4. Create plugin.json manifest using Write tool:
 
    ```json

@@ -31,7 +31,7 @@ This plugin bundles 6 expert review agents that each focus on a specific aspect 
 "Check if the comments are accurate"
 "Review the documentation I added"
 "Analyze comments for technical debt"
-```markdown
+```
 ### 2. pr-test-analyzer
 
 **Focus**: Test coverage quality and completeness
@@ -80,7 +80,7 @@ This plugin bundles 6 expert review agents that each focus on a specific aspect 
 "Review the error handling"
 "Check for silent failures"
 "Analyze catch blocks in this PR"
-```markdown
+```
 ### 4. type-design-analyzer
 
 **Focus**: Type design quality and invariants
@@ -129,7 +129,7 @@ This plugin bundles 6 expert review agents that each focus on a specific aspect 
 "Review my recent changes"
 "Check if everything looks good"
 "Review this code before I commit"
-```markdown
+```
 ### 6. code-simplifier
 
 **Focus**: Code simplification and refactoring
@@ -173,7 +173,7 @@ Simply ask questions that match an agent's focus area, and Claude will automatic
 
 "I've added documentation - is it accurate?"
 → Triggers comment-analyzer
-```markdown
+```
 ### Comprehensive PR Review
 
 For thorough PR review, ask for multiple aspects:
@@ -206,7 +206,7 @@ Install from your personal marketplace:
 /plugins
 # Find "pr-review-toolkit"
 # Install
-```diff
+```
 Or add manually to settings if needed.
 
 ## Agent Details
@@ -265,7 +265,7 @@ You can request multiple agents to run in parallel or sequentially:
 ```text
 "Run pr-test-analyzer and comment-analyzer in parallel"
 
-```text
+```
 **Sequential** (when one informs the other):
 ```text
 "First review test coverage, then check code quality"

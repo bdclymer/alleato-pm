@@ -10,7 +10,7 @@ command: /audit-docs
 
 ```typescript
 /audit-docs <folder_path>
-```text
+```
 Example:
 
 ```bash
@@ -80,7 +80,7 @@ Creates/updates `AUDIT-LOG.md` in the audited directory:
 - Files Deleted: [list]
 - Issues Fixed: [count]
 - Next Audit: [date]
-```markdown
+```
 ### Direct Updates
 
 - **Fix percentages** in existing files
@@ -114,7 +114,7 @@ Reports saved:
 To fix issues:
 /fix-docs --report latest --severity critical
 
-```typescript
+```
 ## Configuration Options
 
 You can customize the audit with additional parameters:

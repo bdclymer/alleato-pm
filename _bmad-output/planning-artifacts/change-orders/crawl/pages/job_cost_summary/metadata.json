@@ -1,0 +1,544 @@
+{
+  "url": "https://us02.procore.com/562949953443325/company/home/job_cost_summary",
+  "pageName": "job_cost_summary",
+  "category": "change-orders",
+  "pageId": "job_cost_summary",
+  "timestamp": "2025-12-30T01:06:50.278Z",
+  "analysis": {
+    "components": {
+      "buttons": 3,
+      "forms": 1,
+      "inputs": 7,
+      "tables": 2,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 4,
+      "tabs": 0,
+      "dropdowns": 2,
+      "icons": 11
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "",
+          "Project Name",
+          "Project Number",
+          "Original Contract Value",
+          "Approved COs",
+          "Revised Contract",
+          "Pending COs",
+          "Pending RevisedContract",
+          "OwnerInvoices",
+          "PaymentsReceived",
+          "Remaining",
+          "% Paid",
+          "Schedule % Complete",
+          "Estimated Completion Date",
+          "",
+          "",
+          "Page Subtotal",
+          "$12,048,653.86",
+          "$4,586,326.83",
+          "$16,634,980.69",
+          "$0.00",
+          "$16,634,980.69",
+          "$16,023,139.59",
+          "$15,763,932.08",
+          "$871,048.61",
+          "",
+          "",
+          "",
+          "Grand Total:",
+          "$12,048,653.86",
+          "$4,586,326.83",
+          "$16,634,980.69",
+          "$0.00",
+          "$16,634,980.69",
+          "$16,023,139.59",
+          "$15,763,932.08",
+          "$871,048.61",
+          "",
+          "",
+          ""
+        ],
+        "rows": 13,
+        "classes": "item_list sortable summable",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "",
+          "Project Name",
+          "Project Number",
+          "Original Contract Value",
+          "Approved COs",
+          "Revised Contract",
+          "Pending COs",
+          "Pending RevisedContract",
+          "OwnerInvoices",
+          "PaymentsReceived",
+          "Remaining",
+          "% Paid",
+          "Schedule % Complete",
+          "Estimated Completion Date"
+        ],
+        "rows": 0,
+        "classes": "pc-sticky-header-wrapper item_list sortable summable",
+        "id": null
+      }
+    ],
+    "title": "Portfolio • Alleato Group",
+    "h1": "Portfolio"
+  },
+  "links": 43,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/erp_integrations",
+      "text": "ERP Integrations",
+      "classes": "FavoritesTool-kRNVO dzKRPR",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/company-level/portfolio",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/configure_tab",
+      "text": "",
+      "classes": "config-container powertip",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/list",
+      "text": "Projects",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/executive_dashboard",
+      "text": "Executive Dashboard",
+      "classes": "unlink_on_click",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/health_dashboard",
+      "text": "Health Dashboard",
+      "classes": "unlink_on_click",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/my_open_items",
+      "text": "My Open Items",
+      "classes": "unlink_on_click",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/budgeting_report",
+      "text": "Budget Variance",
+      "classes": "unlink_on_click white-space-normal",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/project_variance_report",
+      "text": "Contract Variance",
+      "classes": "unlink_on_click white-space-normal",
+      "id": null,
+      "index": 10
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/committed_costs",
+      "text": "Commitment Summary",
+      "classes": "unlink_on_click white-space-normal",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/home/job_cost_summary.csv?page=1&sort%5Battribute%5D=name&sort%5Bdirection%5D=asc",
+      "text": "CSV",
+      "classes": " bttn bttn-primary-outline",
+      "id": null,
+      "index": 13
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954470637",
+      "text": "Brennan Pittsburgh",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 14
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954470637",
+      "text": "23-110",
+      "classes": "",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954769112",
+      "text": "Cart Cold Storage",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954769112",
+      "text": "24-106",
+      "classes": "",
+      "id": null,
+      "index": 17
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954777244",
+      "text": "Core Mark",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 18
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954777244",
+      "text": "24-107",
+      "classes": "",
+      "id": null,
+      "index": 19
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954635004",
+      "text": "Crate Escapes",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 20
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954635004",
+      "text": "24-101",
+      "classes": "",
+      "id": null,
+      "index": 21
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954728542",
+      "text": "Goodwill Bart",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 22
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954728542",
+      "text": "24-104",
+      "classes": "",
+      "id": null,
+      "index": 23
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954573338",
+      "text": "Goodwill Excel Center #114",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 24
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954573338",
+      "text": "23-114",
+      "classes": "",
+      "id": null,
+      "index": 25
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954694208",
+      "text": "Lakeshore Temp Power",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 26
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954694208",
+      "text": "24-103",
+      "classes": "",
+      "id": null,
+      "index": 27
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949955214671",
+      "text": "MH",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 28
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949955214671",
+      "text": "26-999",
+      "classes": "",
+      "id": null,
+      "index": 29
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949955221742",
+      "text": "mkh2",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 30
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949955221742",
+      "text": "26-222",
+      "classes": "",
+      "id": null,
+      "index": 31
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954056757",
+      "text": "Spector Vegas",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 32
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954056757",
+      "text": "22-109",
+      "classes": "",
+      "id": null,
+      "index": 33
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954131047",
+      "text": "Ulta Dallas",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 34
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954131047",
+      "text": "23 - 101",
+      "classes": "",
+      "id": null,
+      "index": 35
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954702659",
+      "text": "Wesleyan Office",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 36
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954702659",
+      "text": "24-102",
+      "classes": "",
+      "id": null,
+      "index": 37
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954582251",
+      "text": "Zion Pratt Whitney",
+      "classes": "padding-right-big",
+      "id": null,
+      "index": 38
+    },
+    {
+      "href": "https://us02.procore.com/set_project/562949954582251",
+      "text": "23-112",
+      "classes": "",
+      "id": null,
+      "index": 39
+    },
+    {
+      "href": "https://us02.procore.com/562949953443325/company/portfolio_custom_reports/new",
+      "text": "+ New",
+      "classes": "sidebar_panel_subtitle",
+      "id": null,
+      "index": 41
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 42
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 43
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 44
+    }
+  ],
+  "clickables": 4,
+  "clickableDetails": [
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "",
+      "id": "search_search-button-search__4dkh+",
+      "type": "button",
+      "classes": "search_search-button-search__4dkh+",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "Create Project",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 dLkpaJ",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 dLkpaJ",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 3
+    }
+  ],
+  "dropdowns": 15,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Financial Views\n\t\t\t\t\t\t\n\t\t\t\t\t\n\t\t\t\n\t\t\t\n  \n    \n\t\t\t\t\n",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 1
+    },
+    {
+      "text": "Financial Views",
+      "classes": "dropdown-toggle",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "Financial Views",
+      "classes": "dropdown-title",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "Budget Variance\n\t\t\t\t\t\tContract Variance\n\t\t\t\t\t\tCont",
+      "classes": "wrench-dropdown ",
+      "id": null,
+      "hasMenu": true,
+      "index": 4
+    },
+    {
+      "text": "Budget Variance\n\t\t\t\t\t\tContract Variance\n\t\t\t\t\t\tCont",
+      "classes": "wrench-dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 5
+    },
+    {
+      "text": "Contract Summary",
+      "classes": "active-dropdown-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n            \n",
+      "classes": "dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 7
+    },
+    {
+      "text": "Export\n      \n    \n    \n  \n    \n    \n            \n",
+      "classes": "dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 8
+    },
+    {
+      "text": "Export",
+      "classes": "dropdown-toggle export ",
+      "id": null,
+      "hasMenu": false,
+      "index": 9
+    },
+    {
+      "text": "PDF\nCSV",
+      "classes": "wrench-dropdown export-dropdown",
+      "id": null,
+      "hasMenu": true,
+      "index": 10
+    },
+    {
+      "text": "PDF\nCSV",
+      "classes": "wrench-dropdown-container",
+      "id": null,
+      "hasMenu": true,
+      "index": 11
+    },
+    {
+      "text": "Add Filters",
+      "classes": "rw-dropdownlist rw-widget",
+      "id": null,
+      "hasMenu": false,
+      "index": 12
+    },
+    {
+      "text": "open dropdownStatus:Active",
+      "classes": "rw-dropdownlist rw-widget",
+      "id": null,
+      "hasMenu": false,
+      "index": 13
+    },
+    {
+      "text": "open dropdown",
+      "classes": "rw-dropdownlist-picker rw-select rw-btn",
+      "id": null,
+      "hasMenu": false,
+      "index": 14
+    }
+  ],
+  "screenshotPath": "pages/job_cost_summary/screenshot.png"
+}

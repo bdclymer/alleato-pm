@@ -25,11 +25,11 @@ Launches a guided feature development workflow with 7 distinct phases.
 
 ```bash
 /feature-dev Add user authentication with OAuth
-```bash
+```
 Or simply:
 ```bash
 /feature-dev
-```yaml
+```
 The command will guide you through the entire process interactively.
 
 ## The 7-Phase Workflow
@@ -85,7 +85,7 @@ Key files to understand:
 - src/auth/AuthService.ts:45 - Core authentication logic
 - src/middleware/authMiddleware.ts:12 - Request authentication
 - src/config/security.ts:8 - Security configuration
-```markdown
+```
 ### Phase 3: Clarifying Questions
 
 **Goal**: Fill in gaps and resolve all ambiguities
@@ -161,7 +161,7 @@ Recommendation: Approach 3 - gives you clean boundaries without
 excessive refactoring, and fits your existing architecture well.
 
 Which approach would you like to use?
-```markdown
+```
 ### Phase 5: Implementation
 
 **Goal**: Build the feature
@@ -257,7 +257,7 @@ Suggested next steps:
 - Add tests for OAuth flows
 - Add more OAuth providers (Microsoft, Apple)
 - Update documentation
-```markdown
+```
 ## Agents
 
 ### `code-explorer`
@@ -339,7 +339,7 @@ Suggested next steps:
 
 ```bash
 /feature-dev Add rate limiting to API endpoints
-```bash
+```
 Let the workflow guide you through all 7 phases.
 
 ### Manual agent invocation:
@@ -349,12 +349,12 @@ Let the workflow guide you through all 7 phases.
 
 "Launch code-explorer to trace how authentication works"
 
-```text
+```
 **Design architecture:**
 ```text
 "Launch code-architect to design the caching layer"
 
-```text
+```
 **Review code:**
 ```text
 "Launch code-reviewer to check my recent changes"

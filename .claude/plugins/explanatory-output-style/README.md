@@ -25,7 +25,7 @@ before and after writing code, formatted as:
 `★ Insight ─────────────────────────────────────`
 [2-3 key educational points]
 `─────────────────────────────────────────────────`
-```markdown
+```
 ## Usage
 
 Once installed, the plugin activates automatically at the start of every

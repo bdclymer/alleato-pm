@@ -19,7 +19,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     "args": ["-y", "my-mcp-server"]
   }
 }
-```bash
+```
 **With environment:**
 ```json
 {
@@ -33,7 +33,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     }
   }
 }
-```bash
+```
 ### Process Lifecycle
 
 1. **Startup**: Claude Code spawns process with `command` and `args`
@@ -52,7 +52,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"]
   }
 }
-```bash
+```
 **Custom Scripts:**
 ```json
 {
@@ -75,7 +75,7 @@ Execute local MCP servers as child processes with communication via stdin/stdout
     }
   }
 }
-```bash
+```
 ### Best Practices
 
 1. **Use absolute paths or ${CLAUDE_PLUGIN_ROOT}**
@@ -113,7 +113,7 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
     "url": "https://mcp.example.com/sse"
   }
 }
-```bash
+```
 **With headers:**
 
 ```json
@@ -127,7 +127,7 @@ Connect to hosted MCP servers via HTTP with server-sent events for streaming. Be
     }
   }
 }
-```markdown
+```
 ### Connection Lifecycle
 
 1. **Initialization**: HTTP connection established to URL
@@ -167,7 +167,7 @@ Claude Code handles OAuth flow:
     }
   }
 }
-```markdown
+```
 ### Use Cases
 
 **Official Services:**
@@ -216,7 +216,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     "url": "https://api.example.com/mcp"
   }
 }
-```bash
+```
 **With authentication:**
 
 ```json
@@ -231,7 +231,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     }
   }
 }
-```bash
+```
 ### Request/Response Flow
 
 1. **Tool Discovery**: GET to discover available tools
@@ -258,7 +258,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     "X-API-Key": "${API_KEY}"
   }
 }
-```bash
+```
 **Custom Auth:**
 ```json
 {
@@ -267,7 +267,7 @@ Connect to RESTful MCP servers via standard HTTP requests. Best for token-based 
     "X-User-ID": "${USER_ID}"
   }
 }
-```bash
+```
 ### Use Cases
 
 - REST API backends
@@ -315,7 +315,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "wss://mcp.example.com/ws"
   }
 }
-```bash
+```
 **With authentication:**
 ```json
 {
@@ -425,7 +425,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "args": ["server.js"]
   }
 }
-```text
+```
 **After (SSE - deploy server):**
 ```json
 {
@@ -434,7 +434,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "https://mcp.example.com/sse"
   }
 }
-```markdown
+```
 ### From HTTP to WebSocket
 
 **Before (HTTP):**
@@ -446,7 +446,7 @@ Connect to MCP servers via WebSocket for real-time bidirectional communication. 
     "url": "https://api.example.com/mcp"
   }
 }
-```text
+```
 **After (WebSocket):**
 ```json
 {
@@ -483,7 +483,7 @@ Combine different types:
     }
   }
 }
-```bash
+```
 ### Conditional Configuration
 
 Use environment variables to switch servers:

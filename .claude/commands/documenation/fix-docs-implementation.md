@@ -24,19 +24,19 @@
 
 # Or use 'latest' shorthand
 /fix-docs --report latest --only "status conflicts"
-```markdown
+```
 ### Method 2: Pipe Directly
 ```bash
 # Pipe audit output directly to fix
 /audit-docs ./PLANS/directory/ --format json | /fix-docs --stdin --only "status conflicts"
-```markdown
+```
 ### Method 3: Re-specify Location with Filters
 
 ```bash
 # Fix-docs runs a targeted audit internally
 /fix-docs ./PLANS/directory/ --only "status conflicts"
 # This actually runs audit first, then applies fixes
-```markdown
+```
 ## Audit Report Structure
 
 The audit saves a structured report that fix-docs can read:
@@ -118,7 +118,7 @@ class DocumentationFixer:
                 apply_fix(issue)
             else:
                 prompt_for_manual_fix(issue)
-```markdown
+```
 ## Practical Examples
 
 ### Example 1: Fix Specific Issue Type
@@ -128,13 +128,13 @@ class DocumentationFixer:
 
 # Fix only status conflicts
 /fix-docs --report latest --only "status-conflict"
-```markdown
+```
 ### Example 2: Fix by Severity
 
 ```bash
 # Fix only critical issues from latest audit
 /fix-docs --report latest --severity critical
-```markdown
+```
 ### Example 3: Fix Specific Files
 ```bash
 # Fix issues only in specific files
@@ -159,7 +159,7 @@ class DocumentationFixer:
 >
 > Apply fix? [Y/n]: y
 > ✓ Updated to 72%
-```markdown
+```
 ## Default Behavior
 
 If no report is specified, fix-docs will:
@@ -174,7 +174,7 @@ If no report is specified, fix-docs will:
 > Error: No audit report found
 > Run: /audit-docs ./path/to/docs --save
 > Then: /fix-docs --report latest --only "status conflicts"
-```markdown
+```
 ## Storage Location
 
 Audit reports are stored in:
@@ -196,7 +196,7 @@ For ongoing documentation maintenance:
 
 # Weekly interactive fix session reminder
 0 9 * * MON echo "Review docs: /fix-docs --report latest --interactive"
-```bash
+```
 ## The Complete Workflow
 
 ```bash

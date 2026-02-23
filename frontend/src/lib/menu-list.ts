@@ -4,7 +4,6 @@ import {
   FolderOpen,
   Users,
   Table,
-  CheckSquare,
   Mail,
   HelpCircle,
   Send,
@@ -72,11 +71,6 @@ export function getMenuList(pathname: string, projectId?: string): Group[] {
           href: projectUrl("directory"),
           label: "Directory",
           icon: Users,
-        },
-        {
-          href: projectUrl("tasks"),
-          label: "Tasks",
-          icon: CheckSquare,
         },
       ]
     },

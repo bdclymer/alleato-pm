@@ -73,7 +73,7 @@ Ask: "What am I building?"
 cat .claude/scaffolds/crud-resource/migration.sql
 cat .claude/scaffolds/crud-resource/service.ts
 cat .claude/scaffolds/crud-resource/hook.ts
-```bash
+```
 Replace placeholders with your entity names.
 
 ### Step 3: Verify Against Types

@@ -13,11 +13,13 @@ export interface UnifiedTableStateOptions {
   router: { replace: (url: string) => void };
   defaults: {
     view: ViewMode;
+    allowedViews?: ViewMode[];
     page: number;
     perPage: number;
     search?: string;
     sortBy?: string | null;
     sortDirection?: "asc" | "desc";
+    visibleColumns?: string[];
     filters: Record<string, FilterValue>;
   };
 }
@@ -53,8 +55,30 @@ export function useUnifiedTableState({
   router,
   defaults,
 }: UnifiedTableStateOptions): UnifiedTableState {
+  const allowedViews = React.useMemo<ViewMode[]>(
+    () =>
+      defaults.allowedViews && defaults.allowedViews.length > 0
+        ? defaults.allowedViews
+        : ["table", "card", "list"],
+    [defaults.allowedViews],
+  );
+  const resolveView = React.useCallback(
+    (candidate: string | null | undefined): ViewMode => {
+      const normalized = candidate ?? defaults.view;
+      if (
+        normalized === "table" ||
+        normalized === "card" ||
+        normalized === "list"
+      ) {
+        return allowedViews.includes(normalized) ? normalized : defaults.view;
+      }
+      return defaults.view;
+    },
+    [allowedViews, defaults.view],
+  );
+
   const initialSearch = searchParams.get("search") ?? defaults.search ?? "";
-  const initialView = (searchParams.get("view") as ViewMode) ?? defaults.view;
+  const initialView = resolveView(searchParams.get("view"));
   const initialPage = Number(searchParams.get("page") ?? String(defaults.page));
   const initialPerPage = Number(
     searchParams.get("per_page") ?? String(defaults.perPage),
@@ -81,14 +105,14 @@ export function useUnifiedTableState({
   );
   const [visibleColumns, setVisibleColumns] = React.useState<string[]>(() => {
     if (typeof window === "undefined") {
-      return [];
+      return defaults.visibleColumns ?? [];
     }
     const stored = window.localStorage.getItem(`${entityKey}:visibleColumns`);
-    if (!stored) return [];
+    if (!stored) return defaults.visibleColumns ?? [];
     try {
       return JSON.parse(stored) as string[];
     } catch {
-      return [];
+      return defaults.visibleColumns ?? [];
     }
   });
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -152,7 +176,7 @@ export function useUnifiedTableState({
     }
     lastSearchParamsRef.current = nextParamsString;
 
-    const nextView = (searchParams.get("view") as ViewMode) ?? defaults.view;
+    const nextView = resolveView(searchParams.get("view"));
     const nextSearch = searchParams.get("search") ?? defaults.search ?? "";
     const nextPage = Number(searchParams.get("page") ?? String(defaults.page));
     const nextPerPage = Number(
@@ -164,10 +188,7 @@ export function useUnifiedTableState({
       defaults.sortDirection ??
       "asc";
 
-    const viewValue: ViewMode =
-      nextView === "card" || nextView === "list" ? nextView : defaults.view;
-
-    setCurrentView((prev: ViewMode) => (prev === viewValue ? prev : viewValue));
+    setCurrentView((prev: ViewMode) => (prev === nextView ? prev : nextView));
     setSearchInput((prev: string) => (prev === nextSearch ? prev : nextSearch));
     setDebouncedSearch((prev: string) => (prev === nextSearch ? prev : nextSearch));
 
@@ -183,7 +204,7 @@ export function useUnifiedTableState({
     setSortDirection((prev) =>
       prev === nextSortDirection ? prev : nextSortDirection === "desc" ? "desc" : "asc",
     );
-  }, [defaults.page, defaults.perPage, defaults.search, defaults.view, searchParams]);
+  }, [defaults.page, defaults.perPage, defaults.search, defaults.sortBy, defaults.sortDirection, resolveView, searchParams]);
 
   return {
     searchInput,

@@ -23,7 +23,7 @@ Use for:
 User: You need to run this SQL in Supabase:
 DROP TABLE IF EXISTS ...
 CREATE TABLE ...
-```text
+```
 **CORRECT:**
 
 ```bash
@@ -43,7 +43,7 @@ Use for:
 ```bash
 After running this SQL, regenerate the Supabase types:
 npx supabase gen types typescript ...
-```text
+```
 **CORRECT:**
 
 ```text
@@ -56,7 +56,7 @@ Before giving up and asking user to do something, search for a tool:
 
 ```text
 [Uses ToolSearch with query: "supabase sql"]
-```diff
+```
 ---
 
 ## The Incident (2026-01-28)

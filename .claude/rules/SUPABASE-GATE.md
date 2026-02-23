@@ -29,7 +29,7 @@ npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema p
 
 # Then use Read tool on:
 frontend/src/types/database.types.ts
-```sql
+```
 Look for:
 - Table exists in `Tables` interface
 - Column names match exactly (case-sensitive)

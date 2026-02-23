@@ -14,7 +14,7 @@ Takes audit findings and intelligently routes them to specialized agents based o
 
 ```bash
 /delegate-audit-tasks --report <audit-report>
-```sql
+```
 ## Task Routing Matrix
 
 ### 1. **Code-Verification Agent** (`task-verification-enforcer`)
@@ -77,7 +77,7 @@ Analyzes codebase for documentation gaps:
 ### Step 1: Parse Audit Report
 ```bash
 /delegate-audit-tasks --report latest
-```markdown
+```
 ### Step 2: Automatic Task Assignment
 
 ```yaml
@@ -106,7 +106,7 @@ WRITING TASKS (4) → documentation-writer:
 ANALYSIS TASKS (2) → pattern-analyzer:
 ✓ Find undocumented functions
 ✓ Analyze documentation coverage
-```markdown
+```
 ### Step 3: Parallel Execution
 ```bash
 Launching agents in parallel...
@@ -146,14 +146,14 @@ Launching agents in parallel...
 1. Conflicting architectural decisions
 2. Complex feature documentation
 3. Business logic explanations
-```markdown
+```
 ## Example Delegation Commands
 
 ### Delegate Everything
 ```bash
 # Parse audit and delegate all tasks
 /delegate-audit-tasks --report latest --auto
-```markdown
+```
 ### Selective Delegation
 
 ```bash
@@ -162,7 +162,7 @@ Launching agents in parallel...
 
 # Only delegate safe cleanup tasks
 /delegate-audit-tasks --report latest --only cleanup --safe
-```markdown
+```
 ### Interactive Delegation
 ```bash
 /delegate-audit-tasks --report latest --interactive

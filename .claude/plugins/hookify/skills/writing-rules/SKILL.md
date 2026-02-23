@@ -24,7 +24,7 @@ pattern: regex-pattern-here
 
 Message to show Claude when this rule triggers.
 Can include markdown formatting, warnings, suggestions, etc.
-```yaml
+```
 ### Frontmatter Fields
 
 **name** (required): Unique identifier for the rule
@@ -58,7 +58,7 @@ Can include markdown formatting, warnings, suggestions, etc.
 ```yaml
 event: bash
 pattern: rm\s+-rf
-```yaml
+```
 ### Advanced Format (Multiple Conditions)
 
 For complex rules with multiple conditions:
@@ -78,7 +78,7 @@ conditions:
 ---
 
 You're adding an API key to a .env file. Ensure this file is in .gitignore!
-```diff
+```
 **Condition fields:**
 - `field`: Which field to check
   - For bash: `command`
@@ -134,7 +134,7 @@ pattern: sudo\s+|rm\s+-rf|chmod\s+777
 ---
 
 Dangerous command detected!
-```yaml
+```
 **Common patterns:**
 - Dangerous commands: `rm\s+-rf`, `dd\s+if=`, `mkfs`
 - Privilege escalation: `sudo\s+`, `su\s+`
@@ -151,7 +151,7 @@ pattern: console\.log\(|eval\(|innerHTML\s*=
 ---
 
 Potentially problematic code pattern detected!
-```yaml
+```
 **Match on different fields:**
 
 ```markdown
@@ -167,7 +167,7 @@ conditions:
 ---
 
 Console.log in TypeScript file!
-```yaml
+```
 **Common patterns:**
 - Debug code: `console\.log\(`, `debugger`, `print\(`
 - Security risks: `eval\(`, `innerHTML\s*=`, `dangerouslySetInnerHTML`
@@ -213,7 +213,7 @@ Production deployment checklist:
 - [ ] Tests passing?
 - [ ] Reviewed by team?
 - [ ] Monitoring ready?
-```markdown
+```
 ## Pattern Writing Tips
 
 ### Regex Basics
@@ -245,7 +245,7 @@ console\.log\(   Matches: console.log(
 chmod\s+777      Matches: chmod 777, chmod  777
 API_KEY\s*=      Matches: API_KEY=, API_KEY =
 
-```markdown
+```
 ### Testing Patterns
 
 Test regex patterns before using:
@@ -262,13 +262,13 @@ Or use online regex testers (regex101.com with Python flavor).
 
 ```yaml
 pattern: log    # Matches "log", "login", "dialog", "catalog"
-```yaml
+```
 Better: `console\.log\(|logger\.`
 
 **Too specific:**
 ```yaml
 pattern: rm -rf /tmp  # Only matches exact path
-```yaml
+```
 Better: `rm\s+-rf`
 
 **Escaping issues:**
@@ -339,7 +339,7 @@ pattern: dangerous_command
 ---
 
 Warning message here
-```yaml
+```
 **Rule with conditions:**
 ```markdown
 ---

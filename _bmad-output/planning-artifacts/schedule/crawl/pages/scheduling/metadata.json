@@ -1,0 +1,158 @@
+{
+  "pageName": "Scheduling",
+  "category": "scheduling",
+  "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/schedulemgmt",
+  "pageId": "scheduling",
+  "capturedAt": "2026-01-27T18:58:32.802Z",
+  "interactionDriven": true,
+  "systemActions": [
+    {
+      "label": "Scroll to activity",
+      "type": "context_menu"
+    },
+    {
+      "label": "Bulk edit",
+      "type": "context_menu"
+    },
+    {
+      "label": "Edit",
+      "type": "context_menu"
+    },
+    {
+      "label": "Copy",
+      "type": "context_menu"
+    },
+    {
+      "label": "Cut",
+      "type": "context_menu"
+    },
+    {
+      "label": "Paste",
+      "type": "context_menu"
+    },
+    {
+      "label": "Set deadline to finish date",
+      "type": "context_menu"
+    },
+    {
+      "label": "Add...",
+      "type": "context_menu"
+    },
+    {
+      "label": "Convert to milestone",
+      "type": "context_menu"
+    },
+    {
+      "label": "Indent Activity",
+      "type": "context_menu"
+    },
+    {
+      "label": "Outdent Activity",
+      "type": "context_menu"
+    },
+    {
+      "label": "Delete",
+      "type": "context_menu"
+    },
+    {
+      "label": "SearchCmdK",
+      "type": "modal_action"
+    },
+    {
+      "label": "More",
+      "type": "modal_action"
+    },
+    {
+      "label": "Learn More",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "More",
+      "type": "modal_action"
+    },
+    {
+      "label": "Feedback",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "Today",
+      "type": "modal_action"
+    },
+    {
+      "label": "",
+      "type": "modal_action"
+    },
+    {
+      "label": "Import",
+      "type": "modal_action"
+    },
+    {
+      "label": "Export",
+      "type": "modal_action"
+    },
+    {
+      "label": "Add Activity Below",
+      "type": "modal_action"
+    }
+  ]
+}

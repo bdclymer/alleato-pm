@@ -78,11 +78,13 @@ export default function ProjectCommitmentsPage(): ReactElement {
     router,
     defaults: {
       view: "table",
+      allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 25,
       search: "",
       sortBy: "number",
       sortDirection: "asc",
+      visibleColumns: commitmentDefaultVisibleColumns,
       filters: initialFilters,
     },
   });
@@ -106,12 +108,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
       };
     });
   }, [searchParams, tableState.setActiveFilters]);
-
-  React.useEffect(() => {
-    if (tableState.visibleColumns.length === 0) {
-      tableState.setVisibleColumns(commitmentDefaultVisibleColumns);
-    }
-  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
   const activeFilters = tableState.activeFilters as FilterState;
 
@@ -314,7 +310,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
           columns: commitmentColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
-          onExport: handleExport,
         }}
         data={{
           items: sortedCommitments,

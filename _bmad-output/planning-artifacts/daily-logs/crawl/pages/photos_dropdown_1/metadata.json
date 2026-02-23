@@ -1,0 +1,13 @@
+{
+  "parentPage": "photos",
+  "parentUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/photos",
+  "dropdownIndex": 1,
+  "menuItems": [
+    {
+      "text": "PDF",
+      "href": null,
+      "type": "div"
+    }
+  ],
+  "timestamp": "2026-01-11T08:44:53.653Z"
+}

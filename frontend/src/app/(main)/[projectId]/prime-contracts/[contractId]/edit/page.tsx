@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
+import { toast } from "sonner";
+
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 import { PageHeader } from "@/components/layout/page-header-unified";
@@ -138,6 +140,8 @@ export default function EditContractPage() {
             contract_termination_date:
               data.contractTerminationDate?.toISOString().split("T")[0] || null,
             retention_percentage: data.defaultRetainage || 0,
+            payment_terms: data.paymentTerms || null,
+            billing_schedule: data.billingSchedule || null,
             is_private: data.isPrivate || false,
             inclusions: data.inclusions || null,
             exclusions: data.exclusions || null,
@@ -257,7 +261,7 @@ export default function EditContractPage() {
 
       router.push(`/${projectId}/prime-contracts/${contractId}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update contract");
+      toast.error(err instanceof Error ? err.message : "Failed to update contract");
     } finally {
       setIsSaving(false);
     }
@@ -369,6 +373,8 @@ export default function EditContractPage() {
       ? new Date(contract.contract_termination_date)
       : undefined,
     defaultRetainage: contract.retention_percentage,
+    paymentTerms: contract.payment_terms || "",
+    billingSchedule: contract.billing_schedule || "",
     isPrivate: contract.is_private,
     inclusions: contract.inclusions || "",
     exclusions: contract.exclusions || "",

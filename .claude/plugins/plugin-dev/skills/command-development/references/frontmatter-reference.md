@@ -15,7 +15,7 @@ argument-hint: [arg1] [arg2]
 ---
 
 Command prompt content here...
-```text
+```
 All fields are optional. Commands work without any frontmatter.
 
 ## Field Specifications
@@ -32,10 +32,10 @@ All fields are optional. Commands work without any frontmatter.
 **Examples:**
 ```yaml
 description: Review code for security issues
-```yaml
+```
 ```yaml
 description: Deploy to staging environment
-```text
+```
 ```yaml
 description: Generate API documentation
 ```
@@ -73,11 +73,11 @@ description: Generate API documentation
 
 ```yaml
 allowed-tools: Read
-```text
+```
 **Multiple tools (comma-separated):**
 ```yaml
 allowed-tools: Read, Write, Edit
-```text
+```
 **Multiple tools (array):**
 
 ```yaml
@@ -85,7 +85,7 @@ allowed-tools:
   - Read
   - Write
   - Bash(git:*)
-```text
+```
 **Tool Patterns:**
 
 **Specific tools:**
@@ -99,18 +99,18 @@ allowed-tools: Read, Grep, Edit
 allowed-tools: Bash(git:*)           # Only git commands
 allowed-tools: Bash(npm:*)           # Only npm commands
 allowed-tools: Bash(docker:*)        # Only docker commands
-```text
+```
 **All tools (not recommended):**
 ```yaml
 allowed-tools: "*"
-```yaml
+```
 **When to use:**
 
 1. **Security:** Restrict command to safe operations
 
    ```yaml
    allowed-tools: Read, Grep  # Read-only command
-   ```text
+   ```
 2. **Clarity:** Document required tools
 
    ```yaml
@@ -121,7 +121,7 @@ allowed-tools: "*"
 
    ```yaml
    allowed-tools: Bash(git status:*), Bash(git diff:*)
-   ```yaml
+   ```
 
 **Best practices:**
 
@@ -147,7 +147,7 @@ model: haiku    # Fast, efficient for simple tasks
 
 ```yaml
 model: sonnet   # Balanced performance (default)
-```text
+```
 ```yaml
 model: opus     # Maximum capability for complex tasks
 ```
@@ -166,7 +166,7 @@ model: opus     # Maximum capability for complex tasks
 description: Format code file
 model: haiku
 ---
-```yaml
+```
 **Use `sonnet` for:**
 
 - Standard commands (default)
@@ -192,7 +192,7 @@ model: sonnet
 description: Analyze system architecture
 model: opus
 ---
-```diff
+```
 **Best practices:**
 
 - Omit unless specific need
@@ -220,7 +220,7 @@ argument-hint: [arg1] [arg2] [optional-arg]
 
 ```yaml
 argument-hint: [pr-number]
-```text
+```
 **Multiple required arguments:**
 
 ```yaml
@@ -231,7 +231,7 @@ argument-hint: [environment] [version]
 
 ```yaml
 argument-hint: [file-path] [options]
-```text
+```
 **Descriptive names:**
 
 ```yaml
@@ -257,7 +257,7 @@ argument-hint: [issue-number]
 ---
 
 Fix issue #$1...
-```yaml
+```
 **Multi-argument:**
 
 ```yaml
@@ -278,7 +278,7 @@ argument-hint: [test-pattern] [options]
 ---
 
 Run tests matching $1 with options: $2
-```markdown
+```
 ### disable-model-invocation
 
 **Type:** Boolean
@@ -302,7 +302,7 @@ disable-model-invocation: true
    description: Approve deployment to production
    disable-model-invocation: true
    ---
-   ```yaml
+   ```
 2. **Destructive operations:** Commands with irreversible effects
 
    ```yaml
@@ -310,7 +310,7 @@ disable-model-invocation: true
    description: Delete all test data
    disable-model-invocation: true
    ---
-   ```yaml
+   ```
 3. **Interactive workflows:** Commands needing user input
 
    ```yaml
@@ -346,7 +346,7 @@ No frontmatter needed:
 
 ```markdown
 Review this code for common issues and suggest improvements.
-```markdown
+```
 ### Simple Command
 
 Just description:
@@ -357,7 +357,7 @@ description: Review code for issues
 ---
 
 Review this code for common issues and suggest improvements.
-```yaml
+```
 ### Standard Command
 
 Description and tools:
@@ -374,7 +374,7 @@ Review each changed file for:
 - Code quality
 - Potential bugs
 - Best practices
-```yaml
+```
 ### Complex Command
 
 All common fields:
@@ -425,7 +425,7 @@ Verify:
 - Rollback plan ready
 
 Type "APPROVED" to confirm deployment.
-```yaml
+```
 ## Validation
 
 ### Common Errors
@@ -437,14 +437,14 @@ description: Missing quote
 allowed-tools: Read, Write
 model: sonnet
 ---  # ❌ Missing closing quote above
-```yaml
+```
 **Fix:** Validate YAML syntax
 
 **Incorrect tool specification:**
 
 ```yaml
 allowed-tools: Bash  # ❌ Missing command filter
-```text
+```
 **Fix:** Use `Bash(git:*)` format
 
 **Invalid model name:**

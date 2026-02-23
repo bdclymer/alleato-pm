@@ -1,0 +1,23 @@
+{
+  "parentPage": "drawings-revisions",
+  "parentUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/drawings/areas/562949954293344/revisions",
+  "dropdownIndex": 1,
+  "menuItems": [
+    {
+      "text": "All Sets and Revisions",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Sketches",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Measurements",
+      "href": null,
+      "type": "div"
+    }
+  ],
+  "timestamp": "2026-01-12T21:02:52.527Z"
+}

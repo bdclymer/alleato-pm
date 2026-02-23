@@ -220,7 +220,7 @@ These subagents are automatically available when placed in `~/.claude/agents/` d
 ```bash
 cd ~/.claude
 git clone https://github.com/wshobson/agents.git
-```markdown
+```
 ## Usage
 
 ### Automatic Invocation
@@ -233,7 +233,7 @@ Mention the subagent by name in your request:
 "Have the security-auditor scan for vulnerabilities"
 "Get the performance-engineer to optimize this bottleneck"
 
-```markdown
+```
 ## Usage Examples
 
 ### Single Agent Tasks
@@ -297,7 +297,7 @@ These subagents work together seamlessly, and for more complex orchestrations, y
 # Product launch workflow
 "Launch new feature with marketing campaign"
 # Automatically uses: business-analyst → content-marketer → sales-automator → customer-support
-```markdown
+```
 ### Advanced Workflows with Slash Commands
 
 For more sophisticated multi-subagent orchestration, use the companion [Commands repository](https://github.com/wshobson/commands):
@@ -314,7 +314,7 @@ For more sophisticated multi-subagent orchestration, use the companion [Commands
 
 # Security-focused implementation (7+ subagents)
 /security-hardening Implement OAuth2 with zero-trust architecture
-```yaml
+```
 ## Subagent Format
 
 Each subagent follows this structure:
@@ -328,7 +328,7 @@ tools: tool1, tool2  # Optional - defaults to all tools
 ---
 
 System prompt defining the subagent's role and capabilities
-```markdown
+```
 ### Model Configuration
 
 As of Claude Code v1.0.64, subagents can specify which Claude model they should use. This allows for cost-effective task delegation based on complexity:
@@ -356,7 +356,7 @@ User Request → Agent A → Agent B → Agent C → Result
 Example: "Build a new API feature"
 backend-architect → frontend-developer → test-automator → security-auditor
 
-```markdown
+```
 ### Parallel Execution
 ```text
 User Request → Agent A + Agent B (simultaneously) → Merge Results
@@ -364,7 +364,7 @@ User Request → Agent A + Agent B (simultaneously) → Merge Results
 Example: "Optimize application performance"
 performance-engineer + database-optimizer → Combined recommendations
 
-```markdown
+```
 ### Conditional Branching
 ```
 
@@ -373,7 +373,7 @@ User Request → Analysis → Route to appropriate specialist
 Example: "Fix this bug"
 debugger (analyzes) → Routes to: backend-architect OR frontend-developer OR devops-troubleshooter
 
-```markdown
+```
 ### Review & Validation
 ```bash
 Primary Agent → Review Agent → Final Result

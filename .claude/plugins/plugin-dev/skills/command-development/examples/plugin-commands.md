@@ -39,7 +39,7 @@ Review the analysis output and provide:
 2. Priority issues to address
 3. Suggested improvements
 4. Code quality score interpretation
-```yaml
+```
 **Key features:**
 - Uses `${CLAUDE_PLUGIN_ROOT}` for portable path
 - Combines file reference with script execution
@@ -77,7 +77,7 @@ Analyze all results and create comprehensive report including:
 - Performance optimization opportunities
 - Security vulnerabilities and fixes
 - Overall health score and recommendations
-```yaml
+```
 **Key features:**
 
 - Multiple script executions
@@ -114,7 +114,7 @@ Ensure documentation includes:
 - Rate limiting information
 
 Format output as markdown suitable for README or docs site.
-```yaml
+```
 **Key features:**
 - Uses plugin template
 - Combines template with source file
@@ -198,7 +198,7 @@ Deployment checklist:
 7. Update deployment log
 
 Report deployment status and any issues encountered.
-```yaml
+```
 **Key features:**
 - Environment-specific configuration
 - Dynamic config file loading
@@ -234,7 +234,7 @@ The agent has access to:
 - Performance guidelines: ${CLAUDE_PLUGIN_ROOT}/docs/performance.md
 
 Note: This uses the Task tool to launch the plugin's code-reviewer agent for thorough analysis.
-```yaml
+```
 **Key features:**
 
 - Delegates to plugin agent
@@ -274,7 +274,7 @@ The skill provides:
 - Quality validation criteria
 
 Generate production-ready API documentation.
-```yaml
+```
 **Key features:**
 - Invokes plugin skill by name
 - Documents skill purpose
@@ -375,7 +375,7 @@ If validations fail:
 - Provide expected values/locations
 - Suggest corrective actions
 - Document troubleshooting steps
-```yaml
+```
 **Key features:**
 - Input validation
 - Resource existence checks
@@ -421,7 +421,7 @@ Analyze results based on environment requirements:
 **Development:** Focus on blocking issues only
 
 Report status and recommend proceed/block decision.
-```bash
+```
 **Key features:**
 
 - Environment-aware logic
@@ -437,7 +437,7 @@ Report status and recommend proceed/block decision.
 
 ```markdown
 !`node ${CLAUDE_PLUGIN_ROOT}/scripts/script-name.js $1`
-```bash
+```
 Use for: Running plugin-provided Node.js scripts
 
 ### Pattern: Plugin Configuration Loading
@@ -451,20 +451,20 @@ Use for: Loading plugin configuration files
 
 ```markdown
 @${CLAUDE_PLUGIN_ROOT}/templates/template-name.md
-```text
+```
 Use for: Using plugin templates for generation
 
 ### Pattern: Agent Invocation
 ```markdown
 Launch the [agent-name] agent for [task description].
-```bash
+```
 Use for: Delegating complex tasks to plugin agents
 
 ### Pattern: Skill Reference
 
 ```markdown
 Use the [skill-name] skill to ensure [requirements].
-```bash
+```
 Use for: Leveraging plugin skills for specialized knowledge
 
 ### Pattern: Input Validation
@@ -493,19 +493,19 @@ Use for: Verifying required plugin files exist
    ```bash
    cd /path/to/plugin
    claude /command-name args
-   ```bash
+   ```
 2. **Verify ${CLAUDE_PLUGIN_ROOT} expansion:**
 
    ```bash
    # Add debug output to command
    !`echo "Plugin root: ${CLAUDE_PLUGIN_ROOT}"`
-   ```bash
+   ```
 3. **Test across different working directories:**
 
    ```bash
    cd /tmp && claude /command-name
    cd /other/project && claude /command-name
-   ```bash
+   ```
 4. **Validate resource availability:**
 
    ```bash
@@ -524,7 +524,7 @@ Use for: Verifying required plugin files exist
 
    # Correct
    !`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js`
-   ```bash
+   ```
 2. **Forgetting to allow required tools:**
 
    ```markdown
@@ -536,7 +536,7 @@ Use for: Verifying required plugin files exist
    allowed-tools: Bash(*)
    ---
    !`bash ${CLAUDE_PLUGIN_ROOT}/scripts/script.sh`
-   ```bash
+   ```
 3. **Not validating inputs:**
 
    ```markdown
@@ -546,7 +546,7 @@ Use for: Verifying required plugin files exist
    # Better - with validation
    Validate: !`echo "$1" | grep -E "^(dev|staging|prod)$" || echo "INVALID"`
    Deploy to $1 environment (if valid)
-   ```bash
+   ```
 4. **Hardcoding plugin paths:**
 
    ```markdown

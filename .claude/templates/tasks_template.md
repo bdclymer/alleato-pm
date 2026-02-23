@@ -31,11 +31,11 @@
 <!-- Tasks related to connecting pieces together -->
 - [ ] {TASK_PLACEHOLDER}
 
-### Phase 5: Testing & Validation
-<!-- Tasks related to tests, validation, quality checks -->
+### Phase 5: Build Verification
+<!-- Build verification only — test authoring is owned by BMAD QA workflows (Quinn/Murat) -->
 - [ ] Run type check: `npx tsc --noEmit`
 - [ ] Run linting: `npm run lint`
-- [ ] Run tests: `npm test`
+- [ ] Run existing tests (regression check): `npm test`
 - [ ] Manual verification
 - [ ] Production build: `npm run build`
 

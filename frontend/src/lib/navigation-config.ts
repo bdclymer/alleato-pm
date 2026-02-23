@@ -77,7 +77,6 @@ export const coreTools: NavigationTool[] = [
   { name: "Directory", path: "directory", requiresProject: true, module: "directory" },
   { name: "Tables Directory", path: "tables-directory", requiresProject: false, adminOnly: true },
   { name: "Settings", path: "settings/plugins", requiresProject: false, adminOnly: true },
-  { name: "Tasks", path: "tasks", requiresProject: true },
   { name: "Admin", path: "admin", requiresProject: true, adminOnly: true },
 ];
 
@@ -98,7 +97,6 @@ export const projectManagementTools: NavigationTool[] = [
 export const financialManagementTools: NavigationTool[] = [
   { name: "Prime Contracts", path: "prime-contracts", requiresProject: true, module: "contracts" },
   { name: "Budget", path: "budget", requiresProject: true, module: "budget" },
-  { name: "Budget V2", path: "budget-v2", requiresProject: true, module: "budget" },
   { name: "Commitments", path: "commitments", requiresProject: true, module: "contracts" },
   { name: "Change Orders", path: "change-orders", requiresProject: true, module: "change_orders" },
   { name: "Change Events", path: "change-events", requiresProject: true, module: "change_orders" },
@@ -431,13 +429,6 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     icon: FolderOpen,
     description: "Document workflows",
     adminOnly: true,
-  },
-  {
-    name: "Tasks",
-    path: "tasks",
-    requiresProject: true,
-    icon: CheckCircle,
-    description: "Task management",
   },
 ];
 

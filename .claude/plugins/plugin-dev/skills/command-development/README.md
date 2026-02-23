@@ -129,7 +129,7 @@ Command prompt content with:
 - Arguments: $1, $2, or $ARGUMENTS
 - Files: @path/to/file
 - Bash: !`command here`
-```bash
+```
 ### Locations
 
 - **Project**: `.claude/commands/` (shared with team)
@@ -168,7 +168,7 @@ description: Review code for issues
 ---
 
 Review this code for quality and potential bugs.
-```yaml
+```
 ### Command with Arguments
 
 ```markdown
@@ -178,7 +178,7 @@ argument-hint: [environment] [version]
 ---
 
 Deploy to $1 environment using version $2
-```yaml
+```
 ### Command with File Reference
 
 ```markdown

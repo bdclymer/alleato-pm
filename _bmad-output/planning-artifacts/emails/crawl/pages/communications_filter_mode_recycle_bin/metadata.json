@@ -1,0 +1,215 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/communications?filter_mode=recycle_bin",
+  "pageName": "communications?filter_mode=recycle_bin",
+  "category": "emails",
+  "pageId": "communications_filter_mode_recycle_bin",
+  "timestamp": "2026-01-12T16:04:23.408Z",
+  "analysis": {
+    "components": {
+      "buttons": 4,
+      "forms": 1,
+      "inputs": 5,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 12,
+      "emailList": 2,
+      "attachments": 0,
+      "recipients": 15,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [],
+        "rows": 1,
+        "classes": "communication_tags",
+        "id": null
+      }
+    ],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": [
+        ""
+      ]
+    },
+    "title": "Emails • Goodwill Bart",
+    "h1": "Emails"
+  },
+  "links": 14,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/emails",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/configure_tab",
+      "text": "",
+      "classes": "config-container powertip",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=inbox",
+      "text": "Inbox (1)",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=archive",
+      "text": "Archive (0)",
+      "classes": "",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=all",
+      "text": "All (1)",
+      "classes": "",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications?filter_mode=spam",
+      "text": "Spam (0)",
+      "classes": "",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communication/new",
+      "text": "Create Email",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 11
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/communications/fancybox_add_tag",
+      "text": "Create Tag",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": "ajax_fancybox_tag_create",
+      "index": 12
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 15
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 16
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 17
+    }
+  ],
+  "clickables": 6,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh HYmWK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh HYmWK",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Clear",
+      "id": "",
+      "type": "a",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Search",
+      "id": "",
+      "type": "button",
+      "classes": "",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 5
+    }
+  ],
+  "dropdowns": 2,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_20_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_20_1__sc-17s58xs-2 StyledDropdownTab-core-12_20_1__sc-17s58xs-5 cQGXsF cQUKhh HYmWK",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    }
+  ],
+  "screenshotPath": "pages/communications_filter_mode_recycle_bin/screenshot.png"
+}

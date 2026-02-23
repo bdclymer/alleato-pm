@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRP: submittals</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --text-muted: #666666;
+      --border: #e5e5e5;
+      --code-bg: #f6f8fa;
+      --accent: #0066cc;
+      --success: #22863a;
+      --warning: #b08800;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --text: #e5e5e5;
+        --text-muted: #999999;
+        --border: #333333;
+        --code-bg: #2d2d2d;
+        --accent: #58a6ff;
+        --success: #3fb950;
+        --warning: #d29922;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    nav.toc {
+      width: 280px;
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    nav.toc h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    nav.toc a {
+      display: block;
+      padding: 6px 0;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    nav.toc a:hover {
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      padding: 48px;
+      max-width: 900px;
+      min-width: 0;
+    }
+
+    h1, h2, h3, h4 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 32px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 { font-size: 20px; }
+    h4 { font-size: 16px; }
+
+    p {
+      margin: 16px 0;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code.inline {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    pre code {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    details.code-block {
+      margin: 16px 0;
+    }
+
+    details.code-block summary {
+      cursor: pointer;
+      padding: 8px 12px;
+      background: var(--code-bg);
+      border-radius: 8px 8px 0 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    details.code-block[open] summary {
+      border-radius: 8px 8px 0 0;
+    }
+
+    details.code-block pre {
+      margin-top: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    ul, ol {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    li.task {
+      list-style: none;
+      margin-left: -24px;
+    }
+
+    li.task input {
+      margin-right: 8px;
+    }
+
+    li.task.done {
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--code-bg);
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    figure.screenshot {
+      margin: 24px 0;
+      padding: 0;
+    }
+
+    figure.screenshot img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    figure.screenshot figcaption {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+      }
+
+      nav.toc {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      main {
+        padding: 24px;
+      }
+    }
+
+    @media print {
+      nav.toc {
+        display: none;
+      }
+
+      main {
+        padding: 0;
+        max-width: 100%;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <a href="#Submittals Module — Product Requirements Prompt (PRP)" style="padding-left: 0px">Submittals Module — Product Requirements Prompt (PRP)</a>
+<a href="#Goal" style="padding-left: 16px">Goal</a>
+<a href="#Why" style="padding-left: 16px">Why</a>
+<a href="#What" style="padding-left: 16px">What</a>
+<a href="#Pages" style="padding-left: 32px">Pages</a>
+<a href="#Database Schema" style="padding-left: 32px">Database Schema</a>
+<a href="#API Endpoints" style="padding-left: 32px">API Endpoints</a>
+<a href="#Components" style="padding-left: 32px">Components</a>
+<a href="#Special Features/functionality" style="padding-left: 32px">Special Features/functionality</a>
+<a href="#Table Columns" style="padding-left: 32px">Table Columns</a>
+<a href="#Frontend Form & Form Fields" style="padding-left: 32px">Frontend Form & Form Fields</a>
+<a href="#Success Criteria" style="padding-left: 16px">Success Criteria</a>
+<a href="#Known Pitfalls & Prevention" style="padding-left: 16px">Known Pitfalls & Prevention</a>
+<a href="#From Incident Log & Pattern Files" style="padding-left: 32px">From Incident Log & Pattern Files</a>
+<a href="#All Needed Context" style="padding-left: 16px">All Needed Context</a>
+<a href="#Context Completeness Check" style="padding-left: 32px">Context Completeness Check</a>
+<a href="#Documentation & References" style="padding-left: 32px">Documentation & References</a>
+<a href="#MUST READ" style="padding-left: 0px">MUST READ</a>
+<a href="#Implementation Blueprint" style="padding-left: 16px">Implementation Blueprint</a>
+<a href="#Implementation Tasks (ordered by dependencies)" style="padding-left: 16px">Implementation Tasks (ordered by dependencies)</a>
+<a href="#Integration Points" style="padding-left: 16px">Integration Points</a>
+<a href="#Validation Loop" style="padding-left: 16px">Validation Loop</a>
+<a href="#Procore Crawl Data Reference" style="padding-left: 16px">Procore Crawl Data Reference</a>
+<a href="#Sitemap" style="padding-left: 32px">Sitemap</a>
+<a href="#Crawl Data Files" style="padding-left: 32px">Crawl Data Files</a>
+<a href="#UI Components Detected" style="padding-left: 32px">UI Components Detected</a>
+<a href="#Confidence Score" style="padding-left: 16px">Confidence Score</a>
+    </nav>
+    <main>
+      <div class="meta">
+        Generated: 2026-02-03T08:22:28.855Z
+      </div>
+      <hr>
+<p>title: Submittals Module — TypeScript PRP</p>
+<p>description: Aligns the Submittals feature with Procore list/detail workflows, Supabase schema, API routes, and rich UI interactions.</p>
+<hr>
+
+<h1 id="Submittals Module — Product Requirements Prompt (PRP)">Submittals Module — Product Requirements Prompt (PRP)</h1>
+
+<h2 id="Goal">Goal</h2>
+
+<strong>Feature Goal:</strong> Deliver a Procore-parity Submittals module that tracks every submission, workflow step, and distribution event while covering list/list-views, exports, create/edit dialogs, detail tabs, and data governance.
+
+<strong>Deliverable:</strong> 
+<ul>
+<li>Supabase schema (tables + views) that persist submittal metadata, workflows, distributions, attachments, and linked drawings.</li>
+<li>An API service + Next.js route pair for list/create and detail/update/delete operations with server-side authorization.</li>
+<li>Client pieces: an enriched <code class="inline">SubmittalsClient</code> list, <code class="inline">SubmittalFormDialog</code>, <code class="inline">SubmittalDetailClient</code> with tabs, workflow response and distribution summaries, attachments, and history.</li>
+<li>Type-safe hooks/schemas/validations that wire Supabase data into GenericDataTable configurations and form dialogs.</li>
+<p></ul>
+
+<strong>Success Definition:</strong> Product teams can create, view, edit, redistribute, and soft-delete submittals through the new UI while the API layer enforces FK integrity, RLS policies, and TypeScript typing; the list view mirrors Procore’s 12 columns, filters, tabs, and export actions, and the detail view exposes general info, related items, emails, and change history.
+
+<h2 id="Why">Why</h2>
+
+<strong>Business value:</strong> Submittals represent the heartbeat of coordination between contractors and owners—missing approvals delay schedules. A production-grade module keeps classic Procore reports (status cards, distribution summaries, attachments, workflow responses) available within Alleato PM without toggling tools.
+
+<strong>Integration:</strong> Reuses Directory (contacts/companies) + Drawings references, leverages the existing <code class="inline">active_submittals</code> view, and plugs into our pattern stack: <code class="inline">GenericDataTable</code>, <code class="inline">TableLayout</code>, <code class="inline">createServiceClient()</code>, and Next.js App Router APIs.
+
+<strong>Problems solved:</strong> The current implementation renders placeholder rows from <code class="inline">active_submittals</code>, lacks creation/edit UIs, has minimal filters, and ignores Procore’s export/Redistribution commands. This PRP wires real Supabase tables, migrations, APIs, and components to close the gap.
+
+<h2 id="What">What</h2>
+
+<h3 id="Pages">Pages</h3>
+
+<table>
+<thead>
+<tr><th>Page</th><th>Route</th><th>Type</th><th>Notes</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<p>| Submittals List | <code class="inline">/(tables)/submittals/page.tsx</code> | Server Component (existing) | Upgrade to fetch typed suppliable data, show 12 columns, filters, status cards, exports, tabbed groupings, and modals for create/edit.| </p>
+<p>| Submittal Detail | <code class="inline">/(main)/[projectId]/submittals/[submittalId]/page.tsx</code> | Server Component (new) | Loads submittal + relations (attachments, responses, distributions, history) and renders <code class="inline">SubmittalDetailClient</code> with General, Related Items, Emails, Change History tabs.| </p>
+<table>
+<thead>
+<tr><th>Submittal Form Dialog</th><th>Modal over list/detail</th><th>Client Component (new)</th><th>Handles create + edit flows and submission of Zod-validated payloads (General/Distribution/Content/Workflow sections).</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+
+<h3 id="Database Schema">Database Schema</h3>
+
+<strong>Existing tables from <code class="inline">frontend/src/types/database.types.ts</code>:</strong>
+<ul>
+<li><code class="inline">submittals</code> (PK: <code class="inline">id</code> string/UUID, <code class="inline">project_id</code> integer not null referencing <code class="inline">projects(id)</code>, <code class="inline">submittal_number</code> text, <code class="inline">submittal_type_id</code> string ❯ <code class="inline">submittal_types(id)</code>, <code class="inline">specification_id</code> string, plus <code class="inline">priority</code>, <code class="inline">status</code>, <code class="inline">ball_in_court</code>, <code class="inline">submission_date</code>, <code class="inline">required_approval_date</code>, <code class="inline">submitted_by</code> string, <code class="inline">submitter_company</code>, <code class="inline">description</code>, <code class="inline">total_versions</code>, <code class="inline">current_version</code>, <code class="inline">metadata</code>, <code class="inline">title</code>, <code class="inline">created_at</code>, <code class="inline">updated_at</code>). <code class="inline">project_id</code> must stay <code class="inline">integer</code> to match <code class="inline">projects.id</code> (avoid the FK mismatch from the 2026-01-28 incident).</li>
+<li><code class="inline">submittal_types</code> (PK <code class="inline">id</code> string) holds human-readable names, categories, and review criteria for dropdowns.</li>
+<li><code class="inline">submittal_documents</code> stores files per submittal (attachments) with <code class="inline">submittal_id</code> → <code class="inline">submittals.id</code>, <code class="inline">document_name</code>, <code class="inline">file_url</code>, <code class="inline">mime_type</code>, <code class="inline">version</code>, <code class="inline">uploaded_at</code>, <code class="inline">uploaded_by</code>.</li>
+<li><code class="inline">submittal_history</code> captures audit actions (<code class="inline">submittal_id</code>, <code class="inline">action</code>, <code class="inline">actor_id</code>, <code class="inline">new_status</code>, <code class="inline">changes</code>, <code class="inline">occurred_at</code>).</li>
+<li><code class="inline">submittal_notifications</code> backs email statuses per person and project, with <code class="inline">submittal_id</code>, <code class="inline">project_id</code>, <code class="inline">user_id</code>, <code class="inline">notification_type</code>, <code class="inline">message</code>.</li>
+<li><code class="inline">submittal_analytics_events</code>, <code class="inline">submittal_performance_metrics</code>, and <code class="inline">submittal_project_dashboard</code> supply dashboards/telemetry—keep them intact for status cards and analytics.</li>
+<p></ul>
+
+<strong>New tables derived from <code class="inline">scripts/playwright-crawl/procore-crawls/submittals/spec/schema.sql</code> (must be added via Supabase migrations + RLS + indexes):</strong>
+<ul>
+<li><code class="inline">submittal_packages</code> (UUID PK) groups submittals per project.</li>
+<li><code class="inline">submittal_workflow_steps</code> (UUID, references <code class="inline">submittals(id)</code>) lists approval steps and order; the UI needs to show the chain in the workflow tab.</li>
+<li><code class="inline">submittal_responses</code> (UUID, references <code class="inline">submittal_workflow_steps</code>) tracks per-approver status (<code class="inline">Submitted</code>, <code class="inline">Pending</code>, <code class="inline">Approved</code>, <code class="inline">Approved as Noted</code>) plus comments/<code class="inline">responded_at</code> for the workflow response cards.</li>
+<li><code class="inline">submittal_distributions</code> and <code class="inline">submittal_distribution_recipients</code> outline distribution events, sender (<code class="inline">from_id</code>), message, distributed timestamp, and recipient contacts; this drives the Distribution Summary section and filter by distribution list.</li>
+<li><code class="inline">submittal_attachments</code> stores files shared with each distribution/response (use <code class="inline">CHECK</code> so at least one parent FK is non-null) and surfaces the “CURRENT” badge.</li>
+<li><code class="inline">submittal_linked_drawings</code> maps submittals to drawings (supports the Related Items tab).</li>
+<p></ul>
+
+<p>All new tables must enable RLS policies that restrict access to <code class="inline">project_directory_memberships.person_id</code>—mirror the policy examples in the schema file. Re-run <code class="inline">npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public</code> after each migration to keep <code class="inline">frontend/src/types/database.types.ts</code> synchronized. Verify <code class="inline">project_id</code> is <code class="inline">INTEGER</code>, <code class="inline">users.id</code> is <code class="inline">UUID</code>, and <code class="inline">people.id</code> is <code class="inline">string</code> before declaring the schema complete (per the 2026-01-28 incident and the direct costs query bug).</p>
+
+<h3 id="API Endpoints">API Endpoints</h3>
+
+<table>
+<thead>
+<tr><th>Method</th><th>Route</th><th>Description</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<p>| GET/POST | <code class="inline">app/api/projects/[projectId]/submittals/route.ts</code> | <code class="inline">GET</code> lists submittals filtered by project, statuses, ball-in-court, exports; <code class="inline">POST</code> validates with Zod and inserts into <code class="inline">submittals</code>, distributions, workflow steps, attachments. Use <code class="inline">createServiceClient()</code> and admin keys for multi-table updates.</p>
+<p>| GET/PUT/DELETE | <code class="inline">app/api/projects/[projectId]/submittals/[submittalId]/route.ts</code> | <code class="inline">GET</code> returns detail (+ distributions, responses, documents, history). <code class="inline">PUT</code> updates submittal and optionally redistributes (triggers <code class="inline">submittal_distributions</code> + recipients). <code class="inline">DELETE</code> soft-deletes (sets <code class="inline">deleted_at</code>). Always <code class="inline">await params</code> (Next.js 15 requires it) and keep slug names explicit (<code class="inline">[projectId]</code>, <code class="inline">[submittalId]</code>) to avoid the dynamic-route conflict in <code class="inline">api-routing-errors.md</code>.</p>
+
+<p>Each handler must verify the authenticated user via <code class="inline">supabase.auth.getSession()</code> before querying. Wrap database calls in try/catch and surface 4xx/5xx statuses, matching patterns from <code class="inline">frontend/src/app/api/projects/[projectId]/route.ts</code>.</p>
+
+<h3 id="Components">Components</h3>
+
+<ul>
+<li><code class="inline">SubmittalsClient</code> (<code class="inline">frontend/src/app/(tables)/submittals/submittals-client.tsx</code>): keep the TableLayout + GenericDataTable wrapper, but shift from placeholder <code class="inline">SubmittalRow</code> → a typed <code class="inline">SubmittalSummaryRow</code> (12 columns + status metadata). Add filters for Approver, Ball In Court, Created By, Revision, Division, Location, Number, Private, Received From, Response, Responsible Contractor, and add toggles for Ball In Court, status cards (Draft/Open/Distributed/Closed), tabs for Items/Packages/Spec Sections/Ball In Court/Recycle Bin, and row navigation to the detail route.</li>
+<li><code class="inline">SubmittalFormDialog</code>: new client component (React Hook Form + <code class="inline">zodResolver</code>) with the General/Distribution/Content/Workflow sections from <code class="inline">FORMS.md</code>. Use searchable selects for contact/company fields (reusing Directory query patterns).</li>
+<li><code class="inline">SubmittalDetailClient</code>: new client component with tabs (General, Related Items, Emails, Change History). Each tab is composed of smaller pieces: <code class="inline">DistributionSummary</code>, <code class="inline">WorkflowResponses</code>, <code class="inline">DocumentList</code>, <code class="inline">EmailTimeline</code>, <code class="inline">HistoryFeed</code>, and <code class="inline">LinkedDrawings</code> (reuse existing UI cards/lists).</li>
+<li>Supporting (new) components: <code class="inline">SubmittalWorkflowResponses</code> (cards with avatar, company, response badge, comments, attachments), <code class="inline">SubmittalDistributionSummary</code> (from/to/message + attachments), <code class="inline">SubmittalHistoryList</code>, <code class="inline">SubmittalDocumentsGrid</code>, <code class="inline">SubmittalEmailHistory</code>, <code class="inline">SubmittalTabs</code> for navigation, <code class="inline">SubmittalActionMenu</code> (Edit, Delete, Redistribute, Duplicate, Create Revision). Mirror styling of existing domain components (e.g., <code class="inline">components/domain/rfIs</code> etc.).</li>
+<p></ul>
+
+<h3 id="Special Features/functionality">Special Features/functionality</h3>
+
+<ul>
+<li>Export menu (PDF/CSV/Excel) attached to the table toolbar, using GenericDataTable’s built-in exporters and the crawl commands (<code class="inline">export_pdf</code>, <code class="inline">export_csv</code>, <code class="inline">export_excel</code>).</li>
+<li>Status cards that count Draft, Open, Distributed, Closed, plus filters for statuses and ball-in-court.</li>
+<li>Ball In Court toggle and dedicated tab (filters rows by <code class="inline">ball_in_court</code> or <code class="inline">responsible_contractor</code>).</li>
+<li>Recycle Bin tab shows soft-deleted rows (<code class="inline">deleted_at</code> not null) with restore action.</li>
+<li>Distribution & workflow data surfaced in detail view alongside attachments (current and previous versions), history log, and email timeline (from <code class="inline">submittal_notifications</code>).</li>
+<li>Crowd-sourced filters (Approver, Received From, Responsible Contractor, Revision, Division, Location, Private, Response) from the filter panel spec.</li>
+<p></ul>
+
+<h3 id="Table Columns">Table Columns</h3>
+
+<table>
+<thead>
+<tr><th>Column</th><th>SQL field</th><th>Type</th><th>Notes</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Spec</th><th><code class="inline">specification_section</code></th><th>text</th><th>CSI spec reference sourced from the submittal or <code class="inline">specifications</code> view.</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>#</td><td><code class="inline">number</code></td><td>text</td><td>Combined with revision to render <code class="inline">Number & Rev.</code></td></tr>
+<tr><td>Rev.</td><td><code class="inline">revision</code></td><td>integer</td><td>Sync with spec changes; default 0 for new submissions.</td></tr>
+<tr><td>Title</td><td><code class="inline">title</code></td><td>text</td><td>Primary submittal title, displayed with tooltip when truncated.</td></tr>
+<tr><td>Type</td><td><code class="inline">submittal_type_name</code> / <code class="inline">submittal_type</code></td><td>text</td><td>Drawn from <code class="inline">submittal_types</code>.</td></tr>
+<tr><td>Status</td><td><code class="inline">status</code></td><td>text/badge</td><td>Uses badges mapped to Draft/Open/Distributed/Closed.</td></tr>
+<tr><td>Responsible C.</td><td><code class="inline">responsible_contractor_name</code></td><td>text</td><td>Derived from the contact/company join.</td></tr>
+<tr><td>Received From</td><td><code class="inline">received_from_name</code></td><td>text</td><td>Person+company join.</td></tr>
+<tr><td>Ball In Court</td><td><code class="inline">ball_in_court</code></td><td>text</td><td>Current responsible party (from workflow).</td></tr>
+<tr><td>Approvers</td><td><code class="inline">approver_names</code></td><td>text[]</td><td>Aggregated from workflows/responses.</td></tr>
+<tr><td>Response</td><td><code class="inline">latest_response_status</code></td><td>text</td><td>Latest workflow approver response.</td></tr>
+<tr><td>Sent Date</td><td><code class="inline">sent_date</code></td><td>date</td><td>Date of the most recent distribution.</td></tr>
+<p></tbody></p>
+<p></table>
+
+<h3 id="Frontend Form & Form Fields">Frontend Form & Form Fields</h3>
+
+<strong>General Information</strong> (required fields marked with <code class="inline"><em></code>): Title</em>, Specification Section, Number<em>, Revision</em>, Submittal Type, Submittal Package, Responsible Contractor, Received From, Submittal Manager<em>, Status, Final Due Date, Cost Code, Location, Linked Drawings.
+
+<strong>Distribution & Scheduling</strong>: Distribution List (contact[]), Ball In Court (display), Lead Time (days), Required On-Site Date.
+
+<strong>Content Section</strong>: Private checkbox, Description</em> (rich text), Attachments with drag-and-drop + “CURRENT” badging.
+
+<strong>Workflow Section</strong>: Workflow template selector + dynamic steps builder (Add Step button) that reflects <code class="inline">submittal_workflow_steps</code> / <code class="inline">submittal_responses</code>.
+
+<h2 id="Success Criteria">Success Criteria</h2>
+
+<ul>
+<li class="task"><input type="checkbox" disabled> Supabase migrations cover the Procore schema (submittals + packages/workflow/responses/distributions/distribution recipients/attachments/linked drawings) with indexes, RLS, and triggers shown in <code class="inline">spec/schema.sql</code>.</li>
+<li class="task"><input type="checkbox" disabled> <code class="inline">active_submittals</code> (Drizzle source: <code class="inline">frontend/drizzle/0000_familiar_clea.sql</code>) includes the new columns needed for the 12-table columns, status calculations, and distribution counts; Supabase query returns rows when tested with <code class="inline">node -e</code> per the direct costs incident.</li>
+<li class="task"><input type="checkbox" disabled> API routes at <code class="inline">/api/projects/[projectId]/submittals</code> and <code class="inline">/api/projects/[projectId]/submittals/[submittalId]</code> handle GET/POST/PUT/DELETE and await <code class="inline">params</code> to avoid App Router async errors.</li>
+<li class="task"><input type="checkbox" disabled> <code class="inline">SubmittalsClient</code> renders all 12 Procore columns, status cards, tabbed views (Items/Packages/Spec Sections/Ball In Court/Recycle Bin), exports, and filters for Approver/Ball In Court/Created By/Revision/Division/Location/Number/Private/Received From/Response/Responsible Contractor.</li>
+<li class="task"><input type="checkbox" disabled> Create/Edit dialog mirrors the FORMS.md sections (General, Distribution & Scheduling, Content, Workflow) with Zod schema validation, searchable dropdowns, rich text description, file uploads, and workflow step management; form buttons match the commands (Update, Update & Send Emails, Delete).</li>
+<li class="task"><input type="checkbox" disabled> Detail view includes Distribution Summary, Workflow Responses, Related Items, Emails, and Change History tabs, plus history entries from <code class="inline">submittal_history</code> and attachments from <code class="inline">submittal_documents</code>/<code class="inline">submittal_attachments</code>.</li>
+<li class="task"><input type="checkbox" disabled> Status cards, workflow response badges, distribution timeline, attachments, and email log are styled consistently with existing domain components.</li>
+<li class="task"><input type="checkbox" disabled> Type checks: <code class="inline">npx tsc --noEmit</code>; lint: <code class="inline">npm run lint</code>; build: <code class="inline">npm run build</code>; Supabase query verification: <code class="inline">node -e "const { createServiceClient } = require('@/lib/supabase/service'); createServiceClient().from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"</code></li>
+<p></ul>
+
+<h2 id="Known Pitfalls & Prevention">Known Pitfalls & Prevention</h2>
+
+<h3 id="From Incident Log & Pattern Files">From Incident Log & Pattern Files</h3>
+
+<h4 id="Direct Costs — Claimed “Fixed” Without Query Validation (INCIDENT-LOG.md 🟡)">Direct Costs — Claimed “Fixed” Without Query Validation (INCIDENT-LOG.md 🟡)</h4>
+<strong>Error:</strong> Supabase query returned empty data despite claiming success.
+<strong>Prevention:</strong> Run the actual query against Supabase before declaring completion (use the <code class="inline">node -e</code> pattern from <code class="inline">.claude/rules/SUPABASE-GATE.md</code>).
+<strong>Validation:</strong> <code class="inline">node -e "const supabase = require('@/lib/supabase/service').createServiceClient(); supabase.from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"</code>
+
+<h4 id="Scheduling — Project FK Was UUID Instead of INTEGER (database-issues.md 🔴)">Scheduling — Project FK Was UUID Instead of INTEGER (database-issues.md 🔴)</h4>
+<strong>Error:</strong> Queries silently returned no rows when <code class="inline">project_id</code> type mismatched the <code class="inline">projects</code> PK.
+<strong>Prevention:</strong> Always re-run <code class="inline">npm run db:types</code> and confirm <code class="inline">project_id</code> columns are <code class="inline">integer</code> whenever referencing <code class="inline">projects</code>; double-check <code class="inline">users.id</code> remains <code class="inline">uuid</code> for audit fields.
+<strong>Validation:</strong> <code class="inline">rg "project_id" supabase/migrations/...</code> + <code class="inline">npm run db:types</code> after migrations.
+
+<h4 id="API Routing Parameter Conflict (api-routing-errors.md 🔴)">API Routing Parameter Conflict (api-routing-errors.md 🔴)</h4>
+<strong>Error:</strong> Next.js rejects route when multiple dynamic segments at the same level use different names.
+<strong>Prevention:</strong> Use <code class="inline">[projectId]</code> everywhere at that route depth. Create separate <code class="inline">[submittalId]</code> child folder for detail API and adjust imports accordingly.
+<strong>Validation:</strong> <code class="inline">npm run check:routes</code> (if available) or rebuild dev server after adding routes.
+
+<h4 id="Async Params Must Be Awaited (api-routing-errors.md 🟡)">Async Params Must Be Awaited (api-routing-errors.md 🟡)</h4>
+<strong>Error:</strong> Accessing <code class="inline">params.projectId</code> directly causes runtime errors in Next.js 15.
+<strong>Prevention:</strong> Always <code class="inline">const { projectId } = await params;</code> inside API handlers and server components.
+<strong>Validation:</strong> TypeScript should compile without errors once <code class="inline">await</code> is added.
+
+<h4 id="Radix Select Empty String Crash (INCIDENT-LOG.md 🟡)">Radix Select Empty String Crash (INCIDENT-LOG.md 🟡)</h4>
+<strong>Error:</strong> <code class="inline"><Select.Item value="" /></code> throws runtime error.
+<strong>Prevention:</strong> Use sentinel values (e.g., <code class="inline">value="none"</code>) and sanitize before submitting, especially for searchable dropdowns (Responsible Contractor, Received From, Workflow Template).
+<strong>Validation:</strong> <code class="inline">npm run dev</code> and interactively open each select to confirm no console error.
+
+<h2 id="All Needed Context">All Needed Context</h2>
+
+<h3 id="Context Completeness Check">Context Completeness Check</h3>
+
+<p>_If someone knew nothing about this codebase, would they have enough to implement this?_ <strong>Yes — schema, API patterns, components, and form rules are documented below.</strong></p>
+
+<h3 id="Documentation & References">Documentation & References</h3>
+
+<details class="code-block"><summary>Code (yaml) - click to expand</summary><pre><code class="language-yaml"># MUST READ
+- file: frontend/src/app/(tables)/submittals/submittals-client.tsx
+  why: Existing list view; follow the TableLayout + GenericDataTable patterns.
+  pattern: Configure `columns`, `filters`, `rowClickPath`, and `enableViewSwitcher` via `GenericTableConfig`.
+  gotcha: Currently uses placeholder `SubmittalRow`; replace with typed data and switch from local filtering to server-driven filters when feasible.
+
+- file: frontend/src/app/(tables)/submittals/submittals-data.ts
+  why: Lists data, fetches from the `active_submittals` view via `createServiceClient()`.
+  pattern: Services should accept `projectId`, default to env var, and gracefully handle Supabase errors.
+  gotcha: The view currently excludes workflows/distributions, so extend or join new tables as needed.
+
+- file: frontend/drizzle/0000_familiar_clea.sql
+  why: Defines the `active_submittals` view consumed by the list.
+  pattern: Update the view definition to surface required columns (`specification_section`, `sent_date`, `responsible_contractor`, etc.).
+  gotcha: Re-running `frontend/drizzle/schema.ts` rebuilds the view; keep it in sync with Supabase migrations.
+
+- file: frontend/src/lib/supabase/service.ts
+  why: Pattern for creating a Supabase admin client with service role keys.
+  pattern: Always guard on missing env vars, disable auto-refresh, and reuse this client inside API routes.
+  gotcha: Never export it to client bundles.
+
+- file: frontend/src/app/api/projects/[projectId]/route.ts
+  why: Template for async App Router route handlers with parameter parsing and auth checks.
+  pattern: `const { projectId } = await params; const supabase = await createClient();` + error handling.
+  gotcha: Do not use generic `[id]` segments at conflicting path depth.
+
+- file: frontend/src/components/tables/generic-table-factory.tsx
+  why: Defines the table factory used by Submittals list.
+  pattern: Configure `columns`, `searchFields`, `filters`, `exportFilename`, and render badges via `renderConfig`.
+  gotcha: Keep the table config serializable; avoid inline functions outside renderConfig if they require closures.
+
+- url: https://nextjs.org/docs/app/api-reference/functions/route-handlers#dynamic-route-segments
+  why: Explains how to declare dynamic App Router route segments and why parameter names must match.
+  critical: Ensures `[projectId]` &amp; `[submittalId]` are consistent across client, server, and API folders.
+
+- url: https://nextjs.org/docs/app/building-your-application/directives
+  why: Reminds that `&#039;use client&#039;` must appear at the top of client components (SubmittalFormDialog, SubmittalDetailClient, etc.).
+  critical: Mixing server/client code causes hydration runtime failures.
+
+- url: https://react-hook-form.com/get-started#SchemaValidation
+  why: Shows how to integrate `zodResolver` with React Hook Form.
+  critical: Use this pattern for the Submittal form dialog to enforce the field types listed in `FORMS.md`.
+
+- url: https://zod.dev/?id=schemas-definitions
+  why: Use Zod to describe the submittal payload (title, specification_section, distribution list, attachments, workflow steps).
+  critical: Ensures schema-driven validation and compile-time inference for submission/update handlers.
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/COMMANDS.md
+  why: Shares Procore domain commands (create, edit, exports, filters).
+  pattern: Align action menu buttons, form footer buttons, and export menu with these command keys.
+  gotcha: Use this as the authoritative list when labeling UI controls/buttons.
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/MUTATIONS.md
+  why: Describes workflows, status state machine, distribution behavior, and response table inference.
+  pattern: Use the described mutations as test scenarios for the API (create/update, redistribute, delete).
+  gotcha: Workflows include response statuses (`Submitted`, `Pending`, `Approved`, `Approved as Noted`) that must map to badges.
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/schema.sql
+  why: Provides Procore-derived table definitions and RLS policies for workflow/distribution tables.
+  pattern: Mirror the PKs/FKs/indexes/constraints when writing Supabase migrations.
+  gotcha: Each new table expects `project_directory_memberships` filtering; replicate the provided policies.
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/FORMS.md
+  why: Enumerates every form field (general/distribution/content/workflow) required for Submittal create/edit.
+  pattern: Implement the same fields, validation requirements, and widget types (searchable select, rich text, attachments).
+  gotcha: `Number` + `Revision` act as a combined identity (store separately but render as a pair).
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/crawl-summary.json
+  why: Lists crawled Procore pages (list, detail, tabs) and captures the commands/forms tied to each view.
+  critical: Use this to prioritize which screenshot/DOM files to reference and to confirm tab names.</code></pre></details>
+
+<h2 id="Implementation Blueprint">Implementation Blueprint</h2>
+
+<details class="code-block"><summary>Code (typescript) - click to expand</summary><pre><code class="language-typescript">interface SubmittalSummaryRow {
+  id: string;
+  projectId: number;
+  submittalNumber: string;
+  revision: number;
+  title: string;
+  specificationSection: string | null;
+  submittalTypeName: string | null;
+  status: &quot;Draft&quot; | &quot;Open&quot; | &quot;Distributed&quot; | &quot;Closed&quot; | string;
+  responsibleContractor: string | null;
+  receivedFrom: string | null;
+  ballInCourt: string | null;
+  approvers: string[];
+  latestResponse: &quot;Submitted&quot; | &quot;Pending&quot; | &quot;Approved&quot; | &quot;Approved as Noted&quot; | string | null;
+  sentDate: string | null;
+  isPrivate: boolean;
+}</code></pre></details>
+
+<p>Reference this interface for the list table config, export helpers, and filtering payloads. Compose <code class="inline">SubmittalDetail</code> types that include <code class="inline">distributions</code>, <code class="inline">responses</code>, <code class="inline">history</code>, <code class="inline">documents</code>, and <code class="inline">linked_drawings</code>. Build Zod schemas (<code class="inline">createSubmittalSchema</code>, <code class="inline">updateSubmittalSchema</code>, <code class="inline">filtersSchema</code>) that mirror the <code class="inline">FORMS.md</code> definitions, use <code class="inline">zodResolver</code> in the dialog, and reuse the inferred TypeScript type for API payloads and responses.</p>
+
+<h2 id="Implementation Tasks (ordered by dependencies)">Implementation Tasks (ordered by dependencies)</h2>
+
+<p>1. <strong>Data Layer – Schema & Types</strong></p>
+<p>   - Write Supabase migrations for <code class="inline">submittal_packages</code>, <code class="inline">submittal_workflow_steps</code>, <code class="inline">submittal_responses</code>, <code class="inline">submittal_distributions</code>, <code class="inline">submittal_distribution_recipients</code>, <code class="inline">submittal_attachments</code>, <code class="inline">submittal_linked_drawings</code>, plus the revised <code class="inline">submittals</code> view/table changes (indexes, triggers, RLS). Follow the field descriptions in <code class="inline">spec/schema.sql</code>, ensure <code class="inline">project_id</code> is <code class="inline">INTEGER</code>, add the <code class="inline">update_updated_at_column</code> trigger, and apply RLS patterns from the schema file.</p>
+<p>   - Run <code class="inline">npm run db:types</code> / <code class="inline">npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public</code> to refresh <code class="inline">frontend/src/types/database.types.ts</code>, then define TypeScript interfaces + Zod schemas that mirror the new columns (use <code class="inline">PascalCase</code> for interfaces, <code class="inline">camelCase</code> for props, arrays typed as <code class="inline">string[]</code>).</p>
+
+<p>2. <strong>API Layer – Services & Routes</strong></p>
+<p>   - Implement a <code class="inline">submittalService</code> (e.g., <code class="inline">frontend/src/services/submittalService.ts</code>) with <code class="inline">list</code>, <code class="inline">getById</code>, <code class="inline">create</code>, <code class="inline">update</code>, <code class="inline">softDelete</code>, <code class="inline">redistribute</code> methods. Each method should use <code class="inline">createServiceClient()</code> and accept typed DTOs; test queries via <code class="inline">node -e</code> to satisfy <code class="inline">.claude/rules/SUPABASE-GATE.md</code>.</p>
+<p>   - Create <code class="inline">app/api/projects/[projectId]/submittals/route.ts</code> (GET + POST) and <code class="inline">app/api/projects/[projectId]/submittals/[submittalId]/route.ts</code> (GET + PUT + DELETE). Always <code class="inline">await params</code>, guard on authenticated users, and map errors to JSON responses.</p>
+
+<p>3. <strong>UI Layer – List + Forms + Detail</strong></p>
+<p>   - Update <code class="inline">SubmittalsClient</code> to accept typed <code class="inline">SubmittalSummaryRow[]</code>, configure all 12 Procore columns, search fields, filters from <code class="inline">COMMANDS.md</code>, export menu, status cards, tabs (Items/Packages/Spec Sections/Ball In Court/Recycle Bin), and the Ball In Court toggle; ensure row clicks navigate to <code class="inline">/[projectId]/submittals/[submittalId]</code>.</p>
+<p>   - Build <code class="inline">SubmittalFormDialog</code> (client component with <code class="inline">'use client'</code>): integrate React Hook Form + zodResolver, break the form into the four sections from <code class="inline">FORMS.md</code>, support file uploads for attachments, workflow step builder, and the required buttons (Update, Update & Send Emails, Delete). Use sentinel values instead of empty strings in <code class="inline"><Select.Item></code> to avoid the Radix bug.</p>
+<p>   - Build <code class="inline">SubmittalDetailClient</code> (client component) that renders tabs (General, Related Items, Emails, Change History) plus supporting components: <code class="inline">SubmittalDistributionSummary</code>, <code class="inline">SubmittalWorkflowResponses</code>, <code class="inline">SubmittalDocumentsGrid</code>, <code class="inline">SubmittalHistoryList</code>, and <code class="inline">SubmittalEmailHistory</code>. Format badges and cards to match the Procore screenshot.</p>
+
+<p>4. <strong>Integration Layer</strong></p>
+<p>   - Add the detail server page <code class="inline">/[projectId]/submittals/[submittalId]/page.tsx</code> that calls the service, passes typed data to the client, and wraps navigation/metadata. Ensure rerouting uses the same <code class="inline">[projectId]</code> parameter as the API to avoid Next.js slug conflicts.</p>
+<p>   - Wire the list view, detail view, form dialog, and API together via a shared hook (e.g., <code class="inline">useSubmittals</code> in <code class="inline">frontend/src/hooks/use-submittals.ts</code>). Include refetching after mutations and optimistic updates for the status cards, ball-in-court toggle, and Recycle Bin filters.</p>
+
+<p>5. <strong>Testing & Validation</strong></p>
+<p>   - Run <code class="inline">npx tsc --noEmit</code>, <code class="inline">npm run lint</code>, <code class="inline">npm run build</code>, and the <code class="inline">node -e</code> Supabase query (see Known Pitfalls section) after migrations and UI changes.</p>
+<p>   - Manually verify: the list page shows 12 columns and tabs, a row opens the detail page, the dialog covers required fields, attachments upload, workflow steps render, distribution/responses appear, and the Recycle Bin tab shows soft-deleted rows.</p>
+<pre><code class="language-text">## Integration Points</code></pre>yaml
+<p>DATABASE:</p>
+<p>  - migration: "Add submittal_* tables + re-run active_submittals view"</p>
+<p>  - client: "frontend/src/lib/supabase/service.ts"</p>
+<p>  - pattern: "use <code class="inline">createServiceClient</code> for batch inserts/updates and ensure RLS policies mirror project_directory_memberships."</p>
+
+<p>CONFIG:</p>
+<p>  - env: "NEXT_PUBLIC_SUBMITTALS_PROJECT_ID / SUBMITTALS_PROJECT_ID"</p>
+<p>  - pattern: "List page falls back to env-defined project if <code class="inline">params</code> are missing."</p>
+
+<p>ROUTES:</p>
+<p>  - file: "frontend/src/app/(tables)/submittals/page.tsx"</p>
+<p>  - api: "frontend/src/app/api/projects/[projectId]/submittals/route.ts" and "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts"</p>
+<p>  - pattern: "Use <code class="inline">[projectId]</code> at this level and <code class="inline">[submittalId]</code> for nested detail routes. Always <code class="inline">await params</code>."</p>
+<p>``<code class="inline"></p>
+
+<h2 id="Validation Loop">Validation Loop</h2>
+
+<ul>
+<li><strong>Type & lint:</strong> </code>npx tsc --noEmit<code class="inline">, </code>npm run lint<code class="inline"></li>
+<li><strong>Supabase schema:</strong> </code>npm run db:types<code class="inline"> (reauthor after migrations) + </code>node -e "const { createServiceClient } = require('@/lib/supabase/service'); createServiceClient().from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"<code class="inline"></li>
+<li><strong>Routes:</strong> </code>rm -rf .next && npm run dev<code class="inline"> after adding new pages or API routes to prevent stale cache.</li>
+<li><strong>Build:</strong> </code>npm run build<code class="inline"></li>
+<li><strong>Manual:</strong> Open </code>/[projectId]/submittals<code class="inline">, toggle tabs/filters, open detail, run create/edit flow, and run req/rescribed exports.</li>
+<p></ul>
+
+<h2 id="Procore Crawl Data Reference">Procore Crawl Data Reference</h2>
+
+<strong>Base Path:</strong> </code>scripts/playwright-crawl/procore-crawls/submittals<code class="inline">
+
+<h3 id="Sitemap">Sitemap</h3>
+
+<table>
+<thead>
+<tr><th>Page</th><th>URL</th><th>Screenshot</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Submittals List</th><th></code>https://us02.procore.com/.../tools/submittals?view=list<code class="inline"></th><th></code>screenshots/submittals-list.png<code class="inline"></th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Submittal Detail</td><td></code>https://us02.procore.com/.../tools/submittals/562949956843326<code class="inline"></td><td></code>screenshots/submittals-detail.png<code class="inline"></td></tr>
+<tr><td>Ball In Court Tab</td><td>view=ball_in_court</td><td></code>screenshots/submittals-tab-ball-in-court.png<code class="inline"></td></tr>
+<tr><td>Packages Tab</td><td>view=packages</td><td></code>screenshots/submittals-tab-packages.png<code class="inline"></td></tr>
+<tr><td>Spec Sections Tab</td><td>view=spec_sections</td><td></code>screenshots/submittals-tab-spec-sections.png<code class="inline"></td></tr>
+<tr><td>Recycle Bin Tab</td><td>view=recycle_bin</td><td></code>screenshots/submittals-tab-recycle-bin.png<code class="inline"></td></tr>
+<p></tbody></p>
+<p></table>
+
+<h3 id="Crawl Data Files">Crawl Data Files</h3>
+
+<table>
+<thead>
+<tr><th>Category</th><th>File</th><th>Path</th><th>Description</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Summary</th><th>Crawl Summary</th><th></code>crawl-summary.json<code class="inline"></th><th>Captures list/detail URLs, timestamps, DOM flags, and forms/tables per page.</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Reports</td><td>Sitemap Table</td><td></code>reports/sitemap-table.md<code class="inline"></td><td>Lists every page encountered during the crawl.</td></tr>
+<tr><td>Reports</td><td>Detailed Report</td><td></code>reports/detailed-report.json<code class="inline"></td><td>JSON metrics about actions and elements on each page.</td></tr>
+<tr><td>Spec</td><td>Commands</td><td></code>spec/COMMANDS.md<code class="inline"></td><td>Canonical command keys (create, edit, exports, filters) backed by Procore UI triggers.</td></tr>
+<tr><td>Spec</td><td>Mutations</td><td></code>spec/MUTATIONS.md<code class="inline"></td><td>Create/update/delete behavior, state machine, workflow responses, distribution payloads.</td></tr>
+<tr><td>Spec</td><td>Schema</td><td></code>spec/schema.sql<code class="inline"></td><td>Proposed tables, indexes, RLS policies, and constraints for submittals data.</td></tr>
+<tr><td>Spec</td><td>Forms</td><td></code>spec/FORMS.md<code class="inline"></td><td>Field list for create/edit form (general/distribution/content/workflow) + filter panel definitions.</td></tr>
+<tr><td>Screenshots</td><td>List View</td><td></code>screenshots/submittals-list.png<code class="inline"></td><td>Captures table layout, status cards, toolbars, and column structure.</td></tr>
+<tr><td>Screenshots</td><td>Detail View</td><td></code>screenshots/submittals-detail.png<code class="inline"></td><td>Shows tabs (General/Related/Emails/Change History), toolbar, workflow panel.</td></tr>
+<tr><td>Screenshots</td><td>Dialogs & Tabs</td><td></code>screenshots/submittals-detail-open_edit_submittal_form.png<code class="inline">, </code>screenshots/submittals-list-open_filter_panel.png<code class="inline">, </code>screenshots/submittals-list-open_export_menu.png<code class="inline"></td><td>Visual references for form sections, filter panel, export menu.</td></tr>
+<p></tbody></p>
+<p></table>
+
+<h3 id="UI Components Detected">UI Components Detected</h3>
+
+<table>
+<thead>
+<tr><th>Label</th><th>Command Key</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Create Submittal</th><th></code>create_submittal<code class="inline"></th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Create Submittal Package</td><td></code>create_submittal_package<code class="inline"></td></tr>
+<tr><td>Edit (toolbar)</td><td></code>edit_submittal<code class="inline"></td></tr>
+<tr><td>Update & Send Emails</td><td></code>update_and_send_emails<code class="inline"></td></tr>
+<tr><td>Delete</td><td></code>delete_submittal<code class="inline"></td></tr>
+<tr><td>Workflow Add Step</td><td></code>add_workflow_step<code class="inline"></td></tr>
+<tr><td>Redistribute</td><td></code>redistribute<code class="inline"></td></tr>
+<p></tbody></p>
+<p></table>
+<p>| Export PDF | </code>export_pdf<code class="inline"> | </p>
+<table>
+<thead>
+<tr><th>Filters (Approver, Response, Division, etc.)</th><th></code>add_filter`</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+
+<h2 id="Confidence Score">Confidence Score</h2>
+
+<strong>Score:</strong> 8/10 — Schema, API, and UI patterns are documented; data tables exist but still need migrations and testing before marking the feature ready.
+
+    </main>
+  </div>
+</body>
+</html>

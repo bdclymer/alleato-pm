@@ -6,13 +6,33 @@
 
 ---
 
+## Folder Ownership (Decision Tree)
+
+Before creating any file, identify which bucket it belongs to:
+
+| Folder | Purpose | Put Here |
+|--------|---------|----------|
+| `.claude/` | Agent behavior | Rules, commands, agent definitions, investigations |
+| `docs/` | Project reference knowledge | Architecture docs, data models, dev guide, AI context |
+| `_bmad-output/` | BMAD workflow outputs | PRPs, feature specs, stories, sprint plans |
+| `docs-ai/` | **DOCS SITE ONLY** ⚠️ | Published user-facing documentation |
+| `scripts/` | Automation | Build scripts, crawlers, seeders |
+| `frontend/src/` | App code | React components, hooks, services, API routes |
+| `supabase/migrations/` | DB schema | SQL migration files |
+
+> **`docs-ai/` is a SYMLINK to a separate git repository (the documentation website).** Do NOT put internal implementation specs, PRPs, or AI context files there. Changes require a separate commit in that repo.
+
+---
+
 ## Where Files Must Go
 
 | File Type | Required Location | Never Put In |
 |-----------|------------------|--------------|
 | Scripts (.js, .ts, .py, .sh) | `scripts/` (with appropriate subdirs) | Project root |
-| Documentation (.md, .mdx) | `docs-ai/` or `DOCS_NEED_TO_FILE/` | Project root |
-| PRPs | `docs-ai/contents/docs/PRPs/<domain>/` | Root, `.claude/`, `PRPs/` (legacy) |
+| Project reference docs (.md) | `docs/` | Project root, `docs-ai/` |
+| PRPs / feature specs | `_bmad-output/planning-artifacts/<feature>/` | `docs-ai/`, project root |
+| Published user docs | `docs-ai/contents/docs/` | `docs/`, `_bmad-output/` |
+| Unfiled / needs review | `DOCS_NEED_TO_FILE/` | Project root |
 | Claude rules | `.claude/rules/` | Root, `docs/` |
 | Claude commands | `.claude/commands/` | Root |
 | SQL migrations | `supabase/migrations/` | Root, `scripts/` |
@@ -41,13 +61,15 @@ These files ARE allowed at project root:
 Before creating ANY new file, answer these questions:
 
 1. **Is this a script?** → `scripts/` (use or create an appropriate subdirectory)
-2. **Is this documentation?** → `docs-ai/contents/docs/` or `DOCS_NEED_TO_FILE/`
-3. **Is this a Claude rule?** → `.claude/rules/`
-4. **Is this a Claude command?** → `.claude/commands/`
-5. **Is this a migration?** → `supabase/migrations/`
-6. **Is this frontend code?** → `frontend/src/`
-7. **Is this a test?** → `frontend/tests/`
-8. **Is this a PRP?** → `docs-ai/contents/docs/PRPs/<domain>/`
+2. **Is this a PRP or feature spec?** → `_bmad-output/planning-artifacts/<feature>/`
+3. **Is this project reference knowledge (architecture, data model, guide)?** → `docs/`
+4. **Is this published user-facing documentation?** → `docs-ai/contents/docs/` *(separate git repo — be careful)*
+5. **Is this a Claude rule?** → `.claude/rules/`
+6. **Is this a Claude command?** → `.claude/commands/`
+7. **Is this a migration?** → `supabase/migrations/`
+8. **Is this frontend code?** → `frontend/src/`
+9. **Is this a test?** → `frontend/tests/`
+10. **Unsure?** → `DOCS_NEED_TO_FILE/` and tell the user
 
 If none of the above match, **ask the user** where it should go.
 
@@ -72,11 +94,12 @@ The `scripts/` directory has organized subdirectories:
 
 | Doc Type | Location |
 |----------|----------|
-| Technical docs (patterns, guides) | `docs-ai/contents/docs/` |
+| Project reference knowledge | `docs/` (architecture, data models, AI context) |
+| Feature PRPs / implementation specs | `_bmad-output/planning-artifacts/<feature>/` |
+| BMAD workflow outputs | `_bmad-output/` |
+| Published user-facing docs | `docs-ai/contents/docs/` *(separate repo)* |
 | Unfiled / needs review | `DOCS_NEED_TO_FILE/` |
-| API documentation | `docs-ai/contents/docs/api/` |
-| Architecture docs | `docs-ai/contents/docs/architecture/` |
-| Pattern documentation | `docs-ai/contents/docs/patterns/` |
+| Agent behavior patterns | `docs-ai/contents/docs/patterns/` *(incident logs, etc.)* |
 
 ---
 

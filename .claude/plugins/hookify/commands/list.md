@@ -34,7 +34,7 @@ Show all configured hookify rules in the project.
 | check-tests | ❌ No | stop | .* | hookify.require-tests.local.md |
 
 **Total**: 3 rules (2 enabled, 1 disabled)
-```text
+```
 1. For each rule, show a brief preview:
 
 ```markdown
@@ -59,7 +59,7 @@ To delete a rule: Remove the .local.md file
 To create a rule: Use `/hookify` command
 
 **Remember**: Changes take effect immediately - no restart needed
-```markdown
+```
 ## If No Rules Found
 
 If no hookify rules exist:

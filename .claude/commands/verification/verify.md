@@ -14,7 +14,7 @@ Runs basic checks to ensure code quality:
 
 ```bash
 cd frontend && npx tsx scripts/verify-task.ts
-```markdown
+```
 ## Visual Verification (MANDATORY for UI Changes)
 For ANY UI changes, you MUST run visual verification:
 
@@ -27,7 +27,7 @@ npx tsx scripts/verify-visual.ts
 
 # Or specify pages:
 npx tsx scripts/verify-visual.ts /dashboard:dashboard /executive:executive
-```diff
+```
 This will:
 
 - Capture screenshots at 3 viewports

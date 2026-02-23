@@ -35,7 +35,7 @@ Create `.mcp.json` at plugin root:
     }
   }
 }
-```bash
+```
 **Benefits:**
 - Clear separation of concerns
 - Easier to maintain
@@ -56,7 +56,7 @@ Add `mcpServers` field to plugin.json:
     }
   }
 }
-```diff
+```
 **Benefits:**
 
 - Single configuration file
@@ -80,7 +80,7 @@ Execute local MCP servers as child processes. Best for local tools and custom se
     }
   }
 }
-```diff
+```
 **Use cases:**
 - File system access
 - Local database connections
@@ -136,7 +136,7 @@ Connect to RESTful MCP servers with token authentication.
     }
   }
 }
-```bash
+```
 **Use cases:**
 - REST API-based MCP servers
 - Token-based authentication
@@ -158,7 +158,7 @@ Connect to WebSocket MCP servers for real-time bidirectional communication.
     }
   }
 }
-```bash
+```
 **Use cases:**
 
 - Real-time data streaming
@@ -176,7 +176,7 @@ All MCP configurations support environment variable substitution:
 {
   "command": "${CLAUDE_PLUGIN_ROOT}/servers/my-server"
 }
-```bash
+```
 **User environment variables** - From user's shell:
 ```json
 {
@@ -213,13 +213,13 @@ allowed-tools: [
   "mcp__plugin_asana_asana__asana_search_tasks"
 ]
 ---
-```diff
+```
 **Wildcard (use sparingly):**
 ```markdown
 ---
 allowed-tools: ["mcp__plugin_asana_asana__*"]
 ---
-```bash
+```
 **Best practice:** Pre-allow specific tools, not wildcards, for security.
 
 ## Lifecycle Management
@@ -252,7 +252,7 @@ OAuth handled automatically by Claude Code:
   "type": "sse",
   "url": "https://mcp.example.com/sse"
 }
-```bash
+```
 User authenticates in browser on first use. No additional configuration needed.
 
 ### Token-Based (Headers)
@@ -285,7 +285,7 @@ Pass configuration to MCP server:
     "LOG_LEVEL": "info"
   }
 }
-```markdown
+```
 ## Integration Patterns
 
 ### Pattern 1: Simple Tool Wrapper
@@ -302,7 +302,7 @@ Steps:
 1. Gather item details from user
 2. Use mcp__plugin_name_server__create_item
 3. Confirm creation
-```text
+```
 **Use for:** Adding validation or preprocessing before MCP calls.
 
 ### Pattern 2: Autonomous Agent
@@ -316,7 +316,7 @@ Analysis Process:
 1. Query data via mcp__plugin_db_server__query
 2. Process and analyze results
 3. Generate insights report
-```text
+```
 **Use for:** Multi-step MCP workflows without user interaction.
 
 ### Pattern 3: Multi-Server Plugin
@@ -347,7 +347,7 @@ Always use secure connections:
 ```json
 ✅ "url": "https://mcp.example.com/sse"
 ❌ "url": "http://mcp.example.com/sse"
-```markdown
+```
 ### Token Management
 
 **DO:**
@@ -371,7 +371,7 @@ Pre-allow only necessary MCP tools:
 ]
 
 ❌ allowed-tools: ["mcp__plugin_api_server__*"]
-```bash
+```
 ## Error Handling
 
 ### Connection Failures

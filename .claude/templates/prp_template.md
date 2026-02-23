@@ -57,17 +57,17 @@ _Before writing this PRP, validate: "If someone knew nothing about this codebase
 - docfile: [PRPs/docs/typescript_specific.md]
   why: [Custom documentation for complex TypeScript/Next.js patterns]
   section: [Specific section if document is large]
-```markdown
+```
 ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
 
 ```bash
 
-```markdown
+```
 ### Desired Codebase tree with files to be added and responsibility of file
 
 ```bash
 
-```markdown
+```
 ### Known Gotchas of our codebase & Library Quirks
 
 ```typescript
@@ -92,7 +92,7 @@ Examples:
  - API response types
  - Component prop types
 
-```typescript
+```
 ### Implementation Tasks (ordered by dependencies)
 
 ```yaml
@@ -130,13 +130,9 @@ Task 5: CREATE hooks/use{DomainAction}.ts
   - DEPENDENCIES: Import types from Task 1, API endpoints from Task 3
   - PLACEMENT: Custom hooks in hooks/
 
-Task 6: CREATE __tests__/{component}.test.tsx
-  - IMPLEMENT: Jest/Testing Library tests for components and hooks
-  - FOLLOW pattern: __tests__/existing.test.tsx (test structure, mocking patterns)
-  - NAMING: describe blocks, test naming conventions, TypeScript test typing
-  - COVERAGE: All components and hooks with positive and negative test cases
-  - PLACEMENT: Tests alongside the code they test
-```tsx
+# NOTE: Test authoring is owned by BMAD QA workflows (Quinn/Murat), not PRP.
+# PRP provides build verification commands only (see Validation Loop below).
+```
 ### Implementation Patterns & Key Details
 
 ```typescript
@@ -174,7 +170,7 @@ export function use{Domain}Action(): {Domain}ActionResult {
   // PATTERN: Hook structure with TypeScript generics (see hooks/useExisting.ts)
   // GOTCHA: [React hook rules and TypeScript typing requirements]
 }
-```markdown
+```
 ### Integration Points
 
 ```yaml
@@ -209,23 +205,17 @@ npm run lint:fix               # Auto-fix linting issues
 npm run type-check             # Full TypeScript validation
 
 # Expected: Zero errors. If errors exist, READ output and fix before proceeding.
-```markdown
-### Level 2: Unit Tests (Component Validation)
+```
+### Level 2: Existing Test Suite (Regression Check)
 
 ```bash
-# Test each component/hook as it's created
-npm test -- __tests__/{domain}.test.tsx
-npm test -- __tests__/use{Hook}.test.ts
+# Run existing tests to ensure no regressions from implementation changes
+npm test
+npm run test:unit
 
-# Full test suite for affected areas
-npm test -- components/{domain}/
-npm test -- hooks/
-
-# Coverage validation (if available)
-npm test -- --coverage --watchAll=false
-
-# Expected: All tests pass. If failing, debug root cause and fix implementation.
-```bash
+# Expected: All existing tests still pass. If failing, fix the regression before proceeding.
+# NOTE: Writing NEW tests is owned by BMAD QA workflows (Quinn/Murat), not PRP.
+```
 ### Level 3: Integration Testing (System Validation)
 
 ```bash
@@ -251,12 +241,10 @@ npm run build
 curl http://localhost:3000/{page} | grep -q "expected-content"
 
 # Expected: All integrations working, proper responses, no hydration errors
-```bash
-### Level 4: Creative & Domain-Specific Validation
+```
+### Level 4: Production Readiness Validation
 
 ```bash
-# TypeScript/Next.js Specific Validation:
-
 # Production build performance
 npm run build && npm run analyze  # Bundle analyzer if available
 
@@ -266,34 +254,22 @@ npx tsc --noEmit --strict        # Strict TypeScript checking
 # Next.js specific checks
 npm run lint:next                # Next.js linting rules if available
 
-# MCP Server Validation Examples:
-# Playwright MCP (for E2E testing)
-playwright-mcp --test-user-flows --browser chromium
-
-# Performance MCP (for Lighthouse audits)
-lighthouse-mcp --url http://localhost:3000 --audit performance
-
-# Accessibility MCP (for a11y testing)
-axe-mcp --scan http://localhost:3000/{pages}
-
-# Custom TypeScript/React Validation
-# React Testing Library integration tests
-# Storybook visual regression tests (if available)
-# TypeScript strict mode compliance
-
-# Expected: All creative validations pass, performance/accessibility standards met
+# Expected: Production build succeeds, no type errors, no lint warnings.
+# NOTE: E2E testing, integration testing, and test architecture are owned by
+# BMAD QA workflows (Quinn for basic coverage, Murat/TEA for advanced strategy).
 ```
 
 ## Final Validation Checklist
 
-### Technical Validation
+### Technical Validation (Build Verification)
 
 - [ ] All 4 validation levels completed successfully
-- [ ] All tests pass: `npm test`
+- [ ] Existing tests still pass (no regressions): `npm test`
 - [ ] No linting errors: `npm run lint`
 - [ ] No type errors: `npx tsc --noEmit`
 - [ ] No formatting issues: `npm run format --check`
 - [ ] Production build succeeds: `npm run build`
+- [ ] NOTE: New test authoring is handled by BMAD QA workflows, not PRP
 
 ### Feature Validation
 

@@ -424,6 +424,12 @@ export function TableToolbar({
   enableBulkDelete = true,
   className,
 }: TableToolbarProps): ReactElement {
+  const hasRightActions =
+    (enableFilters && filters.length > 0) ||
+    (enableColumnToggle && columns.length > 0) ||
+    (enableExport && Boolean(onExport)) ||
+    (enableBulkDelete && Boolean(onBulkDelete));
+
   return (
     <div className={cn("flex items-center justify-between gap-3 py-2", className)}>
       {/* Left side: Search + Views */}
@@ -510,11 +516,10 @@ export function TableToolbar({
           </TooltipProvider>
         )}
 
-        {/* Divider */}
-        <div className="h-4 w-px bg-border mx-1" />
+        {hasRightActions && <div className="h-4 w-px bg-border mx-1" />}
 
         {/* Item count */}
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <span className="inline-flex h-8 items-center rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground whitespace-nowrap">
           {filteredItems === totalItems
             ? `${totalItems} items`
             : `${filteredItems} of ${totalItems}`}

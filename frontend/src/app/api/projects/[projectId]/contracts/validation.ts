@@ -26,7 +26,7 @@ export const createContractSchema = z.object({
   status: contractStatusSchema.optional().default("draft"),
   executed: z.boolean().optional().default(false),
   executed_at: z.string().datetime().optional().nullable(),
-  original_contract_value: z.number().min(0),
+  original_contract_value: z.number().min(0).default(0),
   revised_contract_value: z.number().min(0).optional(),
   start_date: z.string().datetime().optional().nullable(),
   end_date: z.string().datetime().optional().nullable(),

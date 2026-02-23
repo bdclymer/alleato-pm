@@ -58,7 +58,7 @@ const result = await streamText({
     // Step-by-step agent control
   },
 });
-```typescript
+```
 ### AI SDK UI Excellence
 ```typescript
 // Expert in framework-agnostic hooks
@@ -78,7 +78,7 @@ const { messages, append, setMessages } = useChat<CustomUIMessage>({
     // Persist with type safety
   },
 });
-```javascript
+```
 ### Provider Integration Specialist
 
 - **OpenAI**: GPT-4o, o1-preview, DALL-E, Whisper
@@ -115,7 +115,7 @@ const myAgent = agent({
     // Custom tool selection logic
   },
 });
-```javascript
+```
 ### 2. Generative UI with RSC
 ```typescript
 // React Server Components for dynamic UI generation
@@ -168,7 +168,7 @@ const augmentedResult = await generateText({
     },
   ],
 });
-```javascript
+```
 ### 4. Multi-Modal Streaming
 ```typescript
 // Handle images, audio, and video
@@ -185,7 +185,7 @@ const result = await streamText({
     },
   ],
 });
-```javascript
+```
 ### 5. Speech & Transcription
 
 ```typescript
@@ -204,7 +204,7 @@ const transcription = await transcribe({
   model: openai('whisper-1'),
   audioData,
 });
-```javascript
+```
 ## Production Best Practices
 
 ### Error Handling & Resilience
@@ -251,7 +251,7 @@ const result = await streamText({
 // Implement caching strategies
 const cache = new Map();
 const cachedResult = cache.get(cacheKey) || await generateText({...});
-```typescript
+```
 ### Type Safety & Validation
 ```typescript
 // Full type safety with Zod schemas
@@ -282,7 +282,7 @@ const tools = {
     },
   }),
 };
-```javascript
+```
 ## Migration & Upgrade Guidance
 
 ### AI SDK 4 → 5 Migration
@@ -300,7 +300,7 @@ import { streamText } from 'ai';
 
 // Convert legacy code patterns
 const migrated = convertLegacyPatterns(oldCode);
-```javascript
+```
 ## Framework-Specific Implementations
 
 ### Next.js App Router
@@ -338,7 +338,7 @@ export default defineEventHandler(async (event) => {
   
   return result.toDataStreamResponse();
 });
-```javascript
+```
 ### SvelteKit
 ```typescript
 // +server.ts
@@ -354,7 +354,7 @@ export const POST: RequestHandler = async ({ request }) => {
   
   return result.toDataStreamResponse();
 };
-```javascript
+```
 ## Debugging & Troubleshooting
 
 ### Common Issues & Solutions
@@ -370,7 +370,7 @@ return new Response(result.toDataStream(), {
     'Connection': 'keep-alive',
   },
 });
-```javascript
+```
 2. **Tool Calls Not Executing**
 ```typescript
 // Enable tool streaming
@@ -395,7 +395,7 @@ interface CustomUIMessage extends UIMessage {
 const { messages } = useChat<CustomUIMessage>({
   // Configuration
 });
-```javascript
+```
 ## Performance Metrics & Monitoring
 
 ```typescript
@@ -425,7 +425,7 @@ const result = await streamText({
     });
   },
 });
-```javascript
+```
 ## Security Best Practices
 
 ```typescript
@@ -454,7 +454,7 @@ const result = await streamText({
     },
   },
 });
-```markdown
+```
 ## Advanced Use Cases
 
 ### 1. Multi-Agent Orchestration
@@ -479,7 +479,7 @@ const collaborativeSession = createCollaborativeSession({
   participants: users,
   syncStrategy: 'operational-transform',
 });
-```markdown
+```
 ### 3. Adaptive Learning Systems
 ```typescript
 // Implement feedback loops
@@ -491,7 +491,7 @@ const adaptiveModel = createAdaptiveModel({
     threshold: 0.8,
   },
 });
-```javascript
+```
 ## Testing Strategies
 
 ```typescript
@@ -516,7 +516,7 @@ describe('AI SDK Implementation', () => {
     expect(result).toMatchSnapshot();
   });
 });
-```javascript
+```
 ## Deployment Considerations
 
 ### Edge Runtime Optimization
@@ -561,7 +561,7 @@ const streamProcessor = createStreamProcessor({
   flushInterval: 100,
   compression: true,
 });
-```javascript
+```
 ## Integration Patterns
 
 ### Database Persistence
@@ -578,7 +578,7 @@ const persistedChat = await prisma.chat.create({
     },
   },
 });
-```markdown
+```
 ### Queue Processing
 
 ```typescript

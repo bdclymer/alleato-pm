@@ -21,7 +21,7 @@
 ```bash
 # Just check documentation status
 /audit-docs ./PLANS/directory/
-```markdown
+```
 ### Fix Critical Issues Only
 ```bash
 # Audit first
@@ -30,13 +30,13 @@
 # Review the audit report
 # Then fix only critical issues
 /fix-docs audit.md --severity critical
-```markdown
+```
 ### Interactive Fix Session
 
 ```bash
 # Get interactive prompts for each fix
 /audit-docs ./PLANS/ | /fix-docs --interactive
-```markdown
+```
 ## Why Two Commands?
 
 Think of it like going to the doctor:
@@ -72,14 +72,14 @@ Think of it like going to the doctor:
 
 # Fix any issues
 /fix-docs --interactive
-```markdown
+```
 ### Sprint Planning
 ```bash
 # Generate documentation debt report
 /audit-docs ./entire-project/ --format detailed > tech-debt.md
 
 # Plan fixes for sprint
-```markdown
+```
 ### Release Preparation
 
 ```bash
@@ -91,7 +91,7 @@ Think of it like going to the doctor:
 
 # Verify fixes
 /audit-docs ./docs --severity critical
-```markdown
+```
 ## Decision Tree
 
 ```
@@ -110,7 +110,7 @@ Issues found?
             ├─ Yes → /fix-docs --interactive
             └─ No → Schedule for later
 
-```bash
+```
 ## Safety Levels
 
 | Command | Options | Risk Level | Use Case |
@@ -137,7 +137,7 @@ else
   echo "Run: /fix-docs --severity critical"
   exit 1
 fi
-```bash
+```
 ### CI/CD Pipeline
 
 ```yaml
@@ -151,7 +151,7 @@ fi
       echo "Documentation issues found"
       exit 1
     fi
-```bash
+```
 ### VS Code Task
 ```json
 {
@@ -197,7 +197,7 @@ done
 
 # Generate trend report
 /audit-docs --trend week*.json > trend-report.md
-```markdown
+```
 ## Quick Reference Card
 
 ```bash

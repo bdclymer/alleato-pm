@@ -12,7 +12,7 @@ The Next.js dev server failed to start with error:
 
 ```text
 [Error: You cannot use different slug names for the same dynamic path ('id' !== 'recordId').]
-```diff
+```
 **This was the THIRD time this error occurred.**
 
 ---
@@ -31,7 +31,7 @@ frontend/src/app/[projectId]/                ← Correct
 ```text
 frontend/src/app/admin/tables/[table]/[id]/       ← Obsolete
 frontend/src/app/admin/tables/[table]/[recordId]/ ← Correct
-```typescript
+```
 ### Conflict 3: Import Path Reference
 
 ```typescript
@@ -39,7 +39,7 @@ frontend/src/app/admin/tables/[table]/[recordId]/ ← Correct
 import { createChangeOrderSchema } from "@/app/api/projects/[id]/contracts/[contractId]/change-orders/validation";
                                                                    ^^^^
                                                                    Wrong - should be [projectId]
-```diff
+```
 ---
 
 ## What Was Fixed
@@ -58,17 +58,17 @@ import { createChangeOrderSchema } from "@/app/api/projects/[id]/contracts/[cont
 
 // After
 import { createChangeOrderSchema } from "@/app/api/projects/[projectId]/contracts/[contractId]/change-orders/validation";
-```markdown
+```
 ### 3. Deleted Obsolete Route
 ```bash
 rm -rf frontend/src/app/admin/tables/[table]/[id]/
-```yaml
+```
 ### 4. Verified Fix
 
 ```bash
 npm run dev --prefix frontend
 # ✓ Ready in 1611ms (no errors)
-```yaml
+```
 ---
 
 ## Prevention Measures Added

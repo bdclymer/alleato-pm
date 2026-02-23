@@ -96,7 +96,7 @@ enterprise-devops/
     └── templates/
         ├── deployment.yaml
         └── service.yaml
-```bash
+```
 ## File Contents
 
 ### .claude-plugin/plugin.json
@@ -139,7 +139,7 @@ enterprise-devops/
   "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json"
 }
-```bash
+```
 ### .mcp.json
 
 ```json
@@ -218,7 +218,7 @@ After successful build:
 - Offer to deploy to staging
 - Suggest performance optimizations
 - Generate deployment checklist
-```yaml
+```
 ### agents/orchestration/deployment-orchestrator.md
 
 ```markdown
@@ -302,7 +302,7 @@ await SlackClient.notify({
   metadata: deploymentPlan
 })
 \`\`\`
-```yaml
+```
 ### skills/kubernetes-ops/SKILL.md
 
 ```markdown
@@ -620,7 +620,7 @@ For manifest validation:
 \`\`\`bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/kubernetes-ops/scripts/validate-manifest.sh deployment.yaml
 \`\`\`
-```bash
+```
 ### hooks/hooks.json
 
 ```json

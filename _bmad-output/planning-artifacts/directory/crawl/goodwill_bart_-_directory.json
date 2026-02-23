@@ -1,0 +1,2028 @@
+{
+  "fileName": "goodwill_bart_-_directory",
+  "title": "Directory • Goodwill Bart",
+  "forms": [
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10753964/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12640369/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/11855884/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8095660/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/11722976/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12808642/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13425864/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12016026/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12675505/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8709927/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13276000/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13832742/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13021363/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13408722/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/4072878/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/3437348/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/9485978/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/4744386/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/7414623/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/3920653/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/11080811/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/4342529/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/7092788/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1327958/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8257144/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/5964175/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10856155/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10028723/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1350854/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/939221/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10292581/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/4071554/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/5318173/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/3475860/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1815782/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/11184768/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12034909/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/11564530/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12968180/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1553513/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/3809550/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/2130899/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12044757/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/7509114/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8060724/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/5446832/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1305843/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8619463/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/246470/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1244386/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/788712/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/4314498/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10886276/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1814843/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/2167727/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/10776547/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/789954/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/1185706/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/8533660/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/3001478/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/6495078/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/12721877/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/13473393/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    },
+    {
+      "action": "https://us02.procore.com/562949954728542/project/directory/users/5638375/invite",
+      "method": "post",
+      "fields": [
+        {
+          "type": "hidden",
+          "name": "authenticity_token",
+          "id": "",
+          "placeholder": "",
+          "required": false,
+          "value": "qlO-3u1mtMbX5K4YJy1nLgYo5HzBE7PQ64Ah7DC0TCmhZ_B2QIEnyNEcJ6Qleys2q4hRUHp2jEndVAsYNUZqjg",
+          "classes": ""
+        }
+      ]
+    }
+  ],
+  "tables": [],
+  "navigation": {
+    "mainNav": [],
+    "breadcrumbs": []
+  },
+  "actions": [
+    {
+      "text": "SearchCmdK",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "dataAttributes": [
+        {
+          "name": "data-qa-id",
+          "value": "navbar-global-search-bar"
+        }
+      ]
+    },
+    {
+      "text": "More",
+      "type": "submit",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "dataAttributes": []
+    },
+    {
+      "text": "Export",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 hnGHGX StyledDropdownButton-core-12_27_1__sc-ufsy2q-2 iYgwdY",
+      "dataAttributes": [
+        {
+          "name": "data-pendo",
+          "value": "shared-export-dropdown-button"
+        }
+      ]
+    },
+    {
+      "text": "More",
+      "type": "submit",
+      "classes": "StyledTabBase-core-12_27_1__sc-17s58xs-0 StyledDropdownTabBase-core-12_27_1__sc-17s58xs-2 StyledDropdownTab-core-12_27_1__sc-17s58xs-5 kFmjya iawKgC lchDMT",
+      "dataAttributes": []
+    },
+    {
+      "text": "Add Filter",
+      "type": "submit",
+      "classes": "tokenHead__src-Filters__1LUMq",
+      "dataAttributes": [
+        {
+          "name": "data-key",
+          "value": "inactive"
+        },
+        {
+          "name": "data-qa",
+          "value": "addFilter"
+        }
+      ]
+    },
+    {
+      "text": "1",
+      "type": "submit",
+      "classes": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "dataAttributes": []
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimarySolid__iLVPk",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-invite-button"
+        }
+      ]
+    },
+    {
+      "text": "Re-Invite",
+      "type": "submit",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 dBLGrh users_bttnPrimaryOutline__whmp8",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "shared-users-reinvite-button"
+        }
+      ]
+    },
+    {
+      "text": "1",
+      "type": "submit",
+      "classes": "item__src-Paginator__3Fw4A paginatorOverrides_item__NHVor active__src-Paginator__qlDQk paginatorOverrides_active__HSJe7",
+      "dataAttributes": []
+    },
+    {
+      "text": "Add Company",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 jccxI sc-aXZVg eiUXbQ",
+      "dataAttributes": [
+        {
+          "name": "data-a11y-skip",
+          "value": "color-contrast"
+        },
+        {
+          "name": "data-pendo",
+          "value": "new-add-company-open-modal-button"
+        }
+      ]
+    }
+  ],
+  "inlineData": [],
+  "componentPatterns": {
+    "react": {
+      "found": false,
+      "components": []
+    },
+    "vue": {
+      "found": false,
+      "components": []
+    }
+  },
+  "apiEndpoints": [],
+  "cssFramework": [
+    "tailwind",
+    "custom"
+  ],
+  "modals": [],
+  "aiInsights": "### 1. Page Purpose and Functionality\nThe page titled \"Directory • Goodwill Bart\" serves as an interface for managing a directory of users associated with a specific project in Procore. The core functionality appears to include:\n\n- Inviting users to join the project through a form submission, facilitated by multiple forms each targeting a different user.\n- Maintaining a list of users who are presumably part of a construction project, allowing for easy management of access and collaboration.\n- The directory likely allows project managers and team members to view and interact with user profiles.\n\n### 2. Key Data Models/Entities\nBased on the DOM and structured data, the key data models/entities might include:\n\n- **User**: Represents individuals who can be invited to the project. Possible attributes:\n  - `id`: Unique identifier for the user.\n  - `email`: Email address of the user.\n  - `firstName`: First name of the user (if applicable).\n  - `lastName`: Last name of the user (if applicable).\n  - `role`: Role within the project (e.g., Manager, Worker, Viewer).\n  \n- **Project**: Represents the project itself. Possible attributes:\n  - `id`: Unique identifier for the project.\n  - `title`: Title of the project.\n  - `companyId`: Identifier for the associated company.\n  \n- **Invitation**: Represents an invitation sent to a user. Possible attributes:\n  - `id`: Unique identifier for the invitation.\n  - `userId`: ID of the user being invited.\n  - `projectId`: ID of the project associated with the invitation.\n  - `invitationToken`: Token for authentication/verification of the invitation.\n\n### 3. Component Suggestions for React/Next.js\nFor building a modern web application using React or Next.js, several reusable components can be identified:\n\n- **UserCard**: Displays user information and includes actions (e.g., invite, remove). Could be styled to show user role and status.\n- **InvitationForm**: A form component for inviting users. It could accept user-specific information such as email or role.\n- **UserList**: A component that displays a list of `UserCard` components. It could support pagination or filtering for easier navigation.\n- **Notification**: A reusable notification or alert component to inform users of successful actions (like sending an invitation).\n- **Loader**: A spinner or loading animation that can be displayed while data is being fetched or an action is being processed.\n\n### 4. Database Schema Recommendations\nHere’s a simple relational database schema to support the identified data models:\n\n**Table: Users**\n| Column Name   | Data Type      | Description                     |\n|---------------|----------------|---------------------------------|\n| id            | UUID            | Unique identifier for the user.|\n| email         | VARCHAR(255)   | User's email address.          |\n| firstName     | VARCHAR(100)    | User's first name.             |\n| lastName      | VARCHAR(100)    | User's last name.              |\n| role          | ENUM           | Role of the user in the project.|\n\n**Table: Projects**\n| Column Name     | Data Type    | Description                     |\n|-----------------|--------------|---------------------------------|\n| id              | UUID         | Unique identifier for the project.|\n| title           | VARCHAR(255) | Title of the project.          |\n| companyId       | UUID         | Identifier of the associated company.|\n\n**Table: Invitations**\n| Column Name     | Data Type    | Description                     |\n|-----------------|--------------|---------------------------------|\n| id              | UUID         | Unique identifier for the invitation.|\n| userId          | UUID         | ID of the invited user.        |\n| projectId       | UUID         | ID of the related project.     |\n| invitationToken  | VARCHAR(255) | Token for validating the invitation.|\n\n### 5. API Endpoint Patterns Needed\nConsidering the functionality and data models, the following RESTful API endpoint patterns can be suggested:\n\n- **GET /api/projects/{projectId}/users**: Retrieve all users associated with a specific project.\n- **POST /api/projects/{projectId}/users/invite**: Invite a user to the project (accepts user email and other details).\n- **GET /api/users/{userId}**: Retrieve information about a specific user based on their ID.\n- **DELETE /api/projects/{projectId}/users/{userId}**: Remove a user from the project based on their ID.\n- **GET /api/invitations/{invitationToken}**: Validate an invitation token when the user tries to join.\n\nThese components and endpoints align with a modular, scalable architecture and would facilitate a seamless user experience in managing project teams within the Procore application.",
+  "timestamp": "2025-12-03T19:57:23.821Z"
+}

@@ -10,7 +10,7 @@ command: /fix-docs
 
 ```bash
 /fix-docs <audit-report-path> [options]
-```bash
+```
 Or pipe from audit:
 
 ```bash
@@ -54,7 +54,7 @@ This command takes the output from `/audit-docs` and systematically fixes the id
 /fix-docs --only critical
 /fix-docs --type accuracy
 /fix-docs --interactive
-```markdown
+```
 ## Fix Categories
 
 ### 1. Auto-Fixable (Safe)
@@ -82,7 +82,7 @@ This command takes the output from `/audit-docs` and systematically fixes the id
 ### 1. Automatic Mode
 ```bash
 /fix-docs --auto
-```markdown
+```
 - Fixes all auto-fixable issues
 - Skips manual interventions
 - Creates backup before changes
@@ -92,7 +92,7 @@ This command takes the output from `/audit-docs` and systematically fixes the id
 
 ```bash
 /fix-docs --interactive
-```text
+```
 ```
 
 Found: Outdated completion percentage
@@ -106,7 +106,7 @@ File: OLD-PLAN.md
 Action? [archive/delete/skip]: archive
 ✓ Moved to .archive/
 
-```markdown
+```
 ### 3. Selective Mode
 ```bash
 # Fix only critical issues
@@ -117,7 +117,7 @@ Action? [archive/delete/skip]: archive
 
 # Fix specific files
 /fix-docs --files "PLANS-Directory.md,STATUS.md"
-```bash
+```
 ## Workflow Integration
 
 ### Recommended Workflow
@@ -141,7 +141,7 @@ git commit -m "docs: fix documentation issues from audit
 - Archived stale planning documents
 - Fixed broken internal links
 See audit-report-2024-01-18.md for details"
-```bash
+```
 ### CI/CD Pipeline
 ```yaml
 # .github/workflows/doc-quality.yml

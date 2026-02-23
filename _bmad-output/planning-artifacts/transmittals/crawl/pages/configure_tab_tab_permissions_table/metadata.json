@@ -1,0 +1,51 @@
+{
+  "parentPage": "configure_tab",
+  "parentUrl": "https://us02.procore.com/562949954728542/project/directory/configure_tab",
+  "tabName": "Permissions Table",
+  "tabIndex": 1,
+  "analysis": {
+    "components": {
+      "buttons": 7,
+      "forms": 0,
+      "inputs": 7,
+      "tables": 2,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 4,
+      "dropdowns": 0,
+      "icons": 21
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Role",
+          "Type",
+          "Members"
+        ],
+        "rows": 3,
+        "classes": "StyledTable-core-12_27_1__sc-9c7xd-26 TmSdf",
+        "id": null
+      },
+      {
+        "index": 2,
+        "headers": [
+          "Name ▴",
+          "Company",
+          "None",
+          "Read Only",
+          "Standard",
+          "Admin"
+        ],
+        "rows": 64,
+        "classes": "item_list permissions_table",
+        "id": null
+      }
+    ],
+    "title": "Directory • Goodwill Bart",
+    "h1": "Project Directory Settings"
+  },
+  "timestamp": "2026-01-11T08:42:30.885Z"
+}

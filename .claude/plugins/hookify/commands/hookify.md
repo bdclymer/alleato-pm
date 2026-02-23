@@ -58,7 +58,7 @@ Return findings as a structured list with:
 
 Focus on the most recent issues (last 20-30 messages). Don't go back further unless explicitly asked."
 }
-```yaml
+```
 ### Step 2: Present Findings to User
 
 After gathering behaviors (from arguments or agent), present to user using AskUserQuestion:
@@ -106,7 +106,7 @@ action: {warn|block}
 ---
 
 {Message to show Claude when rule triggers}
-```yaml
+```
 **Action values:**
 - `warn`: Show message but allow operation (default)
 - `block`: Prevent operation or stop session
@@ -154,7 +154,7 @@ Use the current working directory (where Claude Code was started) as the base pa
    - dangerous-rm: Bash commands matching "rm -rf"
    - console-log: Edits adding console.log statements
    - sensitive-files: Edits to .env or credentials files
-   ```yaml
+   ```
 4. Verify files were created in the correct location by listing them
 
 5. Inform user: **"Rules are active immediately - no restart needed!"**

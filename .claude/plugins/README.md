@@ -34,11 +34,11 @@ These plugins are included in the Claude Code repository. To use them in your ow
 
 ```bash
 npm install -g @anthropic-ai/claude-code
-```bash
+```
 2. Navigate to your project and run Claude Code:
 ```bash
 claude
-```text
+```
 1. Use the `/plugin` command to install plugins from marketplaces, or configure them in your project's `.claude/settings.json`.
 
 For detailed plugin installation and configuration, see the [official documentation](https://docs.claude.com/en/docs/claude-code/plugins).

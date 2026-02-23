@@ -111,6 +111,10 @@ export interface ContractFormData {
   sovItems?: SOVLineItem[];
   accountingMethod?: "amount" | "unit_quantity";
 
+  // Payment Terms & Billing
+  paymentTerms?: string;
+  billingSchedule?: string;
+
   // Inclusions & Exclusions
   inclusions?: string;
   exclusions?: string;
@@ -1178,6 +1182,29 @@ export function ContractForm({
               <SelectItem value="excel">Excel</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* PAYMENT TERMS & BILLING SCHEDULE */}
+      {/* ================================================================ */}
+      <div className="pt-8">
+        <SectionHeader>Payment Terms</SectionHeader>
+      </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TextField
+            label="Payment Terms"
+            value={formData.paymentTerms || ""}
+            onChange={(e) => updateFormData({ paymentTerms: e.target.value })}
+            placeholder="e.g. Net 30, Net 45"
+          />
+          <TextField
+            label="Billing Schedule"
+            value={formData.billingSchedule || ""}
+            onChange={(e) => updateFormData({ billingSchedule: e.target.value })}
+            placeholder="e.g. Monthly, Upon Completion"
+          />
         </div>
       </div>
 

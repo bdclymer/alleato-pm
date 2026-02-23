@@ -10,7 +10,7 @@ npx tsx scripts/complete-task.ts "Description of what you did"
 
 # Example:
 npx tsx scripts/complete-task.ts "Updated executive page to use full-width dashboard layout"
-```markdown
+```
 ## What It Does
 
 1. **Generates Task Manifest** - Analyzes git changes and creates verification plan

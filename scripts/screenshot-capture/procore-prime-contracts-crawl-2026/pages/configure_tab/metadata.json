@@ -1,0 +1,394 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/prime_contract/configure_tab",
+  "pageName": "configure_tab",
+  "category": "prime-contracts",
+  "pageId": "configure_tab",
+  "timestamp": "2026-02-23T20:38:16.389Z",
+  "analysis": {
+    "components": {
+      "buttons": 18,
+      "forms": 1,
+      "inputs": 11,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 5,
+      "cards": 0,
+      "lists": 2,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 38
+    },
+    "tables": [],
+    "formFields": [
+      {
+        "index": 1,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria6916323187-:r76:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 2,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria6916323187-:r79:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 3,
+        "type": "checkbox",
+        "name": null,
+        "id": "react-aria6916323187-:r7c:",
+        "placeholder": null,
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 4,
+        "type": "checkbox",
+        "name": "allowStandardToCreatePrimeCop",
+        "id": "react-aria4051277645-:r3d:",
+        "placeholder": null,
+        "label": "Allow standard level users to create PCCOs and approve their own workflows",
+        "required": false
+      },
+      {
+        "index": 5,
+        "type": "checkbox",
+        "name": "allowStandardToCreatePrimePco",
+        "id": "react-aria4051277645-:r3k:",
+        "placeholder": null,
+        "label": "Allow Standard Level Users to Create PCOs",
+        "required": false
+      },
+      {
+        "index": 6,
+        "type": "checkbox",
+        "name": "enablePrimeEditableSov",
+        "id": "react-aria4051277645-:r3r:",
+        "placeholder": null,
+        "label": "Allow the schedule of values to be always editable, no matter the contract status",
+        "required": false
+      },
+      {
+        "index": 7,
+        "type": "checkbox",
+        "name": "showMarkupCriteriaOnPrimeContracts",
+        "id": "react-aria4051277645-:r68:",
+        "placeholder": null,
+        "label": "Show Financial Markup Application Criteria on Change Order PDF exports",
+        "required": false
+      },
+      {
+        "index": 8,
+        "type": "checkbox",
+        "name": "enableMarkupLineItemsOnPaymentApplicationPdf",
+        "id": "react-aria4051277645-:r43:",
+        "placeholder": null,
+        "label": "Show financial markups on invoice PDF and CSV exports",
+        "required": false
+      },
+      {
+        "index": 9,
+        "type": "text",
+        "name": null,
+        "id": null,
+        "placeholder": "Select people",
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 10,
+        "type": "text",
+        "name": null,
+        "id": null,
+        "placeholder": "Select people",
+        "label": null,
+        "required": false
+      },
+      {
+        "index": 11,
+        "type": "text",
+        "name": null,
+        "id": null,
+        "placeholder": "Select people",
+        "label": null,
+        "required": false
+      }
+    ],
+    "title": "Prime Contracts • Goodwill Bart",
+    "h1": "Prime Contracts Settings"
+  },
+  "links": 9,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/tools/opentasks",
+      "text": "",
+      "classes": "LegacyLink-ebFRPk jmnyeO",
+      "id": "company-my-open-items-icon-link",
+      "index": 3
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/prime-contract/tutorials/configure-advanced-settings-prime-contract",
+      "text": "Help",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts",
+      "text": "Prime Contracts",
+      "classes": "",
+      "id": null,
+      "index": 5
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "StyledFooterTOSLink-kAPoEu dpVPSM",
+      "id": null,
+      "index": 6
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "StyledFooterPrivacyPolicyLink-ktAqMk kwxcAj",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 8
+    }
+  ],
+  "clickables": 20,
+  "clickableDetails": [
+    {
+      "text": "What permissions do I need to have to edit an RFI?CmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Skip",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Feedback",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 bBKZki",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Kickoff",
+      "id": "StyledBox-core-12_33_0__sc-fgsy0p-0 culKqM DockAppButton-jkOOQl kySCXs",
+      "type": "div",
+      "classes": "StyledBox-core-12_33_0__sc-fgsy0p-0 culKqM DockAppButton-jkOOQl kySCXs",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Prime Contract Configurations",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL cWovdn",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Funding Sources",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "Workflow Settings",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "ERP Integration Settings",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 14
+    },
+    {
+      "text": "Permissions Table",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledTab-core-12_25_2__sc-17s58xs-3 fqfmhL kYYNzK",
+      "hasDropdown": false,
+      "index": 15
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "hasDropdown": false,
+      "index": 16
+    },
+    {
+      "text": "2",
+      "id": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_25_2__sc-mr8gwe-6 ccBucJ",
+      "hasDropdown": false,
+      "index": 17
+    },
+    {
+      "text": "Cancel",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 cdUkSq",
+      "hasDropdown": false,
+      "index": 18
+    },
+    {
+      "text": "Save Changes",
+      "id": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gUkcTl",
+      "hasDropdown": false,
+      "index": 19
+    }
+  ],
+  "dropdowns": 5,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 fqfmhL gpeMXH bMXWQT",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 iTKdkq",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 iTKdkq",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "classes": "StyledTrigger-core-12_25_2__sc-1uf5708-29 iTKdkq",
+      "id": null,
+      "hasMenu": false,
+      "index": 4
+    }
+  ],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

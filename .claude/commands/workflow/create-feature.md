@@ -13,7 +13,7 @@ You DO NOT skip validation -- if a gate fails, you STOP and fix it before contin
 
 ```bash
 $ARGUMENTS
-```typescript
+```
 Parse:
 
 - **EntityName** (required): PascalCase name, e.g., `ChangeOrder`, `DrawingArea`, `BudgetModification`
@@ -103,7 +103,7 @@ Pluralization rules:
 
 ```bash
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
-```markdown
+```
 ### 1b. Read the types file
 Read `frontend/src/types/database.types.ts` using the Read tool.
 
@@ -237,7 +237,7 @@ If it fails:
 
 ```bash
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > /Users/meganharrison/Documents/github/alleato-pm/frontend/src/types/database.types.ts
-```diff
+```
 ---
 
 ## GATE 2: Post-Generation Validation (BLOCKING)
@@ -254,14 +254,14 @@ Read `frontend/src/types/database.types.ts` and confirm:
 ### 2b. Route Conflict Check
 ```bash
 bash scripts/check-route-conflicts.sh
-```typescript
+```
 **If it fails: FIX immediately. Do not continue.**
 
 ### 2c. TypeScript Compilation
 
 ```bash
 cd /Users/meganharrison/Documents/github/alleato-pm/frontend && npx tsc --noEmit 2>&1 | head -80
-```typescript
+```
 **If there are type errors in the generated files:**
 1. Read the error messages
 2. Fix each error

@@ -37,7 +37,7 @@ skill-name/
     ├── scripts/          - Executable code (Python/Bash/etc.)
     ├── references/       - Documentation intended to be loaded into context as needed
     └── assets/           - Files used in output (templates, icons, fonts, etc.)
-```sql
+```
 #### SKILL.md (required)
 
 **Metadata Quality:** The `name` and `description` in YAML frontmatter determine when Claude will use the skill. Be specific about what the skill does and when to use it. Use the third-person (e.g. "This skill should be used when..." instead of "Use this skill when...").
@@ -140,7 +140,7 @@ Usage:
 
 ```bash
 scripts/init_skill.py <skill-name> --path <output-directory>
-```sql
+```
 The script:
 
 - Creates the skill directory at the specified path

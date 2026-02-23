@@ -61,15 +61,8 @@ export async function GET(
     const totalsViewName = isSubcontract
       ? "subcontracts_with_totals"
       : "purchase_orders_with_totals";
-
-    // Performance optimization: Run all detail queries in parallel
-    // instead of sequentially (Phase 9)
-    const [baseResult, totalsResult, sovResult, coResult] = await Promise.all([
-      // Fetch base record with company join (select needed columns only)
-      supabase
-        .from(tableName)
-        .select(
-          `
+    const baseSelect = isSubcontract
+      ? `
           id, project_id, contract_number, title, description, status, executed,
           contract_company_id, start_date, estimated_completion_date,
           actual_completion_date, contract_date, signed_contract_received_date,
@@ -78,8 +71,23 @@ export async function GET(
           invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
           inclusions, exclusions,
           contract_company:companies!contract_company_id(id, name, type)
-        `,
-        )
+        `
+      : `
+          id, project_id, contract_number, title, description, status, executed,
+          contract_company_id, contract_date, signed_po_received_date,
+          issued_on_date, default_retainage_percent, accounting_method,
+          is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
+          invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
+          contract_company:companies!contract_company_id(id, name, type)
+        `;
+
+    // Performance optimization: Run all detail queries in parallel
+    // instead of sequentially (Phase 9)
+    const [baseResult, totalsResult, sovResult, coResult] = await Promise.all([
+      // Fetch base record with company join (select needed columns only)
+      supabase
+        .from(tableName)
+        .select(baseSelect)
         .eq("id", id)
         .single(),
 
@@ -158,6 +166,11 @@ export async function GET(
     const responseData = {
       ...data,
       type: unifiedData.commitment_type,
+      // Normalize date field names across subcontracts and purchase orders.
+      signed_received_date:
+        (data as Record<string, unknown>).signed_contract_received_date ??
+        (data as Record<string, unknown>).signed_po_received_date ??
+        null,
       original_amount: originalAmount,
       approved_change_orders: changeOrderTotals.approved,
       pending_change_orders: changeOrderTotals.pending,

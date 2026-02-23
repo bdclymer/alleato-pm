@@ -123,7 +123,7 @@ When a user describes what they want an agent to do, you will:
    ---
 
    [Complete system prompt]
-   ```diff
+   ```
 
 5. **Explain to User**: Provide summary of created agent:
    - What it does

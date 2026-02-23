@@ -20,7 +20,7 @@ Block dangerous file writes using prompt-based hooks:
     }
   ]
 }
-```text
+```
 **Use for:** Preventing writes to sensitive files or system directories.
 
 ## Pattern 2: Test Enforcement
@@ -41,7 +41,7 @@ Ensure tests run before stopping:
     }
   ]
 }
-```bash
+```
 **Use for:** Enforcing quality standards and preventing incomplete work.
 
 ## Pattern 3: Context Loading
@@ -62,7 +62,7 @@ Load project-specific context at session start:
     }
   ]
 }
-```bash
+```
 **Example script (load-context.sh):**
 ```bash
 #!/bin/bash
@@ -98,7 +98,7 @@ Log all notifications for audit or analysis:
     }
   ]
 }
-```text
+```
 **Use for:** Tracking user notifications or integration with external logging systems.
 
 ## Pattern 5: MCP Tool Monitoring
@@ -119,7 +119,7 @@ Monitor and validate MCP tool usage:
     }
   ]
 }
-```bash
+```
 **Use for:** Protecting against destructive MCP operations.
 
 ## Pattern 6: Build Verification
@@ -140,7 +140,7 @@ Ensure project builds after code changes:
     }
   ]
 }
-```bash
+```
 **Use for:** Catching build errors before committing or stopping work.
 
 ## Pattern 7: Permission Confirmation
@@ -183,7 +183,7 @@ Run linters or formatters on file edits:
     }
   ]
 }
-```bash
+```
 **Example script (check-quality.sh):**
 ```bash
 #!/bin/bash
@@ -194,7 +194,7 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 if [[ "$file_path" == *.js ]] || [[ "$file_path" == *.ts ]]; then
   npx eslint "$file_path" 2>&1 || true
 fi
-```bash
+```
 **Use for:** Automatic code quality enforcement.
 
 ## Pattern Combinations
@@ -246,7 +246,7 @@ Combine multiple patterns for comprehensive protection:
     }
   ]
 }
-```bash
+```
 This provides multi-layered protection and automation.
 
 ## Pattern 9: Temporarily Active Hooks
@@ -279,7 +279,7 @@ touch .enable-security-scan
 
 # Disable the hook
 rm .enable-security-scan
-```bash
+```
 **Use for:**
 - Temporary debugging hooks
 - Feature flags for development
@@ -319,7 +319,7 @@ if [ "$file_size" -gt "$max_file_size" ]; then
   echo '{"decision": "deny", "reason": "File exceeds configured size limit"}' >&2
   exit 2
 fi
-```text
+```
 **Configuration file (.claude/my-plugin.local.json):**
 
 ```json

@@ -51,69 +51,78 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return apiErrorResponse(error);
     }
 
-    // Fetch financial summary data for all contracts
+    // Aggregate financial data from contract_change_orders, payment applications, and payments
+    // NOTE: contract_financial_summary_mv uses the integer-PK contracts table — not prime_contracts (UUID)
     const contractIds = (contracts || []).map((c) => c.id);
 
-    let financialData: Record<string, {
-      original_contract_amount: number | null;
-      approved_change_orders: number | null;
-      pending_change_orders: number | null;
-      draft_change_orders: number | null;
-      revised_contract_amount: number | null;
-      invoiced_amount: number | null;
-      payments_received: number | null;
-      remaining_balance: number | null;
-    }> = {};
+    const coAggregates: Record<string, { approved: number; pending: number; draft: number }> = {};
+    const invoicedAggregates: Record<string, number> = {};
+    const paymentsAggregates: Record<string, number> = {};
 
     if (contractIds.length > 0) {
-      const { data: summaryData } = await supabase
-        .from("contract_financial_summary_mv")
-        .select(`
-          contract_id,
-          original_contract_amount,
-          approved_change_orders,
-          pending_change_orders,
-          draft_change_orders,
-          revised_contract_amount,
-          invoiced_amount,
-          payments_received,
-          remaining_balance
-        `)
-        .in("contract_id", contractIds);
+      const [coResult, invoiceResult, paymentResult] = await Promise.all([
+        supabase
+          .from("contract_change_orders")
+          .select("contract_id, amount, status")
+          .in("contract_id", contractIds),
+        supabase
+          .from("prime_contract_payment_applications")
+          .select("contract_id, amount, status")
+          .in("contract_id", contractIds),
+        supabase
+          .from("prime_contract_payments")
+          .select("contract_id, amount")
+          .in("contract_id", contractIds),
+      ]);
 
-      if (summaryData) {
-        financialData = summaryData.reduce((acc, row) => {
-          if (row.contract_id) {
-            acc[row.contract_id] = {
-              original_contract_amount: row.original_contract_amount,
-              approved_change_orders: row.approved_change_orders,
-              pending_change_orders: row.pending_change_orders,
-              draft_change_orders: row.draft_change_orders,
-              revised_contract_amount: row.revised_contract_amount,
-              invoiced_amount: row.invoiced_amount,
-              payments_received: row.payments_received,
-              remaining_balance: row.remaining_balance,
-            };
+      if (coResult.data) {
+        for (const co of coResult.data) {
+          if (!coAggregates[co.contract_id]) {
+            coAggregates[co.contract_id] = { approved: 0, pending: 0, draft: 0 };
           }
-          return acc;
-        }, {} as typeof financialData);
+          const amount = co.amount ?? 0;
+          if (co.status === "approved") coAggregates[co.contract_id].approved += amount;
+          else if (co.status === "pending") coAggregates[co.contract_id].pending += amount;
+          else if (co.status === "draft") coAggregates[co.contract_id].draft += amount;
+        }
+      }
+
+      if (invoiceResult.data) {
+        for (const inv of invoiceResult.data) {
+          if (inv.status === "approved") {
+            invoicedAggregates[inv.contract_id] =
+              (invoicedAggregates[inv.contract_id] ?? 0) + (inv.amount ?? 0);
+          }
+        }
+      }
+
+      if (paymentResult.data) {
+        for (const pmt of paymentResult.data) {
+          paymentsAggregates[pmt.contract_id] =
+            (paymentsAggregates[pmt.contract_id] ?? 0) + (pmt.amount ?? 0);
+        }
       }
     }
 
-    // Merge contract data with financial summary
+    // Merge contract data with calculated financial values
     const enrichedContracts = (contracts || []).map((contract) => {
-      const financial = financialData[contract.id];
+      const agg = coAggregates[contract.id] ?? { approved: 0, pending: 0, draft: 0 };
+      const revisedValue = (contract.original_contract_value ?? 0) + agg.approved;
+      const invoicedAmount = invoicedAggregates[contract.id] ?? 0;
+      const paymentsReceived = paymentsAggregates[contract.id] ?? 0;
       return {
         ...contract,
-        // Use financial summary values, falling back to stored values
-        original_contract_value: financial?.original_contract_amount ?? contract.original_contract_value,
-        approved_change_orders: financial?.approved_change_orders ?? 0,
-        pending_change_orders: financial?.pending_change_orders ?? 0,
-        draft_change_orders: financial?.draft_change_orders ?? 0,
-        revised_contract_value: financial?.revised_contract_amount ?? contract.revised_contract_value,
-        invoiced: financial?.invoiced_amount ?? 0,
-        payments_received: financial?.payments_received ?? 0,
-        remaining_balance: financial?.remaining_balance ?? contract.revised_contract_value,
+        approved_change_orders: agg.approved,
+        pending_change_orders: agg.pending,
+        draft_change_orders: agg.draft,
+        revised_contract_value: revisedValue,
+        invoiced_amount: invoicedAmount,
+        payments_received: paymentsReceived,
+        remaining_balance: revisedValue - paymentsReceived,
+        percent_paid:
+          revisedValue > 0
+            ? Math.round((paymentsReceived / revisedValue) * 10000) / 100
+            : 0,
       };
     });
 

@@ -6,7 +6,7 @@ Generate a comprehensive report of design system status.
 
 ```bash
 /design-report [format]
-```diff
+```
 **Formats:**
 
 - `summary` - Quick overview (default)

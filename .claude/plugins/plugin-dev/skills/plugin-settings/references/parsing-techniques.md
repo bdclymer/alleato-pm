@@ -19,7 +19,7 @@ list_field: ["item1", "item2", "item3"]
 
 This body content can be extracted separately.
 It's useful for prompts, documentation, or additional context.
-```bash
+```
 ## Parsing Frontmatter
 
 ### Extract Frontmatter Block
@@ -30,7 +30,7 @@ FILE=".claude/my-plugin.local.md"
 
 # Extract everything between --- markers (excluding the markers themselves)
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
-```sql
+```
 **How it works:**
 
 - `sed -n` - Suppress automatic printing
@@ -47,7 +47,7 @@ VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//')
 
 # Quoted value (removes surrounding quotes)
 VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/')
-```bash
+```
 **Boolean fields:**
 ```bash
 ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
@@ -70,7 +70,7 @@ if [[ "$MAX" =~ ^[0-9]+$ ]]; then
     # Too large
   fi
 fi
-```bash
+```
 **List fields (simple):**
 ```bash
 # YAML: list: ["item1", "item2", "item3"]
@@ -81,7 +81,7 @@ LIST=$(echo "$FRONTMATTER" | grep '^list:' | sed 's/list: *//')
 if [[ "$LIST" == *"item1"* ]]; then
   # List contains item1
 fi
-```bash
+```
 **List fields (proper parsing with jq):**
 
 ```bash
@@ -95,7 +95,7 @@ LIST=$(echo "$FRONTMATTER" | yq -o json '.list' 2>/dev/null)
 echo "$LIST" | jq -r '.[]' | while read -r item; do
   echo "Processing: $item"
 done
-```bash
+```
 ## Parsing Markdown Body
 
 ### Extract Body Content
@@ -125,7 +125,7 @@ PROMPT=$(awk '/^---$/{i++; next} i>=2' "$RALPH_STATE_FILE")
 
 # Feed back to Claude
 echo '{"decision": "block", "reason": "'"$PROMPT"'"}' | jq .
-```bash
+```
 **Important:** Use `jq -n --arg` for safer JSON construction with user content:
 
 ```bash
@@ -136,7 +136,7 @@ jq -n --arg prompt "$PROMPT" '{
   "decision": "block",
   "reason": $prompt
 }'
-```sql
+```
 ## Common Parsing Patterns
 
 ### Pattern: Field with Default
@@ -148,7 +148,7 @@ VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.
 if [[ -z "$VALUE" ]]; then
   VALUE="default_value"
 fi
-```bash
+```
 ### Pattern: Optional Field
 
 ```bash
@@ -181,7 +181,7 @@ while IFS=': ' read -r key value; do
       ;;
   esac
 done <<< "$FRONTMATTER"
-```bash
+```
 ## Updating Settings Files
 
 ### Atomic Updates
@@ -201,7 +201,7 @@ sed "s/^field_name: .*/field_name: $NEW_VALUE/" "$FILE" > "$TEMP_FILE"
 
 # Atomic replace
 mv "$TEMP_FILE" "$FILE"
-```bash
+```
 ### Update Single Field
 
 ```bash
@@ -213,7 +213,7 @@ NEXT=$((CURRENT + 1))
 TEMP_FILE="${FILE}.tmp.$$"
 sed "s/^iteration: .*/iteration: $NEXT/" "$FILE" > "$TEMP_FILE"
 mv "$TEMP_FILE" "$FILE"
-```bash
+```
 ### Update Multiple Fields
 
 ```bash
@@ -244,7 +244,7 @@ if [[ ! -r "$FILE" ]]; then
   echo "Settings file not readable" >&2
   exit 1
 fi
-```bash
+```
 ### Validate Frontmatter Structure
 
 ```bash
@@ -255,7 +255,7 @@ if [[ $MARKER_COUNT -lt 2 ]]; then
   echo "Invalid settings file: missing frontmatter markers" >&2
   exit 1
 fi
-```bash
+```
 ### Validate Field Values
 
 ```bash
@@ -270,7 +270,7 @@ case "$MODE" in
     exit 1
     ;;
 esac
-```bash
+```
 ### Validate Numeric Ranges
 
 ```bash
@@ -298,12 +298,12 @@ YAML allows both quoted and unquoted strings:
 field1: value
 field2: "value"
 field3: 'value'
-```bash
+```
 **Handle both:**
 ```bash
 # Remove surrounding quotes if present
 VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\\(.*\\)'$/\\1/")
-```markdown
+```
 ### --- in Markdown Body
 
 If the markdown body contains `---`, the parsing still works because we only match the first two:
@@ -319,7 +319,7 @@ Here's a separator:
 ---
 
 More content after the separator.
-```text
+```
 The `awk '/^---$/{i++; next} i>=2'` pattern handles this correctly.
 
 ### Empty Values
@@ -342,7 +342,7 @@ VALUE=$(echo "$FRONTMATTER" | grep '^field1:' | sed 's/field1: *//')
 if [[ -z "$VALUE" ]] || [[ "$VALUE" == "null" ]]; then
   VALUE="default"
 fi
-```yaml
+```
 ### Special Characters
 
 Values with special characters need careful handling:
@@ -351,7 +351,7 @@ Values with special characters need careful handling:
 message: "Error: Something went wrong!"
 path: "/path/with spaces/file.txt"
 regex: "^[a-zA-Z0-9_]+$"
-```bash
+```
 **Safe parsing:**
 
 ```bash
@@ -359,7 +359,7 @@ regex: "^[a-zA-Z0-9_]+$"
 MESSAGE=$(echo "$FRONTMATTER" | grep '^message:' | sed 's/message: *//' | sed 's/^"\(.*\)"$/\1/')
 
 echo "Message: $MESSAGE"  # Quoted!
-```bash
+```
 ## Performance Optimization
 
 ### Cache Parsed Values
@@ -397,7 +397,7 @@ if [[ -f ".claude/my-plugin.local.md" ]]; then
   # Parse settings
   # ...
 fi
-```bash
+```
 ## Debugging
 
 ### Print Parsed Values
@@ -418,7 +418,7 @@ if [[ -f "$FILE" ]]; then
   ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
   echo "Enabled: $ENABLED" >&2
 fi
-```bash
+```
 ### Validate Parsing
 
 ```bash
@@ -432,7 +432,7 @@ echo "  max_size: $MAX_SIZE" >&2
 if [[ "$ENABLED" != "true" ]] && [[ "$ENABLED" != "false" ]]; then
   echo "⚠️  Unexpected enabled value: $ENABLED" >&2
 fi
-```bash
+```
 ## Alternative: Using yq
 
 For complex YAML, consider using `yq`:

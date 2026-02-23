@@ -135,11 +135,11 @@ function ViewModeTabs({
 }
 
 // =============================================================================
-// SUMMARY CARD COMPONENT
+// SUMMARY STRIP COMPONENT
 // =============================================================================
 
 function SummaryCards({ summary }: { summary: { total_tasks: number; completed_tasks: number; in_progress_tasks: number; not_started_tasks: number; milestones_count: number; overdue_tasks: number } }) {
-  const cards = [
+  const stats = [
     { label: "Total Tasks", value: summary.total_tasks, icon: Calendar, color: "text-foreground" },
     { label: "Completed", value: summary.completed_tasks, icon: CheckCircle, color: "text-[hsl(var(--status-success))]" },
     { label: "In Progress", value: summary.in_progress_tasks, icon: Clock, color: "text-[hsl(var(--status-info))]" },
@@ -148,26 +148,25 @@ function SummaryCards({ summary }: { summary: { total_tasks: number; completed_t
   ];
 
   return (
-    <div className="flex flex-wrap gap-3">
-      {cards.map((card) => (
-        <div
-          key={card.label}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card hover:shadow-sm transition-shadow"
-        >
-          <card.icon className={cn("h-5 w-5", card.color)} />
-          <div>
-            <p className="text-xs text-muted-foreground">{card.label}</p>
-            <p className="text-sm font-semibold tabular-nums">{card.value}</p>
-          </div>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
+      {stats.map((stat, index) => (
+        <div key={stat.label} className="flex items-center gap-2.5">
+          <stat.icon className={cn("h-4 w-4", stat.color)} />
+          <p className="text-sm text-muted-foreground">
+            {stat.label}
+            <span className="ml-1.5 font-semibold text-foreground tabular-nums">
+              {stat.value}
+            </span>
+          </p>
+          {index < stats.length - 1 && <div className="h-4 w-px bg-border/70" />}
         </div>
       ))}
       {summary.overdue_tasks > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-destructive/30 bg-destructive/5">
-          <AlertCircle className="h-5 w-5 text-destructive" />
-          <div>
-            <p className="text-xs text-destructive/80">Overdue</p>
-            <p className="text-sm font-semibold text-destructive tabular-nums">{summary.overdue_tasks}</p>
-          </div>
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-2.5 py-1">
+          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+          <span className="text-xs font-medium text-destructive">
+            Overdue {summary.overdue_tasks}
+          </span>
         </div>
       )}
     </div>
@@ -745,19 +744,16 @@ export default function ProjectSchedulePage() {
           actions={headerActions}
         />
         <PageContainer className="space-y-4">
-          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
-          {/* Skeleton summary cards */}
-          <div className="flex flex-wrap gap-3">
+          {/* Skeleton summary strip */}
+          <div className="flex flex-wrap items-center gap-4 py-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-card animate-pulse">
-                <div className="h-5 w-5 rounded-full bg-muted" />
-                <div className="space-y-1.5">
-                  <div className="h-3 w-16 rounded bg-muted" />
-                  <div className="h-4 w-8 rounded bg-muted" />
-                </div>
+              <div key={i} className="flex items-center gap-2.5 animate-pulse">
+                <div className="h-4 w-4 rounded-full bg-muted" />
+                <div className="h-4 w-20 rounded bg-muted" />
               </div>
             ))}
           </div>
+          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
           {/* Skeleton table rows */}
           <div className="border rounded-lg overflow-hidden">
             <div className="h-10 bg-muted/50 border-b" />
@@ -855,6 +851,11 @@ export default function ProjectSchedulePage() {
         actions={headerActions}
       />
       <PageContainer className="space-y-4">
+        {/* Summary strip shown above tabs because it applies to every view */}
+        {data?.summary && data.summary.total_tasks > 0 && (
+          <SummaryCards summary={data.summary} />
+        )}
+
         <ViewModeTabs mode={viewMode} onChange={setViewMode} />
 
         {/* Bulk Action Bar */}
@@ -865,11 +866,6 @@ export default function ProjectSchedulePage() {
             onDelete={handleBulkDelete}
             onClear={() => setSelectedIds(new Set())}
           />
-        )}
-
-        {/* Summary Cards */}
-        {data?.summary && data.summary.total_tasks > 0 && (
-          <SummaryCards summary={data.summary} />
         )}
 
         {/* Empty State */}

@@ -1,11 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import * as React from "react";
+import type { ReactElement } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Download, Plus } from "lucide-react";
+import { toast } from "sonner";
+
+import { useDeleteRfi } from "@/hooks/use-rfis";
+import type { RFI } from "@/types/database-extensions";
 import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,205 +20,244 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, Plus } from "lucide-react";
-import { useDeleteRfi } from "@/hooks/use-rfis";
-import { RFI_STATUS_OPTIONS } from "@/lib/schemas/rfi-schema";
-import type { RFI } from "@/types/database-extensions";
-
-type RfiTableRow = {
-  id: string;
-  number: string;
-  subject: string;
-  statusDisplay: string;
-  statusKey: string;
-  assignees: string;
-  due_date: string | null;
-  ball_in_court: string | null;
-  rfi_manager: string | null;
-  responsible_contractor: string | null;
-  received_from: string | null;
-  created_at: string | null;
-};
-
-function formatStatus(status: string): string {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
+import {
+  buildRfiTableColumns,
+  rfiColumns,
+  rfiDefaultVisibleColumns,
+  rfiFilters,
+  renderRfiCard,
+  renderRfiList,
+  renderRfiRowActions,
+} from "@/features/rfis/rfis-table-config";
 
 interface RfisClientProps {
   rfis: RFI[];
   projectId: number;
 }
 
-export function RfisClient({ rfis, projectId }: RfisClientProps) {
+type RfiFilterState = Record<string, FilterValue>;
+
+const EMPTY_FILTERS: RfiFilterState = {
+  status: undefined,
+};
+
+export function RfisClient({ rfis, projectId }: RfisClientProps): ReactElement {
+  const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialStatus = searchParams.get("status") ?? "";
+  const initialFilters: RfiFilterState = {
+    status: initialStatus || undefined,
+  };
+
+  const tableState = useUnifiedTableState({
+    entityKey: "rfis",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "number",
+      sortDirection: "desc",
+      visibleColumns: rfiDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  React.useEffect(() => {
+    const nextStatus = searchParams.get("status") ?? "";
+    tableState.setActiveFilters((prev) => {
+      const normalizedStatus = nextStatus || undefined;
+      if (prev.status === normalizedStatus) {
+        return prev;
+      }
+      return {
+        status: normalizedStatus,
+      };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  const [items, setItems] = React.useState<RFI[]>(rfis);
+  React.useEffect(() => {
+    setItems(rfis);
+  }, [rfis]);
+
   const deleteRfi = useDeleteRfi(projectId);
+  const activeFilters = tableState.activeFilters as RfiFilterState;
 
-  const tableRows = useMemo<RfiTableRow[]>(
-    () =>
-      (rfis || []).map((rfi) => ({
-        id: rfi.id,
-        number: String(rfi.number ?? ""),
-        subject: rfi.subject ?? "Untitled RFI",
-        statusDisplay: formatStatus(rfi.status ?? "open"),
-        statusKey: rfi.status ?? "open",
-        assignees: (rfi.assignees ?? []).join(", ") || "—",
-        due_date: rfi.due_date,
-        ball_in_court: rfi.ball_in_court,
-        rfi_manager: rfi.rfi_manager,
-        responsible_contractor: rfi.responsible_contractor,
-        received_from: rfi.received_from,
-        created_at: rfi.created_at,
-      })),
-    [rfis],
-  );
+  const filteredItems = React.useMemo(() => {
+    const statusFilter =
+      typeof activeFilters.status === "string" ? activeFilters.status.toLowerCase() : "";
+    const search = tableState.debouncedSearch.trim().toLowerCase();
 
+    return items.filter((item) => {
+      if (statusFilter && (item.status ?? "").toLowerCase() !== statusFilter) {
+        return false;
+      }
 
-  const tableConfig = useMemo<GenericTableConfig>(
-    () => ({
-      columns: [
-        {
-          id: "number",
-          label: "#",
-          defaultVisible: true,
-          type: "text",
-          isPrimary: true,
-        },
-        {
-          id: "subject",
-          label: "Subject",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "statusDisplay",
-          label: "Status",
-          defaultVisible: true,
-          renderConfig: {
-            type: "badge",
-            variantMap: {
-              Draft: "secondary",
-              Open: "default",
-              Pending: "outline",
-              Closed: "success",
-              Void: "destructive",
-            },
-            defaultVariant: "outline",
-          },
-        },
-        {
-          id: "assignees",
-          label: "Assignees",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "due_date",
-          label: "Due Date",
-          defaultVisible: true,
-          type: "date",
-        },
-        {
-          id: "ball_in_court",
-          label: "Ball In Court",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "rfi_manager",
-          label: "RFI Manager",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "responsible_contractor",
-          label: "Resp. Contractor",
-          defaultVisible: false,
-          type: "text",
-        },
-        {
-          id: "received_from",
-          label: "Received From",
-          defaultVisible: false,
-          type: "text",
-        },
-        {
-          id: "created_at",
-          label: "Created",
-          defaultVisible: false,
-          type: "date",
-        },
-      ],
-      searchFields: ["subject", "number", "assignees", "rfi_manager"],
-      filters: [
-        {
-          id: "status-filter",
-          label: "Status",
-          field: "statusDisplay",
-          options: RFI_STATUS_OPTIONS.map((s) => ({
-            value: formatStatus(s.value),
-            label: s.label,
-          })),
-        },
-      ],
-      exportFilename: "rfis-export.csv",
-      enableViewSwitcher: true,
-      enableSorting: true,
-      defaultSortColumn: "number",
-      defaultSortDirection: "desc",
-      rowClickPath: `/${projectId}/rfis/{id}`,
-      rowActions: [
-        { id: "view", label: "View" },
-        { id: "edit", label: "Edit" },
-        { id: "delete", label: "Delete" },
-      ],
-      onDelete: true,
-      requireDeleteConfirmation: true,
-    }),
-    [projectId],
-  );
+      if (!search) {
+        return true;
+      }
 
-  const handleDeleteRow = async (id: string | number) => {
+      return (
+        String(item.number ?? "").toLowerCase().includes(search) ||
+        (item.subject ?? "").toLowerCase().includes(search) ||
+        (item.rfi_manager ?? "").toLowerCase().includes(search) ||
+        (item.ball_in_court ?? "").toLowerCase().includes(search)
+      );
+    });
+  }, [activeFilters.status, items, tableState.debouncedSearch]);
+
+  const tableColumns = React.useMemo(() => buildRfiTableColumns(), []);
+
+  const handleFilterChange = (nextFilters: RfiFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const handleView = (item: RFI) => {
+    router.push(`/${projectId}/rfis/${item.id}`);
+  };
+
+  const handleEdit = (item: RFI) => {
+    router.push(`/${projectId}/rfis/${item.id}`);
+  };
+
+  const handleDelete = async (item: RFI) => {
     try {
-      await deleteRfi.mutateAsync(String(id));
-      return {};
+      await deleteRfi.mutateAsync(String(item.id));
+      setItems((prev) => prev.filter((entry) => entry.id !== item.id));
+      toast.success("RFI deleted");
     } catch {
-      return { error: "Failed to delete RFI" };
+      toast.error("Failed to delete RFI");
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header actions */}
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          onClick={() => router.push(`/${projectId}/rfis/new`)}
-          className="bg-primary hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create RFI
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>CSV</DropdownMenuItem>
-            <DropdownMenuItem>PDF</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(filteredItems.map((item) => String(item.id)));
+      return;
+    }
+    tableState.setSelectedIds([]);
+  };
 
-      {/* Table */}
-      <div className="bg-background rounded-lg border">
-        <GenericDataTable
-          data={tableRows}
-          config={tableConfig}
-          onDeleteRow={handleDeleteRow}
-        />
-      </div>
-    </div>
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+      return;
+    }
+    tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+  };
+
+  const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+
+  return (
+    <UnifiedTablePage
+      header={{
+        title: "RFIs",
+        description: "Requests for Information",
+        actions: (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => router.push(`/${projectId}/rfis/new`)}
+              data-testid="rfis-create-button"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create RFI
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>CSV</DropdownMenuItem>
+                <DropdownMenuItem>PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
+      }}
+      toolbar={{
+        totalItems: items.length,
+        filteredItems: filteredItems.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search RFIs...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
+        filters: rfiFilters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns: rfiColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredItems,
+        isLoading: false,
+        isFetching: false,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => String(item.id),
+        onRowClick: handleView,
+        rowActions: (item) => renderRfiRowActions(item, handleView, handleEdit, handleDelete),
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+          });
+        },
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
+      }}
+      views={{
+        card: (item) => renderRfiCard(item, handleView),
+        list: (item) => renderRfiList(item, handleView),
+      }}
+      emptyState={{
+        title: "No RFIs found",
+        description: "You have not added any RFIs yet.",
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered,
+        action: (
+          <Button size="sm" onClick={() => router.push(`/${projectId}/rfis/new`)}>
+            Create your first RFI
+          </Button>
+        ),
+      }}
+      features={{
+        enableExport: false,
+        enableBulkDelete: false,
+      }}
+    />
   );
 }

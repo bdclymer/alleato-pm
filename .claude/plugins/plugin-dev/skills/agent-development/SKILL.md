@@ -56,7 +56,7 @@ You are [agent role description]...
 
 **Output Format:**
 [What to return]
-```typescript
+```
 ## Frontmatter Fields
 
 ### name (required)
@@ -104,7 +104,7 @@ assistant: "[How Claude should respond]"
 
 [More examples...]
 
-```bash
+```
 **Best practices:**
 - Include 2-4 concrete examples
 - Show proactive and reactive triggering
@@ -195,7 +195,7 @@ Provide results in this format:
 Handle these situations:
 - [Edge case 1]: [How to handle]
 - [Edge case 2]: [How to handle]
-```markdown
+```
 ### Best Practices
 
 ✅ **DO:**
@@ -244,7 +244,7 @@ Return JSON with:
   "systemPrompt": "You are..."
 }
 
-```text
+```
 Then convert to agent file format with frontmatter.
 
 See `examples/agent-creation-prompt.md` for complete template.
@@ -268,7 +268,7 @@ See `examples/agent-creation-prompt.md` for complete template.
 ✅ Valid: code-reviewer, test-gen, api-analyzer-v2
 ❌ Invalid: ag (too short), -start (starts with hyphen), my_agent (underscore)
 
-```diff
+```
 **Rules:**
 - 3-50 characters
 - Lowercase letters, numbers, hyphens only
@@ -298,7 +298,7 @@ plugin-name/
     ├── reviewer.md
     └── generator.md
 
-```yaml
+```
 All `.md` files in `agents/` are auto-discovered.
 
 ### Namespacing

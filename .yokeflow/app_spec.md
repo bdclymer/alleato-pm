@@ -234,7 +234,7 @@ The Change Orders tool should:
 - docfile: PRPs/ai_docs/procore-change-orders.md
   why: Consolidated summary of Procore change order workflows and fields.
   section: All sections
-```markdown
+```
 ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
 
 ```bash
@@ -257,7 +257,7 @@ The Change Orders tool should:
 │   │   └── types
 │   └── tests
 └── scripts
-```markdown
+```
 ### Desired Codebase tree with files to be added and responsibility of file
 
 ```bash
@@ -277,7 +277,7 @@ frontend/src/hooks/use-contract-change-orders.ts
   # Hook tailored to contract_change_orders (avoid legacy change_orders)
 frontend/tests/e2e/change-orders/change-order-ui.spec.ts
   # UI flow tests (list → detail → approve/reject)
-```markdown
+```
 ### Known Gotchas of our codebase & Library Quirks
 
 ```typescript
@@ -316,7 +316,7 @@ export interface ContractChangeOrder {
   created_at: string;
   updated_at: string;
 }
-```sql
+```
 ### Implementation Tasks (ordered by dependencies)
 
 ```yaml
@@ -364,7 +364,7 @@ Task 7: TESTS
   - ADD: Playwright UI tests for list → detail → approve/reject
   - UPDATE: API tests if contractId resolution changes
   - FOLLOW pattern: frontend/tests/e2e/prime-contracts/api-change-orders.spec.ts
-```typescript
+```
 ### Implementation Patterns & Key Details
 
 ```typescript
@@ -386,7 +386,7 @@ export function ChangeOrderReviewerResponse({ changeOrderId, contractId, project
   // use client: uses state + fetch
   // must send rejection_reason on reject; approved_by/approved_date handled server-side
 }
-```markdown
+```
 ### Integration Points
 
 ```yaml
@@ -408,19 +408,19 @@ CONFIG:
 
 ```bash
 npm run quality --prefix frontend
-```markdown
+```
 ### Level 2: Unit Tests (Component Validation)
 
 ```bash
 cd frontend
 npx playwright test tests/e2e/prime-contracts/api-change-orders.spec.ts
-```markdown
+```
 ### Level 3: Integration Testing (System Validation)
 
 ```bash
 cd frontend
 npx playwright test tests/e2e/change-orders/change-order-ui.spec.ts
-```markdown
+```
 ### Level 4: Creative & Domain-Specific Validation
 
 ```bash
@@ -506,7 +506,7 @@ frontend/src/app/(main)/[projectId]/change-orders/
 ├── page.tsx ✅ (list view implemented)
 ├── new/page.tsx ⚠️ (stub only)
 └── [changeOrderId]/ ❌ (not implemented)
-```markdown
+```
 ### ⚠️ REMAINING WORK
 
 **Critical Missing Components:**
@@ -692,7 +692,7 @@ GET    /api/projects/{id}/change-order-packages
 
 /frontend/src/lib/database.types.ts ⚠️
 (needs regeneration after migrations)
-```markdown
+```
 ### API Files
 
 ```text
@@ -716,7 +716,7 @@ GET    /api/projects/{id}/change-order-packages
 ├── PackageView.tsx ❌
 ├── ChangeOrderList.tsx ⚠️ (basic version exists)
 └── ChangeOrderPDF.tsx ❌
-```markdown
+```
 ### Frontend Pages
 
 ```text
@@ -827,7 +827,7 @@ change_orders (1:many) → change_order_lines
 change_orders (1:many) → change_order_reviews
 change_orders (1:many) → change_order_attachments
 change_orders (1:many) → change_order_audit_log
-```sql
+```
 ## Table Definitions
 
 ### 1. change_orders (Main Entity)
@@ -899,7 +899,7 @@ CREATE TABLE change_orders (
   INDEX idx_due_date (due_date),
   INDEX idx_designated_reviewer (designated_reviewer_id)
 );
-```sql
+```
 ### 2. change_order_packages (Package Organization)
 ```sql
 CREATE TABLE change_order_packages (
@@ -978,7 +978,7 @@ CREATE TABLE change_order_lines (
   INDEX idx_budget_line_id (budget_line_id),
   INDEX idx_line_order (line_order)
 );
-```sql
+```
 ### 4. change_order_reviews (Multi-tier Approval)
 ```sql
 CREATE TABLE change_order_reviews (
@@ -1028,7 +1028,7 @@ CREATE TABLE change_order_reviews (
   INDEX idx_approver (approver_user_id),
   INDEX idx_approved_at (approved_at)
 );
-```sql
+```
 ### 5. change_order_attachments (Document Management)
 
 ```sql
@@ -1063,7 +1063,7 @@ CREATE TABLE change_order_attachments (
   INDEX idx_attachment_type (attachment_type),
   INDEX idx_status (status)
 );
-```sql
+```
 ### 6. change_order_audit_log (Complete Audit Trail)
 ```sql
 CREATE TABLE change_order_audit_log (
@@ -1154,7 +1154,7 @@ UPDATE change_orders co
 JOIN change_order_packages cop ON co.project_id = cop.project_id
 SET co.package_id = cop.id
 WHERE co.package_id IS NULL AND cop.title = 'Legacy Package';
-```markdown
+```
 ## Views and Helper Functions
 
 ### Total Amount Calculation View
@@ -1172,7 +1172,7 @@ FROM change_orders co
 LEFT JOIN change_order_lines li ON co.id = li.change_order_id
 WHERE co.is_deleted = FALSE
 GROUP BY co.id, co.number, co.title, co.status, co.change_order_type;
-```sql
+```
 ### Package Summary View
 
 ```sql
@@ -1190,7 +1190,7 @@ FROM change_order_packages p
 LEFT JOIN change_orders co ON p.id = co.package_id AND co.is_deleted = FALSE
 LEFT JOIN change_order_totals cot ON co.id = cot.change_order_id
 GROUP BY p.id, p.package_number, p.title, p.status;
-```sql
+```
 ### Approval Status Function
 ```sql
 DELIMITER //
@@ -1243,7 +1243,7 @@ CREATE INDEX idx_li_co_order ON change_order_lines(change_order_id, line_order);
 
 -- Audit log partitioning (for high-volume environments)
 -- Partition by created_at monthly for better performance
-```markdown
+```
 ### Query Optimization Examples
 ```sql
 -- Efficient change order list with totals
@@ -1282,7 +1282,7 @@ LEFT JOIN users u ON cor.approver_user_id = u.id
 WHERE co.designated_reviewer_id = ?
   AND cor.approval_status = 'PENDING'
 ORDER BY co.due_date ASC;
-```sql
+```
 ### Triggers for Data Consistency
 
 ```sql
@@ -1406,7 +1406,7 @@ GET /api/projects/123/change-orders?status=pending&contractType=prime&page=1&lim
 Authorization: Bearer <token>
 ```markdown
 #### Response (200 OK)
-```json
+```
 {
   "data": [
     {
@@ -1475,7 +1475,7 @@ Authorization: Bearer <token>
 
 #### Request
 
-```json
+```
 {
   "packageId": 1,
   "contractType": "commitment",
@@ -1510,7 +1510,7 @@ Authorization: Bearer <token>
 }
 ```markdown
 #### Response (201 Created)
-```json
+```
 {
   "id": 562949956482891,
   "number": "CO-002",
@@ -1595,7 +1595,7 @@ Authorization: Bearer <token>
 
 #### Error (400 Bad Request)
 
-```json
+```
 {
   "error": "VALIDATION_ERROR",
   "message": "Invalid change order data",
@@ -1627,7 +1627,7 @@ Authorization: Bearer <token>
 ```http
 GET /api/projects/123/change-orders/562949956482890
 Authorization: Bearer <token>
-```markdown
+```
 #### Response (200 OK)
 
 ```json
@@ -1839,7 +1839,7 @@ Authorization: Bearer <token>
     "contract": "/api/projects/123/commitments/123456"
   }
 }
-```markdown
+```
 ### 4. Update Change Order
 **Method**: PUT
 **URL**: `/api/projects/{projectId}/change-orders/{id}`
@@ -1895,7 +1895,7 @@ Authorization: Bearer <token>
     "self": "/api/projects/123/change-orders/562949956482890"
   }
 }
-```markdown
+```
 ### 5. Approve Change Order
 **Method**: POST
 **URL**: `/api/projects/{projectId}/change-orders/{id}/approve`
@@ -1913,7 +1913,7 @@ Authorization: Bearer <token>
   "requireSignature": false,
   "nextTierReviewerId": null
 }
-```yaml
+```
 #### Response (200 OK)
 
 ```json
@@ -1950,7 +1950,7 @@ Authorization: Bearer <token>
     "execute": "/api/projects/123/change-orders/562949956482890/execute"
   }
 }
-```yaml
+```
 ### 6. CSV Export
 **Method**: GET
 **URL**: `/api/projects/{projectId}/change-orders/export/csv`
@@ -1978,7 +1978,7 @@ Accept: text/csv
 Number,Title,Status,Contract Type,Contract Company,Amount,Date Initiated,Due Date,Review Date,Designated Reviewer,Line Items Count,Created By,Created Date
 CO-001,Phase 1 & 2 Changes - Full Scope,approved,commitment,Goodwill Industries,5062.35,2025-05-13,2025-05-27,2025-05-25,Dawson Jesse,2,Nick Jepson,2025-05-13 09:51:00
 CO-002,Electrical Upgrades Phase 2,pending,commitment,ABC Electrical,2350.00,2025-05-15,2025-06-01,,Dawson Jesse,2,Nick Jepson,2025-05-15 14:30:00
-```yaml
+```
 ### 7. Generate PDF
 **Method**: GET
 **URL**: `/api/projects/{projectId}/change-orders/{id}/pdf`
@@ -2006,7 +2006,7 @@ Content-Length: 524288
 
 %PDF-1.4
 [Binary PDF content]
-```markdown
+```
 ### 8. Bulk Operations
 **Method**: POST
 **URL**: `/api/projects/{projectId}/change-orders/bulk/approve`
@@ -2148,7 +2148,7 @@ interface ChangeOrdersListProps {
     packageId?: number;
   };
 }
-```markdown
+```
 #### Current Implementation Features
 - ✅ Basic data table with columns: Number, Title, Contract, Status, Amount, Due Date
 - ✅ Tab navigation (All, Pending, Approved, Draft)
@@ -2193,7 +2193,7 @@ interface ChangeOrdersListProps {
 │ [← Prev] Page 1 of 3 [Next →]          25 per page [▼]     │
 └─────────────────────────────────────────────────────────────┘
 
-```typescript
+```
 ### 2. ChangeOrderCreateForm
 **File**: `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx`
 **Purpose**: Multi-step form for creating new change orders
@@ -2225,7 +2225,7 @@ interface ChangeOrderCreateFormProps {
 │ Form Navigation                                             │
 │                           [Cancel] [← Back] [Next Step →]  │
 └─────────────────────────────────────────────────────────────┘
-```typescript
+```
 ### 3. ChangeOrderDetail
 
 **File**: `frontend/src/app/(main)/[projectId]/change-orders/[id]/page.tsx`
@@ -2240,7 +2240,7 @@ interface ChangeOrderDetailProps {
   projectId: string;
   mode?: 'view' | 'edit';
 }
-```markdown
+```
 #### Layout Structure
 ```
 
@@ -2264,7 +2264,7 @@ interface ChangeOrderDetailProps {
 │ [Approve] [Reject] [Execute] [Generate PDF] [Email]        │
 └─────────────────────────────────────────────────────────────┘
 
-```typescript
+```
 ### 4. LineItemsTable
 **File**: `frontend/src/components/domain/change-orders/LineItemsTable.tsx`
 **Purpose**: Editable table for managing change order line items
@@ -2289,7 +2289,7 @@ interface ChangeOrderLineItem {
   extendedAmount: number;
   notes?: string;
 }
-```bash
+```
 #### Layout Structure
 
 ```bash
@@ -2325,7 +2325,7 @@ interface ApprovalWorkflowProps {
   onApprove: (data: ApprovalData) => void;
   onReject: (data: RejectionData) => void;
 }
-```markdown
+```
 #### Layout Structure
 ```typescript
 ┌─ Approval Workflow ─────────────────────────────────────────┐
@@ -2349,7 +2349,7 @@ interface ApprovalWorkflowProps {
 │ • 05/25 - Pending approval from Dawson, Jesse             │
 └─────────────────────────────────────────────────────────────┘
 
-```typescript
+```
 ### 6. ChangeOrderPackages
 **File**: `frontend/src/components/domain/change-orders/ChangeOrderPackages.tsx`
 **Purpose**: Package-based organization and management
@@ -2388,7 +2388,7 @@ interface ChangeOrderPackagesProps {
 │                                                             │
 │ [+ New Package]                                             │
 └─────────────────────────────────────────────────────────────┘
-```typescript
+```
 ### 7. StatusBadge
 
 **File**: `frontend/src/components/ui/status-badge.tsx`
@@ -2412,7 +2412,7 @@ type ChangeOrderStatus =
   | 'rejected'
   | 'executed'
   | 'withdrawn';
-```markdown
+```
 #### Visual Design
 ```
 
@@ -2423,7 +2423,7 @@ Status Badge Variants:
 │ Default         │ │ Compact │ │ Detailed                │
 └─────────────────┘ └─────────┘ └──────────────────────────┘
 
-```typescript
+```
 ### 8. ExportDropdown
 **File**: `frontend/src/components/domain/change-orders/ExportDropdown.tsx`
 **Purpose**: Export options menu with CSV and PDF generation
@@ -2436,7 +2436,7 @@ interface ExportDropdownProps {
   projectId: string;
   filters?: ChangeOrderFilters;
 }
-```markdown
+```
 #### Layout Structure
 
 ```text
@@ -2468,7 +2468,7 @@ interface ReportsDropdownProps {
   projectId: string;
   userRole: string;
 }
-```markdown
+```
 #### Layout Structure
 ```typescript
 ┌─ Reports ▼ ─────────────────────────────────────────────────┐
@@ -2487,7 +2487,7 @@ interface ReportsDropdownProps {
 │ └───────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 
-```typescript
+```
 ### 10. FileUploadZone
 **File**: `frontend/src/components/domain/change-orders/FileUploadZone.tsx`
 **Purpose**: Drag-and-drop file upload with progress tracking
@@ -2527,7 +2527,7 @@ interface FileUploadZoneProps {
 │ │ ⏳ Uploading...                                       │ │
 │ └───────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
-```bash
+```
 ## Responsive Design Details
 
 ### Desktop Layout (≥1024px)
@@ -2597,7 +2597,7 @@ interface ChangeOrderStore {
   setFilters: (filters: Partial<ChangeOrderFilters>) => void;
   toggleSelection: (id: number) => void;
 }
-```tsx
+```
 ### Form State (React Hook Form)
 ```typescript
 // Multi-step form state management
@@ -2777,7 +2777,7 @@ description: FORMS ChangeOrders documentation
 │                                                             │
 │              [← Back] [Save Draft] [Submit for Review]     │
 └─────────────────────────────────────────────────────────────┘
-```typescript
+```
 #### Conditional Logic
 
 - **Package Selection**: If "New Package" selected, show packageTitle field
@@ -2877,7 +2877,7 @@ description: FORMS ChangeOrders documentation
 │                                                             │
 │                              [Cancel] [Create Package]     │
 └─────────────────────────────────────────────────────────────┘
-```bash
+```
 ### 4. LineItemsEditor
 
 **Component**: `frontend/src/components/domain/change-orders/LineItemsEditor.tsx`
@@ -2975,7 +2975,7 @@ description: FORMS ChangeOrders documentation
 │                                                             │
 │                              [Cancel] [Submit Review]      │
 └─────────────────────────────────────────────────────────────┘
-```bash
+```
 ### 6. BulkActionForm
 
 **Location**: Modal dialog from change orders list
@@ -3068,7 +3068,7 @@ description: FORMS ChangeOrders documentation
 │                                                             │
 │                              [Clear All] [Done]            │
 └─────────────────────────────────────────────────────────────┘
-```markdown
+```
 ### 8. RelatedItemsForm
 
 **Location**: Modal dialog from change order detail view

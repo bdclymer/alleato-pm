@@ -8,7 +8,7 @@
 
 ```text
 /codex-task
-```diff
+```
 **What This Does:**
 
 1. Prompts you for task details (interactive)
@@ -83,7 +83,7 @@ Issue created: https://github.com/user/repo/issues/123
 Codex will start automatically (watch for comments on issue)
 
 Branch will be: codex/issue-123-feature
-```text
+```
 **Advanced: Batch Tasks**
 
 Create multiple issues at once:

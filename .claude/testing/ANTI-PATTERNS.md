@@ -12,7 +12,7 @@ await page.waitForLoadState('networkidle');
 
 // ✅ GOOD
 await page.waitForLoadState('domcontentloaded');
-```javascript
+```
 ### Hardcoded URLs/IDs
 ```typescript
 // ❌ BAD - fragile, breaks when data changes
@@ -21,7 +21,7 @@ await page.goto('/31/budget');
 // ✅ GOOD - create isolated test data
 const projectId = await createProject(`E2E Test ${Date.now()}`);
 await page.goto(`/${projectId}/budget`);
-```javascript
+```
 ## 🚫 Data Management Anti-Patterns
 
 ### No Test Data Cleanup
@@ -40,7 +40,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await cleanupProjectArtifacts(projectId);
 });
-```markdown
+```
 ### Relying on Specific Counts
 ```typescript
 // ❌ BAD - breaks if other tests leave data
@@ -60,7 +60,7 @@ await createDirectCost({ cost_type: "expense" });  // lowercase
 // ✅ GOOD - match exact case from migration
 await createSubcontract({ status: "Draft" });     // PascalCase
 await createDirectCost({ cost_type: "Expense" });  // PascalCase
-```markdown
+```
 ## 🚫 Selector Anti-Patterns
 
 ### Fragile CSS Selectors
@@ -70,7 +70,7 @@ page.locator('.btn.btn-primary.submit-button')
 
 // ✅ GOOD - semantic selectors
 page.getByRole("button", { name: /submit/i })
-```markdown
+```
 ### Generic Text Selectors
 
 ```typescript
@@ -79,7 +79,7 @@ page.getByText("Concrete delivery")
 
 // ✅ GOOD - scoped to table cells
 page.getByRole("cell", { name: "Concrete delivery" })
-```markdown
+```
 ### Missing TestIds When Available
 ```typescript
 // ❌ BAD - when data-testid exists
@@ -100,7 +100,7 @@ await expect(item).toBeVisible();
 
 // ✅ GOOD - wait for actual condition
 await expect(item).toBeVisible({ timeout: 15000 });
-```markdown
+```
 ### Manual Visibility Checks
 ```typescript
 // ❌ BAD - loses auto-wait benefits
@@ -111,7 +111,7 @@ if (await element.isVisible()) {
 // ✅ GOOD - web-first assertions handle waiting
 await expect(element).toBeVisible();
 await element.click();
-```javascript
+```
 ### Forgetting Reload Fallback
 
 ```typescript
@@ -136,7 +136,7 @@ if (!visible) {
 await expect(
   page.getByRole("cell", { name: "Seeded Item" })
 ).toBeVisible();
-```javascript
+```
 ## 🚫 Test Structure Anti-Patterns
 
 ### Smoke Tests Disguised as E2E
@@ -198,7 +198,7 @@ test.describe("Budget", () => {
     // Test editing
   });
 });
-```javascript
+```
 ## 🚫 Authentication Anti-Patterns
 
 ### Manual Login in Every Test
@@ -224,7 +224,7 @@ test("feature test", async ({ page }) => {
   // Already logged in!
   await page.goto(`/${projectId}/feature`);
 });
-```javascript
+```
 ### Missing Project Membership
 
 ```typescript
@@ -240,7 +240,7 @@ test.beforeAll(async () => {
   projectId = await createProject("Test Project");
   await addProjectMember(projectId, testUserId, "admin");
 });
-```markdown
+```
 ## 🚫 Form Interaction Anti-Patterns
 
 ### Not Clearing Auto-Generated Values
@@ -261,7 +261,7 @@ await page.getByRole("button", { name: /delete/i }).click();
 
 // ✅ GOOD - confirmation dialogs render last/on top
 await page.getByRole("button", { name: /delete/i }).last().click();
-```markdown
+```
 ## 🚫 Database Constraint Violations
 
 ### Status Values Case Sensitivity
@@ -276,7 +276,7 @@ Different entities use different cases - check migrations!
 
 // Companies use UPPERCASE
 { status: "ACTIVE" | "INACTIVE" }
-```sql
+```
 ### Mismatched Foreign Key Types
 
 ```typescript

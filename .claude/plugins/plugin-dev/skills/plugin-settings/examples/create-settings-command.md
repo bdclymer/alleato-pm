@@ -52,7 +52,7 @@ Use AskUserQuestion to gather configuration:
     }
   ]
 }
-```yaml
+```
 ### Step 2: Parse Answers
 
 Extract answers from AskUserQuestion result:

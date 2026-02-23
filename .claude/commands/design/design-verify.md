@@ -6,7 +6,7 @@ Verify that fixes were applied correctly and still hold.
 
 ```bash
 /design-verify [options]
-```yaml
+```
 **Options:**
 
 - `all` - Verify all "fixed" violations

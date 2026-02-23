@@ -1,616 +1,408 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import * as React from "react";
+import type { ReactElement } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import type { Database } from "@/types/database.types";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Search, Calendar, Filter, X } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
+import {
+  buildChangeOrderFilters,
+  buildChangeOrderTableColumns,
+  changeOrderColumns,
+  changeOrderDefaultVisibleColumns,
+  renderChangeOrderCard,
+  renderChangeOrderList,
+  renderChangeOrderRowActions,
+  type UnifiedChangeOrder,
+} from "@/features/change-orders/change-orders-table-config";
 
-type ChangeOrderRow = Database["public"]["Tables"]["change_orders"]["Row"];
-type PrimeContractChangeOrderRow =
-  Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
-type ContractChangeOrderRow =
-  Database["public"]["Tables"]["contract_change_orders"]["Row"];
-
-// Unified change order type that can represent data from any of the three tables
-type UnifiedChangeOrder =
-  | (ChangeOrderRow & {
-      contractType: "general";
-      normalizedNumber: string | null;
-      normalizedTitle: string | null;
-      normalizedDescription: string | null;
-      normalizedStatus: string | null;
-      normalizedAmount: number | null;
-      normalizedCreatedAt: string | null;
-      normalizedDueDate: string | null;
-    })
-  | (Omit<PrimeContractChangeOrderRow, "contracts"> & {
-      contractType: "prime";
-      normalizedNumber: string | null;
-      normalizedTitle: string;
-      normalizedDescription: null;
-      normalizedStatus: string | null;
-      normalizedAmount: number | null;
-      normalizedCreatedAt: string | null;
-      normalizedDueDate: null;
-    })
-  | (Omit<ContractChangeOrderRow, "prime_contracts"> & {
-      contractType: "commitment";
-      normalizedNumber: string;
-      normalizedTitle: null;
-      normalizedDescription: string;
-      normalizedStatus: string;
-      normalizedAmount: number;
-      normalizedCreatedAt: string;
-      normalizedDueDate: null;
-    });
+import { PageActions } from "./page-actions";
 
 interface ChangeOrdersClientProps {
   projectId: string;
   changeOrders: UnifiedChangeOrder[];
 }
 
+type ChangeOrderFilterState = Record<string, FilterValue>;
+
+const EMPTY_FILTERS: ChangeOrderFilterState = {
+  status: undefined,
+  contractType: undefined,
+  reviewer: undefined,
+};
+
+function matchesStatusFilter(order: UnifiedChangeOrder, status: string): boolean {
+  const normalized = (order.normalizedStatus ?? "").toLowerCase();
+
+  if (status === "pending") {
+    return normalized === "pending" || normalized === "submitted";
+  }
+  if (status === "approved") {
+    return normalized === "approved";
+  }
+  return normalized === status;
+}
+
 export function ChangeOrdersClient({
   projectId,
   changeOrders,
-}: ChangeOrdersClientProps) {
-  const router = useRouter();
+}: ChangeOrdersClientProps): ReactElement {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState(searchParams.get("status") || "all");
-  const [contractTypeTab, setContractTypeTab] = useState(
-    searchParams.get("contractType") || "all"
-  );
+  const initialStatus = searchParams.get("status") ?? "";
+  const initialContractType = searchParams.get("contractType") ?? "";
+  const initialReviewer = searchParams.get("reviewer") ?? "";
+  const initialFilters: ChangeOrderFilterState = {
+    status: initialStatus || undefined,
+    contractType: initialContractType || undefined,
+    reviewer: initialReviewer || undefined,
+  };
 
-  // Filter state
-  const [searchText, setSearchText] = useState("");
-  const [reviewerFilter, setReviewerFilter] = useState("all");
-  const [dueDateFrom, setDueDateFrom] = useState<string>("");
-  const [dueDateTo, setDueDateTo] = useState<string>("");
+  const tableState = useUnifiedTableState({
+    entityKey: "change-orders",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "created_at",
+      sortDirection: "desc",
+      visibleColumns: changeOrderDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
 
-  // Update URL when tab changes
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    if (activeTab === "all") {
-      params.delete("status");
-    } else {
-      params.set("status", activeTab);
-    }
-    if (contractTypeTab === "all") {
-      params.delete("contractType");
-    } else {
-      params.set("contractType", contractTypeTab);
-    }
-    const newUrl = params.toString() ? `${pathname}?${params}` : pathname;
-    router.push(newUrl, { scroll: false });
-  }, [activeTab, contractTypeTab, pathname, router, searchParams]);
+  React.useEffect(() => {
+    const nextStatus = searchParams.get("status") ?? "";
+    const nextContractType = searchParams.get("contractType") ?? "";
+    const nextReviewer = searchParams.get("reviewer") ?? "";
 
-  // Get unique reviewers for filter dropdown
-  const uniqueReviewers = useMemo(() => {
+    tableState.setActiveFilters((prev) => {
+      const normalizedStatus = nextStatus || undefined;
+      const normalizedContractType = nextContractType || undefined;
+      const normalizedReviewer = nextReviewer || undefined;
+
+      if (
+        prev.status === normalizedStatus &&
+        prev.contractType === normalizedContractType &&
+        prev.reviewer === normalizedReviewer
+      ) {
+        return prev;
+      }
+
+      return {
+        status: normalizedStatus,
+        contractType: normalizedContractType,
+        reviewer: normalizedReviewer,
+      };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  const activeFilters = tableState.activeFilters as ChangeOrderFilterState;
+
+  const reviewerOptions = React.useMemo(() => {
     const reviewers = changeOrders
-      .filter((co) => co.contractType === "general") // Only general change orders have reviewers
-      .map((co) => {
-        if (co.contractType === "general") {
-          return co.designated_reviewer_id;
-        }
-        return null;
-      })
-      .filter((id): id is string => !!id);
-    return Array.from(new Set(reviewers));
+      .filter((order) => order.contractType === "general")
+      .map((order) =>
+        order.contractType === "general" ? order.designated_reviewer_id : null,
+      )
+      .filter((reviewer): reviewer is string => Boolean(reviewer));
+
+    return Array.from(new Set(reviewers)).map((reviewer) => ({
+      value: reviewer,
+      label: reviewer,
+    }));
   }, [changeOrders]);
 
-  // Filter data based on active tab and additional filters
-  const filteredChangeOrders = useMemo(() => {
-    let result = changeOrders;
+  const filters = React.useMemo(
+    () => buildChangeOrderFilters(reviewerOptions),
+    [reviewerOptions],
+  );
 
-    // Contract type filter
-    if (contractTypeTab !== "all") {
-      result = result.filter((co) => co.contractType === contractTypeTab);
-    }
+  const filteredItems = React.useMemo(() => {
+    const statusFilter =
+      typeof activeFilters.status === "string" ? activeFilters.status.toLowerCase() : "";
+    const contractTypeFilter =
+      typeof activeFilters.contractType === "string"
+        ? activeFilters.contractType.toLowerCase()
+        : "";
+    const reviewerFilter =
+      typeof activeFilters.reviewer === "string" ? activeFilters.reviewer : "";
+    const searchValue = tableState.debouncedSearch.trim().toLowerCase();
 
-    // Status tab filter
-    if (activeTab !== "all") {
-      result = result.filter((co) => {
-        const status = co.normalizedStatus;
-        if (!status) return false;
-        if (activeTab === "pending") {
-          return status === "pending" || status === "submitted";
-        }
-        if (activeTab === "approved") {
-          return status === "approved" || status === "executed";
-        }
-        return status === activeTab;
-      });
-    }
-
-    // Text search filter
-    if (searchText.trim()) {
-      const search = searchText.toLowerCase();
-      result = result.filter((co) => {
-        return (
-          co.normalizedNumber?.toLowerCase().includes(search) ||
-          co.normalizedTitle?.toLowerCase().includes(search) ||
-          co.normalizedDescription?.toLowerCase().includes(search)
-        );
-      });
-    }
-
-    // Reviewer filter (only applies to general change orders)
-    if (reviewerFilter !== "all") {
-      result = result.filter((co) => {
-        if (co.contractType === "general") {
-          return co.designated_reviewer_id === reviewerFilter;
-        }
+    return changeOrders.filter((order) => {
+      if (contractTypeFilter && order.contractType !== contractTypeFilter) {
         return false;
-      });
-    }
+      }
 
-    // Due date range filter (only general change orders have due dates)
-    if (dueDateFrom) {
-      result = result.filter((co) => {
-        if (!co.normalizedDueDate) return false;
-        return new Date(co.normalizedDueDate) >= new Date(dueDateFrom);
-      });
-    }
-    if (dueDateTo) {
-      result = result.filter((co) => {
-        if (!co.normalizedDueDate) return false;
-        return new Date(co.normalizedDueDate) <= new Date(dueDateTo);
-      });
-    }
+      if (statusFilter && !matchesStatusFilter(order, statusFilter)) {
+        return false;
+      }
 
-    return result;
+      if (reviewerFilter) {
+        const orderReviewer =
+          order.contractType === "general" ? order.designated_reviewer_id : null;
+        if (orderReviewer !== reviewerFilter) {
+          return false;
+        }
+      }
+
+      if (!searchValue) {
+        return true;
+      }
+
+      return (
+        (order.normalizedNumber ?? "").toLowerCase().includes(searchValue) ||
+        (order.normalizedTitle ?? "").toLowerCase().includes(searchValue) ||
+        (order.normalizedDescription ?? "").toLowerCase().includes(searchValue)
+      );
+    });
   }, [
+    activeFilters.contractType,
+    activeFilters.reviewer,
+    activeFilters.status,
     changeOrders,
-    contractTypeTab,
-    activeTab,
-    searchText,
-    reviewerFilter,
-    dueDateFrom,
-    dueDateTo,
+    tableState.debouncedSearch,
   ]);
 
-  // Calculate status counts based on current contract type filter
-  const statusCounts = useMemo(() => {
-    const dataToCount =
-      contractTypeTab === "all"
-        ? changeOrders
-        : changeOrders.filter((co) => co.contractType === contractTypeTab);
+  const statusCounts = React.useMemo(() => {
+    const contractTypeFilter =
+      typeof activeFilters.contractType === "string"
+        ? activeFilters.contractType.toLowerCase()
+        : "";
+    const dataset = contractTypeFilter
+      ? changeOrders.filter((order) => order.contractType === contractTypeFilter)
+      : changeOrders;
 
-    return dataToCount.reduce(
-      (acc, co) => {
-        const status = co.normalizedStatus;
+    return dataset.reduce(
+      (acc, order) => {
+        const status = (order.normalizedStatus ?? "").toLowerCase();
 
-        switch (status) {
-          case "pending":
-          case "submitted":
-            acc.pending++;
-            break;
-          case "approved":
-            acc.approved++;
-            break;
-          case "executed":
-            acc.executed++;
-            break;
-          case "rejected":
-            acc.rejected++;
-            break;
-          case "draft":
-            acc.draft++;
-            break;
-        }
+        if (status === "draft") acc.draft += 1;
+        if (status === "pending" || status === "submitted") acc.pending += 1;
+        if (status === "approved") acc.approved += 1;
+        if (status === "rejected") acc.rejected += 1;
+        if (status === "executed") acc.executed += 1;
 
-        acc.total++;
-
+        acc.total += 1;
         return acc;
       },
       {
+        total: 0,
+        draft: 0,
         pending: 0,
         approved: 0,
-        executed: 0,
         rejected: 0,
-        draft: 0,
-        total: 0,
-      }
+        executed: 0,
+      },
     );
-  }, [changeOrders, contractTypeTab]);
+  }, [activeFilters.contractType, changeOrders]);
 
-  const config: GenericTableConfig = {
-    searchFields: ["co_number", "title", "description"],
-    exportFilename: "change-orders-export.csv",
-    editConfig: {
-      tableName: "change_orders",
-      editableFields: [
-        "co_number",
-        "title",
-        "description",
-        "status",
-        "amount",
-      ],
-    },
-    rowClickPath: `/${projectId}/change-orders/{id}`,
-    requireDeleteConfirmation: true,
-    columns: [
-      {
-        id: "co_number",
-        label: "Number",
-        defaultVisible: true,
-        type: "text",
-      },
-      {
-        id: "title",
-        label: "Title",
-        defaultVisible: true,
-        type: "text",
-      },
-      {
-        id: "description",
-        label: "Description",
-        defaultVisible: true,
-        type: "text",
-        renderConfig: {
-          type: "truncate",
-          maxLength: 50,
-        },
-      },
-      {
-        id: "status",
-        label: "Status",
-        defaultVisible: true,
-        type: "badge",
-        renderConfig: {
-          type: "badge",
-          variantMap: {
-            approved: "default",
-            pending: "secondary",
-            draft: "outline",
-            executed: "default",
-            rejected: "destructive",
-            void: "destructive",
-          },
-          defaultVariant: "outline",
-        },
-      },
-      {
-        id: "amount",
-        label: "Amount",
-        defaultVisible: true,
-        type: "number",
-        renderConfig: {
-          type: "currency",
-          prefix: "$",
-          showDecimals: true,
-        },
-      },
-      {
-        id: "submitted_at",
-        label: "Date Initiated",
-        defaultVisible: true,
-        type: "date",
-      },
-      {
-        id: "designated_reviewer_id",
-        label: "Designated Reviewer",
-        defaultVisible: true,
-        type: "text",
-        renderConfig: {
-          type: "truncate",
-          maxLength: 20,
-        },
-      },
-      {
-        id: "approved_at",
-        label: "Review Date",
-        defaultVisible: true,
-        type: "date",
-      },
-      {
-        id: "due_date",
-        label: "Due Date",
-        defaultVisible: false,
-        type: "date",
-      },
-      {
-        id: "created_at",
-        label: "Created",
-        defaultVisible: false,
-        type: "date",
-      },
-    ],
-    filters: [
-      {
-        id: "status",
-        label: "Status",
-        field: "status",
-        options: [
-          { value: "draft", label: "Draft" },
-          { value: "pending", label: "Pending" },
-          { value: "approved", label: "Approved" },
-          { value: "executed", label: "Executed" },
-          { value: "rejected", label: "Rejected" },
-          { value: "void", label: "Void" },
-        ],
-      },
-    ],
+  const currentStatusParam = searchParams.get("status") ?? "";
+  const currentContractTypeParam =
+    searchParams.get("contractType") ??
+    (typeof activeFilters.contractType === "string" ? activeFilters.contractType : "");
+
+  const buildStatusHref = (status?: string): string => {
+    const params = new URLSearchParams();
+
+    if (status) {
+      params.set("status", status);
+    }
+    if (currentContractTypeParam) {
+      params.set("contractType", currentContractTypeParam);
+    }
+
+    const query = params.toString();
+    return query ? `/${projectId}/change-orders?${query}` : `/${projectId}/change-orders`;
   };
 
-  const handleDeleteRow = async (id: string | number) => {
+  const tabs = [
+    {
+      label: "All",
+      href: buildStatusHref(),
+      count: statusCounts.total,
+      isActive: !currentStatusParam,
+    },
+    {
+      label: "Draft",
+      href: buildStatusHref("draft"),
+      count: statusCounts.draft,
+      isActive: currentStatusParam === "draft",
+    },
+    {
+      label: "Pending",
+      href: buildStatusHref("pending"),
+      count: statusCounts.pending,
+      isActive: currentStatusParam === "pending",
+    },
+    {
+      label: "Approved",
+      href: buildStatusHref("approved"),
+      count: statusCounts.approved,
+      isActive: currentStatusParam === "approved",
+    },
+    {
+      label: "Rejected",
+      href: buildStatusHref("rejected"),
+      count: statusCounts.rejected,
+      isActive: currentStatusParam === "rejected",
+    },
+    {
+      label: "Executed",
+      href: buildStatusHref("executed"),
+      count: statusCounts.executed,
+      isActive: currentStatusParam === "executed",
+    },
+  ];
+
+  const tableColumns = React.useMemo(() => buildChangeOrderTableColumns(), []);
+
+  const handleFilterChange = (nextFilters: ChangeOrderFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      contractType:
+        typeof nextFilters.contractType === "string" ? nextFilters.contractType : null,
+      reviewer: typeof nextFilters.reviewer === "string" ? nextFilters.reviewer : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const handleView = (order: UnifiedChangeOrder) => {
+    router.push(`/${projectId}/change-orders/${order.id}`);
+  };
+
+  const handleEdit = (order: UnifiedChangeOrder) => {
+    router.push(`/${projectId}/change-orders/${order.id}/edit`);
+  };
+
+  const handleDelete = async (order: UnifiedChangeOrder) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/change-orders/${id}`, {
+      const response = await fetch(`/api/projects/${projectId}/change-orders/${order.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         toast.error(errorData.error || "Failed to delete change order");
-        return { error: errorData.error || "Failed to delete change order" };
+        return;
       }
 
-      toast.success("Change order deleted successfully");
+      toast.success("Change order deleted");
       router.refresh();
-      return {};
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       toast.error(message);
-      return { error: message };
     }
   };
 
-
-  // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (searchText.trim()) count++;
-    if (reviewerFilter !== "all") count++;
-    if (dueDateFrom) count++;
-    if (dueDateTo) count++;
-    return count;
-  }, [searchText, reviewerFilter, dueDateFrom, dueDateTo]);
-
-  // Clear all filters
-  const handleClearFilters = () => {
-    setSearchText("");
-    setReviewerFilter("all");
-    setDueDateFrom("");
-    setDueDateTo("");
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(filteredItems.map((item) => String(item.id)));
+      return;
+    }
+    tableState.setSelectedIds([]);
   };
 
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+      return;
+    }
+    tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+  };
+
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.contractType) ||
+    Boolean(activeFilters.reviewer);
+
   return (
-    <div className="space-y-6">
-      {/* Filter Bar */}
-      <Card className="bg-muted/40">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Filters</h3>
-              {activeFiltersCount > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </div>
-            {activeFiltersCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearFilters}
-                className="h-7 text-xs"
-              >
-                <X className="w-3.5 h-3.5 mr-1" />
-                Clear All
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Search Input */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Number, title, description..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="pl-9 h-9"
-                />
-              </div>
-            </div>
-
-            {/* Reviewer Filter */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">Reviewer</Label>
-              <Select value={reviewerFilter} onValueChange={setReviewerFilter}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="All Reviewers" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Reviewers</SelectItem>
-                  {uniqueReviewers.map((reviewer) => (
-                    <SelectItem key={reviewer} value={reviewer}>
-                      {reviewer}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Due Date From */}
-            <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                Due Date From
-              </Label>
-              <Input
-                type="date"
-                value={dueDateFrom}
-                onChange={(e) => setDueDateFrom(e.target.value)}
-                className="h-9"
-              />
-            </div>
-
-            {/* Due Date To */}
-            <div className="space-y-1.5">
-              <Label className="text-xs flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                Due Date To
-              </Label>
-              <Input
-                type="date"
-                value={dueDateTo}
-                onChange={(e) => setDueDateTo(e.target.value)}
-                className="h-9"
-              />
-            </div>
-          </div>
-
-          {/* Active Filter Pills */}
-          {activeFiltersCount > 0 && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Active filters:
-                </span>
-                {searchText.trim() && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchText("")}
-                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
-                  >
-                    Search: {searchText}
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-                {reviewerFilter !== "all" && (
-                  <button
-                    type="button"
-                    onClick={() => setReviewerFilter("all")}
-                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
-                  >
-                    Reviewer: {reviewerFilter}
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-                {dueDateFrom && (
-                  <button
-                    type="button"
-                    onClick={() => setDueDateFrom("")}
-                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
-                  >
-                    From: {new Date(dueDateFrom).toLocaleDateString()}
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-                {dueDateTo && (
-                  <button
-                    type="button"
-                    onClick={() => setDueDateTo("")}
-                    className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700 hover:bg-blue-100"
-                  >
-                    To: {new Date(dueDateTo).toLocaleDateString()}
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Contract Type Tabs */}
-      <div className="space-y-4">
-        <Tabs
-          value={contractTypeTab}
-          onValueChange={setContractTypeTab}
-          className="space-y-4"
-        >
-          <div className="border-b">
-            <TabsList className="bg-transparent border-0">
-              <TabsTrigger
-                value="all"
-                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
-              >
-                All (
-                {changeOrders.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="prime"
-                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
-              >
-                Prime Contract (
-                {changeOrders.filter((co) => co.contractType === "prime").length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="commitment"
-                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
-              >
-                Commitments (
-                {
-                  changeOrders.filter((co) => co.contractType === "commitment")
-                    .length
-                }
-                )
-              </TabsTrigger>
-              <TabsTrigger
-                value="general"
-                className="border-b-2 border-transparent data-[state=active]:border-primary rounded-none"
-              >
-                General (
-                {changeOrders.filter((co) => co.contractType === "general").length})
-              </TabsTrigger>
-            </TabsList>
-          </div>
-        </Tabs>
-
-        {/* Status Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="all">
-              All ({statusCounts.total})
-            </TabsTrigger>
-            <TabsTrigger value="draft">Draft ({statusCounts.draft})</TabsTrigger>
-            <TabsTrigger value="pending">
-              Pending ({statusCounts.pending})
-            </TabsTrigger>
-            <TabsTrigger value="approved">
-              Approved ({statusCounts.approved})
-            </TabsTrigger>
-            <TabsTrigger value="rejected">
-              Rejected ({statusCounts.rejected})
-            </TabsTrigger>
-            <TabsTrigger value="executed">
-              Executed ({statusCounts.executed})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={activeTab} className="space-y-4">
-            <GenericDataTable
-              data={filteredChangeOrders}
-              config={config}
-              onDeleteRow={handleDeleteRow}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+    <UnifiedTablePage
+      header={{
+        title: "Change Orders",
+        description: "Track and manage contract change orders",
+        actions: <PageActions projectId={projectId} />,
+      }}
+      tabs={tabs}
+      toolbar={{
+        totalItems: changeOrders.length,
+        filteredItems: filteredItems.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search change orders...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
+        filters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns: changeOrderColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredItems,
+        isLoading: false,
+        isFetching: false,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => String(item.id),
+        onRowClick: handleView,
+        rowActions: (item) =>
+          renderChangeOrderRowActions(item, handleView, handleEdit, handleDelete),
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+          });
+        },
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
+      }}
+      views={{
+        card: (item) => renderChangeOrderCard(item, handleView),
+        list: (item) => renderChangeOrderList(item, handleView),
+      }}
+      emptyState={{
+        title: "No change orders found",
+        description: "No change orders are available for this project yet.",
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered,
+      }}
+      features={{
+        enableExport: false,
+        enableBulkDelete: false,
+      }}
+    />
   );
 }

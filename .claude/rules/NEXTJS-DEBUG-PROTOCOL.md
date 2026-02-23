@@ -21,11 +21,11 @@ pkill -f "next dev"
 sleep 2
 npm run dev > /tmp/nextjs-dev.log 2>&1 &
 sleep 10
-```bash
+```
 Then verify the server started:
 ```bash
 tail -20 /tmp/nextjs-dev.log
-```markdown
+```
 ## Phase 2: Verify Route Exists
 
 **BEFORE using Playwright**, verify the route is compiled:
@@ -36,7 +36,7 @@ ls -la src/app/\(main\)/\[projectId\]/[FEATURE]/page.tsx
 
 # Check server logs for compilation
 grep "Compiled /\[projectId\]/[FEATURE]" /tmp/nextjs-dev.log
-```markdown
+```
 ## Phase 3: Browser Test
 
 **NOW** use Playwright to navigate:

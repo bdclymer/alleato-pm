@@ -13,7 +13,7 @@ mode: standard
 # My Plugin Configuration
 
 Plugin is active in standard mode.
-```yaml
+```
 ## Template: Advanced Configuration
 
 **.claude/my-plugin.local.md:**
@@ -43,7 +43,7 @@ This project uses custom plugin configuration with:
 ## Additional Notes
 
 Contact @team-lead with questions about this configuration.
-```yaml
+```
 ## Template: Agent State File
 
 **.claude/multi-agent-swarm.local.md:**
@@ -84,7 +84,7 @@ Depends on:
 - Task 4.1: Data model design
 
 Report status to coordinator session 'team-leader'.
-```yaml
+```
 ## Template: Feature Flag Pattern
 
 **.claude/experimental-features.local.md:**
@@ -128,7 +128,7 @@ if [[ "$ENABLED" == "true" ]]; then
   # Hook is active
   # ...
 fi
-```markdown
+```
 ## Gitignore
 
 Always add to project `.gitignore`:
@@ -142,7 +142,7 @@ Always add to project `.gitignore`:
 
 Users can edit settings files manually:
 
-```bash
+```
 # Edit settings
 vim .claude/my-plugin.local.md
 

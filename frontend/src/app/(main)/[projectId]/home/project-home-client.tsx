@@ -128,7 +128,6 @@ const toolCategories = [
     title: "Project Management",
     tools: [
       { name: "Meetings", href: "/meetings", icon: Calendar },
-      { name: "Tasks", href: "/tasks", icon: CheckSquare },
       { name: "Schedule", href: "/schedule", icon: Calendar },
       { name: "Daily Logs", href: "/daily-logs", icon: ClipboardList },
     ],
@@ -482,7 +481,7 @@ export function ProjectHomeClient({
                 subtitle: task.due_date
                   ? `Due ${format(new Date(task.due_date), "MMM d, yyyy")}`
                   : undefined,
-                href: `/${project.id}/tasks/${task.id}`,
+                href: `/${project.id}/schedule`,
               }))}
               viewAllHref={`/${project.id}/schedule`}
               emptyMessage="No tasks scheduled"

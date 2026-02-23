@@ -20,7 +20,7 @@ This plugin provides a complete testing system for all forms in the application 
 
 # Test single form
 /test-forms create-project
-```markdown
+```
 ## Features
 
 - ✅ **28+ Forms Cataloged** - Complete inventory with metadata
@@ -46,7 +46,7 @@ This plugin provides a complete testing system for all forms in the application 
     ├── TEST_PLAN_TEMPLATE.md          # Test plan structure
     └── ERROR_REPORT_TEMPLATE.md       # Error documentation format
 
-```markdown
+```
 ## The 6-Phase Workflow
 
 ### Phase 1: Scope & Planning
@@ -118,7 +118,7 @@ documentation/forms/
             ├── create-project-submitted.png
             └── ...
 
-```markdown
+```
 ## Test Helper Utilities
 
 ### Core Form Testing (`frontend/tests/helpers/form-testing.ts`)
@@ -203,14 +203,14 @@ The workflow is integrated with GitHub Actions:
 ### Test All Forms
 ```bash
 /test-forms all
-```text
+```
 Runs comprehensive tests on all 28 forms. Estimated time: 30-45 minutes.
 
 ### Test High Priority Forms Only
 
 ```bash
 /test-forms high-priority
-```text
+```
 Tests only critical user flows (16 forms). Estimated time: 15-20 minutes.
 
 ### Test Specific Form Type
@@ -227,11 +227,11 @@ Tests only critical user flows (16 forms). Estimated time: 15-20 minutes.
 /test-forms create-project
 /test-forms contact-dialog
 /test-forms budget-line-item
-```markdown
+```
 ### Retest Failed Forms
 ```bash
 /test-forms @failed
-```text
+```
 Loads forms marked as "fail" from last test report.
 
 ## Adding New Forms
@@ -254,7 +254,7 @@ npm run quality --prefix frontend
 
 # Re-run tests
 /test-forms all
-```markdown
+```
 ### Migrate Existing Tests
 Follow the migration strategy in the plan:
 1. Extract test data to `form-test-configs.ts`

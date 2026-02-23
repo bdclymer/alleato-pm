@@ -30,7 +30,7 @@ Use LLM-driven decision making for context-aware validation:
   "prompt": "Evaluate if this tool use is appropriate: $TOOL_INPUT",
   "timeout": 30
 }
-```bash
+```
 **Supported events:** Stop, SubagentStop, UserPromptSubmit, PreToolUse
 
 **Benefits:**
@@ -49,7 +49,7 @@ Execute bash commands for deterministic checks:
   "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate.sh",
   "timeout": 60
 }
-```bash
+```
 **Use for:**
 
 - Fast deterministic validations
@@ -72,7 +72,7 @@ Execute bash commands for deterministic checks:
     "SessionStart": [...]
   }
 }
-```bash
+```
 **Key points:**
 - `description` field is optional
 - `hooks` field is required wrapper containing actual hook events
@@ -108,7 +108,7 @@ Execute bash commands for deterministic checks:
   "Stop": [...],
   "SessionStart": [...]
 }
-```diff
+```
 **Key points:**
 - No wrapper - events directly at top level
 - No description field
@@ -137,7 +137,7 @@ Execute before any tool runs. Use to approve, deny, or modify tool calls.
     }
   ]
 }
-```text
+```
 **Output for PreToolUse:**
 
 ```json
@@ -148,7 +148,7 @@ Execute before any tool runs. Use to approve, deny, or modify tool calls.
   },
   "systemMessage": "Explanation for Claude"
 }
-```markdown
+```
 ### PostToolUse
 
 Execute after tool completes. Use to react to results, provide feedback, or log.
@@ -196,7 +196,7 @@ Execute when main agent considers stopping. Use to validate completeness.
     }
   ]
 }
-```text
+```
 **Decision output:**
 ```json
 {
@@ -204,7 +204,7 @@ Execute when main agent considers stopping. Use to validate completeness.
   "reason": "Explanation",
   "systemMessage": "Additional context"
 }
-```bash
+```
 ### SubagentStop
 
 Execute when subagent considers stopping. Use to ensure subagent completed its task.
@@ -231,7 +231,7 @@ Execute when user submits a prompt. Use to add context, validate, or block promp
     }
   ]
 }
-```bash
+```
 ### SessionStart
 
 Execute when Claude Code session begins. Use to load context and set environment.
@@ -257,7 +257,7 @@ Execute when Claude Code session begins. Use to load context and set environment
 
 ```bash
 echo "export PROJECT_TYPE=nodejs" >> "$CLAUDE_ENV_FILE"
-```text
+```
 See `examples/load-context.sh` for complete example.
 
 ### SessionEnd
@@ -282,7 +282,7 @@ Execute when Claude sends notifications. Use to react to user notifications.
   "suppressOutput": false,
   "systemMessage": "Message for Claude"
 }
-```bash
+```
 - `continue`: If false, halt processing (default true)
 - `suppressOutput`: Hide output from transcript (default false)
 - `systemMessage`: Message shown to Claude
@@ -305,7 +305,7 @@ All hooks receive JSON via stdin with common fields:
   "permission_mode": "ask|allow",
   "hook_event_name": "PreToolUse"
 }
-```bash
+```
 **Event-specific fields:**
 
 - **PreToolUse/PostToolUse:** `tool_name`, `tool_input`, `tool_result`
@@ -373,7 +373,7 @@ In plugins, define hooks in `hooks/hooks.json`:
     }
   ]
 }
-```text
+```
 Plugin hooks merge with user's hooks and run in parallel.
 
 ## Matchers
@@ -383,12 +383,12 @@ Plugin hooks merge with user's hooks and run in parallel.
 **Exact match:**
 ```json
 "matcher": "Write"
-```text
+```
 **Multiple tools:**
 
 ```json
 "matcher": "Read|Write|Edit"
-```text
+```
 **Wildcard (all tools):**
 ```json
 "matcher": "*"
@@ -398,7 +398,7 @@ Plugin hooks merge with user's hooks and run in parallel.
 
 ```json
 "matcher": "mcp__.*__delete.*"  // All MCP delete tools
-```text
+```
 **Note:** Matchers are case-sensitive.
 
 ### Common Patterns
@@ -415,7 +415,7 @@ Plugin hooks merge with user's hooks and run in parallel.
 
 // Bash commands only
 "matcher": "Bash"
-```bash
+```
 ## Security Best Practices
 
 ### Input Validation
@@ -434,7 +434,7 @@ if [[ ! "$tool_name" =~ ^[a-zA-Z0-9_]+$ ]]; then
   echo '{"decision": "deny", "reason": "Invalid tool name"}' >&2
   exit 2
 fi
-```bash
+```
 ### Path Safety
 
 Check for path traversal and sensitive files:
@@ -467,7 +467,7 @@ cd "$CLAUDE_PROJECT_DIR"
 # BAD: Unquoted (injection risk)
 echo $file_path
 cd $CLAUDE_PROJECT_DIR
-```markdown
+```
 ### Set Appropriate Timeouts
 
 ```json
@@ -476,7 +476,7 @@ cd $CLAUDE_PROJECT_DIR
   "command": "bash script.sh",
   "timeout": 10
 }
-```bash
+```
 **Defaults:** Command hooks (60s), Prompt hooks (30s)
 
 ## Performance Considerations
@@ -498,7 +498,7 @@ All matching hooks run **in parallel**:
     }
   ]
 }
-```bash
+```
 **Design implications:**
 - Hooks don't see each other's output
 - Non-deterministic ordering
@@ -548,7 +548,7 @@ fi
 # Enabled, run hook logic
 input=$(cat)
 # ... hook logic ...
-```diff
+```
 **Use cases:**
 - Enable strict validation only when needed
 - Temporary debugging hooks
@@ -591,7 +591,7 @@ Use `/hooks` command to review loaded hooks in current session.
 
 ```bash
 claude --debug
-```bash
+```
 Look for hook registration, execution logs, input/output JSON, and timing information.
 
 ### Test Hook Scripts
@@ -603,7 +603,7 @@ echo '{"tool_name": "Write", "tool_input": {"file_path": "/test"}}' | \
   bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate.sh
 
 echo "Exit code: $?"
-```bash
+```
 ### Validate JSON Output
 
 Ensure hooks output valid JSON:

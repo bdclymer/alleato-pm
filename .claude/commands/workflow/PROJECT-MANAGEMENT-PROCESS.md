@@ -72,7 +72,7 @@ When a task is assigned:
    ```bash
    cd frontend
    npx playwright test tests/e2e/<feature>*.spec.ts --reporter=html
-   ```text
+   ```
 3. **Capture evidence** (ALL REQUIRED):
    - Terminal output showing pass/fail counts
    - HTML report: `frontend/playwright-report/index.html`
@@ -132,7 +132,7 @@ Verifier writes report to:
     ↓
 IF PASS → Main agent logs completion
 IF FAIL → Main agent FIXES issues and re-verifies
-```diff
+```
 **Skeptical Verifier Mindset:**
 
 - Assume worker LIED about "it works"
@@ -191,7 +191,7 @@ while (verification status !== PASS) {
 ├── task-log.md                  # Historical log
 ├── tasks/[id].md                # Task definitions
 └── worker-done-[id].md          # Worker completion signals
-```markdown
+```
 ### Documentation (Permanent)
 
 ```text
@@ -360,7 +360,7 @@ npm run quality --prefix frontend
 npx playwright test [relevant-test-file]
 
 # Confirm zero errors
-```markdown
+```
 ### Step 4: Re-Run Verification
 - Spawn verifier agent AGAIN
 - Provide same requirements
@@ -422,7 +422,7 @@ npm run quality --prefix frontend
 
 # Auto-fix what's possible
 npm run quality:fix --prefix frontend
-```yaml
+```
 ### Testing
 
 ```bash
@@ -434,7 +434,7 @@ npx playwright test [file] --workers=1
 
 # Run with output
 npx playwright test [file] --reporter=line
-```yaml
+```
 ### Verification
 ```bash
 # Spawn verifier agent (via Task tool in conversation)
@@ -461,14 +461,14 @@ Location: `documentation/*project-mgmt/templates/verification.md`
 - Task: [Task description]
 
 ## Quality Check Results
-```text
+```
 [Actual command output]
 ```text
 Status: PASS / FAIL
 
 ## Test Results
 
-```text
+```
 [Actual test output]
 ```
 
@@ -490,7 +490,7 @@ Status: PASS (100%) / FAIL
 
 [List or "None"]
 
-```markdown
+```
 ### Task Log Entry Template
 ```markdown
 ## [Task Name] - COMPLETE ✓
@@ -502,7 +502,7 @@ Status: PASS (100%) / FAIL
 
 ### Files Changed
 1. [file path] - [what changed]
-```diff
+```
 ---
 
 ## 🎓 Training Examples

@@ -1,0 +1,239 @@
+import * as React from "react";
+import type { ReactElement } from "react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+
+import type {
+  ColumnConfig,
+  FilterConfig,
+  TableColumn,
+} from "@/components/tables/unified";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { ChangeEvent } from "@/hooks/use-change-events";
+
+type BadgeVariant = "default" | "secondary" | "outline" | "destructive" | "success";
+
+const STATUS_FILTER_OPTIONS = [
+  { value: "open", label: "Open" },
+  { value: "pending", label: "Pending" },
+  { value: "pending_approval", label: "Pending Approval" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
+  { value: "closed", label: "Closed" },
+];
+
+const SCOPE_FILTER_OPTIONS = [
+  { value: "tbd", label: "TBD" },
+  { value: "in_scope", label: "In Scope" },
+  { value: "out_of_scope", label: "Out of Scope" },
+];
+
+export const changeEventColumns: ColumnConfig[] = [
+  { id: "number", label: "#", alwaysVisible: true },
+  { id: "title", label: "Title", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "scope", label: "Scope", defaultVisible: true },
+  { id: "reason", label: "Change Reason", defaultVisible: true },
+  { id: "estimated_impact", label: "Estimated Impact", defaultVisible: true },
+  { id: "created_at", label: "Created", defaultVisible: true },
+];
+
+export const changeEventFilters: FilterConfig[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: STATUS_FILTER_OPTIONS,
+  },
+  {
+    id: "scope",
+    label: "Scope",
+    type: "select",
+    options: SCOPE_FILTER_OPTIONS,
+  },
+];
+
+export const changeEventDefaultVisibleColumns = changeEventColumns
+  .filter((column) => column.defaultVisible !== false)
+  .map((column) => column.id);
+
+function statusVariant(status: string | null | undefined): BadgeVariant {
+  switch ((status ?? "").toLowerCase()) {
+    case "approved":
+      return "success";
+    case "pending":
+    case "pending_approval":
+      return "secondary";
+    case "rejected":
+      return "destructive";
+    case "closed":
+      return "outline";
+    case "open":
+    default:
+      return "default";
+  }
+}
+
+function statusLabel(status: string | null | undefined): string {
+  switch ((status ?? "").toLowerCase()) {
+    case "pending_approval":
+      return "Pending Approval";
+    case "open":
+      return "Open";
+    case "approved":
+      return "Approved";
+    case "rejected":
+      return "Rejected";
+    case "closed":
+      return "Closed";
+    default:
+      return status || "-";
+  }
+}
+
+function scopeLabel(scope: string | null | undefined): string {
+  switch ((scope ?? "").toLowerCase()) {
+    case "tbd":
+      return "TBD";
+    case "in_scope":
+      return "In Scope";
+    case "out_of_scope":
+      return "Out of Scope";
+    default:
+      return scope || "-";
+  }
+}
+
+function formatDate(dateValue: string | null | undefined): string {
+  if (!dateValue) return "-";
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString();
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "-";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
+  return [
+    {
+      ...changeEventColumns[0],
+      render: (item) => <span className="font-mono text-sm">{item.number || `CE-${item.id}`}</span>,
+      sortValue: (item) => item.number ?? `CE-${item.id}`,
+    },
+    {
+      ...changeEventColumns[1],
+      render: (item) => <span className="font-medium">{item.title}</span>,
+      sortValue: (item) => item.title,
+    },
+    {
+      ...changeEventColumns[2],
+      render: (item) => <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>,
+      sortValue: (item) => item.status ?? "",
+    },
+    {
+      ...changeEventColumns[3],
+      render: (item) => <span>{scopeLabel(item.scope)}</span>,
+      sortValue: (item) => scopeLabel(item.scope),
+    },
+    {
+      ...changeEventColumns[4],
+      render: (item) => <span className="line-clamp-1">{item.reason || "-"}</span>,
+      sortValue: (item) => item.reason ?? "",
+    },
+    {
+      ...changeEventColumns[5],
+      render: (item) => <span>{formatCurrency(item.estimated_impact)}</span>,
+      sortValue: (item) => item.estimated_impact ?? 0,
+    },
+    {
+      ...changeEventColumns[6],
+      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+    },
+  ];
+}
+
+export function renderChangeEventRowActions(
+  item: ChangeEvent,
+  onView: (item: ChangeEvent) => void,
+  onEdit: (item: ChangeEvent) => void,
+  onDelete: (item: ChangeEvent) => void,
+): ReactElement {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onView(item)}>
+          <Eye className="mr-2 h-4 w-4" />
+          View
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(item)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function renderChangeEventCard(
+  item: ChangeEvent,
+  onClick: (item: ChangeEvent) => void,
+): ReactElement {
+  return (
+    <div
+      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+      onClick={() => onClick(item)}
+    >
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase text-muted-foreground">{item.number || `CE-${item.id}`}</p>
+          <h3 className="font-medium">{item.title || "Untitled Change Event"}</h3>
+        </div>
+        <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
+      </div>
+      <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Estimated Impact: {formatCurrency(item.estimated_impact)}
+      </p>
+    </div>
+  );
+}
+
+export function renderChangeEventList(
+  item: ChangeEvent,
+  onClick: (item: ChangeEvent) => void,
+): ReactElement {
+  return (
+    <div
+      className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-muted/50"
+      onClick={() => onClick(item)}
+    >
+      <div>
+        <p className="text-sm font-medium">{item.number || `CE-${item.id}`}</p>
+        <p className="text-xs text-muted-foreground">{item.title || "Untitled Change Event"}</p>
+      </div>
+      <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
+    </div>
+  );
+}

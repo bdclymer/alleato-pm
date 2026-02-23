@@ -94,7 +94,7 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 
 ```text
 /pr-review-toolkit:review-pr
-```text
+```
 **Specific aspects:**
 
 ```text
@@ -113,7 +113,7 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 ```text
 /pr-review-toolkit:review-pr all parallel
 # Launches all agents in parallel
-```markdown
+```
 ## Agent Descriptions:
 
 **comment-analyzer**:
@@ -180,7 +180,7 @@ Run a comprehensive pull request review using multiple specialized agents, each 
 3. Address all critical and important issues
 4. Run specific reviews again to verify
 5. Create PR
-```text
+```
 **After PR feedback:**
 
 ```text

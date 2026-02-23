@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRP: scheduling</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --text-muted: #666666;
+      --border: #e5e5e5;
+      --code-bg: #f6f8fa;
+      --accent: #0066cc;
+      --success: #22863a;
+      --warning: #b08800;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --text: #e5e5e5;
+        --text-muted: #999999;
+        --border: #333333;
+        --code-bg: #2d2d2d;
+        --accent: #58a6ff;
+        --success: #3fb950;
+        --warning: #d29922;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    nav.toc {
+      width: 280px;
+      padding: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    nav.toc h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    nav.toc a {
+      display: block;
+      padding: 6px 0;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    nav.toc a:hover {
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      padding: 48px;
+      max-width: 900px;
+      min-width: 0;
+    }
+
+    h1, h2, h3, h4 {
+      margin-top: 32px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    h1 {
+      font-size: 32px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+      margin-top: 0;
+    }
+
+    h2 {
+      font-size: 24px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 { font-size: 20px; }
+    h4 { font-size: 16px; }
+
+    p {
+      margin: 16px 0;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code.inline {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    pre code {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    details.code-block {
+      margin: 16px 0;
+    }
+
+    details.code-block summary {
+      cursor: pointer;
+      padding: 8px 12px;
+      background: var(--code-bg);
+      border-radius: 8px 8px 0 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    details.code-block[open] summary {
+      border-radius: 8px 8px 0 0;
+    }
+
+    details.code-block pre {
+      margin-top: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    ul, ol {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    li.task {
+      list-style: none;
+      margin-left: -24px;
+    }
+
+    li.task input {
+      margin-right: 8px;
+    }
+
+    li.task.done {
+      color: var(--success);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--code-bg);
+      font-weight: 600;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    figure.screenshot {
+      margin: 24px 0;
+      padding: 0;
+    }
+
+    figure.screenshot img {
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    figure.screenshot figcaption {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        flex-direction: column;
+      }
+
+      nav.toc {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      main {
+        padding: 24px;
+      }
+    }
+
+    @media print {
+      nav.toc {
+        display: none;
+      }
+
+      main {
+        padding: 0;
+        max-width: 100%;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <a href="#Scheduling Module - Product Requirement Prompt" style="padding-left: 0px">Scheduling Module - Product Requirement Prompt</a>
+<a href="#Goal" style="padding-left: 16px">Goal</a>
+<a href="#Why" style="padding-left: 16px">Why</a>
+<a href="#What" style="padding-left: 16px">What</a>
+<a href="#Pages" style="padding-left: 32px">Pages</a>
+<a href="#Database Schema" style="padding-left: 32px">Database Schema</a>
+<a href="#API Endpoints" style="padding-left: 32px">API Endpoints</a>
+<a href="#Components" style="padding-left: 32px">Components</a>
+<a href="#Domain Commands (from COMMANDS.md)" style="padding-left: 32px">Domain Commands (from COMMANDS.md)</a>
+<a href="#Success Criteria" style="padding-left: 16px">Success Criteria</a>
+<a href="#All Needed Context" style="padding-left: 16px">All Needed Context</a>
+<a href="#Documentation & References" style="padding-left: 32px">Documentation & References</a>
+<a href="#Crawl Data" style="padding-left: 0px">Crawl Data</a>
+<a href="#Codebase Patterns" style="padding-left: 0px">Codebase Patterns</a>
+<a href="#Current Codebase Structure" style="padding-left: 32px">Current Codebase Structure</a>
+<a href="#Known Gotchas" style="padding-left: 32px">Known Gotchas</a>
+<a href="#Implementation Blueprint" style="padding-left: 16px">Implementation Blueprint</a>
+<a href="#Data Models" style="padding-left: 32px">Data Models</a>
+<a href="#Implementation Tasks (ordered by dependencies)" style="padding-left: 32px">Implementation Tasks (ordered by dependencies)</a>
+<a href="#Validation Loop" style="padding-left: 16px">Validation Loop</a>
+<a href="#Level 1: Syntax & Style (Immediate)" style="padding-left: 32px">Level 1: Syntax & Style (Immediate)</a>
+<a href="#Level 2: Unit Tests" style="padding-left: 32px">Level 2: Unit Tests</a>
+<a href="#Level 3: Integration Testing" style="padding-left: 32px">Level 3: Integration Testing</a>
+<a href="#Start dev server" style="padding-left: 0px">Start dev server</a>
+<a href="#Verify page loads" style="padding-left: 0px">Verify page loads</a>
+<a href="#Verify API endpoints" style="padding-left: 0px">Verify API endpoints</a>
+<a href="#Level 4: E2E Testing" style="padding-left: 32px">Level 4: E2E Testing</a>
+<a href="#Run Playwright tests" style="padding-left: 0px">Run Playwright tests</a>
+<a href="#Final Validation Checklist" style="padding-left: 16px">Final Validation Checklist</a>
+<a href="#Technical Validation" style="padding-left: 32px">Technical Validation</a>
+<a href="#Feature Validation" style="padding-left: 32px">Feature Validation</a>
+<a href="#Code Quality" style="padding-left: 32px">Code Quality</a>
+<a href="#Anti-Patterns to Avoid" style="padding-left: 16px">Anti-Patterns to Avoid</a>
+<a href="#Procore Crawl Data Reference" style="padding-left: 16px">Procore Crawl Data Reference</a>
+<a href="#Sitemap" style="padding-left: 32px">Sitemap</a>
+<a href="#Crawl Data Files" style="padding-left: 32px">Crawl Data Files</a>
+<a href="#Screenshots" style="padding-left: 32px">Screenshots</a>
+<a href="#UI Components Detected" style="padding-left: 32px">UI Components Detected</a>
+<a href="#Confidence Assessment" style="padding-left: 16px">Confidence Assessment</a>
+    </nav>
+    <main>
+      <div class="meta">
+        Generated: 2026-01-28T05:07:30.073Z
+      </div>
+      <h1 id="Scheduling Module - Product Requirement Prompt">Scheduling Module - Product Requirement Prompt</h1>
+
+<table>
+<thead>
+<tr><th>Field</th><th>Value</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Feature</th><th>Scheduling</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Confidence Score</td><td>8/10</td></tr>
+<tr><td>Created</td><td>2026-01-27</td></tr>
+<tr><td>Source</td><td>Procore Crawl Data</td></tr>
+<p></tbody></p>
+<p></table>
+
+<hr>
+
+<h2 id="Goal">Goal</h2>
+
+<strong>Feature Goal</strong>: Implement a fully functional scheduling module that allows project managers to create, edit, and manage project tasks with dependencies, milestones, and deadlines.
+
+<strong>Deliverable</strong>: A complete scheduling page with Gantt chart visualization, task CRUD operations, dependency management, and bulk editing capabilities.
+
+<strong>Success Definition</strong>: Users can create tasks, set dependencies between them, track progress, and view the schedule in a Gantt chart format matching Procore's scheduling tool functionality.
+
+<hr>
+
+<h2 id="Why">Why</h2>
+
+<strong>Business Value</strong>: Project scheduling is a core construction management feature that enables teams to plan work sequences, track progress, and identify delays before they impact the project timeline.
+
+<strong>Integration</strong>: Integrates with project context, potentially links to daily logs, RFIs, and other project tools.
+
+<strong>Problems Solved</strong>:
+<ul>
+<li>Provides visual timeline for project activities</li>
+<li>Enables dependency tracking to identify critical path</li>
+<li>Allows progress tracking with percent complete</li>
+<li>Supports milestone tracking for key deliverables</li>
+<p></ul>
+
+<hr>
+
+<h2 id="What">What</h2>
+
+<h3 id="Pages">Pages</h3>
+<ul>
+<li><code class="inline">/[projectId]/scheduling</code> - Main scheduling page with Gantt chart and task list</li>
+<p></ul>
+
+<h3 id="Database Schema">Database Schema</h3>
+
+<p>Based on <code class="inline">schema.sql</code>:</p>
+
+<details class="code-block"><summary>Code (sql) - click to expand</summary><pre><code class="language-sql">-- Tasks table
+create table app_schedule_tasks (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null,
+  parent_task_id uuid references app_schedule_tasks(id),
+  name text not null,
+  start_date date,
+  finish_date date,
+  duration_days int,
+  percent_complete int default 0,
+  status text default &#039;not_started&#039;,
+  is_milestone boolean default false,
+  constraint_type text,
+  constraint_date date,
+  wbs_code text,
+  sort_order int,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Dependencies table
+create table app_schedule_dependencies (
+  id uuid primary key default gen_random_uuid(),
+  predecessor_task_id uuid references app_schedule_tasks(id),
+  successor_task_id uuid references app_schedule_tasks(id),
+  dependency_type text not null default &#039;FS&#039;, -- FS, SS, FF, SF
+  lag_days int default 0,
+  created_at timestamptz default now()
+);
+
+-- Deadlines table
+create table app_schedule_deadlines (
+  id uuid primary key default gen_random_uuid(),
+  task_id uuid references app_schedule_tasks(id),
+  deadline_date date not null,
+  created_at timestamptz default now()
+);</code></pre></details>
+
+<h3 id="API Endpoints">API Endpoints</h3>
+
+<table>
+<thead>
+<tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th><code class="inline">/api/projects/[projectId]/scheduling/tasks</code></th><th>GET</th><th>List all tasks</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/tasks</code></td><td>POST</td><td>Create task</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/tasks/[taskId]</code></td><td>GET</td><td>Get single task</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/tasks/[taskId]</code></td><td>PUT</td><td>Update task</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/tasks/[taskId]</code></td><td>DELETE</td><td>Delete task</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/tasks/bulk</code></td><td>PUT</td><td>Bulk update tasks</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/dependencies</code></td><td>POST</td><td>Create dependency</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/dependencies/[depId]</code></td><td>DELETE</td><td>Remove dependency</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/import</code></td><td>POST</td><td>Import schedule</td></tr>
+<tr><td><code class="inline">/api/projects/[projectId]/scheduling/export</code></td><td>GET</td><td>Export schedule</td></tr>
+<p></tbody></p>
+<p></table>
+
+<h3 id="Components">Components</h3>
+
+<table>
+<thead>
+<tr><th>Component</th><th>Purpose</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th><code class="inline">SchedulingPage</code></th><th>Main page layout with toolbar and content</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td><code class="inline">TaskTable</code></td><td>Table/grid view of tasks</td></tr>
+<tr><td><code class="inline">GanttChart</code></td><td>Gantt visualization component</td></tr>
+<tr><td><code class="inline">TaskEditModal</code></td><td>Modal for editing task details</td></tr>
+<tr><td><code class="inline">BulkEditPanel</code></td><td>Panel for bulk editing selected tasks</td></tr>
+<tr><td><code class="inline">DependencyEditor</code></td><td>UI for managing task dependencies</td></tr>
+<tr><td><code class="inline">TaskContextMenu</code></td><td>Right-click context menu for task actions</td></tr>
+<p></tbody></p>
+<p></table>
+
+<h3 id="Domain Commands (from COMMANDS.md)">Domain Commands (from COMMANDS.md)</h3>
+
+<table>
+<thead>
+<tr><th>Command</th><th>Label</th><th>Description</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th><code class="inline">add_task</code></th><th>Add Activity Below</th><th>Add a new task to the schedule</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td><code class="inline">edit_task</code></td><td>Edit</td><td>Edit a single scheduling task</td></tr>
+<tr><td><code class="inline">delete_task</code></td><td>Delete</td><td>Delete one or more tasks</td></tr>
+<tr><td><code class="inline">bulk_edit_tasks</code></td><td>Bulk edit</td><td>Edit multiple scheduling tasks at once</td></tr>
+<tr><td><code class="inline">copy_task</code></td><td>Copy</td><td>Copy task to clipboard</td></tr>
+<tr><td><code class="inline">cut_task</code></td><td>Cut</td><td>Cut task to clipboard</td></tr>
+<tr><td><code class="inline">paste_task</code></td><td>Paste</td><td>Paste task from clipboard</td></tr>
+<tr><td><code class="inline">indent_task</code></td><td>Indent Activity</td><td>Make task a child of previous task</td></tr>
+<tr><td><code class="inline">outdent_task</code></td><td>Outdent Activity</td><td>Promote task to higher hierarchy</td></tr>
+<tr><td><code class="inline">convert_to_milestone</code></td><td>Convert to milestone</td><td>Convert a task into a milestone</td></tr>
+<tr><td><code class="inline">set_deadline</code></td><td>Set deadline to finish date</td><td>Lock task finish date as deadline</td></tr>
+<tr><td><code class="inline">scroll_to_task</code></td><td>Scroll to activity</td><td>Scroll viewport to selected task</td></tr>
+<tr><td><code class="inline">import_schedule</code></td><td>Import</td><td>Import scheduling data</td></tr>
+<tr><td><code class="inline">export_schedule</code></td><td>Export</td><td>Export scheduling data</td></tr>
+<p></tbody></p>
+<p></table>
+
+<hr>
+
+<h2 id="Success Criteria">Success Criteria</h2>
+
+<ul>
+<li class="task"><input type="checkbox" disabled> Tasks can be created with name, dates, and duration</li>
+<li class="task"><input type="checkbox" disabled> Tasks display in both table and Gantt chart views</li>
+<li class="task"><input type="checkbox" disabled> Dependencies can be created between tasks</li>
+<li class="task"><input type="checkbox" disabled> Task hierarchy (parent/child) works correctly</li>
+<li class="task"><input type="checkbox" disabled> Bulk editing updates multiple tasks at once</li>
+<li class="task"><input type="checkbox" disabled> Milestones display correctly (zero duration)</li>
+<li class="task"><input type="checkbox" disabled> Deadlines show visual indicator when approaching/passed</li>
+<li class="task"><input type="checkbox" disabled> Import/Export functionality works</li>
+<li class="task"><input type="checkbox" disabled> Progress tracking with percent complete</li>
+<li class="task"><input type="checkbox" disabled> Context menu actions work correctly</li>
+<p></ul>
+
+<hr>
+
+<h2 id="All Needed Context">All Needed Context</h2>
+
+<h3 id="Documentation & References">Documentation & References</h3>
+
+<details class="code-block"><summary>Code (yaml) - click to expand</summary><pre><code class="language-yaml"># Crawl Data
+- file: playwright-procore-crawl/procore-crawls/scheduling/crawl-summary.json
+  why: Structured summary of all crawl data
+  pattern: Contains commands, UI components, screenshot paths
+
+- file: playwright-procore-crawl/procore-crawls/scheduling/spec/COMMANDS.md
+  why: Canonical list of domain commands
+  pattern: Command key, label, description
+
+- file: playwright-procore-crawl/procore-crawls/scheduling/spec/MUTATIONS.md
+  why: Detailed behavior specifications for edit_task
+  critical: Validation rules, dependency handling, hierarchy rules
+
+- file: playwright-procore-crawl/procore-crawls/scheduling/spec/schema.sql
+  why: Database schema for scheduling tables
+  pattern: Tasks, dependencies, deadlines tables
+
+- file: playwright-procore-crawl/procore-crawls/scheduling/pages/scheduling/screenshot.png
+  why: Visual reference for UI implementation
+  critical: Layout, toolbar, Gantt chart appearance
+
+# Codebase Patterns
+- file: frontend/src/app/(main)/[projectId]/budget/page.tsx
+  why: Similar project-scoped page pattern
+  pattern: Page layout, data fetching, project context
+
+- file: frontend/src/lib/services/direct-cost-service.ts
+  why: Service layer pattern for Supabase operations
+  pattern: CRUD operations, error handling, TypeScript types
+
+- file: frontend/src/components/ui/table.tsx
+  why: Existing table component to extend
+  pattern: Column definitions, sorting, selection</code></pre></details>
+
+<h3 id="Current Codebase Structure">Current Codebase Structure</h3>
+
+<details class="code-block"><summary>Code (text) - click to expand</summary><pre><code class="language-text">frontend/src/
+├── app/
+│   └── (main)/
+│       └── [projectId]/
+│           ├── budget/           # Similar page pattern
+│           └── scheduling/       # NEW - to create
+│               └── page.tsx
+├── components/
+│   ├── ui/                   # Shared UI components
+│   └── scheduling/           # NEW - to create
+│       ├── task-table.tsx
+│       ├── gantt-chart.tsx
+│       ├── task-edit-modal.tsx
+│       └── task-context-menu.tsx
+├── lib/
+│   └── services/
+│       └── scheduling-service.ts  # NEW - to create
+└── types/
+    └── scheduling.types.ts    # NEW - to create</code></pre></details>
+
+<h3 id="Known Gotchas">Known Gotchas</h3>
+
+<pre><code class="language-typescript">// CRITICAL: Dependency recalculation must happen server-side
+// Don&#039;t try to calculate successor dates in the client
+
+// CRITICAL: Hierarchy (parent/child) dates are derived
+// Parent dates = min(children.start_date) to max(children.finish_date)
+// Never allow direct edit of parent dates when children exist
+
+// CRITICAL: Circular dependency detection required
+// Before creating a dependency, verify it won&#039;t create a cycle
+
+// GOTCHA: Milestones must have duration_days = 0
+// If converting to milestone, set duration to 0 and start_date = finish_date</code></pre>
+
+<hr>
+
+<h2 id="Implementation Blueprint">Implementation Blueprint</h2>
+
+<h3 id="Data Models">Data Models</h3>
+
+<details class="code-block"><summary>Code (typescript) - click to expand</summary><pre><code class="language-typescript">// lib/types/scheduling.types.ts
+
+export interface ScheduleTask {
+  id: string;
+  project_id: string;
+  parent_task_id: string | null;
+  name: string;
+  start_date: string | null;
+  finish_date: string | null;
+  duration_days: number | null;
+  percent_complete: number;
+  status: &#039;not_started&#039; | &#039;in_progress&#039; | &#039;complete&#039;;
+  is_milestone: boolean;
+  constraint_type: &#039;none&#039; | &#039;start_no_earlier_than&#039; | &#039;finish_no_later_than&#039; | null;
+  constraint_date: string | null;
+  wbs_code: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  // Derived fields
+  children?: ScheduleTask[];
+  dependencies?: ScheduleDependency[];
+  deadline?: ScheduleDeadline;
+}
+
+export interface ScheduleDependency {
+  id: string;
+  predecessor_task_id: string;
+  successor_task_id: string;
+  dependency_type: &#039;FS&#039; | &#039;SS&#039; | &#039;FF&#039; | &#039;SF&#039;;
+  lag_days: number;
+}
+
+export interface ScheduleDeadline {
+  id: string;
+  task_id: string;
+  deadline_date: string;
+}
+
+export interface TaskPatch {
+  name?: string;
+  start_date?: string;
+  finish_date?: string;
+  duration_days?: number;
+  percent_complete?: number;
+  status?: ScheduleTask[&#039;status&#039;];
+  is_milestone?: boolean;
+  constraint_type?: ScheduleTask[&#039;constraint_type&#039;];
+  constraint_date?: string;
+}</code></pre></details>
+
+<h3 id="Implementation Tasks (ordered by dependencies)">Implementation Tasks (ordered by dependencies)</h3>
+
+<details class="code-block"><summary>Code (yaml) - click to expand</summary><pre><code class="language-yaml">Task 1: CREATE types/scheduling.types.ts
+  - IMPLEMENT: TypeScript interfaces for ScheduleTask, ScheduleDependency, ScheduleDeadline
+  - FOLLOW pattern: frontend/src/types/budget.ts
+  - NAMING: PascalCase interfaces, camelCase properties
+  - PLACEMENT: frontend/src/types/
+
+Task 2: CREATE Supabase migration for scheduling tables
+  - IMPLEMENT: Tables from schema.sql with proper indexes
+  - FOLLOW pattern: existing migrations
+  - INCLUDE: RLS policies for project-scoped access
+  - PLACEMENT: supabase/migrations/
+
+Task 3: CREATE lib/services/scheduling-service.ts
+  - IMPLEMENT: CRUD operations for tasks, dependencies, deadlines
+  - FOLLOW pattern: lib/services/direct-cost-service.ts
+  - INCLUDE: Dependency recalculation logic
+  - DEPENDENCIES: Task 1 types
+
+Task 4: CREATE app/api/projects/[projectId]/scheduling/tasks/route.ts
+  - IMPLEMENT: GET (list tasks), POST (create task)
+  - FOLLOW pattern: existing API routes
+  - INCLUDE: Project authorization check
+  - DEPENDENCIES: Task 3 service
+
+Task 5: CREATE app/api/projects/[projectId]/scheduling/tasks/[taskId]/route.ts
+  - IMPLEMENT: GET, PUT, DELETE for single task
+  - FOLLOW pattern: existing API routes
+  - DEPENDENCIES: Task 3 service
+
+Task 6: CREATE components/scheduling/task-table.tsx
+  - IMPLEMENT: Table view of tasks with columns
+  - FOLLOW pattern: components/ui/data-table.tsx
+  - INCLUDE: Selection, sorting, inline editing
+  - DEPENDENCIES: Task 1 types
+
+Task 7: CREATE components/scheduling/gantt-chart.tsx
+  - IMPLEMENT: Gantt chart visualization
+  - CONSIDER: Use existing library (e.g., @ant-design/plots or custom SVG)
+  - INCLUDE: Task bars, dependencies lines, today marker
+  - DEPENDENCIES: Task 1 types
+
+Task 8: CREATE components/scheduling/task-edit-modal.tsx
+  - IMPLEMENT: Modal form for editing task details
+  - FOLLOW pattern: existing modal components
+  - INCLUDE: All editable fields from MUTATIONS.md
+  - DEPENDENCIES: Task 1 types
+
+Task 9: CREATE components/scheduling/task-context-menu.tsx
+  - IMPLEMENT: Right-click context menu with all commands
+  - FOLLOW pattern: existing dropdown menus
+  - INCLUDE: All commands from COMMANDS.md
+  - DEPENDENCIES: Task 1 types
+
+Task 10: CREATE app/(main)/[projectId]/scheduling/page.tsx
+  - IMPLEMENT: Main scheduling page
+  - FOLLOW pattern: app/(main)/[projectId]/budget/page.tsx
+  - INCLUDE: Toolbar, table/Gantt toggle, task list
+  - DEPENDENCIES: Tasks 6, 7, 8, 9
+
+Task 11: CREATE bulk edit functionality
+  - IMPLEMENT: Bulk edit panel for multiple task selection
+  - INCLUDE: Common fields that can be bulk edited
+  - DEPENDENCIES: Task 3 service, Task 10 page
+
+Task 12: CREATE import/export functionality
+  - IMPLEMENT: Import from CSV/MS Project, Export to CSV
+  - INCLUDE: File upload, parsing, validation
+  - DEPENDENCIES: Task 3 service
+
+Task 13: ADD tests for scheduling module
+  - IMPLEMENT: Unit tests for service layer
+  - IMPLEMENT: Component tests for UI
+  - FOLLOW pattern: existing test files
+  - DEPENDENCIES: All previous tasks</code></pre></details>
+
+<hr>
+
+<h2 id="Validation Loop">Validation Loop</h2>
+
+<h3 id="Level 1: Syntax & Style (Immediate)">Level 1: Syntax & Style (Immediate)</h3>
+
+<pre><code class="language-bash">npm run lint
+npx tsc --noEmit
+npm run format</code></pre>
+
+<h3 id="Level 2: Unit Tests">Level 2: Unit Tests</h3>
+
+<pre><code class="language-bash">npm test -- frontend/src/lib/services/scheduling-service.test.ts
+npm test -- frontend/src/components/scheduling/</code></pre>
+
+<h3 id="Level 3: Integration Testing">Level 3: Integration Testing</h3>
+
+<pre><code class="language-bash"># Start dev server
+npm run dev
+
+# Verify page loads
+curl -I http://localhost:3000/[projectId]/scheduling
+
+# Verify API endpoints
+curl http://localhost:3000/api/projects/[projectId]/scheduling/tasks</code></pre>
+
+<h3 id="Level 4: E2E Testing">Level 4: E2E Testing</h3>
+
+<pre><code class="language-bash"># Run Playwright tests
+npx playwright test tests/scheduling.spec.ts</code></pre>
+
+<hr>
+
+<h2 id="Final Validation Checklist">Final Validation Checklist</h2>
+
+<h3 id="Technical Validation">Technical Validation</h3>
+<ul>
+<li class="task"><input type="checkbox" disabled> All tests pass: <code class="inline">npm test</code></li>
+<li class="task"><input type="checkbox" disabled> No linting errors: <code class="inline">npm run lint</code></li>
+<li class="task"><input type="checkbox" disabled> No type errors: <code class="inline">npx tsc --noEmit</code></li>
+<li class="task"><input type="checkbox" disabled> Production build succeeds: <code class="inline">npm run build</code></li>
+<p></ul>
+
+<h3 id="Feature Validation">Feature Validation</h3>
+<ul>
+<li class="task"><input type="checkbox" disabled> Tasks can be created, edited, deleted</li>
+<li class="task"><input type="checkbox" disabled> Dependencies work correctly</li>
+<li class="task"><input type="checkbox" disabled> Gantt chart renders properly</li>
+<li class="task"><input type="checkbox" disabled> Context menu actions work</li>
+<li class="task"><input type="checkbox" disabled> Bulk editing functions correctly</li>
+<li class="task"><input type="checkbox" disabled> Import/export works</li>
+<p></ul>
+
+<h3 id="Code Quality">Code Quality</h3>
+<ul>
+<li class="task"><input type="checkbox" disabled> Follows existing codebase patterns</li>
+<li class="task"><input type="checkbox" disabled> TypeScript types are comprehensive</li>
+<li class="task"><input type="checkbox" disabled> Error handling is robust</li>
+<li class="task"><input type="checkbox" disabled> Loading states are handled</li>
+<p></ul>
+
+<hr>
+
+<h2 id="Anti-Patterns to Avoid">Anti-Patterns to Avoid</h2>
+
+<ul>
+<li>❌ Don't calculate dependency chains client-side - do it server-side</li>
+<li>❌ Don't allow editing parent task dates directly when children exist</li>
+<li>❌ Don't create circular dependencies</li>
+<li>❌ Don't skip validation on task date logic (start ≤ finish)</li>
+<li>❌ Don't hardcode project IDs - always use context</li>
+<p></ul>
+
+<hr>
+
+<h2 id="Procore Crawl Data Reference">Procore Crawl Data Reference</h2>
+
+<p>This section contains all crawl data files, sitemap, and screenshots from the Procore feature analysis.</p>
+
+<h3 id="Sitemap">Sitemap</h3>
+
+<table>
+<thead>
+<tr><th>Page</th><th>URL</th><th>Screenshot</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Scheduling</th><th><a href="https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/schedulemgmt" target="_blank">Procore Scheduling Tool</a></th><th><a href="#main-scheduling-view" target="_blank">View</a></th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+
+<h3 id="Crawl Data Files">Crawl Data Files</h3>
+
+<table>
+<thead>
+<tr><th>Category</th><th>File</th><th>Path</th><th>Description</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Summary</th><th>Crawl Summary</th><th><code class="inline">crawl-summary.json</code></th><th>Structured JSON with all crawl data</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Summary</td><td>README</td><td><code class="inline">README.md</code></td><td>Module overview</td></tr>
+<tr><td>Reports</td><td>Sitemap</td><td><code class="inline">reports/sitemap-table.md</code></td><td>Page URLs and structure</td></tr>
+<tr><td>Reports</td><td>Detailed Report</td><td><code class="inline">reports/detailed-report.json</code></td><td>Full crawl analysis</td></tr>
+<tr><td>Spec</td><td>Commands</td><td><code class="inline">spec/COMMANDS.md</code></td><td>14 domain commands (add_task, edit_task, etc.)</td></tr>
+<tr><td>Spec</td><td>Mutations</td><td><code class="inline">spec/MUTATIONS.md</code></td><td>Behavior specifications for edit_task</td></tr>
+<tr><td>Spec</td><td>Schema</td><td><code class="inline">spec/schema.sql</code></td><td>Database tables (tasks, dependencies, deadlines)</td></tr>
+<tr><td>Spec</td><td>Forms</td><td><code class="inline">spec/FORMS.md</code></td><td>UI form field definitions</td></tr>
+<tr><td>Pages</td><td>Screenshot</td><td><code class="inline">pages/scheduling/screenshot.png</code></td><td>Main scheduling view (76 KB)</td></tr>
+<tr><td>Pages</td><td>DOM</td><td><code class="inline">pages/scheduling/dom.html</code></td><td>Full DOM snapshot (387 KB)</td></tr>
+<tr><td>Pages</td><td>Metadata</td><td><code class="inline">pages/scheduling/metadata.json</code></td><td>Links, dropdowns, system actions</td></tr>
+<p></tbody></p>
+<p></table>
+
+<strong>Base Path</strong>: <code class="inline">playwright-procore-crawl/procore-crawls/scheduling/</code>
+
+<h3 id="Screenshots">Screenshots</h3>
+
+<h4 id="Main Scheduling View">Main Scheduling View</h4>
+
+<p>The main Procore scheduling interface showing the Gantt chart with task list:</p>
+
+<figure class="screenshot"><img src="../../playwright-procore-crawl/procore-crawls/scheduling/pages/scheduling/screenshot.png" alt="Procore Scheduling Screenshot" loading="lazy"><figcaption>Procore Scheduling Screenshot</figcaption></figure>
+
+<strong>Key UI Elements to Replicate:</strong>
+<ul>
+<li>Left panel: Task table with columns (Name, Start, Finish, Duration, % Complete)</li>
+<li>Right panel: Gantt chart with task bars and dependency lines</li>
+<li>Toolbar: Import, Export, view toggles, zoom controls</li>
+<li>Context menu: Right-click actions for task operations</li>
+<li>Task hierarchy: Indent/outdent for parent-child relationships</li>
+<p></ul>
+
+<h3 id="UI Components Detected">UI Components Detected</h3>
+
+<p>From crawl metadata analysis:</p>
+
+<h4 id="Context Menu Items">Context Menu Items</h4>
+<table>
+<thead>
+<tr><th>Label</th><th>Command Key</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Scroll to activity</th><th><code class="inline">scroll_to_task</code></th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Bulk edit</td><td><code class="inline">bulk_edit_tasks</code></td></tr>
+<tr><td>Edit</td><td><code class="inline">edit_task</code></td></tr>
+<tr><td>Copy</td><td><code class="inline">copy_task</code></td></tr>
+<tr><td>Cut</td><td><code class="inline">cut_task</code></td></tr>
+<tr><td>Paste</td><td><code class="inline">paste_task</code></td></tr>
+<tr><td>Set deadline to finish date</td><td><code class="inline">set_deadline</code></td></tr>
+<tr><td>Add...</td><td><code class="inline">add_task</code></td></tr>
+<tr><td>Convert to milestone</td><td><code class="inline">convert_to_milestone</code></td></tr>
+<tr><td>Indent Activity</td><td><code class="inline">indent_task</code></td></tr>
+<tr><td>Outdent Activity</td><td><code class="inline">outdent_task</code></td></tr>
+<tr><td>Delete</td><td><code class="inline">delete_task</code></td></tr>
+<p></tbody></p>
+<p></table>
+
+<h4 id="Modals Detected">Modals Detected</h4>
+<ul>
+<li>SearchCmdK (Cmd+K search)</li>
+<li>More options menu</li>
+<li>Learn More help</li>
+<li>Feedback dialog</li>
+<p></ul>
+
+<hr>
+
+<h2 id="Confidence Assessment">Confidence Assessment</h2>
+
+<table>
+<thead>
+<tr><th>Factor</th><th>Score</th><th>Notes</th></tr>
+<p></thead></p>
+<tbody>
+
+<p></tbody></p>
+<p></table>
+<table>
+<thead>
+<tr><th>Requirements clarity</th><th>9/10</th><th>Clear from crawl data and commands</th></tr>
+<p></thead></p>
+<tbody>
+<tr><td>Codebase patterns</td><td>8/10</td><td>Similar patterns exist (budget, etc.)</td></tr>
+<tr><td>Technical complexity</td><td>7/10</td><td>Gantt chart and dependencies are complex</td></tr>
+<tr><td>Data model</td><td>9/10</td><td>Schema provided from analysis</td></tr>
+<tr><td>UI/UX reference</td><td>8/10</td><td>Screenshot available</td></tr>
+<p></tbody></p>
+<p></table>
+
+<strong>Overall Confidence: 8/10</strong> - Ready for implementation with clear requirements and patterns to follow.
+
+    </main>
+  </div>
+</body>
+</html>

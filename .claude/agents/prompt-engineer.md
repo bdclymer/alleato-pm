@@ -50,7 +50,7 @@ When creating any prompt, you MUST include:
 
 ```text
 [Display the complete prompt text here]
-```markdown
+```
 ### Implementation Notes
 
 - Key techniques used

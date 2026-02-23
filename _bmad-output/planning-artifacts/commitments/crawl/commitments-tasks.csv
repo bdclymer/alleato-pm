@@ -1,0 +1,139 @@
+Task ID,Parent Task,Category,Priority,Task Name,Description,Status,Data Source
+1,1,Data Capture,P0 - Critical,Capture Main Commitments List View,Screenshot and analyze the main commitments list interface,Parent Task,Application UI Crawl
+1.1,1,Data Capture,P0 - Critical,Capture commitments table structure,Document table columns and data types,In Progress,Application UI Crawl
+1.2,1,Data Capture,P0 - Critical,Capture table filters and sorting,Document available filters and sort options,In Progress,Application UI Crawl
+1.3,1,Data Capture,P0 - Critical,Capture action buttons and menus,Document all available actions,In Progress,Application UI Crawl
+1.4,1,Data Capture,P0 - Critical,Capture pagination controls,Document pagination implementation,In Progress,Application UI Crawl
+2,2,Data Capture,P0 - Critical,Capture Configuration Tab,Document configuration options and settings,Parent Task,Application UI Crawl
+2.1,2,Data Capture,P0 - Critical,Capture general settings,Document general configuration options,In Progress,Application UI Crawl
+2.2,2,Data Capture,P0 - Critical,Capture column preferences,Document column visibility and order settings,In Progress,Application UI Crawl
+2.3,2,Data Capture,P0 - Critical,Capture notification settings,Document notification configuration,In Progress,Application UI Crawl
+3,3,Data Capture,P0 - Critical,Capture Recycled Commitments View,Analyze recycled/deleted commitments functionality,Parent Task,Application UI Crawl
+3.1,3,Data Capture,P0 - Critical,Capture recycled items table,Document recycled commitments list structure,In Progress,Application UI Crawl
+3.2,3,Data Capture,P0 - Critical,Capture restore functionality,Document how to restore deleted commitments,In Progress,Application UI Crawl
+3.3,3,Data Capture,P0 - Critical,Capture permanent delete options,Document permanent deletion workflow,In Progress,Application UI Crawl
+4,4,Data Capture,P0 - Critical,Capture Commitment Detail Views,Document individual commitment detail pages,Parent Task,Application UI Crawl
+4.1,4,Data Capture,P0 - Critical,Capture commitment header,Document header information and fields,In Progress,Application UI Crawl
+4.2,4,Data Capture,P0 - Critical,Capture overview tab,Document commitment overview section,In Progress,Application UI Crawl
+4.3,4,Data Capture,P0 - Critical,Capture line items tab,Document SOV/line items structure,In Progress,Application UI Crawl
+4.4,4,Data Capture,P0 - Critical,Capture change orders tab,Document change order workflow,In Progress,Application UI Crawl
+4.5,4,Data Capture,P0 - Critical,Capture invoices tab,Document invoice management,In Progress,Application UI Crawl
+4.6,4,Data Capture,P0 - Critical,Capture documents tab,Document attachment management,In Progress,Application UI Crawl
+5,5,Data Capture,P0 - Critical,Capture Create/Export Dropdowns,Analyze creation and export workflows,Parent Task,Application UI Crawl
+5.1,5,Data Capture,P0 - Critical,Capture create commitment options,Document commitment creation types,In Progress,Application UI Crawl
+5.2,5,Data Capture,P0 - Critical,Capture export dropdown menu,Document available export formats,In Progress,Application UI Crawl
+5.3,5,Data Capture,P0 - Critical,Capture import options,Document import functionality,In Progress,Application UI Crawl
+6,6,Data Capture,P0 - Critical,Capture Multiple Tabs Within Views,Document all tab structures and navigation,Parent Task,Application UI Crawl
+6.1,6,Data Capture,P0 - Critical,Capture tab navigation patterns,Document how tabs are organized,In Progress,Application UI Crawl
+6.2,6,Data Capture,P0 - Critical,Capture tab content structure,Document content within each tab,In Progress,Application UI Crawl
+7,7,Documentation,P0 - Critical,Capture Main Documentation Page,Screenshot Procore commitments documentation,Parent Task,Documentation Crawl
+7.1,7,Documentation,P0 - Critical,Capture overview section,Document main overview content,In Progress,Documentation Crawl
+7.2,7,Documentation,P0 - Critical,Capture feature descriptions,Document commitment features,In Progress,Documentation Crawl
+7.3,7,Documentation,P0 - Critical,Capture getting started guide,Document initial setup instructions,In Progress,Documentation Crawl
+8,8,Documentation,P0 - Critical,Capture Expandable Sections,Document all collapsible content sections,Parent Task,Documentation Crawl
+8.1,8,Documentation,P0 - Critical,Capture section headings,Document all section titles,In Progress,Documentation Crawl
+8.2,8,Documentation,P0 - Critical,Capture expanded content,Document content within expandable sections,In Progress,Documentation Crawl
+9,9,Documentation,P0 - Critical,Capture Resource Links,Catalog all related resources and links,Parent Task,Documentation Crawl
+9.1,9,Documentation,P0 - Critical,Capture internal links,Document links to other support articles,In Progress,Documentation Crawl
+9.2,9,Documentation,P0 - Critical,Capture external resources,Document links to external resources,In Progress,Documentation Crawl
+10,10,Documentation,P0 - Critical,Capture Tutorial Pages,Document step-by-step tutorials,Parent Task,Documentation Crawl
+10.1,10,Documentation,P0 - Critical,Capture creation tutorials,Document how to create commitments,In Progress,Documentation Crawl
+10.2,10,Documentation,P0 - Critical,Capture management tutorials,Document how to manage commitments,In Progress,Documentation Crawl
+10.3,10,Documentation,P0 - Critical,Capture change order tutorials,Document change order workflows,In Progress,Documentation Crawl
+10.4,10,Documentation,P0 - Critical,Capture invoice tutorials,Document invoice creation and approval,In Progress,Documentation Crawl
+11,11,Analysis,P1 - High,Analyze Table Structure,Extract column definitions and data types,Parent Task,Crawl Results
+11.1,11,Analysis,P1 - High,Identify all table columns,List all columns in commitments table,Not Started,Crawl Results
+11.2,11,Analysis,P1 - High,Determine column data types,Determine data type for each column,Not Started,Crawl Results
+11.3,11,Analysis,P1 - High,Document column relationships,Identify foreign key relationships,Not Started,Crawl Results
+11.4,11,Analysis,P1 - High,Document sortable columns,Identify which columns support sorting,Not Started,Crawl Results
+11.5,11,Analysis,P1 - High,Document filterable columns,Identify which columns support filtering,Not Started,Crawl Results
+12,12,Analysis,P1 - High,Analyze Form Fields,Document all input fields and validations,Parent Task,Crawl Results
+12.1,12,Analysis,P1 - High,List all form fields,Create inventory of form fields,Not Started,Crawl Results
+12.2,12,Analysis,P1 - High,Document field types,Identify input types (text date select etc),Not Started,Crawl Results
+12.3,12,Analysis,P1 - High,Document field validations,List required fields and validation rules,Not Started,Crawl Results
+12.4,12,Analysis,P1 - High,Document default values,Identify fields with default values,Not Started,Crawl Results
+13,13,Analysis,P1 - High,Analyze Workflows,Map out all user workflows and processes,Parent Task,Crawl Results
+13.1,13,Analysis,P1 - High,Map commitment creation flow,Document step-by-step creation process,Not Started,Crawl Results
+13.2,13,Analysis,P1 - High,Map approval workflow,Document approval process and states,Not Started,Crawl Results
+13.3,13,Analysis,P1 - High,Map change order workflow,Document change order creation and approval,Not Started,Crawl Results
+13.4,13,Analysis,P1 - High,Map invoice workflow,Document invoice submission and payment,Not Started,Crawl Results
+14,14,Analysis,P1 - High,Analyze Dropdowns and Actions,Catalog all available actions and menus,Parent Task,Crawl Results
+14.1,14,Analysis,P1 - High,List all action buttons,Inventory all action buttons in UI,Not Started,Crawl Results
+14.2,14,Analysis,P1 - High,Document dropdown menus,List all dropdown menu options,Not Started,Crawl Results
+14.3,14,Analysis,P1 - High,Document bulk actions,Identify bulk operation capabilities,Not Started,Crawl Results
+14.4,14,Analysis,P1 - High,Document row-level actions,List actions available on individual rows,Not Started,Crawl Results
+15,15,Analysis,P1 - High,Extract Data Model,Define database schema and relationships,Parent Task,Crawl Results
+15.1,15,Analysis,P1 - High,Define commitments table,Design main commitments table schema,Not Started,Crawl Results
+15.2,15,Analysis,P1 - High,Define line items table,Design commitment line items table,Not Started,Crawl Results
+15.3,15,Analysis,P1 - High,Define change orders table,Design change orders table schema,Not Started,Crawl Results
+15.4,15,Analysis,P1 - High,Define invoices table,Design invoices table schema,Not Started,Crawl Results
+15.5,15,Analysis,P1 - High,Define supporting tables,Design vendor payments and other tables,Not Started,Crawl Results
+15.6,15,Analysis,P1 - High,Document table relationships,Define foreign keys and joins,Not Started,Crawl Results
+16,16,Comparison,P2 - Medium,Compare with Alleato Contracts,Identify feature gaps and differences,Parent Task,Analysis Complete
+16.1,16,Comparison,P2 - Medium,Compare feature lists,List features in Procore vs Alleato,Not Started,Analysis Complete
+16.2,16,Comparison,P2 - Medium,Identify missing features,List features in Procore not in Alleato,Not Started,Analysis Complete
+16.3,16,Comparison,P2 - Medium,Identify extra features,List features in Alleato not in Procore,Not Started,Analysis Complete
+16.4,16,Comparison,P2 - Medium,Prioritize feature gaps,Rank missing features by importance,Not Started,Analysis Complete
+17,17,Comparison,P2 - Medium,Compare Data Structures,Analyze schema differences,Parent Task,Analysis Complete
+17.1,17,Comparison,P2 - Medium,Compare table schemas,Compare Procore vs Alleato tables,Not Started,Analysis Complete
+17.2,17,Comparison,P2 - Medium,Compare column definitions,Compare field types and constraints,Not Started,Analysis Complete
+17.3,17,Comparison,P2 - Medium,Compare relationships,Compare foreign key structures,Not Started,Analysis Complete
+17.4,17,Comparison,P2 - Medium,Identify schema improvements,Suggest schema enhancements,Not Started,Analysis Complete
+18,18,Comparison,P2 - Medium,Compare UI/UX Patterns,Identify UI/UX differences,Parent Task,Analysis Complete
+18.1,18,Comparison,P2 - Medium,Compare list view layouts,Compare table and list designs,Not Started,Analysis Complete
+18.2,18,Comparison,P2 - Medium,Compare detail view organization,Compare detail page structures,Not Started,Analysis Complete
+18.3,18,Comparison,P2 - Medium,Compare form layouts,Compare form designs and flows,Not Started,Analysis Complete
+18.4,18,Comparison,P2 - Medium,Identify UX improvements,Suggest UI/UX enhancements,Not Started,Analysis Complete
+19,19,Comparison,P2 - Medium,Compare Workflows,Document workflow differences,Parent Task,Analysis Complete
+19.1,19,Comparison,P2 - Medium,Compare creation workflows,Compare how commitments are created,Not Started,Analysis Complete
+19.2,19,Comparison,P2 - Medium,Compare approval workflows,Compare approval processes,Not Started,Analysis Complete
+19.3,19,Comparison,P2 - Medium,Compare change workflows,Compare change order processes,Not Started,Analysis Complete
+19.4,19,Comparison,P2 - Medium,Identify workflow improvements,Suggest workflow optimizations,Not Started,Analysis Complete
+20,20,Implementation,P1 - High,Generate Implementation Tasks,Create detailed task list for development,Parent Task,Comparison Complete
+20.1,20,Implementation,P1 - High,Break down database tasks,Create database migration tasks,Not Started,Comparison Complete
+20.2,20,Implementation,P1 - High,Break down API tasks,Create API endpoint development tasks,Not Started,Comparison Complete
+20.3,20,Implementation,P1 - High,Break down UI tasks,Create frontend component tasks,Not Started,Comparison Complete
+20.4,20,Implementation,P1 - High,Define task dependencies,Map task dependencies and order,Not Started,Comparison Complete
+20.5,20,Implementation,P1 - High,Estimate task effort,Add time estimates to tasks,Not Started,Comparison Complete
+21,21,Implementation,P1 - High,Create Feature Parity Checklist,Build checklist of missing features,Parent Task,Comparison Complete
+21.1,21,Implementation,P1 - High,List P0 critical features,List must-have features,Not Started,Comparison Complete
+21.2,21,Implementation,P1 - High,List P1 high priority features,List important features,Not Started,Comparison Complete
+21.3,21,Implementation,P1 - High,List P2 medium priority features,List nice-to-have features,Not Started,Comparison Complete
+21.4,21,Implementation,P1 - High,Create implementation timeline,Plan feature rollout schedule,Not Started,Comparison Complete
+22,22,Implementation,P1 - High,Design Database Schema,Design commitments database tables,Parent Task,Data Model Complete
+22.1,22,Implementation,P1 - High,Design commitments table,Create commitments table schema,Not Started,Data Model Complete
+22.2,22,Implementation,P1 - High,Design line items table,Create line items table schema,Not Started,Data Model Complete
+22.3,22,Implementation,P1 - High,Design change orders table,Create change orders table schema,Not Started,Data Model Complete
+22.4,22,Implementation,P1 - High,Design invoices table,Create invoices table schema,Not Started,Data Model Complete
+22.5,22,Implementation,P1 - High,Design RLS policies,Design row-level security policies,Not Started,Data Model Complete
+22.6,22,Implementation,P1 - High,Create migration files,Write SQL migration scripts,Not Started,Data Model Complete
+23,23,Implementation,P1 - High,Design API Endpoints,Define RESTful API structure,Parent Task,Schema Complete
+23.1,23,Implementation,P1 - High,Design commitments CRUD endpoints,Define commitment API routes,Not Started,Schema Complete
+23.2,23,Implementation,P1 - High,Design line items endpoints,Define line items API routes,Not Started,Schema Complete
+23.3,23,Implementation,P1 - High,Design change orders endpoints,Define change order API routes,Not Started,Schema Complete
+23.4,23,Implementation,P1 - High,Design invoice endpoints,Define invoice API routes,Not Started,Schema Complete
+23.5,23,Implementation,P1 - High,Design approval endpoints,Define approval workflow endpoints,Not Started,Schema Complete
+23.6,23,Implementation,P1 - High,Create API documentation,Document all API endpoints,Not Started,Schema Complete
+24,24,Implementation,P1 - High,Design UI Components,Plan component architecture,Parent Task,Schema Complete
+24.1,24,Implementation,P1 - High,Design list view component,Plan commitments list table,Not Started,Schema Complete
+24.2,24,Implementation,P1 - High,Design detail view component,Plan commitment detail page,Not Started,Schema Complete
+24.3,24,Implementation,P1 - High,Design form components,Plan creation and edit forms,Not Started,Schema Complete
+24.4,24,Implementation,P1 - High,Design tab components,Plan tab navigation and content,Not Started,Schema Complete
+24.5,24,Implementation,P1 - High,Design action components,Plan buttons and dropdown menus,Not Started,Schema Complete
+24.6,24,Implementation,P1 - High,Create component hierarchy,Define component structure,Not Started,Schema Complete
+25,25,Validation,P0 - Critical,Review Crawl Results,Verify completeness of captured data,Parent Task,Crawls Complete
+25.1,25,Validation,P0 - Critical,Review application screenshots,Check all UI screenshots captured,Not Started,Crawls Complete
+25.2,25,Validation,P0 - Critical,Review documentation screenshots,Check all doc pages captured,Not Started,Crawls Complete
+25.3,25,Validation,P0 - Critical,Review captured metadata,Verify data extraction quality,Not Started,Crawls Complete
+25.4,25,Validation,P0 - Critical,Identify missing content,List any gaps in captured data,Not Started,Crawls Complete
+26,26,Validation,P0 - Critical,Validate Documentation,Ensure all features documented,Parent Task,Crawls Complete
+26.1,26,Validation,P0 - Critical,Check feature coverage,Verify all features have documentation,Not Started,Crawls Complete
+26.2,26,Validation,P0 - Critical,Check tutorial completeness,Verify all workflows documented,Not Started,Crawls Complete
+26.3,26,Validation,P0 - Critical,Check screenshot quality,Verify screenshots are readable,Not Started,Crawls Complete
+26.4,26,Validation,P0 - Critical,Verify cross-references,Check all links and references,Not Started,Crawls Complete
+27,27,Validation,P0 - Critical,Create Summary Report,Generate comprehensive findings report,Parent Task,Validation Complete
+27.1,27,Validation,P0 - Critical,Write executive summary,Summarize key findings,Not Started,Validation Complete
+27.2,27,Validation,P0 - Critical,Document feature inventory,List all Procore features,Not Started,Validation Complete
+27.3,27,Validation,P0 - Critical,Document gap analysis,Summarize feature gaps,Not Started,Validation Complete
+27.4,27,Validation,P0 - Critical,Create recommendations,Provide implementation recommendations,Not Started,Validation Complete
+27.5,27,Validation,P0 - Critical,Generate task list,Create actionable task breakdown,Not Started,Validation Complete

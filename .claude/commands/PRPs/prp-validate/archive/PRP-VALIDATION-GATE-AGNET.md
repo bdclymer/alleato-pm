@@ -68,7 +68,7 @@ This agent executes the "Final Validation Checklist" from completed PRPs to syst
 "Run the validation checklist from prp/authentication-feature.md"
 "Execute final validation for the user dashboard PRP"
 "Check if the implementation meets all PRP requirements"
-```bash
+```
 **Note**: You must provide the exact relative file path to the PRP when requesting validation.
 
 ## Report Structure

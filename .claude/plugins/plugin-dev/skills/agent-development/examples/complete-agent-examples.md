@@ -109,7 +109,7 @@ You are an expert code quality reviewer specializing in identifying issues, secu
 - Unclear code intent: Note ambiguity and request clarification
 - Missing context (no CLAUDE.md): Apply general best practices
 - Large changeset: Focus on most impactful files first
-```yaml
+```
 ## Example 2: Test Generator Agent
 
 **File:** `agents/test-generator.md`
@@ -197,7 +197,7 @@ describe('[module name]', () => {
 
   // More tests...
 })
-```yaml
+```
 **Edge Cases:**
 
 - No existing tests: Create new test file following best practices
@@ -211,7 +211,7 @@ describe('[module name]', () => {
 
 **File:** `agents/docs-generator.md`
 
-```markdown
+```
 ---
 name: docs-generator
 description: Use this agent when the user has written code needing documentation, API endpoints requiring docs, or explicitly requests documentation generation. Examples:
@@ -296,7 +296,7 @@ Create documentation in project's standard format:
 
 **File:** `agents/security-analyzer.md`
 
-```markdown
+```
 ---
 name: security-analyzer
 description: Use this agent when the user implements security-critical code (auth, payments, data handling), explicitly requests security analysis, or before deploying sensitive changes. Examples:

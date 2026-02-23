@@ -52,7 +52,7 @@ frontend/
     change-events/
       change-events.spec.ts     # Change events CRUD tests (GOLD STANDARD)
     e2e/                        # Legacy/comprehensive tests (70+ files)
-```sql
+```
 ### How Auth Works
 
 1. `auth.setup.ts` runs **first** (Playwright project dependency)
@@ -103,7 +103,7 @@ await pollFor(
     expect(updated.description).toBe("Revised scope description");
   },
 );
-```javascript
+```
 ### Tier 2: `change-events.spec.ts`
 
 **Location:** `frontend/tests/change-events/change-events.spec.ts`
@@ -153,7 +153,7 @@ if (!dataVisible) {
   await page.reload();
   await page.waitForLoadState("domcontentloaded");
 }
-```sql
+```
 ---
 
 ## The Test Skeleton — Copy-Paste Starter
@@ -282,7 +282,7 @@ test.describe("Feature Name – CRUD Workflows", () => {
     await expect(row).not.toBeVisible({ timeout: 10000 });
   });
 });
-```sql
+```
 ---
 
 ## Helpers Reference
@@ -364,7 +364,7 @@ export async function deleteMyEntitiesByProject(projectId: number) {
     throw new Error(`Failed to delete my_entities: ${error.message}`);
   }
 }
-```markdown
+```
 ### `cleanup.ts` — Project Teardown
 
 ```typescript
@@ -386,7 +386,7 @@ export async function cleanupProjectArtifacts(projectId: number) {
   await deleteProjectMembers(projectId);
   await deleteProject(projectId);
 }
-```sql
+```
 ### `poll.ts` — Wait for DB State
 
 Two flavors:
@@ -406,7 +406,7 @@ await pollFor(
 await pollForSimple(
   async () => (await fetchLineItems(id)).length,
 ).toBe(2);
-```javascript
+```
 ### `fixtures/index.ts` — Extended Test
 
 Import from `../fixtures` instead of `@playwright/test` when you need:
@@ -422,7 +422,7 @@ test('API test', async ({ authenticatedRequest }) => {
 test('navigation test', async ({ safeNavigate }) => {
   await safeNavigate('/projects');
 });
-```javascript
+```
 ### `test-data.ts` — Auto-Tracking Data Manager
 
 ```typescript
@@ -482,7 +482,7 @@ page.getByRole("menuitem", { name: /delete/i }).first()
 
 // Last matching button (useful for confirmation dialogs)
 page.getByRole("button", { name: /delete|confirm/i }).last()
-```typescript
+```
 ### Strict Mode Violation Fix
 
 When `getByText("something")` matches multiple elements:
@@ -496,7 +496,7 @@ page.getByRole("cell", { name: "Concrete delivery" })
 
 // GOOD — take first match explicitly
 page.getByText("Concrete delivery").first()
-```javascript
+```
 ---
 
 ## Navigation Patterns
@@ -518,7 +518,7 @@ await page.waitForLoadState('domcontentloaded');
 await page.goto(`/${projectId}/change-events`, {
   waitUntil: 'domcontentloaded',
 });
-```javascript
+```
 ### Reload Fallback Pattern
 
 For pages where data might not be visible immediately after seeding:
@@ -554,7 +554,7 @@ import { safeNavigate, navigateAndWaitFor, waitForTableLoad } from '../helpers/n
 await safeNavigate(page, '/projects');
 await navigateAndWaitFor(page, '/projects', '[data-testid="project-list"]');
 await waitForTableLoad(page, '[data-testid="budget-table"]', { minRows: 3 });
-```diff
+```
 ---
 
 ## Database Enum Values (CHECK Constraints)
@@ -566,27 +566,27 @@ These are **case-sensitive**. Using wrong case causes constraint violations that
 ```text
 'Draft' | 'Sent' | 'Pending' | 'Approved' | 'Executed' | 'Closed' | 'Void'
 
-```markdown
+```
 ### Direct Costs — Status (`direct_costs_status_check`)
 
 ```
 
 'Draft' | 'Approved' | 'Rejected' | 'Paid'
 
-```markdown
+```
 ### Direct Costs — Cost Type (`direct_costs_cost_type_check`)
 
 ```text
 'Expense' | 'Invoice' | 'Subcontractor Invoice'
 
-```markdown
+```
 ### Change Orders — Status
 
 ```
 
 'draft' | 'pending' | 'approved' | 'rejected' | 'void'
 
-```text
+```
 *(Change orders use lowercase — different convention from subcontracts/direct costs)*
 
 ### Companies — Status
@@ -594,7 +594,7 @@ These are **case-sensitive**. Using wrong case causes constraint violations that
 ```text
 'ACTIVE' | 'INACTIVE'
 
-```text
+```
 *(Companies use UPPERCASE)*
 
 ### How to Find Constraint Values for New Tables
@@ -609,7 +609,7 @@ Or read the generated types:
 ```bash
 npm run db:types
 # Then read frontend/src/types/database.types.ts
-```diff
+```
 ---
 
 ## Running Tests
@@ -643,7 +643,7 @@ npm run test              # All tests
 npm run test:headed       # With browser
 npm run test:ui           # UI mode
 npm run test:report       # View report
-```typescript
+```
 ### Reporter Output
 
 - `--reporter=list` — Inline pass/fail in terminal (best for CI and watching progress)
@@ -665,7 +665,7 @@ npx playwright test -g "Delete" ...  # All tests with "Delete" in name
 
 # Skip setup (use existing auth)
 npx playwright test --project=chromium ...
-```typescript
+```
 ---
 
 ## Known Issues & Solutions
@@ -724,7 +724,7 @@ page.locator("[data-testid^='row-action-delete']").first()
 
 // Or scope to the specific menuitem
 page.getByRole("menuitem", { name: /delete/i }).first()
-```markdown
+```
 ### Issue 6: Confirmation Dialog — Wrong Button Selected
 
 **Error:** Clicking "Delete" hits the wrong button (there are multiple with matching text).
@@ -733,7 +733,7 @@ page.getByRole("menuitem", { name: /delete/i }).first()
 ```typescript
 // Use .last() for confirmation dialogs (they render on top/after)
 page.getByRole("button", { name: /delete|confirm/i }).last()
-```javascript
+```
 ### Issue 7: Form Auto-Generates Values
 
 **Error:** `contractNumber` field already has a prefix like `SC-002`, so `.fill()` appends.
@@ -743,7 +743,7 @@ page.getByRole("button", { name: /delete|confirm/i }).last()
 ```typescript
 await numberInput.clear();  // Clear existing value first
 await numberInput.fill(contractNumber);
-```markdown
+```
 ### Issue 8: "Unable to load data" / "Failed to fetch"
 
 **Error:** Page shows error state instead of data.
@@ -783,7 +783,7 @@ test.skip("Create item via form persists to database", async ({ page }) => {
 ```typescript
 // NEVER
 await page.waitForLoadState('networkidle');
-```javascript
+```
 ### 2. Hardcoding Project IDs
 ```typescript
 // BAD — fragile, breaks when data changes
@@ -792,7 +792,7 @@ await page.goto('/31/budget');
 // GOOD — create your own project
 const projectId = await createProject(`E2E Test ${Date.now()}`);
 await page.goto(`/${projectId}/budget`);
-```javascript
+```
 ### 3. Not Cleaning Up Data
 
 ```typescript
@@ -805,7 +805,7 @@ test("create item", async ({ page }) => {
 // GOOD — clean before AND after
 test.beforeAll(async () => { /* create project */ });
 test.afterAll(async () => { await cleanupProjectArtifacts(projectId); });
-```markdown
+```
 ### 4. Relying on Specific Row Counts
 ```typescript
 // BAD — breaks if other tests leave data
@@ -823,7 +823,7 @@ test("page loads", async ({ page }) => {
   await page.goto("/budget");
   await expect(page.locator("h1")).toBeVisible();
 });
-```text
+```
 Every E2E test must: navigate, interact, submit, verify result. See the [E2E Testing Standards](/.claude/rules/E2E-TESTING-STANDARDS.md).
 
 ### 6. Using `page.waitForTimeout` as Primary Wait
@@ -835,7 +835,7 @@ await expect(item).toBeVisible();
 
 // GOOD — wait for the actual condition
 await expect(item).toBeVisible({ timeout: 15000 });
-```diff
+```
 `waitForTimeout` is acceptable for:
 
 - Brief pauses after click to let animations/transitions complete (300-500ms)
@@ -851,7 +851,7 @@ await createDirectCost({ cost_type: "expense" });  // lowercase
 // GOOD — match exact case from migration
 await createSubcontract({ status: "Draft" });
 await createDirectCost({ cost_type: "Expense" });
-```diff
+```
 ---
 
 ## Debugging Playbook
@@ -877,12 +877,12 @@ open tests/test-results/<folder-name>/video.webm
 npx playwright test tests/financial/commitments.spec.ts \
   --config=config/playwright/playwright.config.ts \
   --headed
-```markdown
+```
 ### Step 4: Use UI Mode for Debugging
 
 ```bash
 npx playwright test --config=config/playwright/playwright.config.ts --ui
-```diff
+```
 UI mode lets you:
 
 - Step through tests
@@ -909,7 +909,7 @@ console.log("Visible buttons:", await page.getByRole("button").allTextContents()
 
 // Take manual screenshot
 await page.screenshot({ path: "debug.png" });
-```sql
+```
 ---
 
 ## Checklist for New Tests

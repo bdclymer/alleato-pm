@@ -1,0 +1,181 @@
+Task ID,Parent Task,Category,Priority,Task Name,Description,Status
+1.1,1.1,Database Schema,P0 - Critical,Design Core Budget Schema,Create database tables for budget management,Parent Task
+1.1.1,1.1,Database Schema,P0 - Critical,Create budgets table,Create budgets table with columns: id project_id name status created_at updated_at,Complete
+1.1.2,1.1,Database Schema,P0 - Critical,Create budget_lines table,Create budget_lines table for individual budget line items,Complete
+1.1.3,1.1,Database Schema,P0 - Critical,Create budget_views table,Create budget_views table for custom view configurations,Complete
+1.1.4,1.1,Database Schema,P0 - Critical,Create budget_templates table,Create budget_templates table for reusable budget templates,Not Started
+1.1.5,1.1,Database Schema,P0 - Critical,Create budget_snapshots table,Create budget_snapshots table for point-in-time captures,Complete
+1.1.6,1.1,Database Schema,P0 - Critical,Create budget_changes table,Create budget_changes table for change tracking,Not Started
+1.2,1.2,Database Schema,P0 - Critical,Create Budget Column Configuration System,Allow users to configure which columns appear in budget views,Parent Task
+1.2.1,1.2,Database Schema,P0 - Critical,Create budget_view_columns junction table,Create junction table for budget view columns configuration,Complete
+1.2.2,1.2,Database Schema,P0 - Critical,Support column ordering and visibility settings,Add support for column ordering and visibility preferences,Complete
+1.2.3,1.2,Database Schema,P0 - Critical,Store column width preferences,Store column width preferences via display_order,Complete
+1.2.4,1.2,Database Schema,P0 - Critical,Support calculated columns,Add support for calculated/computed columns,Complete
+1.2.5,1.2,Database Schema,P0 - Critical,Support 19 core budget column types,Support Cost Code Description Original Budget Revised Budget etc,Complete
+1.2.6,1.2,Database Schema,P0 - Critical,Support extended column types,Support Notes Tools by Product Line Contract Type Publisher Custom fields,Not Started
+1.3,1.3,Database Schema,P0 - Critical,Add Cost Code Integration,Link budgets to cost codes and cost types,Parent Task
+1.3.1,1.3,Database Schema,P0 - Critical,Create cost_codes table,Create cost_codes table if not exists,Complete
+1.3.2,1.3,Database Schema,P0 - Critical,Create cost_types table,Create cost_types table if not exists,Complete
+1.3.3,1.3,Database Schema,P0 - Critical,Add foreign keys to budget_lines,Add foreign key relationships to budget_lines,Complete
+1.3.4,1.3,Database Schema,P0 - Critical,Support hierarchical cost code structure,Support multi-tier cost code hierarchy,Complete
+1.3.5,1.3,Database Schema,P0 - Critical,Add WBS support,Add Work Breakdown Structure support,Not Started
+2.1,2.1,API Development,P0 - Critical,Budget REST API,Create RESTful endpoints for budgets,Parent Task
+2.1.1,2.1,API Development,P0 - Critical,GET /api/budgets,Create endpoint to list budgets,Not Started
+2.1.2,2.1,API Development,P0 - Critical,GET /api/budgets/:id,Create endpoint to get budget details,Not Started
+2.1.3,2.1,API Development,P0 - Critical,POST /api/budgets,Create endpoint to create budget,Not Started
+2.1.4,2.1,API Development,P0 - Critical,PUT /api/budgets/:id,Create endpoint to update budget,Not Started
+2.1.5,2.1,API Development,P0 - Critical,DELETE /api/budgets/:id,Create endpoint to delete budget,Not Started
+2.1.6,2.1,API Development,P0 - Critical,GET /api/budgets/:id/lines,Create endpoint to get budget lines,Not Started
+2.1.7,2.1,API Development,P0 - Critical,POST /api/budgets/:id/lines,Create endpoint to create budget line,Not Started
+2.1.8,2.1,API Development,P0 - Critical,PUT /api/budgets/:id/lines/:lineId,Create endpoint to update line,Not Started
+2.1.9,2.1,API Development,P0 - Critical,DELETE /api/budgets/:id/lines/:lineId,Create endpoint to delete line,Not Started
+2.1.10,2.1,API Development,P0 - Critical,POST /api/budgets/:id/import,Create endpoint to import data,Not Started
+2.1.11,2.1,API Development,P0 - Critical,GET /api/budgets/:id/export,Create endpoint to export data,Not Started
+2.1.12,2.1,API Development,P0 - Critical,GET /api/budgets/:id/snapshots,Create endpoint to list snapshots,Not Started
+2.1.13,2.1,API Development,P0 - Critical,POST /api/budgets/:id/lock,Create endpoint to lock budget,Not Started
+2.1.14,2.1,API Development,P0 - Critical,POST /api/budgets/:id/unlock,Create endpoint to unlock budget,Not Started
+2.2,2.2,API Development,P0 - Critical,Budget Views API,Endpoints for view configuration,Parent Task
+2.2.1,2.2,API Development,P0 - Critical,GET /api/projects/[id]/budget/views,Create endpoint to list available views,Complete
+2.2.2,2.2,API Development,P0 - Critical,POST /api/projects/[id]/budget/views,Create endpoint to create view,Complete
+2.2.3,2.2,API Development,P0 - Critical,PATCH /api/projects/[id]/budget/views/:id,Create endpoint to update view,Complete
+2.2.4,2.2,API Development,P0 - Critical,DELETE /api/projects/[id]/budget/views/:id,Create endpoint to delete view,Complete
+2.2.5,2.2,API Development,P0 - Critical,GET /api/projects/[id]/budget/views/:id,Create endpoint to get single view with columns,Complete
+2.2.6,2.2,API Development,P0 - Critical,POST /api/projects/[id]/budget/views/:id/clone,Create endpoint to clone existing view,Complete
+3.1,3.1,UI Components,P0 - Critical,Build Budget Table Component,Create a data table for displaying budget line items,Parent Task
+3.1.1,3.1,UI Components,P0 - Critical,Implement sortable columns,Add column sorting functionality,Complete
+3.1.2,3.1,UI Components,P0 - Critical,Add filtering capability,Add data filtering functionality,Complete
+3.1.3,3.1,UI Components,P0 - Critical,Support inline editing,Enable inline cell editing,Complete
+3.1.4,3.1,UI Components,P0 - Critical,Add row selection,Add checkbox row selection,Complete
+3.1.5,3.1,UI Components,P0 - Critical,Implement virtual scrolling,Add virtual scrolling for large datasets,Not Started
+3.1.6,3.1,UI Components,P0 - Critical,Add column resizing,Allow users to resize columns,Not Started
+3.1.7,3.1,UI Components,P0 - Critical,Support frozen columns,Support pinned/frozen columns,Not Started
+3.1.8,3.1,UI Components,P0 - Critical,Add totals/summary row,Add row with column totals,Complete
+3.1.9,3.1,UI Components,P0 - Critical,Implement grouping by cost code,Implement hierarchical grouping with 3 tier levels,Complete
+3.2,3.2,UI Components,P0 - Critical,Create Budget Actions Toolbar,Implement action buttons for budget operations,Parent Task
+3.2.1,3.2,UI Components,P0 - Critical,Add More button,Add More dropdown button functionality,Not Started
+3.2.2,3.2,UI Components,P0 - Critical,Add Create Project button,Add Create Project button functionality,Not Started
+3.2.3,3.2,UI Components,P0 - Critical,Add Lock Budget button,Add Lock Budget button functionality,Complete
+3.2.4,3.2,UI Components,P0 - Critical,Add Export button,Add Export dropdown functionality,Not Started
+3.3,3.3,UI Components,P0 - Critical,Build Budget View Selector,Dropdown to switch between budget views,Parent Task
+3.3.1,3.3,UI Components,P0 - Critical,Create view selector dropdown,Create BudgetViewsManager component,Complete
+3.3.2,3.3,UI Components,P0 - Critical,Load available views from database,Load views via API,Complete
+3.3.3,3.3,UI Components,P0 - Critical,Support Current and Original snapshots,Support snapshot selection,Complete
+3.3.4,3.3,UI Components,P0 - Critical,Add view creation modal,Create BudgetViewsModal component,Complete
+3.3.5,3.3,UI Components,P0 - Critical,Implement view editing,Implement BudgetViewsModal edit mode,Complete
+3.3.6,3.3,UI Components,P0 - Critical,Support view deletion,Support deletion with AlertDialog confirmation,Complete
+3.3.7,3.3,UI Components,P0 - Critical,Support view cloning,Add clone functionality,Complete
+3.3.8,3.3,UI Components,P0 - Critical,Support setting default view,Allow users to set default view,Complete
+3.3.9,3.3,UI Components,P0 - Critical,Show star indicator for default view,Display star icon for default view,Complete
+3.3.10,3.3,UI Components,P0 - Critical,Protect system views,Prevent editing/deletion of system views,Complete
+3.4,3.4,UI Components,P0 - Critical,Implement Filter and Group Controls,Allow users to filter and group budget data,Parent Task
+3.4.1,3.4,UI Components,P0 - Critical,Add Add Filter dropdown,Create filter dropdown component,Complete
+3.4.2,3.4,UI Components,P0 - Critical,Add Add Group dropdown,Create group dropdown component,Complete
+3.4.3,3.4,UI Components,P0 - Critical,Support multiple filter criteria,Support multiple simultaneous filters,Complete
+3.4.4,3.4,UI Components,P0 - Critical,Support nested grouping,Support hierarchical cost code tier grouping,Complete
+3.4.5,3.4,UI Components,P0 - Critical,Save filter preferences per user,Save preferences to localStorage,Complete
+3.4.6,3.4,UI Components,P0 - Critical,Add Clear Filters button,Add button to clear all filters,Not Started
+4.1,4.1,CRUD Operations,P0 - Critical,Create Budget Line Items,Allow users to add new budget line items,Parent Task
+4.1.1,4.1,CRUD Operations,P0 - Critical,Build Create button with dropdown,Create button component with dropdown menu,Complete
+4.1.2,4.1,CRUD Operations,P0 - Critical,Create budget line form,Build form with all required fields,Complete
+4.1.3,4.1,CRUD Operations,P0 - Critical,Support bulk import from Excel/CSV,Add Excel/CSV import functionality,Not Started
+4.1.4,4.1,CRUD Operations,P0 - Critical,Validate required fields,Add form validation for required fields,Complete
+4.1.5,4.1,CRUD Operations,P0 - Critical,Auto-calculate totals,Implement automatic total calculations,Complete
+4.1.6,4.1,CRUD Operations,P0 - Critical,Add to database and refresh table,Save to database and update UI,Not Started
+4.2,4.2,CRUD Operations,P0 - Critical,Update Budget Line Items,Allow inline editing of budget values,Parent Task
+4.2.1,4.2,CRUD Operations,P0 - Critical,Enable cell editing on click,Enable inline cell editing,Complete
+4.2.2,4.2,CRUD Operations,P0 - Critical,Validate numeric fields,Add numeric validation,Complete
+4.2.3,4.2,CRUD Operations,P0 - Critical,Auto-save changes,Implement auto-save on edit,Complete
+4.2.4,4.2,CRUD Operations,P0 - Critical,Show saving indicator,Add visual saving indicator,Not Started
+4.2.5,4.2,CRUD Operations,P0 - Critical,Track change history,Log all changes to audit trail,Complete
+4.2.6,4.2,CRUD Operations,P0 - Critical,Support undo/redo,Add undo/redo functionality,Not Started
+4.3,4.3,CRUD Operations,P0 - Critical,Delete Budget Line Items,Allow removal of budget lines,Parent Task
+4.3.1,4.3,CRUD Operations,P0 - Critical,Add delete action to row menu,Add delete button to row actions,Not Started
+4.3.2,4.3,CRUD Operations,P0 - Critical,Show confirmation dialog,Show confirmation before delete,Not Started
+4.3.3,4.3,CRUD Operations,P0 - Critical,Implement soft delete vs hard delete,Choose deletion strategy,Not Started
+4.3.4,4.3,CRUD Operations,P0 - Critical,Update totals after deletion,Recalculate totals after delete,Not Started
+4.3.5,4.3,CRUD Operations,P0 - Critical,Log deletion in audit trail,Add deletion to change log,Not Started
+5.1,5.1,Calculations & Formulas,P1 - High,Implement Budget Calculations,Auto-calculate budget values,Parent Task
+5.1.1,5.1,Calculations & Formulas,P1 - High,Calculate Revised Budget,Revised Budget = Original Budget + Budget Modifications,Complete
+5.1.2,5.1,Calculations & Formulas,P1 - High,Calculate Projected Budget,Projected Budget = Revised Budget + Pending Budget Changes,Complete
+5.1.3,5.1,Calculations & Formulas,P1 - High,Calculate Projected Costs,Projected Costs = Direct Costs + Committed Costs + Pending Cost Changes,Complete
+5.1.4,5.1,Calculations & Formulas,P1 - High,Calculate Variance,Variance = Revised Budget - Projected Costs,Complete
+5.1.5,5.1,Calculations & Formulas,P1 - High,Calculate Cost to Complete,Cost to Complete = Projected Costs - Job to Date Cost,Complete
+5.1.6,5.1,Calculations & Formulas,P1 - High,Calculate Percent Complete,Percent Complete = (Job to Date Cost / Projected Costs) * 100,Complete
+5.1.7,5.1,Calculations & Formulas,P1 - High,Support Unit Qty × Unit Cost calculations,Calculate extended amounts,Complete
+5.1.8,5.1,Calculations & Formulas,P1 - High,Auto-update grand totals,Automatically update summary totals,Complete
+5.1.9,5.1,Calculations & Formulas,P1 - High,Recalculate on any field change,Trigger recalculation on edits,Complete
+5.2,5.2,Calculations & Formulas,P1 - High,Add Variance Analysis,Implement budget variance tracking,Parent Task
+5.2.1,5.2,Calculations & Formulas,P1 - High,Add Analyze Variance feature,Build variance analysis tool,Not Started
+5.2.2,5.2,Calculations & Formulas,P1 - High,Calculate favorable/unfavorable variances,Calculate variance direction,Complete
+5.2.3,5.2,Calculations & Formulas,P1 - High,Color-code variances,Red for over budget green for under,Complete
+5.2.4,5.2,Calculations & Formulas,P1 - High,Show variance as amount and percentage,Display both $ and % variance,Complete
+5.2.5,5.2,Calculations & Formulas,P1 - High,Support variance thresholds/alerts,Add configurable threshold alerts,Not Started
+5.2.6,5.2,Calculations & Formulas,P1 - High,Generate variance reports,Create variance analysis reports,Not Started
+5.2.7,5.2,Calculations & Formulas,P1 - High,Track variance over time,Historical variance tracking,Not Started
+6.1,6.1,Import/Export,P1 - High,Implement Budget Import,Allow users to import budgets from files,Parent Task
+6.1.1,6.1,Import/Export,P1 - High,Add Import dropdown button,Create import dropdown UI,Not Started
+6.1.2,6.1,Import/Export,P1 - High,Support Excel (.xlsx) import,Add Excel file import,Not Started
+6.1.3,6.1,Import/Export,P1 - High,Support CSV import,Add CSV file import,Not Started
+6.1.4,6.1,Import/Export,P1 - High,Validate imported data,Validate data before import,Not Started
+6.1.5,6.1,Import/Export,P1 - High,Show preview before import,Display import preview,Not Started
+6.1.6,6.1,Import/Export,P1 - High,Handle errors gracefully,Add error handling for imports,Not Started
+6.1.7,6.1,Import/Export,P1 - High,Map columns to budget fields,Column mapping interface,Not Started
+6.1.8,6.1,Import/Export,P1 - High,Support cost code matching,Match cost codes during import,Not Started
+6.1.9,6.1,Import/Export,P1 - High,Show import progress,Display progress indicator,Not Started
+6.1.10,6.1,Import/Export,P1 - High,Create import history log,Log all import operations,Not Started
+6.2,6.2,Import/Export,P1 - High,Implement Budget Export,Allow users to export budgets to files,Parent Task
+6.2.1,6.2,Import/Export,P1 - High,Add Export dropdown button,Create export dropdown UI,Not Started
+6.2.2,6.2,Import/Export,P1 - High,Export to Excel (.xlsx),Add Excel export functionality,Not Started
+6.2.3,6.2,Import/Export,P1 - High,Export to CSV,Add CSV export functionality,Not Started
+6.2.4,6.2,Import/Export,P1 - High,Export to PDF,Add PDF export functionality,Not Started
+6.2.5,6.2,Import/Export,P1 - High,Include all visible columns,Export only visible columns,Not Started
+6.2.6,6.2,Import/Export,P1 - High,Respect current filters/grouping,Apply filters to export,Not Started
+6.2.7,6.2,Import/Export,P1 - High,Add export date/user metadata,Include export metadata,Not Started
+6.2.8,6.2,Import/Export,P1 - High,Support custom templates,Allow custom export templates,Not Started
+6.2.9,6.2,Import/Export,P1 - High,Optimize for large datasets,Handle large exports efficiently,Not Started
+8.1,8.1,Change Management,P2 - Medium,Track Budget Changes,Log all modifications to budget,Parent Task
+8.1.1,8.1,Change Management,P2 - Medium,Create change history table,Create database table for changes,Complete
+8.1.2,8.1,Change Management,P2 - Medium,Log user timestamp old value new value,Log complete change details,Complete
+8.1.3,8.1,Change Management,P2 - Medium,Show Change History tab,Display change history UI tab,Complete
+8.1.4,8.1,Change Management,P2 - Medium,Support change approval workflow,Implement approval process,Not Started
+8.1.5,8.1,Change Management,P2 - Medium,Create Pending Budget Changes column,Add pending changes column,Not Started
+8.1.6,8.1,Change Management,P2 - Medium,Implement change request form,Build change request form,Not Started
+8.1.7,8.1,Change Management,P2 - Medium,Add change rejection/approval,Implement approval actions,Not Started
+8.1.8,8.1,Change Management,P2 - Medium,Notify stakeholders of changes,Send change notifications,Not Started
+8.3,8.3,Change Management,P2 - Medium,Implement Budget Locking,Prevent changes to locked budgets,Parent Task
+8.3.1,8.3,Change Management,P2 - Medium,Add Lock Budget button,Add lock button to UI,Complete
+8.3.2,8.3,Change Management,P2 - Medium,Create budget lock status field,Add lock status to database,Complete
+8.3.3,8.3,Change Management,P2 - Medium,Disable editing when locked,Prevent edits on locked budgets,Complete
+8.3.4,8.3,Change Management,P2 - Medium,Require unlock permission,Add permission check for unlock,Not Started
+8.3.5,8.3,Change Management,P2 - Medium,Log lock/unlock events,Track lock/unlock in audit log,Not Started
+8.3.6,8.3,Change Management,P2 - Medium,Show lock indicator in UI,Display lock status indicator,Not Started
+8.3.7,8.3,Change Management,P2 - Medium,Support partial locking,Allow locking specific lines,Not Started
+10.1,10.1,Forecasting,P2 - Medium,Build Forecasting Module,Predict future budget performance,Parent Task
+10.1.1,10.1,Forecasting,P2 - Medium,Add Forecasting tab,Create forecasting tab UI,Complete
+10.1.2,10.1,Forecasting,P2 - Medium,Create forecast templates,Build forecast template system,Not Started
+10.1.3,10.1,Forecasting,P2 - Medium,Support manual forecast entry,Allow manual forecast input,Not Started
+10.1.4,10.1,Forecasting,P2 - Medium,Auto-calculate forecast based on trends,Trend-based forecasting,Not Started
+10.1.5,10.1,Forecasting,P2 - Medium,Show forecast vs actual comparison,Display forecast comparison,Not Started
+10.1.6,10.1,Forecasting,P2 - Medium,Adjust forecast based on committed costs,Include commitments in forecast,Not Started
+10.1.7,10.1,Forecasting,P2 - Medium,Generate forecast reports,Create forecast reports,Not Started
+10.1.8,10.1,Forecasting,P2 - Medium,Alert on forecast overruns,Add forecast alert system,Not Started
+11.1,11.1,Permissions & Security,P1 - High,Implement Budget Permissions,Role-based access control for budgets,Parent Task
+11.1.1,11.1,Permissions & Security,P1 - High,Define permission levels,Define View Edit Admin permissions,Complete
+11.1.2,11.1,Permissions & Security,P1 - High,Check permissions before operations,Add permission checks to all operations,Complete
+11.1.3,11.1,Permissions & Security,P1 - High,Support project-level permissions,Project-specific permission control,Not Started
+11.1.4,11.1,Permissions & Security,P1 - High,Support company-level permissions,Company-wide permission control,Not Started
+11.1.5,11.1,Permissions & Security,P1 - High,Hide/disable UI based on permissions,Permission-based UI rendering,Not Started
+11.1.6,11.1,Permissions & Security,P1 - High,Log permission violations,Track permission violations,Not Started
+11.1.7,11.1,Permissions & Security,P1 - High,Support custom permission groups,Allow custom permission groups,Not Started
+13.3,13.3,Testing & Quality,P0 - Critical,E2E Tests with Playwright,Test complete user workflows,Parent Task
+13.3.1,13.3,Testing & Quality,P0 - Critical,Test budget creation workflow,E2E test for budget creation,Complete
+13.3.2,13.3,Testing & Quality,P0 - Critical,Test budget editing workflow,E2E test for budget editing,Complete
+13.3.3,13.3,Testing & Quality,P0 - Critical,Test import/export workflows,E2E test for import/export,Not Started
+13.3.4,13.3,Testing & Quality,P0 - Critical,Test view configuration,15 tests for budget views API,Complete
+13.3.5,13.3,Testing & Quality,P0 - Critical,Test Budget Views UI,15 tests for budget views UI,Complete
+13.3.6,13.3,Testing & Quality,P0 - Critical,Test hierarchical grouping,20 tests for 3-tier grouping,Complete
+13.3.7,13.3,Testing & Quality,P0 - Critical,Test quick filter presets,Tests for filter functionality,Complete
+13.3.8,13.3,Testing & Quality,P0 - Critical,Test keyboard shortcuts,Tests for keyboard shortcuts,Complete
+13.3.9,13.3,Testing & Quality,P0 - Critical,Test change approval workflow,E2E test for change approval,Not Started
+13.3.10,13.3,Testing & Quality,P0 - Critical,Test budget locking,E2E test for budget locking,Not Started
+13.3.11,13.3,Testing & Quality,P0 - Critical,Visual regression testing,Automated visual regression tests,Not Started

@@ -1,0 +1,13 @@
+{
+  "parentPage": "list",
+  "parentUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/dailylog/list",
+  "dropdownIndex": 2,
+  "menuItems": [
+    {
+      "text": "Create New Report",
+      "href": null,
+      "type": "button"
+    }
+  ],
+  "timestamp": "2026-01-11T08:44:42.678Z"
+}

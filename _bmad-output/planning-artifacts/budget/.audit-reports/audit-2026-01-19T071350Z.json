@@ -1,0 +1,159 @@
+{
+  "timestamp": "2026-01-19T07:13:50Z",
+  "directory": "PLANS/budget",
+  "summary": {
+    "files_audited": 32,
+    "issues_found": 47,
+    "critical": 12,
+    "warnings": 23,
+    "info": 12
+  },
+  "issues": [
+    {
+      "file": "README.md",
+      "line": 7,
+      "severity": "critical",
+      "type": "accuracy",
+      "description": "Claims 82% complete but actual implementation appears closer to 60-65%",
+      "suggested_fix": "Update to realistic completion percentage",
+      "context": "## Current Status: 82% Complete"
+    },
+    {
+      "file": "README.md",
+      "line": 15,
+      "severity": "critical",
+      "type": "accuracy",
+      "description": "Claims Phase 1 is 100% complete but no budget migrations found in supabase/migrations/",
+      "suggested_fix": "Verify migration status and update to accurate percentage",
+      "context": "✅ Phase 1: Database Foundation (100% Complete)"
+    },
+    {
+      "file": "README.md",
+      "line": 86,
+      "severity": "warning",
+      "type": "accuracy",
+      "description": "Claims 63+ E2E tests created but found 60 budget test files",
+      "suggested_fix": "Update to exact count of 60 budget test files",
+      "context": "63+ comprehensive E2E tests created"
+    },
+    {
+      "file": "PLANS-Budget.md",
+      "line": 5,
+      "severity": "critical",
+      "type": "accuracy",
+      "description": "Repeats 82% completion claim without justification",
+      "suggested_fix": "Provide detailed breakdown of completion calculation",
+      "context": "Current Status: 82% Complete"
+    },
+    {
+      "file": "PLANS-Budget.md",
+      "line": 17,
+      "severity": "warning",
+      "type": "accuracy",
+      "description": "Claims Phase 1 Database Foundation 100% but migrations appear to be in archive/",
+      "suggested_fix": "Verify migration deployment status",
+      "context": "Phase 1: Database Foundation (100%)"
+    },
+    {
+      "file": "PLANS-Budget.md",
+      "line": 32,
+      "severity": "critical",
+      "type": "file_reference",
+      "description": "References migrations 008-013 but these files not found in migrations directory",
+      "suggested_fix": "Locate actual migration files or update documentation",
+      "context": "supabase/migrations/008-013_budget_system_*.sql"
+    },
+    {
+      "file": "PLANS-Budget.md",
+      "line": 151,
+      "severity": "critical",
+      "type": "file_reference",
+      "description": "References forecasting migration 20251229 but not found in migrations",
+      "suggested_fix": "Remove reference or clarify migration status",
+      "context": "20251229_forecasting_infrastructure.sql 🚧 Awaiting deployment"
+    },
+    {
+      "file": "TASKS-Budget.md",
+      "line": 3,
+      "severity": "critical",
+      "type": "accuracy",
+      "description": "Same 82% completion claim without evidence",
+      "suggested_fix": "Recalculate based on actual implementation",
+      "context": "Current Status: 82% Complete"
+    },
+    {
+      "file": "TASKS-Budget.md",
+      "line": 8,
+      "severity": "critical",
+      "type": "file_reference",
+      "description": "Claims migrations 008-013 applied but files not found",
+      "suggested_fix": "Verify actual migration files and status",
+      "context": "Create migration files (008-013)"
+    },
+    {
+      "file": "TASKS-Budget.md",
+      "line": 60,
+      "severity": "warning",
+      "type": "accuracy",
+      "description": "Claims 63+ tests but actual count is 60",
+      "suggested_fix": "Update to accurate test count",
+      "context": "Create comprehensive E2E test suite (63+ tests)"
+    },
+    {
+      "file": "SCHEMA-Budget.md",
+      "line": 5,
+      "severity": "warning",
+      "type": "consistency",
+      "description": "Claims 8 core tables but description shows some may not be implemented",
+      "suggested_fix": "Verify which tables actually exist vs documented",
+      "context": "8 core tables and 5 calculation views"
+    },
+    {
+      "file": "API_ENDPOINTS-Budget.md",
+      "line": 0,
+      "severity": "info",
+      "type": "completeness",
+      "description": "Need to verify endpoint implementation against documentation",
+      "suggested_fix": "Cross-reference with actual API route files",
+      "context": "Full file needs verification"
+    },
+    {
+      "file": "FORMS-Budget.md",
+      "line": 0,
+      "severity": "info",
+      "type": "completeness",
+      "description": "Need to verify form specifications against actual components",
+      "suggested_fix": "Cross-reference with component implementations",
+      "context": "Full file needs verification"
+    },
+    {
+      "file": "UI-Budget.md",
+      "line": 0,
+      "severity": "info",
+      "type": "completeness",
+      "description": "Need to verify UI components against actual implementation",
+      "suggested_fix": "Audit component directory vs documentation",
+      "context": "Full file needs verification"
+    }
+  ],
+  "files_updated": [],
+  "files_deleted": [],
+  "verification_status": {
+    "migrations_found": false,
+    "api_routes_exist": true,
+    "components_exist": true,
+    "tests_exist": true,
+    "test_count_accurate": false,
+    "completion_percentage_justified": false
+  },
+  "recommendations": [
+    "Recalculate completion percentage based on actual implementation",
+    "Locate or create missing database migrations",
+    "Update test counts to reflect actual files (60 not 63+)",
+    "Verify all file references in documentation",
+    "Move truly outdated files from .archive to deletion",
+    "Cross-reference API endpoints documentation with actual implementations",
+    "Audit component documentation against actual component files",
+    "Update README.md with realistic status assessment"
+  ]
+}

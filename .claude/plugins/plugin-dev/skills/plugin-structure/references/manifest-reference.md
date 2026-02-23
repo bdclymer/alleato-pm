@@ -36,7 +36,7 @@ The unique identifier for the plugin. Used for:
 
 ```javascript
 /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/
-```diff
+```
 **Examples**:
 - ✅ Good: `api-tester`, `code-review`, `git-workflow-automation`
 - ❌ Bad: `API Tester`, `code_review`, `-git-workflow`, `test-`
@@ -99,14 +99,14 @@ Brief explanation of plugin purpose and functionality.
     "url": "https://janedeveloper.com"
   }
 }
-```diff
+```
 **Alternative format** (string only):
 
 ```json
 {
   "author": "Jane Developer <jane@example.com> (https://janedeveloper.com)"
 }
-```diff
+```
 **Use cases**:
 - Credit and attribution
 - Contact for support or questions
@@ -155,7 +155,7 @@ Source code repository location.
     "directory": "packages/plugin-name"
   }
 }
-```diff
+```
 **Use cases**:
 - Source code access
 - Issue reporting
@@ -185,7 +185,7 @@ Software license identifier.
 {
   "license": "(MIT OR Apache-2.0)"
 }
-```markdown
+```
 #### keywords
 
 **Type**: Array of strings
@@ -224,7 +224,7 @@ Additional directories or files containing command definitions.
 {
   "commands": "./custom-commands"
 }
-```text
+```
 **Multiple paths**:
 ```json
 {
@@ -273,7 +273,7 @@ Hook configuration location or inline definition.
 {
   "hooks": "./config/hooks.json"
 }
-```bash
+```
 **Inline configuration**:
 ```json
 {
@@ -292,7 +292,7 @@ Hook configuration location or inline definition.
     ]
   }
 }
-```bash
+```
 **Use cases**:
 
 - Simple plugins: Inline configuration (< 50 lines)
@@ -312,7 +312,7 @@ MCP server configuration location or inline definition.
 {
   "mcpServers": "./.mcp.json"
 }
-```bash
+```
 **Inline configuration**:
 ```json
 {
@@ -409,20 +409,20 @@ Claude Code validates the manifest on plugin load:
 {
   "name": "My Plugin"  // ❌ Contains spaces
 }
-```text
+```
 Fix: Use kebab-case
 ```json
 {
   "name": "my-plugin"  // ✅
 }
-```text
+```
 **Absolute path**:
 
 ```json
 {
   "commands": "/Users/name/commands"  // ❌ Absolute path
 }
-```text
+```
 Fix: Use relative path
 ```json
 {
@@ -436,20 +436,20 @@ Fix: Use relative path
 {
   "hooks": "hooks/hooks.json"  // ❌ No ./
 }
-```text
+```
 Fix: Add ./ prefix
 ```json
 {
   "hooks": "./hooks/hooks.json"  // ✅
 }
-```text
+```
 **Invalid version**:
 
 ```json
 {
   "version": "1.0"  // ❌ Not semantic versioning
 }
-```text
+```
 Fix: Use MAJOR.MINOR.PATCH
 ```json
 {
@@ -467,7 +467,7 @@ Bare minimum for a working plugin:
 {
   "name": "hello-world"
 }
-```text
+```
 Relies entirely on default directory discovery.
 
 ### Recommended Plugin
@@ -488,7 +488,7 @@ Good metadata for distribution:
   "license": "MIT",
   "keywords": ["code-review", "automation", "quality", "ci-cd"]
 }
-```markdown
+```
 ### Complete Plugin
 
 Full configuration with all features:

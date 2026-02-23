@@ -1,0 +1,315 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/drawing_areas/562949954293344/drawing_log/view_fullscreen/562950056902053?return_action=list&filter_drawing_set=current&page=1&page_size=150&total=0&search_string=&tab=revisions",
+  "pageName": "drawings-viewer-fullscreen",
+  "category": "viewer",
+  "pageId": "drawings-viewer-fullscreen",
+  "timestamp": "2026-01-12T21:06:41.844Z",
+  "analysis": {
+    "components": {
+      "buttons": 3,
+      "forms": 1,
+      "inputs": 1,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 0,
+      "cards": 0,
+      "lists": 5,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 20,
+      "drawingPreviews": 1,
+      "revisionIndicators": 2,
+      "uploadButtons": 26,
+      "areaFolders": 2,
+      "markupTools": 5
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Linked By:",
+          "Taken On:",
+          "Uploaded On:"
+        ],
+        "rows": 2,
+        "classes": "",
+        "id": null
+      }
+    ],
+    "drawingElements": {
+      "drawingAreas": [
+        {
+          "text": "",
+          "classes": "fa fa-folder-open"
+        },
+        {
+          "text": "",
+          "classes": "fa fa-folder-open"
+        }
+      ],
+      "revisions": [
+        {
+          "text": "A142: 1ST FLOOR RESTROOM DETAILS",
+          "classes": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionSelect__1hGty"
+        },
+        {
+          "text": "Rev. 0  (01/10/25) - Permit Set 1-14-25",
+          "classes": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionOptionSelect__NLsM7"
+        }
+      ],
+      "drawings": [
+        {
+          "text": "",
+          "classes": "procore-object-summary-popup drawing-sketch-pin"
+        }
+      ]
+    },
+    "title": "A142 • Drawings • Goodwill Bart",
+    "h1": "Filter Markup",
+    "breadcrumbs": []
+  },
+  "links": 0,
+  "linkDetails": [],
+  "clickables": 15,
+  "clickableDetails": [
+    {
+      "text": "",
+      "id": "Header_fscreenButton__J0RxZ previous-document ",
+      "type": "button",
+      "classes": "Header_fscreenButton__J0RxZ previous-document ",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "",
+      "id": "Header_fscreenButton__J0RxZ next-document ",
+      "type": "button",
+      "classes": "Header_fscreenButton__J0RxZ next-document ",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "A142: 1ST FLOOR RESTROOM DETAILS",
+      "id": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionSelect__1hGty",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionSelect__1hGty",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Rev. 0  (01/10/25) - Permit Set 1-14-25",
+      "id": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionOptionSelect__NLsM7",
+      "type": "div",
+      "classes": "StyledSelectButton-core-12_19_0__sc-mr8gwe-6 crgrTA Header_headerSelect__SZN3K Header_revisionOptionSelect__NLsM7",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Download",
+      "id": "Header_sidebarMenu__j5wqN",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "QR Code",
+      "id": "Header_sidebarMenu__j5wqN",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "Markup",
+      "id": "Header_sidebarMenu__j5wqN ",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN ",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Filter",
+      "id": "Header_sidebarMenu__j5wqN ",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN ",
+      "hasDropdown": false,
+      "index": 7
+    },
+    {
+      "text": "Info",
+      "id": "Header_sidebarMenu__j5wqN ",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN ",
+      "hasDropdown": false,
+      "index": 8
+    },
+    {
+      "text": "Search",
+      "id": "Header_sidebarMenu__j5wqN ",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN ",
+      "hasDropdown": false,
+      "index": 9
+    },
+    {
+      "text": "Activity",
+      "id": "Header_sidebarMenu__j5wqN ",
+      "type": "div",
+      "classes": "Header_sidebarMenu__j5wqN ",
+      "hasDropdown": false,
+      "index": 10
+    },
+    {
+      "text": "Close",
+      "id": "Header_closeButton__vwyWA",
+      "type": "div",
+      "classes": "Header_closeButton__vwyWA",
+      "hasDropdown": false,
+      "index": 11
+    },
+    {
+      "text": "Hide All",
+      "id": "StyledButton-core-12_19_0__sc-c5bhwh-3 bMbBhI Sidebar_showHideAllButton__oTUIC",
+      "type": "button",
+      "classes": "StyledButton-core-12_19_0__sc-c5bhwh-3 bMbBhI Sidebar_showHideAllButton__oTUIC",
+      "hasDropdown": false,
+      "index": 12
+    },
+    {
+      "text": "",
+      "id": "ZoomControl_zoomControl__LDDw0",
+      "type": "div",
+      "classes": "ZoomControl_zoomControl__LDDw0",
+      "hasDropdown": false,
+      "index": 13
+    },
+    {
+      "text": "",
+      "id": "ZoomControl_zoomControl__LDDw0",
+      "type": "div",
+      "classes": "ZoomControl_zoomControl__LDDw0",
+      "hasDropdown": false,
+      "index": 14
+    }
+  ],
+  "dropdowns": 10,
+  "dropdownDetails": [
+    {
+      "text": "",
+      "classes": "procore-upload-menu procore-upload-attacher",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "Select a file from Procore",
+      "classes": "procore-upload-menu",
+      "id": null,
+      "hasMenu": true,
+      "index": 1
+    },
+    {
+      "text": "Select a file from Procore",
+      "classes": "procore-upload-menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "classes": "procore-upload-menu procore-upload-attacher",
+      "id": null,
+      "hasMenu": false,
+      "index": 3
+    },
+    {
+      "text": "Select a file from Procore",
+      "classes": "procore-upload-menu",
+      "id": null,
+      "hasMenu": true,
+      "index": 4
+    },
+    {
+      "text": "Select a file from Procore",
+      "classes": "procore-upload-menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "classes": "procore-upload-menu procore-upload-attacher",
+      "id": null,
+      "hasMenu": false,
+      "index": 6
+    },
+    {
+      "text": "Upload a file from your computer...Select a photo ",
+      "classes": "procore-upload-menu",
+      "id": null,
+      "hasMenu": true,
+      "index": 7
+    },
+    {
+      "text": "Upload a file from your computer...",
+      "classes": "procore-upload-menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 8
+    },
+    {
+      "text": "Select a photo from Procore",
+      "classes": "procore-upload-menu-item",
+      "id": null,
+      "hasMenu": false,
+      "index": 9
+    }
+  ],
+  "tabs": 7,
+  "tabDetails": [
+    {
+      "text": "",
+      "isSelected": false,
+      "classes": "StyledBox-core-12_19_0__sc-fgsy0p-0 hsVray Header_connectabilityIcon__XzAgh",
+      "index": 0
+    },
+    {
+      "text": "QR Code",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 1
+    },
+    {
+      "text": "Markup",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 2
+    },
+    {
+      "text": "Filter",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 3
+    },
+    {
+      "text": "Info",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 4
+    },
+    {
+      "text": "Search",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 5
+    },
+    {
+      "text": "Activity",
+      "isSelected": false,
+      "classes": "Header_tabIconLabel__Q7l0s",
+      "index": 6
+    }
+  ],
+  "screenshotPath": "pages/drawings-viewer-fullscreen/screenshot.png"
+}

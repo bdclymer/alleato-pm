@@ -38,6 +38,7 @@ interface UseHeaderNavReturn {
 }
 
 const meetingTitleCache = new Map<string, string>();
+const primeContractTitleCache = new Map<string, string>();
 
 export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname();
@@ -49,6 +50,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [meetingTitle, setMeetingTitle] = useState<string | null>(null);
+  const [primeContractTitle, setPrimeContractTitle] = useState<string | null>(
+    null,
+  );
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -124,6 +128,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
       segments[1] === "meetings";
+    const isPrimeContractDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "prime-contracts";
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -138,6 +146,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         href = `/${segment}/home`;
       } else if (isMeetingDetailRoute && index === 2) {
         label = meetingTitle || "Meeting";
+      } else if (isPrimeContractDetailRoute && index === 2) {
+        label = primeContractTitle || "Prime Contract";
       } else {
         // Try to find a matching tool name
         const allTools: HeaderNavigationTool[] = [
@@ -180,7 +190,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, currentProject, meetingTitle]);
+  }, [pathname, currentProject, meetingTitle, primeContractTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -232,6 +242,67 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchMeetingTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isPrimeContractDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "prime-contracts";
+
+    if (!isPrimeContractDetailRoute) {
+      setPrimeContractTitle(null);
+      return;
+    }
+
+    const contractId = segments[2];
+    if (!contractId || contractId === "new") {
+      setPrimeContractTitle(null);
+      return;
+    }
+
+    const cacheKey = `${segments[0]}:${contractId}`;
+    const cachedTitle = primeContractTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setPrimeContractTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchPrimeContractTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${segments[0]}/contracts/${contractId}`,
+        );
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const title =
+          typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : null;
+
+        if (isActive) {
+          if (title) {
+            primeContractTitleCache.set(cacheKey, title);
+            setPrimeContractTitle(title);
+          } else {
+            setPrimeContractTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchPrimeContractTitle();
     return () => {
       isActive = false;
     };

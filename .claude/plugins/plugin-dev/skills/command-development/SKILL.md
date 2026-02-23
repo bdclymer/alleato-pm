@@ -44,12 +44,12 @@ Review this code for security vulnerabilities including:
 - Authentication issues
 
 Provide specific line numbers and severity ratings.
-```text
+```
 **Incorrect approach (messages to user):**
 ```markdown
 This command will review your code for security issues.
 You'll receive a report with vulnerability details.
-```diff
+```
 The first example tells Claude what to do. The second tells the user what will happen but doesn't instruct Claude. Always use the first approach.
 
 ### Command Locations
@@ -96,7 +96,7 @@ Review this code for security vulnerabilities including:
 - XSS attacks
 - Authentication bypass
 - Insecure data handling
-```yaml
+```
 No frontmatter needed for basic commands.
 
 ### With YAML Frontmatter
@@ -111,7 +111,7 @@ model: sonnet
 ---
 
 Review this code for security vulnerabilities...
-```yaml
+```
 ## YAML Frontmatter Fields
 
 ### description
@@ -124,7 +124,7 @@ Review this code for security vulnerabilities...
 ---
 description: Review pull request for code quality
 ---
-```diff
+```
 **Best practice:** Clear, actionable description (under 60 characters)
 
 ### allowed-tools
@@ -157,7 +157,7 @@ allowed-tools: Read, Write, Edit, Bash(git:*)
 ---
 model: haiku
 ---
-```diff
+```
 **Use cases:**
 - `haiku` - Fast, simple commands
 - `sonnet` - Standard workflows
@@ -173,7 +173,7 @@ model: haiku
 ---
 argument-hint: [pr-number] [priority] [assignee]
 ---
-```yaml
+```
 **Benefits:**
 
 - Helps users understand command arguments
@@ -190,7 +190,7 @@ argument-hint: [pr-number] [priority] [assignee]
 ---
 disable-model-invocation: true
 ---
-```yaml
+```
 **Use when:** Command should only be manually invoked
 
 ## Dynamic Arguments
@@ -213,7 +213,7 @@ Fix issue #$ARGUMENTS following our coding standards and best practices.
 ```text
 > /fix-issue 123
 > /fix-issue 456
-```text
+```
 **Expands to:**
 
 ```bash
@@ -233,26 +233,26 @@ argument-hint: [pr-number] [priority] [assignee]
 
 Review pull request #$1 with priority level $2.
 After review, assign to $3 for follow-up.
-```text
+```
 **Usage:**
 ```text
 > /review-pr 123 high alice
 
-```text
+```
 **Expands to:**
 ```
 
 Review pull request #123 with priority level high.
 After review, assign to alice for follow-up.
 
-```bash
+```
 ### Combining Arguments
 
 Mix positional and remaining arguments:
 
 ```markdown
 Deploy $1 to $2 environment with options: $3
-```text
+```
 **Usage:**
 
 ```text
@@ -263,7 +263,7 @@ Deploy $1 to $2 environment with options: $3
 
 ```bash
 Deploy api to staging environment with options: --force --skip-tests
-```yaml
+```
 ## File References
 
 ### Using @ Syntax
@@ -280,13 +280,13 @@ Review @$1 for:
 - Code quality
 - Best practices
 - Potential bugs
-```text
+```
 **Usage:**
 ```
 
 > /review-file src/api/users.ts
 
-```diff
+```
 **Effect:** Claude reads `src/api/users.ts` before processing command
 
 ### Multiple File References
@@ -300,7 +300,7 @@ Identify:
 - Breaking changes
 - New features
 - Bug fixes
-```markdown
+```
 ### Static File References
 
 Reference known files without arguments:
@@ -312,7 +312,7 @@ Ensure:
 - TypeScript version matches
 - Dependencies are aligned
 - Build configuration is correct
-```markdown
+```
 ## Bash Execution in Commands
 
 Commands can execute bash commands inline to dynamically gather context before Claude processes the command. This is useful for including repository state, environment information, or project-specific context.
@@ -340,7 +340,7 @@ Simple organization for small command sets:
 ├── review.md
 └── docs.md
 
-```text
+```
 **Use when:** 5-15 commands, no clear categories
 
 ### Namespaced Structure
@@ -360,7 +360,7 @@ Organize commands in subdirectories:
     ├── generate.md     # /generate (project:docs)
     └── publish.md      # /publish (project:docs)
 
-```bash
+```
 **Benefits:**
 - Logical grouping by category
 - Namespace shown in `/help`
@@ -430,7 +430,7 @@ Example: /deploy staging v1.2.3
 -->
 
 Deploy application to $1 environment using version $2...
-```yaml
+```
 ## Common Patterns
 
 ### Review Pattern
@@ -450,7 +450,7 @@ Review each file for:
 4. Documentation needs
 
 Provide specific feedback for each file.
-```yaml
+```
 ### Testing Pattern
 
 ```markdown
@@ -463,7 +463,7 @@ allowed-tools: Bash(npm:*)
 Run tests: !`npm test $1`
 
 Analyze results and suggest fixes for failures.
-```yaml
+```
 ### Documentation Pattern
 
 ```markdown
@@ -495,7 +495,7 @@ PR #$1 Workflow:
 2. Review changes
 3. Run checks
 4. Approve or request changes
-```yaml
+```
 ## Troubleshooting
 
 **Command not appearing:**
@@ -544,7 +544,7 @@ allowed-tools: Bash(node:*)
 Run analysis: !`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js $1`
 
 Review results and report findings.
-```bash
+```
 **Common patterns:**
 
 ```markdown
@@ -559,7 +559,7 @@ Review results and report findings.
 
 # Access plugin resources
 @${CLAUDE_PLUGIN_ROOT}/docs/reference.md
-```diff
+```
 **Why use it:**
 - Works across all installations
 - Portable between systems
@@ -580,7 +580,7 @@ plugin-name/
 │       └── helper.md       # /helper (plugin:plugin-name:utils)
 └── plugin.json
 
-```yaml
+```
 **Namespace benefits:**
 - Logical command grouping
 - Shown in `/help` output
@@ -608,7 +608,7 @@ Load configuration: @${CLAUDE_PLUGIN_ROOT}/config/$1-deploy.json
 
 Deploy to $1 using configuration settings.
 Monitor deployment and report status.
-```yaml
+```
 **Template-based pattern:**
 
 ```markdown
@@ -620,7 +620,7 @@ argument-hint: [component]
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/docs.md
 
 Generate documentation for $1 following template structure.
-```yaml
+```
 **Multi-script pattern:**
 
 ```markdown
@@ -663,7 +663,7 @@ The agent will analyze:
 Agent uses plugin resources:
 - ${CLAUDE_PLUGIN_ROOT}/config/rules.json
 - ${CLAUDE_PLUGIN_ROOT}/checklists/review.md
-```yaml
+```
 **Key points:**
 - Agent must exist in `plugin/agents/` directory
 - Claude uses Task tool to launch agent
@@ -689,7 +689,7 @@ Use the api-docs-standards skill to ensure:
 - Error documentation
 
 Generate production-ready API docs.
-```yaml
+```
 **Key points:**
 
 - Skill must exist in `plugin/skills/` directory
@@ -734,7 +734,7 @@ Phase 4 - Report:
 Template: @${CLAUDE_PLUGIN_ROOT}/templates/review.md
 
 Compile findings into report following template.
-```yaml
+```
 **When to use:**
 - Complex multi-step workflows
 - Leverage multiple plugin capabilities
@@ -778,7 +778,7 @@ Otherwise:
   Explain where to place config file
   Show expected format
   Provide example configuration
-```yaml
+```
 ### Plugin Resource Validation
 
 ```markdown
@@ -793,7 +793,7 @@ Validate plugin setup:
 
 If all checks pass, run analysis.
 Otherwise, report missing components.
-```yaml
+```
 ### Error Handling
 
 ```markdown

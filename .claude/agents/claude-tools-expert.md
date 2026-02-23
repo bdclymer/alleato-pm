@@ -24,7 +24,7 @@ You are an expert on Claude Code's ecosystem of tools, plugins, subagents, slash
 
 ```text
 docs/index/INDEX-SUBAGENTS.md
-```diff
+```
 This file contains:
 
 - Complete categorized list of 68+ subagents with descriptions
@@ -45,7 +45,7 @@ All custom slash commands defined for the project. Check this directory and read
 
 ```text
 .claude/agents/
-```text
+```
 Project-level agent definitions with specialized behaviors.
 
 ### 4. Installed Plugins

@@ -8,19 +8,19 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   cat .env.local | grep -E "SUPABASE_URL|SUPABASE_ANON_KEY"
-  ```javascript
+  ```
 - [ ] **Test project exists (ID: 31)**
 
   ```bash
   # Check project exists in database
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); supabase.from('projects').select('id').eq('id', 31).single().then(({data,error}) => console.log(error ? 'NOT FOUND' : 'EXISTS'));"
-  ```text
+  ```
 - [ ] **Test fixtures exist**
 
   ```bash
   ls -l tests/fixtures/*.pdf tests/fixtures/*.txt
   # Should show: test-document.pdf, revised-drawing.pdf, invalid-file.txt
-  ```text
+  ```
 - [ ] **Playwright dependencies installed**
 
   ```bash
@@ -32,7 +32,7 @@ Use this checklist when running or maintaining the Specifications E2E test suite
   ```bash
   # Kill any existing Next.js servers
   pkill -f "next dev"
-  ```diff
+  ```
 
 ---
 
@@ -44,7 +44,7 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npm run test -- specifications
-  ```text
+  ```
 - [ ] Verify all tests pass
 
   ```text
@@ -60,12 +60,12 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npx playwright test tests/e2e/specifications.spec.ts
-  ```text
+  ```
 - [ ] **Extended suite** (18 tests, ~120s)
 
   ```bash
   npx playwright test tests/e2e/specifications-extended.spec.ts
-  ```markdown
+  ```
 
 ### Category-Specific Tests
 
@@ -73,7 +73,7 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npx playwright test -g "File Upload Validation"
-  ```text
+  ```
 - [ ] **Revision management** (6 tests)
 
   ```bash
@@ -84,17 +84,17 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npx playwright test -g "Area Management"
-  ```text
+  ```
 - [ ] **Pagination & search** (4 tests)
 
   ```bash
   npx playwright test -g "Pagination"
-  ```javascript
+  ```
 - [ ] **Edge cases** (6 tests)
 
   ```bash
   npx playwright test -g "Edge Cases"
-  ```javascript
+  ```
 
 ---
 
@@ -114,7 +114,7 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npx playwright show-report
-  ```markdown
+  ```
 
 ### Review Test Artifacts (if tests failed)
 
@@ -124,7 +124,7 @@ Use this checklist when running or maintaining the Specifications E2E test suite
 
   ```bash
   npx playwright show-trace test-results/<test-name>/trace.zip
-  ```diff
+  ```
 
 ---
 
@@ -144,7 +144,7 @@ If tests fail, follow this checklist:
 
   ```bash
   npm run test:ui
-  ```text
+  ```
 - [ ] Run headed (visible browser)
 
   ```bash
@@ -155,7 +155,7 @@ If tests fail, follow this checklist:
 
   ```bash
   npx playwright test --debug -g "<failing test name>"
-  ```markdown
+  ```
 
 ### 3. Common Failure Patterns
 
@@ -184,7 +184,7 @@ If tests fail, follow this checklist:
 
   ```bash
   npm run db:types
-  ```markdown
+  ```
 - [ ] Check if RLS policies are blocking
 
 ### 4. Fix and Re-run
@@ -194,7 +194,7 @@ If tests fail, follow this checklist:
 
   ```bash
   npx playwright test -g "<fixed test name>"
-  ```text
+  ```
 - [ ] If passes, re-run full suite
 
   ```bash
@@ -213,12 +213,12 @@ If tests leave data behind (shouldn't happen, but just in case):
 
   ```bash
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.from('specification_sections').delete().like('section_number', '99%').then(({error}) => console.log(error || 'Cleaned'));"
-  ```sql
+  ```
 - [ ] **Delete test areas**
 
   ```bash
   node -e "const { createClient } = require('@supabase/supabase-js'); const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY); supabase.from('specification_areas').delete().like('name', '%Test%E2E%').then(({error}) => console.log(error || 'Cleaned'));"
-  ```sql
+  ```
 - [ ] **Delete test revisions** (cascades automatically)
 
 ### Verify Cleanup

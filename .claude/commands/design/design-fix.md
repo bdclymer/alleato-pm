@@ -6,7 +6,7 @@ Fix design system violations with verification loop.
 
 ```bash
 /design-fix [options]
-```bash
+```
 **Options:**
 
 - `all` - Fix all pending violations

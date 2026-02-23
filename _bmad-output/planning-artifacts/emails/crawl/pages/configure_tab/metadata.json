@@ -1,0 +1,186 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/directory/configure_tab",
+  "pageName": "configure_tab",
+  "category": "emails",
+  "pageId": "configure_tab",
+  "timestamp": "2026-01-12T16:05:13.414Z",
+  "analysis": {
+    "components": {
+      "buttons": 7,
+      "forms": 0,
+      "inputs": 7,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 1,
+      "cards": 0,
+      "lists": 1,
+      "tabs": 4,
+      "dropdowns": 0,
+      "icons": 21,
+      "emailList": 0,
+      "attachments": 0,
+      "recipients": 27,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Role",
+          "Type",
+          "Members"
+        ],
+        "rows": 3,
+        "classes": "StyledTable-core-12_27_1__sc-9c7xd-26 TmSdf",
+        "id": null
+      }
+    ],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": [
+        ""
+      ]
+    },
+    "title": "Directory • Goodwill Bart",
+    "h1": "Project Directory Settings"
+  },
+  "links": 8,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/set_company/562949953443325",
+      "text": "",
+      "classes": "HomeLink-Afxbq eFQsYW",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/directory/tutorials/configure-advanced-settings-project-directory",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/directory",
+      "text": "Back",
+      "classes": " bttn bttn-primary-solid bttn-lg",
+      "id": null,
+      "index": 7
+    },
+    {
+      "href": "https://www.procore.com/fine-print/terms",
+      "text": "Terms of Service",
+      "classes": "terms-of-service-link",
+      "id": null,
+      "index": 8
+    },
+    {
+      "href": "https://www.procore.com/fine-print/privacy-policy",
+      "text": "Privacy Policy",
+      "classes": "privacy-policy-link",
+      "id": null,
+      "index": 9
+    },
+    {
+      "href": "http://www.procore.com/",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 10
+    }
+  ],
+  "clickables": 8,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "",
+      "id": "react-aria1132187167-17",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledRemove-core-12_27_1__sc-zqi94b-1 dDsZmG",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "",
+      "id": "react-aria1132187167-19",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledRemove-core-12_27_1__sc-zqi94b-1 dDsZmG",
+      "hasDropdown": false,
+      "index": 4
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "hasDropdown": false,
+      "index": 5
+    },
+    {
+      "text": "",
+      "id": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "type": "button",
+      "classes": "StyledButton-core-12_27_1__sc-c5bhwh-3 eBjaZe StyledSelectClearIcon-core-12_27_1__sc-mr8gwe-5 hnPsfQ",
+      "hasDropdown": false,
+      "index": 6
+    },
+    {
+      "text": "Minimize Sidebar",
+      "id": "sidebar-toggle-button sidebar-toggle show-footer",
+      "type": "div",
+      "classes": "sidebar-toggle-button sidebar-toggle show-footer",
+      "hasDropdown": false,
+      "index": 7
+    }
+  ],
+  "dropdowns": 1,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    }
+  ],
+  "screenshotPath": "pages/configure_tab/screenshot.png"
+}

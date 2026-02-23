@@ -1,0 +1,18 @@
+{
+  "parentPage": "drawings-areas",
+  "parentUrl": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/drawings/areas",
+  "dropdownIndex": 1,
+  "menuItems": [
+    {
+      "text": "Edit",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Delete",
+      "href": null,
+      "type": "div"
+    }
+  ],
+  "timestamp": "2026-01-12T21:02:44.505Z"
+}

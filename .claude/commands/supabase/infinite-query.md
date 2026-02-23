@@ -75,7 +75,7 @@ return (
     <Button onClick={fetchNextPage}>Load more products</Button>
   </div>
 )
-```yaml
+```
 ### With filtering on search params
 
 This example will filter based on a search param like `example.com/?q=hello`.
@@ -104,7 +104,7 @@ return (
     <Button onClick={fetchNextPage}>Load more products</Button>
   </div>
 )
-```tsx
+```
 ## Reusable components
 
 ### Infinite list (fetches as you scroll)
@@ -217,7 +217,7 @@ export function InfiniteList<TableName extends SupabaseTableName>({
     </div>
   )
 }
-```typescript
+```
 Use the `InfiniteList` component with the [Todo List](https://supabase.com/dashboard/project/_/sql/quickstarts) quickstart.
 
 Add `<InfiniteListDemo />` to a page to see it in action.

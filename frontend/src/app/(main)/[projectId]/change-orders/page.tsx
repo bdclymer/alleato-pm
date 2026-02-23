@@ -1,7 +1,5 @@
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { ChangeOrdersClient } from "./change-orders-client";
-import { PageActions } from "./page-actions";
 
 export default async function ProjectChangeOrdersPage({
   params,
@@ -44,19 +42,7 @@ export default async function ProjectChangeOrdersPage({
   if (generalResponse.error || primeResponse.error || commitmentResponse.error) {
     const error = generalResponse.error || primeResponse.error || commitmentResponse.error;
     console.error("Error loading change orders:", error);
-    return (
-      <>
-        <ProjectPageHeader
-          title="Change Orders"
-          description="Track and manage contract change orders"
-        />
-        <PageContainer>
-          <div className="text-center text-destructive p-6">
-            Error loading change orders. Please try again later.
-          </div>
-        </PageContainer>
-      </>
-    );
+    return <ChangeOrdersClient projectId={projectId} changeOrders={[]} />;
   }
 
   // Normalize and combine all change orders with contract type indicator
@@ -98,19 +84,5 @@ export default async function ProjectChangeOrdersPage({
 
   const changeOrderRows = [...generalCOs, ...primeCOs, ...commitmentCOs];
 
-  return (
-    <>
-      <ProjectPageHeader
-        title="Change Orders"
-        description="Track and manage contract change orders"
-        actions={<PageActions projectId={projectId} />}
-      />
-      <PageContainer className="space-y-6">
-        <ChangeOrdersClient
-          projectId={projectId}
-          changeOrders={changeOrderRows}
-        />
-      </PageContainer>
-    </>
-  );
+  return <ChangeOrdersClient projectId={projectId} changeOrders={changeOrderRows} />;
 }

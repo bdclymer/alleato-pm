@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Plus, Download, Package } from "lucide-react";
+import * as React from "react";
+import type { ReactElement } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PageContainer, PageTabs } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
-import { GenericDataTable } from "@/components/tables/generic-table-factory";
-import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +19,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import {
+  buildSubmittalTableColumns,
+  submittalColumns,
+  submittalDefaultVisibleColumns,
+  submittalFilters,
+  renderSubmittalCard,
+  renderSubmittalList,
+  type SubmittalTableRow,
+} from "@/features/submittals/submittals-table-config";
 
-// Submittal interface
 interface Submittal {
   id: string;
   submittal_number: string;
@@ -33,56 +42,14 @@ interface Submittal {
   project_name: string | null;
 }
 
-type SubmittalTableRow = {
-  id: string;
-  submittal_number: string;
-  title: string;
-  statusDisplay: string;
-  priorityLabel: string;
-  submitter_company: string;
-  submission_date: string | null;
-  required_approval_date: string | null;
-  submittal_type_name: string | null;
-  project_name: string | null;
-  ballInCourt: boolean;
-  statusKey: string;
+type SubmittalFilterState = Record<string, FilterValue>;
+
+const EMPTY_FILTERS: SubmittalFilterState = {
+  status: undefined,
+  priority: undefined,
 };
 
-const statusVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline" | "success"
-> = {
-  Draft: "secondary",
-  Submitted: "default",
-  "Under Review": "outline",
-  "Requires Revision": "destructive",
-  Approved: "success",
-  Rejected: "destructive",
-  Superseded: "secondary",
-};
-
-const priorityVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  High: "destructive",
-  Normal: "secondary",
-  Low: "outline",
-};
-
-const statusOptions = [
-  "Draft",
-  "Submitted",
-  "Under Review",
-  "Requires Revision",
-  "Approved",
-  "Rejected",
-  "Superseded",
-];
-
-const priorityOptions = ["High", "Normal", "Low"];
-
-function formatLabel(value?: string | null) {
+function formatLabel(value?: string | null): string {
   if (!value) return "";
   return value
     .split("_")
@@ -90,51 +57,89 @@ function formatLabel(value?: string | null) {
     .join(" ");
 }
 
-export default function SubmittalsPage() {
+export default function SubmittalsPage(): ReactElement {
+  const params = useParams<{ projectId: string }>();
+  const pathname = usePathname();
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const projectId = parseInt(params.projectId as string, 10);
+
+  const projectId = parseInt(params.projectId ?? "", 10);
   const activeTab = searchParams.get("tab") || "items";
 
   useProjectTitle("Submittals");
 
-  const [submittals, setSubmittals] = useState<Submittal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initialStatus = searchParams.get("status") ?? "";
+  const initialPriority = searchParams.get("priority") ?? "";
+  const initialFilters: SubmittalFilterState = {
+    status: initialStatus || undefined,
+    priority: initialPriority || undefined,
+  };
 
-  // Fetch submittals
-  useEffect(() => {
+  const tableState = useUnifiedTableState({
+    entityKey: "submittals",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "submission_date",
+      sortDirection: "desc",
+      visibleColumns: submittalDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  React.useEffect(() => {
+    const nextStatus = searchParams.get("status") ?? "";
+    const nextPriority = searchParams.get("priority") ?? "";
+    tableState.setActiveFilters((prev) => {
+      const normalizedStatus = nextStatus || undefined;
+      const normalizedPriority = nextPriority || undefined;
+      if (prev.status === normalizedStatus && prev.priority === normalizedPriority) {
+        return prev;
+      }
+      return {
+        status: normalizedStatus,
+        priority: normalizedPriority,
+      };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  const [submittals, setSubmittals] = React.useState<Submittal[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
     const fetchSubmittals = async () => {
       if (!projectId) return;
 
       try {
         const response = await fetch(`/api/projects/${projectId}/submittals`);
-
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP ${response.status}`);
         }
-
         const data = await response.json();
         setSubmittals(data || []);
       } catch {
         toast.error("Failed to load submittals");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchSubmittals();
   }, [projectId]);
 
-  // Transform submittals to table rows
-  const tableRows = useMemo<SubmittalTableRow[]>(
+  const tableRows = React.useMemo<SubmittalTableRow[]>(
     () =>
       (submittals || []).map((item) => ({
         id: item.id ?? item.submittal_number ?? crypto.randomUUID(),
         submittal_number: item.submittal_number ?? "",
         title: item.title ?? "Untitled Submittal",
         statusDisplay: formatLabel(String(item.status)) || "Submitted",
-        statusKey: item.status ?? "submitted",
         priorityLabel: formatLabel(String(item.priority)) || "Normal",
         submitter_company: item.submitter_company ?? "",
         submission_date: item.submission_date,
@@ -144,11 +149,17 @@ export default function SubmittalsPage() {
         ballInCourt:
           item.status === "submitted" || item.status === "under_review",
       })),
-    [submittals]
+    [submittals],
   );
 
-  // Filter rows based on active tab
-  const filteredRows = useMemo(() => {
+  const activeFilters = tableState.activeFilters as SubmittalFilterState;
+
+  const filteredItems = React.useMemo(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : "";
+    const priorityFilter =
+      typeof activeFilters.priority === "string" ? activeFilters.priority : "";
+
     if (
       activeTab === "packages" ||
       activeTab === "spec-sections" ||
@@ -157,130 +168,104 @@ export default function SubmittalsPage() {
       return [] as SubmittalTableRow[];
     }
 
-    let rows = tableRows;
-    if (activeTab === "ball-in-court") {
-      rows = rows.filter((row) => row.ballInCourt);
-    }
-    return rows;
-  }, [activeTab, tableRows]);
+    return tableRows.filter((row) => {
+      if (activeTab === "ball-in-court" && !row.ballInCourt) {
+        return false;
+      }
+      if (statusFilter && row.statusDisplay !== statusFilter) {
+        return false;
+      }
+      if (priorityFilter && row.priorityLabel !== priorityFilter) {
+        return false;
+      }
+      if (!search) {
+        return true;
+      }
+      return (
+        row.submittal_number.toLowerCase().includes(search) ||
+        row.title.toLowerCase().includes(search) ||
+        row.submitter_company.toLowerCase().includes(search) ||
+        row.statusDisplay.toLowerCase().includes(search) ||
+        row.priorityLabel.toLowerCase().includes(search) ||
+        (row.submittal_type_name ?? "").toLowerCase().includes(search)
+      );
+    });
+  }, [
+    activeFilters.priority,
+    activeFilters.status,
+    activeTab,
+    tableRows,
+    tableState.debouncedSearch,
+  ]);
 
-  // Table configuration
-  const tableConfig = useMemo<GenericTableConfig>(
-    () => ({
-      columns: [
-        {
-          id: "submittal_number",
-          label: "Number",
-          defaultVisible: true,
-          type: "text",
-          isPrimary: true,
-        },
-        {
-          id: "title",
-          label: "Title",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "submittal_type_name",
-          label: "Type",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "statusDisplay",
-          label: "Status",
-          defaultVisible: true,
-          renderConfig: {
-            type: "badge",
-            variantMap: statusVariantMap,
-            defaultVariant: "outline",
-          },
-        },
-        {
-          id: "priorityLabel",
-          label: "Priority",
-          defaultVisible: true,
-          renderConfig: {
-            type: "badge",
-            variantMap: priorityVariantMap,
-            defaultVariant: "secondary",
-          },
-        },
-        {
-          id: "submitter_company",
-          label: "Submitted By",
-          defaultVisible: true,
-          type: "text",
-        },
-        {
-          id: "submission_date",
-          label: "Submitted",
-          defaultVisible: true,
-          type: "date",
-        },
-        {
-          id: "required_approval_date",
-          label: "Required Approval",
-          defaultVisible: true,
-          type: "date",
-        },
-        {
-          id: "project_name",
-          label: "Project",
-          defaultVisible: false,
-          type: "text",
-        },
-      ],
-      searchFields: [
-        "title",
-        "submittal_number",
-        "submitter_company",
-        "statusDisplay",
-        "priorityLabel",
-        "submittal_type_name",
-      ],
-      filters: [
-        {
-          id: "status-filter",
-          label: "Status",
-          field: "statusDisplay",
-          options: statusOptions.map((status) => ({
-            value: status,
-            label: status,
-          })),
-        },
-        {
-          id: "priority-filter",
-          label: "Priority",
-          field: "priorityLabel",
-          options: priorityOptions.map((priority) => ({
-            value: priority,
-            label: priority,
-          })),
-        },
-      ],
-      exportFilename: "submittals-export.csv",
-      enableViewSwitcher: true,
-      enableSorting: true,
-      defaultSortColumn: "submission_date",
-      defaultSortDirection: "desc",
-    }),
-    []
-  );
+  const tableColumns = React.useMemo(() => buildSubmittalTableColumns(), []);
+
+  const tabs = [
+    {
+      label: "Items",
+      href: `/${projectId}/submittals`,
+      count: tableRows.length,
+      isActive: activeTab === "items",
+      testId: "submittals-tab-items",
+    },
+    {
+      label: "Packages",
+      href: `/${projectId}/submittals?tab=packages`,
+      isActive: activeTab === "packages",
+    },
+    {
+      label: "Spec Sections",
+      href: `/${projectId}/submittals?tab=spec-sections`,
+      isActive: activeTab === "spec-sections",
+    },
+    {
+      label: "Ball In Court",
+      href: `/${projectId}/submittals?tab=ball-in-court`,
+      isActive: activeTab === "ball-in-court",
+      testId: "submittals-tab-ball-in-court",
+    },
+    {
+      label: "Recycle Bin",
+      href: `/${projectId}/submittals?tab=recycle-bin`,
+      isActive: activeTab === "recycle-bin",
+    },
+  ];
+
+  const handleFilterChange = (nextFilters: SubmittalFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      priority: typeof nextFilters.priority === "string" ? nextFilters.priority : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.priority);
+
+  const isComingSoonTab =
+    activeTab === "packages" ||
+    activeTab === "spec-sections" ||
+    activeTab === "recycle-bin";
+
+  const emptyDescription = isComingSoonTab
+    ? `This tab is reserved for upcoming ${activeTab.replace("-", " ")} workflows.`
+    : "Create your first submittal to get started.";
 
   return (
-    <>
-      <PageHeader
-        title="Submittals"
-        description="Manage submittal items, packages, and review workflows"
-        showExportButton={false}
-        actions={
+    <UnifiedTablePage
+      header={{
+        title: "Submittals",
+        description: "Manage submittal items, packages, and review workflows",
+        actions: (
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild data-testid="submittals-dropdown-create">
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Submittal
                 </Button>
               </DropdownMenuTrigger>
@@ -293,91 +278,87 @@ export default function SubmittalsPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
             <DropdownMenu>
               <DropdownMenuTrigger asChild data-testid="submittals-dropdown-export">
                 <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="mr-2 h-4 w-4" />
                   Export
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem data-testid="submittals-export-csv">
-                  CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem data-testid="submittals-export-pdf">
-                  PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem data-testid="submittals-export-excel">
-                  Excel
-                </DropdownMenuItem>
+                <DropdownMenuItem data-testid="submittals-export-csv">CSV</DropdownMenuItem>
+                <DropdownMenuItem data-testid="submittals-export-pdf">PDF</DropdownMenuItem>
+                <DropdownMenuItem data-testid="submittals-export-excel">Excel</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        }
-      />
-
-      {/* Tabs */}
-      <PageTabs
-        tabs={[
-          {
-            label: "Items",
-            href: `/${projectId}/submittals`,
-            count: tableRows.length,
-            testId: "submittals-tab-items",
-          },
-          {
-            label: "Packages",
-            href: `/${projectId}/submittals?tab=packages`,
-          },
-          {
-            label: "Spec Sections",
-            href: `/${projectId}/submittals?tab=spec-sections`,
-          },
-          {
-            label: "Ball In Court",
-            href: `/${projectId}/submittals?tab=ball-in-court`,
-            testId: "submittals-tab-ball-in-court",
-          },
-          {
-            label: "Recycle Bin",
-            href: `/${projectId}/submittals?tab=recycle-bin`,
-          },
-        ]}
-      />
-
-      <PageContainer className="space-y-6">
-        {/* Submittals Table */}
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-muted-foreground">Loading submittals...</p>
-          </div>
-        ) : activeTab === "items" || activeTab === "ball-in-court" ? (
-          filteredRows.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No submittals found</p>
-              <Button onClick={() => router.push(`/${projectId}/submittals/new`)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create your first submittal
-              </Button>
-            </div>
-          ) : (
-            <div data-testid="submittals-table">
-              <GenericDataTable data={filteredRows} config={tableConfig} />
-            </div>
-          )
-        ) : (
-          <div className="text-center py-12">
-            <Badge variant="outline" className="mb-4">
-              <Package className="mr-1 h-4 w-4" />
-              Coming Soon
-            </Badge>
-            <p className="text-sm text-muted-foreground">
-              This tab is reserved for upcoming {activeTab} workflows.
-            </p>
-          </div>
-        )}
-      </PageContainer>
-    </>
+        ),
+      }}
+      tabs={tabs}
+      toolbar={{
+        totalItems: tableRows.length,
+        filteredItems: filteredItems.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search submittals...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
+        filters: submittalFilters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns: submittalColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredItems,
+        isLoading,
+        isFetching: false,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => item.id,
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+          });
+        },
+      }}
+      views={{
+        card: (item) => renderSubmittalCard(item, () => undefined),
+        list: (item) => renderSubmittalList(item, () => undefined),
+      }}
+      emptyState={{
+        title: isComingSoonTab ? "Coming Soon" : "No submittals found",
+        description: emptyDescription,
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered: isFiltered && !isComingSoonTab,
+        action: isComingSoonTab ? undefined : (
+          <Button size="sm" onClick={() => router.push(`/${projectId}/submittals/new`)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create your first submittal
+          </Button>
+        ),
+      }}
+      features={{
+        enableExport: false,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+        enableRowActions: false,
+      }}
+    />
   );
 }

@@ -25,7 +25,6 @@ const coreTools = [
   { name: "360 Reporting", href: "/reporting" },
   { name: "Documents", href: "/documents" },
   { name: "Directory", href: "/directory" },
-  { name: "Tasks", href: "/tasks" },
   { name: "Admin", href: "/admin" },
   { name: "Connection Manager", href: "/connection-manager", badge: "New" },
 ];

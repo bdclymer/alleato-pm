@@ -26,7 +26,7 @@ Combine command and prompt hooks for layered validation:
     }
   ]
 }
-```bash
+```
 **Use case:** Fast deterministic checks followed by intelligent analysis
 
 **Example quick-check.sh:**
@@ -42,7 +42,7 @@ fi
 
 # Let prompt hook handle complex cases
 exit 0
-```bash
+```
 The command hook quickly approves obviously safe commands, while the prompt hook analyzes everything else.
 
 ## Conditional Hook Execution
@@ -60,7 +60,7 @@ fi
 # Run validation logic in CI
 input=$(cat)
 # ... validation code ...
-```bash
+```
 **Use cases:**
 - Different behavior in CI vs local development
 - Project-specific validation
@@ -94,7 +94,7 @@ risk_level=$(calculate_risk "$command")
 echo "$risk_level" > /tmp/hook-state-$$
 
 exit 0
-```bash
+```
 ```bash
 # Hook 2: Use saved state
 #!/bin/bash
@@ -104,7 +104,7 @@ if [ "$risk_level" = "high" ]; then
   echo "High risk operation detected" >&2
   exit 2
 fi
-```bash
+```
 **Important:** This only works for sequential hook events (e.g., PreToolUse then PostToolUse), not parallel hooks.
 
 ## Dynamic Hook Configuration
@@ -127,7 +127,7 @@ if [ -f ".claude-hooks-config.json" ]; then
     # ...
   fi
 fi
-```text
+```
 **Example .claude-hooks-config.json:**
 ```json
 {
@@ -155,7 +155,7 @@ Use transcript and session context for intelligent decisions:
     }
   ]
 }
-```bash
+```
 The LLM can read the transcript file and make context-aware decisions.
 
 ## Performance Optimization
@@ -184,7 +184,7 @@ result='{"decision": "approve"}'
 # Cache result
 echo "$result" > "$cache_file"
 echo "$result"
-```bash
+```
 ### Parallel Execution Optimization
 
 Since hooks run in parallel, design them to be independent:
@@ -214,7 +214,7 @@ Since hooks run in parallel, design them to be independent:
     }
   ]
 }
-```bash
+```
 All three hooks run simultaneously, reducing total latency.
 
 ## Cross-Event Workflows
@@ -243,7 +243,7 @@ if [ "$tool_name" = "Bash" ]; then
     echo $((count + 1)) > /tmp/test-count-$$
   fi
 fi
-```bash
+```
 **Stop - Verify based on tracking:**
 ```bash
 #!/bin/bash
@@ -253,7 +253,7 @@ if [ "$test_count" -eq 0 ]; then
   echo '{"decision": "block", "reason": "No tests were run"}' >&2
   exit 2
 fi
-```bash
+```
 ## Integration with External Systems
 
 ### Slack Notifications
@@ -272,7 +272,7 @@ curl -X POST "$SLACK_WEBHOOK" \
 
 echo '{"decision": "deny"}' >&2
 exit 2
-```bash
+```
 ### Database Logging
 
 ```bash
@@ -297,7 +297,7 @@ tool_name=$(echo "$input" | jq -r '.tool_name')
 echo "hook.pretooluse.${tool_name}:1|c" | nc -u -w1 statsd.local 8125
 
 exit 0
-```bash
+```
 ## Security Patterns
 
 ### Rate Limiting
@@ -332,7 +332,7 @@ echo "$current_minute" > "$rate_file"
 echo "$count" >> "$rate_file"
 
 exit 0
-```bash
+```
 ### Audit Logging
 
 ```bash
@@ -345,7 +345,7 @@ timestamp=$(date -Iseconds)
 echo "$timestamp | $USER | $tool_name | $input" >> ~/.claude/audit.log
 
 exit 0
-```bash
+```
 ### Secret Detection
 
 ```bash
@@ -385,7 +385,7 @@ if [ $? -eq 2 ]; then
 else
   echo "✗ Test 2 failed"
 fi
-```bash
+```
 ### Integration Testing
 
 Create test scenarios that exercise the full hook workflow:
@@ -409,7 +409,7 @@ fi
 
 # Clean up
 rm -rf "$CLAUDE_PROJECT_DIR"
-```markdown
+```
 ## Best Practices for Advanced Hooks
 
 1. **Keep hooks independent**: Don't rely on execution order
@@ -429,7 +429,7 @@ rm -rf "$CLAUDE_PROJECT_DIR"
 # BAD: Assumes hooks run in specific order
 # Hook 1 saves state, Hook 2 reads it
 # This can fail because hooks run in parallel!
-```markdown
+```
 ### ❌ Long-Running Hooks
 
 ```bash
@@ -444,7 +444,7 @@ sleep 120
 # BAD: Script crashes on unexpected input
 file_path=$(echo "$input" | jq -r '.tool_input.file_path')
 cat "$file_path"  # Fails if file doesn't exist
-```bash
+```
 ### ✅ Proper Error Handling
 
 ```bash

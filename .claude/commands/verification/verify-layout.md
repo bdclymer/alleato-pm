@@ -8,7 +8,7 @@ Perform comprehensive verification of layout changes to ensure they meet design 
 
    ```bash
    npm run typecheck --prefix frontend
-   ```text
+   ```
 2. **Run Layout Tests**
 
    ```bash

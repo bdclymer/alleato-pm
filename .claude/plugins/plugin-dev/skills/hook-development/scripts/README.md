@@ -10,7 +10,7 @@ Validates `hooks.json` configuration files for correct structure and common issu
 
 ```bash
 ./validate-hook-schema.sh path/to/hooks.json
-```diff
+```
 **Checks:**
 - Valid JSON syntax
 - Required fields present
@@ -24,7 +24,7 @@ Validates `hooks.json` configuration files for correct structure and common issu
 ```bash
 cd my-plugin
 ./validate-hook-schema.sh hooks/hooks.json
-```markdown
+```
 ## test-hook.sh
 
 Tests individual hook scripts with sample input before deploying to Claude Code.
@@ -33,7 +33,7 @@ Tests individual hook scripts with sample input before deploying to Claude Code.
 
 ```bash
 ./test-hook.sh [options] <hook-script> <test-input.json>
-```diff
+```
 **Options:**
 - `-v, --verbose` - Show detailed execution information
 - `-t, --timeout N` - Set timeout in seconds (default: 60)
@@ -67,7 +67,7 @@ Checks hook scripts for common issues and best practices violations.
 
 ```bash
 ./hook-linter.sh <hook-script.sh> [hook-script2.sh ...]
-```diff
+```
 **Checks:**
 - Shebang presence
 - `set -euo pipefail` usage
@@ -95,18 +95,18 @@ Checks hook scripts for common issues and best practices violations.
 
    ```bash
    vim my-plugin/scripts/my-hook.sh
-   ```text
+   ```
 2. **Lint the script**
 
    ```bash
    ./hook-linter.sh my-plugin/scripts/my-hook.sh
-   ```text
+   ```
 3. **Create test input**
 
    ```bash
    ./test-hook.sh --create-sample PreToolUse > test-input.json
    # Edit test-input.json as needed
-   ```text
+   ```
 4. **Test the hook**
 
    ```bash
@@ -117,12 +117,12 @@ Checks hook scripts for common issues and best practices violations.
 
    ```bash
    # Edit my-plugin/hooks/hooks.json
-   ```text
+   ```
 6. **Validate configuration**
 
    ```bash
    ./validate-hook-schema.sh my-plugin/hooks/hooks.json
-   ```text
+   ```
 7. **Test in Claude Code**
 
    ```bash

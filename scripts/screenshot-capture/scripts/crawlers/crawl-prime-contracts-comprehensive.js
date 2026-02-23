@@ -3,13 +3,13 @@ import fs from "fs";
 import path from "path";
 
 // ========= CONFIG ===========
-const OUTPUT_DIR = "./procore-prime-contracts-crawl";
+const OUTPUT_DIR = "./procore-prime-contracts-crawl-2026";
 const WAIT_TIME = 2000;
 const SCREENSHOT_DIR = path.join(OUTPUT_DIR, "pages");
 const REPORTS_DIR = path.join(OUTPUT_DIR, "reports");
 
 // Starting URL - Prime Contracts
-const START_URL = "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214786/tools/contracts/prime_contracts";
+const START_URL = "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/contracts/prime_contracts";
 
 // Procore credentials
 const PROCORE_EMAIL = "bclymer@alleatogroup.com";
@@ -444,7 +444,7 @@ function generateReport() {
 // Main crawler
 async function crawlPrimeContracts() {
   const browser = await chromium.launch({
-    headless: false,
+    headless: true,
     args: ['--start-maximized']
   });
 

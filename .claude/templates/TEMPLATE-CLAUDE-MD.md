@@ -61,7 +61,7 @@ find . -name "*.tsx"
 rg --files | rg "\.tsx$"
 # or
 rg --files -g "*.tsx"
-```text
+```
 **Enforcement Rules:**
 
 ```typescript
@@ -74,7 +74,7 @@ rg --files -g "*.tsx"
     "Use 'rg --files | rg pattern' or 'rg --files -g pattern' instead of 'find -name' for better performance",
 ),
 
-```typescript
+```
 ## 🧱 Code Structure & Modularity
 
 ### File and Component Limits
@@ -151,7 +151,7 @@ src/
 ├── hooks/                 # Shared custom hooks
 ├── styles/                # Styling files
 └── types/                 # Shared TypeScript types
-```markdown
+```
 ## 🎯 TypeScript Configuration (STRICT REQUIREMENTS)
 
 ### MUST Follow These Compiler Options
@@ -186,7 +186,7 @@ src/
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
-```markdown
+```
 ### MANDATORY Type Requirements
 
 - **NEVER use `any` type** - use `unknown` if type is truly unknown
@@ -235,7 +235,7 @@ npm install @tanstack/react-query zustand
 
 # Development Tools
 npm install -D @testing-library/react @testing-library/jest-dom vitest jsdom
-```typescript
+```
 ## 🛡️ Data Validation with Zod (MANDATORY FOR ALL EXTERNAL DATA)
 
 ### MUST Follow These Validation Rules
@@ -273,7 +273,7 @@ export const apiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
     error: z.string().optional(),
     timestamp: z.string().datetime(),
   });
-```sql
+```
 ### Form Validation with React Hook Form
 
 ```typescript
@@ -307,7 +307,7 @@ function UserForm(): ReactElement {
     </form>
   );
 }
-```sql
+```
 ## 🧪 Testing Strategy (MANDATORY REQUIREMENTS)
 
 ### MUST Meet These Testing Standards
@@ -388,7 +388,7 @@ describe('UserProfile', () => {
     );
   });
 });
-```sql
+```
 ## 🎨 Component Guidelines (STRICT REQUIREMENTS)
 
 ### MANDATORY Component Documentation
@@ -501,7 +501,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button"
 
 export { Button, buttonVariants }
-```sql
+```
 ## 🔄 State Management (STRICT HIERARCHY)
 
 ### MUST Follow This State Hierarchy
@@ -557,7 +557,7 @@ function useUpdateUser() {
     },
   });
 }
-```javascript
+```
 ## 🔐 Security Requirements (MANDATORY)
 
 ### Input Validation (MUST IMPLEMENT ALL)
@@ -619,7 +619,7 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-```sql
+```
 ## 💅 Code Style & Quality
 
 ### ESLint Configuration (MANDATORY)
@@ -655,7 +655,7 @@ const eslintConfig = [
 ];
 
 export default eslintConfig;
-```bash
+```
 ## 📋 Development Commands
 
 ```json

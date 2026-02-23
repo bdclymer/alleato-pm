@@ -43,41 +43,64 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Fetch financial summary from materialized view
-    const { data: financialSummary } = await supabase
-      .from("contract_financial_summary_mv")
-      .select(`
-        original_contract_amount,
-        approved_change_orders,
-        pending_change_orders,
-        draft_change_orders,
-        revised_contract_amount,
-        invoiced_amount,
-        payments_received,
-        remaining_balance
-      `)
-      .eq("contract_id", contractId)
-      .single();
+    // Aggregate financial data from contract_change_orders (UUID contract_id matches prime_contracts.id)
+    // NOTE: contract_financial_summary_mv uses the integer-PK contracts table — not prime_contracts (UUID)
+    const [coResult, invoiceResult, paymentResult] = await Promise.all([
+      supabase
+        .from("contract_change_orders")
+        .select("amount, status")
+        .eq("contract_id", contractId),
+      supabase
+        .from("prime_contract_payment_applications")
+        .select("amount, status")
+        .eq("contract_id", contractId),
+      supabase
+        .from("prime_contract_payments")
+        .select("amount")
+        .eq("contract_id", contractId),
+    ]);
 
-    // Calculate percent paid
-    const revisedAmount = financialSummary?.revised_contract_amount ?? contract.revised_contract_value ?? 0;
-    const paymentsReceived = financialSummary?.payments_received ?? 0;
-    const percentPaid = revisedAmount > 0 ? (paymentsReceived / revisedAmount) * 100 : 0;
+    let approvedCOs = 0;
+    let pendingCOs = 0;
+    let draftCOs = 0;
 
-    // Merge contract with financial summary data
+    if (coResult.data) {
+      for (const co of coResult.data) {
+        const amount = co.amount ?? 0;
+        if (co.status === "approved") approvedCOs += amount;
+        else if (co.status === "pending") pendingCOs += amount;
+        else if (co.status === "draft") draftCOs += amount;
+      }
+    }
+
+    const invoicedAmount = (invoiceResult.data ?? [])
+      .filter((a) => a.status === "approved")
+      .reduce((sum, a) => sum + (a.amount ?? 0), 0);
+
+    const paymentsReceived = (paymentResult.data ?? []).reduce(
+      (sum, p) => sum + (p.amount ?? 0),
+      0,
+    );
+
+    const originalAmount = contract.original_contract_value ?? 0;
+    const revisedAmount = originalAmount + approvedCOs;
+    const remainingBalance = revisedAmount - paymentsReceived;
+    const percentPaid = revisedAmount > 0
+      ? Math.round((paymentsReceived / revisedAmount) * 10000) / 100
+      : 0;
+
+    // Merge contract with calculated financial data
     const enrichedContract = {
       ...contract,
-      // Financial summary from materialized view
-      approved_change_orders: financialSummary?.approved_change_orders ?? 0,
-      pending_change_orders: financialSummary?.pending_change_orders ?? 0,
-      draft_change_orders: financialSummary?.draft_change_orders ?? 0,
-      pending_revised_contract_amount:
-        (financialSummary?.revised_contract_amount ?? contract.revised_contract_value ?? 0) +
-        (financialSummary?.pending_change_orders ?? 0),
-      invoiced_amount: financialSummary?.invoiced_amount ?? 0,
-      payments_received: financialSummary?.payments_received ?? 0,
-      remaining_balance: financialSummary?.remaining_balance ?? contract.revised_contract_value ?? 0,
-      percent_paid: Math.round(percentPaid * 100) / 100,
+      approved_change_orders: approvedCOs,
+      pending_change_orders: pendingCOs,
+      draft_change_orders: draftCOs,
+      pending_revised_contract_amount: revisedAmount + pendingCOs,
+      revised_contract_value: revisedAmount,
+      invoiced_amount: invoicedAmount,
+      payments_received: paymentsReceived,
+      remaining_balance: remainingBalance,
+      percent_paid: percentPaid,
     };
 
     return NextResponse.json(enrichedContract);
@@ -112,27 +135,21 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Look up person_id from auth user
     const { data: authLink } = await supabase
       .from("users_auth")
       .select("person_id")
       .eq("auth_user_id", user.id)
       .single();
-
     const { data: membership } = await supabase
       .from("project_directory_memberships")
       .select("role, status")
       .eq("project_id", parseInt(projectId, 10))
       .eq("person_id", authLink?.person_id ?? "")
       .single();
-
     if (!membership || membership.status !== "active") {
       return NextResponse.json(
-        {
-          error:
-            "Forbidden: You do not have permission to update contracts for this project",
-        },
-        { status: 403 },
+        { error: "Forbidden: You do not have permission to update contracts for this project" },
+        { status: 403 }
       );
     }
 
@@ -234,27 +251,21 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Look up person_id from auth user
     const { data: authLink } = await supabase
       .from("users_auth")
       .select("person_id")
       .eq("auth_user_id", user.id)
       .single();
-
     const { data: membership } = await supabase
       .from("project_directory_memberships")
       .select("role, status")
       .eq("project_id", parseInt(projectId, 10))
       .eq("person_id", authLink?.person_id ?? "")
       .single();
-
     if (!membership || membership.status !== "active") {
       return NextResponse.json(
-        {
-          error:
-            "Forbidden: You do not have permission to delete contracts for this project",
-        },
-        { status: 403 },
+        { error: "Forbidden: You do not have permission to delete contracts for this project" },
+        { status: 403 }
       );
     }
 

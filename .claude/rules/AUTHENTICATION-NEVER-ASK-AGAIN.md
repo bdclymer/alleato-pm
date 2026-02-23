@@ -34,7 +34,7 @@ Claude agents repeatedly:
 Credentials are ALWAYS in `.env` file:
 - PROCORE_USER=bclymer@alleatogroup.com
 - PROCORE_PASSWORD=Clymer926!
-```markdown
+```
 ### 2. Enhanced Testing Commands Section
 
 **Location:** Line 169 in `/CLAUDE.md`
@@ -82,7 +82,7 @@ This appears BEFORE the detailed gates so Claude sees it immediately.
 # Re-authenticate (run ONCE)
 cd frontend
 npx playwright test tests/auth.setup.ts
-```javascript
+```
 **DO NOT:**
 
 - Add login code to every test
@@ -96,7 +96,7 @@ npx playwright test tests/auth.setup.ts
 ```bash
 PROCORE_USER=bclymer@alleatogroup.com
 PROCORE_PASSWORD=Clymer926!
-```javascript
+```
 **Mandatory pattern:**
 ```javascript
 import dotenv from 'dotenv';

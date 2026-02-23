@@ -13,15 +13,15 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
-# Check for .env file in frontend
-if [ ! -f "frontend/.env" ]; then
-    if [ -f "frontend/.env.local.development" ]; then
-        echo "Creating frontend/.env from .env.local.development..."
-        cp frontend/.env.local.development frontend/.env
-        echo "Please verify frontend/.env contains your Supabase credentials"
+# Check for .env.local symlink in frontend (points to root .env)
+if [ ! -f "frontend/.env.local" ]; then
+    if [ -f ".env" ]; then
+        echo "Creating frontend/.env.local symlink to root .env..."
+        ln -s "$(pwd)/.env" frontend/.env.local
+        echo "frontend/.env.local -> $(pwd)/.env"
     else
-        echo "Error: No .env file found in frontend/"
-        echo "  Please create frontend/.env with your Supabase configuration"
+        echo "Error: No .env file found at project root"
+        echo "  Please create .env with your Supabase configuration"
         exit 1
     fi
 fi

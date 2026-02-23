@@ -14,7 +14,7 @@ export function useRfis(projectId: number) {
   return useQuery<RFI[]>({
     queryKey: ["rfis", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/rfis?projectId=${projectId}`);
+      const res = await fetch(`/api/projects/${projectId}/rfis`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to fetch RFIs");
@@ -26,18 +26,18 @@ export function useRfis(projectId: number) {
   });
 }
 
-export function useRfi(rfiId: string) {
+export function useRfi(projectId: number, rfiId: string) {
   return useQuery<RFI>({
     queryKey: ["rfi", rfiId],
     queryFn: async () => {
-      const res = await fetch(`/api/rfis/${rfiId}`);
+      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to fetch RFI");
       }
       return res.json();
     },
-    enabled: !!rfiId,
+    enabled: !!projectId && !!rfiId,
   });
 }
 
@@ -51,7 +51,7 @@ export function useCreateRfi(projectId: number) {
 
   return useMutation({
     mutationFn: async (data: RfiFormValues & { status: string }) => {
-      const res = await fetch("/api/rfis", {
+      const res = await fetch(`/api/projects/${projectId}/rfis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, project_id: projectId }),
@@ -85,7 +85,7 @@ export function useUpdateRfi(projectId: number) {
       rfiId: string;
       data: Partial<RfiFormValues> & { status?: string };
     }) => {
-      const res = await fetch(`/api/rfis/${rfiId}`, {
+      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -116,7 +116,7 @@ export function useDeleteRfi(projectId: number) {
 
   return useMutation({
     mutationFn: async (rfiId: string) => {
-      const res = await fetch(`/api/rfis/${rfiId}`, {
+      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`, {
         method: "DELETE",
       });
       if (!res.ok) {

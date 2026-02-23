@@ -91,7 +91,7 @@
 
 ```bash
 npx supabase db push && npm run typecheck --prefix frontend
-```sql
+```
 - [ ] PASSED  |  [ ] FAILED  |  [ ] NOT RUN
 - Last Run:
 - Evidence:
@@ -134,7 +134,7 @@ npx supabase db push && npm run typecheck --prefix frontend
 
 ```bash
 curl http://localhost:3000/api/[resource]
-```markdown
+```
 - [ ] PASSED  |  [ ] FAILED  |  [ ] NOT RUN
 - Last Run:
 - Evidence:
@@ -169,7 +169,7 @@ curl http://localhost:3000/api/[resource]
 ```bash
 npm run dev --prefix frontend
 # Navigate to /[projectId]/[resource]
-```markdown
+```
 - [ ] PASSED  |  [ ] FAILED  |  [ ] NOT RUN
 - Last Run:
 - Evidence:

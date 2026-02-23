@@ -68,7 +68,7 @@ Key principles for your system prompts:
 - Build in quality assurance and self-correction mechanisms
 
 Remember: The agents you create should be autonomous experts capable of handling their designated tasks with minimal additional guidance. Your system prompts are their complete operational manual.
-```yaml
+```
 ## Usage Pattern
 
 Use this prompt to generate agent configurations:
@@ -85,7 +85,7 @@ Create an agent configuration based on this request: "I need an agent that revie
   "whenToUse": "Use this agent when the user asks to review a pull request, check code quality, or analyze PR changes. Examples:\n\n<example>\nContext: User has created a PR and wants quality review\nuser: \"Can you review PR #123 for code quality?\"\nassistant: \"I'll use the pr-quality-reviewer agent to analyze the PR.\"\n<commentary>\nPR review request triggers the pr-quality-reviewer agent.\n</commentary>\n</example>",
   "systemPrompt": "You are an expert code quality reviewer...\n\n**Your Core Responsibilities:**\n1. Analyze code changes for quality issues\n2. Check adherence to best practices\n..."
 }
-```yaml
+```
 ## Converting to Agent File
 
 Take the JSON output and create the agent markdown file:
@@ -130,7 +130,7 @@ Add after "Architect Comprehensive Instructions":
 - Include OWASP top 10 security considerations
 - Check for common vulnerabilities (injection, XSS, etc.)
 - Validate input sanitization
-```diff
+```
 **For test-generation agents:**
 
 ```diff
@@ -147,7 +147,7 @@ Add after "Design Expert Persona":
 - Use clear, concise language
 - Include code examples
 - Follow project documentation standards from CLAUDE.md
-```yaml
+```
 ## Best Practices from Internal Implementation
 
 ### 1. Consider Project Context
@@ -181,7 +181,7 @@ For code review agents, assume "recently written code" not entire codebase:
 ```bash
 For agents that review code, assume recent changes unless explicitly
 stated otherwise.
-```markdown
+```
 ### 4. Output Structure
 
 Always define clear output format in system prompt:

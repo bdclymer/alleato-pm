@@ -1,0 +1,180 @@
+{
+  "totalPages": 10,
+  "totalLinks": 110,
+  "totalClickables": 256,
+  "totalDropdowns": 286,
+  "totalTabs": 0,
+  "totalPhotoItems": 0,
+  "pages": [
+    {
+      "name": "photos",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/562949954728542/project/images/configure_tab",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "configure_tab",
+      "url": "https://us02.procore.com/562949954728542/project/images/configure_tab",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings/permissions",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "map",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/562949954728542/project/images/configure_tab",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "timeline",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/562949954728542/project/images/configure_tab",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "albums",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/562949954728542/project/images/configure_tab",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957045694",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957592422",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "recycle_bin",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/562949954728542/project/images/configure_tab",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "settings",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings/permissions",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "permissions",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings/permissions",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/settings",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517718",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962703765",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962704263",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958752758",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949963040316",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517704",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949964058125",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949958944695",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949959160218",
+        "https://us02.procore.com/562949954728542/project/directory/edit_person/562949962517835",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "562949957045694",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957045694",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    },
+    {
+      "name": "562949957592422",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums/562949957592422",
+      "outgoingLinks": [
+        "https://us02.procore.com/set_company/562949953443325",
+        "https://us02.procore.com/562949954728542/project/home",
+        "https://us02.procore.com/562949954728542/project/conversations",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/map",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/timeline",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/albums",
+        "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/photos/recycle_bin",
+        "https://www.procore.com/fine-print/terms",
+        "https://www.procore.com/fine-print/privacy-policy",
+        "http://www.procore.com/"
+      ]
+    }
+  ]
+}

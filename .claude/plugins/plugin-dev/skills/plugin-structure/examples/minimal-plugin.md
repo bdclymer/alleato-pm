@@ -10,7 +10,7 @@ hello-world/
 │   └── plugin.json
 └── commands/
     └── hello.md
-```yaml
+```
 ## File Contents
 
 ### .claude-plugin/plugin.json
@@ -19,7 +19,7 @@ hello-world/
 {
   "name": "hello-world"
 }
-```yaml
+```
 ### commands/hello.md
 
 ```markdown

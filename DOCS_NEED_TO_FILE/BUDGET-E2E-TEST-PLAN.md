@@ -627,7 +627,7 @@ await expect(page.getByRole('row').filter({ hasText: costCode3 })).toBeVisible()
 11. Verify 3 new line items in table with correct values
 
 **Assertions:**
-```typescript
+```
 // Open import modal
 await page.getByRole('button', { name: 'Import' }).click();
 const modal = page.getByRole('dialog', { name: /import/i });
@@ -681,7 +681,7 @@ await expect(page.getByRole('row').filter({ hasText: '03-300' })).toBeVisible();
    - Grand totals row at bottom
 
 **Assertions:**
-```typescript
+```
 // Click export
 await page.getByRole('button', { name: 'Export' }).click();
 await page.getByRole('menuitem', { name: 'Excel' }).click();
@@ -756,7 +756,7 @@ expect(stats.size).toBeGreaterThan(0);
 For each test suite, create isolated test data:
 
 #### Minimal Seed (CRUD Tests)
-```typescript
+```
 const testData = {
   project: {
     id: 12345,
@@ -778,7 +778,7 @@ const testData = {
 ```
 
 #### Comprehensive Seed (Calculation Tests)
-```typescript
+```
 const complexTestData = {
   project: { /* same as above */ },
   costCodes: [ /* same as above */ ],
@@ -830,7 +830,7 @@ const complexTestData = {
 
 **Use `test.afterAll` to clean up test data in reverse dependency order:**
 
-```typescript
+```
 test.afterAll(async () => {
   if (!projectId) return;
 
@@ -901,7 +901,7 @@ frontend/tests/e2e/budget/
 
 **Tests use pre-configured auth (saved in `frontend/tests/.auth/user.json`):**
 
-```typescript
+```
 import { test } from '../../fixtures/index';
 
 test.describe('Budget Core CRUD', () => {

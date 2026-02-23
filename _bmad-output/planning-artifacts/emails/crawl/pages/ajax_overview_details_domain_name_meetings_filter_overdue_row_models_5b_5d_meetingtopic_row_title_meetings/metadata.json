@@ -1,0 +1,99 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/home/ajax_overview_details?domain_name=meetings&filter=overdue&row_models%5B%5D=MeetingTopic&row_title=Meetings",
+  "pageName": "ajax_overview_details?domain_name=meetings&filter=overdue&row_models%5B%5D=MeetingTopic&row_title=Meetings",
+  "category": "emails",
+  "pageId": "ajax_overview_details_domain_name_meetings_filter_overdue_row_models_5b_5d_meetingtopic_row_title_meetings",
+  "timestamp": "2026-01-12T16:05:30.404Z",
+  "analysis": {
+    "components": {
+      "buttons": 0,
+      "forms": 0,
+      "inputs": 0,
+      "tables": 1,
+      "modals": 0,
+      "navigation": 0,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 0,
+      "emailList": 0,
+      "attachments": 0,
+      "recipients": 0,
+      "threads": 0,
+      "compose": 0
+    },
+    "tables": [
+      {
+        "index": 1,
+        "headers": [
+          "Status",
+          "#",
+          "Subject",
+          "Ball In Court",
+          "Due"
+        ],
+        "rows": 3,
+        "classes": "item_list",
+        "id": "overview_details"
+      }
+    ],
+    "emailElements": {
+      "subjects": [],
+      "senders": [],
+      "dates": []
+    },
+    "title": "",
+    "h1": "Meetings"
+  },
+  "links": 6,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949972599100",
+      "text": "4.3",
+      "classes": "",
+      "id": null,
+      "index": 0
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949972599100",
+      "text": "Final Finishes and functionality",
+      "classes": "",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949972599530",
+      "text": "4.4",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949972599530",
+      "text": "New Lease Space",
+      "classes": "",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949980766120",
+      "text": "3.4",
+      "classes": "",
+      "id": null,
+      "index": 4
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/meetings/show_meeting_topic/562949980766120",
+      "text": "Changes Not included in RFIs",
+      "classes": "",
+      "id": null,
+      "index": 5
+    }
+  ],
+  "clickables": 0,
+  "clickableDetails": [],
+  "dropdowns": 0,
+  "dropdownDetails": [],
+  "screenshotPath": "pages/ajax_overview_details_domain_name_meetings_filter_overdue_row_models_5b_5d_meetingtopic_row_title_meetings/screenshot.png"
+}

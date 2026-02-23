@@ -1,0 +1,124 @@
+{
+  "url": "https://us02.procore.com/562949954728542/project/transmittals/list?sort=number&view=list&per_page=150&page=1",
+  "pageName": "list",
+  "category": "transmittals",
+  "pageId": "list",
+  "timestamp": "2026-01-11T08:41:38.411Z",
+  "analysis": {
+    "components": {
+      "buttons": 5,
+      "forms": 0,
+      "inputs": 3,
+      "tables": 0,
+      "modals": 0,
+      "navigation": 2,
+      "cards": 0,
+      "lists": 0,
+      "tabs": 0,
+      "dropdowns": 0,
+      "icons": 18
+    },
+    "tables": [],
+    "title": "Transmittals • Goodwill Bart",
+    "h1": "Transmittals"
+  },
+  "links": 4,
+  "linkDetails": [
+    {
+      "href": "https://us02.procore.com/562949954728542/project/home",
+      "text": "",
+      "classes": "LogoContainer-gkeIlB cVoHYA",
+      "id": null,
+      "index": 1
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/conversations",
+      "text": "",
+      "classes": "",
+      "id": null,
+      "index": 2
+    },
+    {
+      "href": "https://support.procore.com/products/online/user-guide/project-level/transmittals",
+      "text": "Help",
+      "classes": "core-contextual-help",
+      "id": null,
+      "index": 3
+    },
+    {
+      "href": "https://us02.procore.com/562949954728542/project/transmittals/configure_tab",
+      "text": "",
+      "classes": "walkme-transmittals-cog",
+      "id": null,
+      "index": 4
+    }
+  ],
+  "clickables": 5,
+  "clickableDetails": [
+    {
+      "text": "SearchCmdK",
+      "id": "nav-bar-search",
+      "type": "button",
+      "classes": "StyledButton-core-12_25_2__sc-c5bhwh-3 gVQXyT StyledNewButton-procore-search__sc-jq3ytc-1 bzskPA",
+      "hasDropdown": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "id": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "type": "button",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "hasDropdown": false,
+      "index": 1
+    },
+    {
+      "text": "More",
+      "id": "StyledTab-core-11_25_1__sc-17s58xs-1 StyledDropdownTab-core-11_25_1__sc-17s58xs-3 kpizHB heBbBm",
+      "type": "button",
+      "classes": "StyledTab-core-11_25_1__sc-17s58xs-1 StyledDropdownTab-core-11_25_1__sc-17s58xs-3 kpizHB heBbBm",
+      "hasDropdown": false,
+      "index": 2
+    },
+    {
+      "text": "Export",
+      "id": "StyledButton-core-11_25_1__sc-c5bhwh-3 Dedwr StyledDropdownButton-core-11_25_1__sc-ufsy2q-2 cCHqhk",
+      "type": "button",
+      "classes": "StyledButton-core-11_25_1__sc-c5bhwh-3 Dedwr StyledDropdownButton-core-11_25_1__sc-ufsy2q-2 cCHqhk",
+      "hasDropdown": false,
+      "index": 3
+    },
+    {
+      "text": "Create",
+      "id": "StyledButton-core-11_25_1__sc-c5bhwh-3 bycvHY",
+      "type": "button",
+      "classes": "StyledButton-core-11_25_1__sc-c5bhwh-3 bycvHY",
+      "hasDropdown": false,
+      "index": 4
+    }
+  ],
+  "dropdowns": 3,
+  "dropdownDetails": [
+    {
+      "text": "More",
+      "classes": "StyledTabBase-core-12_25_2__sc-17s58xs-0 StyledDropdownTabBase-core-12_25_2__sc-17s58xs-2 StyledDropdownTab-core-12_25_2__sc-17s58xs-5 cRXGze NzXIe jCkbQx",
+      "id": null,
+      "hasMenu": false,
+      "index": 0
+    },
+    {
+      "text": "More",
+      "classes": "StyledTab-core-11_25_1__sc-17s58xs-1 StyledDropdownTab-core-11_25_1__sc-17s58xs-3 kpizHB heBbBm",
+      "id": null,
+      "hasMenu": false,
+      "index": 1
+    },
+    {
+      "text": "Export",
+      "classes": "StyledButton-core-11_25_1__sc-c5bhwh-3 Dedwr StyledDropdownButton-core-11_25_1__sc-ufsy2q-2 cCHqhk",
+      "id": null,
+      "hasMenu": false,
+      "index": 2
+    }
+  ],
+  "screenshotPath": "pages/list/screenshot.png"
+}

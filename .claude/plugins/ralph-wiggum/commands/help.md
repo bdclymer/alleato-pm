@@ -16,7 +16,7 @@ The Ralph Wiggum technique is an iterative development methodology based on cont
 while :; do
   cat PROMPT.md | claude-code --continue
 done
-```typescript
+```
 The same prompt is fed to Claude repeatedly. The "self-referential" aspect comes from Claude seeing its own previous work in the files and git history, not from feeding output back as input.
 
 **Each iteration:**
@@ -40,7 +40,7 @@ Start a Ralph loop in your current session.
 /ralph-loop "Refactor the cache layer" --max-iterations 20
 /ralph-loop "Add tests" --completion-promise "TESTS COMPLETE"
 
-```typescript
+```
 **Options:**
 - `--max-iterations <n>` - Max iterations before auto-stop
 - `--completion-promise <text>` - Promise phrase to signal completion
@@ -64,7 +64,7 @@ Cancel an active Ralph loop (removes the loop state file).
 
 /cancel-ralph
 
-```typescript
+```
 **How it works:**
 - Checks for active loop state file
 - Removes `.claude/.ralph-loop.local.md`
@@ -81,7 +81,7 @@ To signal completion, Claude must output a `<promise>` tag:
 ```html
 <promise>TASK COMPLETE</promise>
 
-```diff
+```
 The stop hook looks for this specific tag. Without it (or `--max-iterations`), Ralph runs infinitely.
 
 ### Self-Reference Mechanism

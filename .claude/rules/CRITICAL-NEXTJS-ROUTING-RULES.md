@@ -8,7 +8,7 @@
 
 ```text
 [Error: You cannot use different slug names for the same dynamic path ('paramName1' !== 'paramName2').]
-```diff
+```
 This error is a **HARD BLOCKER**. The Next.js dev server will refuse to start.
 
 ---
@@ -33,7 +33,7 @@ When you have dynamic route segments at the same path level with **different par
 ```text
 ✗ frontend/src/app/admin/tables/[table]/[id]/page.tsx
 ✗ frontend/src/app/admin/tables/[table]/[recordId]/page.tsx
-```text
+```
 **Error:** `'id' !== 'recordId'`
 
 **Violation 3: Mixed naming in nested routes**
@@ -56,7 +56,7 @@ Pick ONE naming convention for each resource type and use it EVERYWHERE:
 ```text
 ✓ frontend/src/app/api/projects/[projectId]/route.ts
 ✓ frontend/src/app/[projectId]/page.tsx
-```typescript
+```
 ### Solution 2: Delete Duplicates
 
 If you have two routes with different names, one is likely obsolete:
@@ -68,7 +68,7 @@ ls -la frontend/src/app/admin/tables/[table]/
 # Check which is newer/correct
 # Delete the obsolete one
 rm -rf frontend/src/app/admin/tables/[table]/[id]/
-```typescript
+```
 ---
 
 ## 📋 PROJECT STANDARDS (ENFORCE THESE)
@@ -149,7 +149,7 @@ for route in $ROUTES; do
 done
 
 echo "✅ No route conflicts found"
-```text
+```
 **Add to `.git/hooks/pre-commit`:**
 ```bash
 #!/bin/bash

@@ -26,11 +26,11 @@ Interactive command that guides you through creating a new Claude Agent SDK appl
 
 ```bash
 /new-sdk-app my-project-name
-```bash
+```
 Or simply:
 ```bash
 /new-sdk-app
-```diff
+```
 The command will interactively ask you:
 
 1. Language choice (TypeScript or Python)
@@ -47,7 +47,7 @@ The command will interactively ask you:
 # → Sets up TypeScript or Python environment
 # → Installs latest SDK version
 # → Verifies the setup automatically
-```markdown
+```
 ### Agent: `agent-sdk-verifier-py`
 
 Thoroughly verifies Python Agent SDK applications for correct setup and best practices.
@@ -73,7 +73,7 @@ The agent runs automatically after `/new-sdk-app` creates a Python project, or y
 "Verify my Python Agent SDK application"
 "Check if my SDK app follows best practices"
 
-```diff
+```
 **Output:**
 Provides a comprehensive report with:
 - Overall status (PASS / PASS WITH WARNINGS / FAIL)
@@ -107,7 +107,7 @@ The agent runs automatically after `/new-sdk-app` creates a TypeScript project, 
 "Verify my TypeScript Agent SDK application"
 "Check if my SDK app follows best practices"
 
-```diff
+```
 **Output:**
 Provides a comprehensive report with:
 - Overall status (PASS / PASS WITH WARNINGS / FAIL)
@@ -131,7 +131,7 @@ Here's a typical workflow using this plugin:
 Language: TypeScript
 Agent type: Coding agent (code review)
 Starting point: Basic agent with common features
-```text
+```
 1. **Automatic verification:**
 The command automatically runs `agent-sdk-verifier-ts` to ensure everything is correctly set up.
 
@@ -143,7 +143,7 @@ echo "ANTHROPIC_API_KEY=your_key_here" > .env
 
 # Run your agent
 npm start
-```bash
+```
 5. **Verify after changes:**
 ```text
 "Verify my SDK application"

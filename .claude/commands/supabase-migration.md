@@ -11,7 +11,7 @@ You are an automated migration engine. You DO NOT describe steps -- you EXECUTE 
 
 ```bash
 $ARGUMENTS
-```sql
+```
 Parse the description of the desired schema change. Examples:
 
 - "add columns phone, address to companies table"
@@ -82,7 +82,7 @@ Create the migration SQL following these conventions:
 -- 5. Indexes on all FKs
 -- 6. updated_at trigger
 -- 7. RLS enabled + 4 policies (SELECT, INSERT, UPDATE, DELETE)
-```sql
+```
 **Column addition pattern:**
 ```sql
 ALTER TABLE table_name
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS table_a_table_b (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(table_a_id, table_b_id)
 );
-```sql
+```
 **For RLS policies on project-scoped tables, use this exact pattern:**
 ```sql
 CREATE POLICY "table_select_policy" ON table_name
@@ -115,7 +115,7 @@ CREATE POLICY "table_select_policy" ON table_name
             AND pdm.status = 'active'
         )
     );
-```markdown
+```
 ## STEP 4: Write Migration File
 
 Generate the filename with current timestamp:
@@ -139,7 +139,7 @@ Use `mcp__supabase__execute_sql` with the SQL content.
 
 ```bash
 npx supabase db push --project-id "lgveqfnpkxvzbnnwuled"
-```text
+```
 If the migration fails:
 1. Read the error message carefully
 2. Fix the SQL (common issues: wrong FK type, missing referenced table, syntax error)
@@ -179,7 +179,7 @@ Search for files that import from or query the modified table:
 
 ```bash
 # Find hooks, services, and API routes that reference this table
-```diff
+```
 Use the Grep tool to search for the table name in:
 
 - `frontend/src/hooks/`

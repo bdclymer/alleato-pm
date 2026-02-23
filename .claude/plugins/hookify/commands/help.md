@@ -39,7 +39,7 @@ pattern: rm\s+-rf
 ⚠️ **Dangerous rm command detected!**
 
 This command could delete important files. Please verify the path.
-```diff
+```
 **Key fields:**
 - `name`: Unique identifier for the rule
 - `enabled`: true/false to activate/deactivate
@@ -54,7 +54,7 @@ The message body is what Claude sees when the rule triggers.
 ```text
 /hookify Don't use console.log in production files
 
-```text
+```
 This analyzes your request and creates the appropriate rule file.
 
 **Option B: Create manually**
@@ -65,7 +65,7 @@ Create `.claude/hookify.my-rule.local.md` with the format above.
 
 /hookify
 
-```yaml
+```
 Without arguments, hookify analyzes recent conversation to find behaviors you want to prevent.
 
 ## Available Commands
@@ -87,7 +87,7 @@ pattern: chmod\s+777
 ---
 
 Don't use chmod 777 - it's a security risk. Use specific permissions instead.
-```yaml
+```
 **Warn about debugging code:**
 
 ```markdown
@@ -99,7 +99,7 @@ pattern: console\.log\(
 ---
 
 Console.log detected. Remember to remove debug logging before committing.
-```yaml
+```
 **Require tests before stopping:**
 ```markdown
 ---

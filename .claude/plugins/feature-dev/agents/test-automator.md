@@ -89,7 +89,7 @@ page.getByText(/welcome, [A-Za-z]+$/i)
 
 // 5. Test ID (explicit contract - use when others fail)
 page.getByTestId('submit-button')
-```javascript
+```
 ## Locator Chaining & Filtering
 
 ```typescript
@@ -107,7 +107,7 @@ await page.getByRole('listitem')
 const button = page.getByRole('button').and(page.getByTitle('Subscribe'));
 const newOrDialog = page.getByRole('button', { name: 'New' }).or(page.getByText('Confirm'));
 await expect(newOrDialog.first()).toBeVisible();
-```markdown
+```
 ## Web-First Assertions (Auto-Wait)
 
 ```typescript
@@ -120,7 +120,7 @@ await expect(page.locator('input')).toHaveValue('test@example.com');
 
 // ❌ WRONG - manual check loses auto-wait
 expect(await page.getByText('welcome').isVisible()).toBe(true);
-```markdown
+```
 ## Soft Assertions (Continue After Failure)
 
 ```typescript
@@ -154,7 +154,7 @@ test('form submission persists to API', async ({ page, request }) => {
   const apiResponse = await request.get(`/api/projects/${projectId}`);
   expect(apiResponse.ok()).toBeTruthy();
 });
-```javascript
+```
 ## Network Mocking
 
 ```typescript
@@ -172,7 +172,7 @@ await page.route('**/api/slow-endpoint', async route => {
   await new Promise(resolve => setTimeout(resolve, 100));
   await route.fulfill({ body: JSON.stringify({ delayed: true }) });
 });
-```javascript
+```
 ---
 
 # PART 2: PROJECT-SPECIFIC PATTERNS
@@ -192,7 +192,7 @@ ls frontend/tests/helpers/
 
 # Check unit test patterns
 find frontend/src -name "*.test.ts" -o -name "*.test.tsx"
-```javascript
+```
 ## Project Authentication Pattern
 
 This project uses a setup project + storage state pattern:
@@ -236,7 +236,7 @@ test.describe('Feature tests', () => {
     // Test uses project.id...
   });
 });
-```javascript
+```
 ---
 
 # PART 3: STARTER TEMPLATES
@@ -273,7 +273,7 @@ test.describe('[Feature] - [Scenario Group]', () => {
     await expect(page.getByRole('alert')).toContainText('Required field');
   });
 });
-```sql
+```
 ## Template 2: CRUD Operations Test
 
 ```typescript
@@ -352,7 +352,7 @@ test.describe('[Resource] Management', () => {
     await expect(page.getByText(`${TEST_PREFIX}-Delete-Me`)).not.toBeVisible();
   });
 });
-```javascript
+```
 ## Template 3: Form Validation Test
 
 ```typescript
@@ -481,7 +481,7 @@ test.describe('[Resource] Table', () => {
     await expect(page.getByText('Page 2')).toBeVisible();
   });
 });
-```javascript
+```
 ## Template 5: Modal Interaction Test
 
 ```typescript
@@ -539,7 +539,7 @@ test.describe('[Feature] Modal', () => {
     await expect(page.getByText('Saved successfully')).toBeVisible();
   });
 });
-```sql
+```
 ## Template 6: Unit Test for Service
 
 ```typescript
@@ -672,7 +672,7 @@ describe('[ServiceName]', () => {
     });
   });
 });
-```sql
+```
 ## Template 7: API Route Test
 
 ```typescript
@@ -775,7 +775,7 @@ await page.goto('/path', { waitUntil: 'networkidle' });
 
 // ✅ GOOD - use domcontentloaded via safeNavigate
 await safeNavigate(page, '/path');
-```javascript
+```
 ## 2. NEVER hardcode auth
 ```typescript
 // ❌ BAD
@@ -783,7 +783,7 @@ await page.context().addCookies([{ name: 'auth', value: 'xxx' }]);
 
 // ✅ GOOD - use fixture
 import { test } from '../fixtures';
-```javascript
+```
 ## 3. NEVER forget cleanup
 
 ```typescript
@@ -793,7 +793,7 @@ await api.post('/create', data); // Orphaned!
 // ✅ GOOD
 const resource = await testData.create('resource', data);
 // Auto-cleaned in afterAll
-```markdown
+```
 ## 4. NEVER use arbitrary waits
 ```typescript
 // ❌ BAD
@@ -812,7 +812,7 @@ await page.click('.btn.primary.large');
 // ✅ GOOD
 await page.getByRole('button', { name: 'Submit' }).click();
 await page.getByTestId('submit-btn').click();
-```markdown
+```
 ## 6. NEVER check visibility manually
 ```typescript
 // ❌ BAD - loses auto-wait
@@ -820,7 +820,7 @@ expect(await page.getByText('Hello').isVisible()).toBe(true);
 
 // ✅ GOOD - auto-waits
 await expect(page.getByText('Hello')).toBeVisible();
-```typescript
+```
 ---
 
 # PART 5: TEST FILE STRUCTURE & COMMANDS

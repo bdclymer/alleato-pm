@@ -18,7 +18,7 @@ Streamlined entry point for implementing Procore features. Automatically determi
 /implement-feature rfis --phase implement
 
 # Available phases: research, plan, analyze, implement, test, verify
-```markdown
+```
 ## Agent Instructions
 
 You are a feature implementation orchestrator. Your job is to coordinate the implementation of a Procore feature using the standardized 7-phase workflow.
@@ -32,7 +32,7 @@ Extract from the command:
 ```typescript
 Arguments provided: {arguments}
 
-```typescript
+```
 Parse the feature name and any flags:
 - `--phase <phase>` - Override auto-detected phase
 - Valid phases: `research`, `plan`, `analyze`, `implement`, `test`, `verify`
@@ -44,7 +44,7 @@ Parse the feature name and any flags:
 
 documentation/*project-mgmt/in-progress/{feature}/
 
-```bash
+```
 If missing, respond:
 ```text
 Feature directory not found: documentation/*project-mgmt/in-progress/{feature}/
@@ -55,13 +55,13 @@ To start a new feature:
 2. Run the Procore crawler: /feature-crawl {feature} <procore-url>
 3. Then run: /implement-feature {feature}
 
-```text
+```
 **2b. Check for crawl data:**
 ```
 
 docs-ai/contents/docs/PRPs/{feature}/crawl-{feature}/
 
-```bash
+```
 If missing, suggest:
 ```text
 No Procore crawl data found. Run the crawler first:
@@ -70,7 +70,7 @@ No Procore crawl data found. Run the crawler first:
 Example:
 /feature-crawl submittals <https://us02.procore.com/562949954728542/project/submittals>
 
-```markdown
+```
 ### Step 3: Read Shared Workflow
 
 Read the shared workflow template:
@@ -78,7 +78,7 @@ Read the shared workflow template:
 
 .agents/workflows/feature-implementation.md
 
-```bash
+```
 This contains the full 7-phase workflow with all sub-agent patterns and gate requirements.
 
 ### Step 4: Read Feature Context
@@ -87,7 +87,7 @@ This contains the full 7-phase workflow with all sub-agent patterns and gate req
 ```diff
 documentation/*project-mgmt/in-progress/{feature}/CONTEXT.md
 
-```diff
+```
 **4b. If CONTEXT.md doesn't exist, auto-generate from crawl data:**
 - Read crawl metadata files from `crawl-{feature}/pages/*/metadata.json`
 - Extract database tables from forms and table structures
@@ -101,7 +101,7 @@ documentation/*project-mgmt/in-progress/{feature}/CONTEXT.md
 
 documentation/*project-mgmt/in-progress/{feature}/STATUS.md
 
-```bash
+```
 **5b. If STATUS.md doesn't exist, check gate files:**
 
 | Gate File | Indicates Phase Complete |
@@ -127,7 +127,7 @@ If in IMPLEMENT phase with multiple tasks:
 ```yaml
 .claude/locks/{feature}/*.lock
 
-```yaml
+```
 **6c. Skip locked tasks, pick first unlocked task**
 **6d. Create lock file for claimed task:**
 ```markdown
@@ -156,7 +156,7 @@ Task({
     Write findings to: .claude/research/{feature}.md`,
   description: "Research {feature}"
 })
-```yaml
+```
 **PLAN Phase:**
 - Create TASKS.md with comprehensive task checklist
 - Create PLANS.md with implementation strategy
@@ -174,7 +174,7 @@ Task({
     4. Update TASKS.md with current state`,
   description: "Analyze {feature} state"
 })
-```yaml
+```
 **IMPLEMENT Phase:**
 For each unchecked task in TASKS.md:
 
@@ -189,7 +189,7 @@ Task({
     Implement the task. Create .claude/worker-done-{feature}-{task-id}.md when done.`,
   description: "Implement {feature} {task}"
 })
-```yaml
+```
 **TEST Phase:**
 ```typescript
 Task({
@@ -221,7 +221,7 @@ Task({
     Create {feature}/VERIFICATION-{task}.md with VERIFIED or FAILED status.`,
   description: "Verify {feature}"
 })
-```bash
+```
 ### Step 8: Update STATUS.md
 
 After phase completion:
@@ -249,7 +249,7 @@ After phase completion:
 
 ## Recent Activity
 - {timestamp}: {what-was-done}
-```markdown
+```
 ### Step 9: Report Status
 
 Provide a clear status update:
@@ -328,18 +328,18 @@ When multiple sessions run `/implement-feature {same-feature}`:
 /feature-crawl submittals https://us02.procore.com/.../submittals
 /implement-feature submittals
 # Auto-executes: RESEARCH -> PLAN -> ANALYZE -> IMPLEMENT -> TEST -> VERIFY
-```markdown
+```
 ### Resume Feature
 ```bash
 /implement-feature direct-costs
 # Reads STATUS.md, continues from current phase
-```markdown
+```
 ### Force Phase
 
 ```bash
 /implement-feature commitments --phase implement
 # Skips auto-detect, runs IMPLEMENT phase
-```markdown
+```
 ### Parallel Sessions
 ```bash
 # Terminal 1

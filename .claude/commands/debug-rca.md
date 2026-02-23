@@ -27,7 +27,7 @@ $ARGUMENTS
 
    # Look for error patterns in logs
    # Search for related error messages
-   ```text
+   ```
 3. **Isolate the Problem**
    - **Binary Search**: Comment out code sections to narrow down
    - **Git Bisect**: Find when the bug was introduced

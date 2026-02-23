@@ -35,7 +35,7 @@ plugin-name/
 │   └── hooks.json           # Event handler configuration
 ├── .mcp.json                # MCP server definitions
 └── scripts/                 # Helper scripts and utilities
-```diff
+```
 **Critical rules:**
 
 1. **Manifest location**: The `plugin.json` manifest MUST be in `.claude-plugin/` directory
@@ -53,7 +53,7 @@ The manifest defines plugin metadata and configuration. Located at `.claude-plug
 {
   "name": "plugin-name"
 }
-```diff
+```
 **Name requirements:**
 - Use kebab-case format (lowercase with hyphens)
 - Must be unique across installed plugins
@@ -94,7 +94,7 @@ Specify custom paths for components (supplements default directories):
   "hooks": "./config/hooks.json",
   "mcpServers": "./.mcp.json"
 }
-```diff
+```
 **Important**: Custom paths supplement defaults—they don't replace them. Components in both default directories and custom paths will load.
 
 **Path rules:**
@@ -118,7 +118,7 @@ commands/
 ├── test.md          # /test command
 └── deploy.md        # /deploy command
 
-```yaml
+```
 **File format**:
 ```markdown
 ---
@@ -144,7 +144,7 @@ agents/
 ├── code-reviewer.md
 ├── test-generator.md
 └── refactorer.md
-```diff
+```
 **File format**:
 
 ```markdown
@@ -156,7 +156,7 @@ capabilities:
 ---
 
 Detailed agent instructions and knowledge...
-```text
+```
 **Usage**: Users can invoke agents manually, or Claude Code selects them automatically based on task context
 
 ### Skills
@@ -180,7 +180,7 @@ skills/
     └── examples/
         └── migration-template.sql
 
-```yaml
+```
 **SKILL.md format**:
 ```markdown
 ---
@@ -190,7 +190,7 @@ version: 1.0.0
 ---
 
 Skill instructions and guidance...
-```text
+```
 **Supporting files**: Skills can include scripts, references, examples, or assets in subdirectories
 
 **Usage**: Claude Code autonomously activates skills based on task context matching the description
@@ -224,7 +224,7 @@ hooks/
     }]
   }]
 }
-```bash
+```
 **Available events**: PreToolUse, PostToolUse, Stop, SubagentStop, SessionStart, SessionEnd, UserPromptSubmit, PreCompact, Notification
 
 **Usage**: Hooks execute automatically in response to Claude Code events
@@ -248,7 +248,7 @@ hooks/
     }
   }
 }
-```bash
+```
 **Usage**: MCP servers integrate seamlessly with Claude Code's tool system
 
 ## Portable Path References
@@ -261,7 +261,7 @@ Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path refer
 {
   "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/run.sh"
 }
-```bash
+```
 **Why it matters**: Plugins install in different locations depending on:
 - User installation method (marketplace, local, npm)
 - Operating system conventions
@@ -289,13 +289,13 @@ Use `${CLAUDE_PLUGIN_ROOT}` environment variable for all intra-plugin path refer
 
 ```markdown
 Reference scripts at: ${CLAUDE_PLUGIN_ROOT}/scripts/helper.py
-```bash
+```
 **In executed scripts**:
 ```bash
 #!/bin/bash
 # ${CLAUDE_PLUGIN_ROOT} available as environment variable
 source "${CLAUDE_PLUGIN_ROOT}/lib/common.sh"
-```sql
+```
 ## File Naming Conventions
 
 ### Component Files
@@ -434,7 +434,7 @@ my-plugin/
 │   └── scripts/
 ├── .mcp.json          # External integrations
 └── scripts/           # Shared utilities
-```markdown
+```
 ### Skill-Focused Plugin
 
 Plugin providing only skills:

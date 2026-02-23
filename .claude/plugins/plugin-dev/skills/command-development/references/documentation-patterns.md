@@ -68,7 +68,7 @@ CHANGELOG:
 [Guide user through steps...]
 
 [Provide clear output...]
-```bash
+```
 ### Documentation Comment Sections
 
 **PURPOSE**: Why the command exists
@@ -141,7 +141,7 @@ Based on analysis, recommend:
 [Recommendations...]
 
 <!-- END: Next steps for user -->
-```bash
+```
 ### Inline Explanations
 
 ```markdown
@@ -186,7 +186,7 @@ Deployment complete!
 1. Monitor logs: /logs $1
 2. Run smoke tests: /smoke-test $1
 3. Notify team: /notify-deployment $1
-```yaml
+```
 ### Decision Point Documentation
 
 ```markdown
@@ -261,7 +261,7 @@ if [ "$1" = "help" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
 fi
 
 [Regular command processing...]
-```bash
+```
 ### Contextual Help
 
 Provide help based on context:
@@ -295,7 +295,7 @@ if [ -z "$1" ]; then
 fi
 
 [Command continues if operation provided...]
-```bash
+```
 ## Error Message Documentation
 
 ### Helpful Error Messages
@@ -342,7 +342,7 @@ if [ ! -f "$1" ]; then
 fi
 
 [Command continues if validation passes...]
-```bash
+```
 ### Error Recovery Guidance
 
 ```markdown
@@ -441,7 +441,7 @@ Compare current features against baseline.
 Now processing your request...
 
 [Command implementation...]
-```yaml
+```
 ### Example-Driven Documentation
 
 ```markdown
@@ -498,7 +498,7 @@ File: $1
 Format: $2
 
 [Perform transformation...]
-```yaml
+```
 ## Maintenance Documentation
 
 ### Version and Changelog
@@ -544,7 +544,7 @@ KNOWN ISSUES:
   - #123: Slow performance with large files (workaround: use --stream flag)
   - #456: Special characters in Windows (fix planned for v2.2.0)
 -->
-```markdown
+```
 ### Maintenance Notes
 
 ```markdown

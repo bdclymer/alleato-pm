@@ -22,7 +22,7 @@ plugin-name/
 │   ├── foo.md            # /foo (plugin:plugin-name)
 │   └── bar.md            # /bar (plugin:plugin-name)
 └── plugin.json           # Plugin manifest
-```diff
+```
 **Key points:**
 
 - Commands are discovered at plugin load time
@@ -73,7 +73,7 @@ Avoid:
 - /test               (conflicts with common name)
 - /run                (too generic)
 - /do-stuff           (not descriptive)
-```yaml
+```
 ## CLAUDE_PLUGIN_ROOT Environment Variable
 
 ### Purpose
@@ -100,7 +100,7 @@ allowed-tools: Bash(node:*), Read
 Run analysis: !`node ${CLAUDE_PLUGIN_ROOT}/scripts/analyze.js`
 
 Read template: @${CLAUDE_PLUGIN_ROOT}/templates/report.md
-```text
+```
 **Expands to:**
 ```
 
@@ -108,7 +108,7 @@ Run analysis: !`node /path/to/plugins/plugin-name/scripts/analyze.js`
 
 Read template: @/path/to/plugins/plugin-name/templates/report.md
 
-```yaml
+```
 ### Common Patterns
 
 #### 1. Executing Plugin Scripts
@@ -122,7 +122,7 @@ allowed-tools: Bash(node:*)
 Lint results: !`node ${CLAUDE_PLUGIN_ROOT}/bin/lint.js $1`
 
 Review the linting output and suggest fixes.
-```yaml
+```
 #### 2. Loading Configuration Files
 
 ```markdown
@@ -134,7 +134,7 @@ allowed-tools: Read, Bash(*)
 Configuration: @${CLAUDE_PLUGIN_ROOT}/config/deploy-config.json
 
 Deploy application using the configuration above for $1 environment.
-```bash
+```
 #### 3. Accessing Plugin Resources
 
 ```markdown
@@ -160,7 +160,7 @@ Step 2 - Config: @${CLAUDE_PLUGIN_ROOT}/config/$1.json
 Step 3 - Execute: !`${CLAUDE_PLUGIN_ROOT}/bin/execute $1`
 
 Review results and report status.
-```yaml
+```
 ### Best Practices
 
 1. **Always use for plugin-internal paths:**
@@ -170,7 +170,7 @@ Review results and report status.
 
    # Bad
    @./templates/foo.md  # Relative to current directory, not plugin
-   ```yaml
+   ```
 1. **Validate file existence:**
 
    ```markdown
@@ -194,7 +194,7 @@ Review results and report status.
    ├── templates/          (report templates)
    └── config/             (configuration files)
    -->
-   ```bash
+   ```
 2. **Combine with arguments:**
 
    ```markdown
@@ -241,7 +241,7 @@ Deploy to $1 environment using:
 3. Application version: !`cat package.json | grep version`
 
 Execute deployment and monitor progress.
-```yaml
+```
 **When to use:** Commands that need consistent settings across invocations
 
 ### Pattern 2: Template-Based Generation
@@ -262,7 +262,7 @@ Include:
 - API reference
 - Examples
 - Testing guidelines
-```yaml
+```
 **When to use:** Standardized output generation
 
 ### Pattern 3: Multi-Script Workflow
@@ -304,7 +304,7 @@ Environment check: !`echo "Deploying to: $1"`
 
 Deploy application using $1 environment configuration.
 Verify deployment and run smoke tests.
-```yaml
+```
 **When to use:** Commands that behave differently per environment
 
 ### Pattern 5: Plugin Data Management
@@ -323,7 +323,7 @@ Analyze @$1 and save results to cache:
 !`mkdir -p ${CLAUDE_PLUGIN_ROOT}/cache && date > ${CLAUDE_PLUGIN_ROOT}/cache/last-run.txt`
 
 Store analysis for future reference and comparison.
-```yaml
+```
 **When to use:** Commands that need persistent data storage
 
 ## Integration with Plugin Components
@@ -347,7 +347,7 @@ The agent will:
 4. Generate detailed report
 
 Note: This uses the Task tool to launch the plugin's code-analyzer agent.
-```yaml
+```
 **Key points:**
 - Agent must be defined in plugin's `agents/` directory
 - Claude will automatically use Task tool to launch agent
@@ -397,7 +397,7 @@ Commit changes: !\`git commit -m "$2"\`
 
 Note: This commit will trigger the plugin's pre-commit hook for validation.
 Review hook output for any issues.
-```yaml
+```
 **Key points:**
 - Hooks execute automatically on events
 - Commands can prepare state for hooks
@@ -430,7 +430,7 @@ Execute comprehensive review:
    Template: @${CLAUDE_PLUGIN_ROOT}/templates/review-report.md
 
 Generate final report combining all outputs.
-```yaml
+```
 **When to use:** Complex workflows leveraging multiple plugin capabilities
 
 ## Validation Patterns
@@ -451,7 +451,7 @@ $IF($1 in [dev, staging, prod],
   Deploy to $1 environment using validated configuration,
   ERROR: Invalid environment '$1'. Must be one of: dev, staging, prod
 )
-```yaml
+```
 **Validation approaches:**
 1. Bash validation using grep/test
 2. Inline validation in prompt
@@ -493,7 +493,7 @@ $IF($1 AND $2,
   Deploy version $2 to $1 environment,
   ERROR: Both environment and version required. Usage: /deploy [env] [version]
 )
-```yaml
+```
 ### Plugin Resource Validation
 
 Verify plugin resources available:
@@ -511,7 +511,7 @@ Validate plugin setup:
 
 If all checks pass, proceed with analysis.
 Otherwise, report missing components and installation steps.
-```yaml
+```
 ### Output Validation
 
 Validate command execution results:
@@ -530,7 +530,7 @@ Validate output:
 - File count: !`find dist -type f | wc -l`
 
 Report build status and any validation failures.
-```yaml
+```
 ### Graceful Error Handling
 
 Handle errors gracefully with helpful messages:

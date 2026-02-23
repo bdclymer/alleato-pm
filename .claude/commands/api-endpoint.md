@@ -11,7 +11,7 @@ You are an automated endpoint generator. You DO NOT describe steps -- you EXECUT
 
 ```bash
 $ARGUMENTS
-```sql
+```
 Parse the arguments:
 
 - **HTTP method**: GET, POST, PUT, PATCH, DELETE (required)
@@ -117,7 +117,7 @@ async {methodName}(
   if (error) throw error;
   return data;
 }
-```sql
+```
 **Mutation method (POST/PATCH/DELETE):**
 ```typescript
 async {methodName}(
@@ -133,7 +133,7 @@ async {methodName}(
   if (error) throw error;
   return data;
 }
-```sql
+```
 If the service file doesn't exist, create it following the scaffold pattern from `.claude/scaffolds/crud-resource/service.ts`.
 
 ## STEP 6: Write API Route
@@ -183,7 +183,7 @@ export async function {METHOD}(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
-```sql
+```
 **CRITICAL route rules:**
 - ALWAYS use `[projectId]` not `[id]`
 - ALWAYS `await params` (Next.js 15 async params)
@@ -241,11 +241,11 @@ Also update the hook's return type interface and return statement to include the
 
 ```bash
 bash scripts/check-route-conflicts.sh
-```bash
+```
 **8b. TypeScript check:**
 ```bash
 npm run typecheck --prefix frontend 2>&1 | head -50
-```diff
+```
 Fix any errors before proceeding.
 
 ## STEP 9: Report Results

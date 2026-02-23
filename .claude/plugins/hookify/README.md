@@ -20,7 +20,7 @@ The hookify plugin makes it simple to create hooks without editing complex `hook
 
 ```bash
 /hookify Warn me when I use rm -rf commands
-```text
+```
 This analyzes your request and creates `.claude/hookify.warn-rm.local.md`.
 
 ### 2. Test It Immediately
@@ -31,7 +31,7 @@ Ask Claude to run a command that should trigger the rule:
 ```text
 Run rm -rf /tmp/test
 
-```text
+```
 You should see the warning message immediately!
 
 ## Usage
@@ -43,14 +43,14 @@ You should see the warning message immediately!
 
 /hookify Don't use console.log in TypeScript files
 
-```bash
+```
 Creates a rule from your explicit instructions.
 
 **Without arguments:**
 ```text
 /hookify
 
-```bash
+```
 Analyzes recent conversation to find behaviors you've corrected or been frustrated by.
 
 ### Helper Commands
@@ -60,12 +60,12 @@ Analyzes recent conversation to find behaviors you've corrected or been frustrat
 
 /hookify:list
 
-```text
+```
 **Configure rules interactively:**
 ```text
 /hookify:configure
 
-```bash
+```
 Enable/disable existing rules through an interactive interface.
 
 **Get help:**
@@ -73,7 +73,7 @@ Enable/disable existing rules through an interactive interface.
 
 /hookify:help
 
-```yaml
+```
 ## Rule Configuration Format
 
 ### Simple Rule (Single Pattern)
@@ -94,7 +94,7 @@ This command could delete important files. Please:
 - Verify the path is correct
 - Consider using a safer approach
 - Make sure you have backups
-```yaml
+```
 **Action field:**
 
 - `warn`: Shows warning but allows operation (default)
@@ -122,7 +122,7 @@ conditions:
 🔐 **Sensitive file edit detected!**
 
 Ensure credentials are not hardcoded and file is in .gitignore.
-```yaml
+```
 **All conditions must match** for the rule to trigger.
 
 ## Event Types
@@ -188,7 +188,7 @@ action: warn
 🐛 **Debug code detected**
 
 Remember to remove debugging statements before committing.
-```yaml
+```
 **This rule warns but allows** - Claude sees the message but can still proceed.
 
 ### Example 3: Require Tests Before Stopping
@@ -208,7 +208,7 @@ conditions:
 **Tests not detected in transcript!**
 
 Before stopping, please run tests to verify your changes work correctly.
-```yaml
+```
 **This blocks Claude from stopping** if no test commands appear in the session transcript. Enable only when you want strict enforcement.
 
 ## Advanced Usage
@@ -234,7 +234,7 @@ conditions:
 🔐 **Hardcoded credential in TypeScript!**
 
 Use environment variables instead of hardcoded values.
-```markdown
+```
 ### Operators Reference
 
 - `regex_match`: Pattern must match (most common)
@@ -276,13 +276,13 @@ Set `enabled: true`
 
 /hookify:configure
 
-```markdown
+```
 ### Delete Rules
 
 Simply delete the `.local.md` file:
 ```bash
 rm .claude/hookify.my-rule.local.md
-```markdown
+```
 ### View All Rules
 
 ```text

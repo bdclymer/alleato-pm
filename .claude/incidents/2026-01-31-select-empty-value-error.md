@@ -18,7 +18,7 @@ Radix UI Select component in `task-edit-modal.tsx` was using an empty string val
 A <Select.Item /> must have a value prop that is not an empty string.
 This is because the Select value can be set to an empty string to clear
 the selection and show the placeholder.
-```typescript
+```
 ---
 
 ## Root Cause
@@ -50,7 +50,7 @@ Applied the same pattern already used for `constraint_type` field in the same co
 >
   <SelectContent>
     <SelectItem value="">No parent (root task)</SelectItem>
-```typescript
+```
 ### After
 ```typescript
 <Select
@@ -74,7 +74,7 @@ value={formData.constraint_type || "none"}
 onValueChange={(value) =>
   handleChange("constraint_type", value === "none" ? null : (value as ConstraintType))
 }
-```diff
+```
 **Lesson:** When a Select needs a "no selection" option, use a sentinel value like `"none"` and convert it to `null` in the change handler.
 
 ---

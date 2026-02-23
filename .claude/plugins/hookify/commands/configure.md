@@ -17,7 +17,7 @@ Use Glob tool to find all hookify rule files:
 
 ```text
 pattern: ".claude/hookify.*.local.md"
-```bash
+```
 If no rules found, inform user:
 
 ```bash
@@ -60,7 +60,7 @@ Use AskUserQuestion to let user select rules:
     }
   ]
 }
-```diff
+```
 **Option format:**
 - Label: `{rule-name} (currently {enabled|disabled})`
 - Description: Brief description from rule's message or pattern
@@ -83,14 +83,14 @@ For each rule to toggle:
 old_string: "enabled: false"
 new_string: "enabled: true"
 
-```text
+```
 **Edit pattern for disabling:**
 ```
 
 old_string: "enabled: true"
 new_string: "enabled: false"
 
-```markdown
+```
 ### 6. Confirm Changes
 
 Show user what was changed:

@@ -5,10 +5,11 @@
 
 export type ContractStatus =
   | "draft"
-  | "active"
-  | "completed"
-  | "cancelled"
-  | "on_hold";
+  | "out_for_bid"
+  | "out_for_signature"
+  | "approved"
+  | "complete"
+  | "terminated";
 
 export interface PrimeContract {
   id: string;

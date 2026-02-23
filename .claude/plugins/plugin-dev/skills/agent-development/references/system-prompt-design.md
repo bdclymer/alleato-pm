@@ -35,7 +35,7 @@ Provide results structured as:
 Handle these situations:
 - [Edge case 1]: [Specific handling approach]
 - [Edge case 2]: [Specific handling approach]
-```markdown
+```
 ## Pattern 1: Analysis Agents
 
 For agents that analyze code, PRs, or documentation:
@@ -85,7 +85,7 @@ You are an expert [domain] analyzer specializing in [specific analysis type].
 - No issues found: Provide positive feedback and validation
 - Too many issues: Group and prioritize top 10
 - Unclear code: Request clarification rather than guessing
-```bash
+```
 ## Pattern 2: Generation Agents
 
 For agents that create code, tests, or documentation:
@@ -127,7 +127,7 @@ Create [what] with:
 - Insufficient context: Ask user for clarification
 - Conflicting patterns: Follow most recent/explicit pattern
 - Complex requirements: Break into smaller pieces
-```bash
+```
 ## Pattern 3: Validation Agents
 
 For agents that validate, check, or verify:
@@ -224,7 +224,7 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 - Phase failure: Attempt retry, then report and stop
 - Missing dependencies: Request from user
 - Timeout: Report partial completion
-```markdown
+```
 ## Writing Style Guidelines
 
 ### Tone and Voice
@@ -239,7 +239,7 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ❌ This agent will analyze...
 ❌ I will analyze...
 
-```markdown
+```
 ### Clarity and Specificity
 
 **Be specific, not vague:**
@@ -254,7 +254,7 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ✅ Categorize as critical (security), major (bugs), or minor (style)
 ❌ Rate the severity of issues
 
-```markdown
+```
 ### Actionable Instructions
 
 **Give concrete steps:**
@@ -265,7 +265,7 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 ✅ Generate test file at test/path/to/file.test.ts
 ❌ Create tests
 
-```markdown
+```
 ## Common Pitfalls
 
 ### ❌ Vague Responsibilities
@@ -286,12 +286,12 @@ You are an expert [domain] orchestrator specializing in coordinating [complex wo
 1. Analyze TypeScript code for type safety issues
 2. Identify missing type annotations and improper 'any' usage
 3. Recommend specific type improvements with examples
-```markdown
+```
 ### ❌ Missing Process Steps
 
 ```markdown
 Analyze the code and provide feedback.
-```text
+```
 **Why bad:** Agent doesn't know HOW to analyze.
 
 ### ✅ Clear Process
@@ -303,7 +303,7 @@ Analyze the code and provide feedback.
 3. Check for 'any' type usage
 4. Verify generic type parameters
 5. List findings with file:line references
-```markdown
+```
 ### ❌ Undefined Output
 
 ```markdown

@@ -1,0 +1,210 @@
+"use client";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { CreateContractInput, UpdateContractInput } from "@/app/api/projects/[projectId]/contracts/validation";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface PrimeContract {
+  id: string;
+  project_id: number;
+  contract_number: string;
+  title: string;
+  client_id: number | null;
+  vendor_id: string | null;
+  contractor_id: string | null;
+  architect_engineer_id: string | null;
+  description: string | null;
+  status: string;
+  executed: boolean;
+  executed_at: string | null;
+  original_contract_value: number;
+  revised_contract_value: number;
+  start_date: string | null;
+  end_date: string | null;
+  substantial_completion_date: string | null;
+  actual_completion_date: string | null;
+  signed_contract_received_date: string | null;
+  contract_termination_date: string | null;
+  retention_percentage: number | null;
+  is_private: boolean;
+  inclusions: string | null;
+  exclusions: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PrimeContractListResponse {
+  data: PrimeContract[];
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
+
+// =============================================================================
+// Query Keys
+// =============================================================================
+
+export const primeContractKeys = {
+  all: (projectId: number) => ["prime-contracts", projectId] as const,
+  list: (projectId: number, params?: Record<string, unknown>) =>
+    [...primeContractKeys.all(projectId), "list", params] as const,
+  detail: (projectId: number, contractId: string) =>
+    [...primeContractKeys.all(projectId), contractId] as const,
+};
+
+// =============================================================================
+// List Hook
+// =============================================================================
+
+export function usePrimeContracts(
+  projectId: number,
+  params?: { status?: string; search?: string },
+) {
+  const searchParams = new URLSearchParams();
+  if (params?.status) searchParams.set("status", params.status);
+  if (params?.search) searchParams.set("search", params.search);
+
+  const queryString = searchParams.toString();
+  const url = `/api/projects/${projectId}/contracts${queryString ? `?${queryString}` : ""}`;
+
+  return useQuery<PrimeContractListResponse>({
+    queryKey: primeContractKeys.list(projectId, params),
+    queryFn: async () => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to fetch prime contracts");
+      }
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+}
+
+// =============================================================================
+// Detail Hook
+// =============================================================================
+
+export function usePrimeContract(projectId: number, contractId: string) {
+  return useQuery<PrimeContract>({
+    queryKey: primeContractKeys.detail(projectId, contractId),
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to fetch contract");
+      }
+      return res.json();
+    },
+    enabled: !!projectId && !!contractId,
+  });
+}
+
+// =============================================================================
+// Create Hook
+// =============================================================================
+
+export function useCreatePrimeContract(projectId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PrimeContract, Error, CreateContractInput>({
+    mutationFn: async (data) => {
+      const res = await fetch(`/api/projects/${projectId}/contracts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to create contract");
+      }
+      return res.json();
+    },
+    onSuccess: (contract) => {
+      queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectId),
+      });
+      toast.success(`Contract "${contract.title}" created`);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create contract");
+    },
+  });
+}
+
+// =============================================================================
+// Update Hook
+// =============================================================================
+
+export function useUpdatePrimeContract(projectId: number, contractId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation<PrimeContract, Error, UpdateContractInput>({
+    mutationFn: async (data) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to update contract");
+      }
+      return res.json();
+    },
+    onSuccess: (contract) => {
+      queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectId),
+      });
+      queryClient.setQueryData(
+        primeContractKeys.detail(projectId, contractId),
+        contract,
+      );
+      toast.success("Contract updated");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update contract");
+    },
+  });
+}
+
+// =============================================================================
+// Delete Hook
+// =============================================================================
+
+export function useDeletePrimeContract(projectId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, Error, string>({
+    mutationFn: async (contractId) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to delete contract");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectId),
+      });
+      toast.success("Contract deleted");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete contract");
+    },
+  });
+}

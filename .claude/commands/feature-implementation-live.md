@@ -22,7 +22,7 @@ Every feature lives in exactly one place:
 
 ```text
 documentation/*project-mgmt/active/{feature}/
-```text
+```
 Everything related to the feature goes here.
 
 Nothing critical goes in .claude/, temp folders, or agent memory.
@@ -109,7 +109,7 @@ Run from repo root:
 
 ```bash
 npm run quality --prefix frontend
-```diff
+```
 Requirement:
 
 - Zero TypeScript errors
@@ -181,7 +181,7 @@ Notes:
 
 ## Final Verdict
 VERIFIED / FAILED
-```bash
+```
 If any section fails → fix the issue → re-run gates → update files.
 
 Definition of “Complete”

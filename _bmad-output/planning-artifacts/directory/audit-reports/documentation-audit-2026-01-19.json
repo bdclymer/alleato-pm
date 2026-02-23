@@ -1,0 +1,189 @@
+{
+  "audit_id": "audit-2026-01-19-093045",
+  "directory": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/",
+  "timestamp": "2026-01-19T09:30:45Z",
+  "files_audited": [
+    "DIRECTORY-STATUS-UPDATE.md",
+    "FORMS-Directory.md",
+    "PLANS-Directory.md",
+    "API_ENDPOINTS-DIRECTORY.md",
+    "SCHEMA-Directory.md",
+    "UI-DIRECTORY.md",
+    "TASKS-DIRECTORY.md"
+  ],
+  "issues": [
+    {
+      "id": "issue-001",
+      "type": "status-conflict",
+      "severity": "critical",
+      "description": "Three different completion percentages (95%, 91%, 83%) claimed across recent files",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/DIRECTORY-STATUS-UPDATE.md",
+          "line": 15,
+          "current_value": "95% complete",
+          "suggested_value": "72% complete",
+          "evidence": "Code analysis shows only 72% of claimed features are actually implemented",
+          "fix_strategy": "update-percentage"
+        },
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/FORMS-Directory.md",
+          "line": 8,
+          "current_value": "91% complete (7 forms implemented)",
+          "suggested_value": "57% complete (4 forms implemented)",
+          "evidence": "Only 4 of 7 claimed forms actually exist in codebase",
+          "fix_strategy": "update-percentage-and-count"
+        },
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/PLANS-Directory.md",
+          "line": 12,
+          "current_value": "83% implementation",
+          "suggested_value": "72% implementation",
+          "evidence": "Inconsistent with actual codebase analysis",
+          "fix_strategy": "update-percentage"
+        }
+      ],
+      "auto_fixable": true
+    },
+    {
+      "id": "issue-002",
+      "type": "false-implementation-claims",
+      "severity": "critical",
+      "description": "Documentation claims features are complete that aren't actually implemented",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/FORMS-Directory.md",
+          "line": 25,
+          "current_value": "✅ CompanyEditDialog.tsx - Edit company information",
+          "suggested_value": "❌ CompanyEditDialog.tsx - Not implemented",
+          "evidence": "File does not exist in components/directory/",
+          "fix_strategy": "mark-not-implemented"
+        },
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/FORMS-Directory.md",
+          "line": 28,
+          "current_value": "✅ DistributionGroupDialog.tsx - Manage distribution groups",
+          "suggested_value": "❌ DistributionGroupDialog.tsx - Not implemented",
+          "evidence": "File does not exist in components/directory/",
+          "fix_strategy": "mark-not-implemented"
+        },
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/FORMS-Directory.md",
+          "line": 31,
+          "current_value": "✅ PermissionTemplateDialog.tsx - Create permission templates",
+          "suggested_value": "❌ PermissionTemplateDialog.tsx - Not implemented",
+          "evidence": "File does not exist in components/directory/",
+          "fix_strategy": "mark-not-implemented"
+        }
+      ],
+      "auto_fixable": true
+    },
+    {
+      "id": "issue-003",
+      "type": "stale-documentation",
+      "severity": "warning",
+      "description": "Old specs from Jan 15 contradict current implementation",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/OLD-PLAN-Jan15.md",
+          "last_modified": "2026-01-15",
+          "suggested_action": "archive",
+          "archive_path": ".archive/2026-01/OLD-PLAN-Jan15.md",
+          "fix_strategy": "archive-file"
+        },
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/INITIAL-SPEC-Jan15.md",
+          "last_modified": "2026-01-15",
+          "suggested_action": "archive",
+          "archive_path": ".archive/2026-01/INITIAL-SPEC-Jan15.md",
+          "fix_strategy": "archive-file"
+        }
+      ],
+      "auto_fixable": true
+    },
+    {
+      "id": "issue-004",
+      "type": "missing-features",
+      "severity": "warning",
+      "description": "Import/Export consistently marked incomplete despite claims of near-completion",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/API_ENDPOINTS-DIRECTORY.md",
+          "line": 145,
+          "current_value": "✅ Import/Export endpoints complete",
+          "suggested_value": "⚠️ Import/Export endpoints partially implemented",
+          "evidence": "Only export implemented, import endpoint returns 501",
+          "fix_strategy": "update-status"
+        }
+      ],
+      "auto_fixable": true
+    },
+    {
+      "id": "issue-005",
+      "type": "duplicate-content",
+      "severity": "warning",
+      "description": "Multiple files contain conflicting status information",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/DIRECTORY-STATUS-UPDATE.md",
+          "line": 1,
+          "current_value": "Multiple status files exist",
+          "suggested_value": "Consolidate into PLANS-Directory.md",
+          "evidence": "3 different files tracking same status information",
+          "fix_strategy": "consolidate-files"
+        }
+      ],
+      "auto_fixable": false
+    },
+    {
+      "id": "issue-006",
+      "type": "outdated-references",
+      "severity": "suggestion",
+      "description": "References to moved or renamed components",
+      "files": [
+        {
+          "path": "/Users/meganharrison/Documents/github/alleato-pm/PLANS/directory/UI-DIRECTORY.md",
+          "line": 67,
+          "current_value": "components/directory/tables/",
+          "suggested_value": "components/tables/",
+          "evidence": "Directory structure changed in recent refactor",
+          "fix_strategy": "update-path"
+        }
+      ],
+      "auto_fixable": true
+    }
+  ],
+  "summary": {
+    "total_issues": 15,
+    "critical": 3,
+    "warnings": 8,
+    "suggestions": 4,
+    "auto_fixable": 12,
+    "manual_review_required": 3,
+    "files_with_issues": 7,
+    "stale_files": 10,
+    "health_score": 75
+  },
+  "recommendations": {
+    "immediate_actions": [
+      "Resolve status conflicts by verifying actual implementation percentage",
+      "Remove or correct false implementation claims",
+      "Archive stale documentation from Jan 15"
+    ],
+    "short_term": [
+      "Consolidate duplicate status tracking to single source of truth",
+      "Update all component paths to match current structure",
+      "Complete import functionality or update documentation"
+    ],
+    "long_term": [
+      "Implement automated documentation validation in CI/CD",
+      "Create documentation update checklist for PRs",
+      "Set up regular documentation audits"
+    ]
+  },
+  "next_steps": {
+    "fix_command": "/fix-docs --report PLANS/directory/files/audit-reports/documentation-audit-2026-01-19.json --severity critical",
+    "delegation_command": "/delegate-audit-tasks --report PLANS/directory/files/audit-reports/documentation-audit-2026-01-19.json",
+    "verification_command": "/task-verification-enforcer --verify-claims PLANS/directory/"
+  }
+}

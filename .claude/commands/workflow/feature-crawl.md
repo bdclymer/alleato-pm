@@ -11,7 +11,7 @@ Streamlined workflow for capturing comprehensive screenshots and analysis of Pro
 
 ```bash
 /feature-crawl <feature-name> <app-url> [support-url] [project-id]
-```markdown
+```
 ### Examples
 
 ```bash
@@ -26,7 +26,7 @@ Streamlined workflow for capturing comprehensive screenshots and analysis of Pro
 
 # Crawl Punch List with custom project
 /feature-crawl punch-list https://us02.procore.com/123456789/project/punch_list https://support.procore.com/products/online/user-guide/project-level/punch-list 123456789
-```typescript
+```
 ## What It Does
 
 The feature crawler automates the complete workflow:
@@ -114,7 +114,7 @@ const START_URL = "<provided-app-url>";
 const PROCORE_EMAIL = "bclymer@alleatogroup.com";
 const PROCORE_PASSWORD = "[from auth.json or .env]";
 const maxPages = 50; // Safety limit
-```diff
+```
 **Include:**
 - Login automation
 - Page navigation and waiting
@@ -137,7 +137,7 @@ const OUTPUT_DIR = "./documentation/*project-mgmt/active/<feature-name>/procore-
 const START_URL = "<provided-support-url>";
 const WAIT_TIME = 2000;
 const maxPages = 100; // Comprehensive documentation crawl
-```diff
+```
 **Include:**
 
 - No authentication needed (public docs)
@@ -167,7 +167,7 @@ Run the generated scripts in sequence:
 ```bash
 cd scripts/screenshot-capture
 node scripts/crawl-<feature-name>-comprehensive.js
-```text
+```
 **Documentation Crawler (if support URL provided):**
 ```bash
 cd scripts/screenshot-capture
@@ -253,7 +253,7 @@ List documentation pages with categories:
 ## Implementation Insights
 
 ### Data Model Considerations
-```sql
+```
 -- Suggested schema from app UI analysis
 CREATE TABLE <feature> (
   id BIGINT PRIMARY KEY,
@@ -300,7 +300,7 @@ CREATE TABLE <feature> (
 3. Design API endpoints from observed interactions
 4. Build frontend components matching captured UI
 5. Implement business logic from documentation
-```bash
+```
 ### Step 6: Generate README
 
 Create `README.md` in the crawl directory with:
@@ -402,7 +402,7 @@ If the crawler encounters issues:
 4. Creates: SUBMITTALS-CRAWL-STATUS.md with app analysis
 5. Creates: README.md with instructions
 6. Reports: "App Crawl: 47 pages, 312 links, 89 clickables"
-```markdown
+```
 ### Example 2: App + Documentation
 
 ```bash

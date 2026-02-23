@@ -12,7 +12,7 @@
 
 ```bash
 npx tsx .agents/tools/generate-verification-report.ts {feature}
-```text
+```
 This script:
 1. Runs `npm run typecheck --prefix frontend`
 2. Runs Playwright tests for the feature
@@ -22,7 +22,7 @@ This script:
 
 ### Step 2: Open Generated Report
 
-```bash
+```
 # Report location:
 docs-ai/contents/docs/PRPs/{feature}/verification/index.html
 ```
@@ -78,7 +78,7 @@ docs-ai/contents/docs/PRPs/{feature}/verification/index.html
 
 **Format:**
 
-```diff
+```
 Verification complete. Report: file:///{absolute-path}/index.html
 
 Overall status: {PASS/FAIL}
@@ -106,7 +106,7 @@ Overall status: {PASS/FAIL}
 
 ### Evidence File Structure
 
-```text
+```
 docs-ai/contents/docs/PRPs/{feature}/verification
 ├── index.html                          # Main report (REQUIRED)
 ├── screenshots/
@@ -174,7 +174,7 @@ The verifier agent should be invoked:
 
 **From prp-execute Agent:**
 
-```yaml
+```
 Feature implementation complete. Ready for verification.
 Feature: {feature-name}
 Tests: {test-file-path}
@@ -183,7 +183,7 @@ Expected behavior: {brief description}
 
 **To prp-execute Agent (if FAILED):**
 
-```text
+```
 Verification FAILED. Issues to fix:
 1. {Issue 1 with specific file:line}
 2. {Issue 2 with specific file:line}
@@ -196,7 +196,7 @@ Re-run verification after fixes.
 
 ## Quick Reference
 
-```bash
+```
 # Generate verification report
 npx tsx .agents/tools/generate-verification-report.ts {feature}
 
@@ -214,13 +214,13 @@ cd frontend && npx playwright test tests/e2e/{feature}*.spec.ts --reporter=html
 ### Scenario: Direct Costs Feature
 
 **1. Run Script:**
-```bash
+```
 npx tsx .agents/tools/generate-verification-report.ts direct-costs
 ```
 
 **2. Review Output:**
 
-```yaml
+```
 📁 Created report structure at: docs-ai/contents/docs/PRPs/{feature}/verification
 🔍 Running quality checks...
 🧪 Running Playwright tests...
@@ -240,7 +240,7 @@ npx tsx .agents/tools/generate-verification-report.ts direct-costs
 
 **3. Report to User:**
 
-```diff
+```
 Verification complete. Report: docs-ai/contents/docs/PRPs/{feature}/verification/index.html
 
 Overall status: PASS

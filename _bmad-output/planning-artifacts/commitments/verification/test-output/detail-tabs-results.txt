@@ -1,0 +1,30 @@
+[dotenv@17.2.3] injecting env (62) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+Running 15 tests using 7 workers
+
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Reusing valid auth state (cookie not expired)
+  ✓   1 [setup] › tests/auth.setup.ts:11:6 › authenticate (96ms)
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  suppress all logs with { quiet: true }
+  ✓   6 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:201:7 › Commitment Detail Page - New Tabs › should display all tabs including new tabs (8.4s)
+  ✓   7 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:213:7 › Commitment Detail Page - New Tabs › should switch tabs correctly (8.6s)
+  ✓   2 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:247:9 › Commitment Detail Page - New Tabs › Change Orders Tab › should make change order numbers clickable (8.9s)
+  ✓   8 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:228:9 › Commitment Detail Page - New Tabs › Change Orders Tab › should render Change Orders tab with data (9.0s)
+  ✓   3 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:278:9 › Commitment Detail Page - New Tabs › Schedule of Values Tab › should display SOV line items (9.0s)
+  ✓   4 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:236:9 › Commitment Detail Page - New Tabs › Change Orders Tab › should display change order data in table (9.0s)
+  ✓   5 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:256:9 › Commitment Detail Page - New Tabs › Change Orders Tab › should show empty state when no change orders (13.4s)
+  ✓   9 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:292:9 › Commitment Detail Page - New Tabs › Invoices Tab › should render Invoices tab with billing summary (5.1s)
+  ✓  10 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:300:9 › Commitment Detail Page - New Tabs › Invoices Tab › should display billing line items (5.1s)
+  ✓  12 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:331:9 › Commitment Detail Page - New Tabs › Attachments Tab › should render Attachments tab with data (4.9s)
+  ✓  13 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:339:9 › Commitment Detail Page - New Tabs › Attachments Tab › should display attachment files (5.0s)
+  ✓  15 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:373:7 › Commitment Detail Page - New Tabs › should maintain tab state when switching tabs (4.3s)
+  ✓  14 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:348:9 › Commitment Detail Page - New Tabs › Attachments Tab › should show empty state when no attachments (8.9s)
+  ✓  11 [chromium] › tests/e2e/commitments-detail-tabs.spec.ts:309:9 › Commitment Detail Page - New Tabs › Invoices Tab › should show empty state when no billing data (9.0s)
+
+  15 passed (19.8s)

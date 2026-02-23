@@ -97,14 +97,14 @@
 
 ```bash
 Project ID: lgveqfnpkxvzbnnwuled
-```markdown
+```
 ### Type Generation
 
 ```bash
 npx supabase gen types typescript \
   --project-id "lgveqfnpkxvzbnnwuled" \
   --schema public > frontend/src/types/database.types.ts
-```diff
+```
 ---
 
 ## Test Credentials

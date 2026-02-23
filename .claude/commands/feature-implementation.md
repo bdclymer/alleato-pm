@@ -92,7 +92,7 @@ Import from fixtures for authenticated requests:
 `,
   description: "Test {feature}"
 })
-```diff
+```
 ---
 
 ## MANDATORY 8-PHASE WORKFLOW
@@ -102,7 +102,7 @@ Every feature implementation MUST follow this phased workflow. Skipping phases i
 ```yaml
 PATTERNS --> RESEARCH --> PLAN --> ANALYZE --> IMPLEMENT --> TEST --> VERIFY --> COMPLETE
 
-```yaml
+```
 **Phase 0: PATTERNS** - Read relevant patterns from `.agents/patterns/` before starting
 
 ---
@@ -194,7 +194,7 @@ Task({
 - [ ] Quality check passes
 - [ ] All tests pass
 - [ ] Matches Procore reference
-```yaml
+```
 **Gate:** Cannot proceed without TASKS.md and PLANS.md created.
 
 ---
@@ -223,7 +223,7 @@ Task({
     - frontend/tests/e2e/{feature}*.spec.ts (tests)`,
   description: "Analyze {feature} codebase state"
 })
-```yaml
+```
 **Output:** TASKS.md updated with current state markers.
 
 ---
@@ -265,7 +265,7 @@ When done, create .claude/worker-done-{feature}-[task-id].md with:
 BEGIN IMPLEMENTATION.`,
   description: "Implement {feature} [task]"
 })
-```yaml
+```
 **Rules:**
 - One task per worker agent
 - Workers do NOT run tests
@@ -339,7 +339,7 @@ Create /documentation/*project-mgmt/active/{feature}/tests/tests-passing-{featur
 
 ```bash
 npx tsx .agents/tools/enforce-gates.ts {feature}
-```yaml
+```
 This generates `{feature_dir}/GATES.md` with:
 - Checksum proof that gates were run
 - Timestamps
@@ -403,7 +403,7 @@ VERIFIED / FAILED
 BE RUTHLESS. If ANY check fails, mark as FAILED.`,
   description: "Verify {feature}"
 })
-```bash
+```
 **Gate:** Cannot mark task complete without VERIFIED status.
 
 ---
@@ -541,7 +541,7 @@ npm run typecheck --prefix frontend
 
 # Auto-fix when possible
 npm run quality:fix --prefix frontend
-```markdown
+```
 ### Zero Tolerance
 
 | BANNED | REQUIRED |
@@ -599,14 +599,14 @@ Before starting a task, check/create lock file:
 
 .claude/locks/{feature}/{task-id}.lock
 
-```yaml
+```
 Lock file contents:
 ```markdown
 # Lock: {task-id}
 Session: [session-id]
 Started: [timestamp]
 Task: [task description]
-```bash
+```
 ### Picking Up Tasks
 
 1. Read STATUS.md for current progress

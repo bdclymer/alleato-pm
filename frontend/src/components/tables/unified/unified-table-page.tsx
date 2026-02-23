@@ -34,6 +34,17 @@ export interface TableColumn<T> extends ColumnConfig {
 
 export type SortDirection = "asc" | "desc";
 
+export interface UnifiedTableFeatures {
+  enableSearch?: boolean;
+  enableViews?: boolean;
+  enableFilters?: boolean;
+  enableColumnToggle?: boolean;
+  enableExport?: boolean;
+  enableBulkDelete?: boolean;
+  enableRowSelection?: boolean;
+  enableRowActions?: boolean;
+}
+
 export interface UnifiedTablePageProps<T> {
   header: {
     title: string;
@@ -52,12 +63,12 @@ export interface UnifiedTablePageProps<T> {
     onViewChange: (view: ViewMode) => void;
     enabledViews?: ViewMode[];
     filters?: FilterConfig[];
-    activeFilters: Record<string, string | number | boolean | string[] | null | undefined>;
-    onFilterChange: (filters: Record<string, string | number | boolean | string[] | null | undefined>) => void;
-    onClearFilters: () => void;
-    columns: ColumnConfig[];
-    visibleColumns: string[];
-    onColumnVisibilityChange: (columns: string[]) => void;
+    activeFilters?: Record<string, string | number | boolean | string[] | null | undefined>;
+    onFilterChange?: (filters: Record<string, string | number | boolean | string[] | null | undefined>) => void;
+    onClearFilters?: () => void;
+    columns?: ColumnConfig[];
+    visibleColumns?: string[];
+    onColumnVisibilityChange?: (columns: string[]) => void;
     onExport?: () => void;
     onBulkDelete?: () => void;
   };
@@ -78,7 +89,7 @@ export interface UnifiedTablePageProps<T> {
     sortDirection: SortDirection;
     onSortChange: (sortBy: string, direction: SortDirection) => void;
   };
-  selection: {
+  selection?: {
     selectedIds: string[];
     onSelectAll: (checked: boolean) => void;
     onSelectRow: (id: string, checked: boolean) => void;
@@ -101,6 +112,7 @@ export interface UnifiedTablePageProps<T> {
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: string) => void;
   };
+  features?: UnifiedTableFeatures;
 }
 
 export function UnifiedTablePage<T>({
@@ -114,7 +126,60 @@ export function UnifiedTablePage<T>({
   views,
   emptyState,
   pagination,
+  features,
 }: UnifiedTablePageProps<T>): ReactElement {
+  const resolvedFeatures: Required<UnifiedTableFeatures> = {
+    enableSearch: features?.enableSearch ?? true,
+    enableViews: features?.enableViews ?? true,
+    enableFilters: features?.enableFilters ?? true,
+    enableColumnToggle: features?.enableColumnToggle ?? true,
+    enableExport: features?.enableExport ?? true,
+    enableBulkDelete: features?.enableBulkDelete ?? true,
+    enableRowSelection: features?.enableRowSelection ?? true,
+    enableRowActions: features?.enableRowActions ?? true,
+  };
+  const selectedIds = selection?.selectedIds ?? [];
+  const hasSelectionApi = Boolean(selection);
+  const handleSelectAll = selection?.onSelectAll ?? (() => undefined);
+  const handleSelectRow = selection?.onSelectRow ?? (() => undefined);
+  const hasRowSelection = resolvedFeatures.enableRowSelection && hasSelectionApi;
+  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions);
+
+  const canRenderCardView =
+    resolvedFeatures.enableViews && toolbar.currentView === "card" && Boolean(views?.card);
+  const canRenderListView =
+    resolvedFeatures.enableViews && toolbar.currentView === "list" && Boolean(views?.list);
+  const shouldRenderTableView =
+    toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
+  const toolbarColumns: ColumnConfig[] = React.useMemo(
+    () =>
+      toolbar.columns ??
+      table.columns.map((column) => ({
+        id: column.id,
+        label: column.label,
+        defaultVisible: column.defaultVisible,
+        alwaysVisible: column.alwaysVisible,
+      })),
+    [table.columns, toolbar.columns],
+  );
+  const visibleColumns = toolbar.visibleColumns ?? toolbarColumns.map((column) => column.id);
+  const activeFilters = toolbar.activeFilters ?? {};
+  const handleFilterChange =
+    toolbar.onFilterChange ??
+    (() => {
+      // no-op by default so pages without filters don't need wiring
+    });
+  const handleClearFilters =
+    toolbar.onClearFilters ??
+    (() => {
+      // no-op by default so pages without filters don't need wiring
+    });
+  const handleColumnVisibilityChange =
+    toolbar.onColumnVisibilityChange ??
+    (() => {
+      // no-op by default so pages without column picker don't need wiring
+    });
+
   const sortedItems = React.useMemo(() => {
     if (!sorting?.sortBy) return data.items;
     const column = table.columns.find((col) => col.id === sorting.sortBy);
@@ -142,8 +207,8 @@ export function UnifiedTablePage<T>({
 
   const allSelected =
     sortedItems.length > 0 &&
-    sortedItems.every((item) => selection.selectedIds.includes(table.getRowId(item)));
-  const someSelected = selection.selectedIds.length > 0 && !allSelected;
+    sortedItems.every((item) => selectedIds.includes(table.getRowId(item)));
+  const someSelected = selectedIds.length > 0 && !allSelected;
 
   const showEmptyState = !data.isLoading && !data.error && sortedItems.length === 0;
   const showTable = !data.isLoading && !data.error && sortedItems.length > 0;
@@ -171,7 +236,7 @@ export function UnifiedTablePage<T>({
     <>
       <PageHeader title={header.title} description={header.description} actions={header.actions} />
 
-      <PageContainer>
+      <PageContainer className="pt-2 sm:pt-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           <TableToolbar
@@ -186,14 +251,20 @@ export function UnifiedTablePage<T>({
             onViewChange={toolbar.onViewChange}
             enabledViews={toolbar.enabledViews}
             filters={toolbar.filters}
-            activeFilters={toolbar.activeFilters}
-            onFilterChange={toolbar.onFilterChange}
-            onClearFilters={toolbar.onClearFilters}
-            columns={toolbar.columns}
-            visibleColumns={toolbar.visibleColumns}
-            onColumnVisibilityChange={toolbar.onColumnVisibilityChange}
+            activeFilters={activeFilters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+            columns={toolbarColumns}
+            visibleColumns={visibleColumns}
+            onColumnVisibilityChange={handleColumnVisibilityChange}
             onExport={toolbar.onExport}
             onBulkDelete={toolbar.onBulkDelete}
+            enableSearch={resolvedFeatures.enableSearch}
+            enableViews={resolvedFeatures.enableViews}
+            enableFilters={resolvedFeatures.enableFilters}
+            enableColumnToggle={resolvedFeatures.enableColumnToggle}
+            enableExport={resolvedFeatures.enableExport}
+            enableBulkDelete={resolvedFeatures.enableBulkDelete && hasRowSelection}
           />
         </div>
 
@@ -225,19 +296,21 @@ export function UnifiedTablePage<T>({
           </div>
         )}
 
-        {showTable && toolbar.currentView === "table" && (
+        {showTable && shouldRenderTableView && (
           <div className={cn("mt-4 border rounded-lg", data.isFetching && "opacity-70")}>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[40px]">
-                    <Checkbox
-                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                      onCheckedChange={(checked) => selection.onSelectAll(Boolean(checked))}
-                    />
-                  </TableHead>
+                  {hasRowSelection && (
+                    <TableHead className="w-[40px]">
+                      <Checkbox
+                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                      />
+                    </TableHead>
+                  )}
                   {table.columns
-                    .filter((column) => toolbar.visibleColumns.includes(column.id))
+                    .filter((column) => visibleColumns.includes(column.id))
                     .map((column) => {
                       const isSortable = column.sortable !== false && Boolean(sorting);
                       return (
@@ -259,7 +332,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  <TableHead className="w-[50px]" />
+                  {hasRowActions && <TableHead className="w-[50px]" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -268,26 +341,30 @@ export function UnifiedTablePage<T>({
                     key={table.getRowId(item)}
                     className={cn(
                       "cursor-pointer",
-                      selection.selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
+                      selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
                     )}
                     onClick={() => table.onRowClick?.(item)}
                   >
-                    <TableCell onClick={(event) => event.stopPropagation()}>
-                      <Checkbox
-                        checked={selection.selectedIds.includes(table.getRowId(item))}
-                        onCheckedChange={(checked) =>
-                          selection.onSelectRow(table.getRowId(item), Boolean(checked))
-                        }
-                      />
-                    </TableCell>
+                    {hasRowSelection && (
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.includes(table.getRowId(item))}
+                          onCheckedChange={(checked) =>
+                            handleSelectRow(table.getRowId(item), Boolean(checked))
+                          }
+                        />
+                      </TableCell>
+                    )}
                     {table.columns
-                      .filter((column) => toolbar.visibleColumns.includes(column.id))
+                      .filter((column) => visibleColumns.includes(column.id))
                       .map((column) => (
                         <TableCell key={column.id}>{column.render(item)}</TableCell>
                       ))}
-                    <TableCell onClick={(event) => event.stopPropagation()}>
-                      {table.rowActions?.(item)}
-                    </TableCell>
+                    {hasRowActions && (
+                      <TableCell onClick={(event) => event.stopPropagation()}>
+                        {table.rowActions?.(item)}
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -295,10 +372,10 @@ export function UnifiedTablePage<T>({
           </div>
         )}
 
-        {showTable && toolbar.currentView === "card" && views?.card && (
+        {showTable && canRenderCardView && (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedItems.map((item) => {
-              const CardView = views.card;
+              const CardView = views?.card;
               return (
                 <React.Fragment key={table.getRowId(item)}>
                   {CardView ? CardView(item) : null}
@@ -308,10 +385,10 @@ export function UnifiedTablePage<T>({
           </div>
         )}
 
-        {showTable && toolbar.currentView === "list" && views?.list && (
+        {showTable && canRenderListView && (
           <div className="mt-4 space-y-1">
             {sortedItems.map((item) => {
-              const ListView = views.list;
+              const ListView = views?.list;
               return (
                 <React.Fragment key={table.getRowId(item)}>
                   {ListView ? ListView(item) : null}

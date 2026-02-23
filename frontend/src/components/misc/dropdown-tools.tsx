@@ -26,7 +26,6 @@ const coreTools: ToolLink[] = [
 ];
 
 const projectManagementTools: ToolLink[] = [
-  { name: "Tasks", href: "/tasks", isFavorite: true },
   { name: "Schedule", href: "/schedule", hasCreateAction: true },
   { name: "Daily Logs", href: "/daily-logs" },
 ];

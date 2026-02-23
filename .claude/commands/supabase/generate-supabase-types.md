@@ -20,17 +20,17 @@ You can [install the CLI](https://www.npmjs.com/package/supabase) via npm or oth
 
 ```bash
 npm i supabase@">=1.8.1" --save-dev
-```bash
+```
 Login with your Personal Access Token:
 
 ```bash
 npx supabase login
-```text
+```
 Before generating types, ensure you initialize your Supabase project:
 
 ```bash
 npx supabase init
-```bash
+```
 Generate types for your project to produce the `database.types.ts` file in the types folder:
 
 ```bash
@@ -41,7 +41,7 @@ or in case of local development:
 
 ```bash
 npx supabase gen types typescript --local > src/types/database.types.ts
-```sql
+```
 These types are generated from your database schema. Given a table `public.movies`, the generated types will look like:
 
 ```sql
@@ -50,7 +50,7 @@ create table public.movies (
   name text not null,
   data jsonb null
 );
-```yaml
+```
 ```ts ./database.types.ts
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -129,7 +129,7 @@ export type Database = MergeDeep<
     }
   }
 >
-```typescript
+```
 <Admonition type="note">
 
 To use `MergeDeep`, set `compilerOptions.strictNullChecks` to `true` in your `tsconfig.json`.
@@ -238,7 +238,7 @@ let movie: Database['public']['Tables']['movies']['Row'] = // ...
 
 // After 😍
 let movie: Tables<'movies'>
-```sql
+```
 ### Response types for complex queries
 
 `supabase-js` always returns a `data` object (for success), and an `error` object (for unsuccessful requests).
@@ -258,7 +258,7 @@ create table cities (
   "name" text,
   "country_id" int references "countries"
 );
-```typescript
+```
 We can get the nested `CountriesWithCities` type like this:
 
 ```ts
@@ -285,12 +285,12 @@ One way to keep your type definitions in sync with your database is to set up a 
 
 Add the following script to your `package.json` to run it using `npm run update-types`
 
-```json
+```
 "update-types": "npx supabase gen types --lang=typescript --project-id \"$PROJECT_REF\" > src/types/database.types.ts"
 ```yaml
 Create a file `.github/workflows/update-types.yml` with the following snippet to define the action along with the environment variables. This script will commit new type changes to your repo every night.
 
-```yaml
+```
 name: Update database types
 
 on:

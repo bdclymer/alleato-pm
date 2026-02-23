@@ -25,7 +25,7 @@ If you are reading this, STOP and use `/create-feature $ARGUMENTS` instead.
 
 ```bash
 $ARGUMENTS
-```typescript
+```
 Parse the entity name and any flags:
 
 - `--skip-migration` - Skip database migration (table already exists)
@@ -122,7 +122,7 @@ If the MCP tool is not available, run via Bash:
 
 ```bash
 npx supabase migration up --project-id "lgveqfnpkxvzbnnwuled"
-```text
+```
 If that also fails, apply via `mcp__supabase__execute_sql` with the SQL content.
 
 ## STEP 7: Regenerate Types
@@ -148,14 +148,14 @@ Run via Bash:
 
 ```bash
 bash scripts/check-route-conflicts.sh
-```bash
+```
 If it fails, FIX the conflict before proceeding.
 
 **8c. TypeScript check:**
 Run via Bash:
 ```bash
 npm run typecheck --prefix frontend 2>&1 | head -50
-```diff
+```
 If there are type errors in the generated files, fix them.
 
 ## STEP 9: Report Results

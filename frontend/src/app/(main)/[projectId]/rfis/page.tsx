@@ -1,7 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProjectRfis } from "@/lib/supabase/queries";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
 import { RfisClient } from "./rfis-client";
 
 export default async function RfisPage({
@@ -22,15 +20,5 @@ export default async function RfisPage({
     console.error("RFI page fetch error:", error);
   }
 
-  return (
-    <>
-      <PageHeader
-        title="RFIs"
-        description="Requests for Information"
-      />
-      <PageContainer>
-        <RfisClient rfis={rfis ?? []} projectId={numericProjectId} />
-      </PageContainer>
-    </>
-  );
+  return <RfisClient rfis={rfis ?? []} projectId={numericProjectId} />;
 }

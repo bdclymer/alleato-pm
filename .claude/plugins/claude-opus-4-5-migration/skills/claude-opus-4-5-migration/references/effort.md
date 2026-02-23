@@ -28,7 +28,7 @@ response = client.messages.create(
     },
     messages=[...]
 )
-```javascript
+```
 **TypeScript SDK:**
 ```typescript
 const response = await client.messages.create({
@@ -40,7 +40,7 @@ const response = await client.messages.create({
   },
   messages: [...]
 });
-```text
+```
 **Raw API:**
 
 ```json

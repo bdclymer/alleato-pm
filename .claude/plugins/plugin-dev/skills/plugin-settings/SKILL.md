@@ -38,7 +38,7 @@ This markdown body can contain:
 - Additional instructions
 - Prompts to feed back to Claude
 - Documentation or notes
-```yaml
+```
 ### Example: Plugin State File
 
 **.claude/my-plugin.local.md:**
@@ -55,7 +55,7 @@ coordinator_session: team-leader
 
 This plugin is configured for standard validation mode.
 Contact @team-lead with questions.
-```bash
+```
 ## Reading Settings Files
 
 ### From Hooks (Bash Scripts)
@@ -91,7 +91,7 @@ if [[ "$STRICT_MODE" == "true" ]]; then
   # Apply strict validation
   # ...
 fi
-```yaml
+```
 See `examples/read-settings-hook.sh` for complete working example.
 
 ### From Commands
@@ -129,7 +129,7 @@ If present, parse YAML frontmatter and adapt behavior according to:
 - enabled: Whether plugin is active
 - mode: Processing mode (strict, standard, lenient)
 - Additional configuration fields
-```bash
+```
 ## Parsing Techniques
 
 ### Extract Frontmatter
@@ -137,14 +137,14 @@ If present, parse YAML frontmatter and adapt behavior according to:
 ```bash
 # Extract everything between --- markers
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
-```bash
+```
 ### Read Individual Fields
 
 **String fields:**
 
 ```bash
 VALUE=$(echo "$FRONTMATTER" | grep '^field_name:' | sed 's/field_name: *//' | sed 's/^"\(.*\)"$/\1/')
-```bash
+```
 **Boolean fields:**
 ```bash
 ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
@@ -156,7 +156,7 @@ ENABLED=$(echo "$FRONTMATTER" | grep '^enabled:' | sed 's/enabled: *//')
 ```bash
 MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
 # Use: if [[ $MAX -gt 100 ]]; then
-```bash
+```
 ### Read Markdown Body
 
 Extract content after second `---`:
@@ -164,7 +164,7 @@ Extract content after second `---`:
 ```bash
 # Get everything after closing ---
 BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
-```bash
+```
 ## Common Patterns
 
 ### Pattern 1: Temporarily Active Hooks
@@ -190,7 +190,7 @@ fi
 
 # Run hook logic
 # ...
-```yaml
+```
 **Use case:** Enable/disable hooks without editing hooks.json (requires restart).
 
 ### Pattern 2: Agent State Management
@@ -226,7 +226,7 @@ COORDINATOR=$(echo "$FRONTMATTER" | grep '^coordinator_session:' | sed 's/coordi
 
 # Send notification to coordinator
 tmux send-keys -t "$COORDINATOR" "Agent $AGENT_NAME completed task" Enter
-```yaml
+```
 ### Pattern 3: Configuration-Driven Behavior
 
 **.claude/my-plugin.local.md:**
@@ -242,7 +242,7 @@ enable_logging: true
 
 Strict mode enabled for this project.
 All writes validated against security policies.
-```bash
+```
 Use in hooks or commands:
 
 ```bash
@@ -259,7 +259,7 @@ case "$LEVEL" in
     # Apply lenient validation
     ;;
 esac
-```markdown
+```
 ## Creating Settings Files
 
 ### From Commands
@@ -299,7 +299,7 @@ Your settings are active.
 \`\`\`
 
 After creating or editing, restart Claude Code for changes to take effect.
-```markdown
+```
 ## Best Practices
 
 ### File Naming
@@ -328,7 +328,7 @@ Document this in plugin README.
 
 Provide sensible defaults when settings file doesn't exist:
 
-```bash
+```
 if [[ ! -f "$STATE_FILE" ]]; then
   # Use defaults
   ENABLED=true
@@ -342,7 +342,7 @@ fi
 
 Validate settings values:
 
-```bash
+```
 MAX=$(echo "$FRONTMATTER" | grep '^max_value:' | sed 's/max_value: *//')
 
 # Validate numeric range
@@ -358,7 +358,7 @@ fi
 
 Document in your README:
 
-```markdown
+```
 ## Changing Settings
 
 After editing `.claude/my-plugin.local.md`:
@@ -375,7 +375,7 @@ Hooks cannot be hot-swapped within a session.
 
 When writing settings files from user input:
 
-```bash
+```
 # Escape quotes in user input
 SAFE_VALUE=$(echo "$USER_INPUT" | sed 's/"/\\"/g')
 
@@ -390,7 +390,7 @@ EOF
 
 If settings contain file paths:
 
-```bash
+```
 FILE_PATH=$(echo "$FRONTMATTER" | grep '^data_file:' | sed 's/data_file: *//')
 
 # Check for path traversal
@@ -411,7 +411,7 @@ Settings files should be:
 ### multi-agent-swarm Plugin
 
 **.claude/multi-agent-swarm.local.md:**
-```markdown
+```
 ---
 agent_name: auth-implementation
 task_number: 3.5
@@ -439,7 +439,7 @@ Coordinate with auth-agent on shared types.
 
 **.claude/ralph-loop.local.md:**
 
-```markdown
+```
 ---
 iteration: 1
 max_iterations: 10
@@ -460,7 +460,7 @@ Make sure tests pass after each fix.
 
 ### File Location
 
-```bash
+```
 project-root/
 └── .claude/
     └── plugin-name.local.md
@@ -468,7 +468,7 @@ project-root/
 ```bash
 ### Frontmatter Parsing
 
-```bash
+```
 # Extract frontmatter
 FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$FILE")
 
@@ -478,13 +478,13 @@ VALUE=$(echo "$FRONTMATTER" | grep '^field:' | sed 's/field: *//' | sed 's/^"\(.
 
 ### Body Parsing
 
-```bash
+```
 # Extract body (after second ---)
 BODY=$(awk '/^---$/{i++; next} i>=2' "$FILE")
 ```bash
 ### Quick Exit Pattern
 
-```bash
+```
 if [[ ! -f ".claude/my-plugin.local.md" ]]; then
   exit 0  # Not configured
 fi

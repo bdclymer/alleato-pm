@@ -25,7 +25,7 @@ Creates a git commit with an automatically generated commit message based on sta
 
 ```bash
 /commit
-```text
+```
 **Example workflow:**
 ```bash
 # Make some changes to your code
@@ -37,7 +37,7 @@ Creates a git commit with an automatically generated commit message based on sta
 # - Stage the files
 # - Create a commit with an appropriate message
 # - Show you the commit status
-```diff
+```
 **Features:**
 
 - Automatically drafts commit messages that match your repo's style
@@ -61,7 +61,7 @@ Complete workflow command that commits, pushes, and creates a pull request in on
 
 ```bash
 /commit-push-pr
-```text
+```
 **Example workflow:**
 ```bash
 # Make your changes
@@ -106,7 +106,7 @@ Cleans up local branches that have been deleted from the remote repository.
 
 ```bash
 /clean_gone
-```text
+```
 **Example workflow:**
 ```bash
 # After PRs are merged and remote branches are deleted
@@ -117,7 +117,7 @@ Cleans up local branches that have been deleted from the remote repository.
 # - Remove any associated worktrees
 # - Delete the stale local branches
 # - Report what was cleaned up
-```diff
+```
 **Features:**
 
 - Handles both regular branches and worktree branches
@@ -167,7 +167,7 @@ This plugin is included in the Claude Code repository. The commands are automati
 # Write code
 /commit
 # Continue development
-```markdown
+```
 ### Feature branch workflow:
 ```bash
 # Develop feature across multiple commits

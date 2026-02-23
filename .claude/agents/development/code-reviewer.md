@@ -36,7 +36,7 @@ For ANY numeric value change in configuration files:
 - pool size dramatically increased (can overload database)
 - timeout values changed (can cause cascading failures)
 - idle connection settings modified (affects resource usage)
-```diff
+```
 Questions to ask:
 
 - "How many concurrent users does this support?"
@@ -67,7 +67,7 @@ Questions to ask:
 - Buffer sizes
 - Cache limits
 - Thread pool sizes
-```diff
+```
 Questions to ask:
 
 - "What's the current memory usage pattern?"
@@ -103,7 +103,7 @@ High-risk patterns:
 - Exposed management endpoints or admin interfaces
 - SQL query logging enabled (information disclosure)
 - Verbose error messages revealing system internals
-```markdown
+```
 #### Application Settings
 
 Danger zones:

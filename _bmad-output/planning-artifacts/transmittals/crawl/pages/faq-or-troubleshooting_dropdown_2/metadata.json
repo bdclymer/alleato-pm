@@ -1,0 +1,363 @@
+{
+  "parentPage": "faq-or-troubleshooting",
+  "parentUrl": "https://v2.support.procore.com/product-manuals/transmittals-project/faq-or-troubleshooting",
+  "dropdownIndex": 2,
+  "menuItems": [
+    {
+      "text": "Product Manuals",
+      "href": "https://v2.support.procore.com/product-manuals/",
+      "type": "a"
+    },
+    {
+      "text": "Process Guides",
+      "href": "https://v2.support.procore.com/process-guides/",
+      "type": "a"
+    },
+    {
+      "text": "Certifications        Get Procore Certified for free with role-based, online training courses",
+      "href": "https://learn.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Training Video Library   Search our library of training videos",
+      "href": "https://v2.support.procore.com/video-library/",
+      "type": "a"
+    },
+    {
+      "text": "Permissions Matrix",
+      "href": "https://v2.support.procore.com/process-guides/permissions-matrix/",
+      "type": "a"
+    },
+    {
+      "text": "Glossary of Terms",
+      "href": "https://v2.support.procore.com/glossary-of-terms/",
+      "type": "a"
+    },
+    {
+      "text": "System Status        View the status of the app",
+      "href": "https://status.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Community        Ask questions, find ideas and articles, and connect with others",
+      "href": "https://community.procore.com/s/",
+      "type": "a"
+    },
+    {
+      "text": "Product Updates        Learn about the newest features to see what's coming to the platform",
+      "href": "https://www.procore.com/whats-new/en",
+      "type": "a"
+    },
+    {
+      "text": "Developers        Build applications on the Procore platform",
+      "href": "https://developers.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Release Notes",
+      "href": "https://v2.support.procore.com/release-notes/",
+      "type": "a"
+    },
+    {
+      "text": "Australia (English)",
+      "href": "https://en-au.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": "https://pt-br.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (English)",
+      "href": "https://en-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": "https://fr-ca.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": "https://de.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "España (Español)",
+      "href": "https://es-es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "France (Français)",
+      "href": "https://fr.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "href": "https://es.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Polska (Polski)",
+      "href": "https://pl-pl.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": "https://en-gb.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "United States (English)",
+      "href": "https://v2.support.procore.com/product-manuals/transmittals-project/faq-or-troubleshooting/",
+      "type": "a"
+    },
+    {
+      "text": "新加坡 (中文)",
+      "href": "https://zh-sg.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "日本 (日本語)",
+      "href": "https://ja-jp.support.procore.com/",
+      "type": "a"
+    },
+    {
+      "text": "Resources",
+      "href": null,
+      "type": "button"
+    },
+    {
+      "text": "Certifications        Get Procore Certified for free with role-based, online training courses",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Training Video Library   Search our library of training videos",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Permissions Matrix",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Glossary of Terms",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "System Status        View the status of the app",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Community        Ask questions, find ideas and articles, and connect with others",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Product Updates        Learn about the newest features to see what's coming to the platform",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Developers        Build applications on the Procore platform",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Australia (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Canada (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "España (Español)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "France (Français)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Polska (Polski)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "United States (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "新加坡 (中文)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "日本 (日本語)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Product Manuals",
+      "href": null,
+      "type": "li"
+    },
+    {
+      "text": "Process Guides",
+      "href": null,
+      "type": "li"
+    },
+    {
+      "text": "Resources               Certifications        Get Procore Certified for free with role-based, online training courses       Training Video Library   Search our library of training videos       Permissions Matrix          Glossary of Terms          System Status        View the status of the app       Community        Ask questions, find ideas and articles, and connect with others       Product Updates        Learn about the newest features to see what's coming to the platform       Developers        Build applications on the Procore platform       function c(o){if(!o)return;const a=o.target,r=a.matches(\"[data-dropdown-button]\");if(!r&&a.closest(\"[data-dropdown]\")!=null)return;let e=null,n=null;if(r&&(e=a.closest(\"[data-dropdown]\"),n=e.querySelector(\"[data-dropdown-button]\"),e?.classList.toggle(\"active\"),n)){const t=n.ariaExpanded===\"true\";n.ariaExpanded=(!t).toString()}document.querySelectorAll(\"[data-dropdown].active\").forEach(t=>{if(t&&t!==e&&![...t.querySelectorAll(\"[data-dropdown]\")].includes(e)){t.classList.remove(\"active\");const d=t.querySelector(\"[data-dropdown-button]\");d.ariaExpanded=\"false\"}})}document.addEventListener(\"click\",o=>{c(o)});",
+      "href": null,
+      "type": "li"
+    },
+    {
+      "text": "Certifications        Get Procore Certified for free with role-based, online training courses",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Training Video Library   Search our library of training videos",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Permissions Matrix",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Glossary of Terms",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "System Status        View the status of the app",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Community        Ask questions, find ideas and articles, and connect with others",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Product Updates        Learn about the newest features to see what's coming to the platform",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Developers        Build applications on the Procore platform",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Release Notes",
+      "href": null,
+      "type": "li"
+    },
+    {
+      "text": "Australia (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Brasil (Português)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Canada (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Canada (Français)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Deutschland (Deutsch)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "España (Español)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "France (Français)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Latinoamérica (Español)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "Polska (Polski)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "United Kingdom (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "United States (English)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "新加坡 (中文)",
+      "href": null,
+      "type": "div"
+    },
+    {
+      "text": "日本 (日本語)",
+      "href": null,
+      "type": "div"
+    }
+  ],
+  "timestamp": "2026-01-11T08:43:20.220Z"
+}
