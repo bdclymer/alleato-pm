@@ -23,7 +23,6 @@ type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface ContactWithCompany extends Contact {
   company?: Company | null;
-  auth_user_id?: string | null;
   is_admin?: boolean | null;
 }
 

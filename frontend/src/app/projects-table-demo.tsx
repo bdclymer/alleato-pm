@@ -26,7 +26,7 @@ interface Project {
 const PROJECTS: Project[] = Array(15).fill(null).map((_, i) => ({
   id: `${i + 1}`,
   tag: 'DEMO',
-  name: 'BSD at Wasmiya',
+  name: 'BSD at Alleato',
   role: 'Administrators',
   lastModified: '22.04.2021',
   lastEntry: '22.04.2021',
@@ -627,7 +627,7 @@ export default function ProjectsTableDemo() {
       <main className="main-content">
         {/* Top Bar */}
         <header className="top-bar">
-          <h1 className="page-title-bar">Projects | BSD at Wasmiya</h1>
+          <h1 className="page-title-bar">Projects | BSD at Alleato</h1>
           <div className="top-bar-actions">
             {/* Search Dropdown */}
             <div className="search-dropdown-wrapper">

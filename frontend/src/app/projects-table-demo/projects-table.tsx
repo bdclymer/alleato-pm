@@ -44,8 +44,8 @@ import {
 } from "@/components/ui/table";
 import { Project } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
-import { EditableCell } from "./editable-cell";
-import { EditProjectDialog } from "./edit-project-dialog";
+import { EditableCell } from "../../components/portfolio/editable-cell";
+import { EditProjectDialog } from "../../components/portfolio/edit-project-dialog";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -274,7 +274,7 @@ export function ProjectsTable({
           <span
             className={cn(
               "px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-200",
-              phaseColors[phase.toLowerCase()] || "bg-muted text-foreground border border-border",
+              phaseColors[phase.toLowerCase()] || "border border-border",
             )}
           >
             {phase}
@@ -420,7 +420,7 @@ export function ProjectsTable({
               })
             ) : (
               <div className="col-span-full flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
                   </svg>
@@ -559,7 +559,7 @@ export function ProjectsTable({
                       <span
                         className={cn(
                           "px-2 py-0.5 rounded-full font-medium",
-                          phaseColors[project.phase.toLowerCase()] || "bg-muted text-foreground",
+                          phaseColors[project.phase.toLowerCase()] || "text-foreground",
                         )}
                       >
                         {project.phase}
@@ -574,7 +574,7 @@ export function ProjectsTable({
             })
           ) : (
             <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -591,7 +591,7 @@ export function ProjectsTable({
       {/* Desktop Table View - hidden on small screens */}
       <div className="flex-1 overflow-x-auto overflow-y-auto hidden md:block">
         <Table>
-          <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10">
+          <TableHeader className="sticky top-0 backdrop-blur-sm z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
@@ -600,7 +600,7 @@ export function ProjectsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-xs font-semibold text-foreground/90 py-4 px-4 bg-muted/80 backdrop-blur-sm"
+                    className="text-xs font-semibold text-foreground/90 py-4 px-4 backdrop-blur-sm"
                     style={{
                       width: header.getSize(),
                       ...getStickyStyles(header.column, "rgb(249 250 251 / 0.8)"),
@@ -649,7 +649,7 @@ export function ProjectsTable({
                   className="h-32 text-center"
                 >
                   <div className="flex flex-col items-center justify-center space-y-3 py-8">
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center">
                       <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                       </svg>

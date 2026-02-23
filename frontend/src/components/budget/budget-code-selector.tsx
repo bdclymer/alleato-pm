@@ -57,6 +57,7 @@ function BudgetCodeSelector({
 }: BudgetCodeSelectorProps) {
   const [open, setOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
+  const commandListId = React.useId()
 
   const selectedCode = budgetCodes.find(code => code.id === value)
 
@@ -107,6 +108,7 @@ function BudgetCodeSelector({
           type="button"
           role="combobox"
           aria-expanded={open}
+          aria-controls={commandListId}
           disabled={disabled}
           className={cn(
             "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
@@ -136,7 +138,7 @@ function BudgetCodeSelector({
             onValueChange={setSearchQuery}
             className="border-0 focus:ring-0"
           />
-          <CommandList className="max-h-[300px]">
+          <CommandList id={commandListId} className="max-h-[300px]">
             <CommandEmpty>
               {loading ? (
                 <div className="flex items-center gap-2 py-6 text-center">

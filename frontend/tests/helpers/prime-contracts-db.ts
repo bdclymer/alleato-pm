@@ -109,6 +109,10 @@ export async function deletePrimeContractCascade(contractId: string) {
     .eq("attached_to_id", contractId)
     .eq("attached_to_table", "prime_contracts");
 
+  // Clean up Phase 6 payment infrastructure (added 2026-02-24)
+  await supabaseAdmin.from("prime_contract_payments").delete().eq("contract_id", contractId);
+  await supabaseAdmin.from("prime_contract_payment_applications").delete().eq("contract_id", contractId);
+
   await supabaseAdmin.from("contract_line_items").delete().eq("contract_id", contractId);
   await supabaseAdmin.from("prime_contracts").delete().eq("id", contractId);
 }

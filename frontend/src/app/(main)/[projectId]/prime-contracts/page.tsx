@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -317,10 +317,20 @@ export default function ProjectContractsPage(): ReactElement {
           title: "Prime Contracts",
           description: "Manage prime contracts and owner agreements",
           actions: (
-            <Button size="sm" onClick={() => router.push(`/${projectId}/prime-contracts/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Contract
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Configure
+              </Button>
+              <Button size="sm" onClick={() => router.push(`/${projectId}/prime-contracts/new`)}>
+                <Plus className="h-4 w-4 mr-2" />
+                New Contract
+              </Button>
+            </div>
           ),
         }}
         tabs={tabs}

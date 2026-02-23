@@ -51,6 +51,9 @@ export default defineConfig({
         storageState: 'tests/.auth/user.json',
       },
       dependencies: ['setup'],
+      // Exclude specs that share a DB row (project_id=67) with chromium — running
+      // both projects in parallel causes race conditions in beforeEach/afterEach.
+      testIgnore: /prime-contracts-settings\.spec\.ts/,
     },
     {
       name: 'no-auth',

@@ -23,7 +23,8 @@ test.describe("Prime Contracts financial integrity", () => {
       const contractId = createdContractIds.pop();
       if (!contractId) continue;
 
-      await supabaseAdmin.from("contract_payments").delete().eq("contract_id", contractId);
+      await supabaseAdmin.from("prime_contract_payments").delete().eq("contract_id", contractId);
+      await supabaseAdmin.from("prime_contract_payment_applications").delete().eq("contract_id", contractId);
       await supabaseAdmin.from("contract_change_orders").delete().eq("contract_id", contractId);
       await deletePrimeContractCascade(contractId);
     }
@@ -147,53 +148,19 @@ test.describe("Prime Contracts financial integrity", () => {
     });
     const draftStatusSupported = draftInsertError === null;
 
-    const { data: paymentRecord, error: paymentInsertError } = await supabaseAdmin
-      .from("contract_payments")
+    // Insert payment into prime_contract_payments (the UUID-based table for prime contracts).
+    // No approval workflow — all inserted payments count toward payments_received immediately.
+    const { error: paymentInsertError } = await supabaseAdmin
+      .from("prime_contract_payments")
       .insert({
-      contract_id: contractId,
-      payment_number: `PAY-${stamp}`,
-      payment_date: new Date().toISOString().slice(0, 10),
-      amount: 400,
-      payment_type: "progress",
-      status: "pending",
-      })
-      .select("id")
-      .single();
+        contract_id: contractId,
+        project_id: parseInt(projectId, 10),
+        payment_number: `PAY-${stamp}`,
+        payment_date: new Date().toISOString().slice(0, 10),
+        amount: 400,
+        method: "check",
+      });
     expect(paymentInsertError).toBeNull();
-    expect(paymentRecord?.id).toBeTruthy();
-
-    const approverId =
-      baseline.created_by ??
-      (
-        await supabaseAdmin
-          .from("users_auth")
-          .select("auth_user_id")
-          .not("auth_user_id", "is", null)
-          .limit(1)
-          .single()
-      ).data?.auth_user_id ??
-      null;
-    expect(approverId).toBeTruthy();
-
-    const approvedAt = new Date().toISOString();
-    const { error: paymentApproveError } = await supabaseAdmin
-      .from("contract_payments")
-      .update({
-        status: "approved",
-        approved_by: approverId,
-        approved_date: approvedAt,
-      })
-      .eq("id", paymentRecord?.id ?? "");
-    expect(paymentApproveError).toBeNull();
-
-    const { error: paymentPaidError } = await supabaseAdmin
-      .from("contract_payments")
-      .update({
-        status: "paid",
-        paid_date: approvedAt,
-      })
-      .eq("id", paymentRecord?.id ?? "");
-    expect(paymentPaidError).toBeNull();
 
     const expectedApproved = baseline.approved_change_orders + 300;
     const expectedPending = baseline.pending_change_orders + 200;

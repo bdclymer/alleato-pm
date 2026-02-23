@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/Users/meganharrison/Documents/github/alleato-pm/frontend/playwright.config.ts",
-    "rootDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+    "configFile": "/Users/meganharrison/Documents/github/alleato-procore/frontend/playwright.config.ts",
+    "rootDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
     "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "setup",
         "name": "setup",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/.*\\.setup\\.ts/"
@@ -32,7 +32,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -40,7 +40,7 @@
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -48,7 +48,7 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -56,15 +56,17 @@
         },
         "id": "debug",
         "name": "debug",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
-        "testIgnore": [],
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
+        "testIgnore": [
+          "/prime-contracts-settings\\.spec\\.ts/"
+        ],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -72,7 +74,7 @@
         },
         "id": "no-auth",
         "name": "no-auth",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/github/alleato-procore/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
@@ -109,8 +111,8 @@
     "tags": [],
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
-    "version": "1.58.2",
-    "workers": 5,
+    "version": "1.58.1",
+    "workers": 7,
     "webServer": {
       "command": "npm run dev",
       "url": "http://localhost:3000",
@@ -140,7 +142,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6827,
+                  "duration": 6860,
                   "errors": [],
                   "stdout": [
                     {
@@ -152,18 +154,18 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-02-21T22:54:08.004Z",
+                  "startTime": "2026-02-23T22:41:37.743Z",
                   "annotations": [],
                   "attachments": [
                     {
                       "name": "screenshot",
                       "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                      "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
                     },
                     {
                       "name": "video",
                       "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
+                      "path": "/Users/meganharrison/Documents/github/alleato-procore/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
                     }
                   ]
                 }
@@ -177,75 +179,13 @@
           "column": 6
         }
       ]
-    },
-    {
-      "title": "e2e/change-orders/change-orders-comprehensive.spec.ts",
-      "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Change Orders - Status Workflow",
-          "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
-          "line": 125,
-          "column": 6,
-          "specs": [
-            {
-              "title": "should approve pending CO and update contract value",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 1,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 5986,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-21T22:54:19.358Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-orders-change-o-6c276-O-and-update-contract-value-chromium/test-finished-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/e2e-change-orders-change-o-6c276-O-and-update-contract-value-chromium/video.webm"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "336398dae1d48adbe7d3-44e980f31b3e400f8394",
-              "file": "e2e/change-orders/change-orders-comprehensive.spec.ts",
-              "line": 157,
-              "column": 7
-            }
-          ]
-        }
-      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-02-21T22:54:06.614Z",
-    "duration": 20329.403,
-    "expected": 2,
+    "startTime": "2026-02-23T22:41:37.158Z",
+    "duration": 7766.156000000001,
+    "expected": 1,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

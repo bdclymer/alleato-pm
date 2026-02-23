@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (existing) {
       return NextResponse.json(
         { error: "Application number already exists for this contract" },
-        { status: 400 },
+        { status: 409 },
       );
     }
 

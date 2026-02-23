@@ -51,68 +51,92 @@ export async function GET(
     }
 
     const isSubcontract = unifiedData.commitment_type === "subcontract";
-    const tableName = isSubcontract ? "subcontracts" : "purchase_orders";
-    const sovTableName = isSubcontract
-      ? "subcontract_sov_items"
-      : "purchase_order_sov_items";
-    const sovFkColumn = isSubcontract
-      ? "subcontract_id"
-      : "purchase_order_id";
-    const totalsViewName = isSubcontract
-      ? "subcontracts_with_totals"
-      : "purchase_orders_with_totals";
-    const baseSelect = isSubcontract
-      ? `
-          id, project_id, contract_number, title, description, status, executed,
-          contract_company_id, start_date, estimated_completion_date,
-          actual_completion_date, contract_date, signed_contract_received_date,
-          issued_on_date, default_retainage_percent, accounting_method,
-          is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
-          invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
-          inclusions, exclusions,
-          contract_company:companies!contract_company_id(id, name, type)
-        `
-      : `
-          id, project_id, contract_number, title, description, status, executed,
-          contract_company_id, contract_date, signed_po_received_date,
-          issued_on_date, default_retainage_percent, accounting_method,
-          is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
-          invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
-          contract_company:companies!contract_company_id(id, name, type)
-        `;
+    const subcontractBaseSelect = `
+      id, project_id, contract_number, title, description, status, executed,
+      contract_company_id, start_date, estimated_completion_date,
+      actual_completion_date, contract_date, signed_contract_received_date,
+      issued_on_date, default_retainage_percent, accounting_method,
+      is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
+      invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
+      inclusions, exclusions,
+      contract_company:companies!contract_company_id(id, name, type)
+    `;
+    const purchaseOrderBaseSelect = `
+      id, project_id, contract_number, title, description, status, executed,
+      contract_company_id, contract_date, signed_po_received_date,
+      issued_on_date, default_retainage_percent, accounting_method,
+      is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
+      invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
+      contract_company:companies!contract_company_id(id, name, type)
+    `;
 
     // Performance optimization: Run all detail queries in parallel
     // instead of sequentially (Phase 9)
-    const [baseResult, totalsResult, sovResult, coResult] = await Promise.all([
-      // Fetch base record with company join (select needed columns only)
-      supabase
-        .from(tableName)
-        .select(baseSelect)
-        .eq("id", id)
-        .single(),
+    const [baseResult, totalsResult, sovResult, coResult] = isSubcontract
+      ? await Promise.all([
+          // Fetch base record with company join (select needed columns only)
+          supabase
+            .from("subcontracts")
+            .select(subcontractBaseSelect)
+            .eq("id", id)
+            .single(),
 
-      // Fetch financial totals from _with_totals view
-      (supabase as any)
-        .from(totalsViewName)
-        .select(
-          "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
-        )
-        .eq("id", id)
-        .single(),
+          // Fetch financial totals from _with_totals view
+          supabase
+            .from("subcontracts_with_totals")
+            .select(
+              "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
+            )
+            .eq("id", id)
+            .single(),
 
-      // Fetch SOV line items (select needed columns)
-      (supabase as any)
-        .from(sovTableName)
-        .select("id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order")
-        .eq(sovFkColumn, id)
-        .order("line_number", { ascending: true }),
+          // Fetch SOV line items (select needed columns)
+          supabase
+            .from("subcontract_sov_items")
+            .select(
+              "id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order",
+            )
+            .eq("subcontract_id", id)
+            .order("line_number", { ascending: true }),
 
-      // Fetch change order totals by status (only need status + amount)
-      supabase
-        .from("contract_change_orders")
-        .select("status, amount")
-        .eq("contract_id", id),
-    ]);
+          // Fetch change order totals by status (only need status + amount)
+          supabase
+            .from("contract_change_orders")
+            .select("status, amount")
+            .eq("contract_id", id),
+        ])
+      : await Promise.all([
+          // Fetch base record with company join (select needed columns only)
+          supabase
+            .from("purchase_orders")
+            .select(purchaseOrderBaseSelect)
+            .eq("id", id)
+            .single(),
+
+          // Fetch financial totals from _with_totals view
+          supabase
+            .from("purchase_orders_with_totals")
+            .select(
+              "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
+            )
+            .eq("id", id)
+            .single(),
+
+          // Fetch SOV line items (select needed columns)
+          supabase
+            .from("purchase_order_sov_items")
+            .select(
+              "id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order",
+            )
+            .eq("purchase_order_id", id)
+            .order("line_number", { ascending: true }),
+
+          // Fetch change order totals by status (only need status + amount)
+          supabase
+            .from("contract_change_orders")
+            .select("status, amount")
+            .eq("contract_id", id),
+        ]);
 
     const { data, error } = baseResult;
     const { data: totalsData } = totalsResult;

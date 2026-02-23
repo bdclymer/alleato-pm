@@ -21,16 +21,19 @@ You can [install the CLI](https://www.npmjs.com/package/supabase) via npm or oth
 ```bash
 npm i supabase@">=1.8.1" --save-dev
 ```
+
 Login with your Personal Access Token:
 
 ```bash
 npx supabase login
 ```
+
 Before generating types, ensure you initialize your Supabase project:
 
 ```bash
 npx supabase init
 ```
+
 Generate types for your project to produce the `database.types.ts` file in the types folder:
 
 ```bash
@@ -42,6 +45,7 @@ or in case of local development:
 ```bash
 npx supabase gen types typescript --local > src/types/database.types.ts
 ```
+
 These types are generated from your database schema. Given a table `public.movies`, the generated types will look like:
 
 ```sql
@@ -51,6 +55,7 @@ create table public.movies (
   data jsonb null
 );
 ```
+
 ```ts ./database.types.ts
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -130,6 +135,7 @@ export type Database = MergeDeep<
   }
 >
 ```
+
 <Admonition type="note">
 
 To use `MergeDeep`, set `compilerOptions.strictNullChecks` to `true` in your `tsconfig.json`.
@@ -239,6 +245,7 @@ let movie: Database['public']['Tables']['movies']['Row'] = // ...
 // After 😍
 let movie: Tables<'movies'>
 ```
+
 ### Response types for complex queries
 
 `supabase-js` always returns a `data` object (for success), and an `error` object (for unsuccessful requests).
@@ -259,6 +266,7 @@ create table cities (
   "country_id" int references "countries"
 );
 ```
+
 We can get the nested `CountriesWithCities` type like this:
 
 ```ts
@@ -291,12 +299,13 @@ Add the following script to your `package.json` to run it using `npm run update-
 Create a file `.github/workflows/update-types.yml` with the following snippet to define the action along with the environment variables. This script will commit new type changes to your repo every night.
 
 ```
+
 name: Update database types
 
 on:
   schedule:
     # sets the action to run daily. You can modify this to run the action more or less frequently
-    - cron: '0 0 * * *'
+    - cron: '0 0 ** *'
 
 jobs:
   update:
@@ -332,6 +341,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
+
 ```
 
 Alternatively, you can use a community-supported GitHub action: [`generate-supabase-db-types-github-action`](https://github.com/lyqht/generate-supabase-db-types-github-action).

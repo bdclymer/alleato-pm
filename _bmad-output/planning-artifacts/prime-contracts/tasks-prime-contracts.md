@@ -5,7 +5,7 @@ description: TASKS PrimeContracts documentation
 
 # Prime Contracts Implementation - Complete Task Checklist
 
-## Current Status: 10/10 (Updated 2026-02-23 — Phases 3, 4, 5, 6 complete)
+## Current Status: 10/10 (Updated 2026-02-23 — Phases 3, 4, 5, 6, 7 complete)
 
 > **Source of truth:** `.claude/investigations/prime-contracts/gap-analysis-verified.md`
 > **Evidence:** Live Procore crawl of project 562949954728542 + support doc analysis
@@ -113,18 +113,23 @@ description: TASKS PrimeContracts documentation
 
 ---
 
-### Phase 7: Configure Settings ⏳ NOT STARTED
+### Phase 7: Configure Settings ✅ COMPLETE (2026-02-23)
 
-Procore's configure tab has 8 settings. None built.
-
-- [ ] Create project-level prime contracts settings table
-- [ ] Number of CO Tiers (1 or 2 tier workflow)
-- [ ] Allow standard level users to create PCCOs
-- [ ] Allow standard level users to create PCOs
-- [ ] SOV always editable regardless of contract status
-- [ ] Show markup on CO PDF exports
-- [ ] Show markup on invoice PDF/CSV
-- [ ] Default distributions (Prime Contract, PCCO, PCO)
+- [x] Create migration: `prime_contract_project_settings` table (20260224000004)
+  - UNIQUE on project_id (one row per project), lazy-init defaults
+  - RLS: project members can view/insert/update
+- [x] GET/PUT `/api/projects/[projectId]/contracts/settings`
+  - GET returns existing row or defaults (no row written until first save)
+  - PUT upserts via `onConflict: "project_id"`
+- [x] Configure page at `/[projectId]/prime-contracts/configure/page.tsx`
+  - CO Tier Workflow: 1-tier vs 2-tier toggle (PCO → PCCO)
+  - Permissions: allow standard users create PCCOs / PCOs (Switch)
+  - SOV always editable (Switch)
+  - Show markup on CO PDF (Switch)
+  - Show markup on invoice PDF/CSV (Switch)
+  - Default distributions: Prime Contract, PCCO, PCO (text inputs)
+  - Save button with success/error toast
+- [x] "Configure" button added to prime contracts list page header
 
 ---
 
