@@ -875,24 +875,6 @@ export default function ProjectContractDetailPage() {
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setActiveTab("emails")}
-              aria-label="Email"
-              title="Email"
-            >
-              <Mail className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => window.print()}
-              aria-label="Export"
-              title="Export"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm">
@@ -944,6 +926,24 @@ export default function ProjectContractDetailPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setActiveTab("emails")}
+              aria-label="Email"
+              title="Email"
+            >
+              <Mail className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => window.print()}
+              aria-label="Export"
+              title="Export"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
 
             <Button
               variant="outline"
@@ -1110,34 +1110,13 @@ export default function ProjectContractDetailPage() {
         {activeTab === "overview" && (
           <div className="space-y-6 pb-20">
             <section className="rounded-2xl bg-background">
-              <div className="px-6 pb-4 pt-3">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                      Prime Contract
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={getStatusBadgeVariant(contract.status)}>
-                        Status: {formatStatusLabel(contract.status)}
-                      </Badge>
-                      <Badge variant={contract.executed ? "secondary" : "outline"}>
-                        Executed: {contract.executed ? "Yes" : "No"}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-6 pb-6 pt-8">
+              <div className="pb-6 pt-4">
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <div className="space-y-6">
                     <div className="rounded-xl bg-muted/40 p-5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <h3 className="text-base font-semibold">Parties & Terms</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Primary contract details and responsibilities
-                          </p>
                         </div>
                         <Button
                           variant="ghost"
@@ -1241,13 +1220,9 @@ export default function ProjectContractDetailPage() {
                     </div>
 
                     <div className="rounded-xl bg-muted/40 p-5">
-                      <h3 className="text-base font-semibold">Scope Narrative</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Written description and scope clarifications
-                      </p>
+                      <h3 className="text-base font-semibold">Description</h3>
                       <div className="mt-5 grid gap-6">
                         <div>
-                          <p className="text-xs font-medium text-muted-foreground">Description</p>
                           <p
                             className={cn(
                               "mt-2 text-[15px] leading-7",
@@ -1278,9 +1253,6 @@ export default function ProjectContractDetailPage() {
 
                     <div className="rounded-xl bg-muted/40 p-5">
                       <h3 className="text-base font-semibold">Inclusions & Exclusions</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Scope boundaries and assumptions
-                      </p>
                       <div className="mt-5 space-y-6">
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">Inclusions</p>
@@ -1315,7 +1287,6 @@ export default function ProjectContractDetailPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-base font-semibold">Financial Snapshot</h3>
-                          <p className="text-sm text-muted-foreground">Current contract position</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -1400,7 +1371,6 @@ export default function ProjectContractDetailPage() {
 
                     <div className="rounded-xl bg-muted/40 p-5">
                       <h3 className="text-base font-semibold">Key Dates</h3>
-                      <p className="text-sm text-muted-foreground">Contract timeline milestones</p>
                       <dl className="mt-5 space-y-4 text-sm">
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Start Date</dt>

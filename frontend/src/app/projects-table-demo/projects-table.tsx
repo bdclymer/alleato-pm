@@ -523,11 +523,18 @@ export function ProjectsTable({
                 complete: "bg-green-50 text-green-700",
               };
               return (
-                <button
-                  type="button"
+                <div
                   key={row.id}
+                  role="button"
+                  tabIndex={0}
                   className="w-full p-4 hover:bg-muted/50 transition-colors text-left"
                   onClick={() => onProjectClick?.(project)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onProjectClick?.(project);
+                    }
+                  }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -569,7 +576,7 @@ export function ProjectsTable({
                       <span className="text-muted-foreground">{project.state}</span>
                     )}
                   </div>
-                </button>
+                </div>
               );
             })
           ) : (

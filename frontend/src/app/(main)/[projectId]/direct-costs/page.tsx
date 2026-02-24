@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
-import { getProjectInfo } from "@/lib/supabase/project-fetcher";
-import { Button } from "@/components/ui/button";
 import { DirectCostsClient } from "./direct-costs-client";
 import type { DirectCostRow } from "./direct-costs-client";
+import { getProjectInfo } from "@/lib/supabase/project-fetcher";
+import type { CostCodeDetailRow } from "./direct-costs-table-utils";
 
 export default async function ProjectDirectCostsPage({
   params,
@@ -12,30 +9,31 @@ export default async function ProjectDirectCostsPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const { numericProjectId, supabase } = await getProjectInfo(projectId);
+  const { project, numericProjectId, supabase } = await getProjectInfo(projectId);
 
   const { data: directCosts, error } = await supabase
     .from("direct_costs")
     .select(`
       *,
-      vendor:vendors(name)
+      vendor:vendors(name),
+      line_items:direct_cost_line_items(
+        id,
+        budget_code_id,
+        description,
+        line_total,
+        quantity,
+        unit_cost
+      )
     `)
     .eq("project_id", numericProjectId)
+    .eq("is_deleted", false)
     .order("date", { ascending: false });
 
   if (error) {
     return (
-      <>
-        <PageHeader
-          title="Direct Costs"
-          description="Track direct project expenses and invoices"
-        />
-        <PageContainer>
-          <div className="text-center text-destructive p-6">
-            Error loading direct costs. Please try again later.
-          </div>
-        </PageContainer>
-      </>
+      <div className="text-center text-destructive p-6">
+        Error loading direct costs. Please try again later.
+      </div>
     );
   }
 
@@ -54,23 +52,70 @@ export default async function ProjectDirectCostsPage({
     vendor: row.vendor as { name: string } | null,
   }));
 
+  const budgetCodeIds = Array.from(
+    new Set(
+      (directCosts || [])
+        .flatMap((row) => (row.line_items as Array<{ budget_code_id: string }> | null) || [])
+        .map((lineItem) => lineItem.budget_code_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  const { data: costCodes } =
+    budgetCodeIds.length > 0
+      ? await supabase
+          .from("cost_codes")
+          .select("id,title,division_title")
+          .in("id", budgetCodeIds)
+      : { data: [] as Array<{ id: string; title: string | null; division_title: string | null }> };
+
+  const costCodeMap = new Map(
+    (costCodes || []).map((row) => [row.id, row]),
+  );
+
+  const costCodeDetails: CostCodeDetailRow[] = (directCosts || []).flatMap((row) => {
+    const lineItems =
+      (row.line_items as Array<{
+        id: string;
+        budget_code_id: string;
+        description: string | null;
+        line_total: number | null;
+        quantity: number | null;
+        unit_cost: number | null;
+      }> | null) || [];
+
+    return lineItems.map((lineItem) => {
+      const costCode = costCodeMap.get(lineItem.budget_code_id);
+      const amount =
+        lineItem.line_total ??
+        (lineItem.quantity ?? 0) * (lineItem.unit_cost ?? 0);
+
+      return {
+        id: `${row.id}-${lineItem.id}`,
+        direct_cost_id: row.id,
+        budget_code_id: lineItem.budget_code_id,
+        budget_code: costCode?.title ?? lineItem.budget_code_id,
+        budget_description: lineItem.description ?? row.description ?? "",
+        division_label: costCode?.division_title ?? "Uncategorized",
+        date: row.date,
+        vendor_name: (row.vendor as { name: string } | null)?.name ?? "Internal",
+        employee_name: null,
+        cost_type: row.cost_type,
+        invoice_number: row.invoice_number,
+        status: row.status,
+        description: row.description ?? lineItem.description,
+        amount,
+        received_date: row.received_date,
+      };
+    });
+  });
+
   return (
-    <>
-      <PageHeader
-        title="Direct Costs"
-        description="Track direct project expenses and invoices"
-        actions={
-          <Button asChild size="sm" data-testid="direct-costs-create-button">
-            <Link href={`/${projectId}/direct-costs/new`}>Add Direct Cost</Link>
-          </Button>
-        }
-      />
-      <PageContainer className="space-y-6">
-        <DirectCostsClient
-          projectId={projectId}
-          directCosts={directCostRows}
-        />
-      </PageContainer>
-    </>
+    <DirectCostsClient
+      projectId={projectId}
+      directCosts={directCostRows}
+      costCodeDetails={costCodeDetails}
+      projectName={project.name ?? `Project ${projectId}`}
+    />
   );
 }
