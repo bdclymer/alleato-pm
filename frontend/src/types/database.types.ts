@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/github/alleato-procore
 export type Json =
   | string
   | number
@@ -13709,6 +13710,128 @@ export type Database = {
           },
         ]
       }
+      submittal_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          distribution_id: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          is_current: boolean | null
+          response_id: string | null
+          submittal_id: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          distribution_id?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          is_current?: boolean | null
+          response_id?: string | null
+          submittal_id?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          distribution_id?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          is_current?: boolean | null
+          response_id?: string | null
+          submittal_id?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_attachments_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_distributions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_attachments_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_attachments_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittal_distribution_recipients: {
+        Row: {
+          distribution_id: string
+          id: string
+          recipient_id: string
+        }
+        Insert: {
+          distribution_id: string
+          id?: string
+          recipient_id: string
+        }
+        Update: {
+          distribution_id?: string
+          id?: string
+          recipient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_distribution_recipients_distribution_id_fkey"
+            columns: ["distribution_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_distributions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittal_distributions: {
+        Row: {
+          distributed_at: string | null
+          from_id: string
+          id: string
+          message: string | null
+          submittal_id: string
+        }
+        Insert: {
+          distributed_at?: string | null
+          from_id: string
+          id?: string
+          message?: string | null
+          submittal_id: string
+        }
+        Update: {
+          distributed_at?: string | null
+          from_id?: string
+          id?: string
+          message?: string | null
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_distributions_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_documents: {
         Row: {
           ai_analysis: Json | null
@@ -13815,6 +13938,32 @@ export type Database = {
           },
         ]
       }
+      submittal_linked_drawings: {
+        Row: {
+          drawing_id: string
+          id: string
+          submittal_id: string
+        }
+        Insert: {
+          drawing_id: string
+          id?: string
+          submittal_id: string
+        }
+        Update: {
+          drawing_id?: string
+          id?: string
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_linked_drawings_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_notifications: {
         Row: {
           created_at: string | null
@@ -13913,6 +14062,79 @@ export type Database = {
           },
         ]
       }
+      submittal_packages: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          project_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          project_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_packages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_performance_metrics: {
         Row: {
           calculated_at: string | null
@@ -13995,6 +14217,57 @@ export type Database = {
           },
         ]
       }
+      submittal_responses: {
+        Row: {
+          comments: string | null
+          created_at: string | null
+          id: string
+          responded_at: string | null
+          responder_id: string
+          response_status: string
+          submittal_id: string
+          updated_at: string | null
+          workflow_step_id: string | null
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          responded_at?: string | null
+          responder_id: string
+          response_status?: string
+          submittal_id: string
+          updated_at?: string | null
+          workflow_step_id?: string | null
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          responded_at?: string | null
+          responder_id?: string
+          response_status?: string
+          submittal_id?: string
+          updated_at?: string | null
+          workflow_step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_responses_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_responses_workflow_step_id_fkey"
+            columns: ["workflow_step_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_workflow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submittal_types: {
         Row: {
           ai_analysis_config: Json | null
@@ -14028,66 +14301,155 @@ export type Database = {
         }
         Relationships: []
       }
-      submittals: {
+      submittal_workflow_steps: {
         Row: {
           created_at: string | null
-          current_version: number | null
-          description: string | null
           id: string
+          step_order: number
+          step_type: string
+          submittal_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          step_order: number
+          step_type?: string
+          submittal_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          step_order?: number
+          step_type?: string
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_workflow_steps_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittals: {
+        Row: {
+          ball_in_court: string | null
+          cost_code_id: number | null
+          created_at: string | null
+          created_by: string | null
+          current_version: number | null
+          deleted_at: string | null
+          description: string | null
+          division: string | null
+          final_due_date: string | null
+          id: string
+          is_private: boolean
+          lead_time: number | null
+          location_id: number | null
           metadata: Json | null
           priority: string | null
           project_id: number
+          received_from_id: string | null
           required_approval_date: string | null
+          required_on_site_date: string | null
+          responsible_contractor_id: number | null
+          revision: number
+          sent_date: string | null
           specification_id: string | null
+          specification_section: string | null
           status: string | null
           submission_date: string | null
+          submittal_manager_id: string | null
           submittal_number: string
-          submittal_type_id: string
+          submittal_package_id: string | null
+          submittal_type: string | null
+          submittal_type_id: string | null
           submitted_by: string
           submitter_company: string | null
           title: string
           total_versions: number | null
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
+          ball_in_court?: string | null
+          cost_code_id?: number | null
           created_at?: string | null
+          created_by?: string | null
           current_version?: number | null
+          deleted_at?: string | null
           description?: string | null
+          division?: string | null
+          final_due_date?: string | null
           id?: string
+          is_private?: boolean
+          lead_time?: number | null
+          location_id?: number | null
           metadata?: Json | null
           priority?: string | null
           project_id: number
+          received_from_id?: string | null
           required_approval_date?: string | null
+          required_on_site_date?: string | null
+          responsible_contractor_id?: number | null
+          revision?: number
+          sent_date?: string | null
           specification_id?: string | null
+          specification_section?: string | null
           status?: string | null
           submission_date?: string | null
+          submittal_manager_id?: string | null
           submittal_number: string
-          submittal_type_id: string
+          submittal_package_id?: string | null
+          submittal_type?: string | null
+          submittal_type_id?: string | null
           submitted_by: string
           submitter_company?: string | null
           title: string
           total_versions?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
+          ball_in_court?: string | null
+          cost_code_id?: number | null
           created_at?: string | null
+          created_by?: string | null
           current_version?: number | null
+          deleted_at?: string | null
           description?: string | null
+          division?: string | null
+          final_due_date?: string | null
           id?: string
+          is_private?: boolean
+          lead_time?: number | null
+          location_id?: number | null
           metadata?: Json | null
           priority?: string | null
           project_id?: number
+          received_from_id?: string | null
           required_approval_date?: string | null
+          required_on_site_date?: string | null
+          responsible_contractor_id?: number | null
+          revision?: number
+          sent_date?: string | null
           specification_id?: string | null
+          specification_section?: string | null
           status?: string | null
           submission_date?: string | null
+          submittal_manager_id?: string | null
           submittal_number?: string
-          submittal_type_id?: string
+          submittal_package_id?: string | null
+          submittal_type?: string | null
+          submittal_type_id?: string | null
           submitted_by?: string
           submitter_company?: string | null
           title?: string
           total_versions?: number | null
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -14137,6 +14499,13 @@ export type Database = {
             columns: ["specification_id"]
             isOneToOne: false
             referencedRelation: "specifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittals_submittal_package_id_fkey"
+            columns: ["submittal_package_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_packages"
             referencedColumns: ["id"]
           },
           {

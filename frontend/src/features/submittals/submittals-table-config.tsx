@@ -10,150 +10,199 @@ import { Badge } from "@/components/ui/badge";
 
 export interface SubmittalTableRow {
   id: string;
+  // Procore-aligned columns (12)
+  specification_section: string | null;
   submittal_number: string;
+  revision: number;
   title: string;
-  statusDisplay: string;
-  priorityLabel: string;
-  submitter_company: string;
-  submission_date: string | null;
-  required_approval_date: string | null;
   submittal_type_name: string | null;
-  project_name: string | null;
-  ballInCourt: boolean;
+  status: string;
+  responsible_contractor: string | null;
+  received_from: string | null;
+  ball_in_court: string | null;
+  approvers: string | null;
+  latest_response: string | null;
+  sent_date: string | null;
+  // Extra display helpers
+  is_private: boolean;
+  division: string | null;
+  final_due_date: string | null;
+  deleted_at: string | null;
 }
+
+// ─── Status / Response badge maps ────────────────────────────────────────────
 
 const statusVariantMap: Record<
   string,
   "default" | "secondary" | "destructive" | "outline" | "success"
 > = {
   Draft: "secondary",
-  Submitted: "default",
-  "Under Review": "outline",
-  "Requires Revision": "destructive",
-  Approved: "success",
-  Rejected: "destructive",
-  Superseded: "secondary",
+  Open: "default",
+  Distributed: "outline",
+  Closed: "success",
 };
 
-const priorityVariantMap: Record<
+const responseVariantMap: Record<
   string,
-  "default" | "secondary" | "destructive" | "outline"
+  "default" | "secondary" | "destructive" | "outline" | "success"
 > = {
-  High: "destructive",
-  Normal: "secondary",
-  Low: "outline",
+  Submitted: "default",
+  Pending: "outline",
+  Approved: "success",
+  "Approved as Noted": "success",
+  Revise: "destructive",
+  Rejected: "destructive",
 };
+
+// ─── Column definitions ───────────────────────────────────────────────────────
 
 export const submittalColumns: ColumnConfig[] = [
-  { id: "submittal_number", label: "Number", alwaysVisible: true },
+  { id: "specification_section", label: "Spec Section", defaultVisible: true },
+  { id: "submittal_number", label: "#", alwaysVisible: true },
+  { id: "revision", label: "Rev.", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "submittal_type_name", label: "Type", defaultVisible: true },
-  { id: "statusDisplay", label: "Status", defaultVisible: true },
-  { id: "priorityLabel", label: "Priority", defaultVisible: true },
-  { id: "submitter_company", label: "Submitted By", defaultVisible: true },
-  { id: "submission_date", label: "Submitted", defaultVisible: true },
-  { id: "required_approval_date", label: "Required Approval", defaultVisible: true },
-  { id: "project_name", label: "Project", defaultVisible: false },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "responsible_contractor", label: "Responsible C.", defaultVisible: true },
+  { id: "received_from", label: "Received From", defaultVisible: false },
+  { id: "ball_in_court", label: "Ball In Court", defaultVisible: true },
+  { id: "approvers", label: "Approvers", defaultVisible: false },
+  { id: "latest_response", label: "Response", defaultVisible: true },
+  { id: "sent_date", label: "Sent Date", defaultVisible: true },
 ];
 
 export const submittalDefaultVisibleColumns = submittalColumns
-  .filter((column) => column.defaultVisible !== false)
-  .map((column) => column.id);
+  .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
+  .map((c) => c.id);
+
+// ─── Filters ─────────────────────────────────────────────────────────────────
 
 export const submittalFilters: FilterConfig[] = [
   {
     id: "status",
     label: "Status",
     type: "select",
-    options: [
-      "Draft",
-      "Submitted",
-      "Under Review",
-      "Requires Revision",
-      "Approved",
-      "Rejected",
-      "Superseded",
-    ].map((status) => ({
-      value: status,
-      label: status,
+    options: ["Draft", "Open", "Distributed", "Closed"].map((v) => ({
+      value: v,
+      label: v,
     })),
   },
   {
-    id: "priority",
-    label: "Priority",
+    id: "latest_response",
+    label: "Response",
     type: "select",
-    options: ["High", "Normal", "Low"].map((priority) => ({
-      value: priority,
-      label: priority,
-    })),
+    options: [
+      "Submitted",
+      "Pending",
+      "Approved",
+      "Approved as Noted",
+      "Revise",
+      "Rejected",
+    ].map((v) => ({ value: v, label: v })),
+  },
+  {
+    id: "division",
+    label: "Division",
+    type: "text",
   },
 ];
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
+// ─── Table columns ────────────────────────────────────────────────────────────
+
+function formatDate(v: string | null | undefined): string {
+  if (!v) return "-";
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
 }
 
 export function buildSubmittalTableColumns(): TableColumn<SubmittalTableRow>[] {
   return [
     {
       ...submittalColumns[0],
-      render: (item) => <span className="font-medium">{item.submittal_number || "-"}</span>,
-      sortValue: (item) => item.submittal_number || "",
+      render: (item) => (
+        <span className="text-xs text-muted-foreground">
+          {item.specification_section || "-"}
+        </span>
+      ),
+      sortValue: (item) => item.specification_section ?? "",
     },
     {
       ...submittalColumns[1],
-      render: (item) => <span>{item.title || "Untitled Submittal"}</span>,
-      sortValue: (item) => item.title || "",
+      render: (item) => (
+        <span className="font-medium">{item.submittal_number || "-"}</span>
+      ),
+      sortValue: (item) => item.submittal_number,
     },
     {
       ...submittalColumns[2],
-      render: (item) => <span>{item.submittal_type_name || "-"}</span>,
-      sortValue: (item) => item.submittal_type_name || "",
+      render: (item) => <span>{item.revision ?? 0}</span>,
+      sortValue: (item) => item.revision ?? 0,
     },
     {
       ...submittalColumns[3],
       render: (item) => (
-        <Badge variant={statusVariantMap[item.statusDisplay] ?? "outline"}>
-          {item.statusDisplay}
-        </Badge>
+        <span className="max-w-[240px] truncate block" title={item.title}>
+          {item.title || "Untitled"}
+        </span>
       ),
-      sortValue: (item) => item.statusDisplay,
+      sortValue: (item) => item.title,
     },
     {
       ...submittalColumns[4],
-      render: (item) => (
-        <Badge variant={priorityVariantMap[item.priorityLabel] ?? "secondary"}>
-          {item.priorityLabel}
-        </Badge>
-      ),
-      sortValue: (item) => item.priorityLabel,
+      render: (item) => <span>{item.submittal_type_name || "-"}</span>,
+      sortValue: (item) => item.submittal_type_name ?? "",
     },
     {
       ...submittalColumns[5],
-      render: (item) => <span>{item.submitter_company || "-"}</span>,
-      sortValue: (item) => item.submitter_company || "",
+      render: (item) => (
+        <Badge variant={statusVariantMap[item.status] ?? "outline"}>
+          {item.status || "-"}
+        </Badge>
+      ),
+      sortValue: (item) => item.status,
     },
     {
       ...submittalColumns[6],
-      render: (item) => <span>{formatDate(item.submission_date)}</span>,
-      sortValue: (item) => (item.submission_date ? new Date(item.submission_date).getTime() : 0),
+      render: (item) => <span>{item.responsible_contractor || "-"}</span>,
+      sortValue: (item) => item.responsible_contractor ?? "",
     },
     {
       ...submittalColumns[7],
-      render: (item) => <span>{formatDate(item.required_approval_date)}</span>,
-      sortValue: (item) =>
-        item.required_approval_date ? new Date(item.required_approval_date).getTime() : 0,
+      render: (item) => <span>{item.received_from || "-"}</span>,
+      sortValue: (item) => item.received_from ?? "",
     },
     {
       ...submittalColumns[8],
-      render: (item) => <span>{item.project_name || "-"}</span>,
-      sortValue: (item) => item.project_name || "",
+      render: (item) => <span>{item.ball_in_court || "-"}</span>,
+      sortValue: (item) => item.ball_in_court ?? "",
+    },
+    {
+      ...submittalColumns[9],
+      render: (item) => <span>{item.approvers || "-"}</span>,
+      sortValue: (item) => item.approvers ?? "",
+    },
+    {
+      ...submittalColumns[10],
+      render: (item) =>
+        item.latest_response ? (
+          <Badge variant={responseVariantMap[item.latest_response] ?? "outline"}>
+            {item.latest_response}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
+      sortValue: (item) => item.latest_response ?? "",
+    },
+    {
+      ...submittalColumns[11],
+      render: (item) => <span>{formatDate(item.sent_date)}</span>,
+      sortValue: (item) =>
+        item.sent_date ? new Date(item.sent_date).getTime() : 0,
     },
   ];
 }
+
+// ─── Card / List views ────────────────────────────────────────────────────────
 
 export function renderSubmittalCard(
   item: SubmittalTableRow,
@@ -166,17 +215,23 @@ export function renderSubmittalCard(
     >
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">{item.submittal_number || "-"}</p>
-          <h3 className="font-medium">{item.title || "Untitled Submittal"}</h3>
+          <p className="text-xs uppercase text-muted-foreground">
+            {item.submittal_number} Rev.&nbsp;{item.revision ?? 0}
+          </p>
+          <h3 className="font-medium">{item.title || "Untitled"}</h3>
         </div>
-        <Badge variant={statusVariantMap[item.statusDisplay] ?? "outline"}>
-          {item.statusDisplay}
+        <Badge variant={statusVariantMap[item.status] ?? "outline"}>
+          {item.status}
         </Badge>
       </div>
-      <p className="text-sm text-muted-foreground">{item.submittal_type_name || "-"}</p>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Required Approval: {formatDate(item.required_approval_date)}
+      <p className="text-sm text-muted-foreground">
+        {item.specification_section || item.submittal_type_name || "-"}
       </p>
+      {item.ball_in_court && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Ball In Court: {item.ball_in_court}
+        </p>
+      )}
     </div>
   );
 }
@@ -191,11 +246,16 @@ export function renderSubmittalList(
       onClick={() => onClick(item)}
     >
       <div>
-        <p className="text-sm font-medium">{item.submittal_number || "-"}</p>
-        <p className="text-xs text-muted-foreground">{item.title || "Untitled"}</p>
+        <p className="text-sm font-medium">
+          {item.submittal_number} — {item.title || "Untitled"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Rev.&nbsp;{item.revision ?? 0} &middot;{" "}
+          {item.specification_section || item.submittal_type_name || "-"}
+        </p>
       </div>
-      <Badge variant={statusVariantMap[item.statusDisplay] ?? "outline"}>
-        {item.statusDisplay}
+      <Badge variant={statusVariantMap[item.status] ?? "outline"}>
+        {item.status}
       </Badge>
     </div>
   );
