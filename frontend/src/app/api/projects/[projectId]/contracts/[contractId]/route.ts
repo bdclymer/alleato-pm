@@ -135,24 +135,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-    const { data: membership } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-    if (!membership || membership.status !== "active") {
-      return NextResponse.json(
-        { error: "Forbidden: You do not have permission to update contracts for this project" },
-        { status: 403 }
-      );
-    }
-
     // Check if contract exists and belongs to this project
     const { data: existingContract } = await supabase
       .from("prime_contracts")
@@ -249,24 +231,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-    const { data: membership } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-    if (!membership || membership.status !== "active") {
-      return NextResponse.json(
-        { error: "Forbidden: You do not have permission to delete contracts for this project" },
-        { status: 403 }
-      );
     }
 
     // Check for related records before deletion
