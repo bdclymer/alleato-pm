@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Plus, Sparkles, AlertCircle, Loader2, Info } from "lucide-react";
+import { Plus, Sparkles, AlertCircle, Loader2, Info, Search, HelpCircle, ChevronRight, ChevronDown } from "lucide-react";
 import {
   CreateSubcontractSchema,
   type CreateSubcontractInput,
@@ -28,17 +28,49 @@ import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { DateField } from "@/components/forms/DateField";
 import { MultiSelectField } from "@/components/forms/MultiSelectField";
-import { CostCodeSelector } from "./CostCodeSelector";
+import { SectionHeader } from "@/components/ui/section-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface BudgetCode {
+  id: string;
+  code: string;
+  costType: string | null;
+  description: string;
+  fullLabel: string;
+}
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -66,6 +98,36 @@ export function CreateSubcontractForm({
   const [attachments, setAttachments] = React.useState<
     Array<{ name: string; size: number; type: string }>
   >([]);
+
+  // Budget code state (matching prime contracts pattern)
+  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
+  const [loadingBudgetCodes, setLoadingBudgetCodes] = React.useState(true);
+  const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<number | null>(null);
+  const [budgetCodeSearchQuery, setBudgetCodeSearchQuery] = React.useState("");
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
+  const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
+    costCodeId: "",
+    costType: "S", // Default to Subcontract for commitments
+  });
+  const [availableCostCodes, setAvailableCostCodes] = React.useState<
+    Array<{
+      id: string;
+      title: string | null;
+      status: string | null;
+      division_title: string | null;
+    }>
+  >([]);
+  const [loadingCostCodes, setLoadingCostCodes] = React.useState(false);
+  const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(new Set());
+  const [groupedCostCodes, setGroupedCostCodes] = React.useState<
+    Record<string, Array<{
+      id: string;
+      title: string | null;
+      status: string | null;
+      division_title: string | null;
+    }>>
+  >({});
+  const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
 
   // Use the companies hook
   const { options: companyOptions, isLoading: isLoadingCompanies } =
@@ -141,6 +203,176 @@ export function CreateSubcontractForm({
     }
   }, [contractCompanyId, setValue]);
 
+  // Fetch budget codes for the project
+  React.useEffect(() => {
+    const fetchBudgetCodes = async () => {
+      if (!projectId) return;
+      try {
+        setLoadingBudgetCodes(true);
+        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
+        if (!response.ok) {
+          throw new Error("Failed to load budget codes");
+        }
+        const data = (await response.json()) as { budgetCodes: BudgetCode[] };
+        setBudgetCodes(data.budgetCodes || []);
+      } catch {
+        setBudgetCodes([]);
+      } finally {
+        setLoadingBudgetCodes(false);
+      }
+    };
+    fetchBudgetCodes();
+  }, [projectId]);
+
+  // Fetch cost codes when create budget code modal opens
+  React.useEffect(() => {
+    const fetchCostCodes = async () => {
+      if (!showCreateBudgetCodeModal) return;
+      try {
+        setLoadingCostCodes(true);
+        const supabaseClient = createClient();
+        const { data, error } = await supabaseClient
+          .from("cost_codes")
+          .select("id, title, status, division_title")
+          .eq("status", "Active")
+          .order("id", { ascending: true });
+
+        if (error) return;
+
+        const codes = data || [];
+        setAvailableCostCodes(codes);
+
+        const grouped = codes.reduce(
+          (acc: Record<string, typeof codes>, code: (typeof codes)[0]) => {
+            const divisionKey = code.division_title || "Other";
+            if (!acc[divisionKey]) acc[divisionKey] = [];
+            acc[divisionKey].push(code);
+            return acc;
+          },
+          {} as Record<string, typeof codes>,
+        );
+        setGroupedCostCodes(grouped);
+      } catch {
+        // Intentionally swallowed: component shows appropriate state on error
+      } finally {
+        setLoadingCostCodes(false);
+      }
+    };
+    fetchCostCodes();
+  }, [showCreateBudgetCodeModal]);
+
+  const filteredBudgetCodes = budgetCodes.filter((code) =>
+    code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
+  );
+
+  const getCostTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      R: "Contract Revenue",
+      E: "Equipment",
+      X: "Expense",
+      L: "Labor",
+      M: "Material",
+      S: "Subcontract",
+    };
+    return types[type] || type;
+  };
+
+  const toggleDivision = (division: string) => {
+    setExpandedDivisions((prev) => {
+      const next = new Set(prev);
+      if (next.has(division)) {
+        next.delete(division);
+      } else {
+        next.add(division);
+      }
+      return next;
+    });
+  };
+
+  const handleBudgetCodeSelect = (lineIndex: number, code: BudgetCode) => {
+    const updated = [...sovLines];
+    updated[lineIndex] = {
+      ...updated[lineIndex],
+      budgetCodeId: code.id,
+      budgetCodeLabel: code.fullLabel,
+      budgetCode: code.code,
+    };
+    setSovLines(updated);
+    setOpenBudgetCodePopover(null);
+  };
+
+  const handleCreateBudgetCode = async () => {
+    try {
+      setIsCreatingBudgetCode(true);
+      const selectedCostCode = availableCostCodes.find(
+        (cc) => cc.id === newBudgetCodeData.costCodeId,
+      );
+      if (!selectedCostCode) {
+        toast.error("Please select a cost code");
+        return;
+      }
+
+      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cost_code_id: newBudgetCodeData.costCodeId,
+          cost_type_id: newBudgetCodeData.costType,
+          description: selectedCostCode.title || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error?.error || "Failed to create budget code");
+      }
+
+      const { budgetCode } = (await response.json()) as { budgetCode: BudgetCode };
+      setBudgetCodes([...budgetCodes, budgetCode]);
+
+      // Find first empty budget code row and assign
+      const emptyIndex = sovLines.findIndex((line) => !line.budgetCodeId && !line.isGroup);
+      if (emptyIndex >= 0) {
+        const updated = [...sovLines];
+        updated[emptyIndex] = {
+          ...updated[emptyIndex],
+          budgetCodeId: budgetCode.id,
+          budgetCodeLabel: budgetCode.fullLabel,
+          budgetCode: budgetCode.code,
+        };
+        setSovLines(updated);
+      } else {
+        // Add a new line with the budget code
+        const isUnitQuantity = accountingMethod === "unit_quantity";
+        setSovLines([
+          ...sovLines,
+          {
+            lineNumber: sovLines.length + 1,
+            budgetCodeId: budgetCode.id,
+            budgetCodeLabel: budgetCode.fullLabel,
+            budgetCode: budgetCode.code,
+            description: "",
+            amount: 0,
+            quantity: isUnitQuantity ? 1 : undefined,
+            unitCost: isUnitQuantity ? 0 : undefined,
+            unitOfMeasure: isUnitQuantity ? "" : undefined,
+            billedToDate: 0,
+          } as SovLineItem,
+        ]);
+      }
+
+      setShowCreateBudgetCodeModal(false);
+      setNewBudgetCodeData({ costCodeId: "", costType: "S" });
+      toast.success("Budget code created and added to form");
+    } catch (error) {
+      toast.error(
+        `Failed to create budget code: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setIsCreatingBudgetCode(false);
+    }
+  };
+
   const handleAutofill = () => {
     const autofillData = generateAutofillData();
 
@@ -211,23 +443,97 @@ export function CreateSubcontractForm({
     }
   };
 
+  const csvInputRef = React.useRef<HTMLInputElement>(null);
+
   const addSOVLine = () => {
-    const newLine: SovLineItem & { _id: string } = {
-      _id: `line-${Date.now()}-${Math.random()}`,
+    const isUnitQuantity = accountingMethod === "unit_quantity";
+    const newLine: SovLineItem = {
       lineNumber: sovLines.length + 1,
+      budgetCodeId: "",
+      budgetCodeLabel: "",
+      description: "",
       amount: 0,
+      quantity: isUnitQuantity ? 1 : undefined,
+      unitCost: isUnitQuantity ? 0 : undefined,
+      unitOfMeasure: isUnitQuantity ? "" : undefined,
       billedToDate: 0,
     };
-    setSovLines([...sovLines, newLine as SovLineItem]);
+    setSovLines([...sovLines, newLine]);
+  };
+
+  const addGroup = () => {
+    const groupLine: SovLineItem = {
+      lineNumber: sovLines.length + 1,
+      description: "",
+      amount: 0,
+      billedToDate: 0,
+      isGroup: true,
+    };
+    setSovLines([...sovLines, groupLine]);
+  };
+
+  const handleCSVImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split("\n").filter((line) => line.trim());
+      if (lines.length < 2) return;
+
+      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      const descIdx = headers.findIndex((h) => h.includes("description"));
+      const amountIdx = headers.findIndex(
+        (h) => h.includes("amount") && !h.includes("remaining") && !h.includes("billed"),
+      );
+      const budgetCodeIdx = headers.findIndex(
+        (h) => h.includes("budget") || h.includes("cost") || h.includes("code"),
+      );
+
+      const imported: SovLineItem[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+        if (cols.every((c) => !c)) continue;
+
+        imported.push({
+          lineNumber: sovLines.length + imported.length + 1,
+          description: descIdx >= 0 ? cols[descIdx] : cols[0] || "",
+          budgetCode: budgetCodeIdx >= 0 ? cols[budgetCodeIdx] : undefined,
+          amount: amountIdx >= 0 ? parseFloat(cols[amountIdx]) || 0 : 0,
+          billedToDate: 0,
+        } as SovLineItem);
+      }
+
+      if (imported.length > 0) {
+        setSovLines([...sovLines, ...imported]);
+      }
+    };
+    reader.readAsText(file);
+
+    if (csvInputRef.current) csvInputRef.current.value = "";
   };
 
   const updateSOVLine = (
     index: number,
-    field: keyof SovLineItem,
-    value: unknown,
+    updates: Partial<SovLineItem>,
   ) => {
     const updated = [...sovLines];
-    updated[index] = { ...updated[index], [field]: value };
+    const isUnitQuantity = accountingMethod === "unit_quantity";
+    const current = updated[index];
+
+    const merged = { ...current, ...updates };
+
+    // Auto-calculate amount when in unit/quantity mode
+    if (isUnitQuantity && (updates.quantity !== undefined || updates.unitCost !== undefined)) {
+      merged.amount =
+        (updates.quantity ?? current.quantity ?? 0) *
+        (updates.unitCost ?? current.unitCost ?? 0);
+    }
+
+    updated[index] = merged;
     setSovLines(updated);
   };
 
@@ -235,9 +541,42 @@ export function CreateSubcontractForm({
     setSovLines(sovLines.filter((_, i) => i !== index));
   };
 
+  const toggleAccountingMethod = () => {
+    const nextMethod = accountingMethod === "unit_quantity" ? "amount_based" : "unit_quantity";
+    const updatedItems = sovLines.map((item) => {
+      if (item.isGroup) return item;
+      if (nextMethod === "unit_quantity") {
+        const quantity = item.quantity ?? 1;
+        let unitCost = item.unitCost;
+        if (unitCost === undefined || unitCost === null) {
+          unitCost = (item.amount || 0) / quantity;
+        }
+        return {
+          ...item,
+          quantity,
+          unitCost,
+          unitOfMeasure: item.unitOfMeasure || "",
+          amount: quantity * unitCost,
+        };
+      } else {
+        const amount = (item.quantity ?? 1) * (item.unitCost ?? 0);
+        return {
+          ...item,
+          amount: amount || item.amount || 0,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+          unitOfMeasure: item.unitOfMeasure,
+        };
+      }
+    });
+    setValue("accountingMethod", nextMethod as (typeof AccountingMethodValues)[number]);
+    setSovLines(updatedItems);
+  };
+
   const calculateSOVTotals = () => {
     const totals = sovLines.reduce(
       (acc, line) => {
+        if (line.isGroup) return acc; // Skip group headers
         const lineAmount = line.amount || 0;
         const lineBilled = line.billedToDate || 0;
         return {
@@ -257,6 +596,14 @@ export function CreateSubcontractForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+      {/* Hidden CSV file input */}
+      <input
+        ref={csvInputRef}
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={handleCSVImport}
+      />
       {/* Autofill Test Data Button */}
       <div className="flex justify-end">
         <Button
@@ -408,7 +755,7 @@ export function CreateSubcontractForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
             <div className="flex items-center gap-2">
@@ -432,28 +779,6 @@ export function CreateSubcontractForm({
                 {errors.defaultRetainagePercent.message}
               </p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="accountingMethod">Accounting Method</Label>
-            <Select
-              value={accountingMethod}
-              onValueChange={(value) =>
-                setValue(
-                  "accountingMethod",
-                  value as (typeof AccountingMethodValues)[number],
-                )
-              }
-              disabled={isSubmitting}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="amount_based">Amount-based</SelectItem>
-                <SelectItem value="unit_quantity">Unit/Quantity</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-2">
@@ -512,228 +837,422 @@ export function CreateSubcontractForm({
       </section>
 
       {/* Schedule of Values Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          Schedule of Values
-        </h2>
-
-        {/* SOV Accounting Method Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4 dark:bg-blue-950 dark:border-blue-800">
-          <div className="flex items-center justify-between">
+      <section className="space-y-4" data-testid="sov-section">
+        {/* Accounting Method Info Banner */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3 dark:bg-blue-950 dark:border-blue-800">
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+          <div className="flex-1">
             <p className="text-sm text-blue-900 dark:text-blue-100">
-              This contract&apos;s accounting method is{" "}
+              This contract&apos;s default accounting method is{" "}
               <strong>
                 {accountingMethod === "amount_based"
                   ? "amount-based"
                   : "unit/quantity"}
               </strong>
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isSubmitting}
-              onClick={() =>
-                setValue(
-                  "accountingMethod",
-                  accountingMethod === "amount_based"
-                    ? "unit_quantity"
-                    : "amount_based",
-                )
-              }
-            >
+              . To use budget codes with a unit of measure association, select
               Change to{" "}
               {accountingMethod === "amount_based"
                 ? "Unit/Quantity"
                 : "Amount-based"}
-            </Button>
+              .
+            </p>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            disabled={isSubmitting}
+            onClick={toggleAccountingMethod}
+            data-testid="sov-accounting-toggle"
+          >
+            Change to{" "}
+            {accountingMethod === "amount_based"
+              ? "Unit/Quantity"
+              : "Amount-based"}
+          </Button>
         </div>
 
-        {/* SOV Table */}
-        {sovLines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <div className="text-muted-foreground">
-              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                <span className="text-4xl">📊</span>
-              </div>
-            </div>
-            <p className="text-lg font-medium text-foreground">
-              You Have No Line Items Yet
-            </p>
-            <div className="flex gap-2">
-              <Button type="button" onClick={addSOVLine} disabled={isSubmitting}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
-                Add Group
-              </Button>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
-                Import SOV from CSV
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={addSOVLine}
-                size="sm"
-                disabled={isSubmitting}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isSubmitting}
-              >
-                Add Group
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isSubmitting}
-              >
-                Import SOV from CSV
-              </Button>
-            </div>
+        <SectionHeader
+          actions={
+            <Select
+              onValueChange={(value) => {
+                if (value === "add_group") addGroup();
+              }}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Add Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="add_group">Add Group</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        >
+          Schedule of Values
+        </SectionHeader>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground w-12">
-                      #
+        {/* SOV Table */}
+        <div
+          className="border rounded-lg overflow-hidden"
+          data-testid="sov-table"
+          data-accounting-method={accountingMethod}
+        >
+          <table className="w-full">
+            <thead className="bg-muted border-b">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground w-12">
+                  #
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground min-w-[300px]">
+                  <div className="flex items-center gap-1">
+                    Budget Code
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Link to a budget code</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                  Description
+                </th>
+                {accountingMethod === "unit_quantity" && (
+                  <>
+                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                      Qty
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
-                      Change Event Line Item
+                    <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                      UOM
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
-                      Budget Code
+                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                      Unit Cost
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
-                      Description
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
-                      Amount
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
-                      Billed to Date
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
-                      Amount Remaining
-                    </th>
-                    <th className="px-3 py-2 w-12" aria-label="Actions"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y">
-                  {sovLines.map((line, index) => (
+                  </>
+                )}
+                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                  Amount
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                  Billed to Date
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                  Amount Remaining
+                </th>
+                <th className="px-4 py-3 w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sovLines.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={accountingMethod === "unit_quantity" ? 10 : 7}
+                    className="px-4 py-12 text-center"
+                  >
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                        <span className="text-4xl">📊</span>
+                      </div>
+                      <p className="text-lg font-medium text-foreground">
+                        You Have No Line Items Yet
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={addSOVLine}
+                        variant="default"
+                        disabled={isSubmitting}
+                        data-testid="sov-add-line-empty"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Line
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                sovLines.map((line, index) =>
+                  line.isGroup ? (
                     <tr
-                      key={
-                        (line as SovLineItem & { _id?: string })._id ||
-                        `line-${index}`
-                      }
+                      key={`group-${index}`}
+                      className="border-b bg-muted/50"
+                      data-testid={`sov-group-${index}`}
                     >
-                      <td className="px-3 py-2 text-sm">{index + 1}</td>
-                      <td className="px-3 py-2">
-                        <Input
-                          className="text-sm"
-                          placeholder="Change Event"
-                          value={line.changeEventLineItem || ""}
-                          onChange={(e) =>
-                            updateSOVLine(
-                              index,
-                              "changeEventLineItem",
-                              e.target.value,
-                            )
-                          }
-                        />
+                      <td className="px-4 py-3 text-sm font-semibold">
+                        {index + 1}
                       </td>
-                      <td className="px-3 py-2">
-                        <CostCodeSelector
-                          value={line.budgetCode || ""}
-                          onChange={(value) =>
-                            updateSOVLine(index, "budgetCode", value)
-                          }
-                          placeholder="Select budget code"
-                          className="w-full"
-                        />
-                      </td>
-                      <td className="px-3 py-2">
+                      <td
+                        colSpan={
+                          accountingMethod === "unit_quantity" ? 8 : 5
+                        }
+                        className="px-4 py-3"
+                      >
                         <Input
-                          className="text-sm"
-                          placeholder="Description"
+                          className="h-8 font-semibold"
+                          placeholder="Group name (e.g. General Conditions)"
                           value={line.description || ""}
                           onChange={(e) =>
-                            updateSOVLine(index, "description", e.target.value)
+                            updateSOVLine(index, {
+                              description: e.target.value,
+                            })
                           }
+                          data-testid="sov-group-name"
                         />
                       </td>
-                      <td className="px-3 py-2">
-                        <Input
-                          className="text-sm text-right"
-                          type="number"
-                          step="0.01"
-                          placeholder="$0.00"
-                          value={line.amount || 0}
-                          onChange={(e) =>
-                            updateSOVLine(
-                              index,
-                              "amount",
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-sm text-right">
-                        ${(line.billedToDate || 0).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-right">
-                        $
-                        {(
-                          (line.amount || 0) - (line.billedToDate || 0)
-                        ).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-3">
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => removeSOVLine(index)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
                         >
-                          <X className="h-4 w-4" />
+                          ×
                         </Button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-muted font-semibold">
-                  <tr>
-                    <td colSpan={4} className="px-3 py-2 text-sm">
-                      Total:
-                    </td>
-                    <td className="px-3 py-2 text-sm text-right">
-                      ${totals.amount.toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-right">
-                      ${totals.billedToDate.toFixed(2)}
-                    </td>
-                    <td className="px-3 py-2 text-sm text-right">
-                      ${totals.amountRemaining.toFixed(2)}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-        )}
+                  ) : (
+                    <tr
+                      key={`line-${index}`}
+                      className="border-b"
+                      data-testid={`sov-line-${index}`}
+                    >
+                      <td className="px-4 py-3 text-sm">{index + 1}</td>
+                      <td className="px-4 py-3">
+                        <Popover
+                          open={openBudgetCodePopover === index}
+                          onOpenChange={(open) => {
+                            setOpenBudgetCodePopover(open ? index : null);
+                            if (open) setBudgetCodeSearchQuery("");
+                          }}
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className="w-full justify-between text-left font-normal h-8"
+                              data-testid="sov-line-budget-code"
+                            >
+                              <span className="truncate">
+                                {line.budgetCodeLabel ||
+                                  "Select budget code..."}
+                              </span>
+                              <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-[400px] p-0"
+                            align="start"
+                          >
+                            <Command>
+                              <CommandInput
+                                placeholder="Search budget codes..."
+                                value={budgetCodeSearchQuery}
+                                onValueChange={setBudgetCodeSearchQuery}
+                              />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {loadingBudgetCodes
+                                    ? "Loading..."
+                                    : "No budget codes found."}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {filteredBudgetCodes.map((code) => (
+                                    <CommandItem
+                                      key={code.id}
+                                      value={code.fullLabel}
+                                      onSelect={() =>
+                                        handleBudgetCodeSelect(index, code)
+                                      }
+                                    >
+                                      {code.fullLabel}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                                <CommandSeparator />
+                                <CommandGroup>
+                                  <CommandItem
+                                    onSelect={() => {
+                                      setOpenBudgetCodePopover(null);
+                                      setShowCreateBudgetCodeModal(true);
+                                    }}
+                                    className="text-blue-600"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create New Budget Code
+                                  </CommandItem>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Input
+                          value={line.description || ""}
+                          onChange={(e) =>
+                            updateSOVLine(index, {
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Description"
+                          className="h-8"
+                          data-testid="sov-line-description"
+                        />
+                      </td>
+                      {accountingMethod === "unit_quantity" && (
+                        <>
+                          <td className="px-4 py-3">
+                            <Input
+                              type="number"
+                              value={line.quantity ?? ""}
+                              onChange={(e) =>
+                                updateSOVLine(index, {
+                                  quantity:
+                                    parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="h-8 text-right"
+                              data-testid="sov-line-quantity"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Input
+                              value={line.unitOfMeasure || ""}
+                              onChange={(e) =>
+                                updateSOVLine(index, {
+                                  unitOfMeasure: e.target.value,
+                                })
+                              }
+                              className="h-8"
+                              data-testid="sov-line-unit-of-measure"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <Input
+                              type="number"
+                              value={line.unitCost ?? ""}
+                              onChange={(e) =>
+                                updateSOVLine(index, {
+                                  unitCost:
+                                    parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="h-8 text-right"
+                              data-testid="sov-line-unit-cost"
+                            />
+                          </td>
+                        </>
+                      )}
+                      <td className="px-4 py-3">
+                        <Input
+                          type="number"
+                          value={line.amount || ""}
+                          onChange={(e) =>
+                            updateSOVLine(index, {
+                              amount: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="h-8 text-right"
+                          data-testid="sov-line-amount"
+                          readOnly={accountingMethod === "unit_quantity"}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm">
+                        ${(line.billedToDate || 0).toFixed(2)}
+                      </td>
+                      <td
+                        className="px-4 py-3 text-right text-sm"
+                        data-testid="sov-line-amount-remaining"
+                      >
+                        $
+                        {(
+                          (line.amount || 0) - (line.billedToDate || 0)
+                        ).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSOVLine(index)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                        >
+                          ×
+                        </Button>
+                      </td>
+                    </tr>
+                  ),
+                )
+              )}
+            </tbody>
+            <tfoot className="bg-muted border-t">
+              <tr>
+                <td colSpan={2} className="px-4 py-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addSOVLine}
+                    disabled={isSubmitting}
+                    data-testid="sov-add-line-footer"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Line
+                  </Button>
+                </td>
+                <td className="px-4 py-3 text-right font-medium">Total:</td>
+                {accountingMethod === "unit_quantity" && (
+                  <>
+                    <td className="px-4 py-3" />
+                    <td className="px-4 py-3" />
+                    <td className="px-4 py-3" />
+                  </>
+                )}
+                <td
+                  className="px-4 py-3 text-right font-medium"
+                  data-testid="sov-total-amount"
+                >
+                  ${totals.amount.toFixed(2)}
+                </td>
+                <td
+                  className="px-4 py-3 text-right font-medium"
+                  data-testid="sov-total-billed"
+                >
+                  ${totals.billedToDate.toFixed(2)}
+                </td>
+                <td
+                  className="px-4 py-3 text-right font-medium"
+                  data-testid="sov-total-remaining"
+                >
+                  ${totals.amountRemaining.toFixed(2)}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Import dropdown below the table */}
+        <div className="mt-4">
+          <Select
+            onValueChange={(value) => {
+              if (value === "csv") csvInputRef.current?.click();
+            }}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Import" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="excel">Excel</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </section>
 
       {/* Inclusions & Exclusions Section */}
@@ -1024,6 +1543,151 @@ export function CreateSubcontractForm({
           </Button>
         </div>
       </div>
+
+      {/* Create Budget Code Modal */}
+      <Dialog
+        open={showCreateBudgetCodeModal}
+        onOpenChange={setShowCreateBudgetCodeModal}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Budget Code</DialogTitle>
+            <DialogDescription>
+              Add a new budget code that can be used for line items in this
+              project.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="costCode">Cost Code*</Label>
+              {loadingCostCodes ? (
+                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                  Loading cost codes...
+                </div>
+              ) : (
+                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                  {Object.entries(groupedCostCodes)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([division]) => (
+                      <div key={division} className="border-b last:border-b-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleDivision(division)}
+                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                        >
+                          <span className="text-sm font-semibold text-foreground">
+                            {division}
+                          </span>
+                          {expandedDivisions.has(division) ? (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </button>
+
+                        {expandedDivisions.has(division) && (
+                          <div className="bg-muted/50">
+                            {groupedCostCodes[division].map((costCode) => (
+                              <button
+                                key={costCode.id}
+                                type="button"
+                                onClick={() =>
+                                  setNewBudgetCodeData({
+                                    ...newBudgetCodeData,
+                                    costCodeId: costCode.id,
+                                  })
+                                }
+                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
+                                  newBudgetCodeData.costCodeId === costCode.id
+                                    ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-950 dark:text-blue-300"
+                                    : "text-foreground"
+                                }`}
+                              >
+                                {costCode.division_title || costCode.id} -{" "}
+                                {costCode.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Click on a division to expand and select a cost code
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="costType">Cost Type*</Label>
+              <Select
+                value={newBudgetCodeData.costType}
+                onValueChange={(value) =>
+                  setNewBudgetCodeData({
+                    ...newBudgetCodeData,
+                    costType: value,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="R">R - Contract Revenue</SelectItem>
+                  <SelectItem value="E">E - Equipment</SelectItem>
+                  <SelectItem value="X">X - Expense</SelectItem>
+                  <SelectItem value="L">L - Labor</SelectItem>
+                  <SelectItem value="M">M - Material</SelectItem>
+                  <SelectItem value="S">S - Subcontract</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm font-medium text-foreground">Preview:</p>
+              <p className="text-sm text-foreground mt-1">
+                {newBudgetCodeData.costCodeId ? (
+                  <>
+                    {availableCostCodes.find(
+                      (cc) => cc.id === newBudgetCodeData.costCodeId,
+                    )?.division_title ||
+                      availableCostCodes.find(
+                        (cc) => cc.id === newBudgetCodeData.costCodeId,
+                      )?.id}
+                    .{newBudgetCodeData.costType} –{" "}
+                    {
+                      availableCostCodes.find(
+                        (cc) => cc.id === newBudgetCodeData.costCodeId,
+                      )?.title
+                    }{" "}
+                    – {getCostTypeLabel(newBudgetCodeData.costType)}
+                  </>
+                ) : (
+                  "Select cost code and cost type to see preview"
+                )}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCreateBudgetCodeModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateBudgetCode}
+              disabled={
+                isCreatingBudgetCode ||
+                !newBudgetCodeData.costCodeId ||
+                !newBudgetCodeData.costType
+              }
+            >
+              {isCreatingBudgetCode ? "Creating..." : "Create Budget Code"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

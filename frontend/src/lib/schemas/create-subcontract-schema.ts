@@ -45,9 +45,15 @@ export const SovLineItemSchema = z.object({
   lineNumber: optionalNumber, // maps to '#'
   changeEventLineItem: z.string().trim().optional(),
   budgetCode: z.string().trim().optional(),
+  budgetCodeId: z.string().trim().optional(), // FK to budget_codes
+  budgetCodeLabel: z.string().trim().optional(), // display label
   description: z.string().trim().optional(),
   amount: optionalPositiveNumber,
+  quantity: z.number().min(0).optional(),
+  unitCost: z.number().min(0).optional(),
+  unitOfMeasure: z.string().trim().optional(),
   billedToDate: optionalPositiveNumber,
+  isGroup: z.boolean().optional(), // true for group header rows
   // Amount Remaining is displayed as a column but is typically computed:
   // amountRemaining = amount - billedToDate
 });
