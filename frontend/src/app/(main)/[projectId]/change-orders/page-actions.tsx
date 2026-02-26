@@ -8,6 +8,7 @@ import {
   ReportsDropdown,
   type ReportFilter,
 } from "@/components/domain/change-orders/ReportsDropdown";
+import { ReviewerSettingsDialog } from "./reviewer-settings-dialog";
 
 interface PageActionsProps {
   projectId: string;
@@ -43,6 +44,7 @@ export function PageActions({ projectId }: PageActionsProps) {
 
   return (
     <div className="flex items-center gap-2">
+      <ReviewerSettingsDialog projectId={projectId} />
       <ReportsDropdown onApplyFilter={handleApplyFilter} />
       <ExportDropdown projectId={projectId} />
       <Button asChild size="sm" data-testid="change-orders-create-button">

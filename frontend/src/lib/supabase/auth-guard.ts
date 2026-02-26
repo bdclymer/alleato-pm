@@ -15,6 +15,50 @@ interface AuthGuardResult {
   serviceClient: ReturnType<typeof createServiceClient>;
 }
 
+async function resolvePersonIdFromAuth(
+  serviceClient: ReturnType<typeof createServiceClient>,
+  user: { id: string; email?: string | null },
+): Promise<string | null> {
+  const { data: authLink, error: authLinkError } = await serviceClient
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (!authLinkError && authLink?.person_id) {
+    return authLink.person_id;
+  }
+
+  // Backward-compatibility fallback for accounts created before users_auth linkage.
+  const { data: personByAuthId, error: personByAuthIdError } = await serviceClient
+    .from("people")
+    .select("id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (!personByAuthIdError && personByAuthId?.id) {
+    return personByAuthId.id;
+  }
+
+  if (!user.email) {
+    return null;
+  }
+
+  // Last-resort fallback for environments where auth_user_id was never backfilled.
+  const normalizedEmail = user.email.toLowerCase();
+  const { data: personByEmail, error: personByEmailError } = await serviceClient
+    .from("people")
+    .select("id")
+    .ilike("email", normalizedEmail)
+    .maybeSingle();
+
+  if (!personByEmailError && personByEmail?.id) {
+    return personByEmail.id;
+  }
+
+  return null;
+}
+
 /**
  * Verifies the current user is authenticated AND is an active member of the specified project.
  * Returns the service client only after authorization is confirmed.
@@ -39,14 +83,12 @@ export async function verifyProjectAccess(
 
   // Step 2: Look up person_id from auth user
   const serviceClient = createServiceClient();
+  const personId = await resolvePersonIdFromAuth(serviceClient, {
+    id: user.id,
+    email: user.email,
+  });
 
-  const { data: authLink, error: authLinkError } = await serviceClient
-    .from("users_auth")
-    .select("person_id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  if (authLinkError || !authLink) {
+  if (!personId) {
     return NextResponse.json(
       { error: "User profile not found" },
       { status: 403 },
@@ -63,7 +105,7 @@ export async function verifyProjectAccess(
     return {
       membership: {
         membershipId: `super-admin:${user.id}:${projectId}`,
-        personId: authLink.person_id,
+        personId,
         authUserId: user.id,
         projectId,
         permissionTemplateId: null,
@@ -76,7 +118,7 @@ export async function verifyProjectAccess(
   const { data: membership, error: membershipError } = await serviceClient
     .from("project_directory_memberships")
     .select("id, person_id, project_id, permission_template_id")
-    .eq("person_id", authLink.person_id)
+    .eq("person_id", personId)
     .eq("project_id", projectId)
     .eq("status", "active")
     .maybeSingle();

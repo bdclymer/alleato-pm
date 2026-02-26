@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  canReviewGeneralChangeOrder,
+  getReviewerAccessForProject,
+  isReviewerAccessError,
+} from "@/lib/change-orders/reviewer-access";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeOrderId: string }>;
@@ -13,46 +18,24 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeOrderId } = await params;
-    const supabase = await createClient();
-
-    // Get current user
+    const numericProjectId = Number(projectId);
+    const reviewerAccess = await getReviewerAccessForProject(numericProjectId);
+    if (isReviewerAccessError(reviewerAccess)) {
+      return reviewerAccess;
+    }
+    const supabase = reviewerAccess.serviceClient;
+    const requestSupabase = await createClient();
     const {
       data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    } = await requestSupabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Look up person_id from auth user
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-
-    const { data: membership } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-
-    if (!membership || membership.status !== "active") {
-      return NextResponse.json(
-        {
-          error:
-            "Forbidden: You do not have permission to approve change orders for this project",
-        },
-        { status: 403 },
-      );
     }
 
     // Get the change order
     const { data: changeOrder, error: fetchError } = await supabase
       .from("change_orders")
-      .select("id, amount, status, contract_id, project_id")
+      .select("id, amount, status, contract_id, project_id, designated_reviewer_id")
       .eq("id", Number(changeOrderId))
       .eq("project_id", Number(projectId))
       .single();
@@ -61,6 +44,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         { error: "Change order not found" },
         { status: 404 },
+      );
+    }
+
+    if (
+      !canReviewGeneralChangeOrder(
+        reviewerAccess,
+        changeOrder.designated_reviewer_id,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Forbidden: Only admins or the designated reviewer can approve this change order",
+        },
+        { status: 403 },
       );
     }
 
@@ -104,18 +102,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (changeOrder.contract_id) {
       const { data: contract } = await supabase
         .from("contracts")
-        .select("id, revised_contract_value")
+        .select("id, revised_contract_amount")
         .eq("id", changeOrder.contract_id)
         .single();
 
       if (contract) {
         const newRevisedValue =
-          (contract.revised_contract_value || 0) + (changeOrder.amount || 0);
+          (contract.revised_contract_amount || 0) + (changeOrder.amount || 0);
 
         const { error: contractUpdateError } = await supabase
           .from("contracts")
           .update({
-            revised_contract_value: newRevisedValue,
+            revised_contract_amount: newRevisedValue,
             updated_at: now,
           })
           .eq("id", changeOrder.contract_id);

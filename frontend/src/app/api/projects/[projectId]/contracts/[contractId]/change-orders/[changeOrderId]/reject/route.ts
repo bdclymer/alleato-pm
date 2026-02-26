@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { rejectChangeOrderSchema } from "../../validation";
 import { ZodError } from "zod";
+import {
+  canReviewContractChangeOrder,
+  getReviewerAccessForProject,
+  isReviewerAccessError,
+} from "@/lib/change-orders/reviewer-access";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; changeOrderId: string }>;
@@ -14,44 +19,33 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId, changeOrderId } = await params;
-    const supabase = await createClient();
+    const numericProjectId = Number(projectId);
+    const reviewerAccess = await getReviewerAccessForProject(numericProjectId);
+    if (isReviewerAccessError(reviewerAccess)) {
+      return reviewerAccess;
+    }
+    if (!canReviewContractChangeOrder(reviewerAccess)) {
+      return NextResponse.json(
+        {
+          error:
+            "Forbidden: Only admins or assigned reviewers can reject commitment change orders",
+        },
+        { status: 403 },
+      );
+    }
+
+    const supabase = reviewerAccess.serviceClient;
     const body = await request.json();
 
     // Validate request body
     const validatedData = rejectChangeOrderSchema.parse(body);
 
-    // Get current user
+    const requestSupabase = await createClient();
     const {
       data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    } = await requestSupabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Look up person_id from auth user
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-
-    const { data: membership } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId, 10))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-
-    if (!membership || membership.status !== "active") {
-      return NextResponse.json(
-        {
-          error:
-            "Forbidden: You do not have permission to reject change orders for this project",
-        },
-        { status: 403 },
-      );
     }
 
     // Verify contract exists and belongs to project

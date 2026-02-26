@@ -1,22 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
+import type { ReactElement } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Check, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader } from "@/components/layout/page-header-unified";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageTabs } from "@/components/layout/PageTabs";
-import { Text } from "@/components/ui/text";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
 import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
+import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -26,54 +34,245 @@ interface ContactWithCompany extends Contact {
   is_admin?: boolean | null;
 }
 
-export default function DirectoryContactsPage() {
+interface ContactTableRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  type: string;
+  company: string;
+  phone: string;
+  is_admin: boolean;
+  created_at: string | null;
+}
+
+type ContactFilterState = Record<string, FilterValue>;
+type InlineEditDraft = Pick<ContactTableRow, "first_name" | "last_name" | "email" | "type" | "phone">;
+
+const EMPTY_FILTERS: ContactFilterState = {
+  type: undefined,
+  is_admin: undefined,
+};
+
+const contactColumns: ColumnConfig[] = [
+  { id: "full_name", label: "Name", alwaysVisible: true },
+  { id: "email", label: "Email", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: true },
+  { id: "company", label: "Company", defaultVisible: true },
+  { id: "phone", label: "Phone", defaultVisible: true },
+  { id: "is_admin", label: "Admin Access", defaultVisible: true },
+  { id: "created_at", label: "Created", defaultVisible: true },
+];
+
+const contactDefaultVisibleColumns = contactColumns
+  .filter((column) => column.defaultVisible !== false)
+  .map((column) => column.id);
+
+function formatDate(value: string | null): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString();
+}
+
+function escapeCsvValue(value: string): string {
+  if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
+    return `"${value.replace(/"/g, "\"\"")}"`;
+  }
+  return value;
+}
+
+function buildContactTableColumns(
+  editingContactId: string | null,
+  inlineDraft: InlineEditDraft,
+  onInlineDraftChange: (field: keyof InlineEditDraft, value: string) => void,
+): TableColumn<ContactTableRow>[] {
+  return [
+    {
+      ...contactColumns[0],
+      render: (item) =>
+        editingContactId === item.id ? (
+          <div className="flex gap-2">
+            <Input
+              value={inlineDraft.first_name}
+              onChange={(event) => onInlineDraftChange("first_name", event.target.value)}
+              placeholder="First name"
+              className="h-8 min-w-[120px]"
+            />
+            <Input
+              value={inlineDraft.last_name}
+              onChange={(event) => onInlineDraftChange("last_name", event.target.value)}
+              placeholder="Last name"
+              className="h-8 min-w-[120px]"
+            />
+          </div>
+        ) : (
+          <span className="font-medium">{item.full_name}</span>
+        ),
+      sortValue: (item) => item.full_name,
+      csvValue: (item) => item.full_name,
+    },
+    {
+      ...contactColumns[1],
+      render: (item) =>
+        editingContactId === item.id ? (
+          <Input
+            type="email"
+            value={inlineDraft.email}
+            onChange={(event) => onInlineDraftChange("email", event.target.value)}
+            placeholder="email@example.com"
+            className="h-8"
+          />
+        ) : (
+          <span>{item.email || "-"}</span>
+        ),
+      sortValue: (item) => item.email || "",
+      csvValue: (item) => item.email || "",
+    },
+    {
+      ...contactColumns[2],
+      render: (item) =>
+        editingContactId === item.id ? (
+          <Input
+            value={inlineDraft.type}
+            onChange={(event) => onInlineDraftChange("type", event.target.value)}
+            placeholder="Type"
+            className="h-8"
+          />
+        ) : (
+          <span>{item.type || "-"}</span>
+        ),
+      sortValue: (item) => item.type || "",
+      csvValue: (item) => item.type || "",
+    },
+    {
+      ...contactColumns[3],
+      render: (item) => <span>{item.company || "-"}</span>,
+      sortValue: (item) => item.company || "",
+      csvValue: (item) => item.company || "",
+    },
+    {
+      ...contactColumns[4],
+      render: (item) =>
+        editingContactId === item.id ? (
+          <Input
+            value={inlineDraft.phone}
+            onChange={(event) => onInlineDraftChange("phone", event.target.value)}
+            placeholder="Phone"
+            className="h-8"
+          />
+        ) : (
+          <span>{item.phone || "-"}</span>
+        ),
+      sortValue: (item) => item.phone || "",
+      csvValue: (item) => item.phone || "",
+    },
+    {
+      ...contactColumns[5],
+      render: (item) => (
+        <Badge variant={item.is_admin ? "default" : "secondary"}>
+          {item.is_admin ? "Admin" : "Standard"}
+        </Badge>
+      ),
+      sortValue: (item) => (item.is_admin ? 1 : 0),
+      csvValue: (item) => (item.is_admin ? "Admin" : "Standard"),
+    },
+    {
+      ...contactColumns[6],
+      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+      csvValue: (item) => formatDate(item.created_at),
+    },
+  ];
+}
+
+export default function DirectoryContactsPage(): ReactElement {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialType = searchParams.get("type") ?? "";
+  const initialAdmin = searchParams.get("is_admin") ?? "";
+  const initialFilters: ContactFilterState = {
+    type: initialType || undefined,
+    is_admin: initialAdmin || undefined,
+  };
+
+  const tableState = useUnifiedTableState({
+    entityKey: "global-directory-contacts",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "full_name",
+      sortDirection: "asc",
+      visibleColumns: contactDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  React.useEffect(() => {
+    const nextType = searchParams.get("type") ?? "";
+    const nextAdmin = searchParams.get("is_admin") ?? "";
+    tableState.setActiveFilters((prev) => {
+      const normalizedType = nextType || undefined;
+      const normalizedAdmin = nextAdmin || undefined;
+      if (prev.type === normalizedType && prev.is_admin === normalizedAdmin) {
+        return prev;
+      }
+      return {
+        type: normalizedType,
+        is_admin: normalizedAdmin,
+      };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
   const [contacts, setContacts] = React.useState<ContactWithCompany[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editingContactId, setEditingContactId] = React.useState<string | null>(null);
+  const [inlineDraft, setInlineDraft] = React.useState<InlineEditDraft>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    type: "",
+    phone: "",
+  });
 
   const fetchContacts = React.useCallback(async () => {
     try {
+      setError(null);
       const supabase = createClient();
-
-      // Fetch people and companies separately to avoid PostgREST schema cache issues
       const [peopleResult, companiesResult] = await Promise.all([
-        supabase
-          .from("people")
-          .select("*")
-          .order("last_name", { ascending: true }),
-        supabase
-          .from("companies")
-          .select("*"),
+        supabase.from("people").select("*").order("last_name", { ascending: true }),
+        supabase.from("companies").select("*"),
       ]);
 
       if (peopleResult.error) throw peopleResult.error;
       if (companiesResult.error) throw companiesResult.error;
 
-      // Create a map of companies by ID for fast lookup
-      const companiesMap = new Map(
-        (companiesResult.data || []).map((c) => [c.id, c])
-      );
-
-      // Join people with their companies
+      const companiesMap = new Map((companiesResult.data || []).map((company) => [company.id, company]));
       const peopleData = (peopleResult.data || []).map((person) => ({
         ...person,
         company: person.company_id ? companiesMap.get(person.company_id) || null : null,
       }));
 
-      // For each person, try to get their auth_user_id and admin status
       const contactsWithAuth = await Promise.all(
-        (peopleData || []).map(async (person) => {
-          // Get auth link
+        peopleData.map(async (person) => {
           const { data: authLink } = await supabase
             .from("users_auth")
             .select("auth_user_id")
             .eq("person_id", person.id)
             .maybeSingle();
 
-          // Get admin status if they have an auth account
-          let isAdmin = null;
+          let isAdmin: boolean | null = null;
           if (authLink?.auth_user_id) {
             const { data: profile } = await supabase
               .from("user_profiles")
@@ -88,12 +287,12 @@ export default function DirectoryContactsPage() {
             auth_user_id: authLink?.auth_user_id || null,
             is_admin: isAdmin,
           };
-        })
+        }),
       );
 
       setContacts(contactsWithAuth);
-    } catch (err) {
-      setError(err as Error);
+    } catch (fetchError) {
+      setError(fetchError as Error);
     } finally {
       setIsLoading(false);
     }
@@ -103,159 +302,405 @@ export default function DirectoryContactsPage() {
     fetchContacts();
   }, [fetchContacts]);
 
-  const handleAddContact = () => {
-    setDialogOpen(true);
-  };
+  const activeFilters = tableState.activeFilters as ContactFilterState;
+  const tableData = React.useMemo<ContactTableRow[]>(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const typeFilter = typeof activeFilters.type === "string" ? activeFilters.type : "";
+    const isAdminFilter =
+      typeof activeFilters.is_admin === "string" ? activeFilters.is_admin : "";
 
-  const handleDialogSuccess = () => {
-    fetchContacts();
-  };
+    return contacts
+      .map((contact) => ({
+        id: contact.id,
+        first_name: contact.first_name || "",
+        last_name: contact.last_name || "",
+        full_name:
+          `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Unnamed Contact",
+        email: contact.email || "",
+        type: contact.person_type || "",
+        company: contact.company?.name || "",
+        phone: contact.phone_business || contact.phone_mobile || "",
+        is_admin: Boolean(contact.is_admin),
+        created_at: contact.created_at,
+      }))
+      .filter((contact) => {
+        if (typeFilter && contact.type.toLowerCase() !== typeFilter.toLowerCase()) {
+          return false;
+        }
+        if (isAdminFilter) {
+          const expected = isAdminFilter === "true";
+          if (contact.is_admin !== expected) {
+            return false;
+          }
+        }
+        if (!search) {
+          return true;
+        }
+        return (
+          contact.full_name.toLowerCase().includes(search) ||
+          contact.email.toLowerCase().includes(search) ||
+          contact.phone.toLowerCase().includes(search) ||
+          contact.company.toLowerCase().includes(search)
+        );
+      });
+  }, [activeFilters.is_admin, activeFilters.type, contacts, tableState.debouncedSearch]);
 
-  const tableData = React.useMemo(() => {
-    return contacts.map((contact) => ({
-      id: contact.id,
-      full_name:
-        `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
-        "Unnamed Contact",
-      first_name: contact.first_name,
-      last_name: contact.last_name,
-      email: contact.email || "",
-      phone: contact.phone_business || contact.phone_mobile || "",
-      type: contact.person_type || "",
-      company: contact.company?.name || "",
-      created_at: contact.created_at,
-      auth_user_id: contact.auth_user_id,
-      is_admin: contact.is_admin,
-    }));
-  }, [contacts]);
-
-  const tableConfig: GenericTableConfig = {
-    columns: [
-      {
-        id: "full_name",
-        label: "Name",
-        defaultVisible: true,
-        isPrimary: true,
-        type: "text",
-      },
-      {
-        id: "email",
-        label: "Email",
-        defaultVisible: true,
-        type: "email",
-      },
-      {
-        id: "type",
-        label: "Type",
-        defaultVisible: true,
-        type: "text",
-      },
-      {
-        id: "company",
-        label: "Company",
-        defaultVisible: true,
-        type: "text",
-      },
-      {
-        id: "phone",
-        label: "Phone",
-        defaultVisible: true,
-        type: "text",
-      },
-      {
-        id: "is_admin",
-        label: "Admin Access",
-        defaultVisible: true,
-        type: "boolean",
-      },
-      {
-        id: "created_at",
-        label: "Created",
-        defaultVisible: true,
-        type: "date",
-      },
-    ],
-    searchFields: ["full_name", "email", "phone", "company"],
-    exportFilename: "contacts.csv",
-    enableViewSwitcher: false,
-    defaultViewMode: "table",
-    enableRowSelection: true,
-    editConfig: {
-      tableName: "people",
-      editableFields: ["first_name", "last_name", "email", "phone_business"],
-    },
-    onDelete: true,
-  };
+  const uniqueTypes = React.useMemo(
+    () => Array.from(new Set(tableData.map((contact) => contact.type).filter(Boolean))),
+    [tableData],
+  );
 
   const tabs = getDirectoryTabs(pathname);
+  const onInlineDraftChange = React.useCallback((field: keyof InlineEditDraft, value: string) => {
+    setInlineDraft((prev) => ({ ...prev, [field]: value }));
+  }, []);
 
-  if (isLoading) {
-    return (
-      <>
-        <PageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="flex justify-center items-center py-12">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-              <Text tone="muted">Loading contacts...</Text>
-            </div>
-          </div>
-        </PageContainer>
-      </>
-    );
-  }
+  const tableColumns = React.useMemo(
+    () => buildContactTableColumns(editingContactId, inlineDraft, onInlineDraftChange),
+    [editingContactId, inlineDraft, onInlineDraftChange],
+  );
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.type) ||
+    Boolean(activeFilters.is_admin);
 
-  if (error) {
-    return (
-      <>
-        <PageHeader
-          title="Company Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="text-center py-12">
-            <Text tone="destructive">
-              Error loading contacts: {error.message}
-            </Text>
-          </div>
-        </PageContainer>
-      </>
+  const handleFilterChange = (nextFilters: ContactFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      type: typeof nextFilters.type === "string" ? nextFilters.type : null,
+      is_admin: typeof nextFilters.is_admin === "string" ? nextFilters.is_admin : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const sortRows = React.useCallback(
+    (rows: ContactTableRow[]) => {
+      if (!tableState.sortBy) {
+        return rows;
+      }
+      const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);
+      if (!sortColumn?.sortValue) {
+        return rows;
+      }
+      return [...rows].sort((a, b) => {
+        const valueA = sortColumn.sortValue?.(a);
+        const valueB = sortColumn.sortValue?.(b);
+
+        if (valueA == null && valueB == null) return 0;
+        if (valueA == null) return tableState.sortDirection === "asc" ? -1 : 1;
+        if (valueB == null) return tableState.sortDirection === "asc" ? 1 : -1;
+        if (typeof valueA === "number" && typeof valueB === "number") {
+          return tableState.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+        }
+        const comparison = String(valueA).localeCompare(String(valueB));
+        return tableState.sortDirection === "asc" ? comparison : -comparison;
+      });
+    },
+    [tableColumns, tableState.sortBy, tableState.sortDirection],
+  );
+
+  const handleStartInlineEdit = (contact: ContactTableRow) => {
+    setEditingContactId(contact.id);
+    setInlineDraft({
+      first_name: contact.first_name,
+      last_name: contact.last_name,
+      email: contact.email,
+      type: contact.type,
+      phone: contact.phone,
+    });
+  };
+
+  const handleCancelInlineEdit = () => {
+    setEditingContactId(null);
+    setInlineDraft({
+      first_name: "",
+      last_name: "",
+      email: "",
+      type: "",
+      phone: "",
+    });
+  };
+
+  const handleSaveInlineEdit = async () => {
+    if (!editingContactId) {
+      return;
+    }
+    const firstName = inlineDraft.first_name.trim();
+    const lastName = inlineDraft.last_name.trim();
+    const personType = inlineDraft.type.trim();
+    if (!firstName || !lastName || !personType) {
+      toast.error("First name, last name, and type are required.");
+      return;
+    }
+
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("people")
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        email: inlineDraft.email.trim() || null,
+        person_type: personType,
+        phone_business: inlineDraft.phone.trim() || null,
+        phone_mobile: inlineDraft.phone.trim() || null,
+      })
+      .eq("id", editingContactId);
+
+    if (updateError) {
+      toast.error(updateError.message || "Failed to update contact.");
+      return;
+    }
+
+    toast.success("Contact updated.");
+    handleCancelInlineEdit();
+    await fetchContacts();
+  };
+
+  const deleteContacts = React.useCallback(async (ids: string[]): Promise<boolean> => {
+    if (ids.length === 0) return true;
+
+    const supabase = createClient();
+
+    const { error: unlinkError } = await supabase
+      .from("users_auth")
+      .delete()
+      .in("person_id", ids);
+    if (unlinkError) {
+      toast.error(unlinkError.message || "Failed to remove user links.");
+      return false;
+    }
+
+    const { error: deleteError } = await supabase.from("people").delete().in("id", ids);
+    if (deleteError) {
+      toast.error(deleteError.message || "Failed to delete contact.");
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  const handleDeleteContact = async (contact: ContactTableRow) => {
+    const confirmed = window.confirm(`Delete ${contact.full_name}?`);
+    if (!confirmed) return;
+
+    const deleted = await deleteContacts([contact.id]);
+    if (!deleted) return;
+    toast.success("Contact deleted.");
+    if (editingContactId === contact.id) {
+      handleCancelInlineEdit();
+    }
+    tableState.setSelectedIds((prev) => prev.filter((id) => id !== contact.id));
+    await fetchContacts();
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) return;
+
+    const confirmed = window.confirm(`Delete ${selectedIds.length} selected contact(s)?`);
+    if (!confirmed) return;
+
+    const deleted = await deleteContacts(selectedIds);
+    if (!deleted) return;
+    toast.success(`${selectedIds.length} contact(s) deleted.`);
+    if (editingContactId && selectedIds.includes(editingContactId)) {
+      handleCancelInlineEdit();
+    }
+    tableState.setSelectedIds([]);
+    await fetchContacts();
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(sortRows(tableData).map((contact) => contact.id));
+      return;
+    }
+    tableState.setSelectedIds([]);
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...new Set([...prev, id])]);
+      return;
+    }
+    tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+  };
+
+  const handleExport = () => {
+    const rowsToExport = sortRows(tableData);
+    if (rowsToExport.length === 0) {
+      toast.info("No contacts to export.");
+      return;
+    }
+
+    const visibleColumns = tableColumns.filter((column) =>
+      tableState.visibleColumns.includes(column.id),
     );
-  }
+
+    const headers = visibleColumns.map((column) => escapeCsvValue(column.label));
+    const rows = rowsToExport.map((item) =>
+      visibleColumns
+        .map((column) => {
+          const value = column.csvValue ? column.csvValue(item) : String(column.sortValue?.(item) ?? "");
+          return escapeCsvValue(value);
+        })
+        .join(","),
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "directory-contacts.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const renderRowActions = (contact: ContactTableRow) => {
+    if (editingContactId === contact.id) {
+      return (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveInlineEdit}>
+            <Check className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCancelInlineEdit}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleStartInlineEdit(contact)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Contact
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => void handleDeleteContact(contact)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Contact
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <>
-      <PageHeader
-        title="Company Directory: Contacts"
-        description="Manage companies, clients, contacts, users, and employees across your organization"
-        showProjectName={false}
-        actions={
-          <Button
-            onClick={handleAddContact}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Contact
-          </Button>
-        }
+      <UnifiedTablePage
+        header={{
+          title: "Company Directory: Contacts",
+          description:
+            "Manage companies, clients, contacts, users, and employees across your organization",
+          actions: (
+            <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+              <Plus className="mr-2 h-4 w-4" />
+              New Contact
+            </Button>
+          ),
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems: contacts.length,
+          filteredItems: tableData.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search contacts...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "card", "list"],
+          filters: [
+            {
+              id: "type",
+              label: "Type",
+              type: "select",
+              options: uniqueTypes.map((type) => ({ value: type, label: type })),
+            },
+            {
+              id: "is_admin",
+              label: "Admin Access",
+              type: "select",
+              options: [
+                { value: "true", label: "Admin" },
+                { value: "false", label: "Standard" },
+              ],
+            },
+          ],
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: contactColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          onExport: handleExport,
+          onBulkDelete: handleBulkDelete,
+        }}
+        data={{
+          items: tableData,
+          isLoading,
+          isFetching: false,
+          error: error ?? undefined,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          rowActions: renderRowActions,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+            });
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        emptyState={{
+          title: "No contacts found",
+          description: "No contacts are available yet.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered,
+          action: (
+            <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Contact
+            </Button>
+          ),
+        }}
+        features={{
+          enableExport: true,
+          enableBulkDelete: true,
+          enableRowSelection: true,
+          enableRowActions: true,
+        }}
       />
-      <PageTabs tabs={tabs} />
-      <PageContainer>
-        <GenericDataTable data={tableData} config={tableConfig} />
-      </PageContainer>
 
-      <ContactFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={handleDialogSuccess}
-      />
+      <ContactFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />
     </>
   );
 }
