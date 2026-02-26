@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { PageContainer, FormContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
@@ -159,13 +156,9 @@ export default function NewContractPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="New Prime Contract"
-        breadcrumbs={[
-          { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-          { label: "New Contract" },
-        ]}
-        actions={undefined}
+        description="Create a new owner agreement"
       />
 
       <PageContainer className="bg-gray-50">

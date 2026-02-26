@@ -1,4 +1,3 @@
-Using workdir /Users/meganharrison/Documents/github/alleato-procore
 export type Json =
   | string
   | number

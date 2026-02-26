@@ -27,7 +27,7 @@ import {
 
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { ProjectPageHeader } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
@@ -265,6 +265,31 @@ export default function ProjectContractDetailPage() {
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     useState(false);
+
+  // Attachments state
+  const [attachments, setAttachments] = useState<Array<{
+    id: string;
+    fileName: string;
+    url: string;
+    uploadedBy: { id: string; email: string } | null;
+    uploadedAt: string;
+  }>>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  // Change Order create/reject dialog state
+  const [showNewCoDialog, setShowNewCoDialog] = useState(false);
+  const [coForm, setCoForm] = useState({
+    change_order_number: "",
+    description: "",
+    amount: "",
+    status: "draft" as "draft" | "pending",
+  });
+  const [isSubmittingCo, setIsSubmittingCo] = useState(false);
+  const [showRejectCoDialog, setShowRejectCoDialog] = useState(false);
+  const [rejectingCoId, setRejectingCoId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isRejectingCo, setIsRejectingCo] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -707,6 +732,158 @@ export default function ProjectContractDetailPage() {
     }
   };
 
+  // Fetch attachments when overview tab is active
+  useEffect(() => {
+    if (!contract) return;
+    const fetchAttachments = async () => {
+      try {
+        setAttachmentsLoading(true);
+        const response = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/attachments`,
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        setAttachments(data.data || []);
+      } catch {
+        // swallowed
+      } finally {
+        setAttachmentsLoading(false);
+      }
+    };
+    fetchAttachments();
+  }, [contract, contractId, projectId]);
+
+  const handleUploadAttachment = async (file: File) => {
+    setIsUploadingAttachment(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/attachments`,
+        { method: "POST", body: formData },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to upload attachment");
+        return;
+      }
+      const newAttachment = await response.json();
+      setAttachments((prev) => [
+        {
+          id: newAttachment.id,
+          fileName: newAttachment.fileName,
+          url: newAttachment.url,
+          uploadedBy: newAttachment.uploadedBy,
+          uploadedAt: newAttachment.uploadedAt,
+        },
+        ...prev,
+      ]);
+      toast.success(`"${file.name}" uploaded successfully`);
+    } catch {
+      toast.error("Failed to upload attachment");
+    } finally {
+      setIsUploadingAttachment(false);
+    }
+  };
+
+  const handleCreateCo = async () => {
+    if (!coForm.change_order_number || !coForm.description || !coForm.amount) {
+      toast.error("CO number, description, and amount are required");
+      return;
+    }
+    setIsSubmittingCo(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/change-orders`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contract_id: contractId,
+            change_order_number: coForm.change_order_number,
+            description: coForm.description,
+            amount: parseFloat(coForm.amount),
+            status: coForm.status,
+          }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to create change order");
+        return;
+      }
+      const newCo = await response.json();
+      setChangeOrders((prev) => [...prev, newCo]);
+      setShowNewCoDialog(false);
+      setCoForm({ change_order_number: "", description: "", amount: "", status: "draft" });
+      toast.success("Change order created successfully");
+    } catch {
+      toast.error("Failed to create change order");
+    } finally {
+      setIsSubmittingCo(false);
+    }
+  };
+
+  const handleApproveCo = async (coId: string) => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${coId}/approve`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to approve change order");
+        return;
+      }
+      setChangeOrders((prev) =>
+        prev.map((co) =>
+          co.id === coId ? { ...co, status: "approved", approved_date: new Date().toISOString() } : co,
+        ),
+      );
+      toast.success("Change order approved");
+    } catch {
+      toast.error("Failed to approve change order");
+    }
+  };
+
+  const handleRejectCo = async () => {
+    if (!rejectingCoId || !rejectionReason.trim()) {
+      toast.error("Rejection reason is required");
+      return;
+    }
+    setIsRejectingCo(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${rejectingCoId}/reject`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rejection_reason: rejectionReason }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to reject change order");
+        return;
+      }
+      setChangeOrders((prev) =>
+        prev.map((co) =>
+          co.id === rejectingCoId
+            ? { ...co, status: "rejected", rejection_reason: rejectionReason }
+            : co,
+        ),
+      );
+      setShowRejectCoDialog(false);
+      setRejectingCoId(null);
+      setRejectionReason("");
+      toast.success("Change order rejected");
+    } catch {
+      toast.error("Failed to reject change order");
+    } finally {
+      setIsRejectingCo(false);
+    }
+  };
+
   const handleBudgetCodeCreated = async (budgetCodeId: string) => {
     try {
       setBudgetCodesLoading(true);
@@ -818,7 +995,7 @@ export default function ProjectContractDetailPage() {
   if (loading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Prime Contract"
           description="Loading contract details..."
         />
@@ -832,7 +1009,7 @@ export default function ProjectContractDetailPage() {
   if (error || !contract) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Prime Contract"
           description="Unable to load contract"
           breadcrumbs={[
@@ -862,7 +1039,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
         description={
           contract.vendor
@@ -1234,19 +1411,58 @@ export default function ProjectContractDetailPage() {
                             {getTextValue(contract.description).text}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
-                          <p className="text-xs font-medium text-muted-foreground">Attachments</p>
-                          <div className="mt-3 flex items-center justify-between">
-                            <p className="text-sm italic text-muted-foreground">No attachments yet</p>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => toast.info("Attachment upload is coming soon")}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Attachment
-                            </Button>
+                        <div className="rounded-lg border border-border bg-muted/30 p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Attachments {attachments.length > 0 && `(${attachments.length})`}
+                            </p>
+                            <label className="cursor-pointer">
+                              <input
+                                type="file"
+                                className="sr-only"
+                                disabled={isUploadingAttachment}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleUploadAttachment(file);
+                                  e.target.value = "";
+                                }}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                disabled={isUploadingAttachment}
+                              >
+                                <span>
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  {isUploadingAttachment ? "Uploading..." : "Add Attachment"}
+                                </span>
+                              </Button>
+                            </label>
                           </div>
+                          {attachmentsLoading ? (
+                            <p className="text-sm text-muted-foreground italic">Loading...</p>
+                          ) : attachments.length === 0 ? (
+                            <p className="text-sm italic text-muted-foreground">No attachments yet</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              {attachments.map((att) => (
+                                <li key={att.id} className="flex items-center justify-between text-sm">
+                                  <a
+                                    href={att.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline truncate max-w-[60%]"
+                                  >
+                                    {att.fileName}
+                                  </a>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDate(att.uploadedAt)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1623,7 +1839,7 @@ export default function ProjectContractDetailPage() {
                     {pendingChangeOrders.length} pending • {rejectedChangeOrders.length} rejected
                   </p>
                 </div>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setShowNewCoDialog(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   New Change Order
                 </Button>
@@ -1651,6 +1867,7 @@ export default function ProjectContractDetailPage() {
                         <TableHead>Status</TableHead>
                         <TableHead>Requested</TableHead>
                         <TableHead>Approved/Rejected</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1686,6 +1903,33 @@ export default function ProjectContractDetailPage() {
                               ? new Date(co.approved_date).toLocaleDateString()
                               : "--"}
                           </TableCell>
+                          <TableCell>
+                            {co.status !== "approved" && co.status !== "rejected" && (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs text-green-700 border-green-300 hover:bg-green-50"
+                                  onClick={() => handleApproveCo(co.id)}
+                                >
+                                  <Check className="h-3 w-3 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs text-red-700 border-red-300 hover:bg-red-50"
+                                  onClick={() => {
+                                    setRejectingCoId(co.id);
+                                    setShowRejectCoDialog(true);
+                                  }}
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -1697,7 +1941,7 @@ export default function ProjectContractDetailPage() {
                             changeOrders.reduce((sum, co) => sum + (co.amount ?? 0), 0),
                           )}
                         </TableCell>
-                        <TableCell colSpan={3}></TableCell>
+                        <TableCell colSpan={4}></TableCell>
                       </TableRow>
                     </tfoot>
                   </Table>
@@ -2621,6 +2865,122 @@ export default function ProjectContractDetailPage() {
         projectId={projectId}
         onSuccess={handleBudgetCodeCreated}
       />
+
+      {/* New Change Order Dialog */}
+      <Dialog open={showNewCoDialog} onOpenChange={setShowNewCoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Change Order</DialogTitle>
+            <DialogDescription>
+              Create a new change order for this contract.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="co-number">
+                CO Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="co-number"
+                value={coForm.change_order_number}
+                onChange={(e) => setCoForm((prev) => ({ ...prev, change_order_number: e.target.value }))}
+                placeholder="CO-001"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="co-description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="co-description"
+                value={coForm.description}
+                onChange={(e) => setCoForm((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe the change order..."
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="co-amount">
+                Amount <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="co-amount"
+                type="number"
+                step="0.01"
+                value={coForm.amount}
+                onChange={(e) => setCoForm((prev) => ({ ...prev, amount: e.target.value }))}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="co-status">Status</Label>
+              <select
+                id="co-status"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={coForm.status}
+                onChange={(e) => setCoForm((prev) => ({ ...prev, status: e.target.value as "draft" | "pending" }))}
+              >
+                <option value="draft">Draft</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewCoDialog(false)} disabled={isSubmittingCo}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateCo} disabled={isSubmittingCo}>
+              {isSubmittingCo ? "Creating..." : "Create Change Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Change Order Dialog */}
+      <Dialog open={showRejectCoDialog} onOpenChange={setShowRejectCoDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject Change Order</DialogTitle>
+            <DialogDescription>
+              Provide a reason for rejecting this change order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="rejection-reason">
+                Rejection Reason <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Explain why this change order is being rejected..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectCoDialog(false);
+                setRejectingCoId(null);
+                setRejectionReason("");
+              }}
+              disabled={isRejectingCo}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectCo}
+              disabled={isRejectingCo || !rejectionReason.trim()}
+            >
+              {isRejectingCo ? "Rejecting..." : "Reject Change Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

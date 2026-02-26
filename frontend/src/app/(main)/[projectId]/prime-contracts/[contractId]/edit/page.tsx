@@ -2,15 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { toast } from "sonner";
 
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
 
 interface Contract {
@@ -274,20 +272,10 @@ export default function EditContractPage() {
   if (loading) {
     return (
       <>
-        <PageHeader
-          title="Edit Contract"
-          breadcrumbs={[
-            { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-            { label: "Edit Contract" },
-          ]}
-        />
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center py-8">Loading contract...</div>
-            </CardContent>
-          </Card>
-        </div>
+        <ProjectPageHeader title="Edit Contract" description="Loading contract..." />
+        <PageContainer>
+          <div className="text-center py-8 text-sm text-gray-500">Loading contract...</div>
+        </PageContainer>
       </>
     );
   }
@@ -295,31 +283,23 @@ export default function EditContractPage() {
   if (loadError) {
     return (
       <>
-        <PageHeader
-          title="Edit Contract"
-          breadcrumbs={[
-            { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-            { label: "Edit Contract" },
-          ]}
-        />
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <Card>
-            <CardContent className="p-8 space-y-4">
-              <p className="text-sm text-destructive">{loadError}</p>
-              <div className="flex items-center gap-2">
-                <Button onClick={() => window.location.reload()}>
-                  Retry
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/${projectId}/prime-contracts`)}
-                >
-                  Back to Contracts
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <ProjectPageHeader title="Edit Contract" description="Error loading contract" />
+        <PageContainer>
+          <div className="space-y-4">
+            <p className="text-sm text-destructive">{loadError}</p>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/${projectId}/prime-contracts`)}
+              >
+                Back to Contracts
+              </Button>
+            </div>
+          </div>
+        </PageContainer>
       </>
     );
   }
@@ -383,43 +363,23 @@ export default function EditContractPage() {
 
   return (
     <>
-      <PageHeader
-        title="Edit Contract"
-        breadcrumbs={[
-          { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-          {
-            label: contract.contract_number || contractId,
-            href: `/${projectId}/prime-contracts/${contractId}`,
-          },
-          { label: "Edit" },
-        ]}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        }
+      <ProjectPageHeader
+        title={`Edit: ${contract.contract_number || contract.title}`}
+        description="Update contract details and SOV line items"
       />
 
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <Card>
-          <CardContent className="p-8">
-            <ContractForm
-              initialData={initialData}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              isSubmitting={isSaving}
-              mode="edit"
-              projectId={projectId}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <PageContainer className="bg-gray-50">
+        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-white rounded-lg border border-gray-200 p-8">
+          <ContractForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+            isSubmitting={isSaving}
+            mode="edit"
+            projectId={projectId}
+          />
+        </FormContainer>
+      </PageContainer>
     </>
   );
 }
