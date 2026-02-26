@@ -7,8 +7,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { FormContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
@@ -133,12 +132,13 @@ export default function NewCommitmentPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={title}
-        breadcrumbs={[
-          { label: "Commitments", href: `/${projectId}/commitments` },
-          { label: title },
-        ]}
+        description={
+          type === "subcontract"
+            ? "Create a new subcontract commitment"
+            : "Create a new purchase order commitment"
+        }
         actions={
           <Button
             variant="ghost"
@@ -152,21 +152,23 @@ export default function NewCommitmentPage() {
         }
       />
 
-      <FormContainer maxWidth="xl">
-        {type === "purchase_order" ? (
-          <CreatePurchaseOrderForm
-            projectId={projectId}
-            onSubmit={handleSubmitPurchaseOrder}
-            onCancel={handleCancel}
-          />
-        ) : (
-          <CreateSubcontractForm
-            projectId={projectId}
-            onSubmit={handleSubmitSubcontract}
-            onCancel={handleCancel}
-          />
-        )}
-      </FormContainer>
+      <PageContainer>
+        <FormContainer maxWidth="xl">
+          {type === "purchase_order" ? (
+            <CreatePurchaseOrderForm
+              projectId={projectId}
+              onSubmit={handleSubmitPurchaseOrder}
+              onCancel={handleCancel}
+            />
+          ) : (
+            <CreateSubcontractForm
+              projectId={projectId}
+              onSubmit={handleSubmitSubcontract}
+              onCancel={handleCancel}
+            />
+          )}
+        </FormContainer>
+      </PageContainer>
     </>
   );
 }

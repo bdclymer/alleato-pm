@@ -185,7 +185,7 @@ export async function POST(
 
     // Verify commitment exists
     const { data: commitment, error: fetchError } = await supabase
-      .from("commitments")
+      .from("commitments_unified")
       .select("id, project_id")
       .eq("id", id)
       .single();

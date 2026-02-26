@@ -92,39 +92,6 @@ export async function POST(
       `[Subcontracts API] Authenticated user: ${user.email} (${user.id})`,
     );
 
-    // Look up person_id from auth user
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-
-    const { data: membership, error: accessError } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-
-    if (accessError || !membership || membership.status !== "active") {
-      console.error(
-        "[Subcontracts API] Project access check failed:",
-        accessError,
-      );
-      return NextResponse.json(
-        {
-          error:
-            "Forbidden: You do not have permission to access this project",
-          details: `User ${user.email} is not an active member of project ${projectId}`,
-        },
-        { status: 403 },
-      );
-    }
-
-    console.warn(
-      `[Subcontracts API] User membership status: ${membership.status} - authorized`,
-    );
-
     // Parse and validate request body
     const body = await request.json();
     console.warn(

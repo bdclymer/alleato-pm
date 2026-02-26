@@ -77,30 +77,6 @@ export async function POST(
       );
     }
 
-    // Look up person_id from auth user
-    const { data: authLink } = await supabase
-      .from("users_auth")
-      .select("person_id")
-      .eq("auth_user_id", user.id)
-      .single();
-
-    const { data: membership } = await supabase
-      .from("project_directory_memberships")
-      .select("role, status")
-      .eq("project_id", parseInt(projectId))
-      .eq("person_id", authLink?.person_id ?? "")
-      .single();
-
-    if (!membership || membership.status !== "active") {
-      return NextResponse.json(
-        {
-          error: "Forbidden: You do not have permission to access this project",
-          details: `User is not an active member of project ${projectId}`,
-        },
-        { status: 403 },
-      );
-    }
-
     const body = await request.json();
     const validationResult = CreatePurchaseOrderSchema.safeParse(body);
 
