@@ -53,10 +53,10 @@ BEGIN
   pipeline_url := current_setting('app.pipeline_url', true);
 
   IF pipeline_url IS NOT NULL AND pipeline_url <> '' THEN
-    PERFORM extensions.http_post(
+    PERFORM net.http_post(
       url     := pipeline_url,
-      headers := '{"Content-Type": "application/json"}'::jsonb,
-      body    := json_build_object('metadataId', NEW.id::TEXT)::text
+      body    := json_build_object('metadataId', NEW.id::TEXT)::jsonb,
+      headers := '{"Content-Type": "application/json"}'::jsonb
     );
   END IF;
 

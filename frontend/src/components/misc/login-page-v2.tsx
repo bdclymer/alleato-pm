@@ -209,7 +209,11 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                 </p>
               </motion.div>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+                data-dev-autofill-disabled="true"
+              >
                 {/* Email */}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}

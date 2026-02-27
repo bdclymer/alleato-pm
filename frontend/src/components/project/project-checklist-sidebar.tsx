@@ -29,6 +29,8 @@ interface ProjectChecklistSidebarProps {
   projectId: string
   projectName?: string
   className?: string
+  buttonVariant?: React.ComponentProps<typeof Button>["variant"]
+  buttonSize?: React.ComponentProps<typeof Button>["size"]
 }
 
 const getChecklistItems = (projectId: string): ChecklistItem[] => [
@@ -94,6 +96,8 @@ export function ProjectChecklistSidebar({
   projectId,
   projectName = "Project",
   className,
+  buttonVariant = "outline",
+  buttonSize = "default",
 }: ProjectChecklistSidebarProps) {
   const [open, setOpen] = React.useState(false)
   const { data: checklistStatus, isLoading } = useProjectChecklist(projectId)
@@ -126,8 +130,8 @@ export function ProjectChecklistSidebar({
     <Slideover open={open} onOpenChange={setOpen}>
       <SlideoverTrigger asChild>
         <Button
-          variant="outline"
-          size="default"
+          variant={buttonVariant}
+          size={buttonSize}
           className={cn("shadow-sm", className)}
         >
           <span>Setup Checklist</span>

@@ -81,9 +81,14 @@ function checkAuthCookie(
 
     let sessionJson = authCookies.map((c) => c.value).join("");
 
-    // @supabase/ssr stores cookie values as "base64-<encoded>" format
+    // @supabase/ssr v0.5+ stores cookies as "base64-<base64url_encoded>" format.
+    // Explicitly convert base64url to standard base64 before decoding to
+    // ensure compatibility across all Node.js versions.
     if (sessionJson.startsWith("base64-")) {
-      sessionJson = Buffer.from(sessionJson.slice(7), "base64").toString();
+      const b64url = sessionJson.slice(7).replace(/-/g, "+").replace(/_/g, "/");
+      const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
+      const padded = b64url + padding;
+      sessionJson = Buffer.from(padded, "base64").toString("utf-8");
     }
 
     const sessionData = JSON.parse(sessionJson);
@@ -95,8 +100,13 @@ function checkAuthCookie(
     const parts = sessionData.access_token.split(".");
     if (parts.length !== 3) return "missing";
 
+    // JWT payload is always base64url encoded per RFC 7519
+    // Add padding if needed before decoding
+    const base64Payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const payloadPadding = "=".repeat((4 - (base64Payload.length % 4)) % 4);
+    const paddedPayload = base64Payload + payloadPadding;
     const payload = JSON.parse(
-      Buffer.from(parts[1], "base64url").toString(),
+      Buffer.from(paddedPayload, "base64").toString(),
     );
 
     if (!payload?.sub) return "missing";

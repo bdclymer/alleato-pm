@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  ChevronDown,
+  ChevronRight,
   Calendar,
   FileText,
   CheckSquare,
@@ -17,21 +17,12 @@ import {
   Building2,
   ClipboardList,
   Activity,
-  AlertTriangle,
   BarChart3,
   FilePenLine,
-  ArrowUpRight,
   Briefcase,
   Target,
-  Zap,
-  Video,
   Pencil,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import { SectionCard } from "@/components/ui/section-card";
 import { MetricCard, MetricGrid } from "@/components/ui/metric-card";
@@ -118,26 +109,42 @@ interface ProjectHomeClientProps {
 
 const toolCategories = [
   {
-    title: "Core",
+    title: "Financial",
     tools: [
-      { name: "Dashboard", href: "/dashboard", icon: Building2 },
-      { name: "Directory", href: "/directory", icon: Users },
+      { name: "Prime Contracts", href: "/prime-contracts", icon: FilePenLine },
+      { name: "Budget", href: "/budget", icon: TrendingUp },
+      { name: "Commitments", href: "/commitments", icon: Briefcase },
+      { name: "Change Orders", href: "/change-orders", icon: FileText },
+      { name: "Change Events", href: "/change-events", icon: Activity },
+      { name: "Direct Costs", href: "/direct-costs", icon: DollarSign },
+      { name: "Invoices", href: "/invoices", icon: DollarSign },
     ],
   },
   {
     title: "Project Management",
     tools: [
+      { name: "Emails", href: "/emails", icon: FileText },
+      { name: "RFIs", href: "/rfis", icon: Activity },
+      { name: "Submittals", href: "/submittals", icon: FileText },
+      { name: "Transmittals", href: "/transmittals", icon: FileText },
+      { name: "Punch List", href: "/punch-list", icon: CheckSquare },
       { name: "Meetings", href: "/meetings", icon: Calendar },
       { name: "Schedule", href: "/schedule", icon: Calendar },
-      { name: "Daily Logs", href: "/daily-logs", icon: ClipboardList },
+      { name: "Daily Log", href: "/daily-log", icon: ClipboardList },
+      { name: "Photos", href: "/photos", icon: Target },
+      { name: "Drawings", href: "/drawings", icon: Pencil },
+      { name: "Specifications", href: "/specifications", icon: FileText },
     ],
   },
   {
-    title: "Financial",
+    title: "Core",
     tools: [
-      { name: "Commitments", href: "/commitments", icon: FileText },
-      { name: "Invoices", href: "/invoices", icon: DollarSign },
-      { name: "Budget", href: "/budget", icon: TrendingUp },
+      { name: "Home", href: "/home", icon: Building2 },
+      { name: "Client Dashboard", href: "/client-dashboard", icon: BarChart3 },
+      { name: "360 Reporting", href: "/reporting", icon: BarChart3 },
+      { name: "Documents", href: "/documents", icon: FileText },
+      { name: "Directory", href: "/directory", icon: Users },
+      { name: "Tasks", href: "/tasks", icon: CheckSquare },
     ],
   },
 ];
@@ -173,8 +180,8 @@ export function ProjectHomeClient({
   project,
   tasks,
   meetings,
-  changeOrders,
-  rfis,
+  changeOrders: _changeOrders,
+  rfis: _rfis,
   dailyLogs: _dailyLogs,
   commitments,
   contracts,
@@ -278,22 +285,6 @@ export function ProjectHomeClient({
   const commitmentPercentage =
     totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
 
-  // Activity insights
-  const activeTasks = tasks.filter((t) => t.status !== "completed").length;
-  const overdueTasks = tasks.filter(
-    (t) =>
-      t.status !== "completed" &&
-      t.due_date &&
-      new Date(t.due_date) < new Date(),
-  ).length;
-  const activeRFIs = rfis.filter((r) => r.status !== "closed").length;
-  const pendingChangeOrders = changeOrders.filter(
-    (co) => co.status === "pending",
-  ).length;
-  const approvedChangeOrders = changeOrders.filter(
-    (co) => co.status === "approved",
-  ).length;
-
   /* ---------------------------------------------------------------------------
      Render
      ------------------------------------------------------------------------- */
@@ -304,8 +295,23 @@ export function ProjectHomeClient({
         {/* =====================================================================
             Page Header
             ===================================================================== */}
-        <div className="py-6 sm:py-8">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div className="py-4 sm:py-5">
+          <nav className="mb-2 flex items-center gap-1 text-sm font-medium text-neutral-500">
+            <Link href="/" className="hover:text-neutral-700 transition-colors">
+              Projects
+            </Link>
+            <ChevronRight className="h-4 w-4 text-neutral-400" />
+            <Link
+              href={`/${project.id}/home`}
+              className="truncate hover:text-neutral-700 transition-colors"
+            >
+              {project.name || project["job number"] || "Project"}
+            </Link>
+            <ChevronRight className="h-4 w-4 text-neutral-400" />
+            <span className="text-neutral-700">Home</span>
+          </nav>
+
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             {/* Project Identity */}
             <div className="flex-1">
               {project["job number"] && (
@@ -316,38 +322,6 @@ export function ProjectHomeClient({
               <h1 className="text-3xl font-semibold text-neutral-800">
                 {project.name || project["job number"] || "Untitled Project"}
               </h1>
-
-              {/* Quick Navigation Links */}
-              <div className="flex items-center gap-6 mt-12">
-                <Link
-                  href={`/${project.id}/budget`}
-                  className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-orange-600 transition-colors"
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  Budget
-                </Link>
-                <Link
-                  href={`/${project.id}/prime-contracts`}
-                  className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-orange-600 transition-colors"
-                >
-                  <FilePenLine className="h-4 w-4" />
-                  Prime Contracts
-                </Link>
-                <Link
-                  href={`/${project.id}/commitments`}
-                  className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-orange-600 transition-colors"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Commitments
-                </Link>
-                <Link
-                  href={`/${project.id}/schedule`}
-                  className="flex items-center gap-2 text-sm font-medium text-neutral-700 hover:text-orange-600 transition-colors"
-                >
-                  <Calendar className="h-4 w-4" />
-                  Schedule
-                </Link>
-              </div>
             </div>
 
             {/* Actions */}
@@ -364,55 +338,19 @@ export function ProjectHomeClient({
               <ProjectChecklistSidebar
                 projectId={String(project.id)}
                 projectName={project.name || project["job number"] || "Project"}
+                buttonVariant="default"
               />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="lg" className="gap-2">
-                    <Zap className="h-4 w-4" />
-                    Quick Actions
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-[calc(100vw-2rem)] sm:w-[720px] lg:w-[800px] p-0 rounded-lg shadow-xl border-neutral-200"
-                >
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-                      {toolCategories.map((category) => (
-                        <div key={category.title}>
-                          <h4 className="text-xs font-semibold tracking-wide uppercase text-neutral-400 mb-4">
-                            {category.title}
-                          </h4>
-                          <div className="space-y-1">
-                            {category.tools.map((tool) => (
-                              <Link
-                                key={tool.name}
-                                href={`/${project.id}${tool.href}`}
-                                className="flex items-center gap-3 px-3 py-2.5 -mx-3 rounded-lg text-sm text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 transition-colors group"
-                              >
-                                <tool.icon className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                                <span className="font-medium">{tool.name}</span>
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-8">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             {/* Financial Overview */}
             <div>
-              <h3 className="text-lg font-semibold mb-6">Financial Overview</h3>
+              <h3 className="text-lg font-semibold mb-4">Financial Overview</h3>
 
               <MetricGrid cols={3} gap="lg">
                 <MetricCard
@@ -496,87 +434,42 @@ export function ProjectHomeClient({
           </div>
 
           {/* Right Column */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold mb-6">Quick Links</h3>
-              {/* Activity Summary */}
+              <h3 className="text-lg font-semibold mb-2">Quick Links</h3>
               <SectionCard
-                title="Activity"
+                title="Project Tools"
                 open={true}
-                viewAllHref={`/${project.id}/documents`}
               >
-                <div className="space-y-0">
-                  {/* RFIs */}
-                  <Link
-                    href={`/${project.id}/rfis`}
-                    className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Activity className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                      <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                        RFIs
-                      </span>
+                <div className="space-y-4">
+                  {toolCategories.map((category) => (
+                    <div key={category.title}>
+                      <h4 className="mb-2 text-xs font-semibold tracking-wide uppercase text-neutral-400">
+                        {category.title}
+                      </h4>
+                      <div className="space-y-0.5">
+                        {category.tools.map((tool) => (
+                          <Link
+                            key={tool.name}
+                            href={`/${project.id}${tool.href}`}
+                            className="flex items-center gap-2.5 px-2.5 py-1.5 -mx-2.5 rounded-md hover:bg-neutral-50 transition-colors group"
+                          >
+                            <tool.icon className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
+                            <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
+                              {tool.name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                    {activeRFIs > 0 && (
-                      <span className="px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
-                        {activeRFIs}
-                      </span>
-                    )}
-                  </Link>
-                  {/* Meetings */}
-                  <Link
-                    href={`/${project.id}/meetings`}
-                    className="flex items-center justify-between py-2 px-3 -mx-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                      <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                        Meetings
-                      </span>
-                    </div>
-                    {meetings.length > 0 && (
-                      <span className="text-xs text-neutral-500 font-medium">
-                        {meetings.length}
-                      </span>
-                    )}
-                  </Link>
-
-                  <Link
-                    href={`/${project.id}/specifications`}
-                    className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
-                  >
-                    <FileText className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                      Specifications
-                    </span>
-                  </Link>
-
-                  <Link
-                    href={`/${project.id}/drawings`}
-                    className="flex items-center gap-3 py-2 border-b border-neutral-100/60 hover:bg-neutral-50 transition-colors group"
-                  >
-                    <BarChart3 className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                      Drawings
-                    </span>
-                  </Link>
-
-                  <Link
-                    href={`/${project.id}/photos`}
-                    className="flex items-center gap-3 py-2 hover:bg-neutral-50 transition-colors group"
-                  >
-                    <Target className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                    <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                      Photos
-                    </span>
-                  </Link>
+                  ))}
                 </div>
               </SectionCard>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold mb-6">Directory</h3>
-              <div className="space-y-6">
+              <h3 className="text-lg font-semibold mb-4">Directory</h3>
+              <div className="space-y-4">
                 <SectionCard
                   title="Project Team"
                   open={isTeamOpen}

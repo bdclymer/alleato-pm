@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Menu } from "lucide-react";
@@ -23,6 +23,7 @@ import { HeaderMobileMenu } from "./header-mobile-menu";
 
 export function SiteHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const nav = useHeaderNav();
   const { toggleSidebar } = useSidebar();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
@@ -51,6 +52,9 @@ export function SiteHeader() {
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  const isProjectHome =
+    Boolean(nav.projectId) && pathname === `/${nav.projectId}/home`;
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden bg-[#252525] text-zinc-100">
@@ -90,31 +94,35 @@ export function SiteHeader() {
           onViewAll={() => router.push("/")}
         />
 
-        <Separator
-          orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4 hidden md:block bg-zinc-700"
-        />
+        {!isProjectHome && (
+          <>
+            <Separator
+              orientation="vertical"
+              className="mx-2 data-[orientation=vertical]:h-4 hidden md:block bg-zinc-700"
+            />
 
-        {/* Breadcrumbs - Desktop only */}
-        <div className="hidden lg:flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
-          {nav.breadcrumbs.map((crumb, index) => (
-            <span key={`${crumb.href}-${index}`} className="flex items-center gap-1">
-              {index > 0 && (
-                <ChevronRight className="h-4 w-4 text-zinc-500 flex-shrink-0" />
-              )}
-              {index === nav.breadcrumbs.length - 1 ? (
-                <span className="text-white truncate">{crumb.label}</span>
-              ) : (
-                <Link
-                  href={crumb.href}
-                  className="text-zinc-400 hover:text-white transition-colors truncate"
-                >
-                  {crumb.label}
-                </Link>
-              )}
-            </span>
-          ))}
-        </div>
+            {/* Breadcrumbs - Desktop only */}
+            <div className="hidden lg:flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
+              {nav.breadcrumbs.map((crumb, index) => (
+                <span key={`${crumb.href}-${index}`} className="flex items-center gap-1">
+                  {index > 0 && (
+                    <ChevronRight className="h-4 w-4 text-zinc-500 flex-shrink-0" />
+                  )}
+                  {index === nav.breadcrumbs.length - 1 ? (
+                    <span className="text-white truncate">{crumb.label}</span>
+                  ) : (
+                    <Link
+                      href={crumb.href}
+                      className="text-zinc-400 hover:text-white transition-colors truncate"
+                    >
+                      {crumb.label}
+                    </Link>
+                  )}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Active Tool Name (mobile) */}
         <div className="md:hidden flex-1 min-w-0">

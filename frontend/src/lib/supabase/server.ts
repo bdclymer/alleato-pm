@@ -81,9 +81,13 @@ async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null
       return null;
     }
 
-    // @supabase/ssr stores cookie values as "base64-<encoded>" format
+    // @supabase/ssr v0.5+ stores cookies as "base64-<base64url_encoded>" format.
+    // Convert base64url to standard base64 for reliable cross-version decoding.
     if (sessionJson.startsWith("base64-")) {
-      sessionJson = Buffer.from(sessionJson.slice(7), "base64").toString();
+      const b64url = sessionJson.slice(7).replace(/-/g, "+").replace(/_/g, "/");
+      const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
+      const padded = b64url + padding;
+      sessionJson = Buffer.from(padded, "base64").toString("utf-8");
     }
 
     const sessionData = JSON.parse(sessionJson);

@@ -12,7 +12,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
@@ -32,7 +31,6 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,29 +61,25 @@ export function LoginForm({
       setSuccessMessage("Login successful! Redirecting you now...");
       toast.success("Logged in successfully");
 
-      // If an explicit redirect was provided, use it; otherwise smart-route
+      // Determine the redirect path then do a full-page navigation.
+      // window.location.href instead of router.push() avoids a race condition
+      // with router.refresh() in Next.js 15 and guarantees the middleware reads
+      // the freshly-set session cookie on the next request.
+      let destination = "/";
+
       if (redirectTo !== "/") {
-        const safeRedirect = validateCallbackUrl(redirectTo);
-        setTimeout(() => {
-          router.push(safeRedirect);
-          router.refresh();
-        }, 100);
+        destination = validateCallbackUrl(redirectTo);
       } else {
-        // Fetch smart redirect based on user's memberships
         try {
           const res = await fetch("/api/auth/post-login-redirect");
           const { redirect } = await res.json();
-          setTimeout(() => {
-            router.push(redirect || "/");
-            router.refresh();
-          }, 100);
+          destination = redirect || "/";
         } catch {
-          setTimeout(() => {
-            router.push("/");
-            router.refresh();
-          }, 100);
+          destination = "/";
         }
       }
+
+      window.location.href = destination;
     } catch (err: unknown) {
       const fallbackMessage =
         "An error occurred during login. Please try again.";
@@ -106,7 +100,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} data-dev-autofill-disabled="true">
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
