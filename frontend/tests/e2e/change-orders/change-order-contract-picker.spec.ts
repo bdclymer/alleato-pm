@@ -21,7 +21,9 @@ test.describe("Change Order Contract Picker", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // Wait for the page to load
-    await expect(page.getByText("New Change Order")).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole("heading", { name: "New Change Order", exact: true })
+    ).toBeVisible({ timeout: 10000 });
 
     // Open the contract selector
     const contractSelector = page.locator('[data-testid="change-order-contract"]');

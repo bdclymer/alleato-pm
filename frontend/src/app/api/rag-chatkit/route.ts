@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 // This route proxies requests to the Python backend RAG ChatKit endpoint
 // NOTE: This is NOT a ChatKit-compatible API - it's a generic proxy to /rag-chatkit
@@ -10,13 +10,23 @@ const PYTHON_BACKEND_URL =
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    let body: Record<string, unknown> = {};
+    try {
+      body = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        {
+          error: "Invalid Request",
+          message: "Request body must be valid JSON.",
+        },
+        { status: 400 },
+      );
+    }
 
     // Forward to Python backend
     const response = await fetch(`${PYTHON_BACKEND_URL}/rag-chatkit`, {
@@ -126,9 +136,8 @@ export async function POST(request: NextRequest) {
 
 // Also handle GET for bootstrap and state endpoints
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const user = await getApiRouteUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

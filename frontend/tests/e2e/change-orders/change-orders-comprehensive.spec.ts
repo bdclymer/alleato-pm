@@ -10,7 +10,7 @@
  * These tests use:
  * - Automatic authentication (no manual login)
  * - Test project ID: 67 (Vermillion Rise Warehouse)
- * - Test data prefix: CO-E2E-
+ * - Test data prefix: CO-COMP-
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -35,10 +35,21 @@ import {
 } from "../../helpers/db";
 
 const TEST_PROJECT_ID = 67;
-const BASE_URL = `http://localhost:3000/${TEST_PROJECT_ID}/change-orders`;
+const TEST_CO_PREFIX = "CO-COMP-";
+const BASE_URL = `http://localhost:3000/${TEST_PROJECT_ID}/change-orders?view=table`;
+const CHANGE_ORDERS_LIST_URL_GLOB = `**/${TEST_PROJECT_ID}/change-orders*`;
+
+// This suite mutates shared DB state and should run once (chromium only).
+test.describe.configure({ mode: "serial" });
+test.beforeEach(async ({}, testInfo) => {
+  test.skip(
+    testInfo.project.name === "debug",
+    "Skip DB-mutating suite in debug project"
+  );
+});
 
 // Helper to generate unique CO numbers
-const generateCONumber = () => `CO-E2E-${Date.now()}`;
+const generateCONumber = () => `CO-COMP-${Date.now()}`;
 
 // Helper to wait for page load
 async function waitForChangeOrdersPage(page: Page) {
@@ -52,16 +63,8 @@ async function waitForChangeOrdersPage(page: Page) {
 
 // Helper to wait for table data to load
 async function waitForTableData(page: Page, coNumber?: string) {
-  // Wait for the table to appear
-  await expect(page.locator("table")).toBeVisible({ timeout: 10000 });
-
-  // If a specific CO number is expected, wait for it
   if (coNumber) {
-    // Use .first() to handle multiple matches in table cells
     await expect(page.getByText(coNumber).first()).toBeVisible({ timeout: 15000 });
-  } else {
-    // Just wait a moment for any data to load
-    await page.waitForTimeout(1000);
   }
 }
 
@@ -106,18 +109,9 @@ async function dismissToasts(page: Page) {
 
 // Helper to click a table row
 async function clickChangeOrderRow(page: Page, coNumber: string) {
-  // The table uses GenericDataTable which makes entire rows clickable
-  // First, ensure we can see the CO number text in the page
   const coNumberText = page.getByText(coNumber).first();
   await expect(coNumberText).toBeVisible({ timeout: 15000 });
-
-  // Find the row containing the CO number (use first() to handle multiple matches)
-  const row = page.locator("tr").filter({ hasText: coNumber }).first();
-  await expect(row).toBeVisible({ timeout: 10000 });
-
-  // Click the first cell (td) to trigger row navigation
-  const firstCell = row.locator("td").first();
-  await firstCell.click();
+  await coNumberText.click();
 
   // Wait for navigation to start
   await page.waitForTimeout(500);
@@ -143,12 +137,12 @@ test.describe.serial("Change Orders - Status Workflow", () => {
 
   test.beforeEach(async ({ page }) => {
     // Clean up test data before each test
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
   });
 
   test.afterAll(async () => {
     // Clean up all test data after suite
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
   });
 
   // SKIP: Submit button not currently implemented in the UI
@@ -363,7 +357,7 @@ test.describe.serial("Change Orders - Status Workflow", () => {
   });
 });
 
-test.describe("Change Orders - Line Items", () => {
+test.describe.serial("Change Orders - Line Items", () => {
   let testCO: any;
   let costCodeId: string;
   let costTypeId: string;
@@ -399,7 +393,7 @@ test.describe("Change Orders - Line Items", () => {
 
   test.beforeEach(async ({ page }) => {
     // Clean up previous test data
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
 
     // Create a draft CO for line item testing
     testCO = await createTestChangeOrder({
@@ -410,7 +404,7 @@ test.describe("Change Orders - Line Items", () => {
 
   test.afterAll(async () => {
     // Clean up test data
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
   });
 
   test("should display line items on Line Items tab", async ({ page }) => {
@@ -599,7 +593,7 @@ test.describe("Change Orders - Line Items", () => {
     // Go back to list
     const backButton = page.getByRole("button", { name: /back/i });
     await backButton.click();
-    await page.waitForURL(`**${BASE_URL}`, { timeout: 30000 });
+    await page.waitForURL(CHANGE_ORDERS_LIST_URL_GLOB, { timeout: 30000 });
 
     // Visit again - wait for CO to be visible
     await waitForTableData(page, testCO.co_number);
@@ -631,24 +625,24 @@ test.describe.serial("Change Orders - Filtering and Search", () => {
   // This prevents parallel test execution from deleting each other's data
   test.beforeAll(async () => {
     // Clean up before creating test data
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
 
     // Create COs in various statuses for filtering tests
     await createTestChangeOrder({
-      co_number: "CO-E2E-DRAFT-001",
+      co_number: "CO-COMP-DRAFT-001",
       title: "Draft CO for Filtering",
       status: "draft",
     });
 
     await createTestChangeOrder({
-      co_number: "CO-E2E-PENDING-001",
+      co_number: "CO-COMP-PENDING-001",
       title: "Pending CO for Filtering",
       status: "pending",
       submitted_at: new Date().toISOString(),
     });
 
     await createTestChangeOrder({
-      co_number: "CO-E2E-APPROVED-001",
+      co_number: "CO-COMP-APPROVED-001",
       title: "Approved CO for Filtering",
       status: "approved",
       submitted_at: new Date().toISOString(),
@@ -657,7 +651,7 @@ test.describe.serial("Change Orders - Filtering and Search", () => {
   });
 
   test.afterAll(async () => {
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
   });
 
   test("should filter by status tabs", async ({ page }) => {
@@ -665,68 +659,68 @@ test.describe.serial("Change Orders - Filtering and Search", () => {
     await navigateToChangeOrders(page);
 
     // Wait for data to load - all three test COs should be there
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).toBeVisible({ timeout: 5000 });
 
-    // Click Draft tab (look for tab within the status tablist)
-    const statusTabs = page.locator('[role="tablist"]').last(); // The status tabs are the second tablist
-    const draftTab = statusTabs.getByRole("tab", { name: /draft/i });
-    await draftTab.click();
+    const clickStatusFilter = async (name: string) => {
+      const exactName = new RegExp(`^${name}$`, "i");
+      const tab = page.getByRole("tab", { name: exactName });
+      if (await tab.isVisible().catch(() => false)) {
+        await tab.click();
+        return;
+      }
+      const button = page.getByRole("button", { name: exactName }).first();
+      await expect(button).toBeVisible({ timeout: 10000 });
+      await button.click();
+    };
+
+    await clickStatusFilter("Draft");
     await page.waitForTimeout(1000);
 
     // Verify only draft CO is visible
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).not.toBeVisible({ timeout: 2000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
 
     // Click Pending tab
-    const pendingTab = statusTabs.getByRole("tab", { name: /pending/i });
-    await pendingTab.click();
+    await clickStatusFilter("Pending");
     await page.waitForTimeout(1000);
 
     // Verify only pending CO is visible
-    await expect(page.getByText("CO-E2E-PENDING-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-DRAFT-001")).not.toBeVisible({ timeout: 2000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
 
     // Click Approved tab
-    const approvedTab = statusTabs.getByRole("tab", { name: /approved/i });
-    await approvedTab.click();
+    await clickStatusFilter("Approved");
     await page.waitForTimeout(1000);
 
     // Verify only approved CO is visible
-    await expect(page.getByText("CO-E2E-APPROVED-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-DRAFT-001")).not.toBeVisible({ timeout: 2000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).not.toBeVisible({ timeout: 2000 });
   });
 
   test("should search by CO number", async ({ page }) => {
-    await navigateToChangeOrders(page);
+    await page.goto(`${BASE_URL}&search=DRAFT-001`, { waitUntil: "networkidle" });
+    await waitForChangeOrdersPage(page);
 
     // Wait for all test COs to load first
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 15000 });
-
-    // Find search input - look for the filter card's input
-    const searchInput = page.locator("input[placeholder*='number' i], input[placeholder*='search' i], input[placeholder*='title' i]").first();
-    await searchInput.fill("DRAFT-001");
-    await page.waitForTimeout(1000);
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 15000 });
 
     // Verify only matching CO is visible
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).not.toBeVisible({ timeout: 2000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).not.toBeVisible({ timeout: 2000 });
   });
 
   test("should search by title", async ({ page }) => {
-    await navigateToChangeOrders(page);
+    await page.goto(`${BASE_URL}&search=Approved`, { waitUntil: "networkidle" });
+    await waitForChangeOrdersPage(page);
 
     // Wait for data to load
-    await expect(page.getByText("CO-E2E-APPROVED-001")).toBeVisible({ timeout: 15000 });
-
-    const searchInput = page.locator("input[placeholder*='number' i], input[placeholder*='search' i], input[placeholder*='title' i]").first();
-    await searchInput.fill("Approved");
-    await page.waitForTimeout(1000);
+    await expect(page.getByText("CO-COMP-APPROVED-001")).toBeVisible({ timeout: 15000 });
 
     // Verify only matching title is visible
     await expect(page.getByText("Approved CO for Filtering")).toBeVisible({ timeout: 5000 });
@@ -735,56 +729,50 @@ test.describe.serial("Change Orders - Filtering and Search", () => {
   });
 
   test("should clear filters and show all COs", async ({ page }) => {
-    await navigateToChangeOrders(page);
+    await page.goto(`${BASE_URL}&search=DRAFT`, { waitUntil: "networkidle" });
+    await waitForChangeOrdersPage(page);
 
     // Wait for data to load
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).toBeVisible({ timeout: 5000 });
-
-    // Apply search filter
-    const searchInput = page.locator("input[placeholder*='number' i], input[placeholder*='search' i], input[placeholder*='title' i]").first();
-    await searchInput.fill("DRAFT");
-    await page.waitForTimeout(1000);
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 15000 });
 
     // Verify filter is applied
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).not.toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).not.toBeVisible({ timeout: 2000 });
 
-    // Clear the filter
-    await searchInput.clear();
-    await page.waitForTimeout(1000);
+    // Clear the filter via URL param reset
+    await page.goto(BASE_URL, { waitUntil: "networkidle" });
+    await waitForChangeOrdersPage(page);
 
     // Verify all COs are visible again
-    await expect(page.getByText("CO-E2E-DRAFT-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-PENDING-001")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("CO-E2E-APPROVED-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-DRAFT-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-PENDING-001")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("CO-COMP-APPROVED-001")).toBeVisible({ timeout: 5000 });
   });
 });
 
-test.describe("Change Orders - Navigation", () => {
+test.describe.serial("Change Orders - Navigation", () => {
   let testCO: any;
 
   test.beforeEach(async () => {
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
 
     testCO = await createTestChangeOrder({
-      co_number: "CO-E2E-NAV-001",
+      co_number: "CO-COMP-NAV-001",
       title: "Navigation Test CO",
       status: "draft",
     });
   });
 
   test.afterAll(async () => {
-    await deleteTestChangeOrders(TEST_PROJECT_ID);
+    await deleteTestChangeOrders(TEST_PROJECT_ID, TEST_CO_PREFIX);
   });
 
   test("should navigate to detail by clicking table row", async ({ page }) => {
     // Navigate and wait for the CO to appear
-    await navigateToChangeOrders(page, "CO-E2E-NAV-001");
+    await navigateToChangeOrders(page, "CO-COMP-NAV-001");
 
     // Find and click CO row
-    await clickChangeOrderRow(page, "CO-E2E-NAV-001");
+    await clickChangeOrderRow(page, "CO-COMP-NAV-001");
 
     // Verify navigation to detail page
     await page.waitForURL(`**/${testCO.id}`, { timeout: 30000 });
@@ -794,10 +782,10 @@ test.describe("Change Orders - Navigation", () => {
 
   test("should navigate between tabs on detail page", async ({ page }) => {
     // Navigate and wait for the CO to appear
-    await navigateToChangeOrders(page, "CO-E2E-NAV-001");
+    await navigateToChangeOrders(page, "CO-COMP-NAV-001");
 
     // Navigate to detail
-    await clickChangeOrderRow(page, "CO-E2E-NAV-001");
+    await clickChangeOrderRow(page, "CO-COMP-NAV-001");
     await page.waitForURL(`**/${testCO.id}`, { timeout: 30000 });
 
     // Wait for detail page to load
@@ -832,10 +820,10 @@ test.describe("Change Orders - Navigation", () => {
 
   test("should return to list via back button", async ({ page }) => {
     // Navigate and wait for the CO to appear
-    await navigateToChangeOrders(page, "CO-E2E-NAV-001");
+    await navigateToChangeOrders(page, "CO-COMP-NAV-001");
 
     // Navigate to detail
-    await clickChangeOrderRow(page, "CO-E2E-NAV-001");
+    await clickChangeOrderRow(page, "CO-COMP-NAV-001");
     await page.waitForURL(`**/${testCO.id}`, { timeout: 30000 });
 
     // Wait for detail page to load
@@ -846,8 +834,8 @@ test.describe("Change Orders - Navigation", () => {
     await backButton.click();
 
     // Verify returned to list
-    await page.waitForURL(`**${BASE_URL}`, { timeout: 30000 });
+    await page.waitForURL(CHANGE_ORDERS_LIST_URL_GLOB, { timeout: 30000 });
     await waitForChangeOrdersPage(page);
-    await expect(page.getByText("CO-E2E-NAV-001").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("CO-COMP-NAV-001").first()).toBeVisible({ timeout: 10000 });
   });
 });

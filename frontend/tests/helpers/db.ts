@@ -61,9 +61,11 @@ export async function addProjectMember(
     .from("users_auth")
     .select("person_id")
     .eq("auth_user_id", userId)
-    .single();
+    .limit(1);
 
-  if (lookupError || !userAuth) {
+  const personId = userAuth?.[0]?.person_id;
+
+  if (lookupError || !personId) {
     throw new Error(
       `Failed to find person for auth user ${userId}: ${lookupError?.message ?? "not found"}`,
     );
@@ -73,7 +75,7 @@ export async function addProjectMember(
     .from("project_directory_memberships")
     .insert({
       project_id: projectId,
-      person_id: userAuth.person_id,
+      person_id: personId,
       role,
       user_type: "employee",
     });
@@ -152,7 +154,7 @@ export function getAdminClient(): SupabaseClient {
   return adminClient;
 }
 
-export async function fetchChangeEventById(changeEventId: number) {
+export async function fetchChangeEventById(changeEventId: string) {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('change_events')
@@ -350,7 +352,7 @@ export async function listMeetingsForProject(projectId: number) {
   return data ?? [];
 }
 
-export async function fetchLineItems(changeEventId: number) {
+export async function fetchLineItems(changeEventId: string) {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('change_event_line_items')

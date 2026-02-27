@@ -1,0 +1,173 @@
+# generated: 2026-02-26
+# project: alleato-procore
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to in-progress automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is done to incorporate learnings
+# - Dev moves story to review, then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-26
+project: alleato-procore
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: backlog
+  1-1-crawl-baseline-budget: done
+  1-2-feature-parity-budget: backlog
+  1-3-playwright-e2e-budget: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-crawl-baseline-budget-forecasting: done
+  2-2-feature-parity-budget-forecasting: backlog
+  2-3-playwright-e2e-budget-forecasting: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-crawl-baseline-change-events: done
+  3-2-feature-parity-change-events: backlog
+  3-3-playwright-e2e-change-events: backlog
+  epic-3-retrospective: optional
+
+  epic-4: in-progress
+  4-1-crawl-baseline-change-orders: done
+  4-2-feature-parity-change-orders: in-progress
+  4-3-playwright-e2e-change-orders: ready-for-dev
+  epic-4-retrospective: optional
+
+  epic-5: in-progress
+  5-1-crawl-baseline-commitments: done
+  5-2-feature-parity-commitments: in-progress
+  5-3-playwright-e2e-commitments: ready-for-dev
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-crawl-baseline-daily-logs: done
+  6-2-feature-parity-daily-logs: backlog
+  6-3-playwright-e2e-daily-logs: backlog
+  epic-6-retrospective: optional
+
+  epic-7: in-progress
+  7-1-crawl-baseline-direct-costs: done
+  7-2-feature-parity-direct-costs: in-progress
+  7-3-playwright-e2e-direct-costs: done
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-crawl-baseline-directory: done
+  8-2-feature-parity-directory: backlog
+  8-3-playwright-e2e-directory: backlog
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-crawl-baseline-drawings: done
+  9-2-feature-parity-drawings: backlog
+  9-3-playwright-e2e-drawings: backlog
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-crawl-baseline-emails: done
+  10-2-feature-parity-emails: backlog
+  10-3-playwright-e2e-emails: backlog
+  epic-10-retrospective: optional
+
+  epic-11: backlog
+  11-1-crawl-baseline-financial-pages-fix-context: done
+  11-2-feature-parity-financial-pages-fix-context: backlog
+  11-3-playwright-e2e-financial-pages-fix-context: backlog
+  epic-11-retrospective: optional
+
+  epic-12: in-progress
+  12-1-crawl-baseline-invoicing: done
+  12-2-feature-parity-invoicing: in-progress
+  12-3-playwright-e2e-invoicing: ready-for-dev
+  epic-12-retrospective: optional
+
+  epic-13: backlog
+  13-1-crawl-baseline-meetings: done
+  13-2-feature-parity-meetings: backlog
+  13-3-playwright-e2e-meetings: backlog
+  epic-13-retrospective: optional
+
+  epic-14: backlog
+  14-1-crawl-baseline-photos: done
+  14-2-feature-parity-photos: backlog
+  14-3-playwright-e2e-photos: backlog
+  epic-14-retrospective: optional
+
+  epic-15: in-progress
+  15-1-crawl-baseline-prime-contracts: done
+  15-2-feature-parity-prime-contracts: in-progress
+  15-3-playwright-e2e-prime-contracts: review
+  epic-15-retrospective: optional
+
+  epic-16: backlog
+  16-1-crawl-baseline-punch-list: done
+  16-2-feature-parity-punch-list: backlog
+  16-3-playwright-e2e-punch-list: backlog
+  epic-16-retrospective: optional
+
+  epic-17: backlog
+  17-1-crawl-baseline-rfis: done
+  17-2-feature-parity-rfis: backlog
+  17-3-playwright-e2e-rfis: backlog
+  epic-17-retrospective: optional
+
+  epic-18: backlog
+  18-1-crawl-baseline-scheduling: done
+  18-2-feature-parity-scheduling: backlog
+  18-3-playwright-e2e-scheduling: backlog
+  epic-18-retrospective: optional
+
+  epic-19: backlog
+  19-1-crawl-baseline-specifications: done
+  19-2-feature-parity-specifications: backlog
+  19-3-playwright-e2e-specifications: backlog
+  epic-19-retrospective: optional
+
+  epic-20: backlog
+  20-1-crawl-baseline-submittals: done
+  20-2-feature-parity-submittals: backlog
+  20-3-playwright-e2e-submittals: backlog
+  epic-20-retrospective: optional
+
+  epic-21: backlog
+  21-1-crawl-baseline-submittals-archived: done
+  21-2-feature-parity-submittals-archived: backlog
+  21-3-playwright-e2e-submittals-archived: backlog
+  epic-21-retrospective: optional
+
+  epic-22: backlog
+  22-1-crawl-baseline-transmittals: done
+  22-2-feature-parity-transmittals: backlog
+  22-3-playwright-e2e-transmittals: backlog
+  epic-22-retrospective: optional

@@ -6,6 +6,21 @@ import { test, expect } from "@playwright/test";
 
 const TEST_PROJECT_ID = "1"; // Update based on your test data
 
+async function selectFirstReviewerOption(page: import("@playwright/test").Page) {
+  const userOptions = page.locator('[role="option"]').filter({
+    hasNotText: "No reviewer selected",
+  });
+  const userCount = await userOptions.count();
+  if (userCount === 0) {
+    return false;
+  }
+  // Use keyboard navigation to avoid dropdown viewport clipping issues.
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  return true;
+}
+
 test.describe("Change Order Reviewer Picker", () => {
   // Use authenticated state
   test.use({ storageState: "tests/.auth/user.json" });
@@ -73,15 +88,8 @@ test.describe("Change Order Reviewer Picker", () => {
     await page.waitForTimeout(1000);
 
     // Find all user options (excluding the "No reviewer selected" option)
-    const userOptions = page.locator('[role="option"]').filter({
-      hasNotText: "No reviewer selected",
-    });
-
-    const userCount = await userOptions.count();
-
-    if (userCount > 0) {
-      // Click the first user option
-      await userOptions.first().click();
+    const selected = await selectFirstReviewerOption(page);
+    if (selected) {
 
       // Wait for selection to complete
       await page.waitForTimeout(500);
@@ -109,15 +117,8 @@ test.describe("Change Order Reviewer Picker", () => {
     await page.waitForTimeout(1000);
 
     // Find user options
-    const userOptions = page.locator('[role="option"]').filter({
-      hasNotText: "No reviewer selected",
-    });
-
-    const userCount = await userOptions.count();
-
-    if (userCount > 0) {
-      // Select a user first
-      await userOptions.first().click();
+    const selected = await selectFirstReviewerOption(page);
+    if (selected) {
       await page.waitForTimeout(500);
 
       // Open the dropdown again
@@ -125,16 +126,15 @@ test.describe("Change Order Reviewer Picker", () => {
       await page.waitForTimeout(500);
 
       // Click the "No reviewer selected" option to clear
-      await page
-        .locator('[role="option"]:has-text("No reviewer selected")')
-        .click();
+      await page.keyboard.press("Home");
+      await page.keyboard.press("Enter");
 
       // Wait for selection to clear
       await page.waitForTimeout(500);
 
-      // Verify that the trigger shows the placeholder again
+      // Verify that the trigger shows the cleared state again
       const triggerText = await reviewerSelect.textContent();
-      expect(triggerText).toContain("Select a reviewer");
+      expect(triggerText).toContain("No reviewer selected");
     } else {
       // Skip test if no users are available
       test.skip();
@@ -209,14 +209,8 @@ test.describe("Change Order Reviewer Picker", () => {
     await reviewerSelect.click();
     await page.waitForTimeout(1000);
 
-    const userOptions = page.locator('[role="option"]').filter({
-      hasNotText: "No reviewer selected",
-    });
-
-    const userCount = await userOptions.count();
-
-    if (userCount > 0) {
-      await userOptions.first().click();
+    const selected = await selectFirstReviewerOption(page);
+    if (selected) {
       await page.waitForTimeout(500);
 
       // Submit the form

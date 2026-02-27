@@ -73,6 +73,7 @@ export default function AIChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
   const [showSources, setShowSources] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
 
   const handleSubmit = async (message: { content?: string; text?: string }) => {
     const content = message.content || message.text || "";
@@ -87,16 +88,51 @@ export default function AIChat() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/rag-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: content.trim(),
+          thread_id: threadId,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({} as Record<string, unknown>));
+
+      if (!response.ok) {
+        const errorMessage =
+          typeof data.message === "string"
+            ? data.message
+            : `Request failed with status ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      if (typeof data.thread_id === "string" && data.thread_id.length > 0) {
+        setThreadId(data.thread_id);
+      }
+
       const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `I understand you're asking about "${content.trim()}". Based on current industry standards and best practices, here's what I recommend:\n\n**Key Points:**\n- Ensure all safety protocols are in place\n- Review project timeline and milestones\n- Coordinate with relevant stakeholders\n\nWould you like me to provide more specific details on any of these areas?`,
+        content:
+          typeof data.response === "string" && data.response.trim().length > 0
+            ? data.response
+            : "I received your message but couldn't generate a response.",
       };
+
       setMessages((prev) => [...prev, aiResponse]);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unexpected error";
+      const fallbackResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `Request failed: ${errorMessage}`,
+      };
+      setMessages((prev) => [...prev, fallbackResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (

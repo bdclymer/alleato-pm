@@ -54,8 +54,16 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
       },
-      testMatch: /comprehensive-page-check\.spec\.ts|check-styling\.spec\.ts|project-tools-dropdown\.spec\.ts|meetings2-page\.spec\.ts|employees-page\.spec\.ts|project-home-collapsible\.spec\.ts|project-setup-wizard\.spec\.ts|project-setup-wizard-comprehensive\.spec\.ts|wizard-manual-test\.spec\.ts|chat-rag-e2e\.spec\.ts|project-scoped-routing\.spec\.ts|budget-modals\.spec\.ts|page-title-verification\.spec\.ts|form-testing-simple\.spec\.ts|project-home-navigation\.spec\.ts|ai-chat-widget\.spec\.ts|chat-widget-debug\.spec\.ts|project-meeting-detail\.spec\.ts|contract-form-new\.spec\.ts|contract-form-visual\.spec\.ts|sidebar-collapse-verification\.spec\.ts|sidebar-visual-verification\.spec\.ts/,
+      testMatch: /comprehensive-page-check\.spec\.ts|check-styling\.spec\.ts|project-tools-dropdown\.spec\.ts|meetings2-page\.spec\.ts|employees-page\.spec\.ts|project-home-collapsible\.spec\.ts|project-setup-wizard\.spec\.ts|project-setup-wizard-comprehensive\.spec\.ts|wizard-manual-test\.spec\.ts|project-scoped-routing\.spec\.ts|budget-modals\.spec\.ts|page-title-verification\.spec\.ts|form-testing-simple\.spec\.ts|project-home-navigation\.spec\.ts|ai-chat-widget\.spec\.ts|chat-widget-debug\.spec\.ts|project-meeting-detail\.spec\.ts|contract-form-new\.spec\.ts|contract-form-visual\.spec\.ts|sidebar-collapse-verification\.spec\.ts|sidebar-visual-verification\.spec\.ts/,
     },
   ],
   outputDir: '../../tests/test-results',
+  webServer: {
+    command: 'npm run dev',
+    url:
+      process.env.PLAYWRIGHT_BASE_URL ||
+      process.env.BASE_URL ||
+      'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+  },
 });

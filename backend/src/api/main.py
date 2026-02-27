@@ -38,10 +38,14 @@ from uuid import uuid4
 from src.services.env_loader import load_env
 load_env()
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 from agents import (
     Handoff,
@@ -84,6 +88,7 @@ AirlineAgentContext = ProjectContext
 from src.services.memory_store import MemoryStore
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
+from src.services.pipeline import run_full_pipeline
 
 # Import RAG workflow components
 try:
@@ -139,6 +144,8 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_openai_client = OpenAI() if (OpenAI and os.getenv("OPENAI_API_KEY")) else None
 
 app = FastAPI(
     title="Alleato Procore Backend API",
@@ -782,6 +789,19 @@ def _select_keyword(message: str) -> Optional[str]:
     return None
 
 
+def _get_query_embedding(message: str) -> Optional[List[float]]:
+    if _openai_client is None:
+        return None
+    try:
+        response = _openai_client.embeddings.create(
+            model="text-embedding-3-small",
+            input=[message],
+        )
+        return response.data[0].embedding
+    except Exception:
+        return None
+
+
 def _build_chat_reply(
     message: str,
     store: SupabaseRagStore,
@@ -789,9 +809,24 @@ def _build_chat_reply(
     limit: int = 5,
 ) -> Dict[str, Any]:
     keyword = _select_keyword(message)
-    chunks = store.search_chunks_by_keyword(keyword, project_id=project_id, limit=limit)
+    retrieval_mode = "keyword"
+    chunks: List[Dict[str, Any]] = []
+
+    query_embedding = _get_query_embedding(message)
+    if query_embedding:
+        chunks = store.vector_search_documents(
+            query_embedding=query_embedding,
+            limit=limit,
+            project_id=project_id,
+        )
+        if chunks:
+            retrieval_mode = "semantic"
+
+    if not chunks:
+        chunks = store.search_chunks_by_keyword(keyword, project_id=project_id, limit=limit)
     if not chunks:
         chunks = store.fetch_recent_chunks(project_id=project_id, limit=limit)
+        retrieval_mode = "recent"
 
     tasks = store.list_tasks(project_id=project_id, status="open", limit=limit)
     insights = store.list_insights(project_id=project_id, limit=limit)
@@ -821,9 +856,14 @@ def _build_chat_reply(
             "Recent insights: " + "; ".join(insight.get("summary", "")[:80] for insight in insights[:3])
         )
     if sources:
-        reply_lines.append(
-            f"Retrieved {len(sources)} transcript snippets based on the keyword '{keyword or 'recent'}'."
-        )
+        if retrieval_mode == "semantic":
+            reply_lines.append(f"Retrieved {len(sources)} transcript snippets via semantic vector search.")
+        elif retrieval_mode == "keyword":
+            reply_lines.append(
+                f"Retrieved {len(sources)} transcript snippets based on the keyword '{keyword or 'recent'}'."
+            )
+        else:
+            reply_lines.append(f"Retrieved {len(sources)} recent transcript snippets.")
         reply_lines.append("Top relevant transcript evidence:")
         for source in sources[:3]:
             snippet = (source.get("snippet") or "").replace("\n", " ").strip()
@@ -948,21 +988,50 @@ def ingest_fireflies_endpoint(
     pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
 ) -> Dict[str, Any]:
     """Ingest a Fireflies meeting transcript into the knowledge base.
-    
+
     This endpoint processes Fireflies meeting transcripts and extracts:
     - Meeting metadata
     - Transcript chunks for semantic search
     - Action items and tasks
     - Key insights and decisions
-    
+
     Args:
         payload: IngestRequest with path to transcript file, optional project_id, and dry_run flag.
-        
+
     Returns:
         Dict with ingestion result details.
     """
     result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
     return {"result": result.__dict__}
+
+
+class PipelineProcessRequest(BaseModel):
+    metadataId: str
+
+
+@app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
+async def pipeline_process_endpoint(
+    payload: PipelineProcessRequest,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    """Trigger the full RAG pipeline for a document_metadata row.
+
+    Called by the Supabase DB trigger (via pg_net) on every INSERT into
+    document_metadata. Can also be called manually.
+
+    Stages run in background:
+      1. Parser   — parse Fireflies markdown, LLM segmentation → meeting_segments
+      2. Embedder — chunk + embed with OpenAI → documents
+      3. Extractor — structured extraction → decisions/risks/tasks/opportunities
+
+    Args:
+        payload: PipelineProcessRequest with metadataId (UUID string).
+
+    Returns:
+        Dict with status "queued" and the metadataId.
+    """
+    background_tasks.add_task(run_full_pipeline, payload.metadataId)
+    return {"status": "queued", "metadataId": payload.metadataId}
 
 
 # === Admin Endpoints ===

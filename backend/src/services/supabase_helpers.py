@@ -240,6 +240,44 @@ class SupabaseRagStore:
             pass
         return self.fetch_recent_chunks(limit=limit)
 
+    def vector_search_documents(
+        self,
+        query_embedding: List[float],
+        limit: int = 5,
+        project_id: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Vector search against the documents table embeddings."""
+        try:
+            filter_payload: Dict[str, Any] = {}
+            if project_id is not None:
+                filter_payload["project_id"] = project_id
+
+            response = (
+                self._client.rpc(
+                    "match_documents",
+                    {
+                        "query_embedding": query_embedding,
+                        "match_count": limit,
+                        "filter": filter_payload,
+                    },
+                )
+                .execute()
+            )
+            data = response.data or []
+            if data:
+                return [
+                    {
+                        "document_id": row.get("id"),
+                        "text": row.get("content", ""),
+                        "metadata": row.get("metadata", {}),
+                        "similarity": row.get("similarity"),
+                    }
+                    for row in data
+                ]
+        except Exception:
+            pass
+        return []
+
     # ingestion jobs ----------------------------------------------------
     def start_ingestion_job(self, fireflies_id: Optional[str], content_hash: str) -> Optional[str]:
         payload = {

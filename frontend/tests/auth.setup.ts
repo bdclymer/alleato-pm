@@ -1,6 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { test as setup } from "@playwright/test";
-import path from "path";
-import { createSupabaseAdminClient } from "./helpers/supabase";
+
+import { createSupabaseAdminClient, createSupabaseClient } from "./helpers/supabase";
 
 const authFile = path.join(__dirname, ".auth/user.json");
 
@@ -8,109 +11,170 @@ const authFile = path.join(__dirname, ".auth/user.json");
 const TEST_EMAIL = process.env.TEST_USER_1 ?? "test1@mail.com";
 const TEST_PASSWORD = process.env.TEST_PASSWORD_1 ?? "test12026!!!";
 
+/**
+ * Extract Supabase project ref from the URL.
+ * e.g. "https://lgveqfnpkxvzbnnwuled.supabase.co" → "lgveqfnpkxvzbnnwuled"
+ */
+function getProjectRef(): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const match = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/);
+  return match?.[1] ?? "lgveqfnpkxvzbnnwuled";
+}
+
+/**
+ * Check if the existing user.json has a valid (non-expired) access token.
+ */
+function hasValidExistingSession(): boolean {
+  try {
+    if (!fs.existsSync(authFile)) return false;
+    const state = JSON.parse(fs.readFileSync(authFile, "utf-8"));
+    const authCookie = (state.cookies ?? []).find((c: { name: string }) =>
+      /^sb-.*-auth-token/.test(c.name),
+    );
+    if (!authCookie) return false;
+
+    let sessionJson = authCookie.value as string;
+    if (sessionJson.startsWith("base64-")) {
+      sessionJson = Buffer.from(sessionJson.slice(7), "base64").toString();
+    }
+    const sessionData = JSON.parse(sessionJson);
+    const jwt = sessionData?.access_token;
+    if (!jwt) return false;
+
+    const parts = jwt.split(".");
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString());
+
+    // Valid if token doesn't expire in next 5 minutes
+    return payload?.exp && payload.exp * 1000 > Date.now() + 5 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
 setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
 
+  // Fast path: reuse existing valid session without any API calls
+  if (hasValidExistingSession()) {
+    console.log("Existing auth session is still valid — skipping re-authentication");
+    return;
+  }
+
+  // Ensure test user exists in Supabase Auth
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: userList } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
     perPage: 1000,
   });
-  const existingUser = userList?.users?.find(
-    (user) => user.email === TEST_EMAIL,
-  );
+  const existingUser = userList?.users?.find((u) => u.email === TEST_EMAIL);
 
   if (!existingUser) {
-    await supabaseAdmin.auth.admin.createUser({
+    const { error } = await supabaseAdmin.auth.admin.createUser({
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
       email_confirm: true,
     });
-  } else {
-    await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-      password: TEST_PASSWORD,
-      email_confirm: true,
-    });
+    if (error) {
+      throw new Error(`Auth setup failed creating test user: ${error.message}`);
+    }
   }
 
-  // Always re-login to ensure a fresh session for each run.
-
-  // Use the real login page.
-  console.log(`Logging in via ${url}/auth/login as ${TEST_EMAIL}`);
-  const maxLoginAttempts = 3;
-  let redirected = false;
-
-  for (let attempt = 1; attempt <= maxLoginAttempts; attempt += 1) {
-    // Navigate with longer timeout to handle Next.js dev mode compilation
-    await page.goto(`${url}/auth/login`, {
-      waitUntil: "networkidle",
-      timeout: 60000, // 60 seconds to allow for route compilation
+  // Sign in via Supabase API (no UI login — avoids rate limiting)
+  const supabaseClient = createSupabaseClient();
+  const { data: signInData, error: signInError } =
+    await supabaseClient.auth.signInWithPassword({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
     });
 
-    // Wait for the page structure to load first
-    await page.waitForSelector('form', { state: 'attached', timeout: 15000 });
+  if (signInError || !signInData.session) {
+    // Last resort: try UI login if API fails
+    console.warn(
+      `API sign-in failed (${signInError?.message}), falling back to UI login`,
+    );
+    await uiLogin(page, url);
+    await page.context().storageState({ path: authFile });
+    return;
+  }
 
-    // Additional wait for React hydration (Next.js 15 can be slow in dev)
-    await page.waitForTimeout(2000);
+  // Build cookie value in the format @supabase/ssr expects:
+  // "base64-<base64 encoded session JSON>"
+  const session = signInData.session;
+  const sessionJson = JSON.stringify({
+    access_token: session.access_token,
+    token_type: session.token_type,
+    expires_in: session.expires_in,
+    expires_at: session.expires_at,
+    refresh_token: session.refresh_token,
+    user: session.user,
+    weak_password: null,
+  });
+  const cookieValue = `base64-${Buffer.from(sessionJson).toString("base64")}`;
+  const projectRef = getProjectRef();
 
-    // Now find the login button - it should be interactive after hydration
-    const loginButton = page.getByRole("button", { name: /login/i, exact: false });
-    await loginButton.waitFor({ state: "visible", timeout: 15000 });
+  // Set the auth cookie directly in the Playwright browser context
+  await page.context().addCookies([
+    {
+      name: `sb-${projectRef}-auth-token`,
+      value: cookieValue,
+      domain: "localhost",
+      path: "/",
+      // Cookie expires 1 year from now; the JWT access token expires sooner
+      // but the browser will use the refresh token to get a new one.
+      expires: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+      httpOnly: false,
+      secure: false,
+      sameSite: "Lax",
+    },
+  ]);
 
-    await page.getByLabel("Email").fill(TEST_EMAIL);
-    await page.getByLabel("Password").fill(TEST_PASSWORD);
-    await loginButton.click();
+  // Save the auth state for subsequent test runs.
+  // Cookies set via addCookies are captured by storageState without needing a navigation.
+  await page.context().storageState({ path: authFile });
+  console.log(`Auth setup complete — session saved for ${TEST_EMAIL}`);
+});
 
-    redirected = await page
-      .waitForURL((currentUrl) => !currentUrl.pathname.includes("/auth/login"), {
-        timeout: 15000,
-      })
+async function uiLogin(page: Parameters<typeof setup>[1]["page"], url: string) {
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const navigated = await page
+      .goto(`${url}/auth/login`, { waitUntil: "networkidle", timeout: 60000 })
       .then(() => true)
       .catch(() => false);
-    if (redirected) {
-      break;
-    }
 
-    const currentUrl = new URL(page.url());
-    const usedNativeFormSubmit =
-      currentUrl.pathname === "/auth/login" &&
-      currentUrl.searchParams.has("email") &&
-      currentUrl.searchParams.has("password");
-
-    if (usedNativeFormSubmit && attempt < maxLoginAttempts) {
-      // Retry when form submits before client-side handlers attach.
+    if (!navigated) {
       await page.waitForTimeout(2000);
       continue;
     }
-    break;
+
+    const formMounted = await page
+      .waitForSelector("form", { state: "attached", timeout: 30000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (!formMounted) {
+      const pathname = new URL(page.url()).pathname;
+      if (!pathname.includes("/auth/login")) return; // already redirected = success
+      continue;
+    }
+
+    await page.waitForTimeout(3000); // wait for React 19 hydration
+
+    await page.locator("#email").fill(TEST_EMAIL);
+    await page.locator("#password").fill(TEST_PASSWORD);
+    await page.getByRole("button", { name: /login/i, exact: false }).click();
+
+    const redirected = await page
+      .waitForURL((u) => !u.pathname.includes("/auth/login"), { timeout: 15000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (redirected) return;
+    if (attempt < maxAttempts) await page.waitForTimeout(2000);
   }
 
-  if (!redirected) {
-    const currentUrl = page.url();
-    const bodyText = (await page.locator("body").textContent()) ?? "";
-    const errorText = await page
-      .locator("text=Invalid email")
-      .textContent()
-      .catch(() => null);
-    const successText = await page
-      .locator("text=Login successful")
-      .textContent()
-      .catch(() => null);
-
-    throw new Error(
-      `Auth failed - login UI did not appear. ` +
-        `url=${currentUrl}. ` +
-        `Page text: ${errorText ?? successText ?? bodyText.slice(0, 200) ?? "unknown state"}`,
-    );
-  }
-
-  const cookies = await page.context().cookies();
-  const hasAuthCookie = cookies.some((cookie) => cookie.name.startsWith("sb-"));
-  if (!hasAuthCookie) {
-    throw new Error("Auth failed - no Supabase auth cookies found after login");
-  }
-
-  // Save auth state for all subsequent tests
-  await page.context().storageState({ path: authFile });
-  console.log("Auth setup complete - cookie saved");
-});
+  throw new Error(
+    `UI login failed after ${maxAttempts} attempts for ${TEST_EMAIL}`,
+  );
+}

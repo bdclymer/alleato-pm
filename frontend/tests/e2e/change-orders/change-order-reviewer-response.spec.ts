@@ -10,16 +10,22 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
   }) => {
     // Default scenario is "reviewer"
     await expect(page.getByText("Reviewer Action Required")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Approve/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Reject/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Approve", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Reject", exact: true })
+    ).toBeVisible();
   });
 
   test("should open approve dialog and show form fields", async ({ page }) => {
     // Click Approve button
-    await page.getByRole("button", { name: /Approve/i }).click();
+    await page.getByRole("button", { name: "Approve", exact: true }).click();
 
     // Check dialog is open
-    await expect(page.getByText("Approve Change Order")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Approve Change Order", exact: true })
+    ).toBeVisible();
     await expect(
       page.getByText(/Confirm that you want to approve this change order/i)
     ).toBeVisible();
@@ -41,10 +47,12 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
     page,
   }) => {
     // Click Reject button
-    await page.getByRole("button", { name: /Reject/i }).click();
+    await page.getByRole("button", { name: "Reject", exact: true }).click();
 
     // Check dialog is open
-    await expect(page.getByText("Reject Change Order")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Reject Change Order", exact: true })
+    ).toBeVisible();
     await expect(
       page.getByText(/Provide a reason for rejecting this change order/i)
     ).toBeVisible();
@@ -67,7 +75,7 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
     page,
   }) => {
     // Click Reject button
-    await page.getByRole("button", { name: /Reject/i }).click();
+    await page.getByRole("button", { name: "Reject", exact: true }).click();
 
     // Initially disabled
     const rejectButton = page.getByRole("button", {
@@ -100,10 +108,10 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
 
     // Approve/Reject buttons should not be visible
     await expect(
-      page.getByRole("button", { name: /Approve/i })
+      page.getByRole("button", { name: "Approve", exact: true })
     ).not.toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Reject/i })
+      page.getByRole("button", { name: "Reject", exact: true })
     ).not.toBeVisible();
   });
 
@@ -123,16 +131,16 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
 
     // Approve/Reject buttons should not be visible
     await expect(
-      page.getByRole("button", { name: /Approve/i })
+      page.getByRole("button", { name: "Approve", exact: true })
     ).not.toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Reject/i })
+      page.getByRole("button", { name: "Reject", exact: true })
     ).not.toBeVisible();
   });
 
   test("should be able to fill approval form fields", async ({ page }) => {
     // Click Approve button
-    await page.getByRole("button", { name: /Approve/i }).click();
+    await page.getByRole("button", { name: "Approve", exact: true }).click();
 
     // Fill optional fields
     await page
@@ -158,7 +166,7 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
 
   test("should be able to fill rejection form fields", async ({ page }) => {
     // Click Reject button
-    await page.getByRole("button", { name: /Reject/i }).click();
+    await page.getByRole("button", { name: "Reject", exact: true }).click();
 
     // Fill required field
     await page
@@ -186,25 +194,33 @@ test.describe("ChangeOrderReviewerResponse Component", () => {
 
   test("should close approve dialog on cancel", async ({ page }) => {
     // Open dialog
-    await page.getByRole("button", { name: /Approve/i }).click();
-    await expect(page.getByText("Approve Change Order")).toBeVisible();
+    await page.getByRole("button", { name: "Approve", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Approve Change Order", exact: true })
+    ).toBeVisible();
 
     // Click cancel
     await page.getByRole("button", { name: "Cancel" }).click();
 
     // Dialog should be closed
-    await expect(page.getByText("Approve Change Order")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Approve Change Order", exact: true })
+    ).not.toBeVisible();
   });
 
   test("should close reject dialog on cancel", async ({ page }) => {
     // Open dialog
-    await page.getByRole("button", { name: /Reject/i }).click();
-    await expect(page.getByText("Reject Change Order")).toBeVisible();
+    await page.getByRole("button", { name: "Reject", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Reject Change Order", exact: true })
+    ).toBeVisible();
 
     // Click cancel
     await page.getByRole("button", { name: "Cancel" }).click();
 
     // Dialog should be closed
-    await expect(page.getByText("Reject Change Order")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Reject Change Order", exact: true })
+    ).not.toBeVisible();
   });
 });

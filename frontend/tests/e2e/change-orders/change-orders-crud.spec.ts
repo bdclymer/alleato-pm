@@ -15,7 +15,13 @@ const PROJECT_ID = 67;
 
 test.describe("Change Orders – Full CRUD E2E", () => {
   // Retry once for intermittent auth session flakiness
-  test.describe.configure({ retries: 1 });
+  test.describe.configure({ retries: 1, mode: "serial" });
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(
+      testInfo.project.name === "debug",
+      "Skip DB-mutating suite in debug project"
+    );
+  });
   test.beforeEach(async () => {
     // Clean slate for each test - delete all CO test data
     const existing = await listChangeOrdersForProject(PROJECT_ID);
@@ -181,7 +187,7 @@ test.describe("Change Orders – Full CRUD E2E", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // Click back button
-    await page.getByText("Back to Change Orders").click();
+    await page.getByRole("button", { name: /back/i }).click();
 
     // Should be on the list page
     await expect(page).toHaveURL(

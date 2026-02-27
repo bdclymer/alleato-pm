@@ -177,7 +177,9 @@ async function extractFromMeeting(
     throw new Error(`Metadata not found: ${metadataId}`);
   }
 
-  const firefliesId = metadata.fireflies_id as string;
+  // Some document_metadata rows are created outside Fireflies and may not have fireflies_id.
+  // Fall back to metadataId so pipeline stage updates remain addressable.
+  const firefliesId = (metadata.fireflies_id as string) || metadataId;
   const title = metadata.title as string;
   const meetingSummary = (metadata.meeting_summary as string) || "";
   const startedAt = metadata.started_at as string | null;

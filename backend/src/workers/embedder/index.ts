@@ -30,12 +30,12 @@ import { parseFirefliesMarkdown, hashContent } from "../shared/parser";
 import { createMeetingChunks } from "../shared/chunker";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // POST /embed - Embed a specific meeting
     if (request.method === "POST" && url.pathname === "/embed") {
-      return handleEmbed(request, env);
+      return handleEmbed(request, env, ctx);
     }
 
     // POST /embed-pending - Embed all pending meetings
@@ -74,7 +74,7 @@ export default {
 // Handlers
 // -----------------------------------------------------------------------------
 
-async function handleEmbed(request: Request, env: Env): Promise<Response> {
+async function handleEmbed(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   try {
     const body = (await request.json()) as {
       metadataId?: string;
@@ -89,7 +89,7 @@ async function handleEmbed(request: Request, env: Env): Promise<Response> {
     }
 
     let metadataId = body.metadataId;
-    let firefliesId = body.firefliesId;
+    const firefliesId = body.firefliesId;
 
     if (!metadataId && firefliesId) {
       const job = await getJob(env, firefliesId);
@@ -102,7 +102,22 @@ async function handleEmbed(request: Request, env: Env): Promise<Response> {
       metadataId = job.metadata_id;
     }
 
-    const result = await embedMeeting(env, metadataId!);
+    if (!metadataId) {
+      return Response.json({ error: "metadataId could not be resolved" }, { status: 400 });
+    }
+
+    const result = await embedMeeting(env, metadataId);
+
+    // Chain immediately to extractor — don't wait for cron
+    if (env.EXTRACTOR_WORKER_URL) {
+      ctx.waitUntil(
+        fetch(`${env.EXTRACTOR_WORKER_URL}/extract`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ metadataId }),
+        }).catch((err: unknown) => console.error("[Embed] Extractor chain failed:", err))
+      );
+    }
 
     return Response.json({
       success: true,
@@ -178,7 +193,9 @@ async function embedMeeting(
     throw new Error(`Metadata not found: ${metadataId}`);
   }
 
-  const firefliesId = metadata.fireflies_id as string;
+  // Some document_metadata rows are created outside Fireflies and may not have fireflies_id.
+  // Fall back to metadataId so pipeline stage updates remain addressable.
+  const firefliesId = (metadata.fireflies_id as string) || metadataId;
   const content = metadata.content as string;
   const meetingSummary = (metadata.overview as string) || "";
 

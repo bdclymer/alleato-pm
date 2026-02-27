@@ -14,7 +14,7 @@ export async function cleanupProjectArtifacts(projectId: number) {
 
 import { getAdminClient } from './db';
 
-export async function cleanupChangeEvents(changeEventIds: number[]) {
+export async function cleanupChangeEvents(changeEventIds: string[]) {
   if (changeEventIds.length === 0) {
     return;
   }

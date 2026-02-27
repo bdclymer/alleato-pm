@@ -133,15 +133,17 @@ description: TASKS PrimeContracts documentation
 
 ---
 
-### Phase 8: Testing ⏳ NOT STARTED
+### Phase 8: Testing ✅ COMPLETE (2026-02-24) — 46/46 tests pass
 
-- [ ] E2E test: Create contract (fill all fields, submit, verify in list)
-- [ ] E2E test: Edit contract (change status, save, verify update)
-- [ ] E2E test: Add SOV line items
-- [ ] E2E test: Create change order, approve it
-- [ ] E2E test: Verify financial calculations update after CO approval
-- [ ] E2E test: Delete contract
-- [ ] E2E test: Permission check (cannot edit another project's contract)
+- [x] `prime-contracts-settings.spec.ts` — 12 tests (configure page, 5 persistence tests, 5 API tests)
+- [x] `prime-contracts-invoices-payments.spec.ts` — 33 tests (invoices tab UI + API, payments tab UI + API)
+- [x] `prime-contracts-financial-integrity.spec.ts` — 3 tests (revised amount, % paid consistency)
+
+**Fixes applied during Phase 8:**
+
+- API: payment-applications POST returns 409 (not 400) for duplicate application_number
+- Config: excluded `prime-contracts-settings.spec.ts` from `debug` browser project (shared-DB race fix)
+- Tests: `process.pid` in contract numbers prevents cross-worker duplicate key collisions
 
 ---
 

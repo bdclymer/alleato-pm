@@ -11,6 +11,9 @@ export interface Env {
   SUPABASE_SERVICE_KEY: string;
   OPENAI_API_KEY: string;
   FIREFLIES_API_KEY: string;
+  // Worker URLs for pipeline chaining (optional — crons act as fallback if unset)
+  EMBEDDER_WORKER_URL?: string;
+  EXTRACTOR_WORKER_URL?: string;
 }
 
 // -----------------------------------------------------------------------------

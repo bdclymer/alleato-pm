@@ -539,3 +539,145 @@ Before claiming tests pass:
 ### Save all documentation in the docs-ai folder.
 
 - file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs
+## UI/UX Design Standards
+
+### CRITICAL: Anti-Pattern Prevention
+
+**NEVER create these outdated patterns:**
+- Cards within cards (single-level cards only)
+- Multiple nested containers (max 2 levels: page container + content)
+- Heavy shadows (shadow-lg, shadow-xl forbidden in business UIs)
+- Thick borders (use border-gray-200, 1px only)
+
+### Default Design System
+
+**Reference**: Linear, Supabase, Vercel design patterns
+
+**Layout Structure:**
+```tsx
+// All pages should follow this pattern
+<div className="max-w-7xl mx-auto px-6 py-12">
+  <section className="pb-8 border-b border-gray-200">
+    <h2 className="text-lg font-semibold mb-4">Section</h2>
+    {/* Content with space-y-4 or space-y-6 */}
+  </section>
+</div>
+```
+
+**Spacing:**
+- Sections: `space-y-12` or `mb-12`
+- Elements: `space-y-6` or `mb-6`  
+- Related items: `space-y-4` or `mb-4`
+- Tight grouping: `space-y-2` or `mb-2`
+
+**Typography:**
+- Headings: `text-lg/xl/2xl font-semibold text-gray-900`
+- Body: `text-base text-gray-700`
+- Secondary: `text-sm text-gray-600`
+- Labels: `text-sm font-medium text-gray-600`
+- Never use font weights above 600 (semibold)
+
+**Colors:**
+- Text: gray-900 (headings), gray-700 (body), gray-600 (secondary)
+- Borders: gray-200 (standard), gray-300 (hover/distinct)
+- Backgrounds: white (default), gray-50/50 (subtle), gray-100 (distinct)
+- Accent: ONE color only - blue-600, indigo-600, or green-600
+
+**Interactive Elements:**
+```tsx
+// Button standard
+className="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+
+// Primary variant
+className="bg-blue-600 text-white hover:bg-blue-700"
+
+// Secondary variant  
+className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+```
+
+**When to Use Cards:**
+Only for distinct data items/blocks, NOT for page sections:
+```tsx
+// ✓ Acceptable
+<div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+  <p className="text-sm font-medium text-gray-600">Metric</p>
+  <p className="text-2xl font-semibold text-gray-900 mt-1">Value</p>
+</div>
+
+// ✗ Never do this
+<Card>
+  <Card>Nested cards</Card>
+</Card>
+```
+
+**Data Tables:**
+```tsx
+<table className="w-full">
+  <thead className="border-b border-gray-200">
+    <tr>
+      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Header
+      </th>
+    </tr>
+  </thead>
+  <tbody className="divide-y divide-gray-200">
+    <tr className="hover:bg-gray-50">
+      <td className="px-4 py-4 text-sm text-gray-900">Data</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Pre-Implementation Checklist
+
+Before submitting any UI code, verify:
+- [ ] No cards within cards
+- [ ] Max 2 container levels (page + content)
+- [ ] All spacing uses 4px base unit (space-4, space-6, space-8, etc.)
+- [ ] Borders are gray-200/300, 1px only
+- [ ] Single accent color, used sparingly
+- [ ] Typography scale followed (text-sm, text-base, text-lg, etc.)
+- [ ] All buttons have hover states
+- [ ] Focus states on all interactive elements
+- [ ] Responsive on mobile (375px minimum width)
+
+### Code Quality Standards
+
+**Component Organization:**
+1. Import statements
+2. Type definitions
+3. Component function
+4. Helper functions/constants
+5. Exports
+
+**TypeScript Requirements:**
+- All props typed explicitly
+- No `any` types (use `unknown` if necessary)
+- Event handlers properly typed
+
+**Performance:**
+- Memoize expensive calculations
+- Use proper key props in lists
+- Lazy load heavy components
+- Optimize images (Next.js Image component)
+
+### Testing Requirements
+
+**Before marking complete:**
+1. Test on mobile viewport (375px)
+2. Test keyboard navigation
+3. Verify all interactive states (hover, focus, active, disabled)
+4. Check loading and error states
+5. Validate form submissions
+6. Screenshot comparison if updating existing UI
+
+**DO NOT claim completion without:**
+- Running the dev server and visually verifying the changes
+- Testing all interactive elements
+- Confirming responsive behavior
+
+---
+
+## Project-Specific Notes
+
+[Add project-specific requirements here]

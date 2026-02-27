@@ -32,12 +32,12 @@ import {
 import { parseFirefliesMarkdown, formatTranscriptForLLM } from "../shared/parser";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     // POST /parse - Parse a specific meeting
     if (request.method === "POST" && url.pathname === "/parse") {
-      return handleParse(request, env);
+      return handleParse(request, env, ctx);
     }
 
     // POST /parse-pending - Parse all pending meetings
@@ -108,7 +108,7 @@ async function processPendingJobs(env: Env): Promise<{ processed: number; result
 // Handlers
 // -----------------------------------------------------------------------------
 
-async function handleParse(request: Request, env: Env): Promise<Response> {
+async function handleParse(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   try {
     const body = (await request.json()) as {
       metadataId?: string;
@@ -123,7 +123,7 @@ async function handleParse(request: Request, env: Env): Promise<Response> {
     }
 
     let metadataId = body.metadataId;
-    let firefliesId = body.firefliesId;
+    const firefliesId = body.firefliesId;
 
     // If only firefliesId provided, look up metadataId
     if (!metadataId && firefliesId) {
@@ -137,7 +137,22 @@ async function handleParse(request: Request, env: Env): Promise<Response> {
       metadataId = job.metadata_id;
     }
 
-    const result = await parseMeeting(env, metadataId!);
+    if (!metadataId) {
+      return Response.json({ error: "metadataId could not be resolved" }, { status: 400 });
+    }
+
+    const result = await parseMeeting(env, metadataId);
+
+    // Chain immediately to embedder — don't wait for cron
+    if (env.EMBEDDER_WORKER_URL) {
+      ctx.waitUntil(
+        fetch(`${env.EMBEDDER_WORKER_URL}/embed`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ metadataId }),
+        }).catch((err: unknown) => console.error("[Parse] Embedder chain failed:", err))
+      );
+    }
 
     return Response.json({
       success: true,
@@ -181,7 +196,9 @@ async function parseMeeting(
     throw new Error(`Metadata not found: ${metadataId}`);
   }
 
-  const firefliesId = metadata.fireflies_id as string;
+  // Some document_metadata rows are created outside Fireflies and may not have fireflies_id.
+  // Fall back to metadataId so pipeline stage updates remain addressable.
+  const firefliesId = (metadata.fireflies_id as string) || metadataId;
   const content = metadata.content as string;
 
   if (!content) {

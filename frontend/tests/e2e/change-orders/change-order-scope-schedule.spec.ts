@@ -23,11 +23,11 @@ test.describe("Change Order Scope & Schedule Fields", () => {
     await page.locator('text="Scope & Schedule Impact"').scrollIntoViewIfNeeded();
 
     // Check that the scope label exists
-    await expect(page.locator('label:has-text("Scope")')).toBeVisible();
+    await expect(page.getByText("Scope", { exact: true })).toBeVisible();
 
     // Check that both radio options are visible
-    await expect(page.locator('label:has-text("In Scope")')).toBeVisible();
-    await expect(page.locator('label:has-text("Out of Scope")')).toBeVisible();
+    await expect(page.getByText("In Scope", { exact: true })).toBeVisible();
+    await expect(page.getByText("Out of Scope", { exact: true })).toBeVisible();
   });
 
   test("should select in scope radio button", async ({ page }) => {
