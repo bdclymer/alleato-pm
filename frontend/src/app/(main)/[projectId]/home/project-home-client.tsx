@@ -213,7 +213,7 @@ export function ProjectHomeClient({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="px-4 sm:px-6 lg:px-12">
+      <div className="pt-4 px-4 sm:px-6 lg:px-12">
         {/* =====================================================================
             Page Header
             ===================================================================== */}
@@ -309,7 +309,7 @@ export function ProjectHomeClient({
               </MetricGrid>
             </div>
             <div className="my-8 space-y-3">
-              <h3 className="text-xl font-semibold text-neutral-800">
+              <h3 className="text-l text-neutral-800">
                 Financial Tools
               </h3>
               <Tabs defaultValue="prime-contracts" className="space-y-3">
@@ -849,22 +849,6 @@ export function ProjectHomeClient({
             <MeetingsSection
               meetings={meetings}
               projectId={project.id}
-              maxItems={5}
-            />
-
-            <InfoSection
-              title="Schedule & Tasks"
-              icon={CheckSquare}
-              items={tasks.slice(0, 5).map((task) => ({
-                id: task.id,
-                title: task.task_description || `Task #${task.id}`,
-                subtitle: task.due_date
-                  ? `Due ${format(new Date(task.due_date), "MMM d, yyyy")}`
-                  : undefined,
-                href: `/${project.id}/schedule`,
-              }))}
-              viewAllHref={`/${project.id}/schedule`}
-              emptyMessage="No tasks scheduled"
               maxItems={5}
             />
 
