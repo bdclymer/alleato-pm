@@ -289,7 +289,7 @@ export default function ProjectDirectoryCompaniesPage(): ReactElement {
     <>
       <UnifiedTablePage
         header={{
-          title: "Project Directory: Companies",
+          title: "Project Directory - Companies",
           description: "Manage companies and team members for this project",
           actions: (
             <Button onClick={() => tableState.setSearchParams({ detail: "new" })}>

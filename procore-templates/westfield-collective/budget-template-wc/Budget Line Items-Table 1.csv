@@ -1,0 +1,5 @@
+Sub Job,Cost Code,Cost Type,Description,Manual Calculation,Unit Qty,UOM,Unit Cost,Budget Amount,Start Date,End Date,Curve
+,01-3120,X,Vice President.Expense,False,,,0,0,,,
+,01-3120,L,Vice President.Labor,False,,,0,0,,,
+,013-126,X,Pre-construction.Expense,False,,,25960,25960,,,
+,013-126,S,Pre-construction.Subcontract,False,,,0,0,,,

@@ -711,12 +711,14 @@ export function ContractForm({
               </div>
               <DialogFooter>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => setShowAddCompany(false)}
                 >
                   Cancel
                 </Button>
                 <Button
+                  type="button"
                   onClick={handleCreateCompany}
                   disabled={!newCompanyName.trim() || isCreating}
                 >
@@ -948,6 +950,7 @@ export function ContractForm({
                     </p>
                     <Button
                       onClick={addSOVLine}
+                      type="button"
                       variant="default"
                       data-testid="sov-add-line-empty"
                     >
@@ -974,6 +977,7 @@ export function ContractForm({
                       >
                         <PopoverTrigger asChild>
                           <Button
+                            type="button"
                             variant="outline"
                             role="combobox"
                             className="w-full justify-between text-left font-normal h-8"
@@ -1116,6 +1120,7 @@ export function ContractForm({
                       <Button
                         variant="ghost"
                         size="sm"
+                        type="button"
                         onClick={() => removeSOVLine(item.id)}
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
                       >
@@ -1132,6 +1137,7 @@ export function ContractForm({
                   <Button
                     variant="outline"
                     size="sm"
+                    type="button"
                     onClick={addSOVLine}
                     data-testid="sov-add-line-footer"
                   >

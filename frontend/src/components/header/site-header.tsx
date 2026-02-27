@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { EnhancedDevPanel } from "@/components/dev-tools/enhanced-dev-panel";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
-import { headerNavGroups } from "@/lib/navigation-config";
+import { headerNavGroups, type HeaderNavGroup as HeaderNavGroupConfig } from "@/lib/navigation-config";
 
 import { useHeaderNav } from "./use-header-nav";
 import { HeaderNavGroup } from "./header-nav-group";
@@ -55,6 +55,15 @@ export function SiteHeader() {
 
   const isProjectHome =
     Boolean(nav.projectId) && pathname === `/${nav.projectId}/home`;
+  const toolsGroup: HeaderNavGroupConfig = {
+    id: "tools",
+    label: "Tools",
+    tools: headerNavGroups.flatMap((group) => group.tools),
+    subGroups: headerNavGroups.map((group) => ({
+      label: group.label,
+      toolNames: group.tools.map((tool) => tool.name),
+    })),
+  };
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden bg-[#252525] text-zinc-100">
@@ -124,16 +133,11 @@ export function SiteHeader() {
           </>
         )}
 
-        {/* Active Tool Name (mobile) */}
-        <div className="md:hidden flex-1 min-w-0">
-          <h1 className="text-sm font-semibold truncate">
-            {nav.activeToolName}
-          </h1>
-        </div>
+        <div className="md:hidden flex-1 min-w-0" />
 
         {/* Right side controls */}
         <div className="ml-auto flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          {/* Project Selector + Active Tool (desktop) */}
+          {/* Project Selector (desktop) */}
           <div className="hidden md:flex items-center gap-2 mr-2">
             <ProjectSelector
               projectId={nav.projectId}
@@ -144,32 +148,22 @@ export function SiteHeader() {
               onProjectSelect={nav.handleProjectSelect}
               onViewAll={() => router.push("/")}
             />
-
-            {/* Active Tool Indicator */}
-            <div className="flex items-center px-3 py-1.5 bg-zinc-700/60 rounded-md">
-              <span className="text-sm font-semibold text-white">
-                {nav.activeToolName}
-              </span>
-            </div>
           </div>
 
-          {/* Navigation Groups (desktop only) */}
+          {/* Tools Navigation (desktop only) */}
           <nav className="hidden md:flex items-center gap-0.5 mr-2">
-            {headerNavGroups.map((group) => (
-              <HeaderNavGroup
-                key={group.id}
-                group={group}
-                isOpen={nav.openPanel === group.id}
-                onToggle={() => nav.togglePanel(group.id)}
-                onClose={nav.closePanels}
-                projectId={nav.projectId}
-                activeToolName={nav.activeToolName}
-                activeGroupId={nav.activeGroupId}
-                permissions={permissions}
-                isAppAdmin={isAppAdmin}
-                userType={userType}
-              />
-            ))}
+            <HeaderNavGroup
+              group={toolsGroup}
+              isOpen={nav.openPanel === toolsGroup.id}
+              onToggle={() => nav.togglePanel(toolsGroup.id)}
+              onClose={nav.closePanels}
+              projectId={nav.projectId}
+              activeToolName={nav.activeToolName}
+              activeGroupId={nav.activeGroupId ? toolsGroup.id : null}
+              permissions={permissions}
+              isAppAdmin={isAppAdmin}
+              userType={userType}
+            />
           </nav>
 
           {/* Admin/Settings Menu */}

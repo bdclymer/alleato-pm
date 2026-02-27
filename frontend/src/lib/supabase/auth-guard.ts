@@ -81,8 +81,34 @@ export async function verifyProjectAccess(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Step 2: Look up person_id from auth user
+  // Step 2: Check if user is app admin (bypass project membership checks)
   const serviceClient = createServiceClient();
+  const { data: profile } = await serviceClient
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.is_admin === true) {
+    const adminPersonId =
+      (await resolvePersonIdFromAuth(serviceClient, {
+        id: user.id,
+        email: user.email,
+      })) || user.id;
+
+    return {
+      membership: {
+        membershipId: `super-admin:${user.id}:${projectId}`,
+        personId: adminPersonId,
+        authUserId: user.id,
+        projectId,
+        permissionTemplateId: null,
+      },
+      serviceClient,
+    };
+  }
+
+  // Step 3: Look up person_id from auth user for non-admin users
   const personId = await resolvePersonIdFromAuth(serviceClient, {
     id: user.id,
     email: user.email,
@@ -95,26 +121,7 @@ export async function verifyProjectAccess(
     );
   }
 
-  const { data: profile } = await serviceClient
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.is_admin === true) {
-    return {
-      membership: {
-        membershipId: `super-admin:${user.id}:${projectId}`,
-        personId,
-        authUserId: user.id,
-        projectId,
-        permissionTemplateId: null,
-      },
-      serviceClient,
-    };
-  }
-
-  // Step 3: Verify active membership in the project
+  // Step 4: Verify active membership in the project
   const { data: membership, error: membershipError } = await serviceClient
     .from("project_directory_memberships")
     .select("id, person_id, project_id, permission_template_id")

@@ -1,14 +1,23 @@
 "use client";
 
+import * as React from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface Project {
   id: number;
@@ -35,20 +44,47 @@ export function ProjectSelector({
   onProjectSelect,
   onViewAll,
 }: ProjectSelectorProps) {
+  const [open, setOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const filteredProjects = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return projects;
+
+    return projects.filter((project) => {
+      const name = project.name.toLowerCase();
+      const jobNumber = project["job number"]?.toLowerCase() ?? "";
+      return name.includes(query) || jobNumber.includes(query);
+    });
+  }, [projects, searchQuery]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (nextOpen) onFetchProjects();
+    if (!nextOpen) setSearchQuery("");
+  };
+
+  const handleProjectSelect = (value: string) => {
+    const selectedProjectId = Number.parseInt(value, 10);
+    if (!Number.isNaN(selectedProjectId)) {
+      onProjectSelect(selectedProjectId);
+      setOpen(false);
+    }
+  };
+
   return (
-    <Select
-      value={projectId?.toString() || ""}
-      onValueChange={(value) => {
-        if (value === "view-all") {
-          onViewAll();
-        } else {
-          onProjectSelect(parseInt(value));
-        }
-      }}
-      onOpenChange={(open) => open && onFetchProjects()}
-    >
-      <SelectTrigger className="h-8 w-[120px] sm:w-[160px] lg:w-[200px] border-0 bg-zinc-700/60 hover:bg-zinc-600/70 focus:ring-0 focus:ring-offset-0">
-        <SelectValue placeholder="Select Project">
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "h-8 w-[120px] sm:w-[160px] lg:w-[200px] border-0 bg-zinc-700/60 hover:bg-zinc-600/70 justify-between px-3 focus-visible:ring-0 focus-visible:ring-offset-0",
+            !currentProject && "text-zinc-300"
+          )}
+        >
           {currentProject ? (
             <span className="font-medium truncate text-xs sm:text-sm text-white">
               {currentProject.name}
@@ -58,37 +94,65 @@ export function ProjectSelector({
               Select Project
             </span>
           )}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Projects</SelectLabel>
-          {loadingProjects ? (
-            <div className="py-2 px-2 text-center text-sm text-muted-foreground">
-              Loading...
-            </div>
-          ) : projects.length > 0 ? (
-            projects.map((project) => (
-              <SelectItem
-                key={project.id}
-                value={project.id.toString()}
-                className="h-auto py-2"
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-70" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="w-[300px] p-0"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search projects..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList className="max-h-[280px]">
+            <CommandEmpty>
+              {loadingProjects ? "Loading..." : "No projects found"}
+            </CommandEmpty>
+            <CommandGroup heading="Projects">
+              {filteredProjects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={project.id.toString()}
+                  onSelect={handleProjectSelect}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      project.id === projectId ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{project.name}</div>
+                    {project["job number"] && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        {project["job number"]}
+                      </div>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup>
+              <CommandItem
+                value="view-all"
+                onSelect={() => {
+                  onViewAll();
+                  setOpen(false);
+                }}
+                className="cursor-pointer font-medium"
               >
-                <span className="font-medium truncate">{project.name}</span>
-              </SelectItem>
-            ))
-          ) : (
-            <div className="py-2 px-2 text-center text-sm text-muted-foreground">
-              No projects found
-            </div>
-          )}
-        </SelectGroup>
-        <SelectGroup>
-          <SelectItem value="view-all" className="font-medium h-auto py-2">
-            View All Projects
-          </SelectItem>
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+                View All Projects
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

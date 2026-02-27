@@ -26,6 +26,56 @@ interface ImportResult {
   skippedRows?: number;
 }
 
+interface CostCodeDivision {
+  id: string;
+  code: string;
+}
+
+const VALID_COST_TYPES = ["R", "E", "X", "L", "M", "S", "O"] as const;
+
+const normalizeCostCode = (value: string): string => {
+  const trimmed = value.trim();
+  const [prefix, ...rest] = trimmed.split("-");
+  if (!prefix || rest.length === 0) return trimmed;
+  const normalizedPrefix = prefix.replace(/^0+(\d)/, "$1");
+  return `${normalizedPrefix}-${rest.join("-")}`;
+};
+
+const buildCostCodeCandidates = (value: string): string[] => {
+  const trimmed = value.trim();
+  const normalized = normalizeCostCode(trimmed);
+  return [...new Set([trimmed, normalized].filter(Boolean))];
+};
+
+const resolveDivisionId = (
+  costCodeId: string,
+  divisions: CostCodeDivision[],
+): string | null => {
+  const [prefix] = costCodeId.split("-");
+  const cleanedPrefix = prefix?.trim() || "";
+  const normalizedPrefix = cleanedPrefix.replace(/^0+(\d)/, "$1");
+
+  const byCode = divisions.find((division) => {
+    const divisionCode = division.code.trim();
+    const normalizedDivisionCode = divisionCode.replace(/^0+(\d)/, "$1");
+    return (
+      divisionCode === cleanedPrefix ||
+      normalizedDivisionCode === normalizedPrefix
+    );
+  });
+
+  if (byCode) return byCode.id;
+
+  const generalDivision = divisions.find(
+    (division) =>
+      division.id.toLowerCase() === "general" ||
+      division.code.toLowerCase() === "general",
+  );
+  if (generalDivision) return generalDivision.id;
+
+  return divisions[0]?.id ?? null;
+};
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ projectId: string }> },
@@ -125,6 +175,14 @@ export async function POST(
     const warnings: string[] = [];
     let skippedRows = 0;
 
+    const { data: divisionsData } = await supabase
+      .from("cost_code_divisions")
+      .select("id, code")
+      .eq("is_active", true)
+      .order("code", { ascending: true });
+
+    const divisions: CostCodeDivision[] = divisionsData || [];
+
     // Helper function to get budget amount from multiple possible column names
     const getBudgetAmount = (row: BudgetRow): number => {
       return row["Budget Amount"] || row["Original Budget"] || 0;
@@ -166,10 +224,10 @@ export async function POST(
         }
 
         // Validate cost type is valid
-        const validCostTypes = ["R", "E", "X", "L", "M", "S", "O"];
-        if (!validCostTypes.includes(row["Cost Type"])) {
+        const costTypeCode = String(row["Cost Type"]).trim().toUpperCase();
+        if (!VALID_COST_TYPES.includes(costTypeCode as (typeof VALID_COST_TYPES)[number])) {
           errors.push(
-            `Row ${rowNum}: Invalid Cost Type "${row["Cost Type"]}". Must be one of: ${validCostTypes.join(", ")}`,
+            `Row ${rowNum}: Invalid Cost Type "${row["Cost Type"]}". Must be one of: ${VALID_COST_TYPES.join(", ")}`,
           );
           continue;
         }
@@ -178,31 +236,133 @@ export async function POST(
         const { data: costType, error: costTypeError } = await supabase
           .from("cost_code_types")
           .select("id")
-          .eq("code", row["Cost Type"])
+          .ilike("code", costTypeCode)
           .single();
 
         if (costTypeError || !costType) {
           errors.push(
-            `Row ${rowNum}: Cost Type "${row["Cost Type"]}" not found`,
+            `Row ${rowNum}: Cost Type "${costTypeCode}" not found`,
           );
           continue;
         }
 
-        // Find or validate the cost code exists for this project
-        const { data: projectCostCode, error: costCodeError } = await supabase
+        const costCodeCandidates = buildCostCodeCandidates(String(row["Cost Code"]));
+
+        // First try project_budget_codes (legacy table), then project_cost_codes.
+        const { data: projectBudgetCodes } = await supabase
           .from("project_budget_codes")
-          .select("id, cost_code_id, cost_type_id")
+          .select("id, cost_code_id")
           .eq("project_id", numericProjectId)
-          .eq("cost_code_id", row["Cost Code"])
+          .in("cost_code_id", costCodeCandidates)
           .eq("cost_type_id", costType.id)
           .eq("is_active", true)
-          .single();
+          .limit(1);
 
-        if (costCodeError || !projectCostCode) {
-          errors.push(
-            `Row ${rowNum}: Cost code "${row["Cost Code"]}" with type "${row["Cost Type"]}" not found in project budget codes`,
-          );
-          continue;
+        const { data: projectCostCodes } = await supabase
+          .from("project_cost_codes")
+          .select("id, cost_code_id")
+          .eq("project_id", numericProjectId)
+          .in("cost_code_id", costCodeCandidates)
+          .eq("cost_type_id", costType.id)
+          .eq("is_active", true)
+          .limit(1);
+
+        const matchedCostCodeId =
+          projectBudgetCodes?.[0]?.cost_code_id ||
+          projectCostCodes?.[0]?.cost_code_id ||
+          null;
+
+        let finalCostCodeId = matchedCostCodeId;
+
+        if (!finalCostCodeId) {
+          // Auto-create missing cost code + project cost code from import row.
+          const csvCostCodeId = String(row["Cost Code"]).trim();
+          const { data: existingCostCode } = await supabase
+            .from("cost_codes")
+            .select("id, title")
+            .in("id", costCodeCandidates)
+            .limit(1)
+            .maybeSingle();
+
+          finalCostCodeId = existingCostCode?.id || csvCostCodeId;
+
+          if (!existingCostCode) {
+            const divisionId = resolveDivisionId(finalCostCodeId, divisions);
+
+            if (!divisionId) {
+              errors.push(
+                `Row ${rowNum}: Could not determine division for cost code "${finalCostCodeId}"`,
+              );
+              continue;
+            }
+
+            const { error: createCostCodeError } = await supabase
+              .from("cost_codes")
+              .insert({
+                id: finalCostCodeId,
+                title: row.Description
+                  ? String(row.Description).trim()
+                  : finalCostCodeId,
+                division_id: divisionId,
+                status: "active",
+              });
+
+            if (createCostCodeError && createCostCodeError.code !== "23505") {
+              errors.push(
+                `Row ${rowNum}: Failed to create cost code "${finalCostCodeId}": ${createCostCodeError.message}`,
+              );
+              continue;
+            }
+
+            warnings.push(
+              `Row ${rowNum}: Created missing cost code "${finalCostCodeId}"`,
+            );
+          }
+
+          const { data: existingProjectCostCode } = await supabase
+            .from("project_cost_codes")
+            .select("id, is_active")
+            .eq("project_id", numericProjectId)
+            .eq("cost_code_id", finalCostCodeId)
+            .eq("cost_type_id", costType.id)
+            .limit(1)
+            .maybeSingle();
+
+          if (existingProjectCostCode) {
+            if (!existingProjectCostCode.is_active) {
+              const { error: reactivateProjectCostCodeError } = await supabase
+                .from("project_cost_codes")
+                .update({ is_active: true })
+                .eq("id", existingProjectCostCode.id);
+
+              if (reactivateProjectCostCodeError) {
+                errors.push(
+                  `Row ${rowNum}: Failed to reactivate project cost code "${finalCostCodeId}.${costTypeCode}": ${reactivateProjectCostCodeError.message}`,
+                );
+                continue;
+              }
+            }
+          } else {
+            const { error: createProjectCostCodeError } = await supabase
+              .from("project_cost_codes")
+              .insert({
+                project_id: numericProjectId,
+                cost_code_id: finalCostCodeId,
+                cost_type_id: costType.id,
+                is_active: true,
+              });
+
+            if (createProjectCostCodeError && createProjectCostCodeError.code !== "23505") {
+              errors.push(
+                `Row ${rowNum}: Failed to create project cost code "${finalCostCodeId}.${costTypeCode}": ${createProjectCostCodeError.message}`,
+              );
+              continue;
+            }
+
+            warnings.push(
+              `Row ${rowNum}: Added project cost code "${finalCostCodeId}.${costTypeCode}"`,
+            );
+          }
         }
 
         // Parse numeric fields with validation
@@ -218,7 +378,7 @@ export async function POST(
         // Prepare budget line item data
         const lineItemData = {
           project_id: numericProjectId,
-          cost_code_id: String(row["Cost Code"]).trim(),
+          cost_code_id: finalCostCodeId,
           cost_type_id: costType.id,
           description: row.Description ? String(row.Description).trim() : null,
           original_amount: budgetAmount,
@@ -257,6 +417,19 @@ export async function POST(
       skippedRows,
       message: `Successfully imported ${importedItems.length} of ${rows.length} line items`,
     };
+
+    if (importedItems.length === 0 && errors.length > 0) {
+      return NextResponse.json(
+        {
+          error: "No line items were imported",
+          errors,
+          warnings: warnings.length > 0 ? warnings : undefined,
+          skippedRows,
+          totalRows: rows.length,
+        },
+        { status: 400 },
+      );
+    }
 
     // Add summary to message if there were issues
     if (errors.length > 0 || warnings.length > 0 || skippedRows > 0) {

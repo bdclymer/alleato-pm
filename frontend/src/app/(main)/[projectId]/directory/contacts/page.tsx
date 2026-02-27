@@ -70,7 +70,7 @@ export default function ProjectDirectoryContactsPage() {
     return (
       <>
         <PageHeader
-          title="Directory"
+          title="Project Directory - Contacts"
           description="Manage contacts for this project"
           actions={
             <Button onClick={handleAddContact} className="bg-brand hover:bg-brand/90">
@@ -94,7 +94,7 @@ export default function ProjectDirectoryContactsPage() {
   return (
     <>
       <PageHeader
-        title="Directory"
+        title="Project Directory - Contacts"
         description="Manage contacts for this project"
         actions={
           <Button onClick={handleAddContact} className="bg-brand hover:bg-brand/90">

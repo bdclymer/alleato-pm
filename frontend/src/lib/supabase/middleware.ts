@@ -74,8 +74,12 @@ function checkAuthCookie(
   try {
     const allCookies = request.cookies.getAll();
     const authCookies = allCookies
-      .filter((c) => /^sb-.*-auth-token/.test(c.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter((c) => /^sb-[^-]+-auth-token(?:\.\d+)?$/.test(c.name))
+      .sort((a, b) => {
+        const aChunk = Number(a.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
+        const bChunk = Number(b.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
+        return aChunk - bChunk;
+      });
 
     if (authCookies.length === 0) return "missing";
 

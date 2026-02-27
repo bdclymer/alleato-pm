@@ -94,7 +94,7 @@ export default function ProjectDirectoryUsersPage() {
     return (
       <>
         <PageHeader
-          title="Directory"
+          title="Project Directory - Users"
           description="Manage users for this project"
           actions={
             <Button onClick={handleAddUser} variant="default">
@@ -118,7 +118,7 @@ export default function ProjectDirectoryUsersPage() {
   return (
     <>
       <PageHeader
-        title="Directory"
+        title="Project Directory - Users"
         description="Manage users for this project"
         actions={
           <Button onClick={handleAddUser} variant="default">

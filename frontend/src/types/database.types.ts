@@ -5902,6 +5902,7 @@ export type Database = {
           embedding: string | null
           file_date: string | null
           file_id: string
+          file_name: string | null
           fireflies_id: string | null
           id: string
           metadata: Json | null
@@ -5921,6 +5922,7 @@ export type Database = {
           embedding?: string | null
           file_date?: string | null
           file_id: string
+          file_name?: string | null
           fireflies_id?: string | null
           id?: string
           metadata?: Json | null
@@ -5940,6 +5942,7 @@ export type Database = {
           embedding?: string | null
           file_date?: string | null
           file_id?: string
+          file_name?: string | null
           fireflies_id?: string | null
           id?: string
           metadata?: Json | null
@@ -8793,6 +8796,21 @@ export type Database = {
           rules_json?: Json
           scope?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pipeline_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value?: string
+        }
+        Update: {
+          key?: string
+          value?: string
         }
         Relationships: []
       }

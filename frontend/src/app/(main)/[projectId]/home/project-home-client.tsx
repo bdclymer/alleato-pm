@@ -4,7 +4,6 @@ import * as React from "react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   ChevronRight,
@@ -13,28 +12,20 @@ import {
   CheckSquare,
   TrendingUp,
   DollarSign,
-  Users,
-  Building2,
   ClipboardList,
-  Activity,
-  BarChart3,
   FilePenLine,
   Briefcase,
-  Target,
   Pencil,
 } from "lucide-react";
 
-import { SectionCard } from "@/components/ui/section-card";
 import { MetricCard, MetricGrid } from "@/components/ui/metric-card";
-import { InlineTeamMemberForm } from "@/components/project-home/inline-team-member-form";
-import { DirectorySummary } from "@/components/project-home/directory-summary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { InfoSection } from "./info-section";
 import { MeetingsSection } from "./meetings-section";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
-import { cn } from "@/lib/utils";
 
 /* =============================================================================
    PROJECT HOME
@@ -104,52 +95,6 @@ interface ProjectHomeClientProps {
 }
 
 /* -----------------------------------------------------------------------------
-   Project Tools Configuration
-   ----------------------------------------------------------------------------- */
-
-const toolCategories = [
-  {
-    title: "Financial",
-    tools: [
-      { name: "Prime Contracts", href: "/prime-contracts", icon: FilePenLine },
-      { name: "Budget", href: "/budget", icon: TrendingUp },
-      { name: "Commitments", href: "/commitments", icon: Briefcase },
-      { name: "Change Orders", href: "/change-orders", icon: FileText },
-      { name: "Change Events", href: "/change-events", icon: Activity },
-      { name: "Direct Costs", href: "/direct-costs", icon: DollarSign },
-      { name: "Invoices", href: "/invoices", icon: DollarSign },
-    ],
-  },
-  {
-    title: "Project Management",
-    tools: [
-      { name: "Emails", href: "/emails", icon: FileText },
-      { name: "RFIs", href: "/rfis", icon: Activity },
-      { name: "Submittals", href: "/submittals", icon: FileText },
-      { name: "Transmittals", href: "/transmittals", icon: FileText },
-      { name: "Punch List", href: "/punch-list", icon: CheckSquare },
-      { name: "Meetings", href: "/meetings", icon: Calendar },
-      { name: "Schedule", href: "/schedule", icon: Calendar },
-      { name: "Daily Log", href: "/daily-log", icon: ClipboardList },
-      { name: "Photos", href: "/photos", icon: Target },
-      { name: "Drawings", href: "/drawings", icon: Pencil },
-      { name: "Specifications", href: "/specifications", icon: FileText },
-    ],
-  },
-  {
-    title: "Core",
-    tools: [
-      { name: "Home", href: "/home", icon: Building2 },
-      { name: "Client Dashboard", href: "/client-dashboard", icon: BarChart3 },
-      { name: "360 Reporting", href: "/reporting", icon: BarChart3 },
-      { name: "Documents", href: "/documents", icon: FileText },
-      { name: "Directory", href: "/directory", icon: Users },
-      { name: "Tasks", href: "/tasks", icon: CheckSquare },
-    ],
-  },
-];
-
-/* -----------------------------------------------------------------------------
    Utility Functions
    ----------------------------------------------------------------------------- */
 
@@ -180,14 +125,14 @@ export function ProjectHomeClient({
   project,
   tasks,
   meetings,
-  changeOrders: _changeOrders,
-  rfis: _rfis,
-  dailyLogs: _dailyLogs,
+  changeOrders,
+  rfis,
+  dailyLogs,
   commitments,
   contracts,
   budget = [],
-  changeEvents: _changeEvents = [],
-  schedule: _schedule = [],
+  changeEvents = [],
+  schedule = [],
   sov: _sov = [],
 }: ProjectHomeClientProps) {
   const router = useRouter();
@@ -218,18 +163,7 @@ export function ProjectHomeClient({
     notes: (project as any).description || "",
   };
 
-  // Section open states
-  const [isTeamOpen, setIsTeamOpen] = React.useState(true);
-  const [isCommitmentsOpen, setIsCommitmentsOpen] = React.useState(true);
-  const [isScheduleOpen, setIsScheduleOpen] = React.useState(true);
-  const [showAddTeamMemberForm, setShowAddTeamMemberForm] =
-    React.useState(false);
-
-  /* ---------------------------------------------------------------------------
-     Team Member Handlers
-     ------------------------------------------------------------------------- */
-
-  const parseTeamMembers = (): TeamMember[] => {
+  const teamMembers = React.useMemo((): TeamMember[] => {
     if (!project.team_members || !Array.isArray(project.team_members)) {
       return [];
     }
@@ -252,22 +186,7 @@ export function ProjectHomeClient({
           parsedMember?.personId || parsedMember?.contactId || undefined,
       };
     });
-  };
-
-  const handleSaveTeamMembers = async (members: TeamMember[]) => {
-    try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ team_members: members }),
-      });
-      if (!response.ok) throw new Error("Failed to update team members");
-      setShowAddTeamMemberForm(false);
-      router.refresh();
-    } catch (error) {
-      throw error;
-    }
-  };
+  }, [project.team_members]);
 
   /* ---------------------------------------------------------------------------
      Calculate Metrics & Insights
@@ -284,6 +203,9 @@ export function ProjectHomeClient({
   const remaining = Math.max(totalBudget - committed, 0);
   const commitmentPercentage =
     totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
+  const primeContracts = contracts.filter(
+    (contract) => contract.contract_type === "prime",
+  );
 
   /* ---------------------------------------------------------------------------
      Render
@@ -345,12 +267,10 @@ export function ProjectHomeClient({
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-4">
+        <div className="pb-8">
+          <div className="space-y-4">
             {/* Financial Overview */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Financial Overview</h3>
 
               <MetricGrid cols={3} gap="lg">
                 <MetricCard
@@ -388,26 +308,548 @@ export function ProjectHomeClient({
                 />
               </MetricGrid>
             </div>
-            <InfoSection
-              title="Commitments"
-              icon={ClipboardList}
-              items={commitments.slice(0, 6).map((commitment) => ({
-                id: commitment.id,
-                title:
-                  commitment.title ||
-                  `${
-                    commitment.type === "subcontract"
-                      ? "Subcontract"
-                      : "Purchase Order"
-                  } #${commitment.number}`,
-                subtitle: commitment.contract_amount
-                  ? formatCompactCurrency(commitment.contract_amount)
-                  : commitment.number,
-                href: `/${project.id}/commitments/${commitment.id}`,
-              }))}
-              viewAllHref={`/${project.id}/commitments`}
-              emptyMessage="No commitments yet"
-              maxItems={6}
+            <div className="my-8 space-y-3">
+              <h3 className="text-xl font-semibold text-neutral-800">
+                Financial Tools
+              </h3>
+              <Tabs defaultValue="prime-contracts" className="space-y-3">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+                  <TabsTrigger value="prime-contracts">Prime Contracts</TabsTrigger>
+                  <TabsTrigger value="commitments">Commitments</TabsTrigger>
+                  <TabsTrigger value="direct-costs">Direct Costs</TabsTrigger>
+                  <TabsTrigger value="invoices">Invoices</TabsTrigger>
+                  <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
+                  <TabsTrigger value="change-events">Change Events</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="prime-contracts" className="mt-0">
+                  {primeContracts.length > 0 ? (
+                    <div className="space-y-0">
+                      {primeContracts.slice(0, 5).map((contract) => (
+                          <Link
+                            key={contract.id}
+                            href={`/${project.id}/prime-contracts/${contract.id}`}
+                            className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-neutral-900 truncate">
+                                {contract.title || contract.contract_number}
+                              </p>
+                              <p className="text-xs text-neutral-500 truncate">
+                                {contract.contract_number}
+                              </p>
+                            </div>
+                            <span className="text-sm font-medium text-neutral-700">
+                              {formatCompactCurrency(contract.contract_amount || 0)}
+                            </span>
+                          </Link>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No prime contracts yet.
+                      </p>
+                    </div>
+                  )}
+                  {primeContracts.length > 0 ? (
+                    <div className="mt-3">
+                      <Link
+                        href={`/${project.id}/prime-contracts`}
+                        className="text-sm font-medium text-brand hover:underline"
+                      >
+                        View all prime contracts
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-center">
+                      <Link
+                        href={`/${project.id}/prime-contracts/new`}
+                        className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                      >
+                        Create a prime contract
+                      </Link>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="commitments" className="mt-0">
+                  {commitments.length > 0 ? (
+                    <div className="space-y-0">
+                      {commitments.slice(0, 5).map((commitment) => (
+                        <Link
+                          key={commitment.id}
+                          href={`/${project.id}/commitments/${commitment.id}`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">
+                              {commitment.title ||
+                                `${commitment.type === "subcontract" ? "Subcontract" : "PO"} #${commitment.number}`}
+                            </p>
+                            <p className="text-xs text-neutral-500 truncate">
+                              {commitment.number}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-neutral-700">
+                            {formatCompactCurrency(commitment.contract_amount || 0)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No commitments yet.
+                      </p>
+                    </div>
+                  )}
+                  {commitments.length > 0 ? (
+                    <div className="mt-3">
+                      <Link
+                        href={`/${project.id}/commitments`}
+                        className="text-sm font-medium text-brand hover:underline"
+                      >
+                        View all commitments
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-center">
+                      <Link
+                        href={`/${project.id}/commitments/new`}
+                        className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                      >
+                        Create a commitment
+                      </Link>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="direct-costs" className="mt-0">
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-neutral-500">
+                      Direct costs summary is available in the Direct Costs tool.
+                    </p>
+                  </div>
+                  <div className="mt-3">
+                    <Link
+                      href={`/${project.id}/direct-costs`}
+                      className="text-sm font-medium text-brand hover:underline"
+                    >
+                      View direct costs
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="invoices" className="mt-0">
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-neutral-500">
+                      Invoice summary is available in the Invoices tool.
+                    </p>
+                  </div>
+                  <div className="mt-3">
+                    <Link
+                      href={`/${project.id}/invoices`}
+                      className="text-sm font-medium text-brand hover:underline"
+                    >
+                      View invoices
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="change-orders" className="mt-0">
+                  {changeOrders.length > 0 ? (
+                    <div className="space-y-0">
+                      {changeOrders.slice(0, 5).map((changeOrder) => (
+                        <Link
+                          key={changeOrder.id}
+                          href={`/${project.id}/change-orders/${changeOrder.id}`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">
+                              {changeOrder.title || `Change Order #${changeOrder.id}`}
+                            </p>
+                            <p className="text-xs text-neutral-500 truncate">
+                              {changeOrder.co_number || `CO-${changeOrder.id}`}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-neutral-700">
+                            {formatCompactCurrency(changeOrder.amount || 0)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No change orders yet.
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/change-orders`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {changeOrders.length > 0 ? "View all change orders" : "Create a change order"}
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="change-events" className="mt-0">
+                  {changeEvents.length > 0 ? (
+                    <div className="space-y-0">
+                      {changeEvents.slice(0, 5).map((changeEvent) => (
+                        <Link
+                          key={changeEvent.id}
+                          href={`/${project.id}/change-events/${changeEvent.id}`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">
+                              {changeEvent.title || `Change Event #${changeEvent.id}`}
+                            </p>
+                            <p className="text-xs text-neutral-500 truncate">
+                              {changeEvent.status || "Draft"}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-neutral-700">
+                            {changeEvent.number}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No change events yet.
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/change-events`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {changeEvents.length > 0 ? "View all change events" : "Create a change event"}
+                    </Link>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="my-8 space-y-3">
+              <h3 className="text-xl font-semibold text-neutral-800">
+                Project Directory
+              </h3>
+              <Tabs defaultValue="project-team" className="space-y-3">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="project-team">Project Team</TabsTrigger>
+                  <TabsTrigger value="users">Users</TabsTrigger>
+                  <TabsTrigger value="subcontractors">Subcontractors</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="project-team" className="mt-0">
+                  {teamMembers.length > 0 ? (
+                    <div className="space-y-0">
+                      {teamMembers.slice(0, 6).map((member, index) => (
+                        <div
+                          key={`team-${project.id}-${index}`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0"
+                        >
+                          <p className="text-sm font-medium text-neutral-900 truncate">
+                            {member.name}
+                          </p>
+                          <p className="text-xs text-neutral-500 truncate">
+                            {member.role}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No team members yet.
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/directory/users`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {teamMembers.length > 0 ? "View all project team" : "Add Team Member"}
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="users" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      Manage project users in Directory.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/directory/users`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View users
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="subcontractors" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      Manage subcontractors in Directory.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/directory/companies`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View subcontractors
+                    </Link>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="my-8 space-y-3">
+              <h3 className="text-xl font-semibold text-neutral-800">
+                Project Management
+              </h3>
+              <Tabs defaultValue="schedule" className="space-y-3">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                  <TabsTrigger value="rfis">RFI&apos;s</TabsTrigger>
+                  <TabsTrigger value="submittals">Submittals</TabsTrigger>
+                  <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
+                  <TabsTrigger value="punch-list">Punch List</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="schedule" className="mt-0">
+                  {tasks.length > 0 ? (
+                    <div className="space-y-0">
+                      {tasks.slice(0, 5).map((task) => (
+                        <Link
+                          key={task.id}
+                          href={`/${project.id}/schedule`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <p className="text-sm font-medium text-neutral-900 truncate">
+                            {task.task_description || `Task #${task.id}`}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {task.due_date
+                              ? format(new Date(task.due_date), "MMM d")
+                              : "No due date"}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No schedule items yet.
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/schedule`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {tasks.length > 0 || schedule.length > 0 ? "View schedule" : "Create schedule"}
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="rfis" className="mt-0">
+                  {rfis.length > 0 ? (
+                    <div className="space-y-0">
+                      {rfis.slice(0, 5).map((rfi) => (
+                        <Link
+                          key={rfi.id}
+                          href={`/${project.id}/rfis/${rfi.id}`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <p className="text-sm font-medium text-neutral-900 truncate">
+                            {rfi.subject || `RFI #${rfi.number}`}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {rfi.status}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">No RFI&apos;s yet.</p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/rfis`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {rfis.length > 0 ? "View all RFI's" : "Create an RFI"}
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="submittals" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No submittals yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/submittals`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      Create a submittal
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="daily-log" className="mt-0">
+                  {dailyLogs.length > 0 ? (
+                    <div className="space-y-0">
+                      {dailyLogs.slice(0, 5).map((log) => (
+                        <Link
+                          key={log.id}
+                          href={`/${project.id}/daily-log`}
+                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
+                        >
+                          <p className="text-sm font-medium text-neutral-900 truncate">
+                            Daily Log
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {format(new Date(log.log_date), "MMM d, yyyy")}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="pt-4 pb-1 text-center">
+                      <p className="text-sm text-neutral-500">
+                        No daily logs yet.
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/daily-log`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      {dailyLogs.length > 0 ? "View daily log" : "Create a daily log"}
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="punch-list" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No punch list items yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/punch-list`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      Create a punch list item
+                    </Link>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="my-8 space-y-3">
+              <h3 className="text-xl font-semibold text-neutral-800">Files</h3>
+              <Tabs defaultValue="drawings" className="space-y-3">
+                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+                  <TabsTrigger value="drawings">Drawings</TabsTrigger>
+                  <TabsTrigger value="photos">Photos</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                  <TabsTrigger value="specifications">Specifications</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="drawings" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No drawings yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/drawings`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View drawings
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="photos" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No photos yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/photos`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View photos
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="documents" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No documents yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/documents`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View documents
+                    </Link>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="specifications" className="mt-0">
+                  <div className="pt-4 pb-1 text-center">
+                    <p className="text-sm text-neutral-500">
+                      No specifications yet.
+                    </p>
+                  </div>
+                  <div className="mt-1 text-center">
+                    <Link
+                      href={`/${project.id}/specifications`}
+                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
+                    >
+                      View specifications
+                    </Link>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <MeetingsSection
+              meetings={meetings}
+              projectId={project.id}
+              maxItems={5}
             />
 
             <InfoSection
@@ -426,137 +868,6 @@ export function ProjectHomeClient({
               maxItems={5}
             />
 
-            <MeetingsSection
-              meetings={meetings}
-              projectId={project.id}
-              maxItems={5}
-            />
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Quick Links</h3>
-              <SectionCard
-                title="Project Tools"
-                open={true}
-              >
-                <div className="space-y-4">
-                  {toolCategories.map((category) => (
-                    <div key={category.title}>
-                      <h4 className="mb-2 text-xs font-semibold tracking-wide uppercase text-neutral-400">
-                        {category.title}
-                      </h4>
-                      <div className="space-y-0.5">
-                        {category.tools.map((tool) => (
-                          <Link
-                            key={tool.name}
-                            href={`/${project.id}${tool.href}`}
-                            className="flex items-center gap-2.5 px-2.5 py-1.5 -mx-2.5 rounded-md hover:bg-neutral-50 transition-colors group"
-                          >
-                            <tool.icon className="h-4 w-4 text-neutral-400 group-hover:text-brand transition-colors" />
-                            <span className="text-sm font-medium text-neutral-700 group-hover:text-neutral-900">
-                              {tool.name}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Directory</h3>
-              <div className="space-y-4">
-                <SectionCard
-                  title="Project Team"
-                  open={isTeamOpen}
-                  onOpenChange={setIsTeamOpen}
-                  viewAllHref={`/${project.id}/directory/users`}
-                  onAdd={() => setShowAddTeamMemberForm(true)}
-                  addLabel="Add Member"
-                >
-                  {showAddTeamMemberForm && (
-                    <div className="mb-4 pb-4 border-b border-neutral-100">
-                      <InlineTeamMemberForm
-                        projectId={project.id}
-                        existingMembers={parseTeamMembers()}
-                        onSave={handleSaveTeamMembers}
-                        onCancel={() => setShowAddTeamMemberForm(false)}
-                      />
-                    </div>
-                  )}
-
-                  {project.team_members &&
-                  Array.isArray(project.team_members) &&
-                  project.team_members.length > 0 ? (
-                    <div className="space-y-0">
-                      {project.team_members.slice(0, 6).map((member, index) => {
-                        const parsedMember =
-                          typeof member === "string"
-                            ? (() => {
-                                try {
-                                  return JSON.parse(member);
-                                } catch {
-                                  return {
-                                    name: member,
-                                    role: "Role not specified",
-                                  };
-                                }
-                              })()
-                            : member;
-
-                        const memberName = parsedMember?.name || "Team Member";
-                        const memberRole =
-                          parsedMember?.role || "Role not specified";
-                        const initials = String(memberName)
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .substring(0, 2)
-                          .toUpperCase();
-
-                        return (
-                          <div
-                            key={`team-${project.id}-${index}`}
-                            className="flex items-center gap-3 py-2 border-b border-neutral-100/60 last:border-0"
-                          >
-                            <Avatar className="h-7 w-7 border border-neutral-200/80">
-                              <AvatarImage
-                                src="/alleato-favicon.png"
-                                alt={String(memberName)}
-                              />
-                              <AvatarFallback className="bg-neutral-100 text-neutral-600 text-xs font-medium">
-                                {initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-neutral-900 truncate">
-                                {String(memberName)}
-                              </p>
-                              <p className="text-xs text-neutral-500 truncate">
-                                {String(memberRole)}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <SectionCard.Empty
-                      message="No team members yet"
-                      description="Add team members to get started"
-                      actionLabel="Add Team Member"
-                      onAction={() => setShowAddTeamMemberForm(true)}
-                    />
-                  )}
-                </SectionCard>
-
-                <DirectorySummary projectId={String(project.id)} />
-              </div>
-            </div>
           </div>
         </div>
       </div>

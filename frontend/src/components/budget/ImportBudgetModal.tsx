@@ -24,6 +24,7 @@ interface ImportResult {
   success: boolean;
   importedCount: number;
   totalRows: number;
+  error?: string;
   errors?: string[];
   warnings?: string[];
   skippedRows?: number;
@@ -169,7 +170,12 @@ export function ImportBudgetModal({
       const result: ImportResult = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.errors?.[0] || result.message || "Failed to import budget");
+        throw new Error(
+          result.error ||
+          result.errors?.[0] ||
+          result.message ||
+          "Failed to import budget",
+        );
       }
 
       // Store the result for display

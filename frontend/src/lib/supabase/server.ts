@@ -70,8 +70,12 @@ async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null
 
     // Supabase SSR stores auth in chunked cookies: sb-<ref>-auth-token.0, .1, etc.
     const authCookieParts = allCookies
-      .filter((c) => /^sb-.*-auth-token/.test(c.name))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter((c) => /^sb-[^-]+-auth-token(?:\.\d+)?$/.test(c.name))
+      .sort((a, b) => {
+        const aChunk = Number(a.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
+        const bChunk = Number(b.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
+        return aChunk - bChunk;
+      });
 
     if (authCookieParts.length === 0) return null;
 

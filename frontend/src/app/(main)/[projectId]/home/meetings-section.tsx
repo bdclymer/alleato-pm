@@ -35,7 +35,7 @@ export function MeetingsSection({
   const displayMeetings = meetings.slice(0, maxItems);
 
   return (
-    <div className="rounded-md border border-neutral-200 bg-background p-8 mb-6">
+    <div className="pt-6 pb-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-2">
