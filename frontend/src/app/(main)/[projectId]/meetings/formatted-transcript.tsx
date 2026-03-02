@@ -6,26 +6,48 @@ import { SectionHeader } from "@/components/ui/section-header";
 
 interface FormattedTranscriptProps {
   content: string;
+  /** Ordered list of participant emails — index 0 = speaker "0", index 1 = speaker "1", etc. */
+  participants?: string[];
+}
+
+function formatParticipantName(email: string): string {
+  const localPart = email.split("@")[0];
+  if (!localPart) return email;
+  const parts = localPart.split(/[._-]/);
+  if (parts.length >= 2) {
+    const firstName =
+      parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+    const lastName =
+      parts[parts.length - 1].charAt(0).toUpperCase() +
+      parts[parts.length - 1].slice(1).toLowerCase();
+    return `${firstName} ${lastName}`;
+  }
+  return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
 }
 
 /**
- * Renders markdown-formatted transcript content with proper styling
- * Expects to receive only the transcript portion (not the full document)
- *
- * CRITICAL FIX: This component now preprocesses transcript text to add proper paragraph breaks
- * before speaker labels to prevent the transcript from displaying as one jumbled block of text.
+ * Renders markdown-formatted transcript content with proper styling.
+ * Maps numbered speaker labels (e.g. **0:**) to actual participant names
+ * when a participants array is provided.
  */
-export function FormattedTranscript({ content }: FormattedTranscriptProps) {
-  // Preprocess the transcript to ensure proper paragraph breaks
-  // This handles transcripts that might not have proper markdown formatting
+export function FormattedTranscript({
+  content,
+  participants = [],
+}: FormattedTranscriptProps) {
   const formattedContent = content
-    // Convert numbered speakers (e.g., **0:** **1:**) to "Speaker 1:", "Speaker 2:"
-    .replace(/\*\*(\d+):\*\*/g, (_, n) => `**Speaker ${parseInt(n, 10) + 1}:**`)
+    // Replace **0:**, **1:** etc. with actual participant names (or "Speaker N" fallback)
+    .replace(/\*\*(\d+):\*\*/g, (_, n) => {
+      const idx = parseInt(n, 10);
+      if (participants[idx]) {
+        return `**${formatParticipantName(participants[idx])}:**`;
+      }
+      return `**Speaker ${idx + 1}:**`;
+    })
     // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
     .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")
-    // Add double line breaks before speaker names followed by colon (e.g., **John Smith:**)
+    // Add double line breaks before speaker name labels
     .replace(/(\*\*[^*]+:\*\*)/g, "\n\n$1 ")
-    // Ensure there's spacing after paragraphs
+    // Normalise excessive blank lines
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
@@ -36,7 +58,6 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Headings
           h1: ({ children }) => (
             <h1 className="text-2xl font-sans font-light tracking-tight text-neutral-900 mb-4 mt-8 first:mt-0">
               {children}
@@ -57,15 +78,11 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
               {children}
             </h4>
           ),
-
-          // Paragraphs
           p: ({ children }) => (
             <p className="text-sm text-neutral-700 leading-relaxed mb-2">
               {children}
             </p>
           ),
-
-          // Lists
           ul: ({ children }) => (
             <ul className="text-sm text-neutral-700 leading-relaxed mb-2 space-y-2">
               {children}
@@ -77,31 +94,23 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
             </ol>
           ),
           li: ({ children }) => {
-            // Skip empty list items
             const childArray = Array.isArray(children) ? children : [children];
             const hasContent = childArray.some((child) => {
               if (typeof child === "string") return child.trim().length > 0;
               return child != null;
             });
             if (!hasContent) return null;
-
             return (
-              <li className="flex items-start gap-4 ml-1">
-                <span className="text-brand mt-0.5 shrink-0">•</span>
+              <li className="flex items-start gap-2.5 ml-1">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0 flex-none" />
                 <span>{children}</span>
               </li>
             );
           },
-
-          // Emphasis
           strong: ({ children }) => (
-            <strong className="font-semibold text-neutral-900">
-              {children}
-            </strong>
+            <strong className="font-semibold text-neutral-900">{children}</strong>
           ),
           em: ({ children }) => <em className="italic">{children}</em>,
-
-          // Code
           code: ({ children }) => (
             <code className="px-1.5 py-0.5 bg-neutral-100 text-neutral-800 rounded text-xs font-mono">
               {children}
@@ -112,35 +121,25 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
               {children}
             </pre>
           ),
-
-          // Blockquotes
           blockquote: ({ children }) => (
-            <blockquote className="border-l-4 border-brand pl-4 py-2 mb-4 text-neutral-600 italic">
+            <blockquote className="border-l-4 border-primary/30 pl-4 py-2 mb-4 text-neutral-600 italic">
               {children}
             </blockquote>
           ),
-
-          // Horizontal rule
           hr: () => <hr className="border-neutral-200 my-6" />,
-
-          // Links
           a: ({ href, children }) => (
             <a
               href={href}
-              className="text-brand hover:underline"
+              className="text-primary hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >
               {children}
             </a>
           ),
-
-          // Tables
           table: ({ children }) => (
             <div className="overflow-x-auto mb-4">
-              <table className="min-w-full border border-border">
-                {children}
-              </table>
+              <table className="min-w-full border border-border">{children}</table>
             </div>
           ),
           thead: ({ children }) => (
