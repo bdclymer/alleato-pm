@@ -218,6 +218,8 @@ export class DirectCostService {
     } = await this.supabase.auth.getUser();
     if (!user) throw new Error("Authentication required");
 
+    const defaultBudgetCodeId = await this.getDefaultBudgetCodeId(projectId);
+
     // Calculate total from line items
     const total_amount = this.calculateTotal(
       data.line_items.map((item) => ({
@@ -256,15 +258,24 @@ export class DirectCostService {
       throw new Error(`Failed to create direct cost: ${costError.message}`);
 
     // Create line items
-    const lineItemsToInsert = data.line_items.map((item, index) => ({
-      direct_cost_id: directCost.id,
-      budget_code_id: item.budget_code_id,
-      description: item.description || null,
-      quantity: item.quantity,
-      uom: item.uom,
-      unit_cost: item.unit_cost,
-      line_order: item.line_order || index + 1,
-    }));
+    const lineItemsToInsert = data.line_items.map((item, index) => {
+      const budgetCodeId = item.budget_code_id || defaultBudgetCodeId;
+      if (!budgetCodeId) {
+        throw new Error(
+          "No project budget code available. Add at least one budget code in project setup."
+        );
+      }
+
+      return {
+        direct_cost_id: directCost.id,
+        budget_code_id: budgetCodeId,
+        description: item.description || null,
+        quantity: item.quantity,
+        uom: item.uom,
+        unit_cost: item.unit_cost,
+        line_order: item.line_order || index + 1,
+      };
+    });
 
     const { data: lineItems, error: lineItemsError } = await this.supabase
       .from("direct_cost_line_items")
@@ -419,6 +430,8 @@ export class DirectCostService {
 
     // Update line items if provided
     if (data.line_items !== undefined) {
+      const defaultBudgetCodeId = await this.getDefaultBudgetCodeId(projectId);
+
       // Calculate new total
       updateData.total_amount = this.calculateTotal(
         data.line_items.map((item) => ({
@@ -437,16 +450,25 @@ export class DirectCostService {
         throw new Error(`Failed to update line items: ${deleteError.message}`);
 
       // Insert new line items
-      const lineItemsToInsert = data.line_items.map((item, index) => ({
+      const lineItemsToInsert = data.line_items.map((item, index) => {
+        const budgetCodeId = item.budget_code_id || defaultBudgetCodeId;
+        if (!budgetCodeId) {
+          throw new Error(
+            "No project budget code available. Add at least one budget code in project setup."
+          );
+        }
+
+        return {
         id: item.id, // May be undefined for new items
         direct_cost_id: costId,
-        budget_code_id: item.budget_code_id,
+        budget_code_id: budgetCodeId,
         description: item.description || null,
         quantity: item.quantity,
         uom: item.uom,
         unit_cost: item.unit_cost,
         line_order: item.line_order || index + 1,
-      }));
+        };
+      });
 
       const { error: insertError } = await this.supabase
         .from("direct_cost_line_items")
@@ -751,6 +773,25 @@ export class DirectCostService {
     return mapping[sort] || "date";
   }
 
+  private async getDefaultBudgetCodeId(
+    projectId: string | number
+  ): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from("project_cost_codes")
+      .select("id")
+      .eq("project_id", Number(projectId))
+      .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load project budget codes: ${error.message}`);
+    }
+
+    return data?.id ?? null;
+  }
+
   private groupByField(
     items: Array<{ [key: string]: unknown }>,
     field: string
@@ -825,9 +866,8 @@ export class DirectCostService {
         changed_fields: changedFields,
         user_id: userId,
       });
-    } catch (error) {
+    } catch {
       // Don't fail the main operation if audit logging fails
-       
-      }
+    }
   }
 }

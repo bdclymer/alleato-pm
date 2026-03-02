@@ -33,6 +33,7 @@ export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): 
     tableState,
     pagedMeetings,
     totalItems,
+    unfilteredTotal,
     totalPages,
     filters,
     activeFilters,
@@ -71,7 +72,7 @@ export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): 
           ),
         }}
         toolbar={{
-          totalItems,
+          totalItems: unfilteredTotal,
           filteredItems: totalItems,
           selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,

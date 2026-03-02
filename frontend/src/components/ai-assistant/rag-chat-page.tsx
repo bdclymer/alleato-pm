@@ -13,12 +13,16 @@ import {
 } from "@/hooks/use-rag-conversations";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea } from "./chat-area";
+import type { ToolTraceItem } from "./trace-panel";
 
 interface ChatHistoryMessage {
   id: string;
   role: string;
   content: string;
   sources: unknown[] | null;
+  metadata?: {
+    tool_trace?: ToolTraceItem[];
+  } | null;
   created_at: string | null;
 }
 
@@ -30,18 +34,33 @@ function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
   };
 }
 
+function extractToolTraces(
+  messages: ChatHistoryMessage[],
+): Record<string, ToolTraceItem[]> {
+  const tracesByMessageId: Record<string, ToolTraceItem[]> = {};
+  messages.forEach((msg) => {
+    const traces = msg.metadata?.tool_trace;
+    if (Array.isArray(traces) && traces.length > 0) {
+      tracesByMessageId[msg.id] = traces;
+    }
+  });
+  return tracesByMessageId;
+}
+
 function ChatWithSession({
   sessionId,
   initialMessages,
+  toolTracesByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
   onFinishMessage,
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
+  toolTracesByMessageId: Record<string, ToolTraceItem[]>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
-  onFinishMessage: () => void;
+  onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState(pendingFirstMessage ?? "");
   const sessionIdRef = useRef(sessionId);
@@ -64,7 +83,7 @@ function ChatWithSession({
       },
     }),
     onFinish: () => {
-      onFinishMessage();
+      onFinishMessage(sessionIdRef.current);
     },
   });
 
@@ -101,6 +120,7 @@ function ChatWithSession({
   return (
     <ChatArea
       messages={messages}
+      toolTracesByMessageId={toolTracesByMessageId}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
@@ -122,6 +142,9 @@ export function RagChatPage() {
     null,
   );
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
+  const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
+    Record<string, ToolTraceItem[]>
+  >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
 
@@ -132,35 +155,41 @@ export function RagChatPage() {
   const renameConversation = useRenameConversation();
   const deleteConversation = useDeleteConversation();
 
+  const loadSessionMessages = useCallback(async (sessionId: string) => {
+    setIsLoadingMessages(true);
+    try {
+      const res = await fetch(`/api/ai-assistant/messages/${sessionId}`);
+      const data = await res.json();
+      const historyMessages = (data.messages || []) as ChatHistoryMessage[];
+      const msgs: UIMessage[] = historyMessages.map((m) => dbMessageToUIMessage(m));
+      setInitialMessages(msgs);
+      setToolTracesByMessageId(extractToolTraces(historyMessages));
+    } catch {
+      setInitialMessages([]);
+      setToolTracesByMessageId({});
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, []);
+
   // Load messages when session changes
   useEffect(() => {
     const sessionId = activeSessionId;
     if (!sessionId) {
       setInitialMessages([]);
+      setToolTracesByMessageId({});
       return;
     }
-
-    setIsLoadingMessages(true);
-    fetch(`/api/ai-assistant/messages/${sessionId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const msgs: UIMessage[] = (data.messages || []).map(
-          (m: ChatHistoryMessage) => dbMessageToUIMessage(m),
-        );
-        setInitialMessages(msgs);
-      })
-      .catch(() => {
-        setInitialMessages([]);
-      })
-      .finally(() => setIsLoadingMessages(false));
-  }, [activeSessionId]);
+    void loadSessionMessages(sessionId);
+  }, [activeSessionId, loadSessionMessages]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
 
-  const handleFinishMessage = useCallback(() => {
+  const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
-  }, [queryClient]);
+    void loadSessionMessages(sessionId);
+  }, [queryClient, loadSessionMessages]);
 
   const setActiveSession = useCallback(
     (sessionId: string | null) => {
@@ -175,11 +204,22 @@ export function RagChatPage() {
     [router],
   );
 
-  const handleNewChat = useCallback(() => {
-    setActiveSession(null);
+  const handleNewChat = useCallback(async () => {
+    if (createConversation.isPending) return;
+
     setInitialMessages([]);
     setPendingFirstMessage(null);
-  }, [setActiveSession]);
+    setPendingSessionId(null);
+
+    try {
+      const result = await createConversation.mutateAsync("New conversation");
+      const sessionId = result.session_id;
+      setPendingSessionId(sessionId);
+      router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
+    } catch {
+      setActiveSession(null);
+    }
+  }, [createConversation, router, setActiveSession]);
 
   const handleSelectConversation = useCallback(
     (sessionId: string) => {
@@ -238,6 +278,7 @@ export function RagChatPage() {
           key={effectiveSessionId}
           sessionId={effectiveSessionId}
           initialMessages={initialMessages}
+          toolTracesByMessageId={toolTracesByMessageId}
           isLoadingMessages={isLoadingMessages}
           pendingFirstMessage={pendingFirstMessage}
           onFinishMessage={handleFinishMessage}
@@ -245,6 +286,7 @@ export function RagChatPage() {
       ) : (
         <ChatArea
           messages={[]}
+          toolTracesByMessageId={{}}
           isLoadingMessages={false}
           isStreaming={false}
           input={noSessionInput}

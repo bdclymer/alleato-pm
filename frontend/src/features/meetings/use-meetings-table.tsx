@@ -19,7 +19,11 @@ import {
   buildMeetingFilters,
   buildMeetingTableColumns,
   meetingDefaultVisibleColumns,
+  type EditableField,
+  type EditContext,
 } from "@/features/meetings/meetings-table-config";
+
+// ─── Constants ───────────────────────────────────────────────────────────────
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   year: undefined,
@@ -28,6 +32,8 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 };
 
 type FilterState = Record<string, FilterValue>;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getMeetingYear(dateValue: string | null | undefined): string | null {
   if (!dateValue) return null;
@@ -48,7 +54,7 @@ function sortMeetings(
   getSortValue: (meeting: Meeting, columnId: string) => string | number | null,
 ): Meeting[] {
   if (!sortBy) return meetings;
-  const sorted = [...meetings].sort((a, b) => {
+  return [...meetings].sort((a, b) => {
     const valueA = getSortValue(a, sortBy);
     const valueB = getSortValue(b, sortBy);
 
@@ -63,9 +69,9 @@ function sortMeetings(
     const comparison = String(valueA).localeCompare(String(valueB));
     return sortDirection === "asc" ? comparison : -comparison;
   });
-
-  return sorted;
 }
+
+// ─── Result type ──────────────────────────────────────────────────────────────
 
 export interface UseMeetingsTableResult {
   tableState: ReturnType<typeof useUnifiedTableState>;
@@ -73,6 +79,7 @@ export interface UseMeetingsTableResult {
   setMeetings: React.Dispatch<React.SetStateAction<Meeting[]>>;
   pagedMeetings: Meeting[];
   totalItems: number;
+  unfilteredTotal: number;
   totalPages: number;
   filters: FilterConfig[];
   activeFilters: FilterState;
@@ -97,6 +104,8 @@ export interface UseMeetingsTableResult {
   handleExport: () => void;
 }
 
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableResult {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,6 +115,14 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [meetingToDelete, setMeetingToDelete] = React.useState<Meeting | null>(null);
 
+  // ── Inline editing state ────────────────────────────────────────────────────
+  const [editingCell, setEditingCell] = React.useState<{
+    meetingId: string;
+    field: EditableField;
+  } | null>(null);
+  const [editingValue, setEditingValue] = React.useState("");
+
+  // ── Table state ─────────────────────────────────────────────────────────────
   const initialYear = searchParams.get("year") ?? "";
   const initialType = searchParams.get("type") ?? "";
   const initialCategory = searchParams.get("category") ?? "";
@@ -131,6 +148,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     },
   });
 
+  // Sync filter state from URL (handles browser back/forward navigation)
   React.useEffect(() => {
     const nextYear = searchParams.get("year") ?? "";
     const nextType = searchParams.get("type") ?? "";
@@ -157,15 +175,16 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     });
   }, [searchParams, tableState.setActiveFilters]);
 
+  // Initialise visible columns from defaults if not yet stored
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(meetingDefaultVisibleColumns);
     }
   }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
+  // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
   const searchTerm = tableState.debouncedSearch.toLowerCase();
-  const tableColumns = buildMeetingTableColumns();
 
   const filteredMeetings = meetings.filter((meeting) => {
     const meetingYear = getMeetingYear(meeting.date);
@@ -188,15 +207,92 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     return matchesYear && matchesType && matchesCategory && matchesSearch;
   });
 
+  // ── Projects for inline select ───────────────────────────────────────────────
+  const { projects } = useProjects();
+  const projectOptions = projects.map((project) => ({
+    value: project.name || "",
+    label: project.name || "Unnamed Project",
+  }));
+
+  // ── Inline edit handlers ─────────────────────────────────────────────────────
+  const handleCellClick = (meeting: Meeting, field: EditableField) => {
+    let initialValue = "";
+    if (field === "date" && meeting.date) {
+      // Format as YYYY-MM-DD for <input type="date">
+      const d = new Date(meeting.date);
+      if (!Number.isNaN(d.getTime())) {
+        initialValue = d.toISOString().split("T")[0];
+      }
+    } else {
+      initialValue = (meeting[field as keyof Meeting] as string | null) ?? "";
+    }
+    setEditingCell({ meetingId: meeting.id, field });
+    setEditingValue(initialValue);
+  };
+
+  const handleInlineSave = async (valueOverride?: string) => {
+    if (!editingCell) return;
+    const { meetingId, field } = editingCell;
+
+    let saveValue: string | null =
+      valueOverride !== undefined ? valueOverride : editingValue;
+    if (!saveValue) saveValue = null;
+
+    // Convert YYYY-MM-DD to full ISO string for date fields
+    if (field === "date" && saveValue) {
+      saveValue = new Date(`${saveValue}T12:00:00`).toISOString();
+    }
+
+    // Close editing state immediately so UX feels snappy
+    setEditingCell(null);
+    setEditingValue("");
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("document_metadata")
+        .update({ [field]: saveValue })
+        .eq("id", meetingId);
+
+      if (error) throw new Error(error.message);
+
+      setMeetings((prev) =>
+        prev.map((m) => (m.id === meetingId ? { ...m, [field]: saveValue } : m)),
+      );
+      toast.success("Updated");
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  const handleInlineCancel = () => {
+    setEditingCell(null);
+    setEditingValue("");
+  };
+
+  // ── Build edit context and columns ───────────────────────────────────────────
+  const editContext: EditContext = {
+    editingCell,
+    editingValue,
+    projectOptions,
+    handleCellClick,
+    setEditingValue,
+    handleInlineSave,
+    handleInlineCancel,
+  };
+
+  const tableColumns = buildMeetingTableColumns(editContext);
+
+  // ── Sorting and pagination ────────────────────────────────────────────────────
   const sortedMeetings = sortMeetings(
     filteredMeetings,
     tableState.sortBy,
     tableState.sortDirection,
     (meeting, columnId) =>
-      tableColumns.find((column) => column.id === columnId)?.sortValue?.(meeting) ??
-      null,
+      tableColumns.find((column) => column.id === columnId)?.sortValue?.(meeting) ?? null,
   );
 
+  const unfilteredTotal = meetings.length;
   const totalItems = sortedMeetings.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / tableState.perPage));
   const pageStart = (tableState.page - 1) * tableState.perPage;
@@ -210,6 +306,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     }
   }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
+  // ── Filter options derived from raw data ─────────────────────────────────────
   const years = uniqueSorted(
     meetings
       .map((meeting) => getMeetingYear(meeting.date))
@@ -217,36 +314,24 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
   ).sort((a, b) => Number(b) - Number(a));
 
   const types = uniqueSorted(
-    meetings
-      .map((meeting) => meeting.type ?? "")
-      .filter((value) => value !== ""),
+    meetings.map((meeting) => meeting.type ?? "").filter((value) => value !== ""),
   );
 
   const categories = uniqueSorted(
-    meetings
-      .map((meeting) => meeting.category ?? "")
-      .filter((value) => value !== ""),
+    meetings.map((meeting) => meeting.category ?? "").filter((value) => value !== ""),
   );
 
-  const filters = buildMeetingFilters({
-    years,
-    types,
-    categories,
-  });
-
-  const { projects } = useProjects();
-  const projectOptions = projects.map((project) => ({
-    value: project.name || "",
-    label: project.name || "Unnamed Project",
-  }));
+  const filters = buildMeetingFilters({ years, types, categories });
 
   const detailFields = buildMeetingDetailFields({ projectOptions });
 
+  // ── Detail panel ──────────────────────────────────────────────────────────────
   const detailParam = tableState.detailParam;
   const selectedMeeting = detailParam
     ? meetings.find((meeting) => meeting.id === detailParam) || null
     : null;
 
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
@@ -287,9 +372,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
         .update(payload)
         .eq("id", selectedMeeting.id);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       setMeetings((prev) =>
         prev.map((meeting) =>
@@ -298,7 +381,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
       );
       toast.success("Meeting updated successfully");
       tableState.setSearchParams({ detail: null });
-    } catch (err) {
+    } catch {
       toast.error("Failed to update meeting");
     }
   };
@@ -313,13 +396,11 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
         .delete()
         .eq("id", meetingToDelete.id);
 
-      if (error) {
-        throw new Error(error.message);
-      }
+      if (error) throw new Error(error.message);
 
       setMeetings((prev) => prev.filter((meeting) => meeting.id !== meetingToDelete.id));
       toast.success("Meeting deleted successfully");
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete meeting");
     } finally {
       setDeleteDialogOpen(false);
@@ -361,14 +442,14 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
       return;
     }
 
-    const tableColumns = buildMeetingTableColumns();
-    const visibleColumns = tableColumns.filter((column) =>
+    const cols = buildMeetingTableColumns();
+    const visibleCols = cols.filter((column) =>
       tableState.visibleColumns.includes(column.id),
     );
 
-    const headers = visibleColumns.map((column) => column.label);
+    const headers = visibleCols.map((column) => column.label);
     const rows = sortedMeetings.map((meeting) =>
-      visibleColumns
+      visibleCols
         .map((column) =>
           column.csvValue ? column.csvValue(meeting) : String(column.render(meeting) ?? ""),
         )
@@ -398,6 +479,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     setMeetings,
     pagedMeetings,
     totalItems,
+    unfilteredTotal,
     totalPages,
     filters,
     activeFilters,

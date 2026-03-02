@@ -2,10 +2,64 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
 
-export function createProjectTools(_userId: string) {
+type ToolTracePayload = {
+  tool: string;
+  input: Record<string, unknown>;
+  output?: unknown;
+  error?: string;
+  timestamp: string;
+};
+
+type CreateProjectToolsOptions = {
+  onTrace?: (trace: ToolTracePayload) => void;
+};
+
+function asNumber(value: unknown): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function withTrace<TInput extends Record<string, unknown>, TResult>(
+  name: string,
+  options: CreateProjectToolsOptions,
+  execute: (input: TInput) => Promise<TResult>,
+) {
+  return async (input: TInput): Promise<TResult> => {
+    try {
+      const output = await execute(input);
+      options.onTrace?.({
+        tool: name,
+        input,
+        output,
+        timestamp: new Date().toISOString(),
+      });
+      return output;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown tool error";
+      options.onTrace?.({
+        tool: name,
+        input,
+        error: message,
+        timestamp: new Date().toISOString(),
+      });
+      throw error;
+    }
+  };
+}
+
+export function createProjectTools(
+  _userId: string,
+  options: CreateProjectToolsOptions = {},
+) {
   const supabase = createServiceClient();
 
   return {
@@ -24,7 +78,10 @@ export function createProjectTools(_userId: string) {
             "Project phase filter: 'Current' (default), 'Complete', 'Estimating', 'Planning', or 'all'",
           ),
       }),
-      execute: async ({ phase }) => {
+      execute: withTrace(
+        "getPortfolioOverview",
+        options,
+        async ({ phase }) => {
         // Fetch projects filtered by phase
         let projectQuery = supabase
           .from("projects")
@@ -200,7 +257,8 @@ export function createProjectTools(_userId: string) {
             participants: m.participants,
           })),
         };
-      },
+        },
+      ),
     }),
 
     getProjectRiskAnalysis: tool({
@@ -215,7 +273,10 @@ export function createProjectTools(_userId: string) {
           .optional()
           .describe("Project name to search for"),
       }),
-      execute: async ({ projectId, projectName }) => {
+      execute: withTrace(
+        "getProjectRiskAnalysis",
+        options,
+        async ({ projectId, projectName }) => {
         let resolvedId = projectId;
         let resolvedName = projectName;
 
@@ -417,7 +478,8 @@ export function createProjectTools(_userId: string) {
             participants: m.participants,
           })),
         };
-      },
+        },
+      ),
     }),
 
     getFinancialAnalysis: tool({
@@ -431,7 +493,10 @@ export function createProjectTools(_userId: string) {
           .optional()
           .describe("Optional project ID to scope the analysis"),
       }),
-      execute: async ({ projectId }) => {
+      execute: withTrace(
+        "getFinancialAnalysis",
+        options,
+        async ({ projectId }) => {
         let financialQuery = supabase
           .from("prime_contract_financial_summary")
           .select("*");
@@ -548,7 +613,146 @@ export function createProjectTools(_userId: string) {
             status: f.status,
           })),
         };
-      },
+        },
+      ),
+    }),
+
+    getProjectBudgetSummary: tool({
+      description:
+        "Get a true project budget summary from budget line data (NOT contract value). " +
+        "Use this FIRST for questions like 'total budget', 'budget amount', or 'budget status' " +
+        "for a specific project.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name to resolve if projectId is unknown"),
+      }),
+      execute: withTrace(
+        "getProjectBudgetSummary",
+        options,
+        async ({ projectId, projectName }) => {
+          let resolvedId = projectId;
+          let resolvedProject: AnyRow | null = null;
+
+          if (!resolvedId && projectName) {
+            const { data, error } = await supabase
+              .from("projects")
+              .select("id, name, phase")
+              .ilike("name", `%${projectName}%`)
+              .limit(1)
+              .single();
+            if (error || !data) {
+              return { error: `No project found matching "${projectName}"` };
+            }
+            resolvedId = data.id;
+            resolvedProject = data;
+          }
+
+          if (!resolvedId) {
+            return { error: "Provide projectId or projectName" };
+          }
+
+          if (!resolvedProject) {
+            const { data } = await supabase
+              .from("projects")
+              .select("id, name, phase")
+              .eq("id", resolvedId)
+              .single();
+            resolvedProject = data ?? null;
+          }
+
+          const [budgetRes, contractRes] = await Promise.all([
+            supabase
+              .from("v_budget_lines")
+              .select(
+                "id, original_amount, revised_budget, approved_co_total, budget_mod_total",
+              )
+              .eq("project_id", resolvedId),
+            supabase
+              .from("prime_contract_financial_summary")
+              .select(
+                "title, original_contract_amount, revised_contract_amount, approved_change_orders, pending_change_orders, invoiced_amount, payments_received",
+              )
+              .eq("project_id", resolvedId),
+          ]);
+
+          const budgetLines = (budgetRes.data ?? []) as AnyRow[];
+          const contractRows = (contractRes.data ?? []) as AnyRow[];
+
+          const totalOriginalBudget = budgetLines.reduce(
+            (sum, row) => sum + asNumber(row.original_amount),
+            0,
+          );
+          const totalRevisedBudget = budgetLines.reduce(
+            (sum, row) => sum + asNumber(row.revised_budget),
+            0,
+          );
+          const totalApprovedBudgetChanges = budgetLines.reduce(
+            (sum, row) => sum + asNumber(row.approved_co_total),
+            0,
+          );
+          const totalBudgetModifications = budgetLines.reduce(
+            (sum, row) => sum + asNumber(row.budget_mod_total),
+            0,
+          );
+          const budgetDelta = totalRevisedBudget - totalOriginalBudget;
+          const budgetGrowthPct =
+            totalOriginalBudget > 0
+              ? Math.round((budgetDelta / totalOriginalBudget) * 100)
+              : 0;
+
+          const contractTotals = {
+            originalContractValue: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.original_contract_amount),
+              0,
+            ),
+            revisedContractValue: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.revised_contract_amount),
+              0,
+            ),
+            approvedChangeOrders: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.approved_change_orders),
+              0,
+            ),
+            pendingChangeOrders: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.pending_change_orders),
+              0,
+            ),
+            invoicedAmount: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.invoiced_amount),
+              0,
+            ),
+            paymentsReceived: contractRows.reduce(
+              (sum, row) => sum + asNumber(row.payments_received),
+              0,
+            ),
+          };
+
+          return {
+            project: {
+              id: resolvedId,
+              name: resolvedProject?.name ?? projectName ?? null,
+              phase: resolvedProject?.phase ?? null,
+            },
+            budgetSummary: {
+              totalOriginalBudget,
+              totalRevisedBudget,
+              totalApprovedBudgetChanges,
+              totalBudgetModifications,
+              budgetDelta,
+              budgetGrowthPct,
+              budgetLineCount: budgetLines.length,
+            },
+            contractContext: contractTotals,
+            dataNotes: [
+              "Budget totals are from v_budget_lines (budget data).",
+              "Contract totals are provided separately for context.",
+            ],
+          };
+        },
+      ),
     }),
 
     getActionItemsAndInsights: tool({
@@ -568,7 +772,10 @@ export function createProjectTools(_userId: string) {
           .default(20)
           .describe("Max results to return"),
       }),
-      execute: async ({ projectId, maxResults }) => {
+      execute: withTrace(
+        "getActionItemsAndInsights",
+        options,
+        async ({ projectId, maxResults }) => {
         // get_priority_insights RPC has a SQL type bug — fall back gracefully
         let priorityInsights: AnyRow[] = [];
         try {
@@ -663,7 +870,8 @@ export function createProjectTools(_userId: string) {
             ballInCourt: r.ball_in_court,
           })),
         };
-      },
+        },
+      ),
     }),
 
     searchDocuments: tool({
@@ -686,7 +894,10 @@ export function createProjectTools(_userId: string) {
           .default(10)
           .describe("Max results to return"),
       }),
-      execute: async ({ query, projectId, maxResults }) => {
+      execute: withTrace(
+        "searchDocuments",
+        options,
+        async ({ query, projectId, maxResults }) => {
         if (projectId) {
           const { data: docRows } = await supabase
             .from("document_metadata")
@@ -740,7 +951,8 @@ export function createProjectTools(_userId: string) {
             content: r.content?.substring(0, 1000),
           })),
         };
-      },
+        },
+      ),
     }),
 
     getProjectDetails: tool({
@@ -755,7 +967,10 @@ export function createProjectTools(_userId: string) {
           .optional()
           .describe("Project name to search for (partial match)"),
       }),
-      execute: async ({ projectId, projectName }) => {
+      execute: withTrace(
+        "getProjectDetails",
+        options,
+        async ({ projectId, projectName }) => {
         let project: AnyRow | null = null;
 
         if (projectId) {
@@ -855,7 +1070,8 @@ export function createProjectTools(_userId: string) {
             participants: d.participants,
           })),
         };
-      },
+        },
+      ),
     }),
   };
 }

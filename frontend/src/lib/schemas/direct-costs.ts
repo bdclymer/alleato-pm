@@ -66,6 +66,10 @@ const optionalUuidSchema = z
   .uuid('Must be a valid UUID')
   .nullable()
   .optional();
+const optionalUuidOrEmptySchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.string().uuid('Must be a valid UUID').nullable().optional()
+);
 
 // =============================================================================
 // LINE ITEM SCHEMA
@@ -73,7 +77,7 @@ const optionalUuidSchema = z
 
 export const DirectCostLineItemSchema = z.object({
   id: uuidSchema.optional(), // Optional for new items
-  budget_code_id: uuidSchema,
+  budget_code_id: optionalUuidOrEmptySchema,
   description: optionalString,
   quantity: positiveNumber,
   uom: z.enum(UnitTypes).default('LOT'),
@@ -109,20 +113,7 @@ const DirectCostBaseSchema = z.object({
   paid_date: z.coerce.date().optional().nullable(),
 });
 
-// Refinement for vendor/employee requirement
-const vendorOrEmployeeRefinement = <T extends { vendor_id?: string | null; employee_id?: string | null }>(
-  schema: z.ZodType<T>
-) =>
-  schema.refine(
-    (data) => data.vendor_id || data.employee_id,
-    {
-      message: 'Either vendor or employee must be selected',
-      path: ['vendor_id'],
-    }
-  );
-
-// Create schema with refinement
-export const DirectCostCreateSchema = vendorOrEmployeeRefinement(DirectCostBaseSchema);
+export const DirectCostCreateSchema = DirectCostBaseSchema;
 
 // Update schema - extend the base (without refinement), then add refinement
 const DirectCostUpdateBaseSchema = DirectCostBaseSchema.extend({
@@ -142,7 +133,7 @@ const DirectCostUpdateBaseSchema = DirectCostBaseSchema.extend({
       .optional(),
   });
 
-export const DirectCostUpdateSchema = vendorOrEmployeeRefinement(DirectCostUpdateBaseSchema);
+export const DirectCostUpdateSchema = DirectCostUpdateBaseSchema;
 
 // =============================================================================
 // STATUS WORKFLOW SCHEMAS

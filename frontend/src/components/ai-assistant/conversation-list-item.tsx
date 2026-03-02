@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   CheckIcon,
-  MessageSquareIcon,
   PencilIcon,
   Trash2Icon,
   XIcon,
@@ -105,14 +104,13 @@ export function ConversationListItem({
         }
       }}
       className={cn(
-        "group flex w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-left text-sm transition-colors",
+        "group flex w-full max-w-full cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-4 py-2 text-left text-sm transition-colors",
         "hover:bg-muted/60",
         isActive && "bg-muted",
       )}
     >
-      <MessageSquareIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate font-medium">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium">
           {conversation.title || "New conversation"}
         </span>
         <span className="text-xs text-muted-foreground">

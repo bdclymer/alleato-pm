@@ -280,7 +280,7 @@ function getCostRowWithLineItem(
   const totalAmount = formatCurrency(cost.total_amount);
   const lineTotal = formatCurrency(lineItem.line_total);
   const unitCost = formatCurrency(lineItem.unit_cost);
-  const budgetCode = lineItem.budget_code?.code || lineItem.budget_code_id;
+  const budgetCode = lineItem.budget_code?.code || lineItem.budget_code_id || '';
 
   if (template === 'accounting') {
     return [
@@ -311,7 +311,7 @@ function getCostRowWithLineItem(
       budgetCode,
       lineItem.description || '',
       lineItem.quantity.toString(),
-      lineItem.uom,
+      lineItem.uom || '',
       unitCost,
       lineTotal,
       totalAmount,

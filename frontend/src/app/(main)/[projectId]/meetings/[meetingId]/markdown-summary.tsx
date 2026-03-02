@@ -7,17 +7,14 @@ interface MarkdownSummaryProps {
 }
 
 /**
- * Renders the summary section markdown with custom styling.
- * Used for bullet-point summaries from meeting transcripts.
+ * Renders the summary section markdown with clean bullet-point styling.
  * Preprocesses content to remove empty list items that create blank bullets.
  */
 export function MarkdownSummary({ content }: MarkdownSummaryProps) {
-  // Preprocess: remove empty list items (lines that are just "- " or "* " with nothing after)
   const cleanedContent = content
     .split("\n")
     .filter((line) => {
       const trimmed = line.trim();
-      // Filter out empty list items: "- ", "* ", "-", "*"
       return trimmed !== "-" && trimmed !== "*" && trimmed !== "- " && trimmed !== "* ";
     })
     .join("\n");
@@ -27,13 +24,14 @@ export function MarkdownSummary({ content }: MarkdownSummaryProps) {
       remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => (
-          <p className="text-sm text-neutral-700 leading-relaxed mb-4 last:mb-0">
+          <p className="text-sm text-foreground leading-relaxed mb-3 last:mb-0">
             {children}
           </p>
         ),
-        ul: ({ children }) => <ul className="space-y-4">{children}</ul>,
+        ul: ({ children }) => (
+          <ul className="space-y-2.5">{children}</ul>
+        ),
         li: ({ children }) => {
-          // Skip rendering if children is empty/whitespace only
           const childArray = Array.isArray(children) ? children : [children];
           const hasContent = childArray.some((child) => {
             if (typeof child === "string") return child.trim().length > 0;
@@ -42,16 +40,14 @@ export function MarkdownSummary({ content }: MarkdownSummaryProps) {
           if (!hasContent) return null;
 
           return (
-            <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
-              <span className="text-brand mt-0.5 shrink-0">•</span>
+            <li className="flex items-start gap-2.5 text-sm text-foreground leading-relaxed">
+              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0 flex-none" />
               <span>{children}</span>
             </li>
           );
         },
         strong: ({ children }) => (
-          <strong className="font-semibold text-neutral-900">
-            {children}
-          </strong>
+          <strong className="font-semibold text-foreground">{children}</strong>
         ),
       }}
     >

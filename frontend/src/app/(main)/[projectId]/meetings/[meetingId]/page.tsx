@@ -28,13 +28,23 @@ function formatParticipantName(email: string): string {
   if (!localPart) return email;
   const parts = localPart.split(/[._-]/);
   if (parts.length >= 2) {
-    const firstName = parts[0].charAt(0).toUpperCase() + '.';
+    const firstName =
+      parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
     const lastName =
       parts[parts.length - 1].charAt(0).toUpperCase() +
       parts[parts.length - 1].slice(1).toLowerCase();
     return `${firstName} ${lastName}`;
   }
   return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
+}
+
+function getEmailInitials(email: string): string {
+  const localPart = email.split('@')[0];
+  const parts = localPart.split(/[._-]/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  return localPart.slice(0, 2).toUpperCase();
 }
 
 type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & {
@@ -51,7 +61,7 @@ interface PageProps {
 
 export default async function ProjectMeetingDetailPage({ params }: PageProps) {
   const { projectId, meetingId } = await params;
-  const { project, supabase } = await getProjectInfo(projectId);
+  const { project, numericProjectId, supabase } = await getProjectInfo(projectId);
 
   const { data: meetingData, error } = await supabase
     .from('document_metadata')
@@ -72,6 +82,18 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
     .order('segment_index', { ascending: true });
 
   const segments = (segmentsData || []) as MeetingSegment[];
+
+  // Fetch related meetings for this project
+  const { data: relatedMeetingsData } = await supabase
+    .from('document_metadata')
+    .select('id, title, date, duration_minutes')
+    .eq('project_id', numericProjectId)
+    .eq('type', 'meeting')
+    .neq('id', meetingId)
+    .order('date', { ascending: false })
+    .limit(5);
+
+  const relatedMeetings = relatedMeetingsData || [];
 
   const allTasks: string[] = [];
   const allRisks: string[] = [];
@@ -152,7 +174,7 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
 
   return (
     <PageContainer maxWidth="xl" className="pb-12">
-      {/* Page header — inside container so it's constrained */}
+      {/* Page header */}
       <div className="mb-6">
         <Link
           href={`/${projectId}/meetings`}
@@ -205,7 +227,7 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
-        {/* Main content — narrative only */}
+        {/* Main content */}
         <div className="space-y-8">
           {/* Meeting Overview */}
           {parsedSections?.gist ? (
@@ -263,14 +285,20 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
           {/* Full Transcript */}
           {parsedSections?.transcript ? (
             <section className="border-t border-border pt-6">
-              <FormattedTranscript content={parsedSections.transcript} />
+              <FormattedTranscript
+                content={parsedSections.transcript}
+                participants={participantsList}
+              />
             </section>
           ) : null}
 
           {/* Empty state */}
           {!transcriptContent && segments.length === 0 && (
             <section className="py-12 text-center">
-              <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1.5} />
+              <FileText
+                className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4"
+                strokeWidth={1.5}
+              />
               <p className="text-sm font-medium text-foreground">No transcript available</p>
               <p className="text-sm text-muted-foreground mt-1">
                 This meeting has not been processed yet.
@@ -281,27 +309,9 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
 
         {/* Sidebar */}
         <aside className="space-y-6">
-          {participantsList.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">
-                <Users className="h-3.5 w-3.5" />
-                Attendees ({participantsList.length})
-              </div>
-              <ul className="space-y-2">
-                {participantsList.map((participant, idx) => (
-                  <li key={`${participant}-${idx}`} className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {formatParticipantName(participant)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{participant}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
+          {/* Topics */}
           {parsedSections?.keywords && (
-            <div className="space-y-2 border-t border-border pt-4">
+            <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
                 Topics
               </div>
@@ -322,6 +332,7 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
             </div>
           )}
 
+          {/* Action Snapshot */}
           {hasActionItems && (
             <div className="space-y-4 border-t border-border pt-4">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -359,6 +370,69 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
                   items={allOpportunities}
                 />
               )}
+            </div>
+          )}
+
+          {/* Attendees — below Action Snapshot */}
+          {participantsList.length > 0 && (
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">
+                <Users className="h-3.5 w-3.5" />
+                Attendees ({participantsList.length})
+              </div>
+              <ul className="space-y-3">
+                {participantsList.map((participant, idx) => {
+                  const name = formatParticipantName(participant);
+                  const initials = getEmailInitials(participant);
+                  return (
+                    <li key={`${participant}-${idx}`} className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          {initials}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{participant}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Related Meetings */}
+          {relatedMeetings.length > 0 && (
+            <div className="space-y-3 border-t border-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Related Meetings
+              </div>
+              <ul className="space-y-2">
+                {relatedMeetings.map((rm) => (
+                  <li key={rm.id}>
+                    <Link
+                      href={`/${projectId}/meetings/${rm.id}`}
+                      className="group block space-y-0.5 rounded-md p-2 -mx-2 hover:bg-muted transition-colors"
+                    >
+                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        {rm.title || 'Untitled Meeting'}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        {rm.date && (
+                          <span>{format(new Date(rm.date), 'MMM d, yyyy')}</span>
+                        )}
+                        {rm.duration_minutes && (
+                          <>
+                            <span>·</span>
+                            <span>{rm.duration_minutes} min</span>
+                          </>
+                        )}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </aside>

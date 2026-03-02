@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import {
@@ -33,6 +33,7 @@ import {
 } from "./direct-costs-table-utils";
 import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
 import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
+import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
 import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
 
 export type DirectCostRow = {
@@ -104,6 +105,7 @@ export function DirectCostsClient({
   const [editingInitialData, setEditingInitialData] = React.useState<DirectCostUpdate | undefined>(undefined);
   const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false);
   const [isEditLoading, setIsEditLoading] = React.useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (summaryTab !== "summary") return;
@@ -287,10 +289,16 @@ export function DirectCostsClient({
           title: "Direct Costs",
           description: "Track and manage direct project costs",
           actions: (
-            <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Direct Cost
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+              <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Direct Cost
+              </Button>
+            </div>
           ),
         }}
         tabs={tabs}
@@ -452,6 +460,13 @@ export function DirectCostsClient({
           </div>
         </SlideoverContent>
       </Slideover>
+
+      <DirectCostsImportDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        projectId={projectId}
+        onImported={() => router.refresh()}
+      />
     </>
   );
 }

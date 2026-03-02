@@ -3190,6 +3190,38 @@ export type Database = {
           },
         ]
       }
+      Chat: {
+        Row: {
+          createdAt: string
+          id: string
+          title: string
+          userId: string
+          visibility: string
+        }
+        Insert: {
+          createdAt: string
+          id?: string
+          title: string
+          userId: string
+          visibility?: string
+        }
+        Update: {
+          createdAt?: string
+          id?: string
+          title?: string
+          userId?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Chat_userId_User_id_fk"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_history: {
         Row: {
           content: string
@@ -5427,6 +5459,41 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Document: {
+        Row: {
+          content: string | null
+          createdAt: string
+          id: string
+          text: string
+          title: string
+          userId: string
+        }
+        Insert: {
+          content?: string | null
+          createdAt: string
+          id?: string
+          text?: string
+          title: string
+          userId: string
+        }
+        Update: {
+          content?: string | null
+          createdAt?: string
+          id?: string
+          text?: string
+          title?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Document_userId_User_id_fk"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
             referencedColumns: ["id"]
           },
         ]
@@ -8112,6 +8179,73 @@ export type Database = {
           metadata?: Json | null
         }
         Relationships: []
+      }
+      Message: {
+        Row: {
+          chatId: string
+          content: Json
+          createdAt: string
+          id: string
+          role: string
+        }
+        Insert: {
+          chatId: string
+          content: Json
+          createdAt: string
+          id?: string
+          role: string
+        }
+        Update: {
+          chatId?: string
+          content?: Json
+          createdAt?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Message_chatId_Chat_id_fk"
+            columns: ["chatId"]
+            isOneToOne: false
+            referencedRelation: "Chat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Message_v2: {
+        Row: {
+          attachments: Json
+          chatId: string
+          createdAt: string
+          id: string
+          parts: Json
+          role: string
+        }
+        Insert: {
+          attachments: Json
+          chatId: string
+          createdAt: string
+          id?: string
+          parts: Json
+          role: string
+        }
+        Update: {
+          attachments?: Json
+          chatId?: string
+          createdAt?: string
+          id?: string
+          parts?: Json
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Message_v2_chatId_Chat_id_fk"
+            columns: ["chatId"]
+            isOneToOne: false
+            referencedRelation: "Chat"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -13047,6 +13181,32 @@ export type Database = {
           },
         ]
       }
+      Stream: {
+        Row: {
+          chatId: string
+          createdAt: string
+          id: string
+        }
+        Insert: {
+          chatId: string
+          createdAt: string
+          id?: string
+        }
+        Update: {
+          chatId?: string
+          createdAt?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Stream_chatId_Chat_id_fk"
+            columns: ["chatId"]
+            isOneToOne: false
+            referencedRelation: "Chat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sub_jobs: {
         Row: {
           code: string
@@ -14642,6 +14802,57 @@ export type Database = {
           },
         ]
       }
+      Suggestion: {
+        Row: {
+          createdAt: string
+          description: string | null
+          documentCreatedAt: string
+          documentId: string
+          id: string
+          isResolved: boolean
+          originalText: string
+          suggestedText: string
+          userId: string
+        }
+        Insert: {
+          createdAt: string
+          description?: string | null
+          documentCreatedAt: string
+          documentId: string
+          id?: string
+          isResolved?: boolean
+          originalText: string
+          suggestedText: string
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          description?: string | null
+          documentCreatedAt?: string
+          documentId?: string
+          id?: string
+          isResolved?: boolean
+          originalText?: string
+          suggestedText?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Suggestion_documentId_documentCreatedAt_Document_id_createdAt_f"
+            columns: ["documentId", "documentCreatedAt"]
+            isOneToOne: false
+            referencedRelation: "Document"
+            referencedColumns: ["id", "createdAt"]
+          },
+          {
+            foreignKeyName: "Suggestion_userId_User_id_fk"
+            columns: ["userId"]
+            isOneToOne: false
+            referencedRelation: "User"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_status: {
         Row: {
           created_at: string | null
@@ -14882,6 +15093,24 @@ export type Database = {
           is_complete?: boolean | null
           task?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      User: {
+        Row: {
+          email: string
+          id: string
+          password: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          password?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          password?: string | null
         }
         Relationships: []
       }
@@ -15490,6 +15719,72 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Vote: {
+        Row: {
+          chatId: string
+          isUpvoted: boolean
+          messageId: string
+        }
+        Insert: {
+          chatId: string
+          isUpvoted: boolean
+          messageId: string
+        }
+        Update: {
+          chatId?: string
+          isUpvoted?: boolean
+          messageId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Vote_chatId_Chat_id_fk"
+            columns: ["chatId"]
+            isOneToOne: false
+            referencedRelation: "Chat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Vote_messageId_Message_id_fk"
+            columns: ["messageId"]
+            isOneToOne: false
+            referencedRelation: "Message"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Vote_v2: {
+        Row: {
+          chatId: string
+          isUpvoted: boolean
+          messageId: string
+        }
+        Insert: {
+          chatId: string
+          isUpvoted: boolean
+          messageId: string
+        }
+        Update: {
+          chatId?: string
+          isUpvoted?: boolean
+          messageId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Vote_v2_chatId_Chat_id_fk"
+            columns: ["chatId"]
+            isOneToOne: false
+            referencedRelation: "Chat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Vote_v2_messageId_Message_v2_id_fk"
+            columns: ["messageId"]
+            isOneToOne: false
+            referencedRelation: "Message_v2"
             referencedColumns: ["id"]
           },
         ]

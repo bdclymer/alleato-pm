@@ -1,30 +1,70 @@
 "use client";
 
+import { useChat, type UIMessage } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
-
 interface SimpleRagChatProps {
   placeholder?: string;
+}
+
+interface ChatHistoryMessage {
+  id: string;
+  role: string;
+  content: string;
+}
+
+const WIDGET_SESSION_STORAGE_KEY = "ai-assistant-widget-session-id";
+
+function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
+  return {
+    id: msg.id,
+    role: msg.role as "user" | "assistant",
+    parts: [{ type: "text", text: msg.content }],
+  };
+}
+
+function getMessageText(message: UIMessage): string {
+  return message.parts
+    .filter(
+      (part): part is { type: "text"; text: string } => part.type === "text",
+    )
+    .map((part) => part.text)
+    .join("");
 }
 
 export function SimpleRagChat({
   placeholder = "Message Alleato AI...",
 }: SimpleRagChatProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  sessionIdRef.current = sessionId;
+
+  const { messages, setMessages, sendMessage, status } = useChat({
+    id: sessionId ?? "widget-session",
+    transport: new DefaultChatTransport({
+      api: "/api/ai-assistant/chat",
+      prepareSendMessagesRequest(request) {
+        const lastMessage = request.messages.at(-1);
+        return {
+          body: {
+            id: sessionIdRef.current,
+            message: lastMessage,
+            messages: request.messages,
+          },
+        };
+      },
+    }),
+  });
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,87 +74,121 @@ export function SimpleRagChat({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  useEffect(() => {
+    const savedSession = localStorage.getItem(WIDGET_SESSION_STORAGE_KEY);
+    if (!savedSession) return;
 
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
+    setSessionId(savedSession);
+    setIsLoadingMessages(true);
+    fetch(`/api/ai-assistant/messages/${savedSession}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Failed to load chat history");
+        const data = await res.json();
+        const historyMessages = (data.messages || []).map(
+          (msg: ChatHistoryMessage) => dbMessageToUIMessage(msg),
+        );
+        setMessages(historyMessages);
+      })
+      .catch(() => {
+        localStorage.removeItem(WIDGET_SESSION_STORAGE_KEY);
+        setSessionId(null);
+        setMessages([]);
+      })
+      .finally(() => {
+        setIsLoadingMessages(false);
+      });
+  }, [setMessages]);
 
-    setMessages((prev) => [...prev, userMessage]);
+  const createConversation = useCallback(async (title: string) => {
+    const response = await fetch("/api/ai-assistant/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create conversation");
+    }
+
+    const data = await response.json();
+    const nextSessionId = data?.conversation?.session_id as string;
+    if (!nextSessionId) {
+      throw new Error("Conversation was created without a session id");
+    }
+
+    sessionIdRef.current = nextSessionId;
+    localStorage.setItem(WIDGET_SESSION_STORAGE_KEY, nextSessionId);
+    setSessionId(nextSessionId);
+    return nextSessionId;
+  }, []);
+
+  const handleSendMessage = useCallback(async () => {
+    const trimmedInput = input.trim();
+    const isStreaming = status === "streaming";
+    if (!trimmedInput || isStreaming || isCreatingSession || isLoadingMessages) {
+      return;
+    }
+
     setInput("");
-    setIsLoading(true);
 
     try {
-      // Call the RAG endpoint
-      const response = await fetch("/api/rag-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMessage.content,
-          thread_id: threadId,
-        }),
-      });
-
-      const data = await response.json().catch(() => null);
-      if (!response.ok) {
-        const backendMessage =
-          data && typeof data === "object" && "message" in data
-            ? String(data.message)
-            : `HTTP ${response.status}`;
-        throw new Error(backendMessage);
+      if (!sessionIdRef.current) {
+        setIsCreatingSession(true);
+        const title = trimmedInput.substring(0, 50) || "New conversation";
+        await createConversation(title);
       }
-
-      if (data.thread_id && !threadId) {
-        setThreadId(data.thread_id);
-      }
-
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content:
-          data.response ||
-          data.message ||
-          "I received your message but couldn't generate a response.",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      sendMessage({ text: trimmedInput });
     } catch (error) {
-      const message =
+      const errorText =
         error instanceof Error
           ? error.message
-          : "Sorry, I encountered an unexpected error.";
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Request failed: ${message}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+          : "An unexpected error occurred while sending your message.";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          parts: [{ type: "text", text: `Request failed: ${errorText}` }],
+        },
+      ]);
     } finally {
-      setIsLoading(false);
+      setIsCreatingSession(false);
     }
-  };
+  }, [
+    input,
+    status,
+    isCreatingSession,
+    isLoadingMessages,
+    createConversation,
+    sendMessage,
+    setMessages,
+  ]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      void handleSendMessage();
     }
   };
+
+  const isLoading =
+    isLoadingMessages ||
+    isCreatingSession ||
+    status === "submitted" ||
+    status === "streaming";
 
   return (
     <div
       className="flex flex-col h-full w-full bg-background"
       data-testid="simple-rag-chat"
     >
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.length === 0 ? (
+        {isLoadingMessages ? (
+          <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            Loading chat history...
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Bot className="h-12 w-12 text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">
@@ -162,7 +236,9 @@ export function SimpleRagChat({
                     : "bg-muted text-foreground",
                 )}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {getMessageText(message)}
+                </p>
               </div>
               {message.role === "user" && (
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -185,7 +261,6 @@ export function SimpleRagChat({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div className="border-t p-4">
         <div className="flex gap-2 items-end">
           <Textarea
@@ -198,7 +273,9 @@ export function SimpleRagChat({
             rows={1}
           />
           <Button
-            onClick={sendMessage}
+            onClick={() => {
+              void handleSendMessage();
+            }}
             disabled={!input.trim() || isLoading}
             size="icon"
             className="h-[44px] w-[44px] flex-shrink-0"

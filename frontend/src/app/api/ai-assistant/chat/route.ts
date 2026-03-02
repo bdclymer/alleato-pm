@@ -23,6 +23,14 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join("");
 }
 
+function isProjectBudgetQuestion(message: string): boolean {
+  const text = message.toLowerCase();
+  const mentionsBudget = /\bbudget\b/.test(text);
+  const asksAmount = /(total|amount|value|status|how much)/.test(text);
+  const notPortfolio = !/(portfolio|all projects|across projects)/.test(text);
+  return mentionsBudget && asksAmount && notPortfolio;
+}
+
 export async function POST(request: Request) {
   const user = await getApiRouteUser();
   if (!user) {
@@ -42,6 +50,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createServiceClient();
+  const toolTrace: Array<Record<string, unknown>> = [];
 
   // Persist the latest user message
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
@@ -58,13 +67,25 @@ export async function POST(request: Request) {
   }
 
   const modelMessages = await convertToModelMessages(messages);
-  const tools = createProjectTools(user.id);
+  const tools = createProjectTools(user.id, {
+    onTrace: (trace) => {
+      toolTrace.push(trace);
+    },
+  });
+  const latestUserText = lastUserMessage
+    ? extractTextFromParts(lastUserMessage.parts)
+    : "";
+  const systemPrompt = isProjectBudgetQuestion(latestUserText)
+    ? `${ragAssistantSystemPrompt}
+
+You MUST call getProjectBudgetSummary for this request before drafting the answer. Use budgetSummary totals as the source of truth for budget values. If you include contract totals, label them separately as contract context.`
+    : ragAssistantSystemPrompt;
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       const result = streamText({
         model: getLanguageModel(DEFAULT_MODEL),
-        system: ragAssistantSystemPrompt,
+        system: systemPrompt,
         messages: modelMessages,
         tools,
         stopWhen: stepCountIs(7),
@@ -83,6 +104,12 @@ export async function POST(request: Request) {
               user_id: user.id,
               role: "assistant",
               content,
+              metadata: JSON.parse(
+                JSON.stringify({
+                  tool_trace: toolTrace,
+                  model: DEFAULT_MODEL,
+                }),
+              ),
             });
           }
         }

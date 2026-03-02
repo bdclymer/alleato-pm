@@ -24,6 +24,10 @@ import { Button } from "@/components/ui/button";
 import { BotIcon, CopyIcon, SendIcon, SquareIcon } from "lucide-react";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
+import {
+  TracePanel,
+  type ToolTraceItem,
+} from "./trace-panel";
 
 function getMessageText(msg: UIMessage): string {
   return msg.parts
@@ -34,6 +38,7 @@ function getMessageText(msg: UIMessage): string {
 
 interface ChatAreaProps {
   messages: UIMessage[];
+  toolTracesByMessageId?: Record<string, ToolTraceItem[]>;
   isLoadingMessages: boolean;
   isStreaming: boolean;
   input: string;
@@ -44,6 +49,7 @@ interface ChatAreaProps {
 
 export function ChatArea({
   messages,
+  toolTracesByMessageId = {},
   isLoadingMessages,
   isStreaming,
   input,
@@ -84,6 +90,11 @@ export function ChatArea({
                   )}
                   <MessageContent>
                     <MessageResponse>{text}</MessageResponse>
+                    {isAssistant && (
+                      <TracePanel
+                        traces={toolTracesByMessageId[msg.id] ?? []}
+                      />
+                    )}
                   </MessageContent>
                   {isAssistant && text && (
                     <MessageActions>
