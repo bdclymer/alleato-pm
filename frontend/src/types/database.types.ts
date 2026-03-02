@@ -7918,6 +7918,114 @@ export type Database = {
           },
         ]
       }
+      meeting_digests: {
+        Row: {
+          action_items_summary: Json | null
+          created_at: string | null
+          decisions_summary: Json | null
+          digest_html: string | null
+          digest_text: string
+          follow_ups: Json | null
+          generation_time_seconds: number | null
+          id: string
+          key_takeaways: string[] | null
+          metadata_id: string
+          model_used: string | null
+          opportunities_summary: Json | null
+          project_id: number | null
+          risks_summary: Json | null
+        }
+        Insert: {
+          action_items_summary?: Json | null
+          created_at?: string | null
+          decisions_summary?: Json | null
+          digest_html?: string | null
+          digest_text: string
+          follow_ups?: Json | null
+          generation_time_seconds?: number | null
+          id?: string
+          key_takeaways?: string[] | null
+          metadata_id: string
+          model_used?: string | null
+          opportunities_summary?: Json | null
+          project_id?: number | null
+          risks_summary?: Json | null
+        }
+        Update: {
+          action_items_summary?: Json | null
+          created_at?: string | null
+          decisions_summary?: Json | null
+          digest_html?: string | null
+          digest_text?: string
+          follow_ups?: Json | null
+          generation_time_seconds?: number | null
+          id?: string
+          key_takeaways?: string[] | null
+          metadata_id?: string
+          model_used?: string | null
+          opportunities_summary?: Json | null
+          project_id?: number | null
+          risks_summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_digests_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: true
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: true
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_digests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_segments: {
         Row: {
           created_at: string

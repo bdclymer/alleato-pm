@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // Apply search filter
     if (search) {
       query = query.or(
-        `name.ilike.%${search}%,email_address.ilike.%${search}%,business_phone.ilike.%${search}%`
+        `name.ilike.%${search}%,title.ilike.%${search}%,website.ilike.%${search}%,address.ilike.%${search}%,city.ilike.%${search}%,state.ilike.%${search}%,notes.ilike.%${search}%`
       );
     }
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     // Apply company type filter
     if (company_type) {
-      query = query.eq("company_type", company_type);
+      query = query.eq("type", company_type);
     }
 
     // Apply sorting
@@ -84,8 +84,13 @@ export async function GET(request: NextRequest) {
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);
 
+    const normalizedCompanies = (companies || []).map((company) => ({
+      ...company,
+      company_type: company.type ?? null,
+    }));
+
     return NextResponse.json({
-      data: companies || [],
+      data: normalizedCompanies,
       pagination: {
         page,
         per_page,
@@ -156,9 +161,7 @@ export async function POST(request: NextRequest) {
         state: body.state || null,
         zip: body.zip || null,
         website: body.website || null,
-        business_phone: body.business_phone || null,
-        email_address: body.email_address || null,
-        company_type: body.company_type || "VENDOR",
+        type: body.company_type || body.type || "VENDOR",
         status: body.status || "ACTIVE",
         created_by: user.id,
       })

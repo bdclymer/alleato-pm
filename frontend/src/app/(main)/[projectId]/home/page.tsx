@@ -80,9 +80,9 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),
 
-    // Fetch contracts
+    // Fetch prime contracts
     supabase
-      .from("financial_contracts")
+      .from("prime_contracts")
       .select("*")
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),

@@ -62,11 +62,18 @@ def process_documents():
         openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         print("✓ OpenAI client initialized for embeddings")
     
-    # Fetch all meeting documents
-    result = client.table('document_metadata').select('*').eq('type', 'meeting').execute()
+    # Fetch unprocessed meeting documents (max 50, skip already embedded)
+    result = (
+        client.table('document_metadata')
+        .select('*')
+        .eq('type', 'meeting')
+        .not_.in_('status', ['embedded', 'done'])
+        .limit(50)
+        .execute()
+    )
     documents = result.data or []
-    
-    print(f"Found {len(documents)} meeting documents to process")
+
+    print(f"Found {len(documents)} unembedded meeting documents (max 50)")
     
     for i, doc in enumerate(documents, 1):
         doc_id = doc['id']

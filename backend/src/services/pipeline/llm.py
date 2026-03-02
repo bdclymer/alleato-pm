@@ -218,6 +218,63 @@ Guidelines:
     return StructuredData(decisions=decisions, risks=risks, tasks=tasks, opportunities=opportunities)
 
 
+# ---------------------------------------------------------------------------
+# Meeting digest
+# ---------------------------------------------------------------------------
+
+def generate_meeting_digest(
+    title: str,
+    date: Optional[str],
+    participants: List[str],
+    summary: str,
+    decisions: List[Dict[str, Any]],
+    risks: List[Dict[str, Any]],
+    tasks: List[Dict[str, Any]],
+    opportunities: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Generate an executive post-meeting digest from structured data."""
+    prompt = f"""Generate a concise executive digest for this meeting.
+
+Meeting: {title}
+Date: {date or "Unknown"}
+Participants: {", ".join(participants)}
+
+Summary: {summary[:2000]}
+
+Decisions Made: {json.dumps(decisions[:20], default=str)}
+Risks Identified: {json.dumps(risks[:20], default=str)}
+Action Items: {json.dumps(tasks[:20], default=str)}
+Opportunities: {json.dumps(opportunities[:10], default=str)}
+
+Return JSON with:
+{{
+  "digest_text": "A 3-5 paragraph executive briefing covering what happened, \
+what was decided, what needs attention, and what's next. Write for a busy \
+executive who missed the meeting.",
+  "decisions_summary": [
+    {{"decision": "What was decided", "owner": "Who owns it", "impact": "Why it matters"}}
+  ],
+  "action_items_summary": [
+    {{"action": "What needs to happen", "assignee": "Who", "due": "When if known"}}
+  ],
+  "risks_summary": [
+    {{"risk": "What could go wrong", "severity": "high|medium|low", "mitigation": "Suggested action"}}
+  ],
+  "opportunities_summary": [
+    {{"opportunity": "What could be leveraged", "type": "efficiency|revenue|relationship"}}
+  ],
+  "follow_ups": [
+    {{"item": "What needs follow-up before next meeting", "owner": "Who should drive it"}}
+  ],
+  "key_takeaways": ["Top 3-5 bullet points a PM must know from this meeting"]
+}}
+
+Be specific. Use actual names and details from the meeting data."""
+
+    raw = _call_llm(prompt, json_mode=True)
+    return json.loads(raw)
+
+
 def _parse_date(raw: Optional[str]) -> Optional[str]:
     """Return a valid YYYY-MM-DD string or None."""
     if not raw:

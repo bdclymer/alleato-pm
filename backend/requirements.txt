@@ -25,6 +25,9 @@ crawl4ai>=0.1.0
 beautifulsoup4>=4.12.0
 httpx>=0.25.0
 
+# Scheduling
+apscheduler>=3.10.0
+
 # Utils
 python-dotenv>=1.0.0
 click>=8.1.0

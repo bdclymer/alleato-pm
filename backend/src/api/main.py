@@ -1034,6 +1034,76 @@ async def pipeline_process_endpoint(
     return {"status": "queued", "metadataId": payload.metadataId}
 
 
+# === Scheduled Analysis Engine ===
+
+@app.on_event("startup")
+async def start_scheduler():
+    """Initialize the scheduled analysis engine on server startup."""
+    try:
+        from src.services.scheduler import init_scheduler
+        init_scheduler()
+    except Exception as e:
+        logger.warning("Scheduler init failed (non-critical): %s", e)
+
+
+@app.on_event("shutdown")
+async def stop_scheduler():
+    """Gracefully shut down the scheduler."""
+    try:
+        from src.services.scheduler import shutdown_scheduler
+        shutdown_scheduler()
+    except Exception:
+        pass
+
+
+# === Digest Endpoints ===
+
+@app.get("/api/digests/meeting/{metadata_id}", tags=["Digests"])
+async def get_meeting_digest(metadata_id: str) -> Dict[str, Any]:
+    """Get the post-meeting digest for a specific meeting."""
+    from src.services.supabase_helpers import get_supabase_client
+    client = get_supabase_client()
+    resp = (
+        client.table("meeting_digests")
+        .select("*")
+        .eq("metadata_id", metadata_id)
+        .maybe_single()
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Digest not found")
+    return resp.data
+
+
+@app.post("/api/digests/daily/generate", tags=["Digests"])
+async def trigger_daily_digest(
+    background_tasks: BackgroundTasks,
+    date: Optional[str] = Query(None, description="YYYY-MM-DD, default today"),
+    days: int = Query(1, description="Number of days to include"),
+) -> Dict[str, Any]:
+    """Manually trigger daily digest generation."""
+    from src.services.daily_digest import run_daily_digest
+    background_tasks.add_task(run_daily_digest, date, days)
+    return {"status": "queued", "date": date, "days": days}
+
+
+@app.get("/api/digests/daily/{date}", tags=["Digests"])
+async def get_daily_digest(date: str) -> Dict[str, Any]:
+    """Get the daily recap for a specific date (YYYY-MM-DD)."""
+    from src.services.supabase_helpers import get_supabase_client
+    client = get_supabase_client()
+    resp = (
+        client.table("daily_recaps")
+        .select("*")
+        .eq("recap_date", date)
+        .maybe_single()
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Daily recap not found")
+    return resp.data
+
+
 # === Admin Endpoints ===
 # Import and include admin routes
 try:

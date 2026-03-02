@@ -541,105 +541,58 @@ Before claiming tests pass:
 - file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs
 ## UI/UX Design Standards
 
-### CRITICAL: Anti-Pattern Prevention
+### CRITICAL: Premium Minimal Baseline (MANDATORY)
 
-**NEVER create these outdated patterns:**
-- Cards within cards (single-level cards only)
-- Multiple nested containers (max 2 levels: page container + content)
-- Heavy shadows (shadow-lg, shadow-xl forbidden in business UIs)
-- Thick borders (use border-gray-200, 1px only)
+When asked to design/build any page, default to **Linear/Supabase-style minimal UI** with strong hierarchy and low visual noise.
 
-### Default Design System
+**Hard constraints (non-negotiable):**
+- Never nest cards (`Card` inside `Card` is forbidden)
+- Never wrap whole page sections in decorative cards
+- Max 2 visual container levels (page shell + section content)
+- No heavy shadows (`shadow-lg`, `shadow-xl`, glows)
+- No thick borders (1px only)
+- One accent color per page
 
-**Reference**: Linear, Supabase, Vercel design patterns
-
-**Layout Structure:**
+**Required page structure:**
 ```tsx
-// All pages should follow this pattern
-<div className="max-w-7xl mx-auto px-6 py-12">
-  <section className="pb-8 border-b border-gray-200">
-    <h2 className="text-lg font-semibold mb-4">Section</h2>
-    {/* Content with space-y-4 or space-y-6 */}
-  </section>
-</div>
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
+
+<>
+  <ProjectPageHeader title="..." description="..." actions={<div>...</div>} />
+  <PageContainer className="space-y-8">
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">Section title</h2>
+      </div>
+      {/* table, form grid, or list */}
+    </section>
+  </PageContainer>
+</>
 ```
 
-**Spacing:**
-- Sections: `space-y-12` or `mb-12`
-- Elements: `space-y-6` or `mb-6`  
-- Related items: `space-y-4` or `mb-4`
-- Tight grouping: `space-y-2` or `mb-2`
+**Card usage policy:**
+- Allowed: KPI tiles, compact mobile record tiles, isolated side modules
+- Not allowed: page scaffolding, generic wrappers, card-in-card composition
 
-**Typography:**
-- Headings: `text-lg/xl/2xl font-semibold text-gray-900`
-- Body: `text-base text-gray-700`
-- Secondary: `text-sm text-gray-600`
-- Labels: `text-sm font-medium text-gray-600`
-- Never use font weights above 600 (semibold)
-
-**Colors:**
-- Text: gray-900 (headings), gray-700 (body), gray-600 (secondary)
-- Borders: gray-200 (standard), gray-300 (hover/distinct)
-- Backgrounds: white (default), gray-50/50 (subtle), gray-100 (distinct)
-- Accent: ONE color only - blue-600, indigo-600, or green-600
-
-**Interactive Elements:**
-```tsx
-// Button standard
-className="px-4 py-2 text-sm font-medium rounded-md transition-colors"
-
-// Primary variant
-className="bg-blue-600 text-white hover:bg-blue-700"
-
-// Secondary variant  
-className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-```
-
-**When to Use Cards:**
-Only for distinct data items/blocks, NOT for page sections:
-```tsx
-// ✓ Acceptable
-<div className="rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-  <p className="text-sm font-medium text-gray-600">Metric</p>
-  <p className="text-2xl font-semibold text-gray-900 mt-1">Value</p>
-</div>
-
-// ✗ Never do this
-<Card>
-  <Card>Nested cards</Card>
-</Card>
-```
-
-**Data Tables:**
-```tsx
-<table className="w-full">
-  <thead className="border-b border-gray-200">
-    <tr>
-      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Header
-      </th>
-    </tr>
-  </thead>
-  <tbody className="divide-y divide-gray-200">
-    <tr className="hover:bg-gray-50">
-      <td className="px-4 py-4 text-sm text-gray-900">Data</td>
-    </tr>
-  </tbody>
-</table>
-```
+**Visual rhythm:**
+- Use 8px spacing cadence (`space-y-2/4/6/8`, `gap-4/6`)
+- Default section spacing: `space-y-8`
+- Default group spacing: `space-y-4`
+- Typography caps at semibold (`font-semibold`)
 
 ### Pre-Implementation Checklist
 
 Before submitting any UI code, verify:
-- [ ] No cards within cards
-- [ ] Max 2 container levels (page + content)
-- [ ] All spacing uses 4px base unit (space-4, space-6, space-8, etc.)
-- [ ] Borders are gray-200/300, 1px only
-- [ ] Single accent color, used sparingly
-- [ ] Typography scale followed (text-sm, text-base, text-lg, etc.)
-- [ ] All buttons have hover states
-- [ ] Focus states on all interactive elements
-- [ ] Responsive on mobile (375px minimum width)
+- [ ] No nested cards
+- [ ] No decorative section wrapper cards
+- [ ] Max 2 container levels
+- [ ] 8px spacing cadence followed
+- [ ] Border + background contrast is subtle (no heavy chrome)
+- [ ] Single accent color is used consistently
+- [ ] Responsive down to 375px
+- [ ] Keyboard focus states are visible
+
+Reference: `docs/design/AI-UI-BASELINE.md`
 
 ### Code Quality Standards
 

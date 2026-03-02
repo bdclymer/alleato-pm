@@ -106,6 +106,11 @@ export const financialManagementTools: NavigationTool[] = [
 
 export const adminTools: NavigationTool[] = [
   {
+    name: "AI Assistant",
+    path: "/ai-assistant",
+    requiresProject: false,
+  },
+  {
     name: "Docs Chat",
     path: "/docs",
     requiresProject: false,

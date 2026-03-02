@@ -20,6 +20,7 @@ import {
 
 import { MetricCard, MetricGrid } from "@/components/ui/metric-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { InfoSection } from "./info-section";
 import { MeetingsSection } from "./meetings-section";
@@ -44,7 +45,7 @@ type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
-type Contract = Database["public"]["Tables"]["financial_contracts"]["Row"];
+type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type BudgetItem = Database["public"]["Tables"]["budget_lines"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
 type SOV = Database["public"]["Tables"]["schedule_of_values"]["Row"];
@@ -115,6 +116,13 @@ function formatCompactCurrency(amount: number): string {
     return `$${(amount / 1000).toFixed(0)}K`;
   }
   return formatCurrency(amount);
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "TM";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 /* -----------------------------------------------------------------------------
@@ -203,9 +211,7 @@ export function ProjectHomeClient({
   const remaining = Math.max(totalBudget - committed, 0);
   const commitmentPercentage =
     totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
-  const primeContracts = contracts.filter(
-    (contract) => contract.contract_type === "prime",
-  );
+  const primeContracts = contracts;
 
   /* ---------------------------------------------------------------------------
      Render
@@ -340,7 +346,11 @@ export function ProjectHomeClient({
                               </p>
                             </div>
                             <span className="text-sm font-medium text-neutral-700">
-                              {formatCompactCurrency(contract.contract_amount || 0)}
+                              {formatCompactCurrency(
+                                contract.revised_contract_value ||
+                                  contract.original_contract_value ||
+                                  0,
+                              )}
                             </span>
                           </Link>
                         ))}
@@ -552,18 +562,25 @@ export function ProjectHomeClient({
 
                 <TabsContent value="project-team" className="mt-0">
                   {teamMembers.length > 0 ? (
-                    <div className="space-y-0">
+                    <div className="space-y-1">
                       {teamMembers.slice(0, 6).map((member, index) => (
                         <div
                           key={`team-${project.id}-${index}`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0"
+                          className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-neutral-50 transition-colors"
                         >
-                          <p className="text-sm font-medium text-neutral-900 truncate">
-                            {member.name}
-                          </p>
-                          <p className="text-xs text-neutral-500 truncate">
-                            {member.role}
-                          </p>
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="bg-neutral-200 text-neutral-700 text-xs font-semibold">
+                              {getInitials(member.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-neutral-900 truncate">
+                              {member.name}
+                            </p>
+                            <p className="text-xs text-neutral-500 truncate">
+                              {member.role}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>

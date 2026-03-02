@@ -1,359 +1,1012 @@
 ---
-title: Submittals Module — TypeScript PRP
-description: Aligns the Submittals feature with Procore list/detail workflows, Supabase schema, API routes, and rich UI interactions.
+title: prp suumittals
+description: prp suumittals documentation
 ---
 
 # Submittals Module — Product Requirements Prompt (PRP)
 
+**Version**: 1.0
+**Created**: 2026-01-28
+**Confidence Score**: 8/10
+
+---
+
 ## Goal
 
-**Feature Goal:** Deliver a Procore-parity Submittals module that tracks every submission, workflow step, and distribution event while covering list/list-views, exports, create/edit dialogs, detail tabs, and data governance.
+**Feature Goal**: Build a fully functional submittals module with CRUD operations, detail view, workflow responses, distribution management, and form dialogs — matching the Procore submittals tool UI and behavior.
 
-**Deliverable:**
+**Deliverable**: Enhanced submittals feature with:
 
-- Supabase schema (tables + views) that persist submittal metadata, workflows, distributions, attachments, and linked drawings.
-- An API service + Next.js route pair for list/create and detail/update/delete operations with server-side authorization.
-- Client pieces: an enriched `SubmittalsClient` list, `SubmittalFormDialog`, `SubmittalDetailClient` with tabs, workflow response and distribution summaries, attachments, and history.
-- Type-safe hooks/schemas/validations that wire Supabase data into GenericDataTable configurations and form dialogs.
+- Database schema (8 tables with RLS)
+- Service class with full CRUD + filtering
+- React hooks for data fetching
+- Create/Edit form dialogs
+- Detail view page with tabs (General, Related Items, Emails, Change History)
+- List view enhancements (real column mapping to Procore's 12 columns)
+- Workflow response tracking
+- Distribution management
 
-**Success Definition:** Product teams can create, view, edit, redistribute, and soft-delete submittals through the new UI while the API layer enforces FK integrity, RLS policies, and TypeScript typing; the list view mirrors Procore’s 12 columns, filters, tabs, and export actions, and the detail view exposes general info, related items, emails, and change history.
+**Success Definition**: A user can create, view, edit, filter, and delete submittals. Submittals show correct Procore-matching columns (Spec, #, Rev, Title, Type, Status, Responsible Contractor, Received From, Ball In Court, Approvers, Response, Sent Date). Detail view displays distribution summary, description, and workflow responses. All tabs function (Items, Packages, Spec Sections, Ball In Court, Recycle Bin).
+
+---
 
 ## Why
 
-**Business value:** Submittals represent the heartbeat of coordination between contractors and owners—missing approvals delay schedules. A production-grade module keeps classic Procore reports (status cards, distribution summaries, attachments, workflow responses) available within Alleato PM without toggling tools.
+**Business Value**: Submittals are a core construction workflow for tracking shop drawings, product data, samples, and other contractor deliverables that require approval before work proceeds. Missing or late submittals delay construction projects.
 
-**Integration:** Reuses Directory (contacts/companies) + Drawings references, leverages the existing `active_submittals` view, and plugs into our pattern stack: `GenericDataTable`, `TableLayout`, `createServiceClient()`, and Next.js App Router APIs.
+**Integration**: Connects with existing Directory (contacts/companies), Drawings (linked drawings), and project structure. Shares patterns with change-orders, RFIs, and other Procore tools already in the codebase.
 
-**Problems solved:** The current implementation renders placeholder rows from `active_submittals`, lacks creation/edit UIs, has minimal filters, and ignores Procore’s export/Redistribution commands. This PRP wires real Supabase tables, migrations, APIs, and components to close the gap.
+**Problems Solved**: Currently the submittals list view exists but uses placeholder data from an `active_submittals` view. There is no create/edit form, no detail view, no workflow tracking, and columns don't match Procore's actual UI. This PRP completes the module.
+
+---
 
 ## What
 
 ### Pages
 
-| Page | Route | Type | Notes |
-|------|-------|------|-------|
-| Submittals List | `/(tables)/submittals/page.tsx` | Server Component (existing) | Upgrade to fetch typed suppliable data, show 12 columns, filters, status cards, exports, tabbed groupings, and modals for create/edit.|
-| Submittal Detail | `/(main)/[projectId]/submittals/[submittalId]/page.tsx` | Server Component (new) | Loads submittal + relations (attachments, responses, distributions, history) and renders `SubmittalDetailClient` with General, Related Items, Emails, Change History tabs.|
-| Submittal Form Dialog | Modal over list/detail | Client Component (new) | Handles create + edit flows and submission of Zod-validated payloads (General/Distribution/Content/Workflow sections).|
+| Page | Route | Type | Description |
+|------|-------|------|-------------|
+| Submittals List | `/(main)/[projectId]/submittals/page.tsx` | Server Component (exists) | List view with tabs, status cards, table |
+| Submittal Detail | `/(main)/[projectId]/submittals/[submittalId]/page.tsx` | Server Component (NEW) | Detail view with General/Related/Emails/History tabs |
+| Submittal Edit | N/A (dialog) | Client Component (NEW) | Edit form dialog opened from detail view |
 
 ### Database Schema
 
-**Existing tables from `frontend/src/types/database.types.ts`:**
+8 tables derived from Procore crawl analysis:
 
-- `submittals` (PK: `id` string/UUID, `project_id` integer not null referencing `projects(id)`, `submittal_number` text, `submittal_type_id` string ❯ `submittal_types(id)`, `specification_id` string, plus `priority`, `status`, `ball_in_court`, `submission_date`, `required_approval_date`, `submitted_by` string, `submitter_company`, `description`, `total_versions`, `current_version`, `metadata`, `title`, `created_at`, `updated_at`). `project_id` must stay `integer` to match `projects.id` (avoid the FK mismatch from the 2026-01-28 incident).
-- `submittal_types` (PK `id` string) holds human-readable names, categories, and review criteria for dropdowns.
-- `submittal_documents` stores files per submittal (attachments) with `submittal_id` → `submittals.id`, `document_name`, `file_url`, `mime_type`, `version`, `uploaded_at`, `uploaded_by`.
-- `submittal_history` captures audit actions (`submittal_id`, `action`, `actor_id`, `new_status`, `changes`, `occurred_at`).
-- `submittal_notifications` backs email statuses per person and project, with `submittal_id`, `project_id`, `user_id`, `notification_type`, `message`.
-- `submittal_analytics_events`, `submittal_performance_metrics`, and `submittal_project_dashboard` supply dashboards/telemetry—keep them intact for status cards and analytics.
-
-**New tables derived from `scripts/playwright-crawl/procore-crawls/submittals/spec/schema.sql` (must be added via Supabase migrations + RLS + indexes):**
-
-- `submittal_packages` (UUID PK) groups submittals per project.
-- `submittal_workflow_steps` (UUID, references `submittals(id)`) lists approval steps and order; the UI needs to show the chain in the workflow tab.
-- `submittal_responses` (UUID, references `submittal_workflow_steps`) tracks per-approver status (`Submitted`, `Pending`, `Approved`, `Approved as Noted`) plus comments/`responded_at` for the workflow response cards.
-- `submittal_distributions` and `submittal_distribution_recipients` outline distribution events, sender (`from_id`), message, distributed timestamp, and recipient contacts; this drives the Distribution Summary section and filter by distribution list.
-- `submittal_attachments` stores files shared with each distribution/response (use `CHECK` so at least one parent FK is non-null) and surfaces the “CURRENT” badge.
-- `submittal_linked_drawings` maps submittals to drawings (supports the Related Items tab).
-
-All new tables must enable RLS policies that restrict access to `project_directory_memberships.person_id`—mirror the policy examples in the schema file. Re-run `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public` after each migration to keep `frontend/src/types/database.types.ts` synchronized. Verify `project_id` is `INTEGER`, `users.id` is `UUID`, and `people.id` is `string` before declaring the schema complete (per the 2026-01-28 incident and the direct costs query bug).
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `submittals` | Main entity | number, revision, title, specification_section, submittal_type, status, ball_in_court, responsible_contractor_id, received_from_id, submittal_manager_id, description, is_private, deleted_at |
+| `submittal_packages` | Groups of submittals | name, description |
+| `submittal_workflow_steps` | Approval chain steps | submittal_id, step_order, step_type |
+| `submittal_responses` | Per-approver responses | submittal_id, responder_id, response_status (Pending/Approved/Approved as Noted), comments |
+| `submittal_distributions` | Distribution events | submittal_id, from_id, message |
+| `submittal_distribution_recipients` | M2M recipients | distribution_id, recipient_id |
+| `submittal_attachments` | Files on submittals/responses | file_name, file_url, is_current, polymorphic parent |
+| `submittal_linked_drawings` | M2M to drawings | submittal_id, drawing_id |
 
 ### API Endpoints
 
 | Method | Route | Description |
 |--------|-------|-------------|
-| GET/POST | `app/api/projects/[projectId]/submittals/route.ts` | `GET` lists submittals filtered by project, statuses, ball-in-court, exports; `POST` validates with Zod and inserts into `submittals`, distributions, workflow steps, attachments. Use `createServiceClient()` and admin keys for multi-table updates.
-| GET/PUT/DELETE | `app/api/projects/[projectId]/submittals/[submittalId]/route.ts` | `GET` returns detail (+ distributions, responses, documents, history). `PUT` updates submittal and optionally redistributes (triggers `submittal_distributions` + recipients). `DELETE` soft-deletes (sets `deleted_at`). Always `await params` (Next.js 15 requires it) and keep slug names explicit (`[projectId]`, `[submittalId]`) to avoid the dynamic-route conflict in `api-routing-errors.md`.
-
-Each handler must verify the authenticated user via `supabase.auth.getSession()` before querying. Wrap database calls in try/catch and surface 4xx/5xx statuses, matching patterns from `frontend/src/app/api/projects/[projectId]/route.ts`.
+| GET | `/api/projects/[projectId]/submittals` | List submittals with filters |
+| POST | `/api/projects/[projectId]/submittals` | Create submittal |
+| GET | `/api/projects/[projectId]/submittals/[submittalId]` | Get submittal detail with relations |
+| PUT | `/api/projects/[projectId]/submittals/[submittalId]` | Update submittal |
+| DELETE | `/api/projects/[projectId]/submittals/[submittalId]` | Soft-delete submittal |
 
 ### Components
 
-- `SubmittalsClient` (`frontend/src/app/(tables)/submittals/submittals-client.tsx`): keep the TableLayout + GenericDataTable wrapper, but shift from placeholder `SubmittalRow` → a typed `SubmittalSummaryRow` (12 columns + status metadata). Add filters for Approver, Ball In Court, Created By, Revision, Division, Location, Number, Private, Received From, Response, Responsible Contractor, and add toggles for Ball In Court, status cards (Draft/Open/Distributed/Closed), tabs for Items/Packages/Spec Sections/Ball In Court/Recycle Bin, and row navigation to the detail route.
-- `SubmittalFormDialog`: new client component (React Hook Form + `zodResolver`) with the General/Distribution/Content/Workflow sections from `FORMS.md`. Use searchable selects for contact/company fields (reusing Directory query patterns).
-- `SubmittalDetailClient`: new client component with tabs (General, Related Items, Emails, Change History). Each tab is composed of smaller pieces: `DistributionSummary`, `WorkflowResponses`, `DocumentList`, `EmailTimeline`, `HistoryFeed`, and `LinkedDrawings` (reuse existing UI cards/lists).
-- Supporting (new) components: `SubmittalWorkflowResponses` (cards with avatar, company, response badge, comments, attachments), `SubmittalDistributionSummary` (from/to/message + attachments), `SubmittalHistoryList`, `SubmittalDocumentsGrid`, `SubmittalEmailHistory`, `SubmittalTabs` for navigation, `SubmittalActionMenu` (Edit, Delete, Redistribute, Duplicate, Create Revision). Mirror styling of existing domain components (e.g., `components/domain/rfIs` etc.).
+| Component | Type | Description |
+|-----------|------|-------------|
+| `SubmittalsClient` | Client (exists, enhance) | List view with GenericDataTable |
+| `SubmittalDetailClient` | Client (NEW) | Detail view with tabs, distribution summary, workflow responses |
+| `SubmittalFormDialog` | Client (NEW) | Create/Edit form with all fields from FORMS.md |
+| `SubmittalWorkflowResponses` | Client (NEW) | Workflow response cards showing approver status |
+| `SubmittalDistributionSummary` | Client (NEW) | From/To/Message/Attachments distribution display |
 
-### Special Features/functionality
+### Table Columns (Procore Match)
 
-- Export menu (PDF/CSV/Excel) attached to the table toolbar, using GenericDataTable’s built-in exporters and the crawl commands (`export_pdf`, `export_csv`, `export_excel`).
-- Status cards that count Draft, Open, Distributed, Closed, plus filters for statuses and ball-in-court.
-- Ball In Court toggle and dedicated tab (filters rows by `ball_in_court` or `responsible_contractor`).
-- Recycle Bin tab shows soft-deleted rows (`deleted_at` not null) with restore action.
-- Distribution & workflow data surfaced in detail view alongside attachments (current and previous versions), history log, and email timeline (from `submittal_notifications`).
-- Crowd-sourced filters (Approver, Received From, Responsible Contractor, Revision, Division, Location, Private, Response) from the filter panel spec.
+Current list view has 9 columns. Procore has 12. Update to match:
 
-### Table Columns
+| Column | Field | Type | Currently Exists |
+|--------|-------|------|-----------------|
+| Spec | specification_section | text | No |
+| # | number | text | Yes (as submittal_number) |
+| Rev. | revision | integer | No |
+| Title | title | text | Yes |
+| Type | submittal_type | text | Yes (as submittal_type_name) |
+| Status | status | badge | Yes (as statusDisplay) |
+| Responsible C. | responsible_contractor | text (FK) | No |
+| Received From | received_from | text (FK) | No |
+| Ball In Court | ball_in_court | text | No |
+| Approvers | approvers | text[] | No |
+| Response | response | text | No |
+| Sent Date | sent_date | date | No |
 
-| Column | SQL field | Type | Notes |
-|--------|-----------|------|-------|
-| Spec | `specification_section` | text | CSI spec reference sourced from the submittal or `specifications` view. |
-| # | `number` | text | Combined with revision to render `Number & Rev.` |
-| Rev. | `revision` | integer | Sync with spec changes; default 0 for new submissions. |
-| Title | `title` | text | Primary submittal title, displayed with tooltip when truncated. |
-| Type | `submittal_type_name` / `submittal_type` | text | Drawn from `submittal_types`. |
-| Status | `status` | text/badge | Uses badges mapped to Draft/Open/Distributed/Closed. |
-| Responsible C. | `responsible_contractor_name` | text | Derived from the contact/company join. |
-| Received From | `received_from_name` | text | Person+company join. |
-| Ball In Court | `ball_in_court` | text | Current responsible party (from workflow). |
-| Approvers | `approver_names` | text[] | Aggregated from workflows/responses. |
-| Response | `latest_response_status` | text | Latest workflow approver response. |
-| Sent Date | `sent_date` | date | Date of the most recent distribution. |
+### Form Fields (from FORMS.md)
 
-### Frontend Form & Form Fields
+**General Information**: title*, specification_section, number*, revision*, submittal_type, submittal_package_id, responsible_contractor_id, received_from_id, submittal_manager_id*, status, cost_code_id, location_id
 
-**General Information** (required fields marked with `*`): Title*, Specification Section, Number*, Revision*, Submittal Type, Submittal Package, Responsible Contractor, Received From, Submittal Manager*, Status, Final Due Date, Cost Code, Location, Linked Drawings.
+**Distribution & Scheduling**: distribution_list[], ball_in_court, lead_time, required_on_site_date
 
-**Distribution & Scheduling**: Distribution List (contact[]), Ball In Court (display), Lead Time (days), Required On-Site Date.
+**Content**: is_private, description*, attachments[]
 
-**Content Section**: Private checkbox, Description* (rich text), Attachments with drag-and-drop + “CURRENT” badging.
+**Workflow**: workflow_template, workflow_steps[]
 
-**Workflow Section**: Workflow template selector + dynamic steps builder (Add Step button) that reflects `submittal_workflow_steps` / `submittal_responses`.
+### Status State Machine
+
+```bash
+Draft → Open → Distributed → Closed
+```
+Response statuses per approver: Submitted, Pending, Approved, Approved as Noted
+
+---
 
 ## Success Criteria
 
-- [ ] Supabase migrations cover the Procore schema (submittals + packages/workflow/responses/distributions/distribution recipients/attachments/linked drawings) with indexes, RLS, and triggers shown in `spec/schema.sql`.
-- [ ] `active_submittals` (Drizzle source: `frontend/drizzle/0000_familiar_clea.sql`) includes the new columns needed for the 12-table columns, status calculations, and distribution counts; Supabase query returns rows when tested with `node -e` per the direct costs incident.
-- [ ] API routes at `/api/projects/[projectId]/submittals` and `/api/projects/[projectId]/submittals/[submittalId]` handle GET/POST/PUT/DELETE and await `params` to avoid App Router async errors.
-- [ ] `SubmittalsClient` renders all 12 Procore columns, status cards, tabbed views (Items/Packages/Spec Sections/Ball In Court/Recycle Bin), exports, and filters for Approver/Ball In Court/Created By/Revision/Division/Location/Number/Private/Received From/Response/Responsible Contractor.
-- [ ] Create/Edit dialog mirrors the FORMS.md sections (General, Distribution & Scheduling, Content, Workflow) with Zod schema validation, searchable dropdowns, rich text description, file uploads, and workflow step management; form buttons match the commands (Update, Update & Send Emails, Delete).
-- [ ] Detail view includes Distribution Summary, Workflow Responses, Related Items, Emails, and Change History tabs, plus history entries from `submittal_history` and attachments from `submittal_documents`/`submittal_attachments`.
-- [ ] Status cards, workflow response badges, distribution timeline, attachments, and email log are styled consistently with existing domain components.
-- [ ] Type checks: `npx tsc --noEmit`; lint: `npm run lint`; build: `npm run build`; Supabase query verification: `node -e "const { createServiceClient } = require('@/lib/supabase/service'); createServiceClient().from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"`
+- [ ] All 8 database tables created with RLS policies
+- [ ] Submittals list shows all 12 Procore columns
+- [ ] Create/Edit form dialog works with all fields from FORMS.md
+- [ ] Detail view shows distribution summary, description, workflow responses
+- [ ] 5 tabs function: Items (list), Packages (grouped), Spec Sections (grouped), Ball In Court (filtered), Recycle Bin (soft-deleted)
+- [ ] Status cards show correct counts per status
+- [ ] Filters match Procore: Approver, Ball In Court, Created By, Current Revision, Division, Location, Number, Private, Received From, Response, Responsible Contractor
+- [ ] Soft delete moves submittals to Recycle Bin tab
+- [ ] Type checking passes: `npx tsc --noEmit`
+- [ ] Build succeeds: `npm run build`
 
-## Known Pitfalls & Prevention
-
-### From Incident Log & Pattern Files
-
-#### Direct Costs — Claimed “Fixed” Without Query Validation (INCIDENT-LOG.md 🟡)
-
-**Error:** Supabase query returned empty data despite claiming success.
-**Prevention:** Run the actual query against Supabase before declaring completion (use the `node -e` pattern from `.claude/rules/SUPABASE-GATE.md`).
-**Validation:** `node -e "const supabase = require('@/lib/supabase/service').createServiceClient(); supabase.from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"`
-
-#### Scheduling — Project FK Was UUID Instead of INTEGER (database-issues.md 🔴)
-
-**Error:** Queries silently returned no rows when `project_id` type mismatched the `projects` PK.
-**Prevention:** Always re-run `npm run db:types` and confirm `project_id` columns are `integer` whenever referencing `projects`; double-check `users.id` remains `uuid` for audit fields.
-**Validation:** `rg "project_id" supabase/migrations/...` + `npm run db:types` after migrations.
-
-#### API Routing Parameter Conflict (api-routing-errors.md 🔴)
-
-**Error:** Next.js rejects route when multiple dynamic segments at the same level use different names.
-**Prevention:** Use `[projectId]` everywhere at that route depth. Create separate `[submittalId]` child folder for detail API and adjust imports accordingly.
-**Validation:** `npm run check:routes` (if available) or rebuild dev server after adding routes.
-
-#### Async Params Must Be Awaited (api-routing-errors.md 🟡)
-
-**Error:** Accessing `params.projectId` directly causes runtime errors in Next.js 15.
-**Prevention:** Always `const { projectId } = await params;` inside API handlers and server components.
-**Validation:** TypeScript should compile without errors once `await` is added.
-
-#### Radix Select Empty String Crash (INCIDENT-LOG.md 🟡)
-
-**Error:** `<Select.Item value="" />` throws runtime error.
-**Prevention:** Use sentinel values (e.g., `value="none"`) and sanitize before submitting, especially for searchable dropdowns (Responsible Contractor, Received From, Workflow Template).
-**Validation:** `npm run dev` and interactively open each select to confirm no console error.
+---
 
 ## All Needed Context
 
 ### Context Completeness Check
 
-_If someone knew nothing about this codebase, would they have enough to implement this?_ **Yes — schema, API patterns, components, and form rules are documented below.**
+_If someone knew nothing about this codebase, would they have everything needed to implement this successfully?_ **Yes** — this PRP includes database schema, form fields, column mappings, status states, codebase patterns, file paths, and specific interface definitions.
 
-### Documentation & References - Must Read
+### Documentation & References
 
 ```yaml
+# MUST READ - Codebase files
 - file: frontend/src/app/(tables)/submittals/submittals-client.tsx
-  why: Existing list view; follow the TableLayout + GenericDataTable patterns.
-  pattern: Configure `columns`, `filters`, `rowClickPath`, and `enableViewSwitcher` via `GenericTableConfig`.
-  gotcha: Currently uses placeholder `SubmittalRow`; replace with typed data and switch from local filtering to server-driven filters when feasible.
+  why: Existing list view component to enhance — add Procore columns, improve tab behavior
+  pattern: GenericDataTable config, TableLayout wrapper, status cards, tab navigation
+  gotcha: Uses SubmittalTableRow local type — must align with new database columns
 
 - file: frontend/src/app/(tables)/submittals/submittals-data.ts
-  why: Lists data, fetches from the `active_submittals` view via `createServiceClient()`.
-  pattern: Services should accept `projectId`, default to env var, and gracefully handle Supabase errors.
-  gotcha: The view currently excludes workflows/distributions, so extend or join new tables as needed.
+  why: Existing data fetching — uses active_submittals view and createServiceClient()
+  pattern: Server-side fetching with Supabase service client, default project ID from env
+  gotcha: Currently reads from active_submittals VIEW — may need to create this view or switch to table
 
-- file: frontend/drizzle/0000_familiar_clea.sql
-  why: Defines the `active_submittals` view consumed by the list.
-  pattern: Update the view definition to surface required columns (`specification_section`, `sent_date`, `responsible_contractor`, etc.).
-  gotcha: Re-running `frontend/drizzle/schema.ts` rebuilds the view; keep it in sync with Supabase migrations.
+- file: frontend/src/app/(main)/[projectId]/submittals/page.tsx
+  why: Server component entry point — passes projectId and fetched data to client
+  pattern: Async server component, params Promise destructuring, numeric project ID resolution
 
-- file: frontend/src/lib/supabase/service.ts
-  why: Pattern for creating a Supabase admin client with service role keys.
-  pattern: Always guard on missing env vars, disable auto-refresh, and reuse this client inside API routes.
-  gotcha: Never export it to client bundles.
+- file: frontend/src/services/directoryService.ts
+  why: Reference service class pattern — class-based, Supabase client injection, DTO types, pagination
+  pattern: Constructor with typed client, separate create/update DTOs, paginated responses, activity logging
+  gotcha: Uses project_directory_memberships for RLS/access check — submittals must follow same pattern (NOT project_members)
 
-- file: frontend/src/app/api/projects/[projectId]/route.ts
-  why: Template for async App Router route handlers with parameter parsing and auth checks.
-  pattern: `const { projectId } = await params; const supabase = await createClient();` + error handling.
-  gotcha: Do not use generic `[id]` segments at conflicting path depth.
+- file: frontend/src/hooks/use-contacts.ts
+  why: Reference hook pattern — useState/useCallback wrapping Supabase queries
+  pattern: Interface-first, options object, returns data + options + loading + error + refetch + create
+  gotcha: Uses project_directory_memberships join for project filtering
+
+- file: frontend/src/hooks/use-change-orders.ts
+  why: Reference hook for CRUD pattern with projectId filtering
+  pattern: Auto-fetch on mount, graceful column degradation, options array for dropdowns
 
 - file: frontend/src/components/tables/generic-table-factory.tsx
-  why: Defines the table factory used by Submittals list.
-  pattern: Configure `columns`, `searchFields`, `filters`, `exportFilename`, and render badges via `renderConfig`.
-  gotcha: Keep the table config serializable; avoid inline functions outside renderConfig if they require closures.
+  why: GenericDataTable config structure — columns, filters, search, rendering
+  pattern: Config-driven, serializable render types (badge, currency, truncate), no functions in config
+  gotcha: RenderConfig must use string enum types, NOT function renderers
 
-- url: https://nextjs.org/docs/app/api-reference/functions/route-handlers#dynamic-route-segments
-  why: Explains how to declare dynamic App Router route segments and why parameter names must match.
-  critical: Ensures `[projectId]` & `[submittalId]` are consistent across client, server, and API folders.
+- file: frontend/src/components/domain/contacts/ContactFormDialog.tsx
+  why: Reference form dialog — React Hook Form + Zod, create/update, nested dialogs
+  pattern: Parent-controlled open state, form reset on open, async submit, toast feedback
 
-- url: https://nextjs.org/docs/app/building-your-application/directives
-  why: Reminds that `'use client'` must appear at the top of client components (SubmittalFormDialog, SubmittalDetailClient, etc.).
-  critical: Mixing server/client code causes hydration runtime failures.
+- file: frontend/src/hooks/use-companies.ts
+  why: Hook for company dropdowns — used for responsible_contractor field
+  pattern: Same structure as use-contacts but queries companies table
+  gotcha: Returns company options with value/label — use for responsible_contractor dropdown
 
-- url: https://react-hook-form.com/get-started#SchemaValidation
-  why: Shows how to integrate `zodResolver` with React Hook Form.
-  critical: Use this pattern for the Submittal form dialog to enforce the field types listed in `FORMS.md`.
+- file: frontend/src/lib/schemas/common.ts
+  why: Zod schema helpers for number inputs (NaN handling)
+  pattern: optionalNumber, requiredNumber, optionalPositiveNumber utilities
 
-- url: https://zod.dev/?id=schemas-definitions
-  why: Use Zod to describe the submittal payload (title, specification_section, distribution list, attachments, workflow steps).
-  critical: Ensures schema-driven validation and compile-time inference for submission/update handlers.
+- file: .claude/scaffolds/crud-resource/hook.ts
+  why: Scaffold template for new hooks — guaranteed correct FK types and patterns
+  pattern: Replace __ENTITY__ placeholders, INTEGER project_id, soft delete, dropdown options
 
+- file: .claude/scaffolds/crud-resource/service.ts
+  why: Scaffold template for service class — class-based, paginated, error handling
+  pattern: Typed Supabase client constructor, PGRST116 handling, separate DTOs
+
+- file: .claude/scaffolds/crud-resource/migration.sql
+  why: Scaffold template for migration — correct FK types, RLS, triggers, indexes
+  pattern: UUID PK, INTEGER project_id FK, audit fields, updated_at trigger, 4 RLS policies
+
+# MUST READ - Spec artifacts from Procore crawl
 - file: scripts/playwright-crawl/procore-crawls/submittals/spec/COMMANDS.md
-  why: Shares Procore domain commands (create, edit, exports, filters).
-  pattern: Align action menu buttons, form footer buttons, and export menu with these command keys.
-  gotcha: Use this as the authoritative list when labeling UI controls/buttons.
-
-- file: scripts/playwright-crawl/procore-crawls/submittals/spec/MUTATIONS.md
-  why: Describes workflows, status state machine, distribution behavior, and response table inference.
-  pattern: Use the described mutations as test scenarios for the API (create/update, redistribute, delete).
-  gotcha: Workflows include response statuses (`Submitted`, `Pending`, `Approved`, `Approved as Noted`) that must map to badges.
-
-- file: scripts/playwright-crawl/procore-crawls/submittals/spec/schema.sql
-  why: Provides Procore-derived table definitions and RLS policies for workflow/distribution tables.
-  pattern: Mirror the PKs/FKs/indexes/constraints when writing Supabase migrations.
-  gotcha: Each new table expects `project_directory_memberships` filtering; replicate the provided policies.
+  why: All 24 domain commands — CRUD, workflow, distribution, export, navigation
+  pattern: Command key → Label → Trigger → Source → Category
 
 - file: scripts/playwright-crawl/procore-crawls/submittals/spec/FORMS.md
-  why: Enumerates every form field (general/distribution/content/workflow) required for Submittal create/edit.
-  pattern: Implement the same fields, validation requirements, and widget types (searchable select, rich text, attachments).
-  gotcha: `Number` + `Revision` act as a combined identity (store separately but render as a pair).
+  why: Complete form field definitions — 14 General, 4 Distribution, 3 Content fields
+  pattern: Field → Label → Type → Required → Widget → Notes
 
-- file: scripts/playwright-crawl/procore-crawls/submittals/crawl-summary.json
-  why: Lists crawled Procore pages (list, detail, tabs) and captures the commands/forms tied to each view.
-  critical: Use this to prioritize which screenshot/DOM files to reference and to confirm tab names.
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/MUTATIONS.md
+  why: CRUD operations, state machine, workflow responses, distribution model
+  pattern: Command → Input → Tables Affected → Side Effects
+
+- file: scripts/playwright-crawl/procore-crawls/submittals/spec/schema.sql
+  why: Database schema — 8 tables with all columns, indexes, RLS, triggers
+  pattern: Review before creating migration — adjust FK types per Supabase Types Gate
 ```
+
+### Current Codebase Tree (relevant files)
+
+```
+
+frontend/src/
+├── app/
+│   ├── (main)/[projectId]/submittals/
+│   │   └── page.tsx                          # Server component (EXISTS)
+│   ├── (tables)/submittals/
+│   │   ├── submittals-client.tsx              # Client list view (EXISTS - ENHANCE)
+│   │   ├── submittals-data.ts                 # Data fetching (EXISTS - ENHANCE)
+│   │   └── settings/
+│   │       ├── general/page.tsx               # Settings page (EXISTS)
+│   │       ├── custom-fields/page.tsx         # Custom fields (EXISTS)
+│   │       ├── workflow-templates/page.tsx     # Workflow templates (EXISTS)
+│   │       └── preferences.ts                 # Settings prefs (EXISTS)
+│   └── api/projects/[projectId]/
+│       └── submittals/                        # API routes (NEW)
+├── components/
+│   ├── tables/generic-table-factory.tsx       # GenericDataTable (EXISTS)
+│   ├── domain/submittals/                     # Domain components (NEW)
+│   └── layouts/                               # TableLayout (EXISTS)
+├── hooks/
+│   ├── use-submittals.ts                      # Submittals hook (NEW)
+│   └── use-contacts.ts                        # Contact hook (EXISTS - reference)
+├── services/
+│   ├── submittalService.ts                    # Service class (NEW)
+│   └── directoryService.ts                    # Reference service (EXISTS)
+├── lib/schemas/
+│   ├── common.ts                              # Zod helpers (EXISTS)
+│   └── submittal.ts                           # Submittal schema (NEW)
+└── types/
+    └── database.types.ts                      # Generated types (REGENERATE)
+
+```
+### Desired Codebase Tree (files to add)
+
+```sql
+frontend/src/
+├── app/
+│   ├── (main)/[projectId]/submittals/
+│   │   ├── page.tsx                           # EXISTS — no change needed
+│   │   └── [submittalId]/
+│   │       └── page.tsx                       # NEW — Detail view server component
+│   ├── (tables)/submittals/
+│   │   ├── submittals-client.tsx              # ENHANCE — Update columns, improve tabs
+│   │   ├── submittals-data.ts                 # ENHANCE — Add detail fetch, filter support
+│   │   └── submittal-detail-client.tsx        # NEW — Detail view client component
+│   └── api/projects/[projectId]/submittals/
+│       ├── route.ts                           # NEW — GET list, POST create
+│       └── [submittalId]/
+│           └── route.ts                       # NEW — GET detail, PUT update, DELETE soft-delete
+├── components/domain/submittals/
+│   ├── SubmittalFormDialog.tsx                 # NEW — Create/Edit dialog
+│   ├── SubmittalWorkflowResponses.tsx         # NEW — Workflow response cards
+│   └── SubmittalDistributionSummary.tsx       # NEW — Distribution from/to display
+├── hooks/
+│   └── use-submittals.ts                      # NEW — CRUD hook with filtering
+├── services/
+│   └── submittalService.ts                    # NEW — Service class with pagination
+└── lib/schemas/
+    └── submittal.ts                           # NEW — Zod validation schema
+
+```
+
+### Known Gotchas
+
+```typescript
+// CRITICAL: projects.id is INTEGER, not UUID
+// All project_id foreign keys MUST be integer NOT NULL REFERENCES projects(id)
+// Violation causes silent query failures (UUID vs INTEGER mismatch)
+
+// CRITICAL: Route parameters must use specific names
+// Use [submittalId] NOT [id] — see .claude/rules/CRITICAL-NEXTJS-ROUTING-RULES.md
+
+// CRITICAL: GenericTableConfig renderConfig uses string enum types
+// Use { type: "badge", variantMap: {...} } NOT function renderers
+// See generic-table-factory.tsx for valid RenderConfig union types
+
+// CRITICAL: active_submittals VIEW must be created or replaced
+// Current submittals-data.ts reads from this view
+// Either create a Postgres VIEW or switch to direct table queries
+
+// CRITICAL: Next.js 15 async params
+// Server components receive params as Promise: params: Promise<{ projectId: string }>
+// Must await: const { projectId } = await params;
+
+// CRITICAL: Supabase Types Gate
+// Run npm run db:types BEFORE writing any database code
+// Read frontend/src/types/database.types.ts to verify columns exist
+
+// GOTCHA: Form number inputs return NaN for empty fields
+// Use optionalNumber from lib/schemas/common.ts in Zod schemas
+
+// GOTCHA: 'use client' directive required for any component using:
+// useState, useEffect, useCallback, event handlers, browser APIs
+```
+
+---
 
 ## Implementation Blueprint
 
-- Use the shape below for the list rows, exports, and filtering payloads, and keep related `SubmittalDetail` types aligned with the API contract.
+### Data Models and Structure
 
 ```typescript
-interface SubmittalSummaryRow {
+// === Zod Schema: lib/schemas/submittal.ts ===
+
+import { z } from "zod";
+import { optionalNumber, optionalPositiveNumber } from "./common";
+
+export const createSubmittalSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  number: z.string().min(1, "Number is required"),
+  revision: z.number().int().min(0).default(0),
+  specification_section: z.string().optional(),
+  submittal_type: z.string().optional(),
+  submittal_package_id: z.string().uuid().optional(),
+  responsible_contractor_id: optionalNumber,
+  received_from_id: z.string().uuid().optional(),
+  submittal_manager_id: z.string().uuid({ message: "Submittal Manager is required" }),
+  status: z.string().default("Draft"),
+  cost_code_id: optionalNumber,
+  location_id: optionalNumber,
+  final_due_date: z.string().optional(), // ISO date string (may be read-only in some contexts)
+  lead_time: optionalPositiveNumber,
+  required_on_site_date: z.string().optional(), // ISO date string
+  is_private: z.boolean().default(false),
+  description: z.string().min(1, "Description is required"),
+});
+
+export const updateSubmittalSchema = createSubmittalSchema.partial();
+
+export type CreateSubmittalInput = z.infer<typeof createSubmittalSchema>;
+export type UpdateSubmittalInput = z.infer<typeof updateSubmittalSchema>;
+
+// === Service types: services/submittalService.ts ===
+
+export interface SubmittalWithRelations {
   id: string;
-  projectId: number;
-  submittalNumber: string;
+  project_id: number;
+  number: string;
   revision: number;
   title: string;
-  specificationSection: string | null;
-  submittalTypeName: string | null;
-  status: "Draft" | "Open" | "Distributed" | "Closed" | string;
-  responsibleContractor: string | null;
-  receivedFrom: string | null;
-  ballInCourt: string | null;
-  approvers: string[];
-  latestResponse: "Submitted" | "Pending" | "Approved" | "Approved as Noted" | string | null;
-  sentDate: string | null;
-  isPrivate: boolean;
+  specification_section: string | null;
+  submittal_type: string | null;
+  status: string;
+  ball_in_court: string | null;
+  responsible_contractor_id: number | null;
+  received_from_id: string | null;
+  submittal_manager_id: string | null;
+  description: string | null;
+  is_private: boolean;
+  lead_time: number | null;
+  required_on_site_date: string | null;
+  sent_date: string | null;
+  deleted_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  // Joined relations
+  responsible_contractor?: { id: number; name: string } | null;
+  received_from?: { id: string; first_name: string; last_name: string } | null;
+  submittal_manager?: { id: string; first_name: string; last_name: string } | null;
+  submittal_package?: { id: string; name: string } | null;
+  workflow_responses?: SubmittalResponseRow[];
+  distributions?: SubmittalDistributionRow[];
+  attachments?: SubmittalAttachmentRow[];
+}
+
+export interface SubmittalResponseRow {
+  id: string;
+  responder_id: string;
+  response_status: string; // Pending, Approved, Approved as Noted
+  comments: string | null;
+  responded_at: string | null;
+  responder?: { first_name: string; last_name: string; company?: string };
+}
+
+export interface SubmittalDistributionRow {
+  id: string;
+  from_id: string;
+  message: string | null;
+  distributed_at: string | null;
+  from?: { first_name: string; last_name: string; company?: string };
+  recipients?: { id: string; first_name: string; last_name: string; company?: string }[];
+  attachments?: SubmittalAttachmentRow[];
+}
+
+export interface SubmittalAttachmentRow {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_size: number | null;
+  is_current: boolean;
+}
+
+export interface SubmittalFilters {
+  search?: string;
+  status?: string;
+  submittal_type?: string;
+  responsible_contractor_id?: number;
+  received_from_id?: string;
+  ball_in_court?: string;
+  specification_section?: string;
+  is_private?: boolean;
+  includeDeleted?: boolean; // For Recycle Bin tab
 }
 ```
-
-Compose `SubmittalDetail` types that include `distributions`, `responses`, `history`, `documents`, and `linked_drawings`. Build Zod schemas (`createSubmittalSchema`, `updateSubmittalSchema`, `filtersSchema`) that mirror the `FORMS.md` definitions, plug them into `zodResolver`, and reuse the inferred TypeScript types across the UI and API layers.
-
-## Implementation Tasks (ordered by dependencies)
-
-1. **Data Layer – Schema & Types**
-   - Write Supabase migrations for `submittal_packages`, `submittal_workflow_steps`, `submittal_responses`, `submittal_distributions`, `submittal_distribution_recipients`, `submittal_attachments`, `submittal_linked_drawings`, plus the revised `submittals` view/table changes (indexes, triggers, RLS). Follow the field descriptions in `spec/schema.sql`, ensure `project_id` is `INTEGER`, add the `update_updated_at_column` trigger, and apply RLS patterns from the schema file.
-   - Run `npm run db:types` / `npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public` to refresh `frontend/src/types/database.types.ts`, then define TypeScript interfaces + Zod schemas that mirror the new columns (use `PascalCase` for interfaces, `camelCase` for props, arrays typed as `string[]`).
-
-2. **API Layer – Services & Routes**
-   - Implement a `submittalService` (e.g., `frontend/src/services/submittalService.ts`) with `list`, `getById`, `create`, `update`, `softDelete`, `redistribute` methods. Each method should use `createServiceClient()` and accept typed DTOs; test queries via `node -e` to satisfy `.claude/rules/SUPABASE-GATE.md`.
-   - Create `app/api/projects/[projectId]/submittals/route.ts` (GET + POST) and `app/api/projects/[projectId]/submittals/[submittalId]/route.ts` (GET + PUT + DELETE). Always `await params`, guard on authenticated users, and map errors to JSON responses.
-
-3. **UI Layer – List + Forms + Detail**
-   - Update `SubmittalsClient` to accept typed `SubmittalSummaryRow[]`, configure all 12 Procore columns, search fields, filters from `COMMANDS.md`, export menu, status cards, tabs (Items/Packages/Spec Sections/Ball In Court/Recycle Bin), and the Ball In Court toggle; ensure row clicks navigate to `/[projectId]/submittals/[submittalId]`.
-   - Build `SubmittalFormDialog` (client component with `'use client'`): integrate React Hook Form + zodResolver, break the form into the four sections from `FORMS.md`, support file uploads for attachments, workflow step builder, and the required buttons (Update, Update & Send Emails, Delete). Use sentinel values instead of empty strings in `<Select.Item>` to avoid the Radix bug.
-   - Build `SubmittalDetailClient` (client component) that renders tabs (General, Related Items, Emails, Change History) plus supporting components: `SubmittalDistributionSummary`, `SubmittalWorkflowResponses`, `SubmittalDocumentsGrid`, `SubmittalHistoryList`, and `SubmittalEmailHistory`. Format badges and cards to match the Procore screenshot.
-
-4. **Integration Layer**
-   - Add the detail server page `/[projectId]/submittals/[submittalId]/page.tsx` that calls the service, passes typed data to the client, and wraps navigation/metadata. Ensure rerouting uses the same `[projectId]` parameter as the API to avoid Next.js slug conflicts.
-   - Wire the list view, detail view, form dialog, and API together via a shared hook (e.g., `useSubmittals` in `frontend/src/hooks/use-submittals.ts`). Include refetching after mutations and optimistic updates for the status cards, ball-in-court toggle, and Recycle Bin filters.
-
-5. **Testing & Validation**
-   - Run `npx tsc --noEmit`, `npm run lint`, `npm run build`, and the `node -e` Supabase query (see Known Pitfalls section) after migrations and UI changes.
-   - Manually verify: the list page shows 12 columns and tabs, a row opens the detail page, the dialog covers required fields, attachments upload, workflow steps render, distribution/responses appear, and the Recycle Bin tab shows soft-deleted rows.
+### Implementation Tasks (ordered by dependencies)
 
 ```
 
-## Integration Points
+## PHASE 1: DATA LAYER
 
-- **Key surfaces:** Ensure schema, env config, and route files stay aligned so exports, filters, and APIs can safely share the same `[projectId]`/`[submittalId]` naming conventions.
+Task 1: CREATE Supabase migration for submittals schema
+
+- IMPLEMENT: 8 tables from spec/schema.sql with RLS, indexes, triggers
+- FOLLOW pattern: .claude/scaffolds/crud-resource/migration.sql
+- CRITICAL: project_id must be INTEGER (not UUID) — projects.id is INTEGER
+- CRITICAL: RLS policies must use project_directory_memberships (NOT project_members). Follow the scaffold pattern:
+      SELECT 1 FROM project_directory_memberships pdm
+      JOIN people p ON p.id = pdm.person_id
+      WHERE p.auth_user_id = auth.uid() AND pdm.project_id = <table>.project_id
+- CRITICAL: Run npm run db:types after migration, verify all tables exist in database.types.ts
+- TABLES: submittals, submittal_packages, submittal_workflow_steps, submittal_responses, submittal_distributions, submittal_distribution_recipients, submittal_attachments, submittal_linked_drawings
+- INCLUDE: active_submittals VIEW (or update existing view) with joined company/contact names
+
+Task 2: CREATE frontend/src/lib/schemas/submittal.ts
+
+- IMPLEMENT: Zod schemas for create and update operations
+- FOLLOW pattern: frontend/src/lib/schemas/common.ts (optionalNumber helpers)
+- FIELDS: title*, number*, revision*, submittal_manager_id*, description* (required), plus all optional fields from FORMS.md
+- EXPORT: createSubmittalSchema, updateSubmittalSchema, CreateSubmittalInput, UpdateSubmittalInput
+
+Task 3: CREATE frontend/src/services/submittalService.ts
+
+- IMPLEMENT: Class-based service with Supabase client injection
+- FOLLOW pattern: frontend/src/services/directoryService.ts (class structure, DTOs, pagination)
+- METHODS: list(projectId, filters), getById(projectId, submittalId), create(projectId, data), update(projectId, submittalId, data), softDelete(projectId, submittalId)
+- INCLUDE: getById must join workflow_responses, distributions, attachments
+- INCLUDE: list must support all SubmittalFilters fields
+- INCLUDE: Pagination support (page, pageSize, total count)
+
+Task 4: CREATE frontend/src/hooks/use-submittals.ts
+
+- IMPLEMENT: React hook wrapping submittalService
+- FOLLOW pattern: frontend/src/hooks/use-contacts.ts (interface-first, useState/useCallback)
+- RETURNS: submittals[], isLoading, error, refetch, createSubmittal, updateSubmittal, deleteSubmittal
+- OPTIONS: projectId, filters (SubmittalFilters), limit, enabled
+
+# === PHASE 2: API LAYER ===
+
+Task 5: CREATE frontend/src/app/api/projects/[projectId]/submittals/route.ts
+
+- IMPLEMENT: GET (list with filters) and POST (create)
+- FOLLOW pattern: Existing API routes in api/projects/[projectId]/
+- GET: Parse query params for filters, call submittalService.list()
+- POST: Validate body with createSubmittalSchema, call submittalService.create()
+- NAMING: Use [projectId] NOT [id]
+
+Task 6: CREATE frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts
+
+- IMPLEMENT: GET (detail), PUT (update), DELETE (soft-delete)
+- GET: Call submittalService.getById() with joined relations
+- PUT: Validate body with updateSubmittalSchema, call submittalService.update()
+- DELETE: Call submittalService.softDelete()
+- NAMING: Use [submittalId] NOT [id]
+
+# === PHASE 3: UI LAYER ===
+
+Task 7: ENHANCE frontend/src/app/(tables)/submittals/submittals-data.ts
+
+- ENHANCE: Add fetchSubmittalDetail() for detail page
+- ADD: Join queries for responsible_contractor, received_from, submittal_manager names
+- ADD: Support for fetching deleted submittals (Recycle Bin)
+- KEEP: Existing fetchSubmittals() and resolveSubmittalsProjectId()
+- CLEANUP: Remove `(supabase as any)` cast and `Record<string, unknown>` type — replace with proper typed queries against submittals table (or updated active_submittals VIEW) after migration creates the tables
+- IMPORTANT: Update SubmittalRow type to use Database["public"]["Tables"]["submittals"]["Row"] from generated types
+
+Task 8: ENHANCE frontend/src/app/(tables)/submittals/submittals-client.tsx
+
+- ENHANCE: Update table columns to match Procore's 12 columns
+- ADD: Spec, Rev, Responsible C., Received From, Ball In Court, Approvers, Response, Sent Date columns
+- ADD: Real filter options matching Procore (11 filters from COMMANDS.md)
+- ADD: onClick handler for Create Submittal menu item → open SubmittalFormDialog
+- ADD: Row click → navigate to detail view /[projectId]/submittals/[submittalId]
+- UPDATE: Status values to match Procore (Draft, Open, Distributed, Closed)
+- KEEP: Existing tab structure, status cards, export dropdown
+
+Task 9: CREATE frontend/src/components/domain/submittals/SubmittalFormDialog.tsx
+
+- IMPLEMENT: Create/Edit dialog with React Hook Form + Zod
+- FOLLOW pattern: frontend/src/components/domain/contacts/ContactFormDialog.tsx
+- SECTIONS: General Information (14 fields), Distribution & Scheduling (4 fields), Content (3 fields)
+- INCLUDE: Searchable dropdowns for contacts (submittal_manager, received_from) and companies (responsible_contractor)
+- INCLUDE: Rich text editor for description field (or textarea as MVP)
+- INCLUDE: File upload for attachments
+- ACTIONS: Create/Update button, Update & Send Emails button, Cancel, Delete (edit mode)
+
+Task 10: CREATE frontend/src/app/(tables)/submittals/submittal-detail-client.tsx
+
+- IMPLEMENT: Detail view with 4 tabs (General, Related Items, Emails, Change History)
+- GENERAL TAB: Distribution summary (From/To/Message/Attachments), Description, Workflow Responses
+- INCLUDE: Edit button → opens SubmittalFormDialog in edit mode
+- INCLUDE: Actions dropdown (Create Revision, Duplicate, Email, Delete)
+- INCLUDE: Redistribute button
+- FOLLOW pattern: Detail view in other tools (use Card components, Tabs)
+
+Task 11: CREATE frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx
+
+- IMPLEMENT: Server component for detail page
+- FOLLOW pattern: frontend/src/app/(main)/[projectId]/submittals/page.tsx
+- FETCH: submittal detail with relations via fetchSubmittalDetail()
+- PASS: Data to SubmittalDetailClient component
+- NAMING: Use [submittalId] parameter name
+
+Task 12: CREATE frontend/src/components/domain/submittals/SubmittalWorkflowResponses.tsx
+
+- IMPLEMENT: Workflow response cards showing approver name, company, status, comments, attachments
+- DISPLAY: Person name + company, response status badge, comments text, attachment links with CURRENT badge
+- STATUSES: Submitted, Pending, Approved, Approved as Noted (each with distinct badge variant)
+
+Task 13: CREATE frontend/src/components/domain/submittals/SubmittalDistributionSummary.tsx
+
+- IMPLEMENT: Distribution display with From, To, Message, Attachments sections
+- FROM: Submittal Manager name + company
+- TO: List of recipients with name + company
+- MESSAGE: Distribution message text
+- ATTACHMENTS: File list with download links
+
+# === PHASE 4: INTEGRATION ===
+
+Task 14: INTEGRATE list view with real data
+
+- WIRE: SubmittalsClient to use new hook/service for real-time data
+- ADD: Create Submittal menu item opens SubmittalFormDialog
+- ADD: Row click navigates to detail page
+- ADD: Recycle Bin tab shows soft-deleted submittals
+- ADD: Packages tab groups submittals by package
+- ADD: Spec Sections tab groups by specification_section
+- TEST: All tabs render correct data
+
+Task 15: INTEGRATE form dialog with API
+
+- WIRE: SubmittalFormDialog submit to API routes
+- ADD: Toast notifications for success/error
+- ADD: Refetch list after create/update/delete
+- ADD: Contact/company dropdowns fetch from existing hooks
+- TEST: Create, edit, delete operations work end-to-end
+
+# === PHASE 5: TESTING & VALIDATION ===
+
+Task 16: Validate types and build
+
+- RUN: npm run db:types (regenerate after migration)
+- RUN: npx tsc --noEmit (zero type errors)
+- RUN: npm run lint (zero lint errors)
+- RUN: npm run build (production build succeeds)
+- VERIFY: No route conflicts (npm run check:routes)
+- VERIFY: Dev server starts (npm run dev)
+
+Task 17: Manual verification
+
+- TEST: Navigate to /[projectId]/submittals — list view renders
+- TEST: Click "Add Submittal" → form dialog opens with all fields
+- TEST: Fill form and submit → submittal appears in list
+- TEST: Click submittal row → detail view renders with correct data
+- TEST: Edit button → form opens pre-filled
+- TEST: Delete → submittal moves to Recycle Bin tab
+- TEST: All 5 tabs render appropriate content
+- TEST: Filters narrow results correctly
+- TEST: Status cards show correct counts
 
 ```
+
+### Implementation Patterns & Key Details
+
+```typescript
+// === Service Class Pattern ===
+// Follow directoryService.ts structure
+
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
+
+// Match directoryService.ts pattern: ReturnType<typeof createClient<Database>>
+type TypedClient = ReturnType<typeof createClient<Database>>;
+
+export class SubmittalService {
+  constructor(private supabase: TypedClient) {}
+
+  async list(projectId: number, filters: SubmittalFilters = {}) {
+    let query = this.supabase
+      .from("submittals")
+      .select("*, submittal_packages(name)", { count: "exact" })
+      .eq("project_id", projectId);
+
+    // Soft delete filter
+    if (filters.includeDeleted) {
+      query = query.not("deleted_at", "is", null);
+    } else {
+      query = query.is("deleted_at", null);
+    }
+
+    // Apply filters
+    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.search) {
+      query = query.or(`title.ilike.%${filters.search}%,number.ilike.%${filters.search}%`);
+    }
+
+    return query.order("created_at", { ascending: false });
+  }
+
+  async getById(projectId: number, submittalId: string) {
+    return this.supabase
+      .from("submittals")
+      .select(`
+        *,
+        submittal_packages(id, name),
+        submittal_responses(*, responder:people(*)),
+        submittal_distributions(*, recipients:submittal_distribution_recipients(*, recipient:people(*)))
+      `)
+      .eq("id", submittalId)
+      .eq("project_id", projectId)
+      .single();
+  }
+}
+
+// === Hook Pattern ===
+// Follow use-contacts.ts structure
+
+export function useSubmittals(options: UseSubmittalsOptions = {}): UseSubmittalsReturn {
+  const { projectId, filters, limit = 100, enabled = true } = options;
+  const [submittals, setSubmittals] = useState<Submittal[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchSubmittals = useCallback(async () => {
+    if (!enabled || !projectId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const service = new SubmittalService(supabase);
+      const { data, error: queryError } = await service.list(
+        typeof projectId === "string" ? parseInt(projectId, 10) : projectId,
+        filters
+      );
+      if (queryError) throw new Error(queryError.message);
+      setSubmittals(data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to fetch submittals"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, filters, limit, enabled]);
+
+  useEffect(() => { fetchSubmittals(); }, [fetchSubmittals]);
+
+  // ... createSubmittal, updateSubmittal, deleteSubmittal methods
+  return { submittals, isLoading, error, refetch: fetchSubmittals, ... };
+}
+
+// === GenericTableConfig for Procore Columns ===
+// Update submittals-client.tsx table config
+
+const tableConfig: GenericTableConfig = {
+  columns: [
+    { id: "specification_section", label: "Spec", defaultVisible: true, type: "text" },
+    { id: "number", label: "#", defaultVisible: true, type: "text", isPrimary: true },
+    { id: "revision", label: "Rev.", defaultVisible: true, type: "text" },
+    { id: "title", label: "Title", defaultVisible: true, type: "text" },
+    { id: "submittal_type", label: "Type", defaultVisible: true, type: "text" },
+    {
+      id: "status", label: "Status", defaultVisible: true,
+      renderConfig: {
+        type: "badge",
+        variantMap: { Draft: "secondary", Open: "default", Distributed: "outline", Closed: "success" },
+        defaultVariant: "outline",
+      },
+    },
+    { id: "responsible_contractor_name", label: "Responsible C.", defaultVisible: true, type: "text" },
+    { id: "received_from_name", label: "Received From", defaultVisible: true, type: "text" },
+    { id: "ball_in_court", label: "Ball In Court", defaultVisible: true, type: "text" },
+    { id: "approvers", label: "Approvers", defaultVisible: true, type: "text" },
+    {
+      id: "response", label: "Response", defaultVisible: true,
+      renderConfig: {
+        type: "badge",
+        variantMap: { Pending: "secondary", Approved: "success", "Approved as Noted": "default" },
+        defaultVariant: "outline",
+      },
+    },
+    { id: "sent_date", label: "Sent Date", defaultVisible: true, type: "date" },
+  ],
+  searchFields: ["title", "number", "specification_section", "responsible_contractor_name"],
+  filters: [
+    { id: "status-filter", label: "Status", field: "status", options: [
+      { value: "Draft", label: "Draft" },
+      { value: "Open", label: "Open" },
+      { value: "Distributed", label: "Distributed" },
+      { value: "Closed", label: "Closed" },
+    ]},
+    // Add remaining 10 filters from COMMANDS.md
+  ],
+  exportFilename: "submittals-export.csv",
+  enableViewSwitcher: true,
+  enableSorting: true,
+  defaultSortColumn: "number",
+  defaultSortDirection: "asc",
+};
+
+// === Form Dialog Pattern ===
+// Follow ContactFormDialog.tsx
+
+interface SubmittalFormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  submittal?: SubmittalWithRelations | null; // null = create mode
+  projectId: number;
+  onSuccess?: () => void;
+}
+
+// useForm with zodResolver(createSubmittalSchema)
+// Reset form when dialog opens
+// Separate Create vs Update submit handlers
+// Toast notifications on success/error
+```
+### Integration Points
+
+```yaml
 DATABASE:
-  - migration: "Add submittal_* tables + re-run active_submittals view"
-  - client: "frontend/src/lib/supabase/service.ts"
-  - pattern: "use `createServiceClient` for batch inserts/updates and ensure RLS policies mirror project_directory_memberships."
-
-CONFIG:
-  - env: "NEXT_PUBLIC_SUBMITTALS_PROJECT_ID / SUBMITTALS_PROJECT_ID"
-  - pattern: "List page falls back to env-defined project if `params` are missing."
+  - migration: "Create 8 submittals tables with RLS, indexes, triggers"
+  - view: "Create or update active_submittals VIEW with joined names"
+  - client: "@/lib/supabase/client" (browser), "@/lib/supabase/service" (server)
+  - types: "Regenerate via npm run db:types after migration"
 
 ROUTES:
-  - file: "frontend/src/app/(tables)/submittals/page.tsx"
-  - api: "frontend/src/app/api/projects/[projectId]/submittals/route.ts" and "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts"
-  - pattern: "Use `[projectId]` at this level and `[submittalId]` for nested detail routes. Always `await params`."
+  - list page: "/(main)/[projectId]/submittals/page.tsx" (EXISTS)
+  - detail page: "/(main)/[projectId]/submittals/[submittalId]/page.tsx" (NEW)
+  - API list: "/api/projects/[projectId]/submittals/route.ts" (NEW)
+  - API detail: "/api/projects/[projectId]/submittals/[submittalId]/route.ts" (NEW)
+
+EXISTING HOOKS:
+  - useContacts: "For submittal_manager, received_from dropdowns"
+  - useCompanies: "For responsible_contractor dropdown (if exists, else create)"
+
+COMPONENTS:
+  - GenericDataTable: "Config-driven table for list view"
+  - TableLayout: "Standard layout wrapper"
+  - shadcn/ui: "Badge, Button, Card, Dialog, DropdownMenu, Tabs, Form, Input, Select, etc."
 ```
+
+---
 
 ## Validation Loop
 
-Use this checklist to verify TypeScript, schema, routes, and runtime stability after any change:
+### Level 1: Syntax & Style
 
-- **Type & lint:** `npx tsc --noEmit`, `npm run lint`
-- **Supabase schema:** `npm run db:types` (re-author after migrations) + `node -e "const { createServiceClient } = require('@/lib/supabase/service'); createServiceClient().from('submittals').select('id').limit(1).then(({ error }) => { if (error) throw error; console.log('ok'); });"`
-- **Routes:** `rm -rf .next && npm run dev` after adding new pages or API routes to prevent stale cache.
-- **Build:** `npm run build`
-- **Manual:** Open `/[projectId]/submittals`, toggle tabs/filters, open detail, run create/edit flow, and run req/rescribed exports.
+```bash
+# After migration
+npm run db:types
+
+# After each file
+npx tsc --noEmit
+npm run lint
+
+# Expected: Zero errors
+
+### Level 2: Unit Verification
+
+
+# Verify types generated correctly
+grep -A 5 "submittals" frontend/src/types/database.types.ts
+
+# Verify route structure
+find frontend/src/app -path "*submittals*" -name "*.tsx" -o -name "*.ts" | sort
+
+# Verify no route conflicts
+npm run check:routes
+```
+### Level 3: Integration Testing
+
+```bash
+# Start dev server
+npm run dev
+
+# Verify list page loads
+curl -s http://localhost:3000/25108/submittals | grep -q "Submittals"
+
+# Verify API responds
+curl -s http://localhost:3000/api/projects/25108/submittals | head -c 200
+
+# Production build
+npm run build
+```
+
+### Level 4: Manual Validation
+
+```bash
+# Open browser to http://localhost:3000/25108/submittals
+# 1. Verify 12 columns render in table
+# 2. Click "Add Submittal" — form dialog opens
+# 3. Fill required fields, submit — row appears in table
+# 4. Click row — detail view loads
+# 5. Click Edit — form opens pre-filled
+# 6. Delete — submittal moves to Recycle Bin tab
+# 7. Check each tab: Items, Packages, Spec Sections, Ball In Court, Recycle Bin
+```
+
+---
+
+## Final Validation Checklist
+
+### Technical
+
+- [ ] All 4 validation levels pass
+- [ ] `npx tsc --noEmit` — zero errors
+- [ ] `npm run lint` — zero errors
+- [ ] `npm run build` — success
+- [ ] `npm run check:routes` — no conflicts
+- [ ] `npm run db:types` — all 8 tables in database.types.ts
+
+### Feature
+
+- [ ] 12 Procore-matching columns in list view
+- [ ] Create/Edit form dialog with all FORMS.md fields
+- [ ] Detail view with distribution summary + workflow responses
+- [ ] 5 tabs functional (Items, Packages, Spec Sections, Ball In Court, Recycle Bin)
+- [ ] 11 filters from Procore filter panel
+- [ ] Status cards with correct counts
+- [ ] Soft delete → Recycle Bin
+- [ ] Row click → detail view navigation
+
+### Code Quality
+
+- [ ] Service class follows directoryService.ts pattern
+- [ ] Hook follows use-contacts.ts pattern
+- [ ] Form dialog follows ContactFormDialog.tsx pattern
+- [ ] GenericTableConfig uses serializable render types only
+- [ ] All FK types match PK types (INTEGER for project_id)
+- [ ] RLS policies on all 8 tables
+- [ ] [submittalId] parameter name (not [id])
+
+---
+
+## Anti-Patterns to Avoid
+
+- Do NOT use `[id]` for route parameters — use `[submittalId]`
+- Do NOT use UUID for `project_id` — it's INTEGER in `projects.id`
+- Do NOT put function renderers in GenericTableConfig — use serializable render types
+- Do NOT write from scratch when scaffolds exist — check `.claude/scaffolds/`
+- Do NOT skip `npm run db:types` before writing database code
+- Do NOT assume column names — read `database.types.ts` first
+- Do NOT use `createClient()` in server components — use `createServiceClient()`
+- Do NOT create inline styles — use Tailwind CSS classes
+- Do NOT skip RLS policies — every table needs them
+
+---
 
 ## Procore Crawl Data Reference
 
-**Base Path:** `scripts/playwright-crawl/procore-crawls/submittals`
-
 ### Sitemap
 
-- **Submittals List:** `https://us02.procore.com/.../tools/submittals?view=list` (screenshot `screenshots/submittals-list.png`)
-- **Submittal Detail:** `https://us02.procore.com/.../tools/submittals/562949956843326` (screenshot `screenshots/submittals-detail.png`)
-- **Ball In Court Tab:** `view=ball_in_court` (screenshot `screenshots/submittals-tab-ball-in-court.png`)
-- **Packages Tab:** `view=packages` (screenshot `screenshots/submittals-tab-packages.png`)
-- **Spec Sections Tab:** `view=spec_sections` (screenshot `screenshots/submittals-tab-spec-sections.png`)
-- **Recycle Bin Tab:** `view=recycle_bin` (screenshot `screenshots/submittals-tab-recycle-bin.png`)
+| Page | Description | Screenshot |
+|------|-------------|------------|
+| Submittals List | Main list with tabs and table | `screenshots/submittals-list.png` |
+| Submittal Detail | Detail view with General tab | `screenshots/submittals-detail.png` |
+| Edit Form | Full edit form with all fields | `screenshots/submittals-detail-open_edit_submittal_form.png` |
+| Filter Panel | Filter dropdown with 11 options | `screenshots/submittals-list-open_filter_panel.png` |
+| Create Menu | Create dropdown (Submittal, Package) | `screenshots/submittals-list-open_create_submittal_dialog.png` |
+| Export Menu | Export dropdown (PDF, CSV, Excel) | `screenshots/submittals-list-open_export_menu.png` |
+| Actions Menu | Detail actions overflow menu | `screenshots/submittals-detail-open_actions_overflow_menu_on_detail.png` |
+| Reports Menu | Reports dropdown | `screenshots/submittals-list-open_reports_menu.png` |
+| Tab: Ball In Court | Ball In Court tab view | `screenshots/submittals-tab-ball-in-court.png` |
+| Tab: Packages | Packages tab view | `screenshots/submittals-tab-packages.png` |
+| Tab: Spec Sections | Spec Sections tab view | `screenshots/submittals-tab-spec-sections.png` |
+| Tab: Recycle Bin | Recycle Bin tab view | `screenshots/submittals-tab-recycle-bin.png` |
 
 ### Crawl Data Files
 
-- **Summary – Crawl Summary:** Captures list/detail URLs, timestamps, DOM flags, and forms/tables per page (`crawl-summary.json`).
-- **Reports – Sitemap Table:** Lists every page encountered during the crawl (`reports/sitemap-table.md`).
-- **Reports – Detailed Report:** JSON metrics about actions and elements on each page (`reports/detailed-report.json`).
-- **Spec – Commands:** Canonical command keys (create, edit, exports, filters) backed by Procore UI triggers (`spec/COMMANDS.md`).
-- **Spec – Mutations:** Create/update/delete behavior, state machine, workflow responses, distribution payloads (`spec/MUTATIONS.md`).
-- **Spec – Schema:** Proposed tables, indexes, RLS policies, and constraints for submittals data (`spec/schema.sql`).
-- **Spec – Forms:** Field list for create/edit form (general/distribution/content/workflow) plus filter panel definitions (`spec/FORMS.md`).
-- **Screenshots – List View:** Captures table layout, status cards, toolbars, and column structure (`screenshots/submittals-list.png`).
-- **Screenshots – Detail View:** Shows tabs (General/Related/Emails/Change History), toolbar, workflow panel (`screenshots/submittals-detail.png`).
-- **Screenshots – Dialogs & Tabs:** Visual references for form sections, filter panel, and export menu (`screenshots/submittals-detail-open_edit_submittal_form.png`, `screenshots/submittals-list-open_filter_panel.png`, `screenshots/submittals-list-open_export_menu.png`).
+| Category | File | Path | Description |
+|----------|------|------|-------------|
+| Summary | Crawl Summary | `crawl-summary.json` | Structured JSON with all crawl data |
+| Summary | README | `README.md` | Module overview with stats |
+| Reports | Sitemap | `reports/sitemap-table.md` | Page URLs |
+| Reports | Detailed Report | `reports/detailed-report.json` | Full analysis |
+| Spec | Commands | `spec/COMMANDS.md` | 24 domain commands |
+| Spec | Mutations | `spec/MUTATIONS.md` | CRUD + state machine |
+| Spec | Schema | `spec/schema.sql` | 8 database tables |
+| Spec | Forms | `spec/FORMS.md` | UI form fields |
+
+**Base Path**: `scripts/playwright-crawl/procore-crawls/submittals/`
+
+### Key UI Elements from Screenshots
+
+**List View:**
+
+- Toolbar: "Create" dropdown (Submittal, Submittal Package), Export dropdown (PDF, CSV, Excel)
+- Tabs: Items | Packages | Spec Sections | Ball In Court | Recycle Bin
+- Table: 12 columns (Spec, #, Rev, Title, Type, Status, Responsible C., Received From, Ball In Court, Approvers, Response, Sent Date)
+- Filters: "Add Filter" button opening panel with 11 filter options
+
+**Detail View:**
+
+- Header: Title, Number & Revision, Status badge
+- Toolbar: Edit button, Redistribute button, Actions dropdown
+- General tab: Distribution summary (From/To/Message/Attachments), Description (rich text), Workflow Responses section
+- Detail tabs: General | Related Items (0) | Emails (0) | Change History (23)
+
+**Edit Form:**
+
+- General Information: Title*, Specification, Number* & Revision*, Submittal Type, Submittal Package, Responsible Contractor, Received From, Submittal Manager*, Status, Final Due Date, Cost Code, Location, Linked Drawings
+- Distribution & Scheduling: Distribution List (tag chips), Ball In Court, Lead Time (days), Required On-Site Date
+- Content: Private checkbox, Description* (rich text editor), Attachments (drag-drop)
+- Workflow: Template selector, Add Step button
+- Actions: Cancel, Update (orange), Update & Send Emails, Delete (trash icon)
 
 ### UI Components Detected
 
-- **Create Submittal:** `create_submittal`
-- **Create Submittal Package:** `create_submittal_package`
-- **Edit (toolbar):** `edit_submittal`
-- **Update & Send Emails:** `update_and_send_emails`
-- **Delete:** `delete_submittal`
-- **Workflow Add Step:** `add_workflow_step`
-- **Redistribute:** `redistribute`
-- **Export PDF:** `export_pdf`
-- **Filters (Approver, Response, Division, etc.):** `add_filter`
+| Label | Command Key |
+|-------|-------------|
+| Create Submittal | `create_submittal` |
+| Create Submittal Package | `create_submittal_package` |
+| Edit | `edit_submittal` |
+| Update | `update_submittal` |
+| Update & Send Emails | `update_and_send_emails` |
+| Delete | `delete_submittal` |
+| Create Revision | `create_revision` |
+| Duplicate Submittal | `duplicate_submittal` |
+| Redistribute | `redistribute` |
+| Email | `email_submittal` |
+| Export PDF | `export_pdf` |
+| Export CSV | `export_csv` |
+| Export Excel | `export_excel` |
+| Add Filter | `add_filter` |
+| Bulk Actions | `bulk_actions` |
 
-## Confidence Score
+## 📚 Key Files & Locations
 
-**Score:** 8/10 — Schema, API, and UI patterns are documented; data tables exist but still need migrations and testing before marking the feature ready.
+```text
+📁 Database
+├── supabase/migrations/              # SQL migrations
+└── frontend/src/types/database.types.ts  # Generated types
+
+📁 Backend
+├── frontend/src/services/submittalService.ts
+├── frontend/src/hooks/use-submittals.ts
+└── frontend/src/app/api/projects/[projectId]/submittals/
+
+📁 Frontend
+├── frontend/src/app/(tables)/submittals/     # List views
+├── frontend/src/app/(main)/[projectId]/submittals/  # Detail pages
+└── frontend/src/components/domain/submittals/   # Components
+```
+### Reference Documents
+
+- **PRP**: `PRPs/pm-tools/submittals/prp-submittals.md`
+- **Crawl Data**: `scripts/playwright-crawl/procore-crawls/submittals/`
+- **Specifications**: `scripts/playwright-crawl/procore-crawls/submittals/spec/`
+
+### Common Commands
+
+```bash
+# Development workflow
+npm run dev              # Start dev server
+npm run db:types         # Update TypeScript types
+npx tsc --noEmit        # Check for type errors
+
+# Before committing
+npm run quality          # Run all checks
+npm run build           # Verify production build
+```
+
+---
+
+## 💡 Tips for Success
+
+1. **Complete phases in order** - Each phase builds on the previous
+2. **Test as you go** - Don't wait until the end to test
+3. **Check types frequently** - Run `npx tsc --noEmit` after each task
+4. **Use the patterns** - Referenced files show the correct approach
+5. **Keep this updated** - Mark tasks complete as you finish them
+
+---
+
+**Remember**: The goal is feature parity with Procore. When in doubt, reference the crawl data in `scripts/playwright-crawl/procore-crawls/submittals/`
+

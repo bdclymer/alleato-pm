@@ -39,6 +39,7 @@ interface UseHeaderNavReturn {
 
 const meetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
+const companyTitleCache = new Map<string, string>();
 
 export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname();
@@ -53,6 +54,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [primeContractTitle, setPrimeContractTitle] = useState<string | null>(
     null,
   );
+  const [companyTitle, setCompanyTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -132,6 +134,17 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
       segments[1] === "prime-contracts";
+    const isGlobalCompanyDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "companies" &&
+      segments[2] !== "new";
+    const isProjectCompanyDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "directory" &&
+      segments[2] === "companies" &&
+      segments[3] !== "new";
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -148,6 +161,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = meetingTitle || "Meeting";
       } else if (isPrimeContractDetailRoute && index === 2) {
         label = primeContractTitle || "Prime Contract";
+      } else if (isGlobalCompanyDetailRoute && index === 2) {
+        label = companyTitle || "Company";
+      } else if (isProjectCompanyDetailRoute && index === 3) {
+        label = companyTitle || "Company";
       } else {
         // Try to find a matching tool name
         const allTools: HeaderNavigationTool[] = [
@@ -190,7 +207,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, currentProject, meetingTitle, primeContractTitle]);
+  }, [pathname, companyTitle, currentProject, meetingTitle, primeContractTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -303,6 +320,79 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchPrimeContractTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isGlobalCompanyDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "companies" &&
+      segments[2] !== "new";
+    const isProjectCompanyDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "directory" &&
+      segments[2] === "companies" &&
+      segments[3] !== "new";
+
+    if (!isGlobalCompanyDetailRoute && !isProjectCompanyDetailRoute) {
+      setCompanyTitle(null);
+      return;
+    }
+
+    const projectId = isProjectCompanyDetailRoute ? segments[0] : null;
+    const companyId = isProjectCompanyDetailRoute ? segments[3] : segments[2];
+    if (!companyId) {
+      setCompanyTitle(null);
+      return;
+    }
+
+    const cacheKey = projectId ? `${projectId}:${companyId}` : companyId;
+    const cachedTitle = companyTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setCompanyTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchCompanyTitle = async () => {
+      try {
+        const endpoint = projectId
+          ? `/api/projects/${projectId}/directory/companies/${companyId}`
+          : `/api/directory/companies/${companyId}`;
+        const response = await fetch(endpoint);
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const title =
+          (typeof data?.name === "string" && data.name.length > 0
+            ? data.name
+            : null) ||
+          (typeof data?.company?.name === "string" &&
+          data.company.name.length > 0
+            ? data.company.name
+            : null);
+        if (isActive) {
+          if (title) {
+            companyTitleCache.set(cacheKey, title);
+            setCompanyTitle(title);
+          } else {
+            setCompanyTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchCompanyTitle();
     return () => {
       isActive = false;
     };

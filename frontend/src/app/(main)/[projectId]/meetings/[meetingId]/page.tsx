@@ -14,6 +14,7 @@ import { SectionHeader } from '@/components/ui/section-header';
 import { FormattedTranscript } from '../formatted-transcript';
 import { parseTranscriptSections } from './parse-transcript-sections';
 import { MarkdownSummary } from './markdown-summary';
+import { DigestSection } from './digest-section';
 import { format } from 'date-fns';
 import { getProjectInfo } from '@/lib/supabase/project-fetcher';
 import type { Database } from '@/types/database.types';
@@ -254,6 +255,9 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
             <MarkdownSummary content={parsedSections.summary} />
           </div>
         )}
+
+        {/* AI Digest Section */}
+        <DigestSection projectId={projectId} meetingId={meetingId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 mb-20">
           <div className="lg:col-span-8 space-y-8">
