@@ -364,7 +364,7 @@ export function PermissionTemplateDialog({
                 control={form.control}
                 name="is_active"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                     <FormControl>
                       <Checkbox
                         checked={field.value}
@@ -453,14 +453,14 @@ export function PermissionTemplateDialog({
                         </Button>
                       </div>
 
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {Object.entries(config.permissions).map(([permission, description]) => (
                           <FormField
                             key={permission}
                             control={form.control as any}
                             name="permissions"
                             render={({ field }) => (
-                              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                                 <FormControl>
                                   <Checkbox
                                     checked={field.value[permission] === true}

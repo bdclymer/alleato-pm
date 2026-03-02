@@ -157,7 +157,7 @@ export function ForecastToCompleteModal({
         {activeTab === "forecast" ? (
           <div className="p-6 space-y-6">
             {/* Current Budget Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-green-50 via-white to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-green-50 via-white to-white">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-foreground">Projected Budget</p>
@@ -175,7 +175,7 @@ export function ForecastToCompleteModal({
             </div>
 
             {/* Forecast Method */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-white via-slate-50 to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-white via-slate-50 to-white">
               <Label className="text-xs uppercase tracking-[0.2em] text-slate-500 block mb-4">
                 Forecast Method
               </Label>
@@ -184,12 +184,12 @@ export function ForecastToCompleteModal({
                 onValueChange={(v) =>
                   setForecastMethod(v as typeof forecastMethod)
                 }
-                className="grid gap-3"
+                className="grid gap-4"
               >
                 <label
                   htmlFor="lump_sum"
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border border-slate-200 bg-background px-4 py-3 shadow-sm cursor-pointer transition-all",
+                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
                     forecastMethod === "lump_sum" &&
                       "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
                   )}
@@ -213,7 +213,7 @@ export function ForecastToCompleteModal({
                 <label
                   htmlFor="manual"
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border border-slate-200 bg-background px-4 py-3 shadow-sm cursor-pointer transition-all",
+                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
                     forecastMethod === "manual" &&
                       "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
                   )}
@@ -233,7 +233,7 @@ export function ForecastToCompleteModal({
                 <label
                   htmlFor="monitored"
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border border-slate-200 bg-background px-4 py-3 shadow-sm cursor-pointer transition-all",
+                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
                     forecastMethod === "monitored" &&
                       "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
                   )}
@@ -259,7 +259,7 @@ export function ForecastToCompleteModal({
 
             {/* Amount Input (only for Lump Sum and Manual) */}
             {(forecastMethod === "lump_sum" || forecastMethod === "manual") && (
-              <div className="rounded-xl border border-slate-200 bg-background shadow-sm p-5">
+              <div className="rounded-xl border border-slate-200 bg-background shadow-sm p-4">
                 <Label
                   htmlFor="forecastAmount"
                   className="text-sm font-medium text-foreground"
@@ -279,8 +279,8 @@ export function ForecastToCompleteModal({
             )}
 
             {/* Calculation Display */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50 shadow-sm p-5">
-              <div className="space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 shadow-sm p-4">
+              <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-foreground">
                     Forecast To Complete
@@ -289,7 +289,7 @@ export function ForecastToCompleteModal({
                     {formatCurrency(calculatedForecast)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-3">
+                <div className="flex justify-between items-center border-t border-slate-200 pt-4">
                   <span className="text-sm text-foreground">
                     Estimated Cost at Completion
                   </span>
@@ -297,7 +297,7 @@ export function ForecastToCompleteModal({
                     {formatCurrency(estimatedCostAtCompletion)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-3">
+                <div className="flex justify-between items-center border-t border-slate-200 pt-4">
                   <span className="text-sm font-semibold text-foreground">
                     Projected Over / Under
                   </span>
@@ -316,7 +316,7 @@ export function ForecastToCompleteModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               View the history of forecast changes for this budget line.
             </p>

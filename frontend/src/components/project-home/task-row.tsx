@@ -31,7 +31,7 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 h-9 px-3 -mx-3 rounded border-b border-neutral-100 last:border-0",
+        "flex items-center gap-4 h-9 px-4 -mx-4 rounded border-b border-neutral-100 last:border-0",
         "transition-colors duration-150 hover:bg-neutral-50",
         "group"
       )}

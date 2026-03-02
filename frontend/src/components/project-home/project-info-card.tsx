@@ -76,7 +76,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
 
       <div className="grid grid-cols-2 gap-4">
         {/* Location */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
           <div>
             <p className="text-sm font-medium text-foreground">Location</p>
@@ -90,7 +90,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
 
         {/* Phone */}
         {project.phone && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <Phone className="w-4 h-4 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">Phone</p>
@@ -100,7 +100,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
         )}
 
         {/* Dates */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
           <div>
             <p className="text-sm font-medium text-foreground">Schedule</p>
@@ -113,7 +113,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
 
         {/* Project Value */}
         {project.projectValue && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">Project Value</p>
@@ -126,7 +126,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
 
         {/* Owner */}
         {project.owner && (
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <Building2 className="w-4 h-4 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm font-medium text-foreground">Owner</p>
@@ -136,7 +136,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
         )}
 
         {/* Type */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <Users className="w-4 h-4 text-muted-foreground mt-0.5" />
           <div>
             <p className="text-sm font-medium text-foreground">Type</p>

@@ -31,8 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Download, FileUp, GripVertical, Layers } from "lucide-react";
 import { useDrawings } from "@/hooks/use-drawings";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
@@ -70,7 +69,7 @@ const columnConfig: Record<string, Omit<BoardColumn, "items">> = {
     id: "superseded",
     title: "Superseded",
     description: "Revisions archived after newer releases.",
-    accent: "bg-slate-50 border-slate-200",
+    accent: "bg-muted/30 border-border",
   },
 };
 
@@ -200,7 +199,7 @@ export default function DrawingsBoardPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Drawings Board"
         description="Drag-and-drop drawing packages by status"
         actions={
@@ -228,7 +227,7 @@ export default function DrawingsBoardPage() {
           </div>
 
           <Card className="border-dashed border-2 border-border bg-card">
-            <CardHeader className="flex flex-wrap items-center gap-3 justify-between pb-2">
+            <CardHeader className="flex flex-wrap items-center gap-4 justify-between pb-2">
               <div className="flex items-center gap-2">
                 <Layers className="h-4 w-4" />
                 <CardTitle className="text-base">Status board</CardTitle>
@@ -260,7 +259,7 @@ export default function DrawingsBoardPage() {
                           key={column.id}
                           className={`min-w-[280px] w-[320px] rounded-2xl border p-4 ${column.accent}`}
                         >
-                          <div className="mb-3 flex items-center justify-between">
+                          <div className="mb-4 flex items-center justify-between">
                             <div>
                               <p className="text-sm font-semibold">{column.title}</p>
                               <p className="text-xs text-muted-foreground">
@@ -275,7 +274,7 @@ export default function DrawingsBoardPage() {
                             items={column.items.map((item) => item.id)}
                             strategy={verticalListSortingStrategy}
                           >
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               {column.items.map((item) => (
                                 <BoardCard key={item.id} item={item} columnId={column.id} />
                               ))}
@@ -334,7 +333,7 @@ function BoardCard({ item, columnId }: BoardCardProps) {
         isDragging ? "opacity-40" : "opacity-100"
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4">
         <Button
           {...attributes}
           {...listeners}

@@ -253,7 +253,7 @@ export function BudgetModificationsModal({
       {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "summary" ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             {/* Totals Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-green-200 shadow-sm p-4 bg-gradient-to-br from-green-50 via-white to-white">
@@ -289,7 +289,7 @@ export function BudgetModificationsModal({
                   key={status}
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    "px-3 py-1.5 text-sm font-medium rounded-full transition-all",
+                    "px-4 py-1.5 text-sm font-medium rounded-full transition-all",
                     statusFilter === status
                       ? "bg-orange-500 text-white"
                       : "bg-muted text-foreground hover:bg-muted",
@@ -303,7 +303,7 @@ export function BudgetModificationsModal({
             </div>
 
             {/* Modifications List */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {loading ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -359,7 +359,7 @@ export function BudgetModificationsModal({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>
                               Effective: {formatDate(mod.effectiveDate)}
@@ -400,7 +400,7 @@ export function BudgetModificationsModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               Detailed line-item breakdown of budget modifications.
             </p>

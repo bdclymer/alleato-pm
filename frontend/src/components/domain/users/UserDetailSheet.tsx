@@ -102,8 +102,8 @@ export function UserDetailSheet({
 
             {/* Contact Information */}
             <div>
-              <h3 className="font-semibold mb-3">Contact Information</h3>
-              <div className="space-y-3">
+              <h3 className="font-semibold mb-4">Contact Information</h3>
+              <div className="space-y-4">
                 {user.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="size-4 text-muted-foreground" />
@@ -150,8 +150,8 @@ export function UserDetailSheet({
 
             {/* Company & Role Information */}
             <div>
-              <h3 className="font-semibold mb-3">Organization</h3>
-              <div className="space-y-3">
+              <h3 className="font-semibold mb-4">Organization</h3>
+              <div className="space-y-4">
                 {user.company && (
                   <div className="flex items-center gap-2">
                     <Building2 className="size-4 text-muted-foreground" />
@@ -183,8 +183,8 @@ export function UserDetailSheet({
 
             {/* Permissions */}
             <div>
-              <h3 className="font-semibold mb-3">Permissions</h3>
-              <div className="space-y-3">
+              <h3 className="font-semibold mb-4">Permissions</h3>
+              <div className="space-y-4">
                 {user.permission_template && (
                   <div className="flex items-center gap-2">
                     <Shield className="size-4 text-muted-foreground" />
@@ -207,8 +207,8 @@ export function UserDetailSheet({
 
             {/* Activity */}
             <div>
-              <h3 className="font-semibold mb-3">Activity</h3>
-              <div className="space-y-3">
+              <h3 className="font-semibold mb-4">Activity</h3>
+              <div className="space-y-4">
                 {user.created_at && (
                   <div className="flex items-center gap-2">
                     <Calendar className="size-4 text-muted-foreground" />

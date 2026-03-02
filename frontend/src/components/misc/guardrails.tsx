@@ -46,7 +46,7 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
       title="Guardrails"
       icon={<Shield className="h-4 w-4 text-blue-600" />}
     >
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-4">
         {guardrailsToShow.map((gr) => (
           <Card
             key={gr.id}
@@ -54,12 +54,12 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
               !gr.input ? "opacity-60" : ""
             }`}
           >
-            <CardHeader className="p-3 pb-1">
+            <CardHeader className="p-4 pb-1">
               <CardTitle className="text-sm flex items-center text-zinc-900">
                 {extractGuardrailName(gr.name)}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3 pt-1">
+            <CardContent className="p-4 pt-1">
               <p className="text-xs font-light text-zinc-500 mb-1">
                 {(() => {
                   const title = extractGuardrailName(gr.name);

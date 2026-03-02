@@ -119,7 +119,7 @@ export function UserFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded">
+            <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded">
               {error}
             </div>
           )}
@@ -202,7 +202,7 @@ export function UserFormDialog({
           </div>
 
           {/* Internal Employee */}
-          <div className="flex items-start space-x-3">
+          <div className="flex items-start space-x-4">
             <Checkbox
               id="isInternalEmployee"
               checked={formData.isInternalEmployee}
@@ -262,7 +262,7 @@ export function UserFormDialog({
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-4 pt-4 border-t">
             <Button
               type="button"
               variant="outline"

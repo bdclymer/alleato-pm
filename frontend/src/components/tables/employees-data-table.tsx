@@ -465,7 +465,7 @@ export function EmployeesDataTable({
                     >
                       {visibleColumns.has("name") && (
                         <TableCell>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-4">
                             <Avatar className="h-8 w-8">
                               <AvatarImage
                                 src={employee.photo || undefined}

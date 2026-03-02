@@ -34,8 +34,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
 import { useCommitments } from "@/hooks/use-commitments";
-import { FormContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { FormContainer , ProjectPageHeader } from "@/components/layout";
+
 
 interface LineItem {
   id: string;
@@ -261,7 +261,7 @@ export default function NewInvoicePage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="New Invoice"
         description="Create a new invoice for billing"
         breadcrumbs={[

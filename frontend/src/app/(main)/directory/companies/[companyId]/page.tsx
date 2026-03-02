@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -155,7 +155,7 @@ function CompactStatRow({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2">
+    <div className="flex items-center justify-between gap-4 py-2">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span className="text-muted-foreground">{icon}</span>
         <span>{title}</span>
@@ -496,7 +496,7 @@ export default function CompanyDetailsPage() {
     return (
       <>
         <ProjectPageHeader title="Company Details" description="Loading company information..." />
-        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-6 sm:pb-8">
+        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
             <div className="space-y-6">
               <Skeleton className="h-6 w-40" />
@@ -517,10 +517,10 @@ export default function CompanyDetailsPage() {
     return (
       <>
         <ProjectPageHeader title="Company Details" description="Unable to load company details" />
-        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-6 sm:pb-8">
+        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
           <section className="space-y-4">
             <SectionHeader title="Request failed" description="The company detail endpoint returned an error." />
-            <div className="rounded-md border border-border px-4 py-5">
+            <div className="rounded-md border border-border px-4 py-4">
               <p className="text-sm text-destructive">{error || "Company not found"}</p>
               <div className="mt-4">
                 <Button variant="outline" onClick={() => router.push("/directory/companies")}>
@@ -576,11 +576,11 @@ export default function CompanyDetailsPage() {
         }
       />
 
-      <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-6 sm:pb-8">
+      <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-8">
             <section className="space-y-4 border-b border-border pb-8">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <SectionHeader title="Contacts" description="People linked to this company." />
                 <Button
                   size="sm"
@@ -607,7 +607,7 @@ export default function CompanyDetailsPage() {
                         <button
                           type="button"
                           onClick={() => openEditContact(contact)}
-                          className="grid w-full grid-cols-1 gap-1 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[minmax(0,1fr)_minmax(220px,1fr)_180px]"
+                          className="grid w-full grid-cols-1 gap-1 py-4 text-left transition-colors hover:bg-muted/30 md:grid-cols-[minmax(0,1fr)_minmax(220px,1fr)_180px]"
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-foreground">
@@ -632,7 +632,7 @@ export default function CompanyDetailsPage() {
             </section>
 
             <section className="space-y-4 border-b border-border pb-8">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <SectionHeader title="Projects" description="Projects where this company is involved." />
                 <Button
                   size="sm"
@@ -653,7 +653,7 @@ export default function CompanyDetailsPage() {
                 <div className="overflow-hidden rounded-md border border-border">
                   <ul className="divide-y divide-border">
                     {associatedProjects.map((project) => (
-                      <li key={project.id} className="space-y-2 px-4 py-3">
+                      <li key={project.id} className="space-y-2 px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium text-foreground">{project.name || `Project ${project.id}`}</p>
                           <Badge variant={statusVariant(project.company_status)}>
@@ -682,7 +682,7 @@ export default function CompanyDetailsPage() {
                 <div className="overflow-hidden rounded-md border border-border">
                   <ul className="divide-y divide-border">
                     {commitments.map((commitment) => (
-                      <li key={`${commitment.type}-${commitment.id}`} className="space-y-2 px-4 py-3">
+                      <li key={`${commitment.type}-${commitment.id}`} className="space-y-2 px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium text-foreground">
                             {commitment.contract_number || "Unnumbered"}
@@ -740,7 +740,7 @@ export default function CompanyDetailsPage() {
                 <div className="overflow-hidden rounded-md border border-border">
                   <ul className="divide-y divide-border">
                     {filteredInvoices.map((invoice) => (
-                      <li key={invoice.id} className="space-y-2 px-4 py-3">
+                      <li key={invoice.id} className="space-y-2 px-4 py-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-medium text-foreground">{invoice.invoice_number || `Invoice ${invoice.id}`}</p>
                           <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
@@ -807,12 +807,12 @@ export default function CompanyDetailsPage() {
         </div>
       </PageContainer>
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-            <DialogDescription>Update company profile details.</DialogDescription>
-          </DialogHeader>
+      <Modal open={editOpen} onOpenChange={setEditOpen}>
+        <ModalContent className="sm:max-w-xl">
+          <ModalHeader>
+            <ModalTitle>Edit Company</ModalTitle>
+            <ModalDescription>Update company profile details.</ModalDescription>
+          </ModalHeader>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="edit-company-name">Name</Label>
@@ -830,7 +830,7 @@ export default function CompanyDetailsPage() {
                 onChange={(e) => setCompanyForm((prev) => ({ ...prev, address: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-company-city">City</Label>
                 <Input
@@ -869,25 +869,25 @@ export default function CompanyDetailsPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isSavingCompany}>
               Cancel
             </Button>
             <Button onClick={handleSaveCompany} disabled={isSavingCompany}>
               {isSavingCompany ? "Saving..." : "Save Changes"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
-      <Dialog open={addContactOpen} onOpenChange={setAddContactOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Add Contact</DialogTitle>
-            <DialogDescription>
+      <Modal open={addContactOpen} onOpenChange={setAddContactOpen}>
+        <ModalContent className="sm:max-w-xl">
+          <ModalHeader>
+            <ModalTitle>Add Contact</ModalTitle>
+            <ModalDescription>
               Add an existing contact to this company or create a new one.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
 
           <Tabs value={contactMode} onValueChange={(value) => setContactMode(value as "existing" | "new")}>
             <TabsList className="w-full">
@@ -957,18 +957,18 @@ export default function CompanyDetailsPage() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <DialogFooter>
+              <ModalFooter>
                 <Button variant="outline" onClick={() => setAddContactOpen(false)} disabled={isSavingContact}>
                   Cancel
                 </Button>
                 <Button onClick={handleAddExistingContact} disabled={isSavingContact}>
                   {isSavingContact ? "Adding..." : "Add Contact"}
                 </Button>
-              </DialogFooter>
+              </ModalFooter>
             </TabsContent>
 
             <TabsContent value="new" className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="new-contact-first">First Name</Label>
                   <Input
@@ -1011,27 +1011,27 @@ export default function CompanyDetailsPage() {
                   onChange={(e) => setNewContactForm((prev) => ({ ...prev, job_title: e.target.value }))}
                 />
               </div>
-              <DialogFooter>
+              <ModalFooter>
                 <Button variant="outline" onClick={() => setAddContactOpen(false)} disabled={isSavingContact}>
                   Cancel
                 </Button>
                 <Button onClick={handleCreateNewContact} disabled={isSavingContact}>
                   {isSavingContact ? "Creating..." : "Create Contact"}
                 </Button>
-              </DialogFooter>
+              </ModalFooter>
             </TabsContent>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+        </ModalContent>
+      </Modal>
 
-      <Dialog open={editContactOpen} onOpenChange={setEditContactOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
-            <DialogDescription>Update this company contact information.</DialogDescription>
-          </DialogHeader>
+      <Modal open={editContactOpen} onOpenChange={setEditContactOpen}>
+        <ModalContent className="sm:max-w-lg">
+          <ModalHeader>
+            <ModalTitle>Edit Contact</ModalTitle>
+            <ModalDescription>Update this company contact information.</ModalDescription>
+          </ModalHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="edit-contact-first">First Name</Label>
                 <Input
@@ -1075,7 +1075,7 @@ export default function CompanyDetailsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -1089,18 +1089,18 @@ export default function CompanyDetailsPage() {
             <Button onClick={handleUpdateContact} disabled={isUpdatingContact}>
               {isUpdatingContact ? "Saving..." : "Save Contact"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
-      <Dialog open={addToProjectOpen} onOpenChange={setAddToProjectOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add Company to Project</DialogTitle>
-            <DialogDescription>
+      <Modal open={addToProjectOpen} onOpenChange={setAddToProjectOpen}>
+        <ModalContent className="sm:max-w-lg">
+          <ModalHeader>
+            <ModalTitle>Add Company to Project</ModalTitle>
+            <ModalDescription>
               Assign this company to a project and grant directory visibility.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="space-y-4">
             <div className="grid gap-2">
               <Label>Project</Label>
@@ -1164,7 +1164,7 @@ export default function CompanyDetailsPage() {
               </Popover>
             </div>
 
-            <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+            <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
               Adding this company to a project may allow contacts from this company to access project directory information based on project membership and permissions.
             </div>
 
@@ -1179,7 +1179,7 @@ export default function CompanyDetailsPage() {
               </Label>
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -1193,9 +1193,9 @@ export default function CompanyDetailsPage() {
             <Button onClick={handleAddCompanyToProject} disabled={isAddingToProject}>
               {isAddingToProject ? "Adding..." : "Add to Project"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

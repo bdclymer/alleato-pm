@@ -262,7 +262,7 @@ export default function SpecificationDetailPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
-                                <FileText className="h-4 w-4 text-gray-400" />
+                                <FileText className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm">{revision.file_name}</span>
                               </div>
                               {revision.notes && (

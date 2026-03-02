@@ -3,13 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Select,
   SelectContent,
@@ -168,19 +168,19 @@ export function CreateBudgetCodeModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Create New Budget Code</DialogTitle>
-          <DialogDescription>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent className="sm:max-w-[500px]">
+        <ModalHeader>
+          <ModalTitle>Create New Budget Code</ModalTitle>
+          <ModalDescription>
             Add a new budget code that can be used for line items in this
             project.
-          </DialogDescription>
-        </DialogHeader>
+          </ModalDescription>
+        </ModalHeader>
 
         <div className="grid gap-4 py-4">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
               {error}
             </div>
           )}
@@ -188,7 +188,7 @@ export function CreateBudgetCodeModal({
           <div className="grid gap-2">
             <Label htmlFor="costCode">Cost Code*</Label>
             {loadingCostCodes ? (
-              <div className="border rounded-md p-3 text-sm text-muted-foreground">
+              <div className="border rounded-md p-4 text-sm text-muted-foreground">
                 Loading cost codes...
               </div>
             ) : (
@@ -232,7 +232,7 @@ export function CreateBudgetCodeModal({
             </Select>
           </div>
 
-          <div className="p-3 bg-muted rounded-md">
+          <div className="p-4 bg-muted rounded-md">
             <p className="text-sm font-medium text-foreground">Preview:</p>
             <p className="text-sm text-foreground mt-1">
               {selectedCostCode ? (
@@ -248,7 +248,7 @@ export function CreateBudgetCodeModal({
           </div>
         </div>
 
-        <DialogFooter>
+        <ModalFooter>
           <Button
             type="button"
             variant="outline"
@@ -263,8 +263,8 @@ export function CreateBudgetCodeModal({
           >
             {loading ? "Creating..." : "Create Budget Code"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }

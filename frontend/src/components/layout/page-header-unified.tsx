@@ -147,7 +147,7 @@ export function PageHeader({
   if (variant === "compact") {
     return (
       <div className={cn("border-b", className)}>
-        <div className="px-4 py-3 sm:px-6 lg:px-8">
+        <div className="px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <Inline gap="md" align="center">
               {titleContent || <Heading level={2}>{title}</Heading>}
@@ -205,7 +205,7 @@ export function PageHeader({
 
           {/* Actions */}
           {(actions || showExportButton) && (
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center md:flex-shrink-0">
+            <div className="flex w-full flex-col gap-4 md:w-auto md:flex-row md:items-center md:flex-shrink-0">
               {showExportButton && (onExportCSV || onExportPDF) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

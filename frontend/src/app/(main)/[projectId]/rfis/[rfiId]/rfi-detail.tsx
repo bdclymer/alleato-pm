@@ -460,7 +460,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
                   control={form.control}
                   name="is_private"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value ?? false}
@@ -549,7 +549,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
               <CardHeader>
                 <CardTitle>General Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <InfoRow label="RFI #" value={String(rfi.number ?? "")} />
                 <InfoRow label="Due Date" value={formatDate(rfi.due_date)} />
                 <InfoRow

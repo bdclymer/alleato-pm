@@ -44,7 +44,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
   };
 
   return (
-    <div className="border-t border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))] px-4 py-3">
+    <div className="border-t border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))] px-4 py-4">
       <div className="flex items-end gap-2">
         {/* Attachment Button */}
         <Button

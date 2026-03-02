@@ -85,7 +85,7 @@ export const StepsContent = ({
       )}
       {...props}
     >
-      <div className="mt-3 grid max-w-full min-w-0 grid-cols-[min-content_minmax(0,1fr)] items-start gap-x-3">
+      <div className="mt-4 grid max-w-full min-w-0 grid-cols-[min-content_minmax(0,1fr)] items-start gap-x-3">
         <div className="min-w-0 self-stretch">{bar ?? <StepsBar />}</div>
         <div className="min-w-0 space-y-2">{children}</div>
       </div>

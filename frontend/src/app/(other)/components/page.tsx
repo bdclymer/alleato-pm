@@ -109,28 +109,28 @@ export default function ComponentsPage() {
               <button
                 type="button"
                 data-id="1"
-                className="px-6 py-3 text-foreground transition-colors hover:text-white"
+                className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Features
               </button>
               <button
                 type="button"
                 data-id="2"
-                className="px-6 py-3 text-foreground transition-colors hover:text-white"
+                className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Pricing
               </button>
               <button
                 type="button"
                 data-id="3"
-                className="px-6 py-3 text-foreground transition-colors hover:text-white"
+                className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 About
               </button>
               <button
                 type="button"
                 data-id="4"
-                className="px-6 py-3 text-foreground transition-colors hover:text-white"
+                className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Contact
               </button>
@@ -260,7 +260,7 @@ function MorphingDialogBasicTwo() {
         }}
         className="border border-border/60 bg-background"
       >
-        <div className="flex items-center space-x-3 p-3">
+        <div className="flex items-center space-x-4 p-4">
           <MorphingDialogImage
             src="https://m.media-amazon.com/images/I/71skAxiMC2L._AC_UF1000,1000_QL80_.jpg"
             alt="What I Talk About When I Talk About Running - book cover"
@@ -358,7 +358,7 @@ function MorphingDialogBasicThree() {
         }}
         className="border border-border/60 bg-background shadow-sm"
       >
-        <div className="flex flex-col items-center space-y-3 p-4">
+        <div className="flex flex-col items-center space-y-4 p-4">
           <MorphingDialogImage
             src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop"
             alt="Mountain landscape"
@@ -420,7 +420,7 @@ function MorphingDialogBasicThree() {
                   mountain ranges in the world, offering both challenging climbs
                   and peaceful hikes for all skill levels.
                 </p>
-                <div className="mt-6 flex gap-3">
+                <div className="mt-6 flex gap-4">
                   <button
                     type="button"
                     className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"

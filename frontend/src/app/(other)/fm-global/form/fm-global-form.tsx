@@ -246,7 +246,7 @@ function HeatedToggle({
   onChange: (value: boolean) => void;
 }): ReactElement {
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
       <div>
         <Label className="text-sm">Building Heated</Label>
         <Text size="sm" tone="muted">
@@ -261,7 +261,7 @@ function HeatedToggle({
 function ErrorBanner({ message }: { message: string | null }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+    <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
       {message}
     </div>
   );
@@ -330,7 +330,7 @@ function FormFields({
   onSubmit: () => void;
 }): ReactElement {
   return (
-    <CardContent className="grid gap-5">
+    <CardContent className="grid gap-4">
       {selectFields.slice(0, 2).map((field) => (
         <SelectField key={field.id} {...field} />
       ))}

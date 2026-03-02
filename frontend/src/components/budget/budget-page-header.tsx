@@ -299,7 +299,7 @@ export function BudgetPageHeader({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>Are you sure you want to lock the budget for this project?</p>
-              <div className="bg-muted border rounded-md p-3 mt-3">
+              <div className="bg-muted border rounded-md p-4 mt-4">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-5 h-5 mt-0.5" />
                   <div className="text-sm">

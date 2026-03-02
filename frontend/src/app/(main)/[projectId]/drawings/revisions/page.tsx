@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { DrawingLogTable } from "@/components/drawings/DrawingLogTable";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,7 +44,7 @@ export default function DrawingRevisionsPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Drawing Revision Log"
           description="Track all drawing revisions and version history"
         />
@@ -59,7 +59,7 @@ export default function DrawingRevisionsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Drawing Revision Log"
         description="Track all drawing revisions and version history"
         actions={

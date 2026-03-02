@@ -86,6 +86,7 @@ export interface UseMeetingsTableResult {
   setMeetingToDelete: React.Dispatch<React.SetStateAction<Meeting | null>>;
   handleFilterChange: (nextFilters: FilterState) => void;
   handleRowClick: (meeting: Meeting) => void;
+  handleEdit: (meeting: Meeting) => void;
   handlePanelOpenChange: (open: boolean) => void;
   handleSave: (data: Partial<Meeting>) => Promise<void>;
   handleDeleteConfirm: () => Promise<void>;
@@ -258,6 +259,10 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
   };
 
   const handleRowClick = (meeting: Meeting) => {
+    router.push(`/meetings/${meeting.id}`);
+  };
+
+  const handleEdit = (meeting: Meeting) => {
     tableState.setSearchParams({ detail: meeting.id });
   };
 
@@ -406,6 +411,7 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
     setMeetingToDelete,
     handleFilterChange,
     handleRowClick,
+    handleEdit,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,

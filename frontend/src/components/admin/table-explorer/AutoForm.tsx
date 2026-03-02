@@ -210,7 +210,7 @@ function FieldRenderer({
     switch (inputType) {
       case "boolean":
         return (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Switch
               {...commonProps}
               checked={Boolean(value)}

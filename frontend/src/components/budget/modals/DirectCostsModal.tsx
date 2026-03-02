@@ -174,7 +174,7 @@ export function DirectCostsModal({
                   type="button"
                   onClick={() => setStatusFilter(status as typeof statusFilter)}
                   className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-full transition-all",
+                    "px-4 py-1 text-xs font-medium rounded-full transition-all",
                     statusFilter === status
                       ? "bg-orange-500 text-white"
                       : "bg-muted text-foreground hover:bg-muted",
@@ -206,9 +206,9 @@ export function DirectCostsModal({
       {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "costs" ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-purple-50 via-white to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-purple-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">Total Direct Costs</p>
@@ -235,7 +235,7 @@ export function DirectCostsModal({
 
             {/* Description Box */}
             <div className="rounded-lg bg-purple-50 border border-purple-200 p-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <Receipt className="h-5 w-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-purple-900">
                   <p className="font-semibold">About Direct Costs</p>
@@ -253,27 +253,27 @@ export function DirectCostsModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Description
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Status
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Vendor
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Amount
                     </th>
                     {showPayments && (
-                      <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                      <th className="text-right px-4 py-4 font-semibold text-slate-800">
                         Payments
                       </th>
                     )}
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Date
                     </th>
                   </tr>
@@ -304,29 +304,29 @@ export function DirectCostsModal({
                         className="hover:bg-purple-50/40 transition-colors"
                       >
                         <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
+                          className="px-4 py-4 text-foreground max-w-xs truncate"
                           title={cost.description || "-"}
                         >
                           {cost.description || "-"}
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
+                        <td className="px-4 py-4 text-foreground text-xs">
                           {cost.costType || "-"}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           {getStatusBadge(cost.status)}
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
+                        <td className="px-4 py-4 text-foreground text-xs">
                           {cost.vendor || "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
                           {formatCurrency(cost.amount)}
                         </td>
                         {showPayments && (
-                          <td className="px-4 py-3 text-right font-medium tabular-nums text-green-600">
+                          <td className="px-4 py-4 text-right font-medium tabular-nums text-green-600">
                             {formatCurrency(cost.payments)}
                           </td>
                         )}
-                        <td className="px-4 py-3 text-foreground">
+                        <td className="px-4 py-4 text-foreground">
                           {formatDate(cost.incurredDate)}
                         </td>
                       </tr>
@@ -337,7 +337,7 @@ export function DirectCostsModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               Summary breakdown of direct costs by status.
             </p>
@@ -353,7 +353,7 @@ export function DirectCostsModal({
                 return (
                   <div
                     key={status}
-                    className="rounded-xl border border-slate-200 shadow-sm p-5 bg-background"
+                    className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background"
                   >
                     <div className="mb-2">{getStatusBadge(status)}</div>
                     <p className="text-2xl font-bold text-foreground mt-2">

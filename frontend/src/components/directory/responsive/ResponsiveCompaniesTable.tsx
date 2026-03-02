@@ -32,19 +32,19 @@ export function ResponsiveCompaniesTable({
   onViewDetails,
 }: ResponsiveCompaniesTableProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Desktop View - Hidden on mobile */}
       <div className="hidden md:block">
         <div className="rounded-md border">
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left text-sm font-medium">
+                <th className="p-4 text-left text-sm font-medium">
                   Company Name
                 </th>
-                <th className="p-3 text-left text-sm font-medium">Location</th>
-                <th className="p-3 text-left text-sm font-medium">Type</th>
-                <th className="p-3 text-right text-sm font-medium">Actions</th>
+                <th className="p-4 text-left text-sm font-medium">Location</th>
+                <th className="p-4 text-left text-sm font-medium">Type</th>
+                <th className="p-4 text-right text-sm font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -60,7 +60,7 @@ export function ResponsiveCompaniesTable({
                   key={company.id}
                   className="border-b last:border-0 hover:bg-muted/50"
                 >
-                  <td className="p-3">
+                  <td className="p-4">
                     <div className="font-medium">
                       {companyDetails?.name || "Unnamed Company"}
                     </div>
@@ -70,13 +70,13 @@ export function ResponsiveCompaniesTable({
                       </div>
                     )}
                   </td>
-                  <td className="p-3 text-sm">
+                  <td className="p-4 text-sm">
                     {companyDetails?.city && companyDetails?.state
                       ? `${companyDetails.city}, ${companyDetails.state}`
                       : companyDetails?.city || companyDetails?.state || "-"}
                   </td>
-                  <td className="p-3 text-sm">{companyType}</td>
-                  <td className="p-3 text-right">
+                  <td className="p-4 text-sm">{companyType}</td>
+                  <td className="p-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -112,7 +112,7 @@ export function ResponsiveCompaniesTable({
       </div>
 
       {/* Mobile View - Card layout */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-4">
         {companies.map((company) => {
           const companyDetails = company.company;
           const companyType =
@@ -121,7 +121,7 @@ export function ResponsiveCompaniesTable({
             "-";
 
           return (
-          <div key={company.id} className="border rounded-lg p-4 space-y-3">
+          <div key={company.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="font-medium">

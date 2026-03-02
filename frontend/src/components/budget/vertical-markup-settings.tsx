@@ -317,7 +317,7 @@ export function VerticalMarkupSettings({
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Header */}
             <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground px-2">
               <div className="col-span-1">#</div>
@@ -331,7 +331,7 @@ export function VerticalMarkupSettings({
             {markups.map((markup, index) => (
               <div
                 key={markup.id}
-                className="grid grid-cols-12 gap-4 items-center p-3 rounded-lg border bg-card hover:bg-muted/50"
+                className="grid grid-cols-12 gap-4 items-center p-4 rounded-lg border bg-card hover:bg-muted/50"
               >
                 <div className="col-span-1 flex items-center gap-2">
                   <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
@@ -520,34 +520,34 @@ export function VerticalMarkupSettings({
                   <table className="w-full">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="text-left p-3 text-sm font-medium">
+                        <th className="text-left p-4 text-sm font-medium">
                           Markup
                         </th>
-                        <th className="text-right p-3 text-sm font-medium">
+                        <th className="text-right p-4 text-sm font-medium">
                           %
                         </th>
-                        <th className="text-right p-3 text-sm font-medium">
+                        <th className="text-right p-4 text-sm font-medium">
                           Amount
                         </th>
-                        <th className="text-right p-3 text-sm font-medium">
+                        <th className="text-right p-4 text-sm font-medium">
                           Running Total
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-t">
-                        <td className="p-3 text-sm">Base Amount</td>
-                        <td className="p-3 text-sm text-right">-</td>
-                        <td className="p-3 text-sm text-right">
+                        <td className="p-4 text-sm">Base Amount</td>
+                        <td className="p-4 text-sm text-right">-</td>
+                        <td className="p-4 text-sm text-right">
                           {formatCurrency(parseFloat(calculatorAmount))}
                         </td>
-                        <td className="p-3 text-sm text-right">
+                        <td className="p-4 text-sm text-right">
                           {formatCurrency(parseFloat(calculatorAmount))}
                         </td>
                       </tr>
                       {calculationResults.calculations.map((calc, index) => (
                         <tr key={index} className="border-t">
-                          <td className="p-3 text-sm">
+                          <td className="p-4 text-sm">
                             {calc.markup_type}
                             {calc.compound && (
                               <Badge
@@ -558,13 +558,13 @@ export function VerticalMarkupSettings({
                               </Badge>
                             )}
                           </td>
-                          <td className="p-3 text-sm text-right">
+                          <td className="p-4 text-sm text-right">
                             {calc.percentage}%
                           </td>
-                          <td className="p-3 text-sm text-right text-success">
+                          <td className="p-4 text-sm text-right text-success">
                             +{formatCurrency(calc.markupAmount)}
                           </td>
-                          <td className="p-3 text-sm text-right font-medium">
+                          <td className="p-4 text-sm text-right font-medium">
                             {formatCurrency(calc.runningTotal)}
                           </td>
                         </tr>
@@ -572,13 +572,13 @@ export function VerticalMarkupSettings({
                     </tbody>
                     <tfoot className="bg-muted border-t-2">
                       <tr>
-                        <td colSpan={2} className="p-3 font-semibold">
+                        <td colSpan={2} className="p-4 font-semibold">
                           Total Markup
                         </td>
-                        <td className="p-3 text-right font-semibold text-success">
+                        <td className="p-4 text-right font-semibold text-success">
                           +{formatCurrency(calculationResults.totalMarkup)}
                         </td>
-                        <td className="p-3 text-right font-bold">
+                        <td className="p-4 text-right font-bold">
                           {formatCurrency(calculationResults.finalAmount)}
                         </td>
                       </tr>

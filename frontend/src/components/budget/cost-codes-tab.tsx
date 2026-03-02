@@ -301,7 +301,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                 key={division}
                 className={isEvenDivision ? "bg-muted/50" : "bg-background"}
               >
-                <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/50">
+                <div className="flex items-center justify-between py-2 px-4 hover:bg-muted/50">
                   <button
                     className="flex items-center gap-2 cursor-pointer flex-1 text-left"
                     onClick={() => toggleDivision(division)}
@@ -331,7 +331,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                 </div>
 
                 {isExpanded && (
-                  <div className="px-3 pb-2 space-y-0.5">
+                  <div className="px-4 pb-2 space-y-0.5">
                     {codes.map((code) => {
                       const isSelected = selectedCostCodes.has(code.id);
 
@@ -339,7 +339,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                         <button
                           key={code.id}
                           type="button"
-                          className="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-muted/70 cursor-pointer w-full text-left"
+                          className="flex items-center gap-4 py-1.5 px-2 rounded hover:bg-muted/70 cursor-pointer w-full text-left"
                           onClick={() => toggleCostCode(code.id)}
                         >
                           <Checkbox

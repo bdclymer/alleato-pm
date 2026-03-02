@@ -34,7 +34,7 @@ export function GlobalHeader() {
   return (
     <header className="h-12 bg-[hsl(var(--procore-header))] text-[hsl(var(--procore-header-text))] flex items-center px-4 justify-between border-b border-white/5">
       {/* Left Section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <SidebarTrigger className="text-[hsl(var(--procore-header-text))] hover:bg-background/10" />
         <div className="flex items-center gap-4">
           {/* Logo */}

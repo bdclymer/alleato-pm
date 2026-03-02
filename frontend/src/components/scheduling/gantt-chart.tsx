@@ -624,7 +624,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
         >
           {/* Header */}
           <div
-            className="border-b bg-muted/30 px-3 flex items-center"
+            className="border-b bg-muted/30 px-4 flex items-center"
             style={{ height: HEADER_HEIGHT }}
           >
             <span className="text-sm font-medium">Task Name</span>
@@ -635,7 +635,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             {data.map((task) => (
               <div
                 key={task.id}
-                className="border-b px-3 flex items-center gap-2 hover:bg-accent cursor-pointer transition-colors duration-150"
+                className="border-b px-4 flex items-center gap-2 hover:bg-accent cursor-pointer transition-colors duration-150"
                 style={{
                   height: ROW_HEIGHT,
                   paddingLeft: `${12 + task.level * 16}px`,

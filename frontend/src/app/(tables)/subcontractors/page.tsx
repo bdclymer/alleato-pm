@@ -3,11 +3,14 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from '@/components/tables/generic-table-factory'
-import { TableLayout } from '@/components/layouts'
-import { PageHeader } from '@/components/layout'
+import { TablePageWrapper } from '@/components/tables/table-page-wrapper'
+
+const PAGE_TITLE = 'Subcontractors'
+const PAGE_DESCRIPTION = 'Manage subcontractors'
 
 const config: GenericTableConfig = {
   title: 'Subcontractors',
+  hideHeader: true,
   description: 'Manage subcontractors',
   searchFields: [
     'company_name',
@@ -152,29 +155,17 @@ export default async function SubcontractorsPage() {
 
   if (error) {
     return (
-      <>
-        <PageHeader
-          title="Subcontractors"
-          description="Manage subcontractors"
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/' },
-            { label: 'Subcontractors' },
-          ]}
-        />
-        <TableLayout>
-          <div className="text-center text-destructive">
-            Error loading subcontractors. Please try again later.
-          </div>
-        </TableLayout>
-      </>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading subcontractors. Please try again later.
+        </div>
+      </TablePageWrapper>
     )
   }
 
   return (
-    <>
-      <TableLayout>
-        <GenericDataTable data={data || []} config={config} />
-      </TableLayout>
-    </>
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={data || []} config={config} />
+    </TablePageWrapper>
   )
 }

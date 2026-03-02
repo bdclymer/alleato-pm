@@ -113,7 +113,7 @@ export function SearchableSelect({
           >
             <div className="flex flex-col">
               {/* Search Input */}
-              <div className="flex items-center border-b px-3 py-2">
+              <div className="flex items-center border-b px-4 py-2">
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                 <Input
                   placeholder={searchPlaceholder}
@@ -135,7 +135,7 @@ export function SearchableSelect({
                     <div
                       key={option.value}
                       className={cn(
-                        "relative flex cursor-pointer select-none items-center px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                        "relative flex cursor-pointer select-none items-center px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
                         value === option.value && "bg-accent",
                       )}
                       onClick={() => handleSelect(option.value)}

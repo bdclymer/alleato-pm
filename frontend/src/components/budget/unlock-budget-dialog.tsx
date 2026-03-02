@@ -93,7 +93,7 @@ export function UnlockBudgetDialog({
 
           {/* Option 1: Preserve Line Items */}
           <div className="border rounded-lg p-6 space-y-4 hover:border-primary/50 transition-colors">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-4">
               <div className="rounded-full bg-primary/10 p-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
               </div>
@@ -117,7 +117,7 @@ export function UnlockBudgetDialog({
 
           {/* Option 2: Delete All Line Items */}
           <div className="border rounded-lg p-6 space-y-4 hover:border-destructive/50 transition-colors">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-4">
               <div className="rounded-full bg-destructive/10 p-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>

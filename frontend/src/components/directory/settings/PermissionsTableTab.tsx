@@ -131,7 +131,7 @@ export function PermissionsTableTab({ projectId }: PermissionsTableTabProps) {
       {/* Search sidebar */}
       <div className="w-64 shrink-0">
         <div className="bg-background rounded-lg border border-border p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">
+          <h3 className="text-sm font-semibold text-foreground mb-4">
             SEARCH PERMISSIONS
           </h3>
           <div className="relative">

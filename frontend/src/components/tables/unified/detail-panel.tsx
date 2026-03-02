@@ -85,7 +85,7 @@ function FieldRenderer<T extends Record<string, unknown>>({
   switch (field.type) {
     case "readonly":
       return (
-        <div className="text-sm py-2 px-3 bg-muted/50 rounded-md">
+        <div className="text-sm py-2 px-4 bg-muted/50 rounded-md">
           {value == null || value === "" ? "-" : String(value)}
         </div>
       );
@@ -285,7 +285,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
         style={{ width: `${width}px`, maxWidth: "100vw" }}
       >
         {/* Header */}
-        <SheetHeader className="px-4 py-3 border-b flex-shrink-0">
+        <SheetHeader className="px-4 py-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-base font-semibold truncate pr-2">
               {title}
@@ -359,7 +359,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
                     <button
                       key={section.id}
                       onClick={section.onClick}
-                      className="w-full flex items-center justify-between py-2 px-3 rounded-md hover:bg-muted/50 transition-colors text-sm"
+                      className="w-full flex items-center justify-between py-2 px-4 rounded-md hover:bg-muted/50 transition-colors text-sm"
                     >
                       <span>{section.label}</span>
                       <span className="text-muted-foreground">
@@ -374,7 +374,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t flex items-center justify-between flex-shrink-0 bg-background">
+        <div className="px-4 py-4 border-t flex items-center justify-between flex-shrink-0 bg-background">
           {onDelete ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>

@@ -1,5 +1,5 @@
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { PunchListPageWrapper } from "./punch-list-page-wrapper";
 
 export default async function PunchListPage({
@@ -12,7 +12,7 @@ export default async function PunchListPage({
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Punch List"
         description="Track and manage punch list items"
       />

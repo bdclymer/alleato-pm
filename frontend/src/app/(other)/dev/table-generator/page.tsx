@@ -367,7 +367,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
 
       <FormLayout>
         {/* Step 1: Select Table */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">1. Select Table</h2>
             <p className="text-sm text-muted-foreground">
@@ -376,7 +376,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
             </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {isFetchingTables ? (
               <div className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -438,7 +438,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
         {selectedTable && !isLoading && (
           <>
             {/* Step 2: Configure Basic Info */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">2. Basic Configuration</h2>
                 <p className="text-sm text-muted-foreground">Set the page title and description</p>
@@ -468,7 +468,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
             </div>
 
             {/* Step 3: Configure Columns */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">3. Configure Columns</h2>
                 <p className="text-sm text-muted-foreground">Select which columns to show and their properties</p>
@@ -477,7 +477,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
               <div>
                 <div className="space-y-2">
                   {columns.map(col => (
-                    <div key={col.name} className="flex items-center gap-4 p-3 border rounded">
+                    <div key={col.name} className="flex items-center gap-4 p-4 border rounded">
                       <Checkbox
                         checked={col.defaultVisible}
                         onCheckedChange={() => toggleColumn(col.name, 'defaultVisible')}
@@ -513,7 +513,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
             </div>
 
             {/* Step 4: Search Fields */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">4. Search Fields</h2>
                 <p className="text-sm text-muted-foreground">Select which fields should be searchable</p>
@@ -537,7 +537,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
             </div>
 
             {/* Step 5: Filters */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">5. Filters (Optional)</h2>
                 <p className="text-sm text-muted-foreground">Add dropdown filters for common fields</p>
@@ -545,7 +545,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
 
               <div className="space-y-4">
                 {filters.map((filter, idx) => (
-                  <div key={idx} className="p-4 border rounded space-y-3">
+                  <div key={idx} className="p-4 border rounded space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">Filter {idx + 1}</h4>
                       <Button variant="ghost" size="sm" onClick={() => removeFilter(idx)}>
@@ -553,7 +553,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Field</Label>
                         <Select value={filter.field} onValueChange={value => updateFilter(idx, { field: value })}>
@@ -611,7 +611,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
             </div>
 
             {/* Step 6: Additional Features */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h2 className="text-xl font-semibold">6. Additional Features</h2>
                 <p className="text-sm text-muted-foreground">Configure editing and navigation</p>
@@ -651,7 +651,7 @@ export default async function ${tableName.replace(/\s/g, '')}Page() {
 
             {/* Generated Code */}
             {generatedCode && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
                   <h2 className="text-xl font-semibold">Generated Code</h2>
                   <p className="text-sm text-muted-foreground">

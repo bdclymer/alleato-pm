@@ -93,7 +93,7 @@ export default function SitemapPage(): ReactElement {
         description="User-navigable pages in Alleato Procore"
       />
       <PageContainer>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {routes.map((route) => (
             <div key={route.path} className="flex items-center gap-2">
               <Link

@@ -46,7 +46,7 @@ export function DivisionTree<T extends DivisionItem>({
 
   if (sortedDivisions.length === 0) {
     return (
-      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+      <div className="px-4 py-4 text-sm text-muted-foreground text-center">
         No items available
       </div>
     );
@@ -64,7 +64,7 @@ export function DivisionTree<T extends DivisionItem>({
           <button
             type="button"
             onClick={() => onToggleDivision(division)}
-            className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
           >
             <span className="text-sm font-semibold text-foreground flex items-center gap-2">
               {expandedDivisions.has(division) ? (

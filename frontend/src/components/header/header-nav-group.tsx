@@ -48,7 +48,7 @@ export function HeaderNavGroup({
         <button
           onClick={onToggle}
           className={cn(
-            "flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+            "flex items-center gap-1 px-4 py-1.5 text-sm font-medium rounded-md transition-colors",
             "text-zinc-300 hover:text-white hover:bg-zinc-700/50",
             isOpen && "text-white bg-zinc-700/50",
             isActiveGroup && !isOpen && "text-white"

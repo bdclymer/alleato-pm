@@ -1,3 +1,4 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
@@ -12,7 +13,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -28,13 +29,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,7 +135,7 @@ export default function DistributionGroupsPage() {
       cell: ({ row }) => {
         const group = row.original;
         return (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
               <Users className="h-4 w-4 text-primary" />
             </div>
@@ -244,7 +245,7 @@ export default function DistributionGroupsPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -265,7 +266,7 @@ export default function DistributionGroupsPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -284,7 +285,7 @@ export default function DistributionGroupsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}
@@ -352,14 +353,14 @@ export default function DistributionGroupsPage() {
       </PageContainer>
 
       {/* Add Group Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Distribution Group</DialogTitle>
-            <DialogDescription>
+      <Modal open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Add Distribution Group</ModalTitle>
+            <ModalDescription>
               Create a new distribution group for mass communication.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Group Name *</Label>
@@ -381,7 +382,7 @@ export default function DistributionGroupsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
@@ -391,22 +392,22 @@ export default function DistributionGroupsPage() {
             >
               {createMutation.isPending ? "Creating..." : "Create Group"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Edit Group Dialog */}
-      <Dialog
+      <Modal
         open={!!editingGroup}
         onOpenChange={(open) => !open && setEditingGroup(null)}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Distribution Group</DialogTitle>
-            <DialogDescription>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>Edit Distribution Group</ModalTitle>
+            <ModalDescription>
               Update the group name and description.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Group Name *</Label>
@@ -428,7 +429,7 @@ export default function DistributionGroupsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={() => setEditingGroup(null)}>
               Cancel
             </Button>
@@ -438,9 +439,9 @@ export default function DistributionGroupsPage() {
             >
               {updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

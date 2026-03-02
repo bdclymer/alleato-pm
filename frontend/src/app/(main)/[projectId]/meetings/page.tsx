@@ -1,8 +1,8 @@
 import { Calendar, Clock } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 
 import { MeetingsTableWrapper } from "./meetings-table-wrapper";
@@ -43,7 +43,7 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Meetings"
         actions={<MeetingsActions projectId={projectId} />}
       />
@@ -51,13 +51,13 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
       <PageContainer>
         {/* Meeting Statistics */}
         <div className="flex items-center lg:gap-12 gap-4 mb-6">
-          <div className="flex items-center lg:gap-3 gap-2">
+          <div className="flex items-center lg:gap-4 gap-2">
             <Calendar className="h-4 w-4 text-brand" />
             <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               {totalMeetings} Total Meetings
             </p>
           </div>
-          <div className="flex items-center gap-2 lg:gap-3">
+          <div className="flex items-center gap-2 lg:gap-4">
             <Clock className="h-4 w-4 text-brand" />
             <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               {thisMonth} This Month

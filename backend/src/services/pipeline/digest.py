@@ -31,7 +31,7 @@ def run_digest(metadata_id: str) -> Dict[str, Any]:
     # 1. Fetch metadata
     meta_resp = (
         client.table("document_metadata")
-        .select("id, title, date, participants_array, overview, meeting_summary, project_id")
+        .select("id, title, date, participants_array, overview, summary, project_id")
         .eq("id", metadata_id)
         .single()
         .execute()
@@ -47,7 +47,7 @@ def run_digest(metadata_id: str) -> Dict[str, Any]:
     participants: List[str] = metadata.get("participants_array") or []
     summary = (
         metadata.get("overview")
-        or metadata.get("meeting_summary")
+        or metadata.get("summary")
         or ""
     )
     project_id = metadata.get("project_id")

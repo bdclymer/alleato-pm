@@ -1,10 +1,11 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { UserPlus, Users, Mail, Phone, Building2, MoreHorizontal, UserX, Eye, RefreshCw, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -36,7 +37,7 @@ import type { TabConfig } from "@/components/templates/data-table-page";
 
 function DirectoryTableSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
           <Skeleton className="h-10 w-10 rounded-full" />
@@ -143,7 +144,7 @@ export default function ProjectDirectoryAllPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Directory"
           description="Manage all people in this project"
           actions={
@@ -173,7 +174,7 @@ export default function ProjectDirectoryAllPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Directory"
         description="Manage all people in this project"
         actions={
@@ -250,7 +251,7 @@ export default function ProjectDirectoryAllPage() {
                       return (
                         <TableRow key={person.id}>
                           <TableCell>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-4">
                               <Avatar className="h-9 w-9">
                                 <AvatarFallback className={isUser ? "bg-primary/10 text-primary" : "bg-secondary/50 text-secondary-foreground"}>
                                   {initials}

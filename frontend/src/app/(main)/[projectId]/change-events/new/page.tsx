@@ -2,13 +2,9 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
-import { FormLayout, DashboardFormLayout } from "@/components/layouts";
-import { Button } from "@/components/ui/button";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 
@@ -22,7 +18,6 @@ export default function NewChangeEventPage() {
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
     try {
-      // Map form field values to API schema enum values
       const SCOPE_MAP: Record<string, string> = {
         in_scope: "In Scope",
         out_of_scope: "Out of Scope",
@@ -87,28 +82,11 @@ export default function NewChangeEventPage() {
   };
 
   return (
-    <DashboardFormLayout maxWidth="wide">
-      <PageHeader
+    <>
+      <ProjectPageHeader
         title="Create Change Event"
         description="Document a potential change to the project scope, schedule, or budget."
-        breadcrumbs={[
-          { label: "Projects", href: "/" },
-          { label: "Change Events", href: `/${projectId}/change-events` },
-          { label: "New Change Event" },
-        ]}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        }
       />
-
       <PageContainer maxWidth="md">
         <ChangeEventForm
           initialData={initialData}
@@ -119,6 +97,6 @@ export default function NewChangeEventPage() {
           projectId={projectId}
         />
       </PageContainer>
-    </DashboardFormLayout>
+    </>
   );
 }

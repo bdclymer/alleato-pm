@@ -19,9 +19,19 @@ Create a new component that follows design system rules.
 
 You are creating a new component. The component name is: $ARGUMENTS
 
-### Step 1: Read Design System Rules
+### Step 1: Read Design System (MANDATORY)
 
-First, read `.claude/design-audit/design-system-rules.md` to understand the rules.
+Read these files from `frontend/src/design-system/` using the Read tool (in parallel):
+
+1. **`frontend/src/design-system/components.md`** -- Component decision trees, banned patterns, layout components
+2. **`frontend/src/design-system/tokens.md`** -- Colors, spacing, typography, shadows, borders
+3. **`frontend/src/design-system/patterns.md`** -- Loading, error, empty states, form patterns
+
+If creating a **page component**, also read:
+
+4. **`frontend/src/design-system/page-archetypes.md`** -- The 4 page templates. Pick ONE and use its EXACT structure.
+
+**You MUST use the design system. No exceptions. No inventing layouts from scratch.**
 
 ### Step 2: Determine Component Type and Location
 
@@ -33,35 +43,45 @@ Based on the name and context, determine:
 
 ### Step 3: Create Component Following Rules
 
-**Color Rules:**
+**All rules below come from the design system files you just read. Follow them exactly.**
 
-- Use semantic tokens: `text-foreground`, `text-muted-foreground`, `bg-background`, `bg-card`
-- Status colors: `text-status-success`, `text-destructive`, etc.
-- Brand color: `text-brand`, `bg-brand`
+**Color Rules (from tokens.md):**
+
+- Use ONLY semantic tokens: `text-foreground`, `text-muted-foreground`, `bg-background`, `bg-card`, `bg-muted`
+- Status: `text-destructive`, `bg-destructive/10`, etc.
 - NEVER use raw hex values or hardcoded Tailwind colors like `text-gray-500`
+- NEVER use arbitrary color values like `text-[#333]`
 
-**Spacing Rules:**
+**Spacing Rules (from tokens.md):**
 
-- Use 8px grid: `p-2`, `p-4`, `p-6`, `p-8`, `gap-2`, `gap-4`, etc.
-- NEVER use `p-3`, `p-5`, `p-7`, `gap-1.5`, `gap-2.5`, etc.
+- Use 8px grid: `p-2`, `p-4`, `p-6`, `p-8`, `gap-2`, `gap-4`, `gap-6`
+- NEVER use odd values: `p-3`, `p-5`, `p-7`, `gap-1.5`, `gap-2.5`
 - NEVER use arbitrary values like `p-[10px]`
 
-**Typography Rules:**
+**Typography Rules (from tokens.md):**
 
-- Use scale: `text-xs`, `text-sm`, `text-base`, `text-lg`, etc.
+- Use scale: `text-xs`, `text-sm`, `text-base`, `text-lg`
+- Max weight: `font-semibold` (never `font-bold` or `font-extrabold`)
 - NEVER use arbitrary values like `text-[14px]`
-- Use design system classes: `.text-card-title`, `.text-metric-sm`, etc.
 
-**Border Radius Rules:**
+**Shadows & Borders (from tokens.md):**
 
-- Use: `rounded-sm`, `rounded-md`, `rounded-lg`, `rounded-xl`, `rounded-full`
-- NEVER use arbitrary values like `rounded-[8px]`
+- Shadows: `shadow-xs` or `shadow-sm` ONLY. Never `shadow-md`/`shadow-lg`/`shadow-xl`
+- Border radius: `rounded-md` or `rounded-lg`. Never arbitrary values.
+- Borders: `border` (1px) only. Never `border-2` or thicker.
 
-**Component Usage Rules:**
+**Component Rules (from components.md):**
 
-- Use ShadCN components where available (Button, Input, Card, Badge, etc.)
-- Use form field wrappers (TextField, SelectField, etc.) for forms
-- Use Card component instead of manual card styling
+- Use shadcn/ui components where available (Button, Input, Badge, etc.)
+- Use `Modal`/`Slideover` from unified components (NEVER raw Dialog/Sheet)
+- For forms, use react-hook-form + zod patterns from patterns.md
+- NEVER nest cards (Card inside Card is forbidden)
+
+**Layout Rules (from components.md):**
+
+- Pages MUST use `ProjectPageHeader` + `PageContainer` from `@/components/layout`
+- Forms MUST use `FormContainer` from `@/components/layout`
+- NEVER use deprecated `ProjectToolPage` or custom header wrappers
 
 **Responsive Rules:**
 

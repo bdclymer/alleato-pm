@@ -34,7 +34,7 @@ export default function TestLineItemsPage() {
         />
       </div>
 
-      <div className="mt-8 p-4 bg-gray-100 dark:bg-gray-800 rounded">
+      <div className="mt-8 p-4 bg-muted dark:bg-foreground/90 rounded">
         <h3 className="font-semibold mb-2">Current Data (JSON):</h3>
         <pre className="text-xs overflow-auto">
           {JSON.stringify(items, null, 2)}

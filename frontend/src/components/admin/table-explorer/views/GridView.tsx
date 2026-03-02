@@ -90,7 +90,7 @@ export function GridView({ table, config, columns, rows }: GridViewProps) {
               </div>
             </CardHeader>
             <CardContent className="pb-2">
-              <dl className="space-y-1.5 text-sm">
+              <dl className="space-y-2 text-sm">
                 {displayColumns.map((col) => {
                   const value = row[col.column_name];
                   if (value === null || value === undefined) return null;

@@ -846,7 +846,7 @@ export function ContractForm({
       {/* ================================================================ */}
       <div className="pt-8">
         {/* Accounting Method Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-4">
           <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="text-sm text-blue-900">
@@ -891,10 +891,10 @@ export function ContractForm({
           <table className="w-full">
             <thead className="bg-muted border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground w-12">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground w-12">
                   #
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground min-w-[300px]">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-[300px]">
                   <div className="flex items-center gap-1">
                     Budget Code
                     <TooltipProvider>
@@ -909,32 +909,32 @@ export function ContractForm({
                     </TooltipProvider>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                   Description
                 </th>
                 {formData.accountingMethod === "unit_quantity" && (
                   <>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       Qty
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                       UOM
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       Unit Cost
                     </th>
                   </>
                 )}
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Billed to Date
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Amount Remaining
                 </th>
-                <th className="px-4 py-3 w-12"></th>
+                <th className="px-4 py-4 w-12"></th>
               </tr>
             </thead>
             <tbody>
@@ -967,8 +967,8 @@ export function ContractForm({
                     className="border-b"
                     data-testid={`sov-line-${index}`}
                   >
-                    <td className="px-4 py-3 text-sm">{index + 1}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 text-sm">{index + 1}</td>
+                    <td className="px-4 py-4">
                       <Popover
                         open={openBudgetCodePopover === item.id}
                         onOpenChange={(open) =>
@@ -1036,7 +1036,7 @@ export function ContractForm({
                         </PopoverContent>
                       </Popover>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Input
                         value={item.description}
                         onChange={(e) =>
@@ -1051,7 +1051,7 @@ export function ContractForm({
                     </td>
                     {formData.accountingMethod === "unit_quantity" && (
                       <>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             type="number"
                             value={item.quantity ?? ""}
@@ -1064,7 +1064,7 @@ export function ContractForm({
                             data-testid="sov-line-quantity"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             value={item.unitOfMeasure || ""}
                             onChange={(e) =>
@@ -1076,7 +1076,7 @@ export function ContractForm({
                             data-testid="sov-line-unit-of-measure"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             type="number"
                             value={item.unitCost ?? ""}
@@ -1091,7 +1091,7 @@ export function ContractForm({
                         </td>
                       </>
                     )}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Input
                         type="number"
                         value={item.amount || ""}
@@ -1107,16 +1107,16 @@ export function ContractForm({
                         }
                       />
                     </td>
-                    <td className="px-4 py-3 text-right text-sm">
+                    <td className="px-4 py-4 text-right text-sm">
                       ${item.billedToDate.toFixed(2)}
                     </td>
                     <td
-                      className="px-4 py-3 text-right text-sm"
+                      className="px-4 py-4 text-right text-sm"
                       data-testid="sov-line-amount-remaining"
                     >
                       ${(item.amount - item.billedToDate).toFixed(2)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1133,7 +1133,7 @@ export function ContractForm({
             </tbody>
             <tfoot className="bg-muted border-t">
               <tr>
-                <td colSpan={2} className="px-4 py-3">
+                <td colSpan={2} className="px-4 py-4">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1145,28 +1145,28 @@ export function ContractForm({
                     Add Line
                   </Button>
                 </td>
-                <td className="px-4 py-3 text-right font-medium">Total:</td>
+                <td className="px-4 py-4 text-right font-medium">Total:</td>
                 {formData.accountingMethod === "unit_quantity" && (
                   <>
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3" />
+                    <td className="px-4 py-4" />
+                    <td className="px-4 py-4" />
+                    <td className="px-4 py-4" />
                   </>
                 )}
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-amount"
                 >
                   ${sovTotals.amount.toFixed(2)}
                 </td>
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-billed"
                 >
                   ${sovTotals.billedToDate.toFixed(2)}
                 </td>
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-remaining"
                 >
                   ${sovTotals.amountRemaining.toFixed(2)}
@@ -1395,7 +1395,7 @@ export function ContractForm({
         )}
 
         {/* Main actions */}
-        <div className="flex gap-3 ml-auto">
+        <div className="flex gap-4 ml-auto">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
@@ -1427,7 +1427,7 @@ export function ContractForm({
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
-                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                <div className="border rounded-md p-4 text-sm text-muted-foreground">
                   Loading cost codes...
                 </div>
               ) : (
@@ -1439,7 +1439,7 @@ export function ContractForm({
                         <button
                           type="button"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -1504,7 +1504,7 @@ export function ContractForm({
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-3 bg-muted rounded-md">
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
                 {newBudgetCodeData.costCodeId ? (

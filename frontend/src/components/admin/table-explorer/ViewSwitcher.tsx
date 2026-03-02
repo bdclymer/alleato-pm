@@ -65,7 +65,7 @@ export function ViewSwitcher({ currentView, enabledViews }: ViewSwitcherProps) {
               key={view}
               value={view}
               disabled={isPending}
-              className="gap-1.5"
+              className="gap-2"
             >
               <Icon className="h-4 w-4" />
               <span className="hidden sm:inline">{VIEW_LABELS[view]}</span>

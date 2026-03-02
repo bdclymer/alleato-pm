@@ -188,7 +188,7 @@ export function DocsChat() {
             </div>
           </button>
 
-          <SheetHeader className="px-6 py-5 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+          <SheetHeader className="px-6 py-4 border-b bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <SheetTitle className="text-xl font-semibold text-blue-900 dark:text-blue-100">
@@ -231,7 +231,7 @@ export function DocsChat() {
                           key={example}
                           type="button"
                           onClick={() => setInput(example)}
-                          className="text-xs px-3 py-2 rounded-lg bg-background dark:bg-gray-800 border border-border dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors text-left"
+                          className="text-xs px-4 py-2 rounded-lg bg-background dark:bg-gray-800 border border-border dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors text-left"
                         >
                           {example}
                         </button>
@@ -253,13 +253,13 @@ export function DocsChat() {
                         : "bg-background dark:bg-gray-800 border border-border dark:border-gray-700 shadow-sm"
                     }`}
                   >
-                    <div className="px-4 py-3">
+                    <div className="px-4 py-4">
                       {message.role === "user" ? (
                         <p className="text-sm leading-relaxed">
                           {message.content}
                         </p>
                       ) : (
-                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-2 prose-headings:my-3 prose-headings:font-semibold prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-code:text-xs prose-code:bg-muted dark:prose-code:bg-gray-900 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted dark:prose-pre:bg-gray-900 prose-pre:border prose-pre:border-border dark:prose-pre:border-gray-700">
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-2 prose-headings:my-4 prose-headings:font-semibold prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-code:text-xs prose-code:bg-muted dark:prose-code:bg-gray-900 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted dark:prose-pre:bg-gray-900 prose-pre:border prose-pre:border-border dark:prose-pre:border-gray-700">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {message.content}
                           </ReactMarkdown>
@@ -269,11 +269,11 @@ export function DocsChat() {
 
                     {/* Sources */}
                     {message.sources && message.sources.length > 0 && (
-                      <div className="px-4 pb-3 pt-1 border-t border-border dark:border-gray-700 mt-2">
+                      <div className="px-4 pb-4 pt-1 border-t border-border dark:border-gray-700 mt-2">
                         <p className="text-xs font-semibold mb-2 text-foreground dark:text-gray-300 uppercase tracking-wide">
                           Sources
                         </p>
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           {message.sources.map((source, idx) => (
                             <a
                               key={source.id}
@@ -302,7 +302,7 @@ export function DocsChat() {
 
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-xl px-4 py-3 shadow-sm">
+                  <div className="bg-background dark:bg-gray-800 border border-border dark:border-gray-700 rounded-xl px-4 py-4 shadow-sm">
                     <div className="flex items-center gap-2 text-sm text-foreground dark:text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span>Thinking...</span>

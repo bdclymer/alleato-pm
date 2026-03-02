@@ -152,7 +152,7 @@ export default function PhotosPage() {
                     </Badge>
                   ))}
                 </div>
-                <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
                   <span>{photo.takenBy}</span>
                   <span>{new Date(photo.takenAt).toLocaleDateString()}</span>
                 </div>

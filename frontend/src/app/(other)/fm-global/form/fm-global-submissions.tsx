@@ -28,7 +28,7 @@ export function FmGlobalSubmissions({
       <CardHeader>
         <CardTitle>Recent Submissions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {submissions.length === 0 && (
           <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
             No submissions yet. Run your first match to save a submission.
@@ -37,7 +37,7 @@ export function FmGlobalSubmissions({
         {submissions.map((submission) => (
           <div
             key={submission.id}
-            className="rounded-lg border border-border/70 p-3"
+            className="rounded-lg border border-border/70 p-4"
           >
             <Text className="font-medium">
               {submission.user_input
@@ -49,7 +49,7 @@ export function FmGlobalSubmissions({
                 ? new Date(submission.created_at).toLocaleString()
                 : "—"}
             </Text>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 size="sm"

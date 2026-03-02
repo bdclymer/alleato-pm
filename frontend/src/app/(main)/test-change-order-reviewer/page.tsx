@@ -18,14 +18,14 @@ export default function TestChangeOrderReviewerPage() {
 
       {/* Scenario Selector */}
       <Card className="p-4">
-        <h2 className="font-semibold mb-3">Select Test Scenario:</h2>
+        <h2 className="font-semibold mb-4">Select Test Scenario:</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setScenario("reviewer")}
             className={`px-4 py-2 rounded-md ${
               scenario === "reviewer"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-muted text-foreground hover:bg-muted"
             }`}
           >
             Reviewer (Can Approve/Reject)
@@ -35,7 +35,7 @@ export default function TestChangeOrderReviewerPage() {
             className={`px-4 py-2 rounded-md ${
               scenario === "not-reviewer"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-muted text-foreground hover:bg-muted"
             }`}
           >
             Not Reviewer (View Only)
@@ -45,7 +45,7 @@ export default function TestChangeOrderReviewerPage() {
             className={`px-4 py-2 rounded-md ${
               scenario === "completed"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-muted text-foreground hover:bg-muted"
             }`}
           >
             Completed Status (No Action)
@@ -117,7 +117,7 @@ export default function TestChangeOrderReviewerPage() {
       {/* Component Props Reference */}
       <Card className="p-4">
         <h3 className="font-semibold mb-2">Component Props:</h3>
-        <pre className="text-xs bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
+        <pre className="text-xs bg-muted dark:bg-foreground p-4 rounded-lg overflow-x-auto">
 {`interface ChangeOrderReviewerResponseProps {
   changeOrderId: string;
   contractId: string;

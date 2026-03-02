@@ -34,7 +34,7 @@ export const NavBar: React.FC<{ tabs: string[] }> = ({ tabs }) => {
   return (
     <div
       className={
-        'w-fit relative border dark:border-neutral-800 border-neutral-300 rounded-full flex gap-5 items-center justify-center p-2 backdrop-blur-2xl'
+        'w-fit relative border dark:border-neutral-800 border-neutral-300 rounded-full flex gap-4 items-center justify-center p-2 backdrop-blur-2xl'
       }
     >
       {tabs.map((link, i) => (

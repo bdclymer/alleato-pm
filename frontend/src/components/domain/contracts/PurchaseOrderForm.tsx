@@ -209,7 +209,7 @@ export function PurchaseOrderForm({
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-3 pt-6">
+      <div className="flex justify-end gap-4 pt-6">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>

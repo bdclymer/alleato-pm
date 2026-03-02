@@ -173,7 +173,7 @@ export function CommittedCostsModal({
                 type="button"
                 onClick={() => setTypeFilter(type as typeof typeFilter)}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-full transition-all",
+                  "px-4 py-1 text-xs font-medium rounded-full transition-all",
                   typeFilter === type
                     ? "bg-orange-500 text-white"
                     : "bg-muted text-foreground hover:bg-muted",
@@ -193,9 +193,9 @@ export function CommittedCostsModal({
       {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "commitments" ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-blue-50 via-white to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-blue-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">Total Committed Costs</p>
@@ -214,7 +214,7 @@ export function CommittedCostsModal({
 
             {/* Description Box */}
             <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <FileCheck className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900">
                   <p className="font-semibold">About Committed Costs</p>
@@ -232,25 +232,25 @@ export function CommittedCostsModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Number
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Vendor
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Description
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Amount
                     </th>
-                    <th className="text-center px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-center px-4 py-4 font-semibold text-slate-800">
                       COs
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Executed
                     </th>
                   </tr>
@@ -280,25 +280,25 @@ export function CommittedCostsModal({
                         key={commitment.id}
                         className="hover:bg-blue-50/40 transition-colors"
                       >
-                        <td className="px-4 py-3 font-medium text-blue-600">
+                        <td className="px-4 py-4 font-medium text-blue-600">
                           {commitment.commitmentNumber}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           {getTypeBadge(commitment.type)}
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
+                        <td className="px-4 py-4 text-foreground text-xs">
                           {commitment.vendor || "-"}
                         </td>
                         <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
+                          className="px-4 py-4 text-foreground max-w-xs truncate"
                           title={commitment.description}
                         >
                           {commitment.description}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
                           {formatCurrency(commitment.amount)}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-4 text-center">
                           {commitment.changeOrders > 0 ? (
                             <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-medium">
                               {commitment.changeOrders}
@@ -307,7 +307,7 @@ export function CommittedCostsModal({
                             <span className="text-muted-foreground">-</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-foreground">
+                        <td className="px-4 py-4 text-foreground">
                           {formatDate(commitment.executedDate)}
                         </td>
                       </tr>
@@ -318,13 +318,13 @@ export function CommittedCostsModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               Breakdown of committed costs by commitment type.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-background">
+              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
                 <div className="mb-2">{getTypeBadge("subcontract")}</div>
                 <p className="text-2xl font-bold text-foreground mt-2">
                   {formatCurrency(subcontractTotal)}
@@ -335,7 +335,7 @@ export function CommittedCostsModal({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-background">
+              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
                 <div className="mb-2">{getTypeBadge("purchase_order")}</div>
                 <p className="text-2xl font-bold text-foreground mt-2">
                   {formatCurrency(purchaseOrderTotal)}

@@ -133,7 +133,7 @@ export function SimpleRagChat({
                 <button
                   key={prompt}
                   onClick={() => setInput(prompt)}
-                  className="px-3 py-1.5 text-sm bg-muted hover:bg-muted rounded-full transition-colors"
+                  className="px-4 py-1.5 text-sm bg-muted hover:bg-muted rounded-full transition-colors"
                 >
                   {prompt}
                 </button>
@@ -145,7 +145,7 @@ export function SimpleRagChat({
             <div
               key={message.id}
               className={cn(
-                "flex gap-3 animate-in fade-in slide-in-from-bottom-2",
+                "flex gap-4 animate-in fade-in slide-in-from-bottom-2",
                 message.role === "user" ? "justify-end" : "justify-start",
               )}
             >
@@ -173,7 +173,7 @@ export function SimpleRagChat({
           ))
         )}
         {isLoading && (
-          <div className="flex gap-3 animate-in fade-in">
+          <div className="flex gap-4 animate-in fade-in">
             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
               <Bot className="w-5 h-5 text-emerald-600" />
             </div>

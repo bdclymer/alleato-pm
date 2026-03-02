@@ -102,7 +102,7 @@ export function ClientStatusToggle({
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-4">
         <CardTitle className="text-base flex items-center gap-2">
           <User className="h-4 w-4" />
           Client Access Settings
@@ -153,7 +153,7 @@ export function ClientStatusToggle({
         )}
 
         {isClient && (
-          <div className="text-xs text-muted-foreground bg-muted rounded-md p-3">
+          <div className="text-xs text-muted-foreground bg-muted rounded-md p-4">
             <p className="font-medium mb-1">Client Access Restrictions:</p>
             <ul className="space-y-1">
               <li>• Limited to client dashboard view</li>

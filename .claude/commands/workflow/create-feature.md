@@ -30,19 +30,25 @@ Parse:
 
 Read ALL of these files using the Read tool (in parallel):
 
+**Design system (how the page MUST look):**
+
+1. **`frontend/src/design-system/page-archetypes.md`** -- The 4 page templates (Table, Form, Form Wide, Content). Pick ONE.
+2. **`frontend/src/design-system/components.md`** -- Component decision trees, banned patterns, layout components
+3. **`frontend/src/design-system/tokens.md`** -- Colors, spacing, typography, shadows, borders
+
 **Reference docs (how to do things right):**
 
-1. **`.claude/FK-TYPES-REFERENCE.md`** -- FK type lookup (which PKs are INTEGER vs UUID)
-2. **`.claude/rules/CRITICAL-NEXTJS-ROUTING-RULES.md`** -- Route naming rules (prevent `[id]` conflicts)
-3. **`.claude/rules/SUPABASE-GATE.md`** -- Database type safety requirements
+4. **`.claude/FK-TYPES-REFERENCE.md`** -- FK type lookup (which PKs are INTEGER vs UUID)
+5. **`.claude/rules/CRITICAL-NEXTJS-ROUTING-RULES.md`** -- Route naming rules (prevent `[id]` conflicts)
+6. **`.claude/rules/SUPABASE-GATE.md`** -- Database type safety requirements
 
 **Pattern docs (what has gone wrong before and how to avoid it):**
-4. **`docs-ai/contents/docs/patterns/database-issues.md`** -- FK mismatch, CHECK constraints, table renames
-5. **`docs-ai/contents/docs/patterns/api-routing-errors.md`** -- Route conflicts, async params
-6. **`docs-ai/contents/docs/patterns/authentication-errors.md`** -- users_auth chain, RLS failures
+7. **`docs-ai/contents/docs/patterns/database-issues.md`** -- FK mismatch, CHECK constraints, table renames
+8. **`docs-ai/contents/docs/patterns/api-routing-errors.md`** -- Route conflicts, async params
+9. **`docs-ai/contents/docs/patterns/authentication-errors.md`** -- users_auth chain, RLS failures
 
 **Prevention system:**
-7. **`.claude/PREVENTION-CHECKLIST.md`** -- All 9 known failure gates with triggers and fixes
+10. **`.claude/PREVENTION-CHECKLIST.md`** -- All 9 known failure gates with triggers and fixes
 
 After reading, internalize these facts before writing ANY code:
 
@@ -198,6 +204,34 @@ Never remove from the template:
 - All indexes
 - `updated_at` trigger
 - All 4 RLS policies
+
+---
+
+## GATE 1.5: Design System Archetype Selection (BLOCKING -- unless --skip-page)
+
+If page generation is included, you MUST select a page archetype BEFORE writing any UI files.
+
+**Select the archetype from `frontend/src/design-system/page-archetypes.md`:**
+
+| If the page is... | Use archetype |
+|--------------------|---------------|
+| A data table with filtering/sorting | **Table Page** (`maxWidth="full"`) |
+| A create/edit form (narrow) | **Form Page** (`FormContainer maxWidth="md"`) |
+| A create/edit form (wide, multi-column) | **Form Wide** (`FormContainer maxWidth="lg"`) |
+| Mixed content (detail view, dashboard section) | **Content Page** (`maxWidth="xl"`) |
+
+**For `/create-feature`, the default is Table Page** (list page with table + form dialog for create/edit).
+
+**The generated page.tsx MUST use the EXACT template from page-archetypes.md:**
+- `ProjectPageHeader` with `title`, `description`, `actions`
+- `PageContainer` with the correct `maxWidth`
+- Standard data-fetching pattern: loading -> error -> empty -> table
+- NO custom wrappers, NO cards around tables, NO invented layouts
+
+**The generated form dialog MUST follow the design system:**
+- Use `frontend/src/design-system/patterns.md` form patterns
+- Use semantic tokens from `tokens.md` (NEVER raw hex, NEVER `text-gray-*`)
+- Use 8px spacing cadence (`space-y-4`, `gap-4`, `gap-6`)
 
 ---
 

@@ -29,7 +29,7 @@ export function ChatHeader({
   isConnected,
 }: ChatHeaderProps) {
   return (
-    <div className="h-14 border-b border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))]/80 backdrop-blur-sm flex items-center px-4 gap-3">
+    <div className="h-14 border-b border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))]/80 backdrop-blur-sm flex items-center px-4 gap-4">
       {/* Mobile Menu Button */}
       <Button
         variant="ghost"

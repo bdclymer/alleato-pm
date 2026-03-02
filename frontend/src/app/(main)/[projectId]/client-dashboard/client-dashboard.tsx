@@ -107,16 +107,16 @@ export default function ClientDashboard({
         <div className="bg-white rounded-xl shadow-sm border p-8">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">
+              <h1 className="text-4xl font-bold text-foreground">
                 {project.name}
               </h1>
-              <p className="text-lg text-gray-600 mt-2">
+              <p className="text-lg text-muted-foreground mt-2">
                 {project["job number"] &&
                   `Project #${project["job number"]} - `}
                 Client Dashboard
               </p>
               {project.address && (
-                <div className="flex items-center gap-2 mt-4 text-gray-500">
+                <div className="flex items-center gap-2 mt-4 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   <span>{project.address}</span>
                 </div>
@@ -128,7 +128,7 @@ export default function ClientDashboard({
               </Badge>
               {primeContract && (
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-500">Contract Value</p>
+                  <p className="text-sm text-muted-foreground">Contract Value</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(
                       primeContract.revised_contract_amount ||
@@ -144,13 +144,13 @@ export default function ClientDashboard({
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">Project Progress</span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   {projectProgress}% Complete
                 </span>
               </div>
               <Progress value={projectProgress} className="h-3" />
               {daysRemaining !== null && daysRemaining > 0 && (
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   {daysRemaining} days remaining until substantial completion
                 </p>
               )}
@@ -164,7 +164,7 @@ export default function ClientDashboard({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Start Date</p>
+                  <p className="text-sm text-muted-foreground">Start Date</p>
                   <p className="text-xl font-semibold">
                     {primeContract?.start_date
                       ? format(
@@ -183,7 +183,7 @@ export default function ClientDashboard({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Completion Date</p>
+                  <p className="text-sm text-muted-foreground">Completion Date</p>
                   <p className="text-xl font-semibold">
                     {primeContract?.substantial_completion_date
                       ? format(
@@ -204,7 +204,7 @@ export default function ClientDashboard({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Open RFIs</p>
+                  <p className="text-sm text-muted-foreground">Open RFIs</p>
                   <p className="text-xl font-semibold">{rfis.length}</p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-warning" />
@@ -216,7 +216,7 @@ export default function ClientDashboard({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Milestones</p>
+                  <p className="text-sm text-muted-foreground">Milestones</p>
                   <p className="text-xl font-semibold">{milestones.length}</p>
                 </div>
                 <Milestone className="h-8 w-8 text-purple-500" />
@@ -252,7 +252,7 @@ export default function ClientDashboard({
                   <CardContent>
                     <div className="space-y-4">
                       <div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Contract Number
                         </p>
                         <p className="font-medium">
@@ -260,11 +260,11 @@ export default function ClientDashboard({
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Title</p>
+                        <p className="text-sm text-muted-foreground">Title</p>
                         <p className="font-medium">{primeContract.title}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">
                           Execution Date
                         </p>
                         <p className="font-medium">
@@ -279,7 +279,7 @@ export default function ClientDashboard({
                       <Separator />
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             Original Amount
                           </p>
                           <p className="font-medium">
@@ -287,7 +287,7 @@ export default function ClientDashboard({
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             Current Amount
                           </p>
                           <p className="font-medium">
@@ -334,11 +334,11 @@ export default function ClientDashboard({
                                 {rfi.status}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-600 line-clamp-1">
+                            <p className="text-sm text-muted-foreground line-clamp-1">
                               {rfi.subject}
                             </p>
                             {rfi.date_submitted && (
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-muted-foreground">
                                 Submitted{" "}
                                 {format(
                                   new Date(rfi.date_submitted),
@@ -351,7 +351,7 @@ export default function ClientDashboard({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       No open RFIs at this time
                     </p>
                   )}
@@ -382,7 +382,7 @@ export default function ClientDashboard({
                               {milestone.name}
                             </p>
                             {milestone.end_date && (
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-muted-foreground">
                                 {format(
                                   new Date(milestone.end_date),
                                   "MMM d, yyyy"
@@ -395,7 +395,7 @@ export default function ClientDashboard({
                               value={milestone.percent_complete || 0}
                               className="w-20 h-2"
                             />
-                            <span className="text-xs text-gray-500 w-10 text-right">
+                            <span className="text-xs text-muted-foreground w-10 text-right">
                               {milestone.percent_complete || 0}%
                             </span>
                           </div>
@@ -403,7 +403,7 @@ export default function ClientDashboard({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       No milestones defined
                     </p>
                   )}
@@ -502,7 +502,7 @@ export default function ClientDashboard({
                         <TableRow key={doc.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-gray-400" />
+                              <FileText className="h-4 w-4 text-muted-foreground" />
                               {doc.name}
                             </div>
                           </TableCell>
@@ -511,10 +511,10 @@ export default function ClientDashboard({
                               {doc.file_type}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-sm text-gray-500">
+                          <TableCell className="text-sm text-muted-foreground">
                             {formatFileSize(doc.file_size)}
                           </TableCell>
-                          <TableCell className="text-sm text-gray-500">
+                          <TableCell className="text-sm text-muted-foreground">
                             {doc.uploaded_at
                               ? format(
                                   new Date(doc.uploaded_at),

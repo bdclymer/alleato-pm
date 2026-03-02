@@ -30,7 +30,7 @@ export function InfoBox({
 }: InfoBoxProps) {
   return (
     <div className={`border border-neutral-200 bg-background p-6 ${className}`}>
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-4 mb-4">
         {icon}
         <SectionHeader>{title}</SectionHeader>
       </div>

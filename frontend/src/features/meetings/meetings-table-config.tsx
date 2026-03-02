@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ExternalLink, FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, FileText, Flame, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,11 @@ import type { Meeting } from "@/lib/validation/meetings";
 export const meetingColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
+  { id: "project", label: "Project", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "source", label: "Source", defaultVisible: true },
-  { id: "url", label: "URL", defaultVisible: true },
-  { id: "project", label: "Project", defaultVisible: true },
+  { id: "links", label: "Links", defaultVisible: true },
 ];
 
 export function buildMeetingFilters(options: {
@@ -118,6 +118,16 @@ export function buildMeetingTableColumns(): TableColumn<Meeting>[] {
     {
       ...meetingColumns[2],
       render: (item) => (
+        <Badge variant={badgeVariant(item.project)} className="font-normal">
+          {item.project ?? "-"}
+        </Badge>
+      ),
+      csvValue: (item) => item.project ?? "",
+      sortValue: (item) => item.project ?? "",
+    },
+    {
+      ...meetingColumns[3],
+      render: (item) => (
         <Badge variant="secondary" className="font-normal">
           {item.type ?? "-"}
         </Badge>
@@ -126,7 +136,7 @@ export function buildMeetingTableColumns(): TableColumn<Meeting>[] {
       sortValue: (item) => item.type ?? "",
     },
     {
-      ...meetingColumns[3],
+      ...meetingColumns[4],
       render: (item) => (
         <Badge variant="outline" className="font-normal">
           {item.category ?? "-"}
@@ -136,26 +146,56 @@ export function buildMeetingTableColumns(): TableColumn<Meeting>[] {
       sortValue: (item) => item.category ?? "",
     },
     {
-      ...meetingColumns[4],
+      ...meetingColumns[5],
       render: (item) => <span className="text-muted-foreground">{item.source ?? "-"}</span>,
       csvValue: (item) => item.source ?? "",
       sortValue: (item) => item.source ?? "",
     },
     {
-      ...meetingColumns[5],
-      render: (item) => <span className="text-muted-foreground">{item.url ?? "-"}</span>,
-      csvValue: (item) => item.url ?? "",
-      sortValue: (item) => item.url ?? "",
-    },
-    {
       ...meetingColumns[6],
-      render: (item) => (
-        <Badge variant={badgeVariant(item.project)} className="font-normal">
-          {item.project ?? "-"}
-        </Badge>
-      ),
-      csvValue: (item) => item.project ?? "",
-      sortValue: (item) => item.project ?? "",
+      render: (item) => {
+        const hasLinks = item.url || item.fireflies_link;
+        if (!hasLinks) {
+          return <span className="text-muted-foreground">-</span>;
+        }
+
+        return (
+          <div className="flex items-center gap-2">
+            {item.url && (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open file"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+              </a>
+            )}
+            {item.fireflies_link && (
+              <a
+                href={item.fireflies_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open in Fireflies"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Flame className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+        );
+      },
+      csvValue: (item) =>
+        [item.url ? "file" : "", item.fireflies_link ? "fireflies" : ""]
+          .filter(Boolean)
+          .join(", "),
+      sortValue: (item) => {
+        if (item.url && item.fireflies_link) return "file,fireflies";
+        if (item.url) return "file";
+        if (item.fireflies_link) return "fireflies";
+        return "";
+      },
     },
   ];
 }

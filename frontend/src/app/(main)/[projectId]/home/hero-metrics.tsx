@@ -44,7 +44,7 @@ export function HeroMetrics({
         href={`/${projectId}/budget`}
         className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-md md:w-1/3 md:p-6 group cursor-pointer"
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
               Budget Remaining
@@ -58,7 +58,7 @@ export function HeroMetrics({
             <p className="text-4xl md:text-5xl font-light tabular-nums tracking-tight text-brand">
               {formatCurrency(remainingBudget)}
             </p>
-            <div className="flex items-baseline gap-3 text-sm text-neutral-600">
+            <div className="flex items-baseline gap-4 text-sm text-neutral-600">
               <span className="font-medium tabular-nums">
                 {budgetUtilization.toFixed(1)}% utilized
               </span>
@@ -73,7 +73,7 @@ export function HeroMetrics({
 
       {/* Forecast Variance */}
       <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
             Forecast Variance
           </p>
@@ -86,7 +86,7 @@ export function HeroMetrics({
               {variance >= 0 ? "+" : ""}
               {formatCurrency(variance)}
             </p>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {variance >= 0 ? (
                 <>
                   <TrendingUp className="h-3.5 w-3.5 text-success" />
@@ -109,7 +109,7 @@ export function HeroMetrics({
 
       {/* Change Orders */}
       <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
-        <div className="space-y-3">
+        <div className="space-y-4">
           <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
             Change Orders
           </p>

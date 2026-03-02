@@ -180,7 +180,7 @@ export function ChangeOrderReviewerResponse({
   if (!currentUserIsReviewer) {
     return (
       <Card className="p-4 border-blue-200 bg-blue-50 dark:bg-blue-950/20">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
           <div className="flex-1">
             <h4 className="font-medium text-blue-900 dark:text-blue-100">
@@ -201,7 +201,7 @@ export function ChangeOrderReviewerResponse({
   if (!canTakeAction) {
     return (
       <Card className="p-4 border-gray-200">
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-4">
           <AlertCircle className="h-5 w-5 text-gray-600 mt-0.5" />
           <div className="flex-1">
             <h4 className="font-medium text-gray-900 dark:text-gray-100">
@@ -291,7 +291,7 @@ export function ChangeOrderReviewerResponse({
             </div>
 
             {/* Confirmation note */}
-            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-900">
+            <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-900">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-green-800 dark:text-green-200">
@@ -367,7 +367,7 @@ export function ChangeOrderReviewerResponse({
             </div>
 
             {/* Warning note */}
-            <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-900">
+            <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-900">
               <div className="flex items-start gap-2">
                 <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-red-800 dark:text-red-200">

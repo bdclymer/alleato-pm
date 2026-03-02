@@ -82,7 +82,7 @@ export function GalleryView({ table, config, rows }: GalleryViewProps) {
             </div>
 
             {/* Content */}
-            <div className="p-3">
+            <div className="p-4">
               <h3 className="font-medium truncate">{title}</h3>
               {subtitle && (
                 <p className="text-sm text-muted-foreground truncate mt-0.5">

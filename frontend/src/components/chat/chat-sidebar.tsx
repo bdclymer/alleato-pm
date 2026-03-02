@@ -50,7 +50,7 @@ export function ChatSidebar({
 
       <ScrollArea className="flex-1">
         {/* Search */}
-        <div className="p-3">
+        <div className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--chat-muted))]" />
             <Input
@@ -62,7 +62,7 @@ export function ChatSidebar({
 
         {/* Channels */}
         <div className="px-2 py-1">
-          <div className="px-3 py-1 text-xs font-semibold text-[hsl(var(--chat-muted))] uppercase tracking-wider">
+          <div className="px-4 py-1 text-xs font-semibold text-[hsl(var(--chat-muted))] uppercase tracking-wider">
             Channels
           </div>
           <div className="space-y-0.5 mt-1">
@@ -71,7 +71,7 @@ export function ChatSidebar({
                 key={channel.id}
                 onClick={() => onChannelSelect(channel.id)}
                 className={cn(
-                  "w-full flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors",
+                  "w-full flex items-center gap-2 px-4 py-1.5 rounded text-sm transition-colors",
                   activeChannel === channel.id
                     ? "bg-[hsl(var(--chat-accent))] text-white font-medium"
                     : "text-[hsl(var(--chat-muted))] hover:bg-[hsl(var(--chat-hover))] hover:text-[hsl(var(--chat-text))]",

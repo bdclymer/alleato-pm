@@ -384,8 +384,8 @@ export function DirectCostForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Basic Information */}
-          <Card className="gap-5 border-border/70 shadow-sm">
-            <CardHeader className="border-b border-border/60 pb-5">
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-4">
               <CardTitle className="text-xl">Basic Information</CardTitle>
               <CardDescription className="text-sm">
                 Enter the cost details and select vendor
@@ -692,8 +692,8 @@ export function DirectCostForm({
           </Card>
 
           {/* Line Items */}
-          <Card className="gap-5 border-border/70 shadow-sm">
-            <CardHeader className="border-b border-border/60 pb-5">
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-4">
               <CardTitle className="text-xl">Line Items</CardTitle>
               <CardDescription className="text-sm">
                 Add line items with budget codes, quantities, and costs
@@ -729,8 +729,8 @@ export function DirectCostForm({
           </Card>
 
           {/* Attachments */}
-          <Card className="gap-5 border-border/70 shadow-sm">
-            <CardHeader className="border-b border-border/60 pb-5">
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="border-b border-border/60 pb-4">
               <CardTitle className="text-xl">Attachments</CardTitle>
               <CardDescription className="text-sm">
                 Upload invoices, receipts, and supporting documents (optional)
@@ -752,8 +752,8 @@ export function DirectCostForm({
           </Card>
 
           {/* Grand Total + Actions */}
-          <div className="sticky bottom-3 z-10 rounded-xl border border-border/70 bg-background/95 px-4 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="sticky bottom-3 z-10 rounded-xl border border-border/70 bg-background/95 px-4 py-4 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/85">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap items-center gap-2">
                 {onCancel && (
                   <Button type="button" variant="outline" onClick={onCancel}>
@@ -774,7 +774,7 @@ export function DirectCostForm({
                     type="button"
                     onClick={handleAutoFill}
                     disabled={isAutoFilling || isLoadingOptions}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30 disabled:opacity-50"
                     title="Development only: Fill form with test data"
                   >
                     <Wand2 className="w-4 h-4" />

@@ -10,8 +10,8 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { FormContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { FormContainer , ProjectPageHeader } from "@/components/layout";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
@@ -322,7 +322,7 @@ export default function EditCommitmentPage(): ReactElement {
   if (isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Loading..."
           breadcrumbs={[
             { label: "Commitments", href: `/${projectId}/commitments` },
@@ -343,7 +343,7 @@ export default function EditCommitmentPage(): ReactElement {
   if (error || !commitmentData) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Error"
           breadcrumbs={[
             { label: "Commitments", href: `/${projectId}/commitments` },
@@ -475,7 +475,7 @@ export default function EditCommitmentPage(): ReactElement {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={title}
         breadcrumbs={[
           { label: "Commitments", href: `/${projectId}/commitments` },

@@ -190,7 +190,7 @@ export function DirectoryFilters({
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base">Filters</CardTitle>
@@ -211,7 +211,7 @@ export function DirectoryFilters({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="rounded-md border p-3 space-y-3">
+        <div className="rounded-md border p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-sm font-medium">Saved Filters</Label>

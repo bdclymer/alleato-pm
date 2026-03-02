@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
 import {
   type CostCodeDetailRow,
   DEFAULT_COST_CODE_VISIBLE_COLUMNS,
@@ -426,14 +426,14 @@ export function DirectCostsClient({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Sheet open={isEditSheetOpen} onOpenChange={(open) => !open && handleCloseEditSheet()}>
-        <SheetContent side="right" className="w-[92vw] sm:max-w-3xl overflow-y-auto p-0">
-          <SheetHeader className="border-b p-4">
-            <SheetTitle>
+      <Slideover open={isEditSheetOpen} onOpenChange={(open) => !open && handleCloseEditSheet()}>
+        <SlideoverContent side="right" className="w-[92vw] sm:max-w-3xl overflow-y-auto p-0">
+          <SlideoverHeader className="border-b p-4">
+            <SlideoverTitle>
               Edit Direct Cost
               {editingCostId ? ` #${editingCostId.slice(0, 8)}` : ""}
-            </SheetTitle>
-          </SheetHeader>
+            </SlideoverTitle>
+          </SlideoverHeader>
           <div className="p-4">
             {isEditLoading || !editingInitialData ? (
               <div className="py-8 text-sm text-muted-foreground">Loading direct cost...</div>
@@ -450,8 +450,8 @@ export function DirectCostsClient({
               />
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </SlideoverContent>
+      </Slideover>
     </>
   );
 }

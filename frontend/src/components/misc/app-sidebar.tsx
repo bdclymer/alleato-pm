@@ -147,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           />
         </Link>
       </SidebarHeader>
-      <SidebarContent className="px-3">
+      <SidebarContent className="px-4">
         <NavDocuments items={coreNavItems} label="Core Tools" />
         <NavDocuments items={projectManagementNavItems} label="Project Management" />
         <NavDocuments items={financialNavItems} label="Financial Management" />

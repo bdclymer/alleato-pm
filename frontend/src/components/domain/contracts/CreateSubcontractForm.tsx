@@ -839,7 +839,7 @@ export function CreateSubcontractForm({
       {/* Schedule of Values Section */}
       <section className="space-y-4" data-testid="sov-section">
         {/* Accounting Method Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3 dark:bg-blue-950 dark:border-blue-800">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4 dark:bg-blue-950 dark:border-blue-800">
           <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="text-sm text-blue-900 dark:text-blue-100">
@@ -901,10 +901,10 @@ export function CreateSubcontractForm({
           <table className="w-full">
             <thead className="bg-muted border-b">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground w-12">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground w-12">
                   #
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground min-w-[300px]">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-[300px]">
                   <div className="flex items-center gap-1">
                     Budget Code
                     <TooltipProvider>
@@ -919,32 +919,32 @@ export function CreateSubcontractForm({
                     </TooltipProvider>
                   </div>
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                   Description
                 </th>
                 {accountingMethod === "unit_quantity" && (
                   <>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       Qty
                     </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                       UOM
                     </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                       Unit Cost
                     </th>
                   </>
                 )}
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Amount
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Billed to Date
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Amount Remaining
                 </th>
-                <th className="px-4 py-3 w-12"></th>
+                <th className="px-4 py-4 w-12"></th>
               </tr>
             </thead>
             <tbody>
@@ -982,14 +982,14 @@ export function CreateSubcontractForm({
                       className="border-b bg-muted/50"
                       data-testid={`sov-group-${index}`}
                     >
-                      <td className="px-4 py-3 text-sm font-semibold">
+                      <td className="px-4 py-4 text-sm font-semibold">
                         {index + 1}
                       </td>
                       <td
                         colSpan={
                           accountingMethod === "unit_quantity" ? 8 : 5
                         }
-                        className="px-4 py-3"
+                        className="px-4 py-4"
                       >
                         <Input
                           className="h-8 font-semibold"
@@ -1003,7 +1003,7 @@ export function CreateSubcontractForm({
                           data-testid="sov-group-name"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Button
                           type="button"
                           variant="ghost"
@@ -1021,8 +1021,8 @@ export function CreateSubcontractForm({
                       className="border-b"
                       data-testid={`sov-line-${index}`}
                     >
-                      <td className="px-4 py-3 text-sm">{index + 1}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4 text-sm">{index + 1}</td>
+                      <td className="px-4 py-4">
                         <Popover
                           open={openBudgetCodePopover === index}
                           onOpenChange={(open) => {
@@ -1091,7 +1091,7 @@ export function CreateSubcontractForm({
                           </PopoverContent>
                         </Popover>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Input
                           value={line.description || ""}
                           onChange={(e) =>
@@ -1106,7 +1106,7 @@ export function CreateSubcontractForm({
                       </td>
                       {accountingMethod === "unit_quantity" && (
                         <>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-4">
                             <Input
                               type="number"
                               value={line.quantity ?? ""}
@@ -1120,7 +1120,7 @@ export function CreateSubcontractForm({
                               data-testid="sov-line-quantity"
                             />
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-4">
                             <Input
                               value={line.unitOfMeasure || ""}
                               onChange={(e) =>
@@ -1132,7 +1132,7 @@ export function CreateSubcontractForm({
                               data-testid="sov-line-unit-of-measure"
                             />
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-4">
                             <Input
                               type="number"
                               value={line.unitCost ?? ""}
@@ -1148,7 +1148,7 @@ export function CreateSubcontractForm({
                           </td>
                         </>
                       )}
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Input
                           type="number"
                           value={line.amount || ""}
@@ -1162,11 +1162,11 @@ export function CreateSubcontractForm({
                           readOnly={accountingMethod === "unit_quantity"}
                         />
                       </td>
-                      <td className="px-4 py-3 text-right text-sm">
+                      <td className="px-4 py-4 text-right text-sm">
                         ${(line.billedToDate || 0).toFixed(2)}
                       </td>
                       <td
-                        className="px-4 py-3 text-right text-sm"
+                        className="px-4 py-4 text-right text-sm"
                         data-testid="sov-line-amount-remaining"
                       >
                         $
@@ -1174,7 +1174,7 @@ export function CreateSubcontractForm({
                           (line.amount || 0) - (line.billedToDate || 0)
                         ).toFixed(2)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Button
                           type="button"
                           variant="ghost"
@@ -1192,7 +1192,7 @@ export function CreateSubcontractForm({
             </tbody>
             <tfoot className="bg-muted border-t">
               <tr>
-                <td colSpan={2} className="px-4 py-3">
+                <td colSpan={2} className="px-4 py-4">
                   <Button
                     type="button"
                     variant="outline"
@@ -1205,28 +1205,28 @@ export function CreateSubcontractForm({
                     Add Line
                   </Button>
                 </td>
-                <td className="px-4 py-3 text-right font-medium">Total:</td>
+                <td className="px-4 py-4 text-right font-medium">Total:</td>
                 {accountingMethod === "unit_quantity" && (
                   <>
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3" />
-                    <td className="px-4 py-3" />
+                    <td className="px-4 py-4" />
+                    <td className="px-4 py-4" />
+                    <td className="px-4 py-4" />
                   </>
                 )}
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-amount"
                 >
                   ${totals.amount.toFixed(2)}
                 </td>
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-billed"
                 >
                   ${totals.billedToDate.toFixed(2)}
                 </td>
                 <td
-                  className="px-4 py-3 text-right font-medium"
+                  className="px-4 py-4 text-right font-medium"
                   data-testid="sov-total-remaining"
                 >
                   ${totals.amountRemaining.toFixed(2)}
@@ -1520,7 +1520,7 @@ export function CreateSubcontractForm({
         <p className="text-sm text-muted-foreground">
           <span className="text-destructive">*</span> Required fields
         </p>
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <Button
             type="button"
             variant="outline"
@@ -1561,7 +1561,7 @@ export function CreateSubcontractForm({
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
-                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                <div className="border rounded-md p-4 text-sm text-muted-foreground">
                   Loading cost codes...
                 </div>
               ) : (
@@ -1573,7 +1573,7 @@ export function CreateSubcontractForm({
                         <button
                           type="button"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -1641,7 +1641,7 @@ export function CreateSubcontractForm({
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-3 bg-muted rounded-md">
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
                 {newBudgetCodeData.costCodeId ? (

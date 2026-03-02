@@ -373,7 +373,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={row.id}
-                    className="group relative bg-card border border-border rounded-lg p-5 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300"
+                    className="group relative bg-card border border-border rounded-lg p-4 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300"
                   >
                     <button
                       type="button"
@@ -392,7 +392,7 @@ export function ProjectsTable({
                       className="block text-left"
                       onClick={() => onProjectClick?.(project)}
                     >
-                      <div className="mb-3 flex items-start justify-between gap-3 pr-6">
+                      <div className="mb-4 flex items-start justify-between gap-4 pr-6">
                         <h3 className="text-base font-semibold text-foreground transition-colors duration-300 line-clamp-2 leading-tight">
                           {project.name}
                         </h3>
@@ -435,7 +435,7 @@ export function ProjectsTable({
         </div>
 
         {/* Pagination Controls for Grid View */}
-        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-background border-t border-border gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-background border-t border-border gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="hidden sm:inline">Showing</span>
             <select
@@ -444,7 +444,7 @@ export function ProjectsTable({
                 table.setPageSize(Number(e.target.value));
               }}
               aria-label="Items per page"
-              className="px-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background"
+              className="px-4 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background"
             >
               {[12, 24, 48, 96].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>
@@ -479,7 +479,7 @@ export function ProjectsTable({
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-            <span className="text-sm text-foreground px-3 py-1">
+            <span className="text-sm text-foreground px-4 py-1">
               {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </span>
@@ -536,7 +536,7 @@ export function ProjectsTable({
                     }
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm text-primary truncate">
                         {project.name}
@@ -581,7 +581,7 @@ export function ProjectsTable({
             })
           ) : (
             <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -655,7 +655,7 @@ export function ProjectsTable({
                   colSpan={columns.length}
                   className="h-32 text-center"
                 >
-                  <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                  <div className="flex flex-col items-center justify-center space-y-4 py-8">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center">
                       <svg className="w-6 h-6 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />

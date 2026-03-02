@@ -21,8 +21,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { TaskTable } from "@/components/scheduling/task-table";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
@@ -120,7 +119,7 @@ function ViewModeTabs({
           onClick={() => onChange(viewMode)}
           aria-label={`Switch to ${label} view`}
           className={cn(
-            "inline-flex items-center gap-2 py-3 px-1 text-sm font-medium transition-all duration-200 border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-sm",
+            "inline-flex items-center gap-2 py-4 px-1 text-sm font-medium transition-all duration-200 border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-sm",
             mode === viewMode
               ? "border-primary text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
@@ -150,7 +149,7 @@ function SummaryCards({ summary }: { summary: { total_tasks: number; completed_t
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
       {stats.map((stat, index) => (
-        <div key={stat.label} className="flex items-center gap-2.5">
+        <div key={stat.label} className="flex items-center gap-2">
           <stat.icon className={cn("h-4 w-4", stat.color)} />
           <p className="text-sm text-muted-foreground">
             {stat.label}
@@ -162,7 +161,7 @@ function SummaryCards({ summary }: { summary: { total_tasks: number; completed_t
         </div>
       ))}
       {summary.overdue_tasks > 0 && (
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-destructive/25 bg-destructive/10 px-2.5 py-1">
+        <div className="inline-flex items-center gap-2 rounded-full border border-destructive/25 bg-destructive/10 px-2.5 py-1">
           <AlertCircle className="h-3.5 w-3.5 text-destructive" />
           <span className="text-xs font-medium text-destructive">
             Overdue {summary.overdue_tasks}
@@ -189,7 +188,7 @@ function BulkActionBar({
   onClear: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg border bg-primary/5 border-primary/20 animate-reveal">
+    <div className="flex items-center gap-4 px-4 py-2.5 rounded-lg border bg-primary/5 border-primary/20 animate-reveal">
       <span className="text-sm font-medium">{selectedCount} selected</span>
       <div className="h-4 w-px bg-border" />
       <DropdownMenu>
@@ -694,7 +693,7 @@ export default function ProjectSchedulePage() {
 
   // Actions for header
   const headerActions = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-4">
       <Button onClick={() => handleAddTask()} size="sm">
         <Plus className="h-4 w-4 mr-2" />
         Add Task
@@ -738,7 +737,7 @@ export default function ProjectSchedulePage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Schedule"
           description="Track project schedule tasks and milestones"
           actions={headerActions}
@@ -747,7 +746,7 @@ export default function ProjectSchedulePage() {
           {/* Skeleton summary strip */}
           <div className="flex flex-wrap items-center gap-4 py-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2.5 animate-pulse">
+              <div key={i} className="flex items-center gap-2 animate-pulse">
                 <div className="h-4 w-4 rounded-full bg-muted" />
                 <div className="h-4 w-20 rounded bg-muted" />
               </div>
@@ -758,7 +757,7 @@ export default function ProjectSchedulePage() {
           <div className="border rounded-lg overflow-hidden">
             <div className="h-10 bg-muted/50 border-b" />
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3 border-b last:border-0 animate-pulse">
+              <div key={i} className="flex items-center gap-4 px-4 py-4 border-b last:border-0 animate-pulse">
                 <div className="h-4 w-4 rounded bg-muted" />
                 <div className="h-4 flex-1 rounded bg-muted" style={{ maxWidth: `${60 + Math.random() * 30}%` }} />
                 <div className="h-4 w-20 rounded bg-muted" />
@@ -779,7 +778,7 @@ export default function ProjectSchedulePage() {
 
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Schedule"
           description="Track project schedule tasks and milestones"
           actions={headerActions}
@@ -790,7 +789,7 @@ export default function ProjectSchedulePage() {
             data-testid="error-state"
             className="flex flex-col items-center justify-center py-16 px-4 animate-reveal"
           >
-            <div className="rounded-full bg-destructive/10 p-3 mb-4">
+            <div className="rounded-full bg-destructive/10 p-4 mb-4">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
             <h3 className="text-lg font-semibold mb-1">
@@ -845,7 +844,7 @@ export default function ProjectSchedulePage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Schedule"
         description="Track project schedule tasks and milestones"
         actions={headerActions}
@@ -871,14 +870,14 @@ export default function ProjectSchedulePage() {
         {/* Empty State */}
         {data && (!data.tasks || data.tasks.length === 0) && (
           <div className="flex flex-col items-center justify-center py-20 px-4 animate-reveal">
-            <div className="rounded-full bg-primary/10 p-4 mb-5">
+            <div className="rounded-full bg-primary/10 p-4 mb-4">
               <Calendar className="h-7 w-7 text-primary" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No tasks scheduled</h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
               Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Button size="sm" onClick={() => handleAddTask()}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Task

@@ -141,7 +141,7 @@ export function ExportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3 max-h-72 overflow-y-auto border rounded-md p-3">
+        <div className="grid grid-cols-2 gap-4 max-h-72 overflow-y-auto border rounded-md p-4">
           {allColumns.map((column) => {
             const checked = selectedColumns.some(
               (selected) => selected.id === column.id,
@@ -149,7 +149,7 @@ export function ExportDialog({
             return (
               <label
                 key={column.id}
-                className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm cursor-pointer"
+                className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm cursor-pointer"
               >
                 <Checkbox
                   checked={checked}

@@ -184,14 +184,14 @@ export function ChangeEventAttachmentsSection({
         >
           <input {...getInputProps()} />
           {isUploading ? (
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <Text variant="muted" size="sm">Uploading files...</Text>
             </div>
           ) : (
             <>
               <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <Text className="mt-3" size="sm" weight="medium">
+              <Text className="mt-4" size="sm" weight="medium">
                 {isDragActive
                   ? "Drop files here"
                   : "Drag & drop files here, or click to browse"}
@@ -225,7 +225,7 @@ export function ChangeEventAttachmentsSection({
                     isDeleting && "opacity-50"
                   )}
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
                     <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <Text className="truncate" size="sm" weight="medium">

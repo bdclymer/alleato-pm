@@ -202,9 +202,9 @@ export function DrawingUploadDialog({
                     {selectedFiles.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg"
+                        className="flex items-center justify-between p-4 border rounded-lg"
                       >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
                           <div className="flex-shrink-0">
                             {uploadProgress[file.name] ? (
                               <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export function DrawingUploadDialog({
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
+            <div className="flex items-center justify-end gap-4 pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"

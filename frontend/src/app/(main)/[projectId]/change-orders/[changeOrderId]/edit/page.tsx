@@ -416,7 +416,7 @@ export default function EditChangeOrderPage() {
                   control={form.control}
                   name="is_private"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
@@ -434,7 +434,7 @@ export default function EditChangeOrderPage() {
                   control={form.control}
                   name="apply_vertical_markup"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
@@ -483,7 +483,7 @@ export default function EditChangeOrderPage() {
             )}
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-4">
               <Button
                 type="button"
                 variant="outline"

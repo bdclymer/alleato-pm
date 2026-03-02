@@ -1,3 +1,4 @@
+import { ProjectPageHeader } from "@/components/layout";
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -119,7 +120,7 @@ export default function DirectCostDetailPage({ params }: DirectCostDetailPagePro
   if (!resolvedParams || isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Direct Cost Details"
           description="Loading direct cost information"
           breadcrumbs={[
@@ -141,7 +142,7 @@ export default function DirectCostDetailPage({ params }: DirectCostDetailPagePro
   if (!directCost) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Direct Cost Details"
           description="Direct cost not found"
           breadcrumbs={[
@@ -162,7 +163,7 @@ export default function DirectCostDetailPage({ params }: DirectCostDetailPagePro
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Direct Cost Details"
         description={`Direct cost #${directCost.id.slice(0, 8)}`}
         breadcrumbs={[

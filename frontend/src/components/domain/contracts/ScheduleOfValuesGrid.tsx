@@ -81,25 +81,25 @@ export function ScheduleOfValuesGrid({
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted">
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                   Description
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                   Cost Code
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Scheduled Value
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Work Completed
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   Materials Stored
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                   % Complete
                 </th>
-                <th className="px-4 py-3 text-center text-sm font-medium text-foreground">
+                <th className="px-4 py-4 text-center text-sm font-medium text-foreground">
                   Actions
                 </th>
               </tr>
@@ -129,19 +129,19 @@ export function ScheduleOfValuesGrid({
             {values.length > 0 && (
               <tfoot className="border-t-2">
                 <tr className="bg-muted font-semibold">
-                  <td colSpan={2} className="px-4 py-3 text-right">
+                  <td colSpan={2} className="px-4 py-4 text-right">
                     Totals:
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-4 text-right">
                     ${totalScheduled.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-4 text-right">
                     ${totalCompleted.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-4 text-right">
                     ${totalMaterials.toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-4 text-right">
                     {overallPercent.toFixed(1)}%
                   </td>
                   <td></td>

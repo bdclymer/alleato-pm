@@ -173,7 +173,7 @@ export default function ExecutiveDashboard() {
           <h2 className="text-lg font-semibold text-foreground mb-4">
             Risk Distribution by Category
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Object.entries(heatMap?.by_category || {})
               .sort(([, a], [, b]) => b - a)
               .map(([category, count]) => (
@@ -224,7 +224,7 @@ export default function ExecutiveDashboard() {
                         Affects {pattern.affected_projects.length} projects ·
                         Occurred {pattern.frequency} times
                       </p>
-                      <div className="mt-3 bg-background/60 rounded p-3">
+                      <div className="mt-4 bg-background/60 rounded p-4">
                         <p className="text-xs font-medium text-purple-900">
                           💡 Recommendation:
                         </p>
@@ -248,7 +248,7 @@ export default function ExecutiveDashboard() {
                       )}
                     </div>
                     <span
-                      className={`px-3 py-1 rounded text-xs font-semibold whitespace-nowrap ${
+                      className={`px-4 py-1 rounded text-xs font-semibold whitespace-nowrap ${
                         pattern.severity === "high"
                           ? "bg-destructive/10 text-destructive"
                           : pattern.severity === "medium"
@@ -275,7 +275,7 @@ export default function ExecutiveDashboard() {
               All projects are healthy! 🎉
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {projectsNeedingAttention.map((project) => (
                 <Link
                   key={project.project_id}
@@ -331,7 +331,7 @@ export default function ExecutiveDashboard() {
         <div className="grid grid-cols-2 gap-6">
           {/* Top Priorities */}
           <div className="bg-destructive/10 rounded-lg border border-destructive/20 p-6">
-            <h3 className="text-lg font-semibold text-destructive mb-3">
+            <h3 className="text-lg font-semibold text-destructive mb-4">
               🔥 Top Priorities
             </h3>
             {summary?.top_priorities && summary.top_priorities.length > 0 ? (
@@ -353,7 +353,7 @@ export default function ExecutiveDashboard() {
 
           {/* Quick Wins */}
           <div className="bg-success/10 rounded-lg border border-success/20 p-6">
-            <h3 className="text-lg font-semibold text-success mb-3">
+            <h3 className="text-lg font-semibold text-success mb-4">
               ✨ Quick Wins Available
             </h3>
             {summary?.quick_wins && summary.quick_wins.length > 0 ? (

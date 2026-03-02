@@ -137,7 +137,7 @@ export const ProjectTableExample = `
     }
   ]}
   mobileCardRenderer={(project) => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
         <div className="font-medium">{project.project_name}</div>
         <div className="text-sm text-muted-foreground">{project.client_name}</div>

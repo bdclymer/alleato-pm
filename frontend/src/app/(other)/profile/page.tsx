@@ -117,7 +117,7 @@ export default function ProfilePage() {
           { label: profile?.fullName ? "Profile" : "Profile setup" },
         ]}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button variant="outline" size="sm">
               Edit profile
             </Button>
@@ -188,10 +188,10 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-3 rounded-xl border bg-muted/40 p-4">
+                <div className="space-y-4 rounded-xl border bg-muted/40 p-4">
                   {contactDetails.map((detail, index) => (
-                    <div key={`${detail.value}-${index}`} className="space-y-3">
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground min-w-0">
+                    <div key={`${detail.value}-${index}`} className="space-y-4">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground min-w-0">
                         <detail.icon className="h-4 w-4 shrink-0" />
                         <span className="break-words min-w-0">
                           {detail.value}
@@ -201,7 +201,7 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4">
+                <div className="flex flex-col gap-4 rounded-xl border bg-muted/40 p-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
                       Profile completeness
@@ -225,7 +225,7 @@ export default function ProfilePage() {
               </div>
             </CardContent>
             {specialties.length > 0 && (
-              <CardFooter className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+              <CardFooter className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 {specialties.map((specialty) => (
                   <Badge key={specialty} variant="outline">
                     {specialty}
@@ -243,7 +243,7 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium break-words flex items-center gap-2">
                     <Shield className="h-4 w-4" />
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                   </Badge>
                 )}
               </div>
-              <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium break-words">
                     Default role
@@ -278,7 +278,7 @@ export default function ProfilePage() {
                   <Badge className="shrink-0">Primary</Badge>
                 )}
               </div>
-              <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium break-words">Work hours</p>
                   <p className="text-sm text-muted-foreground break-words">
@@ -289,7 +289,7 @@ export default function ProfilePage() {
                   <Badge variant="secondary" className="shrink-0">Set</Badge>
                 )}
               </div>
-              <div className="flex items-start justify-between gap-3 rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4">
                 <div className="space-y-1 min-w-0 flex-1">
                   <p className="text-sm font-medium break-words">
                     Preferred communication

@@ -37,7 +37,7 @@ export function MarkdownRenderer({
             ),
             h2: ({ children, ...props }) => (
               <h2
-                className="text-2xl font-semibold text-foreground dark:text-gray-200 mt-6 mb-3"
+                className="text-2xl font-semibold text-foreground dark:text-gray-200 mt-6 mb-4"
                 {...props}
               >
                 {children}
@@ -53,7 +53,7 @@ export function MarkdownRenderer({
             ),
             h4: ({ children, ...props }) => (
               <h4
-                className="text-lg font-semibold text-foreground dark:text-gray-200 mt-3 mb-2"
+                className="text-lg font-semibold text-foreground dark:text-gray-200 mt-4 mb-2"
                 {...props}
               >
                 {children}
@@ -162,7 +162,7 @@ export function MarkdownRenderer({
             ),
             th: ({ children, ...props }) => (
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider"
+                className="px-6 py-4 text-left text-xs font-medium text-muted-foreground dark:text-muted-foreground uppercase tracking-wider"
                 {...props}
               >
                 {children}

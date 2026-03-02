@@ -98,7 +98,7 @@ export function BudgetLineHistoryModal({
   return (
     <BaseModal isOpen={open} onClose={onClose} title="Change History" size="md">
       <ModalBody className="space-y-4 bg-background">
-        <div className="rounded-lg border border-border bg-muted px-4 py-3 shadow-sm">
+        <div className="rounded-lg border border-border bg-muted px-4 py-4 shadow-sm">
           <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
             Line Item
           </div>
@@ -139,7 +139,7 @@ export function BudgetLineHistoryModal({
                       : "border-info/70"
                 } pl-4 pb-4 ${index < history.length - 1 ? "mb-1" : ""} rounded-lg bg-background shadow-[0_10px_30px_-24px_rgba(0,0,0,0.45)]`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
                   <div
                     className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
                       entry.change_type === "create"

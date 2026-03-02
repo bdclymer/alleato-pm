@@ -57,7 +57,7 @@ export function Modal({
         {/* Modal panel */}
         <div
           className={cn(
-            "bg-background dark:bg-gray-900 rounded-3xl text-left overflow-hidden sm:w-[590px] transform transition-all p-5 sm:p-12 relative",
+            "bg-background dark:bg-gray-900 rounded-3xl text-left overflow-hidden sm:w-[590px] transform transition-all p-4 sm:p-12 relative",
             className?.modal,
           )}
         >
@@ -84,7 +84,7 @@ export function Modal({
               </svg>
             </button>
           </div>
-          <div className="mt-3 text-left w-full">
+          <div className="mt-4 text-left w-full">
             <h3 className="text-[30px] mb-2 leading-[38px] font-bold text-foreground dark:text-white/90">
               {title}
             </h3>

@@ -284,7 +284,7 @@ export function BulkAddUsersDialog({
                 {users.map((user, index) => (
                   <div
                     key={user.id}
-                    className="border rounded-lg p-4 space-y-3 bg-muted/30"
+                    className="border rounded-lg p-4 space-y-4 bg-muted/30"
                   >
                     <div className="flex items-center justify-between">
                       <Text size="sm" weight="medium">
@@ -307,7 +307,7 @@ export function BulkAddUsersDialog({
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor={`first_name_${user.id}`}>
                           First Name *
@@ -478,7 +478,7 @@ export function BulkAddUsersDialog({
                 {results.failed_count > 0 && `${results.failed_count} failed.`}
               </Text>
               {results.errors.length > 0 && (
-                <div className="mt-3 space-y-1">
+                <div className="mt-4 space-y-1">
                   <Text size="sm" weight="medium">
                     Errors:
                   </Text>

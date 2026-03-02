@@ -34,7 +34,7 @@ export function CheckboxField({
           aria-invalid={!!error}
         />
       </div>
-      <div className="ml-3">
+      <div className="ml-4">
         <label className="text-sm font-medium text-foreground">{label}</label>
         {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}

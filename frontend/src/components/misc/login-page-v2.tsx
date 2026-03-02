@@ -211,7 +211,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
 
               <form
                 onSubmit={handleSubmit}
-                className="space-y-5"
+                className="space-y-4"
                 data-dev-autofill-disabled="true"
               >
                 {/* Email */}

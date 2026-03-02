@@ -159,7 +159,7 @@ export function ChangeEventRfqForm({
           control={form.control}
           name="includeAttachments"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded border p-3">
+            <FormItem className="flex flex-row items-center justify-between rounded border p-4">
               <div className="space-y-0.5">
                 <FormLabel>Include Attachments</FormLabel>
                 <p className="text-sm text-muted-foreground">

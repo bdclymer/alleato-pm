@@ -27,22 +27,22 @@ export function ResponsiveDistributionGroupsTable({
   onManageMembers,
 }: ResponsiveDistributionGroupsTableProps) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Desktop View - Hidden on mobile */}
       <div className="hidden md:block">
         <div className="rounded-md border">
           <table className="w-full">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left text-sm font-medium">
+                <th className="p-4 text-left text-sm font-medium">
                   Group Name
                 </th>
-                <th className="p-3 text-left text-sm font-medium">
+                <th className="p-4 text-left text-sm font-medium">
                   Description
                 </th>
-                <th className="p-3 text-left text-sm font-medium">Members</th>
-                <th className="p-3 text-left text-sm font-medium">Status</th>
-                <th className="p-3 text-right text-sm font-medium">Actions</th>
+                <th className="p-4 text-left text-sm font-medium">Members</th>
+                <th className="p-4 text-left text-sm font-medium">Status</th>
+                <th className="p-4 text-right text-sm font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -51,18 +51,18 @@ export function ResponsiveDistributionGroupsTable({
                   key={group.id}
                   className="border-b last:border-0 hover:bg-muted/50"
                 >
-                  <td className="p-3">
+                  <td className="p-4">
                     <div className="font-medium">{group.name}</div>
                   </td>
-                  <td className="p-3 text-sm text-muted-foreground">
+                  <td className="p-4 text-sm text-muted-foreground">
                     {group.description || "-"}
                   </td>
-                  <td className="p-3">
+                  <td className="p-4">
                     <Badge variant="secondary">
                       {group.members?.length || 0} members
                     </Badge>
                   </td>
-                  <td className="p-3">
+                  <td className="p-4">
                     <Badge
                       variant={
                         group.status === "active" ? "default" : "secondary"
@@ -71,7 +71,7 @@ export function ResponsiveDistributionGroupsTable({
                       {group.status === "active" ? "Active" : "Inactive"}
                     </Badge>
                   </td>
-                  <td className="p-3 text-right">
+                  <td className="p-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -114,9 +114,9 @@ export function ResponsiveDistributionGroupsTable({
       </div>
 
       {/* Mobile View - Card layout */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-4">
         {groups.map((group) => (
-          <div key={group.id} className="border rounded-lg p-4 space-y-3">
+          <div key={group.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="font-medium">{group.name}</h3>

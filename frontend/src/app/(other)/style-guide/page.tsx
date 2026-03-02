@@ -232,7 +232,7 @@ export default function StyleGuidePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-4">
                 <Calendar className="h-4 w-4 text-brand" />
                 <SectionHeader>Date</SectionHeader>
               </div>
@@ -242,7 +242,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-4">
                 <Clock className="h-4 w-4 text-brand" />
                 <SectionHeader>Duration</SectionHeader>
               </div>
@@ -252,7 +252,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-4">
                 <User className="h-4 w-4 text-brand" />
                 <SectionHeader>Participants</SectionHeader>
               </div>
@@ -260,7 +260,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-center gap-4 mb-4">
                 <FileText className="h-4 w-4 text-brand" />
                 <SectionHeader>Type</SectionHeader>
               </div>
@@ -283,22 +283,22 @@ export default function StyleGuidePage() {
           </div>
 
           <div className="border border-neutral-200 bg-background p-8">
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed">
+            <ul className="space-y-4">
+              <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
                 <span className="text-brand mt-0.5">•</span>
                 <span>
                   Finalize project timeline and key milestones for Q1 delivery
                 </span>
               </li>
-              <li className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed">
+              <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
                 <span className="text-brand mt-0.5">•</span>
                 <span>Review and approve technology stack selection</span>
               </li>
-              <li className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed">
+              <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
                 <span className="text-brand mt-0.5">•</span>
                 <span>Assign team members to specific work packages</span>
               </li>
-              <li className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed">
+              <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
                 <span className="text-brand mt-0.5">•</span>
                 <span>Schedule weekly standup meetings for status updates</span>
               </li>
@@ -319,7 +319,7 @@ export default function StyleGuidePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <CheckCircle className="h-5 w-5 text-success" />
                 <h3 className="text-sm font-semibold text-success">
                   DECISIONS
@@ -331,7 +331,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <FileText className="h-5 w-5 text-info" />
                 <h3 className="text-sm font-semibold text-info">
                   ACTION ITEMS
@@ -343,7 +343,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="h-5 w-5 text-amber-700" />
                 <h3 className="text-sm font-semibold text-amber-700">RISKS</h3>
               </div>
@@ -353,7 +353,7 @@ export default function StyleGuidePage() {
             </div>
 
             <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-5 w-5 text-purple-700" />
                 <h3 className="text-sm font-semibold text-purple-700">
                   OPPORTUNITIES
@@ -399,7 +399,7 @@ export default function StyleGuidePage() {
             <div className="space-y-6">
               <div>
                 <p className="text-xs text-neutral-500 mb-2">
-                  Small gap (gap-2, gap-3)
+                  Small gap (gap-2, gap-4)
                 </p>
                 <div className="flex gap-2">
                   <div className="h-8 w-8 bg-brand"></div>
@@ -431,7 +431,7 @@ export default function StyleGuidePage() {
               </div>
 
               <div className="pt-4 border-t border-neutral-200">
-                <p className="text-xs text-neutral-500 mb-3">Section spacing</p>
+                <p className="text-xs text-neutral-500 mb-4">Section spacing</p>
                 <div className="space-y-2 text-sm text-neutral-700 font-mono">
                   <p>mb-6 - Small section gap</p>
                   <p>mb-8 - Medium section gap</p>
@@ -459,7 +459,7 @@ export default function StyleGuidePage() {
             <div className="space-y-4 font-mono text-sm">
               <div>
                 <p className="text-neutral-900 mb-2">Page Container:</p>
-                <code className="block bg-neutral-50 p-3 text-neutral-700 rounded">
+                <code className="block bg-neutral-50 p-4 text-neutral-700 rounded">
                   {`<div className="min-h-screen bg-neutral-50">`}
                   <br />
                   {`  <div className="max-w-[1800px] mx-auto px-6 md:px-10 lg:px-12 py-12">`}
@@ -476,7 +476,7 @@ export default function StyleGuidePage() {
                 <p className="text-neutral-900 mb-2">
                   Grid Layout (4 columns):
                 </p>
-                <code className="block bg-neutral-50 p-3 text-neutral-700 rounded">
+                <code className="block bg-neutral-50 p-4 text-neutral-700 rounded">
                   {`<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">`}
                   <br />
                   {`  {/* Cards */}`}
@@ -489,7 +489,7 @@ export default function StyleGuidePage() {
                 <p className="text-neutral-900 mb-2">
                   Grid Layout (2 columns):
                 </p>
-                <code className="block bg-neutral-50 p-3 text-neutral-700 rounded">
+                <code className="block bg-neutral-50 p-4 text-neutral-700 rounded">
                   {`<div className="grid grid-cols-1 md:grid-cols-2 gap-6">`}
                   <br />
                   {`  {/* Cards */}`}

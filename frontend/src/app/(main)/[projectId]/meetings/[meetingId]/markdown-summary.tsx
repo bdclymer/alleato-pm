@@ -31,7 +31,7 @@ export function MarkdownSummary({ content }: MarkdownSummaryProps) {
             {children}
           </p>
         ),
-        ul: ({ children }) => <ul className="space-y-3">{children}</ul>,
+        ul: ({ children }) => <ul className="space-y-4">{children}</ul>,
         li: ({ children }) => {
           // Skip rendering if children is empty/whitespace only
           const childArray = Array.isArray(children) ? children : [children];
@@ -42,7 +42,7 @@ export function MarkdownSummary({ content }: MarkdownSummaryProps) {
           if (!hasContent) return null;
 
           return (
-            <li className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed">
+            <li className="flex items-start gap-4 text-sm text-neutral-700 leading-relaxed">
               <span className="text-brand mt-0.5 shrink-0">•</span>
               <span>{children}</span>
             </li>

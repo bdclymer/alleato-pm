@@ -23,7 +23,7 @@ export const ChatMessageItem = ({
       >
         {showHeader && (
           <div
-            className={cn("flex items-center gap-2 text-xs px-3", {
+            className={cn("flex items-center gap-2 text-xs px-4", {
               "justify-end flex-row-reverse": isOwnMessage,
             })}
           >
@@ -39,7 +39,7 @@ export const ChatMessageItem = ({
         )}
         <div
           className={cn(
-            "py-2 px-3 rounded-xl text-sm w-fit",
+            "py-2 px-4 rounded-xl text-sm w-fit",
             isOwnMessage
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-foreground",

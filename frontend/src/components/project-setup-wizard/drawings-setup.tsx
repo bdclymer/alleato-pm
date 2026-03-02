@@ -245,7 +245,7 @@ export function DrawingsSetup({
             {uploadingFiles.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                className="flex items-center gap-4 p-4 rounded-lg border bg-card"
               >
                 <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">

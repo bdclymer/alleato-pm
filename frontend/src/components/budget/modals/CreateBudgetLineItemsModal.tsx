@@ -132,7 +132,7 @@ export function CreateBudgetLineItemsModal({
       size="xl"
     >
       <ModalBody className="min-h-[420px] space-y-6 bg-background">
-        <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-3 shadow-sm flex items-center justify-between gap-3 flex-wrap">
+        <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
               Batch Creation
@@ -141,7 +141,7 @@ export function CreateBudgetLineItemsModal({
               Add one or many lines with clean, mobile-first cards.
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full">
+          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-100 px-4 py-1 rounded-full">
             {items.length || 0} line{items.length === 1 ? "" : "s"}
           </div>
         </div>
@@ -179,16 +179,16 @@ export function CreateBudgetLineItemsModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800 w-[45%]">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800 w-[45%]">
                       Budget Code <span className="text-red-500">*</span>
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800 w-[25%]">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800 w-[25%]">
                       Qty <span className="text-red-500">*</span>
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800 w-[25%]">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800 w-[25%]">
                       UOM
                     </th>
-                    <th className="px-4 py-3 w-[5%]"></th>
+                    <th className="px-4 py-4 w-[5%]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -197,7 +197,7 @@ export function CreateBudgetLineItemsModal({
                       key={item.id}
                       className="hover:bg-orange-50/40 transition-colors"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Select
                           value={item.costCode}
                           onValueChange={(value) =>
@@ -223,7 +223,7 @@ export function CreateBudgetLineItemsModal({
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Input
                           type="number"
                           step="0.01"
@@ -238,7 +238,7 @@ export function CreateBudgetLineItemsModal({
                           )}
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-4">
                         <Select
                           value={item.uom}
                           onValueChange={(value) =>
@@ -257,7 +257,7 @@ export function CreateBudgetLineItemsModal({
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-4 text-center">
                         <button
                           onClick={() => removeLine(item.id)}
                           className="text-red-500 hover:text-red-700"
@@ -277,7 +277,7 @@ export function CreateBudgetLineItemsModal({
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="border border-slate-200 rounded-xl p-4 space-y-3 shadow-sm bg-background/90"
+                  className="border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm bg-background/90"
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-sm font-semibold text-slate-800">
@@ -310,7 +310,7 @@ export function CreateBudgetLineItemsModal({
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs">Qty *</Label>
                       <Input

@@ -38,6 +38,7 @@ interface UseHeaderNavReturn {
 }
 
 const meetingTitleCache = new Map<string, string>();
+const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
 
@@ -51,6 +52,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [meetingTitle, setMeetingTitle] = useState<string | null>(null);
+  const [globalMeetingTitle, setGlobalMeetingTitle] = useState<string | null>(null);
   const [primeContractTitle, setPrimeContractTitle] = useState<string | null>(
     null,
   );
@@ -130,6 +132,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
       segments[1] === "meetings";
+    const isGlobalMeetingDetailRoute =
+      segments.length === 2 &&
+      segments[0] === "meetings";
     const isPrimeContractDetailRoute =
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
@@ -157,6 +162,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
       if (index === 0 && /^\d+$/.test(segment)) {
         label = currentProject?.name || `Project ${segment}`;
         href = `/${segment}/home`;
+      } else if (isGlobalMeetingDetailRoute && index === 1) {
+        label = globalMeetingTitle || "Meeting";
       } else if (isMeetingDetailRoute && index === 2) {
         label = meetingTitle || "Meeting";
       } else if (isPrimeContractDetailRoute && index === 2) {
@@ -207,7 +214,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, currentProject, meetingTitle, primeContractTitle]);
+  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -262,6 +269,44 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
+  }, [pathname]);
+
+  // Fetch title for global /meetings/[meetingId] route
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isGlobalMeetingRoute =
+      segments.length === 2 && segments[0] === "meetings";
+
+    if (!isGlobalMeetingRoute) {
+      setGlobalMeetingTitle(null);
+      return;
+    }
+
+    const meetingId = segments[1];
+    const cached = globalMeetingTitleCache.get(meetingId);
+    if (cached) {
+      setGlobalMeetingTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const response = await fetch(`/api/meetings/${meetingId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const title = typeof data?.title === "string" && data.title.length > 0 ? data.title : null;
+        if (isActive && title) {
+          globalMeetingTitleCache.set(meetingId, title);
+          setGlobalMeetingTitle(title);
+        }
+      } catch {
+        // Best-effort; raw ID fallback is fine
+      }
+    };
+
+    fetchTitle();
+    return () => { isActive = false; };
   }, [pathname]);
 
   useEffect(() => {

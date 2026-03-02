@@ -141,7 +141,7 @@ export function ExportDialog({
 
         <div className="space-y-6 py-4">
           {/* Format Selection */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label htmlFor="export-format">Export Format</Label>
             <RadioGroup
               id="export-format"
@@ -170,7 +170,7 @@ export function ExportDialog({
           </div>
 
           {/* Template Selection */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label htmlFor="export-template">Template</Label>
             <RadioGroup
               id="export-template"
@@ -222,7 +222,7 @@ export function ExportDialog({
           </div>
 
           {/* Export Scope Info */}
-          <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+          <div className="rounded-md bg-muted/50 p-4 text-sm text-muted-foreground">
             <strong>Export scope:</strong> {exportScope}
           </div>
         </div>

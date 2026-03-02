@@ -140,17 +140,17 @@ function CustomFieldsForm({ projectId }: { projectId: number }) {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg">Existing Fields</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {fields.length === 0 && (
             <p className="text-sm text-muted-foreground">No custom fields added.</p>
           )}
           {fields.map((field) => (
             <div
               key={field.id}
-              className="grid gap-2 rounded-lg border p-3 md:grid-cols-4 md:items-center"
+              className="grid gap-2 rounded-lg border p-4 md:grid-cols-4 md:items-center"
             >
               <div className="md:col-span-2">
                 <Label className="text-xs text-muted-foreground">Label</Label>
@@ -205,10 +205,10 @@ function CustomFieldsForm({ projectId }: { projectId: number }) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg">Add Field</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-4 md:items-center">
+        <CardContent className="grid gap-4 md:grid-cols-4 md:items-center">
           <div className="md:col-span-2 space-y-2">
             <Label htmlFor="field-label">Field Label</Label>
             <Input
@@ -258,7 +258,7 @@ function CustomFieldsForm({ projectId }: { projectId: number }) {
             />
             <span className="text-sm">Required</span>
           </div>
-          <div className="md:col-span-4 flex items-center gap-3">
+          <div className="md:col-span-4 flex items-center gap-4">
             <Button onClick={handleAddField} disabled={loading}>
               Add Field
             </Button>
@@ -269,7 +269,7 @@ function CustomFieldsForm({ projectId }: { projectId: number }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Button onClick={handleSave} disabled={saving || loading}>
           Save Fields
         </Button>

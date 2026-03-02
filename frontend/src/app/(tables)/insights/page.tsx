@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type AIInsight = Database["public"]["Tables"]["ai_insights"]["Row"];
 
+const PAGE_TITLE = "AI Insights";
+const PAGE_DESCRIPTION = "AI-generated insights from meetings and documents";
+
 const config: GenericTableConfig = {
   title: "AI Insights",
+  hideHeader: true,
   description: "AI-generated insights from meetings and documents",
   searchFields: ["title", "description", "business_impact", "assignee"],
   exportFilename: "ai-insights-export.csv",
@@ -211,11 +216,17 @@ export default async function AIInsightsPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading AI insights. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading AI insights. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={aiInsights || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(aiInsights || []) as AIInsight[]} config={config} />
+    </TablePageWrapper>
+  );
 }

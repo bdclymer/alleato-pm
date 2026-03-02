@@ -32,7 +32,7 @@ export function KnowledgeDocumentsPanel({
 
   return (
     <div className="flex h-full flex-col rounded-3xl border border-slate-200/60 bg-background/80 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/60 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-[0_45px_95px_-50px_rgba(15,23,42,0.85)] dark:ring-slate-800/60">
-      <div className="border-b border-slate-200/60 px-6 py-5 dark:border-slate-800/60">
+      <div className="border-b border-slate-200/60 px-6 py-4 dark:border-slate-800/60">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
@@ -43,7 +43,7 @@ export function KnowledgeDocumentsPanel({
               latest assistant response are highlighted.
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-4 py-1 text-xs font-medium uppercase tracking-wide text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
             {loadingDocuments ? "Loading…" : `${documents.length} files`}
           </span>
         </div>
@@ -142,7 +142,7 @@ function DocumentGrid({
   return (
     <div className="h-full overflow-y-auto px-6 py-6">
       <div
-        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         style={{ gridAutoRows: "1fr" }}
       >
         {documents.map((document) => {
@@ -195,7 +195,7 @@ function DocumentGrid({
               </div>
               <span
                 className={clsx(
-                  "mt-6 inline-flex w-fit items-center self-start rounded-full px-3 py-1 text-xs font-medium",
+                  "mt-6 inline-flex w-fit items-center self-start rounded-full px-4 py-1 text-xs font-medium",
                   active
                     ? "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200"
                     : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300",
@@ -213,7 +213,7 @@ function DocumentGrid({
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 bg-red-50/70 px-6 text-center text-sm text-red-600 dark:bg-red-950/40 dark:text-red-300">
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-red-50/70 px-6 text-center text-sm text-red-600 dark:bg-red-950/40 dark:text-red-300">
       <span className="font-semibold">Unable to load documents</span>
       <span>{message}</span>
     </div>

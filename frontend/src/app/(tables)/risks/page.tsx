@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type Risk = Database["public"]["Tables"]["risks"]["Row"];
 
+const PAGE_TITLE = "Risks";
+const PAGE_DESCRIPTION = "Track and manage project risks";
+
 const config: GenericTableConfig = {
   title: "Risks",
+  hideHeader: true,
   description: "Track and manage project risks",
   searchFields: ["description", "category", "owner_name", "mitigation_plan"],
   exportFilename: "risks-export.csv",
@@ -149,11 +154,17 @@ export default async function RisksPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading risks. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading risks. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={risks || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(risks || []) as Risk[]} config={config} />
+    </TablePageWrapper>
+  );
 }

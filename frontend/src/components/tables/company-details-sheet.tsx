@@ -147,33 +147,33 @@ export function CompanyDetailsSheet({
 
             {/* Edit Form */}
             <form className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="name">Company Name</Label>
                 <Input id="name" defaultValue={company.name} />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="website">Website</Label>
                 <Input id="website" type="url" defaultValue={company.website ?? ""} />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="title">Title</Label>
                 <Input id="title" defaultValue={company.title || ""} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Label htmlFor="city">City</Label>
                   <Input id="city" defaultValue={company.city || ""} />
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Label htmlFor="state">State</Label>
                   <Input id="state" defaultValue={company.state || ""} />
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" defaultValue={company.address || ""} />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
                   id="notes"

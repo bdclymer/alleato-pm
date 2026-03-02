@@ -97,7 +97,7 @@ export function TableView({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="-ml-3 h-8 gap-1"
+                    className="-ml-4 h-8 gap-1"
                     onClick={() => handleSort(col.column_name)}
                     disabled={isPending}
                   >

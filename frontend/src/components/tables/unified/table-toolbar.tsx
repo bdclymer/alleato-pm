@@ -431,9 +431,9 @@ export function TableToolbar({
     (enableBulkDelete && Boolean(onBulkDelete));
 
   return (
-    <div className={cn("flex items-center justify-between gap-3 py-2", className)}>
+    <div className={cn("flex items-center justify-between gap-4 py-2", className)}>
       {/* Left side: Search + Views */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {enableSearch && (
           <ExpandableSearch
             value={searchValue}

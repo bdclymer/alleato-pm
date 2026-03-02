@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Folder, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { Button } from "@/components/ui/button";
 import { useDrawingAreas, useCreateDrawingArea, useUpdateDrawingArea, useDeleteDrawingArea } from "@/hooks/use-drawing-areas";
 import type { DrawingAreaWithCount } from "@/types/drawings.types";
@@ -69,7 +69,7 @@ export default function DrawingAreasPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Drawing Areas"
           description="Organize your drawings into logical areas and subareas"
         />
@@ -84,7 +84,7 @@ export default function DrawingAreasPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Drawing Areas"
         description="Organize your drawings into logical areas and subareas"
         actions={
@@ -182,7 +182,7 @@ export default function DrawingAreasPage() {
               if (!selectedArea) return null;
 
               return (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">Name</div>
                     <div className="text-foreground">{selectedArea.name}</div>
@@ -207,7 +207,7 @@ export default function DrawingAreasPage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t">
+                  <div className="pt-4 border-t">
                     <Button
                       variant="outline"
                       size="sm"

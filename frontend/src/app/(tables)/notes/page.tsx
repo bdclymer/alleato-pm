@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type Note = Database["public"]["Tables"]["notes"]["Row"];
 
+const PAGE_TITLE = "Notes";
+const PAGE_DESCRIPTION = "Project notes and annotations";
+
 const config: GenericTableConfig = {
   title: "Notes",
+  hideHeader: true,
   description: "Project notes and annotations",
   searchFields: ["body", "created_by"],
   exportFilename: "notes-export.csv",
@@ -82,11 +87,17 @@ export default async function NotesPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading notes. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading notes. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={notes || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(notes || []) as Note[]} config={config} />
+    </TablePageWrapper>
+  );
 }

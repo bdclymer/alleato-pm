@@ -97,7 +97,7 @@ export function AutoSaveIndicator({
   const badgeContent = (
     <Badge
       variant={config.variant}
-      className={cn('flex items-center gap-1.5 transition-opacity', className)}
+      className={cn('flex items-center gap-2 transition-opacity', className)}
       role="status"
       aria-label={config.ariaLabel}
     >

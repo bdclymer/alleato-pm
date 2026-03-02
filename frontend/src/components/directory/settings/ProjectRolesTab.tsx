@@ -231,7 +231,7 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
               </div>
               <div className="py-1">
                 {filteredOptions.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                  <div className="px-4 py-2 text-sm text-muted-foreground">
                     No people found
                   </div>
                 ) : (
@@ -241,7 +241,7 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
                       <button
                         key={person.id}
                         className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center justify-between",
+                          "w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center justify-between",
                           isSelected && "bg-orange-50",
                         )}
                         onClick={() => handleSelect(person.id)}

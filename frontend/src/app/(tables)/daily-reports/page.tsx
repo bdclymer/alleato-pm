@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type DailyRecap = Database["public"]["Tables"]["daily_recaps"]["Row"];
 
+const PAGE_TITLE = "Daily Recaps";
+const PAGE_DESCRIPTION = "AI-generated daily summaries of meetings and decisions";
+
 const config: GenericTableConfig = {
   title: "Daily Recaps",
+  hideHeader: true,
   description: "AI-generated daily summaries of meetings and decisions",
   searchFields: ["recap_text", "model_used"],
   exportFilename: "daily-recaps-export.csv",
@@ -121,11 +126,17 @@ export default async function DailyRecapsPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading daily recaps. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading daily recaps. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={dailyRecaps || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(dailyRecaps || []) as DailyRecap[]} config={config} />
+    </TablePageWrapper>
+  );
 }

@@ -471,7 +471,7 @@ export function CreatePurchaseOrderForm({
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-4">
             <Upload className="h-8 w-8 text-muted-foreground" />
             <div className="flex items-center gap-2">
               <Button
@@ -493,7 +493,7 @@ export function CreatePurchaseOrderForm({
             {attachments.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                className="flex items-center justify-between p-4 bg-muted rounded-lg"
               >
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4 text-foreground" />
@@ -627,41 +627,41 @@ export function CreatePurchaseOrderForm({
               <table className="w-full border">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground w-12">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground w-12">
                       #
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
                       Change Event
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
                       Budget Code
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
                       Description
                     </th>
                     {accountingMethod === "unit-quantity" && (
                       <>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
+                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
                           Qty
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-foreground">
+                        <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
                           UOM
                         </th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
+                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
                           Unit Cost
                         </th>
                       </>
                     )}
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
                       Amount
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
                       Billed to Date
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-foreground">
+                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
                       Amount Remaining
                     </th>
-                    <th className="px-3 py-2 w-12" aria-label="Actions"></th>
+                    <th className="px-4 py-2 w-12" aria-label="Actions"></th>
                   </tr>
                 </thead>
                 <tbody className="bg-background divide-y">
@@ -672,8 +672,8 @@ export function CreatePurchaseOrderForm({
                           ._id || `line-${index}`
                       }
                     >
-                      <td className="px-3 py-2 text-sm">{index + 1}</td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-2 text-sm">{index + 1}</td>
+                      <td className="px-4 py-2">
                         <Input
                           className="text-sm"
                           placeholder="Change Event"
@@ -687,7 +687,7 @@ export function CreatePurchaseOrderForm({
                           }
                         />
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-2">
                         <Input
                           className="text-sm"
                           placeholder="Budget Code"
@@ -697,7 +697,7 @@ export function CreatePurchaseOrderForm({
                           }
                         />
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-2">
                         <Input
                           className="text-sm"
                           placeholder="Description"
@@ -709,7 +709,7 @@ export function CreatePurchaseOrderForm({
                       </td>
                       {accountingMethod === "unit-quantity" && (
                         <>
-                          <td className="px-3 py-2">
+                          <td className="px-4 py-2">
                             <Input
                               className="text-sm text-right"
                               type="number"
@@ -725,7 +725,7 @@ export function CreatePurchaseOrderForm({
                               }
                             />
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-4 py-2">
                             <Select
                               value={line.uom || ""}
                               onValueChange={(value) =>
@@ -744,7 +744,7 @@ export function CreatePurchaseOrderForm({
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-4 py-2">
                             <Input
                               className="text-sm text-right"
                               type="number"
@@ -762,19 +762,19 @@ export function CreatePurchaseOrderForm({
                           </td>
                         </>
                       )}
-                      <td className="px-3 py-2 text-sm text-right">
+                      <td className="px-4 py-2 text-sm text-right">
                         ${(line.amount || 0).toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-sm text-right">
+                      <td className="px-4 py-2 text-sm text-right">
                         ${(line.billedToDate || 0).toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-sm text-right">
+                      <td className="px-4 py-2 text-sm text-right">
                         $
                         {(
                           (line.amount || 0) - (line.billedToDate || 0)
                         ).toFixed(2)}
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-4 py-2">
                         <Button
                           type="button"
                           variant="ghost"
@@ -791,17 +791,17 @@ export function CreatePurchaseOrderForm({
                   <tr>
                     <td
                       colSpan={accountingMethod === "unit-quantity" ? 7 : 4}
-                      className="px-3 py-2 text-sm"
+                      className="px-4 py-2 text-sm"
                     >
                       Total:
                     </td>
-                    <td className="px-3 py-2 text-sm text-right">
+                    <td className="px-4 py-2 text-sm text-right">
                       ${totals.amount.toFixed(2)}
                     </td>
-                    <td className="px-3 py-2 text-sm text-right">
+                    <td className="px-4 py-2 text-sm text-right">
                       ${totals.billedToDate.toFixed(2)}
                     </td>
-                    <td className="px-3 py-2 text-sm text-right">
+                    <td className="px-4 py-2 text-sm text-right">
                       ${totals.amountRemaining.toFixed(2)}
                     </td>
                     <td></td>
@@ -954,7 +954,7 @@ export function CreatePurchaseOrderForm({
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-6 border-t">
         <p className="text-sm text-foreground">*Required fields</p>
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <Button
             type="button"
             variant="outline"

@@ -33,7 +33,7 @@ export function ProjectSetupStepper({
                 <button
                   onClick={() => onStepClick?.(step)}
                   className={cn(
-                    "flex w-full items-center gap-3 py-2 text-left transition-colors rounded-lg px-2 -mx-2",
+                    "flex w-full items-center gap-4 py-2 text-left transition-colors rounded-lg px-2 -mx-2",
                     onStepClick && "hover:bg-muted/50",
                   )}
                   disabled={!onStepClick}

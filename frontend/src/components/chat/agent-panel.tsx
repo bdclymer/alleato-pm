@@ -36,7 +36,7 @@ export function AgentPanel({
       data-testid="agent-panel"
       className="w-3/5 h-full flex flex-col border-r border-border bg-background rounded-xl shadow-sm"
     >
-      <div className="bg-orange-600 text-white h-12 px-4 flex items-center gap-3 shadow-sm rounded-t-xl">
+      <div className="bg-orange-600 text-white h-12 px-4 flex items-center gap-4 shadow-sm rounded-t-xl">
         <Bot className="h-5 w-5" />
         <h1 className="font-semibold text-sm sm:text-base lg:text-lg">
           Agent View

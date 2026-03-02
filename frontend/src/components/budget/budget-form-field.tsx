@@ -71,7 +71,7 @@ function BudgetFormField({
         {error && (
           <div
             id={`${fieldId}-error`}
-            className="flex items-center gap-1.5 text-xs text-destructive"
+            className="flex items-center gap-2 text-xs text-destructive"
             role="alert"
           >
             <AlertCircle className="h-3 w-3 shrink-0" />
@@ -83,7 +83,7 @@ function BudgetFormField({
         {success && !error && (
           <div
             id={`${fieldId}-success`}
-            className="flex items-center gap-1.5 text-xs text-success"
+            className="flex items-center gap-2 text-xs text-success"
           >
             <CheckCircle2 className="h-3 w-3 shrink-0" />
             <span>{success}</span>
@@ -94,7 +94,7 @@ function BudgetFormField({
         {hint && !error && !success && (
           <div
             id={`${fieldId}-hint`}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+            className="flex items-center gap-2 text-xs text-muted-foreground"
           >
             <Info className="h-3 w-3 shrink-0" />
             <span>{hint}</span>

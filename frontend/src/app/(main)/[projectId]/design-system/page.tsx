@@ -1,8 +1,9 @@
+import { ProjectPageHeader } from "@/components/layout";
 import type { ReactElement } from "react";
 import path from "path";
 import { readdir } from "fs/promises";
 
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -47,7 +48,7 @@ export default async function DesignSystemPage(): Promise<ReactElement> {
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <ProjectPageHeader
         title="Design System"
         description="Single source of truth for UI standards, tokens, and components."
       />
@@ -92,7 +93,7 @@ export default async function DesignSystemPage(): Promise<ReactElement> {
                 {uiComponents.map((component) => (
                   <div
                     key={component.file}
-                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                    className="flex items-center justify-between rounded-md border border-border px-4 py-2"
                   >
                     <span className="font-medium text-foreground">{component.name}</span>
                     <span className="text-xs text-muted-foreground">{component.file}</span>

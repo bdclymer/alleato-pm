@@ -396,7 +396,7 @@ export function PersonEditDialog({
             <p className="text-xs text-muted-foreground">
               PNG, JPG, or WEBP up to 2MB.
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {(avatarPreview || existingAvatarUrl) && (
                 <img
                   src={avatarPreview || existingAvatarUrl || ""}

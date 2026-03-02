@@ -332,7 +332,7 @@ export function BudgetViewsModal({
                   columns.map((col, index) => (
                     <div
                       key={col.column_key}
-                      className="flex items-center gap-2 p-3 hover:bg-muted/50"
+                      className="flex items-center gap-2 p-4 hover:bg-muted/50"
                     >
                       <Button
                         variant="ghost"

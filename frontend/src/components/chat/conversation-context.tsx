@@ -21,7 +21,7 @@ export function ConversationContext({ context }: ConversationContextProps) {
       icon={<BookText className="h-4 w-4 text-blue-600" />}
     >
       <Card className="bg-gradient-to-r from-white to-gray-50 border-border shadow-sm">
-        <CardContent className="p-3">
+        <CardContent className="p-4">
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(context).map(([key, value]) => (
               <div

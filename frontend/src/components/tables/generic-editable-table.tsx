@@ -299,7 +299,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
             onChange={(e) =>
               setEditData((prev) => ({ ...prev, [column.key]: e.target.value }))
             }
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-full rounded-md border border-input bg-background px-4 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             {column.selectOptions?.map((option) => (
               <option key={option.value} value={option.value}>
@@ -437,7 +437,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
                   {enableRowSelection && (
                     <Checkbox
                       checked={selectedIds.has(row.id)}
@@ -678,15 +678,15 @@ export function GenericEditableTable<T extends { id: string | number }>({
             onValueChange={(v) => setViewMode(v as ViewMode)}
           >
             <TabsList>
-              <TabsTrigger value="table" className="gap-1.5">
+              <TabsTrigger value="table" className="gap-2">
                 <Table2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Table</span>
               </TabsTrigger>
-              <TabsTrigger value="card" className="gap-1.5">
+              <TabsTrigger value="card" className="gap-2">
                 <LayoutGrid className="h-4 w-4" />
                 <span className="hidden sm:inline">Card</span>
               </TabsTrigger>
-              <TabsTrigger value="list" className="gap-1.5">
+              <TabsTrigger value="list" className="gap-2">
                 <List className="h-4 w-4" />
                 <span className="hidden sm:inline">List</span>
               </TabsTrigger>

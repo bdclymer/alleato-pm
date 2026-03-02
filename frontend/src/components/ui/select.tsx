@@ -47,8 +47,8 @@ function SelectTrigger({
           : "border-input dark:bg-input/30 border bg-transparent shadow-xs focus-visible:border-neutral-400 focus-visible:outline-none",
         // Size-specific styles
         size === "sm"
-          ? "h-8 gap-1.5 px-3"
-          : "h-9 gap-2 px-3 py-2",
+          ? "h-8 gap-2 px-4"
+          : "h-9 gap-2 px-4 py-2",
         "*:data-[slot=select-value]:truncate *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}

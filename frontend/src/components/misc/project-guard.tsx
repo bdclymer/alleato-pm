@@ -66,7 +66,7 @@ export function ProjectGuard({
             You can select a project from the project dropdown in the header or
             return to the homepage to choose a project.
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <Button
               variant="outline"
               className="flex-1"

@@ -41,10 +41,10 @@ export function EditableSummary({ summary, onSave }: EditableSummaryProps) {
     <div>
       {isEditing ? (
         <div>
-          <div className="flex justify-end gap-2 mb-3">
+          <div className="flex justify-end gap-2 mb-4">
             <button
               type="button"
-              className="px-3 py-1.5 text-xs font-medium bg-brand text-white hover:bg-brand-dark transition-colors duration-200 disabled:opacity-50"
+              className="px-4 py-1.5 text-xs font-medium bg-brand text-white hover:bg-brand-dark transition-colors duration-200 disabled:opacity-50"
               onClick={handleSave}
               disabled={isSaving}
             >
@@ -52,7 +52,7 @@ export function EditableSummary({ summary, onSave }: EditableSummaryProps) {
             </button>
             <button
               type="button"
-              className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 disabled:opacity-50"
+              className="px-4 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors duration-200 disabled:opacity-50"
               onClick={handleCancel}
               disabled={isSaving}
             >
@@ -70,7 +70,7 @@ export function EditableSummary({ summary, onSave }: EditableSummaryProps) {
         <div className="relative group">
           <button
             type="button"
-            className="absolute top-0 right-0 inline-flex items-center gap-1.5 text-xs font-medium text-neutral-400 hover:text-brand transition-colors duration-200 opacity-0 group-hover:opacity-100"
+            className="absolute top-0 right-0 inline-flex items-center gap-2 text-xs font-medium text-neutral-400 hover:text-brand transition-colors duration-200 opacity-0 group-hover:opacity-100"
             onClick={handleEdit}
           >
             <Pencil className="h-3.5 w-3.5" />

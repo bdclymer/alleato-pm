@@ -177,7 +177,7 @@ export function renderRfiCard(item: RFI, onClick: (item: RFI) => void): ReactEle
       className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
-      <div className="mb-2 flex items-start justify-between gap-3">
+      <div className="mb-2 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">RFI #{item.number}</p>
           <h3 className="font-medium">{item.subject || "Untitled RFI"}</h3>
@@ -193,7 +193,7 @@ export function renderRfiCard(item: RFI, onClick: (item: RFI) => void): ReactEle
 export function renderRfiList(item: RFI, onClick: (item: RFI) => void): ReactElement {
   return (
     <div
-      className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-muted/50"
+      className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div>

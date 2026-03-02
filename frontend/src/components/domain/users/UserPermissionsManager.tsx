@@ -185,11 +185,11 @@ export function UserPermissionsManager({
             <div className="border rounded-lg overflow-hidden">
               {/* Header Row */}
               <div className="grid grid-cols-5 bg-muted border-b">
-                <div className="p-3 font-semibold">Tool</div>
+                <div className="p-4 font-semibold">Tool</div>
                 {PERMISSION_TYPES.map((perm) => (
                   <div
                     key={perm.type}
-                    className="p-3 font-semibold text-center"
+                    className="p-4 font-semibold text-center"
                   >
                     {perm.label}
                   </div>
@@ -204,7 +204,7 @@ export function UserPermissionsManager({
                     index % 2 === 0 ? "bg-background" : "bg-muted/30"
                   }`}
                 >
-                  <div className="p-3 font-medium">{tool.label}</div>
+                  <div className="p-4 font-medium">{tool.label}</div>
                   {PERMISSION_TYPES.map((perm) => {
                     const hasIt = hasPermission(tool.name, perm.type);
                     const fromTemplate = isFromTemplate(tool.name, perm.type);
@@ -212,7 +212,7 @@ export function UserPermissionsManager({
                     return (
                       <div
                         key={perm.type}
-                        className="p-3 flex items-center justify-center"
+                        className="p-4 flex items-center justify-center"
                       >
                         <div className="flex flex-col items-center gap-1">
                           <Checkbox
@@ -240,7 +240,7 @@ export function UserPermissionsManager({
             </div>
 
             {/* Phase 2 Note */}
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
               <Text size="sm" tone="muted">
                 <Text as="span" weight="medium">
                   Note:
@@ -252,7 +252,7 @@ export function UserPermissionsManager({
             </div>
 
             {/* Legend */}
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
               <Text size="sm" weight="medium" className="mb-2">
                 Legend:
               </Text>
@@ -269,7 +269,7 @@ export function UserPermissionsManager({
 
             {/* Override Summary */}
             {overrides.length > 0 && (
-              <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
                 <Text size="sm" weight="medium" className="mb-1">
                   {overrides.length} Permission Override
                   {overrides.length !== 1 ? "s" : ""}

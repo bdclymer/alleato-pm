@@ -120,7 +120,7 @@ export function InviteDialog({
           {/* Recipient Info */}
           <div className="space-y-2">
             <Label>Recipient</Label>
-            <div className="rounded-md border bg-muted/50 p-3">
+            <div className="rounded-md border bg-muted/50 p-4">
               <div className="font-medium">
                 {person.first_name} {person.last_name}
               </div>
@@ -139,7 +139,7 @@ export function InviteDialog({
           {person.permission_template && (
             <div className="space-y-2">
               <Label>Permission Level</Label>
-              <div className="rounded-md border bg-muted/50 p-3">
+              <div className="rounded-md border bg-muted/50 p-4">
                 <div className="font-medium">
                   {person.permission_template.name}
                 </div>

@@ -198,7 +198,7 @@ export function SpecificationUploadDialog({
                         </div>
                       ) : (
                         <div className="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-4">
                             <FileText className="h-8 w-8 text-red-500" />
                             <div>
                               <p className="text-sm font-medium">{selectedFile.name}</p>
@@ -350,7 +350,7 @@ export function SpecificationUploadDialog({
             />
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-4 pt-4">
               <Button
                 type="button"
                 variant="outline"

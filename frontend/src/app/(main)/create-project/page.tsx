@@ -700,7 +700,7 @@ export default function CreateProjectPage() {
       <div className="flex min-h-[calc(100vh-48px)] flex-col bg-muted">
         <header className="border-b bg-background">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <Link
                 href="/"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
@@ -719,7 +719,7 @@ export default function CreateProjectPage() {
                   Create Project
                 </h1>
               </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="rounded-full border border-dashed border-orange-200 px-4 py-1">
                   Draft status · Not synced
                 </div>
@@ -969,7 +969,7 @@ function CreateProjectForm() {
             }}
           />
           {file ? (
-            <div className="flex items-center gap-3 rounded-lg border border-input bg-background px-4 py-3">
+            <div className="flex items-center gap-4 rounded-lg border border-input bg-background px-4 py-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
                 <ImageIcon className="h-5 w-5 text-muted-foreground" />
               </div>
@@ -1037,7 +1037,7 @@ function CreateProjectForm() {
         if (field.control === "checkbox") {
           return (
             <FormItem className={baseClasses}>
-              <div className="flex items-start space-x-3 rounded-md border border-input bg-background px-4 py-3">
+              <div className="flex items-start space-x-4 rounded-md border border-input bg-background px-4 py-4">
                 <FormControl>
                   <Checkbox
                     id={fieldId}
@@ -1134,14 +1134,14 @@ function CreateProjectForm() {
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {section.fields.map(renderField)}
               </div>
             </CardContent>
           </Card>
         ))}
 
-        <div className="flex flex-col gap-3 rounded-lg border border-dashed border-muted bg-background p-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 rounded-lg border border-dashed border-muted bg-background p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-medium text-foreground">
               Need to start over?
@@ -1150,9 +1150,9 @@ function CreateProjectForm() {
               Reset clears unsaved values but keeps Procore defaults.
             </p>
           </div>
-          <div className="flex justify-between items-center flex-wrap gap-3">
+          <div className="flex justify-between items-center flex-wrap gap-4">
             <DevAutoFillButton />
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               <Button
                 type="button"
                 variant="ghost"

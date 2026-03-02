@@ -19,7 +19,7 @@ export function SupabaseManager() {
             cluster automation.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-4">
           <Badge variant="outline" className="border-dashed">
             Environment: production
           </Badge>

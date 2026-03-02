@@ -18,7 +18,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
       title="Available Agents"
       icon={<Bot className="h-4 w-4 text-violet-600" />}
     >
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-4">
         {agents.map((agent, idx) => (
           <Card
             key={`${agent.name || "agent"}-${idx}`}
@@ -33,12 +33,12 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
                 : ""
             }`}
           >
-            <CardHeader className="p-3 pb-1">
+            <CardHeader className="p-4 pb-1">
               <CardTitle className="text-sm flex items-center text-zinc-900">
                 {agent.name}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3 pt-1">
+            <CardContent className="p-4 pt-1">
               <p className="text-xs font-light text-zinc-500">
                 {agent.description}
               </p>

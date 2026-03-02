@@ -134,9 +134,9 @@ function MeetingCard({
   return (
     <Link href={`/meetings/${meeting.id}`}>
       <Card
-        className={`group hover:shadow-md hover:border-primary/20 transition-all cursor-pointer ${compact ? "p-3" : ""}`}
+        className={`group hover:shadow-md hover:border-primary/20 transition-all cursor-pointer ${compact ? "p-4" : ""}`}
       >
-        <CardHeader className={compact ? "p-0 pb-2" : "pb-3"}>
+        <CardHeader className={compact ? "p-0 pb-2" : "pb-4"}>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <CardTitle
@@ -145,7 +145,7 @@ function MeetingCard({
                 {meeting.title || "Untitled Meeting"}
               </CardTitle>
               {meeting.project && (
-                <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex items-center gap-2 mt-1">
                   <Folder className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground">
                     {meeting.project}
@@ -168,31 +168,31 @@ function MeetingCard({
         </CardHeader>
         <CardContent className={compact ? "p-0" : "pt-0"}>
           {meeting.summary && !compact && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
               {meeting.summary}
             </p>
           )}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {showDate && meeting.date && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Calendar className="h-3 w-3" />
                 <span>{format(parseISO(meeting.date), "MMM d")}</span>
               </div>
             )}
             {meeting.date && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Clock className="h-3 w-3" />
                 <span>{getTimeFromDate(meeting.date)}</span>
               </div>
             )}
             {meeting.duration_minutes && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Play className="h-3 w-3" />
                 <span>{formatDuration(meeting.duration_minutes)}</span>
               </div>
             )}
             {participantCount > 0 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <Users className="h-3 w-3" />
                 <span>{participantCount}</span>
               </div>
@@ -223,7 +223,7 @@ function TodaysMeetings({ meetings }: { meetings: Meeting[] }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-full bg-amber-500/10 p-1.5">
@@ -235,7 +235,7 @@ function TodaysMeetings({ meetings }: { meetings: Meeting[] }) {
           </Badge>
         </div>
       </div>
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {meetings.map((meeting) => (
           <MeetingCard key={meeting.id} meeting={meeting} />
         ))}
@@ -336,9 +336,9 @@ function ProjectGroupedView({ groups }: { groups: ProjectGroup[] }) {
           >
             <Card>
               <CollapsibleTrigger className="w-full">
-                <CardHeader className="py-3 px-4">
+                <CardHeader className="py-4 px-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                       {isOpen ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       ) : (
@@ -370,7 +370,7 @@ function ProjectGroupedView({ groups }: { groups: ProjectGroup[] }) {
                     {(isOpen ? group.meetings : recentMeetings).map(
                       (meeting) => (
                         <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
-                          <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors group">
+                          <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors group">
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
                                 {meeting.title || "Untitled Meeting"}
@@ -776,13 +776,13 @@ export default function MeetingsPage() {
                       <ArrowRight className="h-3.5 w-3.5 ml-1" />
                     </Button>
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {projectGroups.slice(0, 6).map((group) => (
                       <Card
                         key={group.projectId || "unassigned"}
                         className="hover:shadow-sm transition-shadow"
                       >
-                        <CardHeader className="py-3 px-4">
+                        <CardHeader className="py-4 px-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Folder className="h-4 w-4 text-primary" />
@@ -795,7 +795,7 @@ export default function MeetingsPage() {
                             </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent className="pt-0 pb-3 px-4">
+                        <CardContent className="pt-0 pb-4 px-4">
                           <div className="space-y-1">
                             {group.meetings.slice(0, 2).map((meeting) => (
                               <Link

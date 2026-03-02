@@ -99,12 +99,12 @@ export function PortfolioHeader({
         </nav>
 
         {/* Export and Create Project buttons - Desktop */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-4 flex-shrink-0">
         {onSettingsClick && (
           <Button
             onClick={onSettingsClick}
             variant="outline"
-            className="h-9 text-sm px-3"
+            className="h-9 text-sm px-4"
           >
             <FileText className="w-4 h-4 mr-2" />
             Settings

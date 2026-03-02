@@ -149,10 +149,10 @@ function WorkflowTemplatesForm({ projectId }: { projectId: number }) {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg">Existing Templates</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {templates.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No templates defined yet.
@@ -161,7 +161,7 @@ function WorkflowTemplatesForm({ projectId }: { projectId: number }) {
           {templates.map((template) => (
             <div
               key={template.id}
-              className="flex flex-col gap-2 rounded-lg border p-3 md:flex-row md:items-center md:justify-between"
+              className="flex flex-col gap-2 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <p className="font-medium">{template.name}</p>
@@ -190,10 +190,10 @@ function WorkflowTemplatesForm({ projectId }: { projectId: number }) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <CardTitle className="text-lg">Add Template</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
+        <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="template-name">Template Name</Label>
             <Input
@@ -225,7 +225,7 @@ function WorkflowTemplatesForm({ projectId }: { projectId: number }) {
               onChange={(e) => setNewTemplateSteps(e.target.value)}
             />
           </div>
-          <div className="md:col-span-2 flex items-center gap-3">
+          <div className="md:col-span-2 flex items-center gap-4">
             <Button onClick={handleAddTemplate} disabled={loading}>
               Add Template
             </Button>
@@ -236,7 +236,7 @@ function WorkflowTemplatesForm({ projectId }: { projectId: number }) {
         </CardContent>
       </Card>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Button onClick={handleSave} disabled={saving || loading}>
           Save Templates
         </Button>

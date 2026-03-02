@@ -343,8 +343,8 @@ export function AttachmentManager({
             const Icon = getFileIcon(uploadingFile.file.name)
             return (
               <Card key={uploadingFile.id}>
-                <CardContent className="p-3">
-                  <div className="flex items-center space-x-3">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-4">
                     <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
@@ -405,8 +405,8 @@ export function AttachmentManager({
             const Icon = getFileIcon(attachment.file_name)
             return (
               <Card key={attachment.id}>
-                <CardContent className="p-3">
-                  <div className="flex items-center space-x-3">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-4">
                     <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">

@@ -138,7 +138,7 @@ export function HeaderMobileMenu({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
+                            "flex items-center gap-4 px-4 py-2.5 text-sm transition-colors",
                             isDisabled
                               ? "opacity-40 cursor-not-allowed"
                               : "hover:bg-muted active:bg-muted/80",
@@ -206,7 +206,7 @@ export function HeaderMobileMenu({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
+                            "flex items-center gap-4 px-4 py-2.5 text-sm transition-colors",
                             isDisabled
                               ? "opacity-40 cursor-not-allowed"
                               : "hover:bg-muted active:bg-muted/80",

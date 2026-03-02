@@ -161,7 +161,7 @@ function SortableLineItemRow({
       style={style}
     >
       {/* Drag handle */}
-      <TableCell className="w-10 p-3 align-top">
+      <TableCell className="w-10 p-4 align-top">
         <div
           {...attributes}
           {...listeners}
@@ -172,7 +172,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Budget Code */}
-      <TableCell className="min-w-72 p-3 align-top">
+      <TableCell className="min-w-72 p-4 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.budget_code_id`}
@@ -199,7 +199,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Description */}
-      <TableCell className="min-w-64 p-3 align-top">
+      <TableCell className="min-w-64 p-4 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.description`}
@@ -219,7 +219,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Quantity */}
-      <TableCell className="w-36 p-3 align-top">
+      <TableCell className="w-36 p-4 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.quantity`}
@@ -246,7 +246,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* UOM */}
-      <TableCell className="w-28 p-3 align-top">
+      <TableCell className="w-28 p-4 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.uom`}
@@ -273,7 +273,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Unit Cost */}
-      <TableCell className="w-44 p-3 align-top">
+      <TableCell className="w-44 p-4 align-top">
         <FormField
           control={form.control}
           name={`line_items.${index}.unit_cost`}
@@ -303,7 +303,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Line Total */}
-      <TableCell className="w-40 p-3 align-top">
+      <TableCell className="w-40 p-4 align-top">
         <div
           className={cn(
             'pt-2 text-right text-sm font-semibold',
@@ -327,7 +327,7 @@ function SortableLineItemRow({
       </TableCell>
 
       {/* Actions */}
-      <TableCell className="w-24 p-3 align-top">
+      <TableCell className="w-24 p-4 align-top">
         <div className="flex items-center justify-end space-x-1 opacity-80 transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <TooltipProvider>
             <Tooltip>
@@ -466,7 +466,7 @@ export function LineItemsManager({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Line Items Table */}
       <DndContext
         sensors={sensors}
@@ -481,26 +481,26 @@ export function LineItemsManager({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/70 hover:bg-muted/70">
-                  <TableHead className="w-[40px] py-3"></TableHead>
-                  <TableHead className="min-w-72 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="w-[40px] py-4"></TableHead>
+                  <TableHead className="min-w-72 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     Budget Code *
                   </TableHead>
-                  <TableHead className="min-w-64 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="min-w-64 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     Description
                   </TableHead>
-                  <TableHead className="w-36 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="w-36 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     Quantity *
                   </TableHead>
-                  <TableHead className="w-28 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="w-28 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     UOM
                   </TableHead>
-                  <TableHead className="w-44 py-3 text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="w-44 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     Unit Cost *
                   </TableHead>
-                  <TableHead className="w-40 py-3 text-right text-xs font-semibold tracking-wide text-muted-foreground">
+                  <TableHead className="w-40 py-4 text-right text-xs font-semibold tracking-wide text-muted-foreground">
                     Line Total
                   </TableHead>
-                  <TableHead className="w-24 py-3"></TableHead>
+                  <TableHead className="w-24 py-4"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -552,8 +552,8 @@ export function LineItemsManager({
       </DndContext>
 
       {/* Actions and Total */}
-      <div className="flex flex-col gap-3 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
           <Button
             type="button"
             size="default"
@@ -571,7 +571,7 @@ export function LineItemsManager({
           )}
         </div>
 
-        <div className="rounded-lg border border-border/70 bg-background px-4 py-3 text-right">
+        <div className="rounded-lg border border-border/70 bg-background px-4 py-4 text-right">
           <div className="text-xs font-medium tracking-wide text-muted-foreground">Grand Total</div>
           <div className="text-2xl font-semibold">
             {formatCurrency(grandTotal)}

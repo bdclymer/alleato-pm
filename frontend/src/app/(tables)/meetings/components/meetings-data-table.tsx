@@ -24,13 +24,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Select,
   SelectContent,
@@ -682,17 +682,17 @@ export function MeetingsDataTable({
 
       {/* Edit Dialog */}
       {editingMeeting && (
-        <Dialog
+        <Modal
           open={!!editingMeeting}
           onOpenChange={() => setEditingMeeting(null)}
         >
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Meeting</DialogTitle>
-              <DialogDescription>
+          <ModalContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <ModalHeader>
+              <ModalTitle>Edit Meeting</ModalTitle>
+              <ModalDescription>
                 Make changes to the meeting details below
-              </DialogDescription>
-            </DialogHeader>
+              </ModalDescription>
+            </ModalHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label>Title</Label>
@@ -786,37 +786,37 @@ export function MeetingsDataTable({
                 />
               </div>
             </div>
-            <DialogFooter>
+            <ModalFooter>
               <Button variant="outline" onClick={() => setEditingMeeting(null)}>
                 Cancel
               </Button>
               <Button onClick={handleSave}>Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       )}
 
       {/* Delete Confirmation Dialog */}
       {isDeleting && (
-        <Dialog open={!!isDeleting} onOpenChange={() => setIsDeleting(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Deletion</DialogTitle>
-              <DialogDescription>
+        <Modal open={!!isDeleting} onOpenChange={() => setIsDeleting(null)}>
+          <ModalContent>
+            <ModalHeader>
+              <ModalTitle>Confirm Deletion</ModalTitle>
+              <ModalDescription>
                 Are you sure you want to delete this meeting? This action cannot
                 be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
+              </ModalDescription>
+            </ModalHeader>
+            <ModalFooter>
               <Button variant="outline" onClick={() => setIsDeleting(null)}>
                 Cancel
               </Button>
               <Button variant="destructive" onClick={confirmDelete}>
                 Delete
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       )}
     </>
   );

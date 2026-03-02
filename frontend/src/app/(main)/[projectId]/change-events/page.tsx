@@ -23,8 +23,7 @@ import {
   renderChangeEventList,
   renderChangeEventRowActions,
 } from "@/features/change-events/change-events-table-config";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
@@ -152,6 +151,56 @@ export default function ProjectChangeEventsPage(): ReactElement {
     [projectId, refetchChangeEvents],
   );
 
+  const handleBulkDelete = React.useCallback(async () => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) {
+      toast.info("Select at least one change event to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Move ${selectedIds.length} change event${selectedIds.length === 1 ? "" : "s"} to the recycle bin? You can restore them later manually.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const results = await Promise.allSettled(
+        selectedIds.map(async (id) => {
+          const response = await fetch(`/api/projects/${projectId}/change-events/${id}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const message = await response.text();
+            throw new Error(
+              message || `Unable to delete change event ${id}. Check permissions and try again.`,
+            );
+          }
+        }),
+      );
+
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      const successCount = results.length - failedCount;
+
+      if (successCount > 0) {
+        toast.success(
+          `${successCount} change event${successCount === 1 ? "" : "s"} moved to recycle bin`,
+        );
+      }
+
+      if (failedCount > 0) {
+        toast.error(`Failed to delete ${failedCount} change event${failedCount === 1 ? "" : "s"}.`);
+      }
+
+      tableState.setSelectedIds([]);
+      refetchChangeEvents();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to bulk delete change events");
+    }
+  }, [projectId, refetchChangeEvents, tableState]);
+
   const handleFilterChange = React.useCallback(
     (nextFilters: ChangeEventFilterState) => {
       tableState.setActiveFilters(nextFilters);
@@ -260,7 +309,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   if (!hasValidProjectId) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Change Events"
           description="Provide a valid project identifier to access change events."
         />
@@ -320,6 +369,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         columns: changeEventColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        onBulkDelete: handleBulkDelete,
       }}
       data={{
         items: filteredEvents,
@@ -368,7 +418,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       }}
       features={{
         enableExport: false,
-        enableBulkDelete: false,
+        enableBulkDelete: true,
       }}
     />
   );

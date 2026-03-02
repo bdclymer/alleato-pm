@@ -103,7 +103,7 @@ export default function SimpleChatPage() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="border-b px-4 py-3">
+      <div className="border-b px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-info" />
@@ -131,7 +131,7 @@ export default function SimpleChatPage() {
                     I can help you with questions about your projects, tasks,
                     meetings, and more.
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
                     {[
                       "Show me active projects",
                       "What are my recent tasks?",
@@ -141,7 +141,7 @@ export default function SimpleChatPage() {
                       <button
                         key={prompt}
                         onClick={() => setInput(prompt)}
-                        className="text-left p-3 rounded-lg border border-border hover:bg-muted transition-colors"
+                        className="text-left p-4 rounded-lg border border-border hover:bg-muted transition-colors"
                       >
                         <p className="text-sm font-medium text-foreground">
                           {prompt}
@@ -154,7 +154,7 @@ export default function SimpleChatPage() {
                 <div className="space-y-6">
                   {messages.map((message, index) => (
                     <div key={index} className="group">
-                      <div className="flex gap-3">
+                      <div className="flex gap-4">
                         <div className="flex-shrink-0">
                           {message.role === "user" ? (
                             <div className="w-8 h-8 bg-gray-600 rounded-sm flex items-center justify-center">
@@ -252,7 +252,7 @@ export default function SimpleChatPage() {
 
             {isLoading && (
               <div className="px-4 pb-4">
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   <div className="w-8 h-8 bg-info rounded-sm flex items-center justify-center">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
@@ -280,7 +280,7 @@ export default function SimpleChatPage() {
                   onKeyDown={handleKeyPress}
                   placeholder="Message Alleato AI..."
                   disabled={isLoading}
-                  className="min-h-[44px] max-h-[200px] pr-12 resize-none py-3"
+                  className="min-h-[44px] max-h-[200px] pr-12 resize-none py-4"
                   rows={1}
                 />
                 <Button

@@ -129,7 +129,7 @@ const Tool = ({ toolPart, defaultOpen = false, className }: ToolProps) => {
   return (
     <div
       className={cn(
-        "border-border mt-3 overflow-hidden rounded-lg border",
+        "border-border mt-4 overflow-hidden rounded-lg border",
         className,
       )}
     >
@@ -137,7 +137,7 @@ const Tool = ({ toolPart, defaultOpen = false, className }: ToolProps) => {
         <CollapsibleTrigger asChild>
           <Button
             variant="ghost"
-            className="bg-background h-auto w-full justify-between rounded-b-none px-3 py-2 font-normal"
+            className="bg-background h-auto w-full justify-between rounded-b-none px-4 py-2 font-normal"
           >
             <div className="flex items-center gap-2">
               {getStateIcon()}
@@ -155,7 +155,7 @@ const Tool = ({ toolPart, defaultOpen = false, className }: ToolProps) => {
             "data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden",
           )}
         >
-          <div className="bg-background space-y-3 p-3">
+          <div className="bg-background space-y-4 p-4">
             {input && Object.keys(input).length > 0 && (
               <div>
                 <h4 className="text-muted-foreground mb-2 text-sm font-medium">

@@ -19,7 +19,7 @@ interface WelcomeScreenProps {
 export function WelcomeScreen({ onSelectPrompt }: WelcomeScreenProps) {
   return (
     <div className="flex size-full flex-col items-center justify-center gap-8 p-8">
-      <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
           <BotIcon className="h-6 w-6 text-primary" />
         </div>
@@ -32,13 +32,13 @@ export function WelcomeScreen({ onSelectPrompt }: WelcomeScreenProps) {
         </p>
       </div>
 
-      <div className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
         {SUGGESTED_PROMPTS.map((prompt) => (
           <PromptSuggestion
             key={prompt}
             variant="outline"
             size="default"
-            className="h-auto whitespace-normal rounded-xl px-4 py-3 text-left text-sm"
+            className="h-auto w-full break-words rounded-xl px-4 py-4 text-left text-sm !whitespace-normal"
             onClick={() => onSelectPrompt(prompt)}
           >
             {prompt}

@@ -65,7 +65,7 @@ function ToggleSection({
         variant="ghost"
         className="w-full justify-between p-4 hover:bg-muted"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {icon}
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>

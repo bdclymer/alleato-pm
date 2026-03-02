@@ -302,7 +302,7 @@ export function DirectoryTable({
             case "name":
               return (
                 <TableCell key={column.id}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={avatarSrc} />
                       <AvatarFallback>{getInitials(person)}</AvatarFallback>

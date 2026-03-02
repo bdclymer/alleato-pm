@@ -137,9 +137,9 @@ export function JobToDateCostDetailModal({
       {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "costs" ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-blue-50 via-white to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-blue-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">
@@ -160,7 +160,7 @@ export function JobToDateCostDetailModal({
 
             {/* Description Box */}
             <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <DollarSign className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900">
                   <p className="font-semibold">About Job to Date Costs</p>
@@ -178,22 +178,22 @@ export function JobToDateCostDetailModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Description
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Vendor
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Invoice #
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Date
                     </th>
                   </tr>
@@ -224,26 +224,26 @@ export function JobToDateCostDetailModal({
                         className="hover:bg-blue-50/40 transition-colors"
                       >
                         <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
+                          className="px-4 py-4 text-foreground max-w-xs truncate"
                           title={cost.description || "-"}
                         >
                           {cost.description || "-"}
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
+                        <td className="px-4 py-4 text-foreground text-xs">
                           <span className="inline-flex items-center px-2 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">
                             {cost.costType || "Other"}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
+                        <td className="px-4 py-4 text-foreground text-xs">
                           {cost.vendor || "-"}
                         </td>
-                        <td className="px-4 py-3 text-foreground text-xs font-mono">
+                        <td className="px-4 py-4 text-foreground text-xs font-mono">
                           {cost.invoiceNumber || "-"}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
                           {formatCurrency(cost.amount)}
                         </td>
-                        <td className="px-4 py-3 text-foreground">
+                        <td className="px-4 py-4 text-foreground">
                           {formatDate(cost.incurredDate)}
                         </td>
                       </tr>
@@ -254,7 +254,7 @@ export function JobToDateCostDetailModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               Cost breakdown by type for this budget line.
             </p>
@@ -263,16 +263,16 @@ export function JobToDateCostDetailModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Cost Type
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Count
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Total Amount
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       % of Total
                     </th>
                   </tr>
@@ -283,16 +283,16 @@ export function JobToDateCostDetailModal({
                       key={type}
                       className="hover:bg-blue-50/40 transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-foreground">
+                      <td className="px-4 py-4 font-medium text-foreground">
                         {type}
                       </td>
-                      <td className="px-4 py-3 text-right text-foreground">
+                      <td className="px-4 py-4 text-right text-foreground">
                         {data.count}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                      <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
                         {formatCurrency(data.total)}
                       </td>
-                      <td className="px-4 py-3 text-right text-foreground">
+                      <td className="px-4 py-4 text-right text-foreground">
                         {totalAmount > 0
                           ? ((data.total / totalAmount) * 100).toFixed(1)
                           : "0.0"}

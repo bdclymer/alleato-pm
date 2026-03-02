@@ -112,9 +112,9 @@ export function PendingBudgetChangesModal({
     >
       {/* Content */}
       <SidebarBody className="bg-background">
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-4">
           {/* Total Summary */}
-          <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-yellow-50 via-white to-white">
+          <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-yellow-50 via-white to-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-foreground">Total Pending Changes</p>
@@ -133,7 +133,7 @@ export function PendingBudgetChangesModal({
 
           {/* Description Box */}
           <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-4">
               <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-yellow-900">
                 <p className="font-semibold">About Pending Budget Changes</p>
@@ -151,22 +151,22 @@ export function PendingBudgetChangesModal({
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
                     CO Number
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
                     Description
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
                     Contract
                   </th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-right px-4 py-4 font-semibold text-slate-800">
                     Amount
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
                     Requested
                   </th>
                 </tr>
@@ -196,28 +196,28 @@ export function PendingBudgetChangesModal({
                       key={co.id}
                       className="hover:bg-yellow-50/40 transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-blue-600">
+                      <td className="px-4 py-4 font-medium text-blue-600">
                         {co.changeOrderNumber}
                       </td>
                       <td
-                        className="px-4 py-3 text-foreground max-w-xs truncate"
+                        className="px-4 py-4 text-foreground max-w-xs truncate"
                         title={co.description}
                       >
                         {co.description}
                       </td>
-                      <td className="px-4 py-3">{getStatusBadge(co.status)}</td>
-                      <td className="px-4 py-3 text-foreground text-xs">
+                      <td className="px-4 py-4">{getStatusBadge(co.status)}</td>
+                      <td className="px-4 py-4 text-foreground text-xs">
                         {co.contractNumber}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-3 text-right font-semibold tabular-nums",
+                          "px-4 py-4 text-right font-semibold tabular-nums",
                           co.amount < 0 ? "text-red-600" : "text-yellow-600",
                         )}
                       >
                         {formatCurrency(co.amount)}
                       </td>
-                      <td className="px-4 py-3 text-foreground">
+                      <td className="px-4 py-4 text-foreground">
                         {formatDate(co.requestedDate)}
                       </td>
                     </tr>

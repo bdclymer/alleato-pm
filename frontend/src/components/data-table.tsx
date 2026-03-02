@@ -727,12 +727,12 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
             </>
           )}
           <form className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <Label htmlFor="header">Header</Label>
               <Input id="header" defaultValue={item.header} />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="type">Type</Label>
                 <Select defaultValue={item.type}>
                   <SelectTrigger id="type" className="w-full">
@@ -758,7 +758,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="status">Status</Label>
                 <Select defaultValue={item.status}>
                   <SelectTrigger id="status" className="w-full">
@@ -773,16 +773,16 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="target">Target</Label>
                 <Input id="target" defaultValue={item.target} />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="limit">Limit</Label>
                 <Input id="limit" defaultValue={item.limit} />
               </div>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <Label htmlFor="reviewer">Reviewer</Label>
               <Select defaultValue={item.reviewer}>
                 <SelectTrigger id="reviewer" className="w-full">

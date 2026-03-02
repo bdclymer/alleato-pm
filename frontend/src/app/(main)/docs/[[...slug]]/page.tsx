@@ -106,7 +106,7 @@ function Breadcrumbs({ slug }: { slug?: string[] }) {
     <nav className="flex items-center space-x-1 text-sm text-foreground dark:text-muted-foreground mb-6">
       <Link
         href="/docs"
-        className="flex items-center hover:text-foreground dark:hover:text-gray-100"
+        className="flex items-center hover:text-foreground dark:hover:text-muted-foreground"
       >
         <Home className="h-4 w-4" />
         <span className="ml-1">Docs</span>
@@ -121,13 +121,13 @@ function Breadcrumbs({ slug }: { slug?: string[] }) {
           <React.Fragment key={part}>
             <ChevronRight className="h-4 w-4" />
             {isLast ? (
-              <span className="font-medium text-foreground dark:text-gray-100">
+              <span className="font-medium text-foreground dark:text-muted-foreground">
                 {displayName}
               </span>
             ) : (
               <Link
                 href={href}
-                className="hover:text-foreground dark:hover:text-gray-100"
+                className="hover:text-foreground dark:hover:text-muted-foreground"
               >
                 {displayName}
               </Link>
@@ -187,7 +187,7 @@ export default async function DocPage({ params }: DocPageProps) {
 
         <Card className="p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground dark:text-gray-200 flex items-center">
+            <h1 className="text-2xl font-semibold text-foreground dark:text-muted-foreground flex items-center">
               <FolderTree className="mr-2 h-6 w-6" />
               {slug.length > 0
                 ? slug[slug.length - 1].replace(/-/g, " ")
@@ -200,18 +200,18 @@ export default async function DocPage({ params }: DocPageProps) {
 
           {directories.length > 0 && (
             <div className="mb-6">
-              <h2 className="text-lg font-medium text-foreground dark:text-gray-300 mb-3">
+              <h2 className="text-lg font-medium text-foreground dark:text-muted-foreground mb-4">
                 Folders
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {directories.map((dir) => (
                   <Link
                     key={dir}
                     href={`/docs/${requestedPath}${requestedPath ? "/" : ""}${dir}`}
-                    className="flex items-center p-3 border rounded-lg hover:bg-muted dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center p-4 border rounded-lg hover:bg-muted dark:hover:bg-foreground/90 transition-colors"
                   >
                     <FolderTree className="h-5 w-5 text-muted-foreground mr-2" />
-                    <span className="text-foreground dark:text-gray-300">
+                    <span className="text-foreground dark:text-muted-foreground">
                       {dir.replace(/-/g, " ")}
                     </span>
                   </Link>
@@ -222,7 +222,7 @@ export default async function DocPage({ params }: DocPageProps) {
 
           {files.length > 0 && (
             <div>
-              <h2 className="text-lg font-medium text-foreground dark:text-gray-300 mb-3">
+              <h2 className="text-lg font-medium text-foreground dark:text-muted-foreground mb-4">
                 Files
               </h2>
               <div className="space-y-2">
@@ -230,10 +230,10 @@ export default async function DocPage({ params }: DocPageProps) {
                   <Link
                     key={file}
                     href={`/docs/${requestedPath}${requestedPath ? "/" : ""}${file.replace(".md", "")}`}
-                    className="flex items-center p-3 border rounded-lg hover:bg-muted dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center p-4 border rounded-lg hover:bg-muted dark:hover:bg-foreground/90 transition-colors"
                   >
                     <FileText className="h-5 w-5 text-muted-foreground mr-2" />
-                    <span className="text-foreground dark:text-gray-300">
+                    <span className="text-foreground dark:text-muted-foreground">
                       {file.replace(".md", "").replace(/-/g, " ")}
                     </span>
                   </Link>

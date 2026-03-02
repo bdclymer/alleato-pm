@@ -9,8 +9,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { PageContainer, PageTabs } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, PageTabs , ProjectPageHeader } from "@/components/layout";
+
 import {
   Table,
   TableBody,
@@ -263,7 +263,7 @@ export default function ProjectSOVPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Schedule of Values"
         description="View and manage schedule of values across all contracts"
         showExportButton={true}

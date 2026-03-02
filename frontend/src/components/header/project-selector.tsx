@@ -81,7 +81,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 w-[120px] sm:w-[160px] lg:w-[200px] border-0 bg-zinc-700/60 hover:bg-zinc-600/70 justify-between px-3 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-8 w-[120px] sm:w-[160px] lg:w-[200px] border-0 bg-zinc-700/60 hover:bg-zinc-600/70 justify-between px-4 focus-visible:ring-0 focus-visible:ring-offset-0",
             !currentProject && "text-zinc-300"
           )}
         >

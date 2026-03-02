@@ -45,7 +45,7 @@ export function CreateDailyLogButton({ projectId }: { projectId: number }) {
         <DialogHeader>
           <DialogTitle>Create Daily Log</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Label htmlFor="log-date">Date (YYYY-MM-DD)</Label>
           <Input id="log-date" placeholder="2026-01-13" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
@@ -91,7 +91,7 @@ export function CreateManpowerButton({ dailyLogs }: { dailyLogs: DailyLogSummary
         <DialogHeader>
           <DialogTitle>Add Manpower</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Label>Daily Log Date</Label>
           <Select onValueChange={(v) => setLogId(v)}>
             <SelectTrigger><SelectValue placeholder="Select date" /></SelectTrigger>
@@ -147,7 +147,7 @@ export function CreateEquipmentButton({ dailyLogs }: { dailyLogs: DailyLogSummar
         <DialogHeader>
           <DialogTitle>Add Equipment</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Label>Daily Log Date</Label>
           <Select onValueChange={(v) => setLogId(v)}>
             <SelectTrigger><SelectValue placeholder="Select date" /></SelectTrigger>
@@ -199,7 +199,7 @@ export function CreateNoteButton({ dailyLogs }: { dailyLogs: DailyLogSummary[] }
         <DialogHeader>
           <DialogTitle>Add Note</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Label>Daily Log Date</Label>
           <Select onValueChange={(v) => setLogId(v)}>
             <SelectTrigger><SelectValue placeholder="Select date" /></SelectTrigger>

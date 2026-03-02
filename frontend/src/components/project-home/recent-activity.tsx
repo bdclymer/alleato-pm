@@ -72,7 +72,7 @@ export function RecentActivity({ activities, projectId }: RecentActivityProps) {
             <Link
               key={activity.id}
               href={href}
-              className="flex items-start gap-3 group"
+              className="flex items-start gap-4 group"
             >
               <div
                 className={cn(

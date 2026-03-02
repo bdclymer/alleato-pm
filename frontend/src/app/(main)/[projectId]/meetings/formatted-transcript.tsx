@@ -19,6 +19,8 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
   // Preprocess the transcript to ensure proper paragraph breaks
   // This handles transcripts that might not have proper markdown formatting
   const formattedContent = content
+    // Convert numbered speakers (e.g., **0:** **1:**) to "Speaker 1:", "Speaker 2:"
+    .replace(/\*\*(\d+):\*\*/g, (_, n) => `**Speaker ${parseInt(n, 10) + 1}:**`)
     // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
     .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")
     // Add double line breaks before speaker names followed by colon (e.g., **John Smith:**)
@@ -28,8 +30,8 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
     .trim();
 
   return (
-    <div className="border border-neutral-200 bg-background p-8 rounded-md">
-      <SectionHeader className="mb-6">Full Transcript</SectionHeader>
+    <div className="space-y-2">
+      <SectionHeader className="mb-1">Full Transcript</SectionHeader>
 
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
@@ -41,12 +43,12 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-sans font-light tracking-tight text-neutral-900 mb-3 mt-6 first:mt-0">
+            <h2 className="text-xl font-sans font-light tracking-tight text-neutral-900 mb-4 mt-6 first:mt-0">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-medium text-neutral-900 mb-3 mt-6 first:mt-0">
+            <h3 className="text-lg font-medium text-neutral-900 mb-4 mt-6 first:mt-0">
               {children}
             </h3>
           ),
@@ -58,14 +60,14 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
 
           // Paragraphs
           p: ({ children }) => (
-            <p className="text-sm text-neutral-700 leading-relaxed mb-4">
+            <p className="text-sm text-neutral-700 leading-relaxed mb-2">
               {children}
             </p>
           ),
 
           // Lists
           ul: ({ children }) => (
-            <ul className="text-sm text-neutral-700 leading-relaxed mb-4 space-y-2">
+            <ul className="text-sm text-neutral-700 leading-relaxed mb-2 space-y-2">
               {children}
             </ul>
           ),
@@ -84,7 +86,7 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
             if (!hasContent) return null;
 
             return (
-              <li className="flex items-start gap-3 ml-1">
+              <li className="flex items-start gap-4 ml-1">
                 <span className="text-brand mt-0.5 shrink-0">•</span>
                 <span>{children}</span>
               </li>
@@ -136,7 +138,7 @@ export function FormattedTranscript({ content }: FormattedTranscriptProps) {
           // Tables
           table: ({ children }) => (
             <div className="overflow-x-auto mb-4">
-              <table className="min-w-full border border-neutral-200">
+              <table className="min-w-full border border-border">
                 {children}
               </table>
             </div>

@@ -284,7 +284,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
               </div>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
               {snapshots.map((snapshot, index) => {
                 if (index === 0) return null;
                 const previous = snapshots[index - 1];
@@ -296,7 +296,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
                 return (
                   <div
                     key={snapshot.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg"
                   >
                     <div className="flex-1">
                       <div className="font-medium">{snapshot.name}</div>

@@ -189,7 +189,7 @@ export function PendingCostChangesModal({
                 type="button"
                 onClick={() => setTypeFilter(type as typeof typeFilter)}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-full transition-all",
+                  "px-4 py-1 text-xs font-medium rounded-full transition-all",
                   typeFilter === type
                     ? "bg-orange-500 text-white"
                     : "bg-muted text-foreground hover:bg-muted",
@@ -209,9 +209,9 @@ export function PendingCostChangesModal({
       {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "pending" ? (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-gradient-to-br from-orange-50 via-white to-white">
+            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-orange-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">
@@ -232,7 +232,7 @@ export function PendingCostChangesModal({
 
             {/* Description Box */}
             <div className="rounded-lg bg-orange-50 border border-orange-200 p-4">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-4">
                 <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-orange-900">
                   <p className="font-semibold">About Pending Cost Changes</p>
@@ -251,22 +251,22 @@ export function PendingCostChangesModal({
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Number
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Type
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Description
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Status
                     </th>
-                    <th className="text-right px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-3 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
                       Requested
                     </th>
                   </tr>
@@ -296,22 +296,22 @@ export function PendingCostChangesModal({
                         key={change.id}
                         className="hover:bg-orange-50/40 transition-colors"
                       >
-                        <td className="px-4 py-3 font-medium text-blue-600">
+                        <td className="px-4 py-4 font-medium text-blue-600">
                           {change.number}
                         </td>
-                        <td className="px-4 py-3">{getTypeBadge(change)}</td>
+                        <td className="px-4 py-4">{getTypeBadge(change)}</td>
                         <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
+                          className="px-4 py-4 text-foreground max-w-xs truncate"
                           title={change.description}
                         >
                           {change.description}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           {getStatusBadge(change.status)}
                         </td>
                         <td
                           className={cn(
-                            "px-4 py-3 text-right font-semibold tabular-nums",
+                            "px-4 py-4 text-right font-semibold tabular-nums",
                             change.amount < 0
                               ? "text-red-600"
                               : "text-orange-600",
@@ -319,7 +319,7 @@ export function PendingCostChangesModal({
                         >
                           {formatCurrency(change.amount)}
                         </td>
-                        <td className="px-4 py-3 text-foreground">
+                        <td className="px-4 py-4 text-foreground">
                           {formatDate(change.requestedDate)}
                         </td>
                       </tr>
@@ -330,15 +330,15 @@ export function PendingCostChangesModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-4">
             <p className="text-sm text-foreground">
               Summary breakdown of pending cost changes by type.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-background">
+              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
                 <div className="mb-2">
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border bg-blue-100 text-blue-800 border-blue-200">
+                  <span className="inline-flex items-center px-4 py-1 text-sm font-semibold rounded-full border bg-blue-100 text-blue-800 border-blue-200">
                     PENDING COMMITMENTS
                   </span>
                 </div>
@@ -353,9 +353,9 @@ export function PendingCostChangesModal({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 shadow-sm p-5 bg-background">
+              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
                 <div className="mb-2">
-                  <span className="inline-flex items-center px-3 py-1 text-sm font-semibold rounded-full border bg-orange-100 text-orange-800 border-orange-200">
+                  <span className="inline-flex items-center px-4 py-1 text-sm font-semibold rounded-full border bg-orange-100 text-orange-800 border-orange-200">
                     CHANGE ORDERS
                   </span>
                 </div>

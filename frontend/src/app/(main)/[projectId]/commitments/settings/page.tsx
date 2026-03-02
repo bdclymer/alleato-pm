@@ -1,3 +1,4 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import { useState } from "react";
@@ -22,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CommitmentSettings {
@@ -115,7 +116,7 @@ export default function CommitmentSettingsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Commitment Settings"
         breadcrumbs={[
           { label: "Commitments", href: `/${projectId}/commitments` },

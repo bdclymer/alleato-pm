@@ -3,11 +3,16 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_TITLE = "Decisions";
+const PAGE_DESCRIPTION = "Track important project and business decisions";
+
 const config: GenericTableConfig = {
   title: "Decisions",
+  hideHeader: true,
   description: "Track important project and business decisions",
   searchFields: ["description", "impact", "owner_name", "rationale"],
   exportFilename: "decisions-export.csv",
@@ -119,20 +124,20 @@ export default async function DecisionsPage() {
     const decisions = await getDecisions();
 
     return (
-      <div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
         <GenericDataTable
           data={decisions as unknown as Record<string, unknown>[]}
           config={config}
         />
-      </div>
+      </TablePageWrapper>
     );
-  } catch (error) {
+  } catch {
     return (
-      <div className="container mx-auto py-10">
-        <div className="text-center text-destructive">
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
           Error loading decisions. Please try again later.
         </div>
-      </div>
+      </TablePageWrapper>
     );
   }
 }

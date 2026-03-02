@@ -101,7 +101,7 @@ export const MessageComponent = memo(
           </div>
         ) : (
           <div className="group flex w-full flex-col items-end gap-1">
-            <MessageContent className="bg-muted text-primary max-w-[85%] rounded-3xl px-5 py-2.5 whitespace-pre-wrap sm:max-w-[75%]">
+            <MessageContent className="bg-muted text-primary max-w-[85%] rounded-3xl px-4 py-2.5 whitespace-pre-wrap sm:max-w-[75%]">
               {message?.parts
                 .map((part: any) => (part.type === "text" ? part.text : null))
                 .join("")}
@@ -172,7 +172,7 @@ function ToolCallingChatbot() {
       <ChatContainerRoot className="relative flex-1 space-y-0 overflow-y-auto">
         <ChatContainerContent className="space-y-12 px-4 py-12">
           {messages.length === 0 && (
-            <div className="mx-auto w-full max-w-3xl shrink-0 px-3 pb-3 md:px-5 md:pb-5">
+            <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 md:px-4 md:pb-4">
               <div className="text-foreground mb-2 font-medium">
                 Try asking:
               </div>
@@ -201,7 +201,7 @@ function ToolCallingChatbot() {
         </ChatContainerContent>
       </ChatContainerRoot>
 
-      <div className="inset-x-0 bottom-0 mx-auto w-full max-w-3xl shrink-0 px-3 pb-3 md:px-5 md:pb-5">
+      <div className="inset-x-0 bottom-0 mx-auto w-full max-w-3xl shrink-0 px-4 pb-4 md:px-4 md:pb-4">
         <PromptInput
           isLoading={status !== "ready"}
           value={input}
@@ -212,10 +212,10 @@ function ToolCallingChatbot() {
           <div className="flex flex-col">
             <PromptInputTextarea
               placeholder="Ask anything"
-              className="min-h-[44px] pt-3 pl-4 text-base leading-[1.3] sm:text-base md:text-base"
+              className="min-h-[44px] pt-4 pl-4 text-base leading-[1.3] sm:text-base md:text-base"
             />
 
-            <PromptInputActions className="mt-3 flex w-full items-center justify-between gap-2 p-2">
+            <PromptInputActions className="mt-4 flex w-full items-center justify-between gap-2 p-2">
               <div />
               <div className="flex items-center gap-2">
                 <Button

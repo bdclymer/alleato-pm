@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ProjectToolPage } from "@/components/layout/project-tool-page";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Card } from "@/components/ui/card";
 
 export default function ProjectDocumentsPage() {
@@ -9,15 +9,18 @@ export default function ProjectDocumentsPage() {
   const projectId = params.projectId as string;
 
   return (
-    <ProjectToolPage
-      title="Documents"
-      description="Manage project documents and files"
-    >
-      <Card className="p-6">
-        <p className="text-muted-foreground">
-          Documents for project {projectId} - Coming soon
-        </p>
-      </Card>
-    </ProjectToolPage>
+    <>
+      <ProjectPageHeader
+        title="Documents"
+        description="Manage project documents and files"
+      />
+      <PageContainer>
+        <Card className="p-6">
+          <p className="text-muted-foreground">
+            Documents for project {projectId} - Coming soon
+          </p>
+        </Card>
+      </PageContainer>
+    </>
   );
 }

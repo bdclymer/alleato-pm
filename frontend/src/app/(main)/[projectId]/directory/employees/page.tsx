@@ -1,10 +1,11 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -23,7 +24,7 @@ export default function ProjectDirectoryEmployeesPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Directory"
         description="Manage companies and team members for this project"
         actions={

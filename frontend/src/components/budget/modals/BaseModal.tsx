@@ -103,7 +103,7 @@ export function ModalFooter({ children, className }: ModalFooterProps) {
     <div
       className={cn(
         "px-6 py-4 bg-slate-50/90 border-t border-slate-200",
-        "flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3",
+        "flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4",
         "flex-shrink-0",
         className,
       )}
@@ -122,5 +122,5 @@ interface ModalBodyProps {
 }
 
 export function ModalBody({ children, className }: ModalBodyProps) {
-  return <div className={cn("px-6 py-5", className)}>{children}</div>;
+  return <div className={cn("px-6 py-4", className)}>{children}</div>;
 }

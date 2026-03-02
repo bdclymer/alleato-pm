@@ -36,7 +36,7 @@ export function UnlockBudgetModal({
       size="md"
     >
       <ModalBody className="py-6 bg-background">
-        <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 shadow-sm flex items-start gap-3">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-4 shadow-sm flex items-start gap-4">
           <div className="flex-shrink-0">
             <AlertTriangle className="h-6 w-6 text-orange-500" />
           </div>

@@ -102,14 +102,14 @@ export function ChangeEventForm({
         />
       </div>
 
-      <div className="flex justify-between items-center gap-3 pt-6">
+      <div className="flex justify-between items-center gap-4 pt-6">
         <DevAutoFillButton
           formType="changeEvent"
           onAutoFill={(data) =>
             updateFormData(data as Partial<ChangeEventFormData>)
           }
         />
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>

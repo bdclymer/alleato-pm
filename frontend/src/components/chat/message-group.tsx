@@ -47,7 +47,7 @@ export function MessageGroup({
       onMouseLeave={() => setIsHovered(false)}
       onClick={onSelect}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         {/* Avatar - only show for first message in group */}
         <div className="w-9 shrink-0">
           {isFirstInGroup && (

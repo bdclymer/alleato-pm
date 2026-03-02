@@ -254,7 +254,7 @@ export function EnhancedBudgetLineItemModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <DialogHeader className="space-y-3">
+        <DialogHeader className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-xl font-semibold">
@@ -459,7 +459,7 @@ export function EnhancedBudgetLineItemModal({
           <div className="text-sm text-muted-foreground">
             Press <kbd className="bg-muted px-1 rounded text-xs">Ctrl+S</kbd> to save all items
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <BudgetButton
               intent="secondary"
               onClick={() => onOpenChange(false)}

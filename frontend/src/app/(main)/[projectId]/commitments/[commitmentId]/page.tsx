@@ -289,7 +289,7 @@ export default function CommitmentDetailPage() {
       <Stack>
         {/* Header skeleton */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Skeleton className="h-8 w-24" />
             <Skeleton className="h-6 w-20 rounded-full" />
           </div>
@@ -354,7 +354,7 @@ export default function CommitmentDetailPage() {
   return (
     <Stack>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <Text size="xl" weight="bold">
             {commitment.number}
           </Text>
@@ -524,7 +524,7 @@ export default function CommitmentDetailPage() {
                   <Text size="sm" tone="muted">
                     Draft
                   </Text>
-                  <Text size="lg" weight="medium" className="text-gray-500">
+                  <Text size="lg" weight="medium" className="text-muted-foreground">
                     {formatCurrency(commitment.draft_change_orders || 0)}
                   </Text>
                   <Text size="xs" tone="muted">

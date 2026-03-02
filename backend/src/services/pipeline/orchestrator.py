@@ -8,6 +8,8 @@ Usage:
 from __future__ import annotations
 
 import logging
+import os
+import time
 from typing import Any, Dict
 
 from .parser import run_parser
@@ -17,6 +19,21 @@ from .digest import run_digest
 from ..supabase_helpers import get_supabase_client
 
 logger = logging.getLogger(__name__)
+
+
+def _is_transient_db_timeout(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return (
+        "statement timeout" in msg
+        or "code': '57014'" in msg
+        or 'code": "57014"' in msg
+        or "canceling statement due to statement timeout" in msg
+        or "bad gateway" in msg
+        or "error code 502" in msg
+        or "json could not be generated" in msg
+        or "code': 502" in msg
+        or 'code": 502' in msg
+    )
 
 
 def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
@@ -34,44 +51,60 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
     client = get_supabase_client()
     results: Dict[str, Any] = {"metadataId": metadata_id}
 
-    try:
-        logger.info("[Pipeline] Stage 1/4: Parser → %s", metadata_id)
-        results["parser"] = run_parser(metadata_id)
-        logger.info("[Pipeline] Parser done: %s", results["parser"])
-
-        logger.info("[Pipeline] Stage 2/4: Embedder → %s", metadata_id)
-        results["embedder"] = run_embedder(metadata_id)
-        logger.info("[Pipeline] Embedder done: %s", results["embedder"])
-
-        logger.info("[Pipeline] Stage 3/4: Extractor → %s", metadata_id)
-        results["extractor"] = run_extractor(metadata_id)
-        logger.info("[Pipeline] Extractor done: %s", results["extractor"])
-
-        # Stage 4: Digest — non-critical, failures don't block pipeline
+    max_retries = int(os.getenv("PIPELINE_TRANSIENT_RETRIES", "2"))
+    for attempt in range(max_retries + 1):
         try:
-            logger.info("[Pipeline] Stage 4/4: Digest → %s", metadata_id)
-            results["digest"] = run_digest(metadata_id)
-            logger.info("[Pipeline] Digest done: %s", results["digest"])
-        except Exception as digest_exc:
-            logger.warning(
-                "[Pipeline] Digest failed for %s (non-critical): %s",
-                metadata_id, digest_exc,
+            logger.info("[Pipeline] Stage 1/4: Parser → %s", metadata_id)
+            results["parser"] = run_parser(metadata_id)
+            logger.info("[Pipeline] Parser done: %s", results["parser"])
+
+            logger.info("[Pipeline] Stage 2/4: Embedder → %s", metadata_id)
+            results["embedder"] = run_embedder(metadata_id)
+            logger.info("[Pipeline] Embedder done: %s", results["embedder"])
+
+            logger.info("[Pipeline] Stage 3/4: Extractor → %s", metadata_id)
+            results["extractor"] = run_extractor(metadata_id)
+            logger.info("[Pipeline] Extractor done: %s", results["extractor"])
+
+            # Stage 4: Digest — non-critical, failures don't block pipeline
+            try:
+                logger.info("[Pipeline] Stage 4/4: Digest → %s", metadata_id)
+                results["digest"] = run_digest(metadata_id)
+                logger.info("[Pipeline] Digest done: %s", results["digest"])
+            except Exception as digest_exc:
+                logger.warning(
+                    "[Pipeline] Digest failed for %s (non-critical): %s",
+                    metadata_id, digest_exc,
+                )
+                results["digest"] = {"status": "error", "error": str(digest_exc)}
+
+            results["status"] = "done"
+            return results
+        except Exception as exc:
+            is_transient = _is_transient_db_timeout(exc)
+            is_last_attempt = attempt >= max_retries
+            if is_transient and not is_last_attempt:
+                backoff_seconds = 2 ** (attempt + 1)
+                logger.warning(
+                    "[Pipeline] Transient DB timeout for %s; retrying in %ss (attempt %s/%s): %s",
+                    metadata_id,
+                    backoff_seconds,
+                    attempt + 1,
+                    max_retries + 1,
+                    exc,
+                )
+                time.sleep(backoff_seconds)
+                continue
+
+            logger.error(
+                "[Pipeline] Failed at metadata_id=%s: %s", metadata_id, exc, exc_info=True
             )
-            results["digest"] = {"status": "error", "error": str(digest_exc)}
-
-        results["status"] = "done"
-        return results
-
-    except Exception as exc:
-        logger.error(
-            "[Pipeline] Failed at metadata_id=%s: %s", metadata_id, exc, exc_info=True
-        )
-        try:
-            client.table("fireflies_ingestion_jobs").update(
-                {"stage": "error", "error_message": str(exc)[:500]}
-            ).eq("metadata_id", metadata_id).execute()
-        except Exception:
-            pass  # Don't mask the original error
-        results["status"] = "error"
-        results["error"] = str(exc)
-        raise
+            try:
+                client.table("fireflies_ingestion_jobs").update(
+                    {"stage": "error", "error_message": str(exc)[:500]}
+                ).eq("metadata_id", metadata_id).execute()
+            except Exception:
+                pass  # Don't mask the original error
+            results["status"] = "error"
+            results["error"] = str(exc)
+            raise

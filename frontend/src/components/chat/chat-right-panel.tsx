@@ -34,14 +34,14 @@ export function ChatRightPanel({
         <TabsList className="w-full justify-start border-b border-[hsl(var(--chat-border))] rounded-none h-auto p-0 bg-transparent">
           <TabsTrigger
             value="threads"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-3"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-4"
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             Threads
           </TabsTrigger>
           <TabsTrigger
             value="details"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-3"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-4"
           >
             <Info className="h-4 w-4 mr-2" />
             Details
@@ -60,7 +60,7 @@ export function ChatRightPanel({
                 </div>
               ) : (
                 <div className="text-center text-sm text-[hsl(var(--chat-muted))] mt-8">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>Select a message to view its thread</p>
                 </div>
               )}

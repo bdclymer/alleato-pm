@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { RfiDetail } from "./rfi-detail";
 
 export default async function RfiDetailPage({
@@ -24,7 +24,7 @@ export default async function RfiDetailPage({
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={rfi ? `RFI #${rfi.number}` : "RFI Detail"}
         description={rfi?.subject ?? ""}
       />

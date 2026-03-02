@@ -583,7 +583,7 @@ export default function NewChangeOrderPage() {
 
                 {/* Display calculated total */}
                 {lineItems.length > 0 && (
-                  <div className="flex justify-end items-center gap-3 pt-2 border-t">
+                  <div className="flex justify-end items-center gap-4 pt-2 border-t">
                     <span className="text-sm text-muted-foreground">
                       Change Order Total (from line items):
                     </span>
@@ -613,7 +613,7 @@ export default function NewChangeOrderPage() {
                     control={form.control}
                     name="scope"
                     render={({ field }) => (
-                      <FormItem className="space-y-3">
+                      <FormItem className="space-y-4">
                         <FormLabel>Scope</FormLabel>
                         <FormControl>
                           <RadioGroup
@@ -758,7 +758,7 @@ export default function NewChangeOrderPage() {
                   control={form.control}
                   name="is_private"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox
                           id="is_private"
@@ -779,7 +779,7 @@ export default function NewChangeOrderPage() {
             </Card>
 
             {/* Form Actions */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-4">
               <Button
                 type="button"
                 variant="outline"

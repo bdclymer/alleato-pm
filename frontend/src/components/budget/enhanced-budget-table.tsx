@@ -157,15 +157,15 @@ function EnhancedInlineCreateRow({
 
   return (
     <tr className="bg-brand/5 border-2 border-brand/20 shadow-sm">
-      <td className="py-3 pl-3 pr-2">
+      <td className="py-4 pl-4 pr-2">
         {/* Empty checkbox cell */}
       </td>
-      <td className="py-3 px-2">
+      <td className="py-4 px-2">
         {/* Empty expander cell */}
       </td>
 
       {/* Description Field - spans multiple columns for better UX */}
-      <td className="py-3 px-2" colSpan={2}>
+      <td className="py-4 px-2" colSpan={2}>
         <div className="space-y-2">
           {/* Budget Code Selector (Optional) */}
           <BudgetFormField
@@ -198,7 +198,7 @@ function EnhancedInlineCreateRow({
               onKeyDown={(e) => handleKeyDown(e, "description")}
               placeholder="Enter line item description *"
               className={cn(
-                "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm",
+                "h-9 w-full rounded-md border border-input bg-background px-4 py-1 text-sm",
                 "focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 errors.description && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
@@ -211,7 +211,7 @@ function EnhancedInlineCreateRow({
       </td>
 
       {/* Amount Field */}
-      <td className="py-3 px-2">
+      <td className="py-4 px-2">
         <BudgetFormField
           label="Amount"
           required={true}
@@ -234,13 +234,13 @@ function EnhancedInlineCreateRow({
 
       {/* Empty cells for other columns */}
       {Array.from({ length: 10 }).map((_, index) => (
-        <td key={index} className="py-3 px-2">
+        <td key={index} className="py-4 px-2">
           {/* Empty */}
         </td>
       ))}
 
       {/* Action Buttons */}
-      <td className="py-3 px-2">
+      <td className="py-4 px-2">
         <div className="flex items-center gap-1 justify-end">
           {/* Keyboard Help Tooltip */}
           <Tooltip open={showKeyboardHelp} onOpenChange={setShowKeyboardHelp}>

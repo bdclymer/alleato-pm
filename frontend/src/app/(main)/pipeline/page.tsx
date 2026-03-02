@@ -1,3 +1,4 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import { useState, useEffect } from "react";
@@ -32,7 +33,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 
 interface Document {
   id: string;
@@ -227,7 +228,7 @@ export default function DocumentPipelinePage() {
 
   return (
     <PageContainer>
-      <PageHeader
+      <ProjectPageHeader
         title="Document Pipeline Management"
         description="Monitor and manage document processing pipeline"
         actions={
@@ -258,7 +259,7 @@ export default function DocumentPipelinePage() {
                 isProcessing ? "ring-2 ring-blue-500 ring-opacity-50" : ""
               }
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon

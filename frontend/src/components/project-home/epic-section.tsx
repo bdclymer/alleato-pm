@@ -39,7 +39,7 @@ export function EpicSection({
       {/* Epic Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-10 px-3 -mx-3 rounded transition-colors duration-150 hover:bg-neutral-50 group"
+        className="flex items-center justify-between w-full h-10 px-4 -mx-4 rounded transition-colors duration-150 hover:bg-neutral-50 group"
       >
         <div className="flex items-center gap-2">
           <ChevronRight
@@ -69,7 +69,7 @@ export function EpicSection({
           >
             <div className="mt-1 space-y-0">
               {tasks.length === 0 ? (
-                <div className="px-3 py-6 text-center">
+                <div className="px-4 py-6 text-center">
                   <p className="text-sm text-neutral-400">No tasks yet</p>
                 </div>
               ) : (

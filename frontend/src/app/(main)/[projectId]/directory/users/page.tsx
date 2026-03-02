@@ -1,10 +1,11 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";
 import { UserPlus, Users, Mail, Shield, MoreHorizontal, UserX, RefreshCw, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -35,7 +36,7 @@ import type { PersonWithDetails } from "@/services/directoryService";
 
 function UsersTableSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {[...Array(5)].map((_, i) => (
         <div key={i} className="flex items-center space-x-4 p-4 border rounded-lg">
           <Skeleton className="h-10 w-10 rounded-full" />
@@ -93,7 +94,7 @@ export default function ProjectDirectoryUsersPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Project Directory - Users"
           description="Manage users for this project"
           actions={
@@ -117,7 +118,7 @@ export default function ProjectDirectoryUsersPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Project Directory - Users"
         description="Manage users for this project"
         actions={
@@ -183,7 +184,7 @@ export default function ProjectDirectoryUsersPage() {
                       return (
                         <TableRow key={user.id}>
                           <TableCell>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-4">
                               <Avatar className="h-9 w-9">
                                 <AvatarFallback className="bg-primary/10 text-primary">
                                   {initials}
@@ -291,16 +292,16 @@ export default function ProjectDirectoryUsersPage() {
 
       {/* Debug Banner */}
       {process.env.NODE_ENV === "development" && (
-        <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 text-zinc-300 text-xs px-4 py-2 font-mono border-t border-zinc-700">
-          <span className="text-zinc-500">Tables:</span>{" "}
+        <div className="fixed bottom-0 left-0 right-0 bg-foreground text-background/90 text-xs px-4 py-2 font-mono border-t border-border/20">
+          <span className="text-background/60">Tables:</span>{" "}
           <span className="text-blue-400">users_auth</span> →
           <span className="text-green-400">people</span> →
           <span className="text-yellow-400">project_directory_memberships</span>
-          <span className="mx-3 text-zinc-600">|</span>
-          <span className="text-zinc-500">Project:</span>{" "}
+          <span className="mx-4 text-background/50">|</span>
+          <span className="text-background/60">Project:</span>{" "}
           <span className="text-white">{projectId}</span>
-          <span className="mx-3 text-zinc-600">|</span>
-          <span className="text-zinc-500">Results:</span>{" "}
+          <span className="mx-4 text-background/50">|</span>
+          <span className="text-background/60">Results:</span>{" "}
           <span
             className={users.length > 0 ? "text-green-400" : "text-red-400"}
           >
@@ -308,7 +309,7 @@ export default function ProjectDirectoryUsersPage() {
           </span>
           {error && (
             <>
-              <span className="mx-3 text-zinc-600">|</span>
+              <span className="mx-4 text-background/50">|</span>
               <span className="text-red-400">
                 Error: {(error as Error).message}
               </span>

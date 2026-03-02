@@ -95,7 +95,7 @@ function SprinklerDetails({ match }: { match: FmGlobalMatchView }): ReactElement
   ];
 
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-4 md:grid-cols-2">
       {details.map((detail) => (
         <div key={detail.label}>
           <Text size="sm" tone="muted">
@@ -118,11 +118,11 @@ function FigureGrid({ match }: { match: FmGlobalMatchView }): ReactElement | nul
       <Text size="sm" tone="muted">
         Relevant Figures
       </Text>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {match.figures.map((figure) => (
           <div
             key={figure.id}
-            className="rounded-lg border border-border/70 p-3"
+            className="rounded-lg border border-border/70 p-4"
           >
             <Text className="font-medium">
               Figure {figure.figure_number}: {figure.title}
@@ -131,7 +131,7 @@ function FigureGrid({ match }: { match: FmGlobalMatchView }): ReactElement | nul
               {figure.figure_type}
             </Text>
             {figure.image && (
-              <div className="mt-3 overflow-hidden rounded-md border">
+              <div className="mt-4 overflow-hidden rounded-md border">
                 <Image
                   src={figure.image}
                   alt={figure.title}
@@ -207,11 +207,11 @@ function RecommendationsCard({
         <Sparkles className="h-5 w-5 text-primary" />
         <CardTitle className="text-base">Optimization Recommendations</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {recommendations.map((rec) => (
           <div
             key={`${rec.recommendation}-${rec.priority}`}
-            className="rounded-lg border border-border/70 p-3"
+            className="rounded-lg border border-border/70 p-4"
           >
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">{rec.priority}</Badge>

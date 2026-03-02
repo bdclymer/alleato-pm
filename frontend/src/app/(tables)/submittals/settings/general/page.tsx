@@ -122,7 +122,7 @@ function GeneralSettingsForm({ projectId }: { projectId: number }) {
       </div>
 
       <Card>
-        <CardContent className="space-y-3 pt-6">
+        <CardContent className="space-y-4 pt-6">
           <Label htmlFor="numbering" className="text-sm font-medium">
             Numbering Prefix
           </Label>
@@ -138,7 +138,7 @@ function GeneralSettingsForm({ projectId }: { projectId: number }) {
             Prefix applied to new submittal numbers (e.g., SUB-0001). Saved per
             user and project.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Button
               data-testid="submittals-settings-save"
               onClick={handleSave}

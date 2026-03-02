@@ -93,7 +93,7 @@ export function ProjectAccordions({
                 <Link
                   href={`/${projectId}/schedule`}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   View Schedule <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -105,7 +105,7 @@ export function ProjectAccordions({
                   schedule.slice(0, 5).map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start justify-between p-3 bg-muted/50"
+                      className="flex items-start justify-between p-4 bg-muted/50"
                     >
                       <div className="space-y-1">
                         <p className="font-medium text-sm">{item.task}</p>
@@ -121,7 +121,7 @@ export function ProjectAccordions({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground p-3">
+                  <p className="text-sm text-muted-foreground p-4">
                     No schedule items
                   </p>
                 )}
@@ -155,7 +155,7 @@ export function ProjectAccordions({
                 <Link
                   href={`/${projectId}/insights`}
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   View All <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -165,7 +165,7 @@ export function ProjectAccordions({
               <div className="space-y-2 pt-2">
                 {insights.length > 0 ? (
                   insights.slice(0, 5).map((insight) => (
-                    <div key={insight.id} className="p-3 bg-muted/50">
+                    <div key={insight.id} className="p-4 bg-muted/50">
                       <div className="flex items-start justify-between mb-1">
                         <p className="font-medium text-sm">
                           {insight.category || "General"}
@@ -185,7 +185,7 @@ export function ProjectAccordions({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground p-3">
+                  <p className="text-sm text-muted-foreground p-4">
                     No AI insights generated yet
                   </p>
                 )}

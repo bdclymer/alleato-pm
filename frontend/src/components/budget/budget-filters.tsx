@@ -70,8 +70,8 @@ export function BudgetFilters({
   return (
     <div className="flex flex-col lg:flex-row items-stretch lg:items-end justify-between py-4 gap-4">
       {/* Left side - Filter controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 overflow-x-auto">
-        <div className="flex flex-wrap sm:flex-nowrap gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 overflow-x-auto">
+        <div className="flex flex-wrap sm:flex-nowrap gap-4">
           {/* View Selector */}
           <div className="flex flex-col gap-1 min-w-[140px]">
             <span className="text-xs text-muted-foreground">View</span>
@@ -160,7 +160,7 @@ export function BudgetFilters({
         </div>
 
         {/* Quick Filters and Add Filter */}
-        <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:border-l sm:pl-3 sm:ml-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:border-l sm:pl-4 sm:ml-2">
           {/* Quick Filters */}
           <div className="flex flex-col gap-1 min-w-[120px]">
             <span className="text-xs text-muted-foreground">Quick Filter</span>

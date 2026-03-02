@@ -161,7 +161,7 @@ export function ExportCommitmentDialog({
 
         <div className="space-y-6 py-4">
           {/* Format Selection */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label htmlFor="export-format">Export Format</Label>
             <RadioGroup
               id="export-format"
@@ -190,7 +190,7 @@ export function ExportCommitmentDialog({
           </div>
 
           {/* Template Selection */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label htmlFor="export-template">Template</Label>
             <RadioGroup
               id="export-template"
@@ -225,7 +225,7 @@ export function ExportCommitmentDialog({
           </div>
 
           {/* Include Options */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label>Include in Export</Label>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
@@ -278,7 +278,7 @@ export function ExportCommitmentDialog({
 
           {/* Info Box */}
           {format === "pdf" && (
-            <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+            <div className="rounded-md bg-muted/50 p-4 text-sm text-muted-foreground">
               <strong>Note:</strong> PDF export will open a print-friendly page.
               Use your browser&apos;s print function (Ctrl/Cmd+P) to save as PDF.
             </div>

@@ -201,7 +201,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                   <CardHeader>
                     <CardTitle className="text-base">Details</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
+                  <CardContent className="space-y-4 text-sm">
                     <div>
                       <p className="text-muted-foreground text-xs uppercase font-medium">Type</p>
                       <p>
@@ -257,7 +257,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                     <CardHeader>
                       <CardTitle className="text-base">Distribution History</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                    <CardContent className="space-y-4">
                       {distributions.map((dist) => (
                         <div key={dist.id} className="text-sm space-y-1">
                           <p className="text-xs text-muted-foreground">
@@ -308,7 +308,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                       {step.submittal_responses?.map((resp) => (
                         <div
                           key={resp.id}
-                          className="flex items-start justify-between gap-3 rounded-md border p-3"
+                          className="flex items-start justify-between gap-4 rounded-md border p-4"
                         >
                           <div className="text-sm">
                             <p className="font-medium text-xs text-muted-foreground">
@@ -371,9 +371,9 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
             ) : (
               <Card>
                 <CardContent className="pt-4">
-                  <ol className="space-y-3">
+                  <ol className="space-y-4">
                     {history.map((entry) => (
-                      <li key={entry.id} className="flex gap-3 text-sm">
+                      <li key={entry.id} className="flex gap-4 text-sm">
                         <span className="text-muted-foreground text-xs w-28 shrink-0">
                           {formatDate(entry.occurred_at)}
                         </span>

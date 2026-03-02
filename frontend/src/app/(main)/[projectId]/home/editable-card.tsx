@@ -99,7 +99,7 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {fields.map((field) => (
           <div key={field.key}>
             <span className="text-sm font-medium">{field.label}:</span>

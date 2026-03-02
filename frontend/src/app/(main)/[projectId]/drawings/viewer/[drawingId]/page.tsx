@@ -143,7 +143,7 @@ export default function DrawingViewerPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header Bar */}
-      <div className="bg-card border-b px-4 py-3 flex items-center justify-between">
+      <div className="bg-card border-b px-4 py-4 flex items-center justify-between">
         {/* Left side - Back button and breadcrumb */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <Button variant="ghost" size="sm" onClick={handleBack}>

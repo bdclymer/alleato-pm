@@ -86,7 +86,7 @@ export default function Ai02() {
   };
 
   const renderMaxBadge = () => (
-    <div className="flex h-[14px] items-center gap-1.5 rounded border border-border px-1 py-0">
+    <div className="flex h-[14px] items-center gap-2 rounded border border-border px-1 py-0">
       <span
         className="text-[9px] font-bold uppercase"
         style={{
@@ -110,7 +110,7 @@ export default function Ai02() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask anything"
-            className="w-full border-0 p-3 transition-[padding] duration-200 ease-in-out min-h-[48.4px] outline-none text-[16px] text-foreground resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent! whitespace-pre-wrap break-words"
+            className="w-full border-0 p-4 transition-[padding] duration-200 ease-in-out min-h-[48.4px] outline-none text-[16px] text-foreground resize-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent! whitespace-pre-wrap break-words"
           />
         </div>
 
@@ -156,7 +156,7 @@ export default function Ai02() {
             </Select>
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
@@ -188,7 +188,7 @@ export default function Ai02() {
             <Button
               key={button.text}
               variant="ghost"
-              className="group flex items-center gap-2 rounded-full border px-3 py-2 text-sm text-foreground transition-all duration-200 hover:bg-muted/30 h-auto bg-transparent dark:bg-muted"
+              className="group flex items-center gap-2 rounded-full border px-4 py-2 text-sm text-foreground transition-all duration-200 hover:bg-muted/30 h-auto bg-transparent dark:bg-muted"
               onClick={() => handlePromptClick(button.prompt)}
             >
               <IconComponent className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />

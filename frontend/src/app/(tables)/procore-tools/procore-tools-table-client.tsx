@@ -368,14 +368,14 @@ export function ProcoreToolsTableClient({
       views={{
         card: (item) => (
           <div className="rounded-lg border p-4">
-            <div className="mb-2 flex items-start justify-between gap-3">
+            <div className="mb-2 flex items-start justify-between gap-4">
               <h3 className="font-medium">{toDisplayValue(item.name)}</h3>
               <Badge variant={statusVariant(item.status)}>
                 {toDisplayValue(item.status)}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{toDisplayValue(item.slug)}</p>
-            <div className="mt-3">
+            <div className="mt-4">
               <Badge variant={categoryVariant(item.category)}>
                 {toDisplayValue(item.category)}
               </Badge>
@@ -383,7 +383,7 @@ export function ProcoreToolsTableClient({
           </div>
         ),
         list: (item) => (
-          <div className="flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted/50">
+          <div className="flex items-center justify-between rounded-md px-4 py-2 hover:bg-muted/50">
             <div>
               <p className="text-sm font-medium">{toDisplayValue(item.name)}</p>
               <p className="text-xs text-muted-foreground">{toDisplayValue(item.slug)}</p>

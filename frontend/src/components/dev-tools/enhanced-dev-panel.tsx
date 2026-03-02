@@ -344,7 +344,7 @@ export function EnhancedDevPanel() {
 
               {/* Environment Info */}
               <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <Database className="h-4 w-4" />
                   Environment
                 </h3>
@@ -370,7 +370,7 @@ export function EnhancedDevPanel() {
 
               {/* Current Route */}
               <div>
-                <h3 className="font-semibold mb-3">Current Route</h3>
+                <h3 className="font-semibold mb-4">Current Route</h3>
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Path:</span>
@@ -390,7 +390,7 @@ export function EnhancedDevPanel() {
                 <Separator />
                 {/* Page Insights */}
                 <div>
-                  <h3 className="font-semibold mb-3">Page Insights</h3>
+                  <h3 className="font-semibold mb-4">Page Insights</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex gap-2 items-center">
                       <Badge variant="secondary" className="text-xs">
@@ -447,7 +447,7 @@ export function EnhancedDevPanel() {
 
             {/* Health Checks */}
             <div>
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold">System Health</h3>
                   <Button
                     variant="outline"
@@ -507,7 +507,7 @@ export function EnhancedDevPanel() {
 
               {/* Quick Actions */}
               <div>
-                <h3 className="font-semibold mb-3">Quick Fixes</h3>
+                <h3 className="font-semibold mb-4">Quick Fixes</h3>
                 <div className="space-y-2">
                   <Button
                     variant="outline"
@@ -551,7 +551,7 @@ export function EnhancedDevPanel() {
                   </Button>
 
                   {routeConflicts && (
-                    <div className="text-xs bg-muted p-3 rounded-lg font-mono whitespace-pre-wrap">
+                    <div className="text-xs bg-muted p-4 rounded-lg font-mono whitespace-pre-wrap">
                       {routeConflicts}
                     </div>
                   )}
@@ -571,7 +571,7 @@ export function EnhancedDevPanel() {
 
               {/* Quick Links */}
               <div>
-                <h3 className="font-semibold mb-3">Quick Links</h3>
+                <h3 className="font-semibold mb-4">Quick Links</h3>
                 <div className="space-y-2">
                   <Button
                     variant="outline"
@@ -605,12 +605,12 @@ export function EnhancedDevPanel() {
             <TabsContent value="database" className="space-y-4">
               {/* FK Type Reference */}
               <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <LinkIcon className="h-4 w-4" />
                   FK Type Reference
                   <Badge variant="destructive" className="text-xs">CRITICAL</Badge>
                 </h3>
-                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
                   <p className="text-xs text-muted-foreground mb-2">
                     Common FK type mismatches (90+ min wasted on 3 incidents):
                   </p>
@@ -632,11 +632,11 @@ export function EnhancedDevPanel() {
 
               {/* CHECK Constraints */}
               <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
                   <Table2 className="h-4 w-4" />
                   CHECK Constraint Values
                 </h3>
-                <div className="bg-muted/50 rounded-lg p-3 space-y-3">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-4">
                   <p className="text-xs text-muted-foreground mb-2">
                     Case-sensitive! Use exact values:
                   </p>
@@ -660,10 +660,10 @@ export function EnhancedDevPanel() {
               {/* Testing Pattern */}
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2 text-sm">Test Queries Before Deploy</h3>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-xs text-muted-foreground mb-4">
                   NEVER claim a query works without testing it:
                 </p>
-                <code className="text-xs bg-background px-3 py-2 rounded block whitespace-pre-wrap">
+                <code className="text-xs bg-background px-4 py-2 rounded block whitespace-pre-wrap">
                   {`node -e '
 const { createClient } = require("@supabase/supabase-js");
 const supabase = createClient(url, key);

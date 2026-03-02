@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +67,7 @@ export default function ProjectDrawingsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Drawings"
         description="Manage construction drawings with revision tracking"
         actions={
@@ -119,14 +119,14 @@ export default function ProjectDrawingsPage() {
           {/* Drawing Areas Sidebar + Main Content */}
           <div className="grid gap-4 lg:grid-cols-[220px,1fr]">
             {/* Drawing Areas Sidebar */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between px-1 pb-1">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Drawing Areas
                 </h3>
               </div>
               {areas.length === 0 && !isLoading && (
-                <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
                   No areas created yet
                 </div>
               )}
@@ -143,7 +143,7 @@ export default function ProjectDrawingsPage() {
                         page: 1,
                       }))
                     }
-                    className={`w-full rounded-md border px-3 py-2 text-left text-sm transition hover:border-primary ${
+                    className={`w-full rounded-md border px-4 py-2 text-left text-sm transition hover:border-primary ${
                       isActive
                         ? "border-primary bg-primary/5"
                         : "border-border bg-background"
@@ -170,10 +170,10 @@ export default function ProjectDrawingsPage() {
             </div>
 
             {/* Main Content */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Filters */}
               <div className="rounded-lg border bg-card">
-                <div className="flex flex-col gap-2 p-3 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-2 p-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex flex-1 items-center gap-2">
                     <div className="relative w-full lg:max-w-sm">
                       <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -27,6 +27,7 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -146,6 +147,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 _openai_client = OpenAI() if (OpenAI and os.getenv("OPENAI_API_KEY")) else None
+_PIPELINE_MAX_CONCURRENCY = max(1, int(os.getenv("PIPELINE_MAX_CONCURRENCY", "3")))
+_pipeline_semaphore = threading.BoundedSemaphore(_PIPELINE_MAX_CONCURRENCY)
+
+
+def _run_pipeline_limited(metadata_id: str) -> None:
+    """Run pipeline with bounded in-process concurrency to prevent DB overload."""
+    logger.info(
+        "[Pipeline] waiting for slot (%s max) metadata_id=%s",
+        _PIPELINE_MAX_CONCURRENCY,
+        metadata_id,
+    )
+    with _pipeline_semaphore:
+        logger.info("[Pipeline] acquired slot metadata_id=%s", metadata_id)
+        run_full_pipeline(metadata_id)
+        logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
 
 app = FastAPI(
     title="Alleato Procore Backend API",
@@ -1030,7 +1046,7 @@ async def pipeline_process_endpoint(
     Returns:
         Dict with status "queued" and the metadataId.
     """
-    background_tasks.add_task(run_full_pipeline, payload.metadataId)
+    background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
 
 

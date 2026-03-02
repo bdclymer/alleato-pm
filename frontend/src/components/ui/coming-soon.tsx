@@ -153,7 +153,7 @@ export function ComingSoon({
           </div>
 
           {/* Title */}
-          <h1 className="mb-3 text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground">
             {title}
           </h1>
 

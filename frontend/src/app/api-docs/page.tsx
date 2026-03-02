@@ -44,16 +44,16 @@ export default function ApiDocsPage() {
         title="API Documentation"
         description="Interactive Swagger UI for the Alleato Procore frontend + backend endpoints."
         actions={
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4">
             <a
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               href="/openapi.json"
               download
             >
               Download JSON
             </a>
             <a
-              className="rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+              className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
               href="/openapi.yaml"
               download
             >

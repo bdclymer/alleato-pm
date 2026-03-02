@@ -244,7 +244,7 @@ export function ImportFromBudgetModal({
                 <table className="w-full">
                   <thead className="bg-muted sticky top-0 border-b">
                     <tr>
-                      <th className="px-4 py-3 text-left w-12">
+                      <th className="px-4 py-4 text-left w-12">
                         <Checkbox
                           checked={
                             filteredLines.length > 0 &&
@@ -255,16 +255,16 @@ export function ImportFromBudgetModal({
                           onCheckedChange={handleSelectAll}
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                      <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                         Cost Code
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                      <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                         Type
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-foreground">
+                      <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
                         Description
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-foreground">
+                      <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
                         Budget Amount
                       </th>
                     </tr>
@@ -281,7 +281,7 @@ export function ImportFromBudgetModal({
                           handleSelectLine(line.id, !selectedIds.has(line.id))
                         }
                       >
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Checkbox
                             checked={selectedIds.has(line.id)}
                             onCheckedChange={(checked) =>
@@ -290,13 +290,13 @@ export function ImportFromBudgetModal({
                             onClick={(e) => e.stopPropagation()}
                           />
                         </td>
-                        <td className="px-4 py-3 text-sm font-mono">
+                        <td className="px-4 py-4 text-sm font-mono">
                           {line.cost_code_id}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-4 text-sm">
                           {line.cost_type?.code || "-"}
                         </td>
-                        <td className="px-4 py-3 text-sm">
+                        <td className="px-4 py-4 text-sm">
                           <div>
                             {line.cost_code?.title || line.description}
                             {line.description && line.cost_code?.title && (
@@ -306,7 +306,7 @@ export function ImportFromBudgetModal({
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-right font-medium">
+                        <td className="px-4 py-4 text-sm text-right font-medium">
                           {formatCurrency(line.original_amount || 0)}
                         </td>
                       </tr>
@@ -318,7 +318,7 @@ export function ImportFromBudgetModal({
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 text-red-600 bg-red-50 p-3 rounded-md text-sm">
+            <div className="flex items-start gap-2 text-red-600 bg-red-50 p-4 rounded-md text-sm">
               <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <p>{error}</p>
             </div>

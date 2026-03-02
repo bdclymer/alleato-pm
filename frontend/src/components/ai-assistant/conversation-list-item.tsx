@@ -62,7 +62,7 @@ export function ConversationListItem({
 
   if (isEditing) {
     return (
-      <div className="flex items-center gap-1 rounded-lg px-3 py-2">
+      <div className="flex items-center gap-1 rounded-lg px-4 py-2">
         <Input
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
@@ -94,10 +94,18 @@ export function ConversationListItem({
   }
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors",
+        "group flex w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-left text-sm transition-colors",
         "hover:bg-muted/60",
         isActive && "bg-muted",
       )}
@@ -135,6 +143,6 @@ export function ConversationListItem({
           <Trash2Icon className="h-3 w-3" />
         </Button>
       </div>
-    </button>
+    </div>
   );
 }

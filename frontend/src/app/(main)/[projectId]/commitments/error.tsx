@@ -16,7 +16,7 @@ export default function CommitmentsError({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
-      <div className="rounded-full bg-destructive/10 p-3">
+      <div className="rounded-full bg-destructive/10 p-4">
         <svg
           className="h-6 w-6 text-destructive"
           fill="none"
@@ -35,7 +35,7 @@ export default function CommitmentsError({
       <p className="text-muted-foreground text-center max-w-md">
         {error.message || "Failed to load commitments data. Please try again."}
       </p>
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         <Button onClick={reset} variant="default">
           Try Again
         </Button>

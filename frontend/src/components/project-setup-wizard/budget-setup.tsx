@@ -325,7 +325,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
 
         {/* Budget Summary */}
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <h4 className="font-medium flex items-center gap-2">
               <Calculator className="h-4 w-4" />
               Budget Summary

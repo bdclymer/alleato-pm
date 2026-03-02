@@ -135,7 +135,7 @@ export function MonitoringCharts({ initiatives }: MonitoringChartsProps) {
         </CardHeader>
         <CardContent>
           {" "}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {" "}
             {statusDistribution.map(({ status, count, percentage }) => (
               <div key={status} className="flex items-center justify-between">
@@ -180,7 +180,7 @@ export function MonitoringCharts({ initiatives }: MonitoringChartsProps) {
         </CardHeader>
         <CardContent>
           {" "}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {" "}
             {priorityDistribution.map(({ priority, count, percentage }) => (
               <div key={priority} className="flex items-center justify-between">
@@ -217,7 +217,7 @@ export function MonitoringCharts({ initiatives }: MonitoringChartsProps) {
           {" "}
           <div className="space-y-4">
             {" "}
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
               {" "}
               <div>
                 {" "}
@@ -228,7 +228,7 @@ export function MonitoringCharts({ initiatives }: MonitoringChartsProps) {
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />{" "}
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
               {" "}
               <div>
                 {" "}
@@ -243,7 +243,7 @@ export function MonitoringCharts({ initiatives }: MonitoringChartsProps) {
               </Badge>{" "}
             </div>
             {progressTrend.stalled > 0 && (
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg">
                 {" "}
                 <div>
                   {" "}

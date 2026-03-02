@@ -922,7 +922,7 @@ export function BudgetTable({
       {/* Empty state - centered on page, outside of scrollable table */}
       {isEmpty && (
         <div className="flex-1 flex items-center justify-center py-16">
-          <div className="flex flex-col items-center justify-center gap-3">
+          <div className="flex flex-col items-center justify-center gap-4">
             <div className="text-muted-foreground mb-2">
               <svg
                 className="mx-auto h-12 w-12 text-muted-foreground"
@@ -978,7 +978,7 @@ export function BudgetTable({
                         className={cn(
                           "text-xs font-semibold text-foreground py-2 bg-muted/50",
                           header.column.id === "select"
-                            ? "pl-3 pr-0.5"
+                            ? "pl-4 pr-0.5"
                             : header.column.id === "expander"
                               ? "px-0.5"
                               : "px-1.5",
@@ -1018,7 +1018,7 @@ export function BudgetTable({
                           className={cn(
                             "py-2 text-sm",
                             cell.column.id === "select"
-                              ? "pl-3 pr-0.5"
+                              ? "pl-4 pr-0.5"
                               : cell.column.id === "expander"
                                 ? "px-0.5"
                                 : "px-1.5",
@@ -1039,7 +1039,7 @@ export function BudgetTable({
             {/* Inline Create Row */}
             {!isLocked && showInlineCreate && (
               <TableRow className="bg-brand/5 border-b border-border">
-                <TableCell className="py-2 pl-3 pr-0.5">
+                <TableCell className="py-2 pl-4 pr-0.5">
                   {/* Empty checkbox cell */}
                 </TableCell>
                 <TableCell className="py-2 px-0.5">
@@ -1145,11 +1145,11 @@ export function BudgetTable({
           <table className="w-full caption-bottom text-sm table-fixed">
             <tbody>
               <tr className="font-semibold bg-muted border-b transition-colors">
-                <td className={cn("py-3 pl-3 pr-0.5", getWidthClass("select"))} />
-                <td className={cn("py-3 px-0.5", getWidthClass("expander"))} />
+                <td className={cn("py-4 pl-4 pr-0.5", getWidthClass("select"))} />
+                <td className={cn("py-4 px-0.5", getWidthClass("expander"))} />
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm font-bold text-foreground",
+                    "py-4 px-2 text-sm font-bold text-foreground",
                     getWidthClass("description"),
                   )}
                 >
@@ -1157,7 +1157,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("originalBudgetAmount"),
                   )}
                 >
@@ -1167,7 +1167,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("budgetModifications"),
                   )}
                 >
@@ -1177,7 +1177,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("approvedCOs"),
                   )}
                 >
@@ -1187,7 +1187,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("revisedBudget"),
                   )}
                 >
@@ -1197,7 +1197,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("jobToDateCostDetail"),
                   )}
                 >
@@ -1207,7 +1207,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("directCosts"),
                   )}
                 >
@@ -1217,7 +1217,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("pendingChanges"),
                   )}
                 >
@@ -1227,7 +1227,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("projectedBudget"),
                   )}
                 >
@@ -1237,7 +1237,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("committedCosts"),
                   )}
                 >
@@ -1247,7 +1247,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("pendingCostChanges"),
                   )}
                 >
@@ -1257,7 +1257,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("projectedCosts"),
                   )}
                 >
@@ -1267,7 +1267,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("forecastToComplete"),
                   )}
                 >
@@ -1277,7 +1277,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("estimatedCostAtCompletion"),
                   )}
                 >
@@ -1289,7 +1289,7 @@ export function BudgetTable({
                 </td>
                 <td
                   className={cn(
-                    "py-3 px-2 text-sm",
+                    "py-4 px-2 text-sm",
                     getWidthClass("projectedOverUnder"),
                   )}
                 >

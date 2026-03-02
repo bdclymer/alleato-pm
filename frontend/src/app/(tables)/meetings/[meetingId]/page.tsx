@@ -11,16 +11,17 @@ import {
   AlertTriangle,
   ListTodo,
   Sparkles,
+  Users,
+  ArrowLeft,
 } from 'lucide-react'
-import { SectionHeader } from '@/components/ui/section-header'
 import { FormattedTranscript } from '@/app/(main)/[projectId]/meetings/formatted-transcript'
 import { parseTranscriptSections } from '@/app/(main)/[projectId]/meetings/[meetingId]/parse-transcript-sections'
 import { MarkdownSummary } from '@/app/(main)/[projectId]/meetings/[meetingId]/markdown-summary'
 import type { Database } from '@/types/database.types'
-import { DashboardLayout } from '@/components/layouts'
-import { PageHeader } from '@/components/layout'
+import { PageContainer } from '@/components/layout'
+import Link from 'next/link'
+import { CollapsibleSection } from './collapsible-section'
 
-// Extended types to handle fields that may exist in DB but not in generated types
 type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & {
   opportunities?: unknown[]
 }
@@ -29,24 +30,17 @@ type DocumentMetadata = Database['public']['Tables']['document_metadata']['Row']
   duration?: number
 }
 
-/**
- * Format an email address into a display name.
- * e.g. "bclymer@alleatogroup.com" -> "B. Clymer"
- * e.g. "tony@ibexdevgroup.com" -> "Tony"
- */
 function formatParticipantName(email: string): string {
   const localPart = email.split('@')[0]
   if (!localPart) return email
-
-  // Handle formats like "first.last" or "firstlast"
   const parts = localPart.split(/[._-]/)
   if (parts.length >= 2) {
     const firstName = parts[0].charAt(0).toUpperCase() + '.'
-    const lastName = parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1).toLowerCase()
+    const lastName =
+      parts[parts.length - 1].charAt(0).toUpperCase() +
+      parts[parts.length - 1].slice(1).toLowerCase()
     return `${firstName} ${lastName}`
   }
-
-  // Single name - just capitalize it
   return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase()
 }
 
@@ -58,7 +52,6 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const { meetingId } = await params
   const supabase = await createClient()
 
-  // Fetch meeting metadata
   const { data: meetingData, error } = await supabase
     .from('document_metadata')
     .select('*')
@@ -69,20 +62,16 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  // Cast to extended type to handle optional fields
   const meeting = meetingData as DocumentMetadata
 
-  // Fetch meeting segments
   const { data: segmentsData } = await supabase
     .from('meeting_segments')
     .select('*')
     .eq('metadata_id', meetingId)
     .order('segment_index', { ascending: true })
 
-  // Cast to extended type to handle optional fields
   const segments = (segmentsData || []) as MeetingSegment[]
 
-  // Aggregate all outcomes from segments
   const allTasks: string[] = []
   const allRisks: string[] = []
   const allDecisions: string[] = []
@@ -92,23 +81,17 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     if (segment.tasks && Array.isArray(segment.tasks)) {
       segment.tasks.forEach((task: unknown) => {
         const text =
-          typeof task === 'string'
-            ? task
-            : (task as Record<string, unknown>)?.description
+          typeof task === 'string' ? task : (task as Record<string, unknown>)?.description
         if (text) allTasks.push(String(text))
       })
     }
-
     if (segment.risks && Array.isArray(segment.risks)) {
       segment.risks.forEach((risk: unknown) => {
         const text =
-          typeof risk === 'string'
-            ? risk
-            : (risk as Record<string, unknown>)?.description
+          typeof risk === 'string' ? risk : (risk as Record<string, unknown>)?.description
         if (text) allRisks.push(String(text))
       })
     }
-
     if (segment.decisions && Array.isArray(segment.decisions)) {
       segment.decisions.forEach((decision: unknown) => {
         const text =
@@ -118,7 +101,6 @@ export default async function MeetingDetailPage({ params }: PageProps) {
         if (text) allDecisions.push(String(text))
       })
     }
-
     if (segment.opportunities && Array.isArray(segment.opportunities)) {
       segment.opportunities.forEach((opportunity: unknown) => {
         const text =
@@ -130,8 +112,6 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     }
   })
 
-  // Fetch transcript content
-  // Priority: Storage URL > meeting.content (as fallback)
   let transcriptContent = null
   const storageUrl = meeting.url || meeting.source
 
@@ -141,12 +121,11 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       if (response.ok) {
         transcriptContent = await response.text()
       }
-    } catch (err) {
-      console.error("Failed to fetch transcript from storage:", err)
+    } catch {
+      // fallback below
     }
   }
 
-  // Fallback: use meeting.content
   if (!transcriptContent && meeting.content) {
     transcriptContent = meeting.content
   }
@@ -157,422 +136,256 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     ),
   ]
 
-  // Parse the transcript content into sections
-  const parsedSections = transcriptContent
-    ? parseTranscriptSections(transcriptContent)
-    : null
+  const parsedSections = transcriptContent ? parseTranscriptSections(transcriptContent) : null
+
+  const shortDescription =
+    meeting.summary && meeting.summary.length > 180
+      ? `${meeting.summary.slice(0, 180)}...`
+      : meeting.summary || undefined
+
+  const hasActionItems =
+    allTasks.length > 0 ||
+    allDecisions.length > 0 ||
+    allRisks.length > 0 ||
+    allOpportunities.length > 0
 
   return (
-    <>
-      <PageHeader
-        title={meeting.title || 'Untitled Meeting'}
-        description={meeting.summary || undefined}
-        breadcrumbs={[
-          { label: 'Meetings', href: '/meetings' },
-          { label: meeting.title || 'Meeting' },
-        ]}
-      />
+    <PageContainer maxWidth="xl" className="pb-12">
+      {/* Page header — inside container so it's constrained */}
+      <div className="mb-6">
+        <Link
+          href="/meetings"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Meetings
+        </Link>
+        <h1 className="text-2xl font-semibold text-foreground">
+          {meeting.title || 'Untitled Meeting'}
+        </h1>
+        {shortDescription && (
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground max-w-2xl">
+            {shortDescription}
+          </p>
+        )}
+      </div>
 
-      <DashboardLayout>
-        {/* Metadata Grid */}
-        <div className="flex items-center gap-12 mb-12">
-          {/* Date */}
-          {meeting.date && (
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-brand" />
-              <SectionHeader>
-                {format(new Date(meeting.date), 'EEEE, MMMM d, yyyy')}
-              </SectionHeader>
-            </div>
+      {/* Meta bar */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-4 mb-8">
+        {meeting.date ? (
+          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" />
+            {format(new Date(meeting.date), 'EEEE, MMMM d, yyyy')}
+          </span>
+        ) : null}
+        {meeting.type ? (
+          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Tag className="h-3.5 w-3.5" />
+            {meeting.type}
+          </span>
+        ) : null}
+        {meeting.duration ? (
+          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            {meeting.duration} min
+          </span>
+        ) : null}
+        {meeting.fireflies_link ? (
+          <a
+            href={meeting.fireflies_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            View in Fireflies
+          </a>
+        ) : null}
+      </div>
+
+      <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
+        {/* Main content — narrative only */}
+        <div className="space-y-8">
+          {/* Meeting Overview */}
+          {parsedSections?.gist ? (
+            <section className="space-y-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Meeting Overview
+              </h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {parsedSections.gist}
+              </p>
+            </section>
+          ) : null}
+
+          {/* Summary */}
+          {parsedSections?.summary ? (
+            <section className="border-t border-border pt-6">
+              <CollapsibleSection label="Summary">
+                <MarkdownSummary content={parsedSections.summary} />
+              </CollapsibleSection>
+            </section>
+          ) : null}
+
+          {/* Discussion Topics — summaries only, no per-topic action item repetition */}
+          {segments.length > 0 && (
+            <section className="border-t border-border pt-6">
+              <CollapsibleSection label={`Discussion Topics (${segments.length})`}>
+                <div className="space-y-6">
+                  {segments.map((segment, index) => (
+                    <div key={segment.id} className="space-y-1.5 border-l-2 border-border pl-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {segment.segment_index + 1}
+                        </span>
+                        <h3 className="text-sm font-medium text-foreground">
+                          {segment.title || `Topic ${index + 1}`}
+                        </h3>
+                      </div>
+                      {segment.summary && (
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {segment.summary}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            </section>
           )}
 
-          {/* Type */}
-          {meeting.type && (
-            <div className="flex items-center gap-3">
-              <Tag className="h-4 w-4 text-brand" />
-              <SectionHeader>{meeting.type}</SectionHeader>
-            </div>
-          )}
+          {/* Full Transcript */}
+          {parsedSections?.transcript ? (
+            <section className="border-t border-border pt-6">
+              <FormattedTranscript content={parsedSections.transcript} />
+            </section>
+          ) : null}
 
-          {/* Fireflies Link */}
-          {meeting.fireflies_link && (
-            <div className="flex flex-wrap gap-3">
-              <a
-                href={meeting.fireflies_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500"
-              >
-                <ExternalLink className="h-4 w-4 text-brand" />
-                View in Fireflies
-              </a>
-            </div>
-          )}
-
-          {/* Duration */}
-          {meeting.duration && (
-            <div className="border border-neutral-200 bg-background p-6">
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-brand" />
-                <SectionHeader>{meeting.duration} minutes</SectionHeader>
-              </div>
-            </div>
+          {/* Empty state */}
+          {!transcriptContent && segments.length === 0 && (
+            <section className="py-12 text-center">
+              <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1.5} />
+              <p className="text-sm font-medium text-foreground">No transcript available</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                This meeting has not been processed yet.
+              </p>
+            </section>
           )}
         </div>
 
-        {/* Gist Section */}
-        {parsedSections?.gist && (
-          <div className="border border-neutral-200 bg-background p-6 mb-6">
-            <SectionHeader className="mb-4">Meeting Overview</SectionHeader>
-            <p className="text-sm text-neutral-700 leading-relaxed">
-              {parsedSections.gist}
-            </p>
-          </div>
-        )}
-
-        {/* Summary Section */}
-        {parsedSections?.summary && (
-          <div className="border border-neutral-200 bg-background p-6 mb-6">
-            <SectionHeader className="mb-4">Summary</SectionHeader>
-            <MarkdownSummary content={parsedSections.summary} />
-          </div>
-        )}
-
-        {/* Meeting Outcomes */}
-        {(allDecisions.length > 0 ||
-          allTasks.length > 0 ||
-          allRisks.length > 0 ||
-          allOpportunities.length > 0) && (
-          <div className="mb-20">
-            <div className="mb-8">
-              <h2 className="text-2xl md:text-3xl font-sans font-light tracking-tight text-neutral-900 mb-2">
-                Meeting Outcomes
-              </h2>
-              <p className="text-sm text-neutral-500">
-                Key decisions, action items, and insights from this meeting
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Decisions */}
-              {allDecisions.length > 0 && (
-                <div className="border border-neutral-200 bg-background p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <CheckCircle className="h-5 w-5 text-green-700" />
-                    <h3 className="text-lg font-sans font-light text-neutral-900">
-                      Decisions ({allDecisions.length})
-                    </h3>
-                  </div>
-                  <ul className="space-y-3">
-                    {allDecisions.map((decision, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed"
-                      >
-                        <span className="text-green-700 mt-0.5">•</span>
-                        <span>{decision}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Action Items */}
-              {allTasks.length > 0 && (
-                <div className="border border-neutral-200 bg-background p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <ListTodo className="h-5 w-5 text-blue-700" />
-                    <h3 className="text-lg font-sans font-light text-neutral-900">
-                      Action Items ({allTasks.length})
-                    </h3>
-                  </div>
-                  <ul className="space-y-3">
-                    {allTasks.map((task, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed"
-                      >
-                        <span className="text-blue-700 mt-0.5">•</span>
-                        <span>{task}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Risks */}
-              {allRisks.length > 0 && (
-                <div className="border border-neutral-200 bg-background p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <AlertTriangle className="h-5 w-5 text-amber-700" />
-                    <h3 className="text-lg font-sans font-light text-neutral-900">
-                      Risks ({allRisks.length})
-                    </h3>
-                  </div>
-                  <ul className="space-y-3">
-                    {allRisks.map((risk, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed"
-                      >
-                        <span className="text-amber-700 mt-0.5">•</span>
-                        <span>{risk}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Opportunities */}
-              {allOpportunities.length > 0 && (
-                <div className="border border-neutral-200 bg-background p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Sparkles className="h-5 w-5 text-purple-700" />
-                    <h3 className="text-lg font-sans font-light text-neutral-900">
-                      Opportunities ({allOpportunities.length})
-                    </h3>
-                  </div>
-                  <ul className="space-y-3">
-                    {allOpportunities.map((opportunity, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-3 text-sm text-neutral-700 leading-relaxed"
-                      >
-                        <span className="text-purple-700 mt-0.5">•</span>
-                        <span>{opportunity}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Meeting Topics/Segments */}
-        {segments && segments.length > 0 && (
-          <div className="mb-20">
-            <div className="mb-8">
-              <h2 className="text-2xl md:text-3xl font-sans font-light tracking-tight text-neutral-900 mb-2">
-                Discussion Topics
-              </h2>
-              <p className="text-sm text-neutral-500">
-                {segments.length} {segments.length === 1 ? 'topic' : 'topics'}{' '}
-                covered
-              </p>
-            </div>
-
-            <div className="space-y-6">
-              {segments.map((segment, index) => (
-                <div
-                  key={segment.id}
-                  className="border border-neutral-200 bg-background p-8"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-xl font-sans font-light text-neutral-900 flex-1">
-                      {segment.title || `Topic ${index + 1}`}
-                    </h3>
-                    <span className="px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-neutral-100 text-neutral-700 border border-neutral-200">
-                      {segment.segment_index + 1}
-                    </span>
-                  </div>
-
-                  {segment.summary && (
-                    <p className="text-sm text-neutral-600 leading-relaxed mb-6">
-                      {segment.summary}
-                    </p>
-                  )}
-
-                  {/* Segment-specific outcomes */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-neutral-100">
-                    {segment.decisions &&
-                      Array.isArray(segment.decisions) &&
-                      segment.decisions.length > 0 && (
-                        <div>
-                          <SectionHeader className="text-xs mb-3">
-                            Decisions
-                          </SectionHeader>
-                          <ul className="space-y-2">
-                            {segment.decisions.map(
-                              (decision: unknown, idx: number) => {
-                                const text =
-                                  typeof decision === 'string'
-                                    ? decision
-                                    : (decision as Record<string, unknown>)
-                                        ?.description
-                                return (
-                                  <li
-                                    key={idx}
-                                    className="flex items-start gap-2 text-sm text-neutral-700"
-                                  >
-                                    <span className="text-green-700">&#10003;</span>
-                                    <span>{String(text)}</span>
-                                  </li>
-                                )
-                              }
-                            )}
-                          </ul>
-                        </div>
-                      )}
-
-                    {segment.tasks &&
-                      Array.isArray(segment.tasks) &&
-                      segment.tasks.length > 0 && (
-                        <div>
-                          <SectionHeader className="text-xs mb-3">
-                            Action Items
-                          </SectionHeader>
-                          <ul className="space-y-2">
-                            {segment.tasks.map((task: unknown, idx: number) => {
-                              const text =
-                                typeof task === 'string'
-                                  ? task
-                                  : (task as Record<string, unknown>)
-                                      ?.description
-                              return (
-                                <li
-                                  key={idx}
-                                  className="flex items-start gap-2 text-sm text-neutral-700"
-                                >
-                                  <span className="text-blue-700">&rarr;</span>
-                                  <span>{String(text)}</span>
-                                </li>
-                              )
-                            })}
-                          </ul>
-                        </div>
-                      )}
-
-                    {segment.risks &&
-                      Array.isArray(segment.risks) &&
-                      segment.risks.length > 0 && (
-                        <div>
-                          <SectionHeader className="text-xs mb-3">
-                            Risks
-                          </SectionHeader>
-                          <ul className="space-y-2">
-                            {segment.risks.map((risk: unknown, idx: number) => {
-                              const text =
-                                typeof risk === 'string'
-                                  ? risk
-                                  : (risk as Record<string, unknown>)
-                                      ?.description
-                              return (
-                                <li
-                                  key={idx}
-                                  className="flex items-start gap-2 text-sm text-neutral-700"
-                                >
-                                  <span className="text-amber-700">&#9888;</span>
-                                  <span>{String(text)}</span>
-                                </li>
-                              )
-                            })}
-                          </ul>
-                        </div>
-                      )}
-
-                    {segment.opportunities &&
-                      Array.isArray(segment.opportunities) &&
-                      segment.opportunities.length > 0 && (
-                        <div>
-                          <SectionHeader className="text-xs mb-3">
-                            Opportunities
-                          </SectionHeader>
-                          <ul className="space-y-2">
-                            {segment.opportunities.map(
-                              (opportunity: unknown, idx: number) => {
-                                const text =
-                                  typeof opportunity === 'string'
-                                    ? opportunity
-                                    : (opportunity as Record<string, unknown>)
-                                        ?.description
-                                return (
-                                  <li
-                                    key={idx}
-                                    className="flex items-start gap-2 text-sm text-neutral-700"
-                                  >
-                                    <span className="text-purple-700">&#10024;</span>
-                                    <span>{String(text)}</span>
-                                  </li>
-                                )
-                              }
-                            )}
-                          </ul>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Full Transcript */}
-        {parsedSections?.transcript && (
-          <div className="mb-20 max-w-6xl">
-            <FormattedTranscript content={parsedSections.transcript} />
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!transcriptContent && (!segments || segments.length === 0) && (
-          <div className="border border-neutral-200 bg-background p-12 md:p-16 text-center">
-            <FileText
-              className="h-16 w-16 text-neutral-300 mx-auto mb-6"
-              strokeWidth={1.5}
-            />
-            <h3 className="text-2xl font-sans font-light text-neutral-900 tracking-tight mb-3">
-              No transcript available
-            </h3>
-            <p className="text-sm text-neutral-500 leading-relaxed max-w-md mx-auto">
-              The full transcript for this meeting has not been processed yet.
-            </p>
-          </div>
-        )}
-
-        {/* Attendees & Keywords - Bottom Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Sidebar — attendees, topics, and all action items in one place */}
+        <aside className="space-y-6">
           {/* Attendees */}
           {participantsList.length > 0 && (
-            <div className="border border-neutral-200 bg-background p-6">
-              <SectionHeader className="mb-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary">
+                <Users className="h-3.5 w-3.5" />
                 Attendees ({participantsList.length})
-              </SectionHeader>
-              <div className="flex flex-wrap gap-2">
-                {participantsList.map((participant, index) => (
-                  <span
-                    key={`attendee-${meeting.id}-${participant}-${index}`}
-                    className="px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 text-neutral-700 rounded-sm"
-                    title={participant}
-                  >
-                    {formatParticipantName(participant)}
-                  </span>
+              </div>
+              <ul className="space-y-2">
+                {participantsList.map((participant, idx) => (
+                  <li key={`${participant}-${idx}`} className="text-sm">
+                    <p className="font-medium text-foreground">
+                      {formatParticipantName(participant)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{participant}</p>
+                  </li>
                 ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Keywords */}
+          {parsedSections?.keywords && (
+            <div className="space-y-2 border-t border-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Topics
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {parsedSections.keywords
+                  .split(',')
+                  .map((k) => k.trim())
+                  .filter(Boolean)
+                  .map((keyword, idx) => (
+                    <span
+                      key={`${keyword}-${idx}`}
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
               </div>
             </div>
           )}
 
-          {/* Keywords Section */}
-          {parsedSections?.keywords && (
-            <div className="border border-neutral-200 bg-background p-6">
-              <SectionHeader className="mb-4">Topics</SectionHeader>
-              <div className="flex flex-wrap gap-2">
-                {parsedSections.keywords.split(',').map((keyword, index) => {
-                  const trimmedKeyword = keyword.trim()
-                  return (
-                    <span
-                      key={`keyword-${trimmedKeyword}-${index}`}
-                      className="px-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 text-neutral-700 rounded-sm"
-                    >
-                      {trimmedKeyword}
-                    </span>
-                  )
-                })}
+          {/* Action items, decisions, risks, opportunities — all in sidebar */}
+          {hasActionItems && (
+            <div className="space-y-4 border-t border-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Action Snapshot
               </div>
+
+              {allTasks.length > 0 && (
+                <SidebarList
+                  icon={<ListTodo className="h-3.5 w-3.5 text-blue-600" />}
+                  label={`Action Items (${allTasks.length})`}
+                  items={allTasks}
+                />
+              )}
+
+              {allDecisions.length > 0 && (
+                <SidebarList
+                  icon={<CheckCircle className="h-3.5 w-3.5 text-green-600" />}
+                  label={`Decisions (${allDecisions.length})`}
+                  items={allDecisions}
+                />
+              )}
+
+              {allRisks.length > 0 && (
+                <SidebarList
+                  icon={<AlertTriangle className="h-3.5 w-3.5 text-amber-600" />}
+                  label={`Risks (${allRisks.length})`}
+                  items={allRisks}
+                />
+              )}
+
+              {allOpportunities.length > 0 && (
+                <SidebarList
+                  icon={<Sparkles className="h-3.5 w-3.5 text-purple-600" />}
+                  label={`Opportunities (${allOpportunities.length})`}
+                  items={allOpportunities}
+                />
+              )}
             </div>
           )}
-        </div>
-      </DashboardLayout>
-    </>
+        </aside>
+      </div>
+    </PageContainer>
+  )
+}
+
+function SidebarList({
+  icon,
+  label,
+  items,
+}: {
+  icon: React.ReactNode
+  label: string
+  items: string[]
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <ul className="space-y-1.5 pl-5">
+        {items.map((item, idx) => (
+          <li key={idx} className="text-xs leading-relaxed text-muted-foreground list-disc">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

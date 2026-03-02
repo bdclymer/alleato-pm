@@ -183,7 +183,7 @@ export function ImportDialog({
               {IMPORT_TYPES.map((item) => (
                 <div
                   key={item.value}
-                  className="flex items-center gap-2 rounded-md border px-3 py-2"
+                  className="flex items-center gap-2 rounded-md border px-4 py-2"
                 >
                   <RadioGroupItem value={item.value} id={item.value} />
                   <Label htmlFor={item.value}>{item.label}</Label>
@@ -252,8 +252,8 @@ export function ImportDialog({
             </div>
           )}
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="flex items-center gap-2 rounded-md border px-3 py-2">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="flex items-center gap-2 rounded-md border px-4 py-2">
               <Checkbox
                 checked={hasHeaders}
                 onCheckedChange={(checked) =>
@@ -262,7 +262,7 @@ export function ImportDialog({
               />
               <span className="text-sm">File includes header row</span>
             </label>
-            <label className="flex items-center gap-2 rounded-md border px-3 py-2">
+            <label className="flex items-center gap-2 rounded-md border px-4 py-2">
               <Checkbox
                 checked={skipDuplicates}
                 onCheckedChange={(checked) =>
@@ -271,7 +271,7 @@ export function ImportDialog({
               />
               <span className="text-sm">Skip duplicate emails</span>
             </label>
-            <label className="flex items-center gap-2 rounded-md border px-3 py-2">
+            <label className="flex items-center gap-2 rounded-md border px-4 py-2">
               <Checkbox
                 checked={updateExisting}
                 onCheckedChange={(checked) =>
@@ -283,7 +283,7 @@ export function ImportDialog({
           </div>
 
           {result && (
-            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            <div className="rounded-md border bg-muted/40 p-4 text-sm">
               <div className="font-medium">Import Summary</div>
               <ul className="mt-2 space-y-1">
                 <li>

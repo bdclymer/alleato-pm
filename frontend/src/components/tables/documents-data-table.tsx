@@ -358,7 +358,7 @@ export function DocumentsDataTable({
                 >
                   {visibleColumns.has("title") && (
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <div className="text-muted-foreground">
                           {getFileIcon(
                             document.mime_type,

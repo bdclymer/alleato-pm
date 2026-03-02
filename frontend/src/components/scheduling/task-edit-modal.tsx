@@ -375,7 +375,7 @@ export function TaskEditModal({
 
               <div className="space-y-2">
                 <Label>Milestone</Label>
-                <div className="flex items-center space-x-2 h-10 px-3 rounded-md border border-input">
+                <div className="flex items-center space-x-2 h-10 px-4 rounded-md border border-input">
                   <Checkbox
                     id="is_milestone"
                     checked={formData.is_milestone}

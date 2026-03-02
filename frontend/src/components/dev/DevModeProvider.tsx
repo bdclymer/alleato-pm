@@ -77,7 +77,7 @@ function DevModePanel() {
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999] w-96 max-h-[60vh] overflow-auto bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-2xl">
-      <div className="sticky top-0 bg-yellow-200 px-3 py-2 flex items-center justify-between">
+      <div className="sticky top-0 bg-yellow-200 px-4 py-2 flex items-center justify-between">
         <span className="font-bold text-yellow-900 text-sm">
           DEV MODE: Data Sources ({dataSources.length})
         </span>
@@ -140,7 +140,7 @@ function DevModePanel() {
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-yellow-100 px-3 py-2 text-2xs text-yellow-700">
+      <div className="sticky bottom-0 bg-yellow-100 px-4 py-2 text-2xs text-yellow-700">
         Press <kbd className="bg-yellow-200 px-1 rounded">Ctrl+Shift+D</kbd> to toggle
       </div>
     </div>

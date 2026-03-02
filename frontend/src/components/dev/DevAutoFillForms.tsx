@@ -258,11 +258,11 @@ function createButton(form: HTMLFormElement): HTMLButtonElement {
   button.setAttribute(BUTTON_ATTR, "true");
   button.title = "Development only: Fill this form with test data";
   button.className =
-    "inline-flex h-8 items-center rounded-md border border-border bg-muted px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground";
+    "inline-flex h-8 items-center rounded-md border border-border bg-muted px-4 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground";
   button.addEventListener("click", () => {
     const count = fillForm(form);
     if (DEV_ONLY) {
-      console.log(`[DevAutofill] Filled ${count} fields`, form);
+      console.warn(`[DevAutofill] Filled ${count} fields`, form);
     }
   });
 
@@ -280,7 +280,7 @@ function enhanceForm(form: HTMLFormElement): void {
   const button = createButton(form);
   const row = document.createElement("div");
   row.setAttribute(FORM_ENHANCED_ATTR, "true");
-  row.className = "mb-3 flex items-center justify-end";
+  row.className = "mb-4 flex items-center justify-end";
   row.appendChild(button);
 
   form.prepend(row);

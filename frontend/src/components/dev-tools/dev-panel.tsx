@@ -144,7 +144,7 @@ export function DevPanel() {
           <div className="space-y-6 py-6">
             {/* Environment Info */}
             <div>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <Database className="h-4 w-4" />
                 Environment
               </h3>
@@ -174,7 +174,7 @@ export function DevPanel() {
 
             {/* Current Route */}
             <div>
-              <h3 className="font-semibold mb-3">Current Route</h3>
+              <h3 className="font-semibold mb-4">Current Route</h3>
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Path:</span>
@@ -193,7 +193,7 @@ export function DevPanel() {
 
             {/* Health Checks */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold">Health Checks</h3>
                 <Button
                   variant="outline"
@@ -253,7 +253,7 @@ export function DevPanel() {
 
             {/* Quick Actions */}
             <div>
-              <h3 className="font-semibold mb-3">Quick Actions</h3>
+              <h3 className="font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-2">
                 <Button
                   variant="outline"
@@ -294,10 +294,10 @@ export function DevPanel() {
             {/* Type Generation Reminder */}
             <div className="bg-muted/50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2 text-sm">Type Generation</h3>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-4">
                 If you're getting TypeScript errors with Supabase types:
               </p>
-              <code className="text-xs bg-background px-3 py-2 rounded block">
+              <code className="text-xs bg-background px-4 py-2 rounded block">
                 npm run db:types
               </code>
             </div>

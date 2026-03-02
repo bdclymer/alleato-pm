@@ -47,8 +47,8 @@ export function PageTabs({
       : "-mb-px flex overflow-x-auto border-b border-border";
   const buttonClasses =
     variant === "inline"
-      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-2 text-sm font-medium transition-colors"
-      : "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors";
+      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-2 text-sm font-medium transition-colors"
+      : "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors";
 
   return (
     <div className={cn(wrapperClasses, className)}>

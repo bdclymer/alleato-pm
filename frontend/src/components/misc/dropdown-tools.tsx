@@ -59,7 +59,7 @@ export function DropdownTools() {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">
+              <h3 className="mb-4 text-sm font-semibold text-foreground">
                 Core Tools
               </h3>
               <div className="space-y-1">
@@ -82,7 +82,7 @@ export function DropdownTools() {
             </div>
 
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">
+              <h3 className="mb-4 text-sm font-semibold text-foreground">
                 Project Management
               </h3>
               <div className="space-y-1">
@@ -108,7 +108,7 @@ export function DropdownTools() {
             </div>
 
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-foreground">
+              <h3 className="mb-4 text-sm font-semibold text-foreground">
                 Financial Management
               </h3>
               <div className="space-y-1">

@@ -239,6 +239,8 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             ).eq("id", seg_id).execute()
 
     # 11. Store chunks in documents table
+    # Build existing content-hash map once to avoid per-chunk SELECT load.
+    existing_docs_by_hash = _get_existing_docs_by_hash(client, metadata_id)
     for chunk in all_chunks:
         seg_id = segment_id_map.get(chunk.segment_index) if chunk.segment_index >= 0 else None
         _upsert_document(
@@ -249,6 +251,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             started_at=started_at,
             participants=participants,
             project_id=project_id,
+            existing_doc_id=existing_docs_by_hash.get(chunk.content_hash or ""),
         )
 
     # 12. Update metadata status
@@ -276,6 +279,7 @@ def _upsert_document(
     started_at: Optional[str],
     participants: List[str],
     project_id: Optional[int],
+    existing_doc_id: Optional[str],
 ) -> None:
     file_date: Optional[str] = None
     if started_at:
@@ -302,24 +306,26 @@ def _upsert_document(
         },
     }
 
-    # Deduplicate by content hash — update existing, insert new
+    if existing_doc_id:
+        client.table("documents").update(doc_data).eq("id", existing_doc_id).execute()
+    else:
+        client.table("documents").insert(doc_data).execute()
+
+
+def _get_existing_docs_by_hash(client, metadata_id: str) -> Dict[str, str]:
+    """Fetch all existing docs for a file once and map content_hash -> doc id."""
     existing_resp = (
         client.table("documents")
-        .select("id", "metadata")
+        .select("id,metadata")
         .eq("file_id", metadata_id)
-        .limit(100)
         .execute()
     )
     existing = existing_resp.data or []
-    existing_doc = next(
-        (
-            d for d in existing
-            if (d.get("metadata") or {}).get("content_hash") == chunk.content_hash
-        ),
-        None,
-    )
-
-    if existing_doc:
-        client.table("documents").update(doc_data).eq("id", existing_doc["id"]).execute()
-    else:
-        client.table("documents").insert(doc_data).execute()
+    by_hash: Dict[str, str] = {}
+    for row in existing:
+        metadata = row.get("metadata") or {}
+        content_hash = metadata.get("content_hash")
+        row_id = row.get("id")
+        if content_hash and row_id:
+            by_hash[content_hash] = row_id
+    return by_hash

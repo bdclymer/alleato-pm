@@ -318,7 +318,7 @@ export function FileUploadZone({
           className="sr-only"
         />
 
-        <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+        <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
         <Text size="sm" weight="medium" className="mb-1">
           {isDragging ? "Drop files here" : "Drag & drop files here, or click to browse"}
         </Text>
@@ -342,7 +342,7 @@ export function FileUploadZone({
               <div
                 key={`${fileWithProgress.file.name}-${index}`}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg border p-3 transition-all",
+                  "flex items-center gap-4 rounded-lg border p-4 transition-all",
                   fileWithProgress.status === "error" && "border-destructive bg-destructive/5",
                   fileWithProgress.status === "complete" && "border-green-500/30 bg-green-500/5"
                 )}

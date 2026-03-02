@@ -435,7 +435,7 @@ export default function CrawledPagesPage() {
                 >
                   <AccordionTrigger className="hover:no-underline">
                     <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <div
                           className={cn(
                             "p-2 rounded-lg",

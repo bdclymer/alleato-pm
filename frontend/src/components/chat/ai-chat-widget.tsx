@@ -53,7 +53,7 @@ export function AIChatWidget() {
           }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
+          <div className="flex items-center justify-between px-4 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               <span className="font-semibold">Alleato AI Assistant</span>
@@ -81,13 +81,13 @@ export function AIChatWidget() {
           {/* Chat Content */}
           {!isMinimized && (
             <div className="flex flex-col h-[calc(100%-56px)] overflow-hidden">
-              <Alert className="m-3 mb-0">
+              <Alert className="m-4 mb-0">
                 <AlertDescription className="text-xs">
                   This chat uses live backend responses. If the backend is down,
                   you will see an explicit error.
                 </AlertDescription>
               </Alert>
-              <div className="flex-1 overflow-hidden rounded-lg m-3 mt-2 border">
+              <div className="flex-1 overflow-hidden rounded-lg m-4 mt-2 border">
                 <SimpleRagChat />
               </div>
             </div>

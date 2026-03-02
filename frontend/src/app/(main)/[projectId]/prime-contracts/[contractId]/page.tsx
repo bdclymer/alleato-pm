@@ -47,13 +47,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -1019,7 +1019,7 @@ export default function ProjectContractDetailPage() {
         />
         <TableLayout>
           <Card className="p-[var(--card-padding)]">
-            <div className="flex items-center gap-3 text-destructive">
+            <div className="flex items-center gap-4 text-destructive">
               <AlertCircle className="h-5 w-5" />
               <p>{error || "Contract not found"}</p>
             </div>
@@ -1143,7 +1143,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("overview")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "overview"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1156,7 +1156,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("change-orders")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "change-orders"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1181,7 +1181,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("invoices")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "invoices"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1206,7 +1206,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("payments")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "payments"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1231,7 +1231,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("emails")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "emails"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1244,7 +1244,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("history")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "history"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1257,7 +1257,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("financial-markup")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "financial-markup"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1270,7 +1270,7 @@ export default function ProjectContractDetailPage() {
               type="button"
               onClick={() => setActiveTab("advanced-settings")}
               className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-4 text-sm font-medium transition-colors",
+                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                 activeTab === "advanced-settings"
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -1290,8 +1290,8 @@ export default function ProjectContractDetailPage() {
               <div className="pb-6 pt-4">
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="rounded-xl bg-muted/40 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
                           <h3 className="text-base font-semibold">Parties & Terms</h3>
                         </div>
@@ -1312,7 +1312,7 @@ export default function ProjectContractDetailPage() {
                       </div>
                       <Collapsible open={generalInfoOpen}>
                         <CollapsibleContent>
-                          <dl className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                          <dl className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                             <div>
                               <dt className="text-xs font-medium text-muted-foreground">
                                 Title
@@ -1396,9 +1396,9 @@ export default function ProjectContractDetailPage() {
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-5">
+                    <div className="rounded-xl bg-muted/40 p-4">
                       <h3 className="text-base font-semibold">Description</h3>
-                      <div className="mt-5 grid gap-6">
+                      <div className="mt-4 grid gap-6">
                         <div>
                           <p
                             className={cn(
@@ -1412,7 +1412,7 @@ export default function ProjectContractDetailPage() {
                           </p>
                         </div>
                         <div className="rounded-lg border border-border bg-muted/30 p-4">
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-4">
                             <p className="text-xs font-medium text-muted-foreground">
                               Attachments {attachments.length > 0 && `(${attachments.length})`}
                             </p>
@@ -1467,9 +1467,9 @@ export default function ProjectContractDetailPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-5">
+                    <div className="rounded-xl bg-muted/40 p-4">
                       <h3 className="text-base font-semibold">Inclusions & Exclusions</h3>
-                      <div className="mt-5 space-y-6">
+                      <div className="mt-4 space-y-6">
                         <div>
                           <p className="text-xs font-medium text-muted-foreground">Inclusions</p>
                           {inclusionsList.length === 0 ? (
@@ -1499,7 +1499,7 @@ export default function ProjectContractDetailPage() {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-5">
+                    <div className="rounded-xl bg-muted/40 p-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-base font-semibold">Financial Snapshot</h3>
@@ -1521,7 +1521,7 @@ export default function ProjectContractDetailPage() {
                       </div>
                       <Collapsible open={contractSummaryOpen}>
                         <CollapsibleContent>
-                          <dl className="mt-5 space-y-4 text-sm">
+                          <dl className="mt-4 space-y-4 text-sm">
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Original Contract Amount</dt>
                               <dd className="text-right font-semibold tabular-nums">
@@ -1585,9 +1585,9 @@ export default function ProjectContractDetailPage() {
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-5">
+                    <div className="rounded-xl bg-muted/40 p-4">
                       <h3 className="text-base font-semibold">Key Dates</h3>
-                      <dl className="mt-5 space-y-4 text-sm">
+                      <dl className="mt-4 space-y-4 text-sm">
                         <div className="flex items-center justify-between">
                           <dt className="text-muted-foreground">Start Date</dt>
                           <dd className="text-right font-medium">
@@ -1649,7 +1649,7 @@ export default function ProjectContractDetailPage() {
                 <button
                   type="button"
                   onClick={() => setIsSovOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-3"
+                  className="inline-flex items-center gap-4"
                 >
                   <ChevronRight
                     className={cn("h-5 w-5 transition-transform", isSovOpen ? "rotate-90" : "")}
@@ -1676,7 +1676,7 @@ export default function ProjectContractDetailPage() {
               </div>
 
               {isSovOpen && (
-                <div className="mt-5 space-y-4">
+                <div className="mt-4 space-y-4">
                   <Button variant="outline" size="sm" className="min-w-[180px] justify-between">
                     Add Group
                     <ChevronDown className="h-4 w-4 ml-2" />
@@ -1978,7 +1978,7 @@ export default function ProjectContractDetailPage() {
                 </div>
               ) : paymentApplications.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No invoices yet</p>
                   <p className="text-xs mt-2">Create an invoice to track payment applications</p>
                 </div>
@@ -2078,14 +2078,14 @@ export default function ProjectContractDetailPage() {
             </div>
 
             {/* Add Invoice Dialog */}
-            <Dialog open={showAddInvoiceDialog} onOpenChange={setShowAddInvoiceDialog}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>New Invoice / Payment Application</DialogTitle>
-                  <DialogDescription>
+            <Modal open={showAddInvoiceDialog} onOpenChange={setShowAddInvoiceDialog}>
+              <ModalContent className="max-w-lg">
+                <ModalHeader>
+                  <ModalTitle>New Invoice / Payment Application</ModalTitle>
+                  <ModalDescription>
                     Create a payment application for this prime contract.
-                  </DialogDescription>
-                </DialogHeader>
+                  </ModalDescription>
+                </ModalHeader>
                 <div className="space-y-4 py-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -2161,7 +2161,7 @@ export default function ProjectContractDetailPage() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <ModalFooter>
                   <Button
                     variant="outline"
                     onClick={() => setShowAddInvoiceDialog(false)}
@@ -2179,9 +2179,9 @@ export default function ProjectContractDetailPage() {
                   >
                     {isSubmittingInvoice ? "Creating..." : "Create Invoice"}
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
           </div>
         )}
 
@@ -2210,7 +2210,7 @@ export default function ProjectContractDetailPage() {
                 </div>
               ) : payments.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No payments recorded yet</p>
                   <p className="text-xs mt-2">Record a payment when funds are received</p>
                 </div>
@@ -2277,14 +2277,14 @@ export default function ProjectContractDetailPage() {
             </div>
 
             {/* Record Payment Dialog */}
-            <Dialog open={showAddPaymentDialog} onOpenChange={setShowAddPaymentDialog}>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Record Payment Received</DialogTitle>
-                  <DialogDescription>
+            <Modal open={showAddPaymentDialog} onOpenChange={setShowAddPaymentDialog}>
+              <ModalContent className="max-w-lg">
+                <ModalHeader>
+                  <ModalTitle>Record Payment Received</ModalTitle>
+                  <ModalDescription>
                     Log a payment received against this prime contract.
-                  </DialogDescription>
-                </DialogHeader>
+                  </ModalDescription>
+                </ModalHeader>
                 <div className="space-y-4 py-2">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -2316,7 +2316,7 @@ export default function ProjectContractDetailPage() {
                       <Label htmlFor="pmt-method">Method</Label>
                       <select
                         id="pmt-method"
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm"
                         value={paymentForm.method}
                         onChange={(e) =>
                           setPaymentForm((f) => ({ ...f, method: e.target.value }))
@@ -2348,7 +2348,7 @@ export default function ProjectContractDetailPage() {
                       <Label htmlFor="pmt-app">Linked Invoice (optional)</Label>
                       <select
                         id="pmt-app"
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm"
                         value={paymentForm.payment_application_id}
                         onChange={(e) =>
                           setPaymentForm((f) => ({
@@ -2379,7 +2379,7 @@ export default function ProjectContractDetailPage() {
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <ModalFooter>
                   <Button
                     variant="outline"
                     onClick={() => setShowAddPaymentDialog(false)}
@@ -2397,9 +2397,9 @@ export default function ProjectContractDetailPage() {
                   >
                     {isSubmittingPayment ? "Recording..." : "Record Payment"}
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
           </div>
         )}
 
@@ -2669,19 +2669,19 @@ export default function ProjectContractDetailPage() {
                 </div>
                 <div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="border rounded-lg p-3">
+                    <div className="border rounded-lg p-4">
                       <p className="text-sm font-medium">GC Fee / Contractor&apos;s Fee</p>
                       <p className="text-xs text-muted-foreground">Typically 3-10%</p>
                     </div>
-                    <div className="border rounded-lg p-3">
+                    <div className="border rounded-lg p-4">
                       <p className="text-sm font-medium">Insurance</p>
                       <p className="text-xs text-muted-foreground">Typically 1-2%</p>
                     </div>
-                    <div className="border rounded-lg p-3">
+                    <div className="border rounded-lg p-4">
                       <p className="text-sm font-medium">Bond</p>
                       <p className="text-xs text-muted-foreground">Typically 0.5-2%</p>
                     </div>
-                    <div className="border rounded-lg p-3">
+                    <div className="border rounded-lg p-4">
                       <p className="text-sm font-medium">Overhead</p>
                       <p className="text-xs text-muted-foreground">Typically 5-15%</p>
                     </div>
@@ -2734,14 +2734,14 @@ export default function ProjectContractDetailPage() {
       </TableLayout>
 
       {/* Add Line Item Dialog */}
-      <Dialog open={showAddLineItemDialog} onOpenChange={setShowAddLineItemDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Add Schedule of Values Line</DialogTitle>
-            <DialogDescription>
+      <Modal open={showAddLineItemDialog} onOpenChange={setShowAddLineItemDialog}>
+        <ModalContent className="sm:max-w-[500px]">
+          <ModalHeader>
+            <ModalTitle>Add Schedule of Values Line</ModalTitle>
+            <ModalDescription>
               Add a new line to the Schedule of Values for this contract.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -2833,7 +2833,7 @@ export default function ProjectContractDetailPage() {
               />
             </div>
 
-            <div className="rounded-lg bg-muted p-3 text-sm">
+            <div className="rounded-lg bg-muted p-4 text-sm">
               <p className="font-medium mb-1">Total Cost</p>
               <p className="text-lg">
                 {formatCurrency(
@@ -2844,7 +2844,7 @@ export default function ProjectContractDetailPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => setShowAddLineItemDialog(false)}
@@ -2855,9 +2855,9 @@ export default function ProjectContractDetailPage() {
             <Button onClick={handleAddLineItem} disabled={isSubmittingLineItem}>
               {isSubmittingLineItem ? "Adding..." : "Add SOV Line"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <CreateBudgetCodeModal
         open={showCreateBudgetCodeModal}
@@ -2867,14 +2867,14 @@ export default function ProjectContractDetailPage() {
       />
 
       {/* New Change Order Dialog */}
-      <Dialog open={showNewCoDialog} onOpenChange={setShowNewCoDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>New Change Order</DialogTitle>
-            <DialogDescription>
+      <Modal open={showNewCoDialog} onOpenChange={setShowNewCoDialog}>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>New Change Order</ModalTitle>
+            <ModalDescription>
               Create a new change order for this contract.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="co-number">
@@ -2916,7 +2916,7 @@ export default function ProjectContractDetailPage() {
               <Label htmlFor="co-status">Status</Label>
               <select
                 id="co-status"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 value={coForm.status}
                 onChange={(e) => setCoForm((prev) => ({ ...prev, status: e.target.value as "draft" | "pending" }))}
               >
@@ -2925,26 +2925,26 @@ export default function ProjectContractDetailPage() {
               </select>
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={() => setShowNewCoDialog(false)} disabled={isSubmittingCo}>
               Cancel
             </Button>
             <Button onClick={handleCreateCo} disabled={isSubmittingCo}>
               {isSubmittingCo ? "Creating..." : "Create Change Order"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Reject Change Order Dialog */}
-      <Dialog open={showRejectCoDialog} onOpenChange={setShowRejectCoDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reject Change Order</DialogTitle>
-            <DialogDescription>
+      <Modal open={showRejectCoDialog} onOpenChange={setShowRejectCoDialog}>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>Reject Change Order</ModalTitle>
+            <ModalDescription>
               Provide a reason for rejecting this change order.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="rejection-reason">
@@ -2959,7 +2959,7 @@ export default function ProjectContractDetailPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -2978,9 +2978,9 @@ export default function ProjectContractDetailPage() {
             >
               {isRejectingCo ? "Rejecting..." : "Reject Change Order"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }

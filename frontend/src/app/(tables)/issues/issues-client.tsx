@@ -44,7 +44,7 @@ export function IssuesClientPage({ data }: IssuesClientPageProps) {
           totalIssues={issues.length}
           onFilterClick={handleFilterClick}
         />
-        <div className="flex items-center gap-1 px-3">
+        <div className="flex items-center gap-1 px-4">
           <button
             onClick={() => setViewMode("linear")}
             className={`px-2 py-1 text-xs rounded transition-colors ${

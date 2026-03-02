@@ -5,39 +5,17 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronRight,
-  Calendar,
-  FileText,
-  CheckSquare,
-  TrendingUp,
-  DollarSign,
-  ClipboardList,
-  FilePenLine,
-  Briefcase,
-  Pencil,
-} from "lucide-react";
-
-import { MetricCard, MetricGrid } from "@/components/ui/metric-card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronRight, Pencil, TrendingUp } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
-import { InfoSection } from "./info-section";
 import { MeetingsSection } from "./meetings-section";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
 
 /* =============================================================================
-   PROJECT HOME
-   =============================================================================
-   Main dashboard showing project overview, financial metrics, commitments,
-   tasks, and team information.
+   Types
    ============================================================================= */
-
-/* -----------------------------------------------------------------------------
-   Type Definitions
-   ----------------------------------------------------------------------------- */
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["project_tasks"]["Row"];
@@ -48,13 +26,10 @@ type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type BudgetItem = Database["public"]["Tables"]["budget_lines"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
-type SOV = Database["public"]["Tables"]["schedule_of_values"]["Row"];
 
 interface TeamMember {
   name: string;
   role: string;
-  personId?: string;
-  contactId?: string;
 }
 
 interface Commitment {
@@ -92,30 +67,22 @@ interface ProjectHomeClientProps {
   budget?: BudgetItem[];
   changeEvents?: ChangeEvent[];
   schedule?: any[];
-  sov?: SOV[];
+  sov?: any[];
 }
 
-/* -----------------------------------------------------------------------------
-   Utility Functions
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   Utility helpers
+   ============================================================================= */
 
-function formatCurrency(amount: number): string {
+function formatCompactCurrency(amount: number): string {
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
+  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-function formatCompactCurrency(amount: number): string {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(0)}K`;
-  }
-  return formatCurrency(amount);
 }
 
 function getInitials(name: string): string {
@@ -125,9 +92,132 @@ function getInitials(name: string): string {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-/* -----------------------------------------------------------------------------
-   Project Home Client Component
-   ----------------------------------------------------------------------------- */
+/* =============================================================================
+   Sub-components
+   ============================================================================= */
+
+/**
+ * KPI cell — used inside the full-width metric row.
+ * Hairline gap between cells is handled by the parent grid (gap-px bg-border).
+ * Value is large (text-3xl) because numbers here are the primary content.
+ * ref: premium-patterns.md → KPI / Metric Components
+ */
+function KpiCell({
+  label,
+  value,
+  sub,
+  href,
+  highlight,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  href?: string;
+  highlight?: "warn" | "good";
+}) {
+  const inner = (
+    <div className="bg-background p-5 lg:p-6 h-full flex flex-col justify-between">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
+        {label}
+      </p>
+      <div>
+        <p
+          className={`text-3xl font-semibold tabular-nums leading-none ${
+            highlight === "warn"
+              ? "text-amber-600"
+              : highlight === "good"
+              ? "text-green-600"
+              : "text-neutral-900"
+          }`}
+        >
+          {value}
+        </p>
+        {sub && <p className="text-xs text-neutral-400 mt-2 leading-relaxed">{sub}</p>}
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="block group hover:bg-neutral-50 transition-colors">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
+}
+
+/**
+ * Section anchor label — very muted, tiny, tracking-widest.
+ * Content is the hero; label is just wayfinding.
+ * ref: premium-patterns.md → Typography Hierarchy
+ */
+function SectionHeader({
+  label,
+  count,
+  href,
+}: {
+  label: string;
+  count?: number;
+  href?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
+          {label}
+        </span>
+        {count !== undefined && count > 0 && (
+          <span className="text-[10px] text-neutral-300 tabular-nums">{count}</span>
+        )}
+      </div>
+      {href && (
+        <Link
+          href={href}
+          className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors"
+        >
+          View all
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** Sidebar navigation link — name on left, optional count on right */
+function NavLink({
+  href,
+  label,
+  count,
+}: {
+  href: string;
+  label: string;
+  count?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between py-1.5 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+    >
+      <span>{label}</span>
+      {count !== undefined && count > 0 && (
+        <span className="text-xs text-neutral-400 tabular-nums">{count}</span>
+      )}
+    </Link>
+  );
+}
+
+/** Sub-group label inside a sidebar box — barely visible anchor */
+function NavGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-neutral-300 mb-1">
+      {children}
+    </p>
+  );
+}
+
+/* =============================================================================
+   Main component
+   ============================================================================= */
 
 export function ProjectHomeClient({
   project,
@@ -144,11 +234,8 @@ export function ProjectHomeClient({
   sov: _sov = [],
 }: ProjectHomeClientProps) {
   const router = useRouter();
-
-  // Edit project dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
-  // Map database project to portfolio Project type for EditProjectDialog
   const portfolioProject: PortfolioProject = {
     id: String(project.id),
     name: project.name || "",
@@ -172,708 +259,370 @@ export function ProjectHomeClient({
   };
 
   const teamMembers = React.useMemo((): TeamMember[] => {
-    if (!project.team_members || !Array.isArray(project.team_members)) {
-      return [];
-    }
+    if (!project.team_members || !Array.isArray(project.team_members)) return [];
     return project.team_members.map((member) => {
-      const parsedMember =
+      const parsed =
         typeof member === "string"
           ? (() => {
               try {
                 return JSON.parse(member);
               } catch {
-                return { name: member, role: "Role not specified" };
+                return { name: member, role: "" };
               }
             })()
           : member;
-
       return {
-        name: String(parsedMember?.name || "Team Member"),
-        role: String(parsedMember?.role || "Role not specified"),
-        personId:
-          parsedMember?.personId || parsedMember?.contactId || undefined,
+        name: String(parsed?.name || "Team Member"),
+        role: String(parsed?.role || ""),
       };
     });
   }, [project.team_members]);
 
-  /* ---------------------------------------------------------------------------
-     Calculate Metrics & Insights
-     ------------------------------------------------------------------------- */
-
-  const totalBudget = budget.reduce(
-    (sum, item) => sum + (item.original_amount || 0),
-    0,
-  );
-  const committed = commitments.reduce(
-    (sum, c) => sum + (c.contract_amount || 0),
-    0,
-  );
+  // Financial calculations
+  const totalBudget = budget.reduce((sum, item) => sum + (item.original_amount || 0), 0);
+  const committed = commitments.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   const remaining = Math.max(totalBudget - committed, 0);
-  const commitmentPercentage =
-    totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
-  const primeContracts = contracts;
+  const budgetUtilization = totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
 
-  /* ---------------------------------------------------------------------------
-     Render
-     ------------------------------------------------------------------------- */
+  // Content lists
+  const openRfis = rfis.filter((r) => r.status?.toLowerCase() !== "closed");
+  const recentChangeOrders = changeOrders.slice(0, 4);
+  const upcomingTasks = tasks.slice(0, 4);
+  const scheduleCount = schedule.length || tasks.length;
+
+  // "Attention needed" count — open items requiring action
+  const attentionCount = openRfis.length + changeEvents.filter((e) => e.status === "open").length;
+
+  const hasBudgetData = totalBudget > 0;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="pt-4 px-4 sm:px-6 lg:px-12">
-        {/* =====================================================================
-            Page Header
-            ===================================================================== */}
-        <div className="py-4 sm:py-5">
-          <nav className="mb-2 flex items-center gap-1 text-sm font-medium text-neutral-500">
-            <Link href="/" className="hover:text-neutral-700 transition-colors">
-              Projects
-            </Link>
-            <ChevronRight className="h-4 w-4 text-neutral-400" />
-            <Link
-              href={`/${project.id}/home`}
-              className="truncate hover:text-neutral-700 transition-colors"
+      <div className="px-4 sm:px-6 lg:px-12 pt-4 pb-10">
+
+        {/* Breadcrumb */}
+        <nav className="mb-4 flex items-center gap-1 text-sm text-neutral-500">
+          <Link href="/" className="hover:text-neutral-700 transition-colors font-medium">
+            Projects
+          </Link>
+          <ChevronRight className="h-4 w-4 text-neutral-400" />
+          <span className="text-neutral-700 truncate">
+            {project.name || project["job number"] || "Project"}
+          </span>
+        </nav>
+
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            {project["job number"] && (
+              <p className="text-sm text-neutral-400 mb-0.5 tabular-nums">
+                {project["job number"]}
+              </p>
+            )}
+            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">
+              {project.name || project["job number"] || "Untitled Project"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setIsEditDialogOpen(true)}
             >
-              {project.name || project["job number"] || "Project"}
-            </Link>
-            <ChevronRight className="h-4 w-4 text-neutral-400" />
-            <span className="text-neutral-700">Home</span>
-          </nav>
-
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-            {/* Project Identity */}
-            <div className="flex-1">
-              {project["job number"] && (
-                <p className="text-sm text-neutral-500 mb-2">
-                  {project["job number"]}
-                </p>
-              )}
-              <h1 className="text-3xl font-semibold text-neutral-800">
-                {project.name || project["job number"] || "Untitled Project"}
-              </h1>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="lg"
-                className="gap-2"
-                onClick={() => setIsEditDialogOpen(true)}
-              >
-                <Pencil className="h-4 w-4" />
-                Edit Project
-              </Button>
-              <ProjectChecklistSidebar
-                projectId={String(project.id)}
-                projectName={project.name || project["job number"] || "Project"}
-                buttonVariant="default"
-              />
-            </div>
+              <Pencil className="h-3.5 w-3.5" />
+              Edit Project
+            </Button>
+            <ProjectChecklistSidebar
+              projectId={String(project.id)}
+              projectName={project.name || project["job number"] || "Project"}
+              buttonVariant="default"
+            />
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="pb-8">
-          <div className="space-y-4">
-            {/* Financial Overview */}
-            <div>
-
-              <MetricGrid cols={3} gap="lg">
-                <MetricCard
-                  label="Total Budget"
-                  value={totalBudget}
-                  format="currency"
-                  href={`/${project.id}/budget`}
-                />
-                <MetricCard
-                  label="Committed"
-                  value={committed}
-                  format="currency"
-                  change={
-                    commitmentPercentage > 90
-                      ? {
-                          value: commitmentPercentage - 90,
-                          type: "negative" as const,
-                        }
-                      : commitmentPercentage > 70
-                      ? {
-                          value: commitmentPercentage - 70,
-                          type: "neutral" as const,
-                        }
-                      : {
-                          value: commitmentPercentage,
-                          type: "positive" as const,
-                        }
-                  }
-                  href={`/${project.id}/commitments`}
-                />
-                <MetricCard
-                  label="Remaining"
-                  value={remaining}
-                  format="currency"
-                />
-              </MetricGrid>
-            </div>
-            <div className="my-8 space-y-3">
-              <h3 className="text-l text-neutral-800">
-                Financial Tools
-              </h3>
-              <Tabs defaultValue="prime-contracts" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
-                  <TabsTrigger value="prime-contracts">Prime Contracts</TabsTrigger>
-                  <TabsTrigger value="commitments">Commitments</TabsTrigger>
-                  <TabsTrigger value="direct-costs">Direct Costs</TabsTrigger>
-                  <TabsTrigger value="invoices">Invoices</TabsTrigger>
-                  <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
-                  <TabsTrigger value="change-events">Change Events</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="prime-contracts" className="mt-0">
-                  {primeContracts.length > 0 ? (
-                    <div className="space-y-0">
-                      {primeContracts.slice(0, 5).map((contract) => (
-                          <Link
-                            key={contract.id}
-                            href={`/${project.id}/prime-contracts/${contract.id}`}
-                            className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                          >
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-neutral-900 truncate">
-                                {contract.title || contract.contract_number}
-                              </p>
-                              <p className="text-xs text-neutral-500 truncate">
-                                {contract.contract_number}
-                              </p>
-                            </div>
-                            <span className="text-sm font-medium text-neutral-700">
-                              {formatCompactCurrency(
-                                contract.revised_contract_value ||
-                                  contract.original_contract_value ||
-                                  0,
-                              )}
-                            </span>
-                          </Link>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No prime contracts yet.
-                      </p>
-                    </div>
-                  )}
-                  {primeContracts.length > 0 ? (
-                    <div className="mt-3">
-                      <Link
-                        href={`/${project.id}/prime-contracts`}
-                        className="text-sm font-medium text-brand hover:underline"
-                      >
-                        View all prime contracts
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="mt-1 text-center">
-                      <Link
-                        href={`/${project.id}/prime-contracts/new`}
-                        className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                      >
-                        Create a prime contract
-                      </Link>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="commitments" className="mt-0">
-                  {commitments.length > 0 ? (
-                    <div className="space-y-0">
-                      {commitments.slice(0, 5).map((commitment) => (
-                        <Link
-                          key={commitment.id}
-                          href={`/${project.id}/commitments/${commitment.id}`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-neutral-900 truncate">
-                              {commitment.title ||
-                                `${commitment.type === "subcontract" ? "Subcontract" : "PO"} #${commitment.number}`}
-                            </p>
-                            <p className="text-xs text-neutral-500 truncate">
-                              {commitment.number}
-                            </p>
-                          </div>
-                          <span className="text-sm font-medium text-neutral-700">
-                            {formatCompactCurrency(commitment.contract_amount || 0)}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No commitments yet.
-                      </p>
-                    </div>
-                  )}
-                  {commitments.length > 0 ? (
-                    <div className="mt-3">
-                      <Link
-                        href={`/${project.id}/commitments`}
-                        className="text-sm font-medium text-brand hover:underline"
-                      >
-                        View all commitments
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="mt-1 text-center">
-                      <Link
-                        href={`/${project.id}/commitments/new`}
-                        className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                      >
-                        Create a commitment
-                      </Link>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="direct-costs" className="mt-0">
-                  <div className="py-8 text-center">
-                    <p className="text-sm text-neutral-500">
-                      Direct costs summary is available in the Direct Costs tool.
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <Link
-                      href={`/${project.id}/direct-costs`}
-                      className="text-sm font-medium text-brand hover:underline"
-                    >
-                      View direct costs
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="invoices" className="mt-0">
-                  <div className="py-8 text-center">
-                    <p className="text-sm text-neutral-500">
-                      Invoice summary is available in the Invoices tool.
-                    </p>
-                  </div>
-                  <div className="mt-3">
-                    <Link
-                      href={`/${project.id}/invoices`}
-                      className="text-sm font-medium text-brand hover:underline"
-                    >
-                      View invoices
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="change-orders" className="mt-0">
-                  {changeOrders.length > 0 ? (
-                    <div className="space-y-0">
-                      {changeOrders.slice(0, 5).map((changeOrder) => (
-                        <Link
-                          key={changeOrder.id}
-                          href={`/${project.id}/change-orders/${changeOrder.id}`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-neutral-900 truncate">
-                              {changeOrder.title || `Change Order #${changeOrder.id}`}
-                            </p>
-                            <p className="text-xs text-neutral-500 truncate">
-                              {changeOrder.co_number || `CO-${changeOrder.id}`}
-                            </p>
-                          </div>
-                          <span className="text-sm font-medium text-neutral-700">
-                            {formatCompactCurrency(changeOrder.amount || 0)}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No change orders yet.
-                      </p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/change-orders`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {changeOrders.length > 0 ? "View all change orders" : "Create a change order"}
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="change-events" className="mt-0">
-                  {changeEvents.length > 0 ? (
-                    <div className="space-y-0">
-                      {changeEvents.slice(0, 5).map((changeEvent) => (
-                        <Link
-                          key={changeEvent.id}
-                          href={`/${project.id}/change-events/${changeEvent.id}`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-neutral-900 truncate">
-                              {changeEvent.title || `Change Event #${changeEvent.id}`}
-                            </p>
-                            <p className="text-xs text-neutral-500 truncate">
-                              {changeEvent.status || "Draft"}
-                            </p>
-                          </div>
-                          <span className="text-sm font-medium text-neutral-700">
-                            {changeEvent.number}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No change events yet.
-                      </p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/change-events`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {changeEvents.length > 0 ? "View all change events" : "Create a change event"}
-                    </Link>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <div className="my-8 space-y-3">
-              <h3 className="text-xl font-semibold text-neutral-800">
-                Project Directory
-              </h3>
-              <Tabs defaultValue="project-team" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="project-team">Project Team</TabsTrigger>
-                  <TabsTrigger value="users">Users</TabsTrigger>
-                  <TabsTrigger value="subcontractors">Subcontractors</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="project-team" className="mt-0">
-                  {teamMembers.length > 0 ? (
-                    <div className="space-y-1">
-                      {teamMembers.slice(0, 6).map((member, index) => (
-                        <div
-                          key={`team-${project.id}-${index}`}
-                          className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-neutral-50 transition-colors"
-                        >
-                          <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-neutral-200 text-neutral-700 text-xs font-semibold">
-                              {getInitials(member.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-neutral-900 truncate">
-                              {member.name}
-                            </p>
-                            <p className="text-xs text-neutral-500 truncate">
-                              {member.role}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No team members yet.
-                      </p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/directory/users`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {teamMembers.length > 0 ? "View all project team" : "Add Team Member"}
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="users" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      Manage project users in Directory.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/directory/users`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View users
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="subcontractors" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      Manage subcontractors in Directory.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/directory/companies`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View subcontractors
-                    </Link>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <div className="my-8 space-y-3">
-              <h3 className="text-xl font-semibold text-neutral-800">
-                Project Management
-              </h3>
-              <Tabs defaultValue="schedule" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                  <TabsTrigger value="rfis">RFI&apos;s</TabsTrigger>
-                  <TabsTrigger value="submittals">Submittals</TabsTrigger>
-                  <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
-                  <TabsTrigger value="punch-list">Punch List</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="schedule" className="mt-0">
-                  {tasks.length > 0 ? (
-                    <div className="space-y-0">
-                      {tasks.slice(0, 5).map((task) => (
-                        <Link
-                          key={task.id}
-                          href={`/${project.id}/schedule`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <p className="text-sm font-medium text-neutral-900 truncate">
-                            {task.task_description || `Task #${task.id}`}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {task.due_date
-                              ? format(new Date(task.due_date), "MMM d")
-                              : "No due date"}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No schedule items yet.
-                      </p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/schedule`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {tasks.length > 0 || schedule.length > 0 ? "View schedule" : "Create schedule"}
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="rfis" className="mt-0">
-                  {rfis.length > 0 ? (
-                    <div className="space-y-0">
-                      {rfis.slice(0, 5).map((rfi) => (
-                        <Link
-                          key={rfi.id}
-                          href={`/${project.id}/rfis/${rfi.id}`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <p className="text-sm font-medium text-neutral-900 truncate">
-                            {rfi.subject || `RFI #${rfi.number}`}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {rfi.status}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">No RFI&apos;s yet.</p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/rfis`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {rfis.length > 0 ? "View all RFI's" : "Create an RFI"}
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="submittals" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No submittals yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/submittals`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      Create a submittal
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="daily-log" className="mt-0">
-                  {dailyLogs.length > 0 ? (
-                    <div className="space-y-0">
-                      {dailyLogs.slice(0, 5).map((log) => (
-                        <Link
-                          key={log.id}
-                          href={`/${project.id}/daily-log`}
-                          className="flex items-center justify-between gap-3 py-2 border-b border-neutral-100/60 last:border-0 hover:bg-neutral-50 transition-colors group px-2 -mx-2 rounded-md"
-                        >
-                          <p className="text-sm font-medium text-neutral-900 truncate">
-                            Daily Log
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {format(new Date(log.log_date), "MMM d, yyyy")}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="pt-4 pb-1 text-center">
-                      <p className="text-sm text-neutral-500">
-                        No daily logs yet.
-                      </p>
-                    </div>
-                  )}
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/daily-log`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      {dailyLogs.length > 0 ? "View daily log" : "Create a daily log"}
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="punch-list" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No punch list items yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/punch-list`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      Create a punch list item
-                    </Link>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <div className="my-8 space-y-3">
-              <h3 className="text-xl font-semibold text-neutral-800">Files</h3>
-              <Tabs defaultValue="drawings" className="space-y-3">
-                <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-                  <TabsTrigger value="drawings">Drawings</TabsTrigger>
-                  <TabsTrigger value="photos">Photos</TabsTrigger>
-                  <TabsTrigger value="documents">Documents</TabsTrigger>
-                  <TabsTrigger value="specifications">Specifications</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="drawings" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No drawings yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/drawings`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View drawings
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="photos" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No photos yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/photos`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View photos
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="documents" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No documents yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/documents`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View documents
-                    </Link>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="specifications" className="mt-0">
-                  <div className="pt-4 pb-1 text-center">
-                    <p className="text-sm text-neutral-500">
-                      No specifications yet.
-                    </p>
-                  </div>
-                  <div className="mt-1 text-center">
-                    <Link
-                      href={`/${project.id}/specifications`}
-                      className="text-sm font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
-                    >
-                      View specifications
-                    </Link>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <MeetingsSection
-              meetings={meetings}
-              projectId={project.id}
-              maxItems={5}
+        {/* ── KPI Row (Inverted Pyramid: most important data first, full width) ──
+            ref: premium-patterns.md → Layout Patterns → Inverted Pyramid
+            Technique: gap-px on bg-border container = hairline separators, no individual card borders.
+            Numbers at text-3xl because they ARE the content on this row. */}
+        {(hasBudgetData || openRfis.length > 0 || changeOrders.length > 0) && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-200 gap-px mb-12">
+            <KpiCell
+              label="Total Budget"
+              value={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
+              sub={hasBudgetData ? "Original contract value" : "No budget set"}
+              href={`/${project.id}/budget`}
             />
+            <KpiCell
+              label="Committed"
+              value={committed > 0 ? formatCompactCurrency(committed) : "—"}
+              sub={
+                hasBudgetData && committed > 0
+                  ? `${budgetUtilization.toFixed(0)}% of total budget`
+                  : "No contracts yet"
+              }
+              href={`/${project.id}/commitments`}
+              highlight={budgetUtilization > 90 ? "warn" : undefined}
+            />
+            <KpiCell
+              label="Remaining"
+              value={hasBudgetData ? formatCompactCurrency(remaining) : "—"}
+              sub={
+                hasBudgetData
+                  ? `${(100 - budgetUtilization).toFixed(0)}% unallocated`
+                  : undefined
+              }
+              highlight={remaining > 0 && budgetUtilization < 90 ? "good" : undefined}
+            />
+            <KpiCell
+              label="Open Items"
+              value={attentionCount > 0 ? attentionCount : "—"}
+              sub={
+                attentionCount > 0
+                  ? `${openRfis.length} RFI${openRfis.length !== 1 ? "s" : ""} · ${changeEvents.filter((e) => e.status === "open").length} change events`
+                  : "Nothing pending"
+              }
+              href={`/${project.id}/rfis`}
+              highlight={attentionCount > 5 ? "warn" : undefined}
+            />
+          </div>
+        )}
 
+        {/* ── Two-column layout ──
+            Left: content feed (rich items, open/spacious)
+            Right: navigation sidebar (dense, structured)
+            ref: premium-patterns.md → Density Spectrum */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_256px] gap-16 items-start">
+
+          {/* ── Left column: content feed ──
+              Space between sections (space-y-12 = 48px) does the grouping.
+              No borders, no cards — whitespace is the separator.
+              ref: premium-patterns.md → Whitespace as Dividers */}
+          <div className="space-y-12">
+
+            {/* Meetings — highest content density, gets the most visual weight */}
+            <MeetingsSection meetings={meetings} projectId={project.id} maxItems={5} />
+
+            {/* Open RFIs */}
+            {openRfis.length > 0 && (
+              <div>
+                <SectionHeader
+                  label="Open RFIs"
+                  href={`/${project.id}/rfis`}
+                  count={openRfis.length}
+                />
+                <div className="space-y-0.5">
+                  {openRfis.slice(0, 5).map((rfi) => (
+                    <Link
+                      key={rfi.id}
+                      href={`/${project.id}/rfis/${rfi.id}`}
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                    >
+                      <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                        {rfi.subject || `RFI #${rfi.number}`}
+                      </p>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">
+                          {rfi.status || "Open"}
+                        </span>
+                        <span className="text-xs text-neutral-400">#{rfi.number}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent Change Orders — amount is the key data, right-aligned */}
+            {recentChangeOrders.length > 0 && (
+              <div>
+                <SectionHeader
+                  label="Change Orders"
+                  href={`/${project.id}/change-orders`}
+                  count={changeOrders.length}
+                />
+                <div className="space-y-0.5">
+                  {recentChangeOrders.map((co) => (
+                    <Link
+                      key={co.id}
+                      href={`/${project.id}/change-orders/${co.id}`}
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                          {co.title || `Change Order #${co.co_number || co.id}`}
+                        </p>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          {co.co_number || `CO-${co.id}`}
+                        </p>
+                      </div>
+                      <span className="flex-shrink-0 text-sm font-medium text-neutral-700 tabular-nums">
+                        {formatCompactCurrency(co.amount || 0)}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upcoming Tasks — date is the key data */}
+            {upcomingTasks.length > 0 && (
+              <div>
+                <SectionHeader
+                  label="Upcoming Tasks"
+                  href={`/${project.id}/schedule`}
+                  count={upcomingTasks.length}
+                />
+                <div className="space-y-0.5">
+                  {upcomingTasks.map((task) => (
+                    <Link
+                      key={task.id}
+                      href={`/${project.id}/schedule`}
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                    >
+                      <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                        {task.task_description || `Task #${task.id}`}
+                      </p>
+                      <span className="flex-shrink-0 text-xs text-neutral-400 tabular-nums">
+                        {task.due_date ? format(new Date(task.due_date), "MMM d") : "—"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Project Team */}
+            {teamMembers.length > 0 && (
+              <div>
+                <SectionHeader
+                  label="Project Team"
+                  href={`/${project.id}/directory/users`}
+                  count={teamMembers.length}
+                />
+                <div className="space-y-0.5">
+                  {teamMembers.slice(0, 6).map((member, i) => (
+                    <div
+                      key={`tm-${i}`}
+                      className="flex items-center gap-3 py-2 px-2 -mx-2 rounded"
+                    >
+                      <Avatar className="h-6 w-6 flex-shrink-0">
+                        <AvatarFallback className="bg-neutral-100 text-neutral-500 text-[10px]">
+                          {getInitials(member.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-sm text-neutral-800 truncate">
+                        {member.name}
+                        {member.role && (
+                          <span className="text-neutral-400 ml-2">· {member.role}</span>
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty state — no activity yet */}
+            {meetings.length === 0 &&
+              openRfis.length === 0 &&
+              recentChangeOrders.length === 0 &&
+              upcomingTasks.length === 0 && (
+                <div className="py-12 text-center">
+                  <TrendingUp className="h-8 w-8 text-neutral-200 mx-auto mb-3" />
+                  <p className="text-sm text-neutral-400">No activity yet.</p>
+                  <p className="text-xs text-neutral-300 mt-1">
+                    Add meetings, RFIs, and tasks to see them here.
+                  </p>
+                </div>
+              )}
+          </div>
+
+          {/* ── Right sidebar: 2 boxes ──
+              Dense navigation — links are the content here.
+              ref: premium-patterns.md → Density Spectrum → Sidebar: dense, 13px, tight */}
+          <div className="space-y-4">
+
+            {/* Box 1: Financial — nav links only (numbers are in the KPI row above) */}
+            <div className="rounded-lg border border-neutral-200 bg-background p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
+                Financial
+              </p>
+              <div className="space-y-0.5">
+                <NavLink href={`/${project.id}/budget`} label="Budget" />
+                <NavLink
+                  href={`/${project.id}/prime-contracts`}
+                  label="Prime Contracts"
+                  count={contracts.length || undefined}
+                />
+                <NavLink
+                  href={`/${project.id}/commitments`}
+                  label="Commitments"
+                  count={commitments.length || undefined}
+                />
+                <NavLink href={`/${project.id}/direct-costs`} label="Direct Costs" />
+                <NavLink href={`/${project.id}/invoices`} label="Invoices" />
+                <NavLink
+                  href={`/${project.id}/change-orders`}
+                  label="Change Orders"
+                  count={changeOrders.length || undefined}
+                />
+                <NavLink
+                  href={`/${project.id}/change-events`}
+                  label="Change Events"
+                  count={changeEvents.length || undefined}
+                />
+              </div>
+            </div>
+
+            {/* Box 2: Project — tools + files + directory with sub-labels */}
+            <div className="rounded-lg border border-neutral-200 bg-background p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
+                Project
+              </p>
+              <div className="space-y-0.5">
+                <NavLink
+                  href={`/${project.id}/schedule`}
+                  label="Schedule"
+                  count={scheduleCount || undefined}
+                />
+                <NavLink
+                  href={`/${project.id}/rfis`}
+                  label="RFIs"
+                  count={rfis.length || undefined}
+                />
+                <NavLink href={`/${project.id}/submittals`} label="Submittals" />
+                <NavLink
+                  href={`/${project.id}/daily-log`}
+                  label="Daily Log"
+                  count={dailyLogs.length || undefined}
+                />
+                <NavLink href={`/${project.id}/punch-list`} label="Punch List" />
+                <NavLink
+                  href={`/${project.id}/meetings`}
+                  label="Meetings"
+                  count={meetings.length || undefined}
+                />
+              </div>
+
+              <div className="border-t border-neutral-100 mt-4 pt-4 space-y-0.5">
+                <NavGroupLabel>Files</NavGroupLabel>
+                <NavLink href={`/${project.id}/drawings`} label="Drawings" />
+                <NavLink href={`/${project.id}/documents`} label="Documents" />
+                <NavLink href={`/${project.id}/photos`} label="Photos" />
+                <NavLink href={`/${project.id}/specifications`} label="Specifications" />
+              </div>
+
+              <div className="border-t border-neutral-100 mt-4 pt-4 space-y-0.5">
+                <NavGroupLabel>Directory</NavGroupLabel>
+                <NavLink href={`/${project.id}/directory/users`} label="Users" />
+                <NavLink href={`/${project.id}/directory/companies`} label="Companies" />
+                <NavLink href={`/${project.id}/directory/contacts`} label="Contacts" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Edit Project Dialog */}
       <EditProjectDialog
         project={portfolioProject}
         open={isEditDialogOpen}

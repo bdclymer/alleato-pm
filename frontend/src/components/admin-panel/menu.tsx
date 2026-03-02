@@ -30,9 +30,9 @@ export function Menu({ isOpen, projectId }: MenuProps) {
       <nav className="mt-2 h-full w-full">
         <ul className="flex flex-col min-h-[calc(100vh-48px-36px-16px-32px)] lg:min-h-[calc(100vh-32px-40px-32px)] items-start space-y-0.5 px-1">
           {menuList.map(({ groupLabel, menus }, index) => (
-            <li className={cn("w-full", groupLabel ? "pt-3" : "")} key={index}>
+            <li className={cn("w-full", groupLabel ? "pt-4" : "")} key={index}>
               {(isOpen && groupLabel) || isOpen === undefined ? (
-                <p className="text-xs font-semibold text-primary px-3 pb-1 max-w-[248px] truncate">
+                <p className="text-xs font-semibold text-primary px-4 pb-1 max-w-[248px] truncate">
                   {groupLabel}
                 </p>
               ) : !isOpen && isOpen !== undefined && groupLabel ? (
@@ -116,7 +116,7 @@ export function Menu({ isOpen, projectId }: MenuProps) {
                   <Button
                     onClick={() => {}}
                     variant="outline"
-                    className="w-full justify-center h-7 mt-3 text-xs"
+                    className="w-full justify-center h-7 mt-4 text-xs"
                   >
                     <p
                       className={cn(

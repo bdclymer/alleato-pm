@@ -289,7 +289,7 @@ export function DistributionGroupDialog({
               control={form.control}
               name="is_active"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -368,7 +368,7 @@ export function DistributionGroupDialog({
                       {filteredPeople.map((person) => (
                         <div
                           key={person.id}
-                          className="flex items-center space-x-3"
+                          className="flex items-center space-x-4"
                         >
                           <Checkbox
                             checked={selectedMembers.includes(Number(person.id))}

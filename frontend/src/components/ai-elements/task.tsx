@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentProps } from "react";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -7,7 +9,6 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, SearchIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 
 export type TaskItemFileProps = ComponentProps<"div">;
 
@@ -19,7 +20,7 @@ export const TaskItemFile = ({
   <div
     className={cn(
       "inline-flex items-center gap-1 rounded-md border bg-secondary px-1.5 py-0.5 text-foreground text-xs",
-      className,
+      className
     )}
     {...props}
   >
@@ -76,7 +77,7 @@ export const TaskContent = ({
   <CollapsibleContent
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
-      className,
+      className
     )}
     {...props}
   >

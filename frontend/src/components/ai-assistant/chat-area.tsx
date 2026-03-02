@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import type { UIMessage } from "ai";
 import {
   Conversation,
   ConversationContent,
@@ -22,31 +23,39 @@ import {
 import { Button } from "@/components/ui/button";
 import { BotIcon, CopyIcon, SendIcon, SquareIcon } from "lucide-react";
 import { toast } from "sonner";
-import { SourceCitations } from "./source-citations";
 import { WelcomeScreen } from "./welcome-screen";
-import type { RagMessage } from "@/hooks/use-rag-messages";
+
+function getMessageText(msg: UIMessage): string {
+  return msg.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("");
+}
 
 interface ChatAreaProps {
-  messages: RagMessage[];
+  messages: UIMessage[];
   isLoadingMessages: boolean;
-  isSending: boolean;
-  onSendMessage: (message: string) => void;
+  isStreaming: boolean;
+  input: string;
+  onInputChange: (value: string) => void;
+  onSubmit: (message: string) => void;
+  onStop: () => void;
 }
 
 export function ChatArea({
   messages,
   isLoadingMessages,
-  isSending,
-  onSendMessage,
+  isStreaming,
+  input,
+  onInputChange,
+  onSubmit,
+  onStop,
 }: ChatAreaProps) {
-  const [input, setInput] = useState("");
-
   const handleSubmit = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || isSending) return;
-    onSendMessage(trimmed);
-    setInput("");
-  }, [input, isSending, onSendMessage]);
+    if (!trimmed || isStreaming) return;
+    onSubmit(trimmed);
+  }, [input, isStreaming, onSubmit]);
 
   const handleCopy = useCallback((content: string) => {
     navigator.clipboard.writeText(content);
@@ -56,78 +65,79 @@ export function ChatArea({
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Messages or Welcome Screen */}
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       {!hasMessages && !isLoadingMessages ? (
-        <WelcomeScreen onSelectPrompt={(prompt) => onSendMessage(prompt)} />
+        <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
       ) : (
         <Conversation>
           <ConversationContent className="mx-auto w-full max-w-3xl px-4">
-            {messages.map((msg) => (
-              <Message key={msg.id} from={msg.role as "user" | "assistant"}>
-                {msg.role === "assistant" && (
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <BotIcon className="h-4 w-4 text-primary" />
-                  </div>
-                )}
-                <MessageContent>
-                  <MessageResponse>{msg.content}</MessageResponse>
-                </MessageContent>
-                {msg.role === "assistant" && (
-                  <>
-                    <SourceCitations sources={msg.sources} />
+            {messages.map((msg) => {
+              const text = getMessageText(msg);
+              const isAssistant = msg.role === "assistant";
+
+              return (
+                <Message key={msg.id} from={msg.role as "user" | "assistant"}>
+                  {isAssistant && (
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                      <BotIcon className="h-4 w-4 text-primary" />
+                    </div>
+                  )}
+                  <MessageContent>
+                    <MessageResponse>{text}</MessageResponse>
+                  </MessageContent>
+                  {isAssistant && text && (
                     <MessageActions>
                       <MessageAction
                         tooltip="Copy"
-                        onClick={() => handleCopy(msg.content)}
+                        onClick={() => handleCopy(text)}
                       >
                         <CopyIcon className="h-3.5 w-3.5" />
                       </MessageAction>
                     </MessageActions>
-                  </>
-                )}
-              </Message>
-            ))}
+                  )}
+                </Message>
+              );
+            })}
 
-            {/* Typing indicator */}
-            {isSending && (
-              <Message from="assistant">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <BotIcon className="h-4 w-4 text-primary" />
-                </div>
-                <MessageContent>
-                  <div className="flex items-center gap-1.5 py-2">
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
-                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+            {isStreaming &&
+              messages.length > 0 &&
+              messages[messages.length - 1].role === "user" && (
+                <Message from="assistant">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <BotIcon className="h-4 w-4 text-primary" />
                   </div>
-                </MessageContent>
-              </Message>
-            )}
+                  <MessageContent>
+                    <div className="flex items-center gap-2 py-2">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:150ms]" />
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
+                    </div>
+                  </MessageContent>
+                </Message>
+              )}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
       )}
 
-      {/* Input */}
       <div className="mx-auto w-full max-w-3xl px-4 pb-4 pt-2">
         <PromptInput
           value={input}
-          onValueChange={setInput}
-          isLoading={isSending}
+          onValueChange={onInputChange}
+          isLoading={isStreaming}
           onSubmit={handleSubmit}
         >
           <PromptInputTextarea placeholder="Message Alleato AI..." />
           <PromptInputActions className="justify-end px-2 pb-2">
-            <PromptInputAction tooltip={isSending ? "Stop" : "Send"}>
+            <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
               <Button
                 size="icon"
                 variant={input.trim() ? "default" : "ghost"}
                 className="h-8 w-8 rounded-full"
-                disabled={!input.trim() && !isSending}
-                onClick={isSending ? undefined : handleSubmit}
+                disabled={!input.trim() && !isStreaming}
+                onClick={isStreaming ? onStop : handleSubmit}
               >
-                {isSending ? (
+                {isStreaming ? (
                   <SquareIcon className="h-4 w-4" />
                 ) : (
                   <SendIcon className="h-4 w-4" />

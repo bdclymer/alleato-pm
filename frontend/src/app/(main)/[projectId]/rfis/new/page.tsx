@@ -4,8 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Save, Send } from "lucide-react";
 
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { FormContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,7 +90,7 @@ export default function NewRfiPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="New RFI"
         description="Create a new Request for Information"
         actions={
@@ -450,7 +450,7 @@ export default function NewRfiPage() {
                   control={form.control}
                   name="is_private"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
@@ -466,7 +466,7 @@ export default function NewRfiPage() {
               </section>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+              <div className="flex items-center justify-end gap-4 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"

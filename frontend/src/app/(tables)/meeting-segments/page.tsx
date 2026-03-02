@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type MeetingSegment = Database["public"]["Tables"]["meeting_segments"]["Row"];
 
+const PAGE_TITLE = "Meeting Segments";
+const PAGE_DESCRIPTION = "Chunked meeting content for AI analysis and retrieval";
+
 const config: GenericTableConfig = {
   title: "Meeting Segments",
+  hideHeader: true,
   description: "Chunked meeting content for AI analysis and retrieval",
   searchFields: ["title", "summary"],
   exportFilename: "meeting-segments-export.csv",
@@ -126,11 +131,17 @@ export default async function MeetingSegmentsPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading meeting segments. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading meeting segments. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={meetingSegments || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(meetingSegments || []) as MeetingSegment[]} config={config} />
+    </TablePageWrapper>
+  );
 }

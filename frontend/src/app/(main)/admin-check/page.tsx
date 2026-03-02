@@ -89,7 +89,7 @@ export default function AdminCheckPage() {
               Authentication Status
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Text tone="muted">Logged In</Text>
               <Badge variant={data?.authenticated ? "default" : "destructive"}>
@@ -129,7 +129,7 @@ export default function AdminCheckPage() {
                 {data.adminAccess?.description}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Text tone="muted">Admin Access</Text>
                 <Badge variant={data.isAdmin ? "default" : "secondary"}>
@@ -171,7 +171,7 @@ export default function AdminCheckPage() {
                 Linking your auth account to the people directory
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Text tone="muted">Person Link</Text>
                 <Badge variant={data.hasPersonLink ? "default" : "secondary"}>

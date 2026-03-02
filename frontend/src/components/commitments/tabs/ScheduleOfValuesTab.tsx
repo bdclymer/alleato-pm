@@ -281,7 +281,7 @@ export function ScheduleOfValuesTab({
         <CardHeader>
           <CardTitle>Schedule of Values</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
@@ -385,13 +385,13 @@ export function ScheduleOfValuesTab({
           <table className="w-full text-sm">
             <thead className="bg-muted">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">#</th>
-                <th className="px-4 py-3 text-left font-medium">Description</th>
-                <th className="px-4 py-3 text-left font-medium">Budget Code</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-right font-medium">Billed to Date</th>
-                <th className="px-4 py-3 text-right font-medium">Remaining</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-4 text-left font-medium">#</th>
+                <th className="px-4 py-4 text-left font-medium">Description</th>
+                <th className="px-4 py-4 text-left font-medium">Budget Code</th>
+                <th className="px-4 py-4 text-right font-medium">Amount</th>
+                <th className="px-4 py-4 text-right font-medium">Billed to Date</th>
+                <th className="px-4 py-4 text-right font-medium">Remaining</th>
+                <th className="px-4 py-4 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -509,13 +509,13 @@ export function ScheduleOfValuesTab({
             </tbody>
             <tfoot className="bg-muted/60">
               <tr className="font-semibold">
-                <td className="px-4 py-3" colSpan={3}>
+                <td className="px-4 py-4" colSpan={3}>
                   Totals
                 </td>
-                <td className="px-4 py-3 text-right">{formatCurrency(totals.amount)}</td>
-                <td className="px-4 py-3 text-right">{formatCurrency(totals.billed)}</td>
-                <td className="px-4 py-3 text-right">{formatCurrency(amountRemaining)}</td>
-                <td className="px-4 py-3"></td>
+                <td className="px-4 py-4 text-right">{formatCurrency(totals.amount)}</td>
+                <td className="px-4 py-4 text-right">{formatCurrency(totals.billed)}</td>
+                <td className="px-4 py-4 text-right">{formatCurrency(amountRemaining)}</td>
+                <td className="px-4 py-4"></td>
               </tr>
             </tfoot>
           </table>
@@ -582,7 +582,7 @@ function BudgetImpactSummary({ items, costCodes }: BudgetImpactSummaryProps) {
 
   return (
     <div className="rounded-lg border p-4 bg-muted/30">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <Text size="sm" weight="medium">Budget Impact Summary</Text>
         {hasUnassigned && (
           <Badge variant="outline" className="text-amber-600 border-amber-600">
@@ -591,11 +591,11 @@ function BudgetImpactSummary({ items, costCodes }: BudgetImpactSummaryProps) {
           </Badge>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {budgetCodeSummary.map((summary) => (
           <div
             key={summary.code}
-            className={`rounded-md border p-3 bg-background ${
+            className={`rounded-md border p-4 bg-background ${
               summary.code === "unassigned" ? "border-amber-300" : ""
             }`}
           >

@@ -15,7 +15,7 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-muted dark:bg-gray-950">
+    <div className="min-h-screen bg-muted dark:bg-background">
       {children}
       <DocsChat />
     </div>

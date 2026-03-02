@@ -52,7 +52,7 @@ export default function ProjectDirectorySettingsPage() {
               <button
                 onClick={() => setActiveTab("roles")}
                 className={cn(
-                  "w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  "w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors",
                   activeTab === "roles"
                     ? "text-orange-600 bg-orange-50"
                     : "text-foreground hover:text-foreground hover:bg-muted",
@@ -63,7 +63,7 @@ export default function ProjectDirectorySettingsPage() {
               <button
                 onClick={() => setActiveTab("permissions")}
                 className={cn(
-                  "w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  "w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors",
                   activeTab === "permissions"
                     ? "text-orange-600 bg-orange-50"
                     : "text-foreground hover:text-foreground hover:bg-muted",
@@ -74,7 +74,7 @@ export default function ProjectDirectorySettingsPage() {
               <button
                 onClick={() => setActiveTab("activity")}
                 className={cn(
-                  "w-full text-left px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                  "w-full text-left px-4 py-2 text-sm font-medium rounded-md transition-colors",
                   activeTab === "activity"
                     ? "text-orange-600 bg-orange-50"
                     : "text-foreground hover:text-foreground hover:bg-muted",

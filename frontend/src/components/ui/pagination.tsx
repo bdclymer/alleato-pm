@@ -31,7 +31,7 @@ export function SimplePagination({
             disabled={currentPage === 1}
             aria-label="Previous page"
             onClick={() => onPageChange(currentPage - 1)}
-            className="px-3.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
+            className="px-4.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
           >
             Previous
           </button>
@@ -96,7 +96,7 @@ export function SimplePagination({
             disabled={currentPage === totalPages}
             aria-label="Next page"
             onClick={() => onPageChange(currentPage + 1)}
-            className="px-3.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
+            className="px-4.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
           >
             Next
           </button>
@@ -198,6 +198,7 @@ PaginationLink.displayName = "PaginationLink";
 
 const PaginationPrevious = ({
   className,
+  size: _size,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
@@ -214,6 +215,7 @@ PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = ({
   className,
+  size: _size,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink

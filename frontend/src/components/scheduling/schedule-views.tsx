@@ -291,7 +291,7 @@ export function ScheduleGridView({
   return (
     <div className="rounded-lg border bg-card">
       {/* Header */}
-      <div className="grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-3 border-b bg-muted/30 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-4 border-b bg-muted/30 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         <div className="flex items-center">
           <Checkbox
             checked={isAllSelected}
@@ -337,7 +337,7 @@ export function ScheduleGridView({
             <div
               key={task.id}
               className={cn(
-                "grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-3 hover:bg-accent cursor-pointer group transition-colors duration-150",
+                "grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-4 hover:bg-accent cursor-pointer group transition-colors duration-150",
                 selectedIds.has(task.id) && "bg-primary/10"
               )}
               onClick={() => onTaskClick(task)}
@@ -399,7 +399,7 @@ export function ScheduleGridView({
 
       {/* Add Task Row */}
       <div
-        className="flex items-center gap-2 px-4 py-3 hover:bg-accent cursor-pointer border-t border-dashed bg-muted/10 transition-colors duration-150"
+        className="flex items-center gap-2 px-4 py-4 hover:bg-accent cursor-pointer border-t border-dashed bg-muted/10 transition-colors duration-150"
         onClick={() => onAddTask(null)}
       >
         <Plus className="h-4 w-4 text-primary" />
@@ -466,9 +466,9 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
       )}
       onClick={() => onTaskClick(task)}
     >
-      <CardContent className="p-2.5 space-y-1.5">
+      <CardContent className="p-2.5 space-y-2">
         {/* Row 1: Drag handle + task name */}
-        <div className="flex items-start gap-1.5">
+        <div className="flex items-start gap-2">
           <div
             {...attributes}
             {...listeners}
@@ -497,7 +497,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
         </div>
 
         {/* Row 2: Configurable metadata chips */}
-        <div className="flex flex-wrap items-center gap-1.5 pl-[26px]">
+        <div className="flex flex-wrap items-center gap-2 pl-[26px]">
           {visibleFields.has("labels") && label && (
             <Badge
               variant="secondary"
@@ -549,7 +549,7 @@ function TaskCardOverlay({ task }: { task: ScheduleTaskWithHierarchy }) {
 
   return (
     <Card className="cursor-grabbing shadow-xl ring-2 ring-primary/20 w-72">
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="p-4 space-y-2">
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
           {label && (
@@ -595,7 +595,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onUpdateTas
 
   return (
     <div className={cn(
-      "flex flex-col min-w-[280px] w-80 shrink-0 bg-muted/20 rounded-xl p-3 transition-all duration-200",
+      "flex flex-col min-w-[280px] w-80 shrink-0 bg-muted/20 rounded-xl p-4 transition-all duration-200",
       isOver && "ring-2 ring-primary/30 bg-primary/5"
     )}>
       {/* Column Header */}
@@ -609,7 +609,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onUpdateTas
       {/* Add Task Button */}
       <Button
         variant="ghost"
-        className="w-full justify-start gap-2 mb-3 text-primary hover:text-primary hover:bg-background"
+        className="w-full justify-start gap-2 mb-4 text-primary hover:text-primary hover:bg-background"
         onClick={onAddTask}
       >
         <Plus className="h-4 w-4" />
@@ -745,7 +745,7 @@ export function ScheduleBoardView({
   return (
     <div>
       {/* Card field settings */}
-      <div className="flex justify-end px-4 pt-3 pb-1">
+      <div className="flex justify-end px-4 pt-4 pb-1">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm">
@@ -1041,14 +1041,14 @@ export function ScheduleTimelineView({
       <div className="flex">
         {/* Task list sidebar */}
         <div className="w-64 border-r shrink-0">
-          <div className="h-10 border-b px-3 flex items-center text-sm font-medium bg-muted/30">
+          <div className="h-10 border-b px-4 flex items-center text-sm font-medium bg-muted/30">
             {format(currentDate, "yyyy")}
           </div>
           <div className="divide-y">
             {flatTasks.map((task, index) => (
               <div
                 key={task.id}
-                className="h-10 px-3 flex items-center gap-2 hover:bg-accent transition-colors duration-150 cursor-pointer"
+                className="h-10 px-4 flex items-center gap-2 hover:bg-accent transition-colors duration-150 cursor-pointer"
                 onClick={() => onTaskClick(task)}
               >
                 <span className="text-xs text-muted-foreground w-6">{index + 1}</span>
@@ -1066,7 +1066,7 @@ export function ScheduleTimelineView({
               </div>
             ))}
             <div
-              className="h-10 px-3 flex items-center gap-2 text-primary hover:bg-accent transition-colors duration-150 cursor-pointer"
+              className="h-10 px-4 flex items-center gap-2 text-primary hover:bg-accent transition-colors duration-150 cursor-pointer"
               onClick={() => onAddTask(null)}
             >
               <Plus className="h-4 w-4" />

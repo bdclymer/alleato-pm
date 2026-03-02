@@ -212,7 +212,7 @@ export function DataTableGroupable<TData, TValue>({
     }
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {rows.map((row) => {
           // Group header row
           if (row.getIsGrouped()) {
@@ -411,7 +411,7 @@ export function DataTableGroupable<TData, TValue>({
   return (
     <div className={cn("space-y-4", className)}>
       {/* DEPRECATION WARNING - Remove after migration */}
-      <div className="bg-destructive text-white px-4 py-3 rounded-md font-semibold text-center">
+      <div className="bg-destructive text-white px-4 py-4 rounded-md font-semibold text-center">
         ⚠️ DEPRECATED: This page uses legacy DataTableGroupable. Migrate to GenericDataTable + TableLayout
       </div>
       {showToolbar && (

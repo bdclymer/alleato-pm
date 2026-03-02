@@ -46,6 +46,7 @@ export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): 
     setMeetingToDelete,
     handleFilterChange,
     handleRowClick,
+    handleEdit,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,
@@ -101,7 +102,7 @@ export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): 
           rowActions: (item) =>
             renderMeetingRowActions(
               item,
-              handleRowClick,
+              handleEdit,
               (meeting) => {
                 setMeetingToDelete(meeting);
                 setDeleteDialogOpen(true);

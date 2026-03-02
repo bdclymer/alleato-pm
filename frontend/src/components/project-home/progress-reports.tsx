@@ -109,13 +109,13 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
       </div>
 
       {/* Reports List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {mockReports.map((report) => (
           <Card key={report.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-4 mb-2">
                     <h4 className="text-sm font-semibold text-foreground">
                       {report.title}
                     </h4>
@@ -133,7 +133,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                     </Badge>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       <span>{format(report.date, "MMM d, yyyy")}</span>
@@ -146,7 +146,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-muted rounded-full h-2 mb-3">
+                  <div className="w-full bg-muted rounded-full h-2 mb-4">
                     <div
                       className="bg-info h-2 rounded-full transition-all"
                       style={{ width: `${report.completionPercentage}%` }}

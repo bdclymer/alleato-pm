@@ -3,12 +3,17 @@ import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
 
+const PAGE_TITLE = "Daily Logs";
+const PAGE_DESCRIPTION = "View daily construction logs and weather conditions";
+
 const config: GenericTableConfig = {
   title: "Daily Logs",
+  hideHeader: true,
   description: "View daily construction logs and weather conditions",
   searchFields: ["log_date", "created_by"],
   exportFilename: "daily-logs-export.csv",
@@ -81,11 +86,17 @@ export default async function DailyLogsPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading daily logs. Please try again later.
-      </div>
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading daily logs. Please try again later.
+        </div>
+      </TablePageWrapper>
     );
   }
 
-  return <GenericDataTable data={dailyLogs || []} config={config} />;
+  return (
+    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+      <GenericDataTable data={(dailyLogs || []) as DailyLog[]} config={config} />
+    </TablePageWrapper>
+  );
 }

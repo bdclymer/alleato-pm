@@ -244,7 +244,7 @@ export function BulkActionDialog({
                   return (
                     <label
                       key={group.id}
-                      className="flex items-center gap-2 rounded-md border px-3 py-1 text-sm cursor-pointer"
+                      className="flex items-center gap-2 rounded-md border px-4 py-1 text-sm cursor-pointer"
                     >
                       <input
                         type="checkbox"

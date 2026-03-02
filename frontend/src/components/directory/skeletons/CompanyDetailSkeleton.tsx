@@ -16,7 +16,7 @@ export function CompanyDetailSkeleton() {
           <CardHeader>
             <Skeleton className="h-5 w-[150px]" />
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-4 w-full" />
@@ -36,7 +36,7 @@ export function CompanyDetailSkeleton() {
           <CardHeader>
             <Skeleton className="h-5 w-[150px]" />
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-4 w-full" />
@@ -54,9 +54,9 @@ export function CompanyDetailSkeleton() {
         <CardHeader>
           <Skeleton className="h-5 w-[120px]" />
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-2">
+            <div key={i} className="flex items-center gap-4 p-2">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-[150px]" />

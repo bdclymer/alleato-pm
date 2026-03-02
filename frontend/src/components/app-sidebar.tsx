@@ -147,7 +147,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroup>
               <SidebarGroupLabel className="text-primary font-semibold">Project Management</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
+                <SidebarMenu className="grid grid-cols-2 gap-x-2 gap-y-1 group-data-[collapsible=icon]:grid-cols-1">
                   {visibleProjectTools.map((tool) => {
                     const href = buildToolUrl(tool.path, projectId, tool.requiresProject)
                     const isActive = isActivePath(pathname, tool.path)

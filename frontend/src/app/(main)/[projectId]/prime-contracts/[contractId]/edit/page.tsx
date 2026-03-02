@@ -274,7 +274,7 @@ export default function EditContractPage() {
       <>
         <ProjectPageHeader title="Edit Contract" description="Loading contract..." />
         <PageContainer>
-          <div className="text-center py-8 text-sm text-gray-500">Loading contract...</div>
+          <div className="text-center py-8 text-sm text-muted-foreground">Loading contract...</div>
         </PageContainer>
       </>
     );
@@ -368,7 +368,7 @@ export default function EditContractPage() {
         description="Update contract details and SOV line items"
       />
 
-      <PageContainer className="bg-gray-50">
+      <PageContainer className="bg-muted/30">
         <FormContainer maxWidth="xl" className="max-w-[1400px] bg-white rounded-lg border border-gray-200 p-8">
           <ContractForm
             initialData={initialData}

@@ -105,9 +105,9 @@ export function SourceContent({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex flex-col gap-2 p-3"
+        className="flex flex-col gap-2 p-4"
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <img
             src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
               href,

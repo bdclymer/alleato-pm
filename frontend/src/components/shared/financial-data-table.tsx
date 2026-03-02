@@ -107,7 +107,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
                 <th
                   key={column.key}
                   className={cn(
-                    "pb-3 text-left text-sm font-medium",
+                    "pb-4 text-left text-sm font-medium",
                     column.align === "center" && "text-center",
                     column.align === "right" && "text-right",
                     column.className,
@@ -116,7 +116,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
                   {column.header}
                 </th>
               ))}
-              {actions && <th className="pb-3 w-10" />}
+              {actions && <th className="pb-4 w-10" />}
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -133,7 +133,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
                   <td
                     key={column.key}
                     className={cn(
-                      "py-3 text-sm",
+                      "py-4 text-sm",
                       column.align === "center" && "text-center",
                       column.align === "right" && "text-right",
                       column.className,
@@ -143,7 +143,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
                   </td>
                 ))}
                 {actions && (
-                  <td className="py-3">
+                  <td className="py-4">
                     <div onClick={(e) => e.stopPropagation()}>
                       {actions(row)}
                     </div>

@@ -541,58 +541,22 @@ Before claiming tests pass:
 - file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs
 ## UI/UX Design Standards
 
-### CRITICAL: Premium Minimal Baseline (MANDATORY)
+**Single source of truth: `frontend/src/design-system/`**
 
-When asked to design/build any page, default to **Linear/Supabase-style minimal UI** with strong hierarchy and low visual noise.
+Before building ANY UI, read the design system. It contains:
 
-**Hard constraints (non-negotiable):**
-- Never nest cards (`Card` inside `Card` is forbidden)
-- Never wrap whole page sections in decorative cards
-- Max 2 visual container levels (page shell + section content)
-- No heavy shadows (`shadow-lg`, `shadow-xl`, glows)
-- No thick borders (1px only)
-- One accent color per page
+| File | What |
+|------|------|
+| `README.md` | Quick start, decision tree |
+| `principles.md` | Philosophy, hard constraints, card policy |
+| `page-archetypes.md` | The 4 page types with copy-paste templates |
+| `tokens.md` | Colors, spacing, typography, shadows |
+| `components.md` | Which component to use for what |
+| `patterns.md` | Loading, errors, empty states, forms, modals |
 
-**Required page structure:**
-```tsx
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-
-<>
-  <ProjectPageHeader title="..." description="..." actions={<div>...</div>} />
-  <PageContainer className="space-y-8">
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Section title</h2>
-      </div>
-      {/* table, form grid, or list */}
-    </section>
-  </PageContainer>
-</>
-```
-
-**Card usage policy:**
-- Allowed: KPI tiles, compact mobile record tiles, isolated side modules
-- Not allowed: page scaffolding, generic wrappers, card-in-card composition
-
-**Visual rhythm:**
-- Use 8px spacing cadence (`space-y-2/4/6/8`, `gap-4/6`)
-- Default section spacing: `space-y-8`
-- Default group spacing: `space-y-4`
-- Typography caps at semibold (`font-semibold`)
-
-### Pre-Implementation Checklist
-
-Before submitting any UI code, verify:
-- [ ] No nested cards
-- [ ] No decorative section wrapper cards
-- [ ] Max 2 container levels
-- [ ] 8px spacing cadence followed
-- [ ] Border + background contrast is subtle (no heavy chrome)
-- [ ] Single accent color is used consistently
-- [ ] Responsive down to 375px
-- [ ] Keyboard focus states are visible
-
-Reference: `docs/design/AI-UI-BASELINE.md`
+**Every page must use a page archetype. No exceptions.**
+**Every component must come from `@/components/ui/` or `@/components/layout/`. No custom styling.**
+**Every color/spacing/font must use a design token. No hex codes or arbitrary values.**
 
 ### Code Quality Standards
 

@@ -84,7 +84,7 @@ export function DocumentDetailsSheet({
               <>
                 <div>
                   <h3 className="font-semibold mb-2">Content Preview</h3>
-                  <div className="bg-muted p-3 rounded-lg max-h-40 overflow-y-auto">
+                  <div className="bg-muted p-4 rounded-lg max-h-40 overflow-y-auto">
                     <p className="text-sm whitespace-pre-wrap">
                       {document.content.length > 500
                         ? document.content.substring(0, 500) + "..."
@@ -101,7 +101,7 @@ export function DocumentDetailsSheet({
               <>
                 <div>
                   <h3 className="font-semibold mb-2">Metadata</h3>
-                  <div className="bg-muted p-3 rounded-lg">
+                  <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-xs overflow-x-auto">
                       {JSON.stringify(metadata, null, 2)}
                     </pre>
@@ -113,7 +113,7 @@ export function DocumentDetailsSheet({
 
             {/* Edit Form */}
             <form className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
@@ -122,7 +122,7 @@ export function DocumentDetailsSheet({
                 />
               </div>
               {document.content && (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Label htmlFor="content">Content</Label>
                   <Textarea
                     id="content"

@@ -1,5 +1,5 @@
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { ProjectSetupWizard } from "@/components/project-setup-wizard/project-setup-wizard";
-import { DashboardFormLayout } from "@/components/layouts";
 
 interface ProjectSetupPageProps {
   params: Promise<{
@@ -12,8 +12,14 @@ export default async function ProjectSetupPage({
 }: ProjectSetupPageProps) {
   const { projectId } = await params;
   return (
-    <DashboardFormLayout maxWidth="wide">
-      <ProjectSetupWizard projectId={projectId} />
-    </DashboardFormLayout>
+    <>
+      <ProjectPageHeader
+        title="Project Setup"
+        description="Configure your project settings and details"
+      />
+      <PageContainer maxWidth="lg">
+        <ProjectSetupWizard projectId={projectId} />
+      </PageContainer>
+    </>
   );
 }

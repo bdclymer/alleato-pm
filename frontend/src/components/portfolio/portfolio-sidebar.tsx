@@ -35,7 +35,7 @@ export function PortfolioSidebar({
       <div className="flex-1 overflow-auto">
         <button
           onClick={() => setIsReportsExpanded(!isReportsExpanded)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted"
+          className="w-full flex items-center justify-between px-4 py-4 text-sm font-medium text-foreground hover:bg-muted"
         >
           <span>Custom Reports</span>
           <ChevronRight
@@ -53,14 +53,14 @@ export function PortfolioSidebar({
                 <button
                   key={report.id}
                   onClick={() => onReportClick?.(report.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted rounded"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted rounded"
                 >
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   {report.name}
                 </button>
               ))
             ) : (
-              <p className="px-3 py-2 text-sm text-muted-foreground">
+              <p className="px-4 py-2 text-sm text-muted-foreground">
                 No custom reports yet
               </p>
             )}

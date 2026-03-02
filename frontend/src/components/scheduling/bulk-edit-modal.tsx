@@ -234,15 +234,15 @@ export function BulkEditModal({
 
         <div className="space-y-6 py-4">
           {error && (
-            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+            <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-4 rounded-md">
               <AlertCircle className="h-4 w-4" />
               {error}
             </div>
           )}
 
           {fieldConfigs.map((config) => (
-            <div key={config.key} className="space-y-3">
-              <div className="flex items-start gap-3">
+            <div key={config.key} className="space-y-4">
+              <div className="flex items-start gap-4">
                 <Checkbox
                   id={`field-${config.key}`}
                   checked={selectedFields.has(config.key)}

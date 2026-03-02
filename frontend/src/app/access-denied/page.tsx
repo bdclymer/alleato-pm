@@ -44,7 +44,7 @@ export default async function AccessDeniedPage({
             <p className="text-center text-sm text-muted-foreground">
               {message}
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex justify-center gap-4">
               <Button asChild variant="outline">
                 <Link href="/">Back to Projects</Link>
               </Button>

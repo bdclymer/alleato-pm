@@ -64,7 +64,7 @@ export function DirectoryActivityPanel({
         {entries.map((entry) => (
           <div
             key={entry.id}
-            className="rounded-md border p-3 text-sm space-y-1"
+            className="rounded-md border p-4 text-sm space-y-1"
           >
             <div className="font-medium">{entry.action}</div>
             <div className="text-muted-foreground">

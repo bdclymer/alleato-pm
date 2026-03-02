@@ -1,8 +1,9 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TableLayout } from "@/components/layouts";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,7 +134,7 @@ export default function EditChangeEventPage() {
   if (!canEdit) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Cannot Edit Change Event"
           description={`Change Event ${changeEvent.number || changeEvent.id} cannot be edited`}
           breadcrumbs={[
@@ -188,7 +189,7 @@ export default function EditChangeEventPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Edit Change Event"
         description={`Modify Change Event ${changeEvent.number || changeEvent.id}`}
         breadcrumbs={[

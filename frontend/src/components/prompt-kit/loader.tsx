@@ -295,7 +295,7 @@ export function BarsLoader({
 
   const containerSizes = {
     sm: "h-4 gap-1",
-    md: "h-5 gap-1.5",
+    md: "h-5 gap-2",
     lg: "h-6 gap-2",
   };
 

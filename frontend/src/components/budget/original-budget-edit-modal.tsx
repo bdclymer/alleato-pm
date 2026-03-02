@@ -280,7 +280,7 @@ export function OriginalBudgetEditModal({
           {activeTab === "original" ? (
             <div className="p-6 space-y-6">
               {/* Line Item Info */}
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
                 <p className="text-xs uppercase tracking-wider text-slate-500 font-medium">
                   Line Item
                 </p>
@@ -291,7 +291,7 @@ export function OriginalBudgetEditModal({
 
               {/* Parent Row Notice */}
               {lineItem.children && lineItem.children.length > 0 && (
-                <div className="rounded-lg border-2 border-orange-200 bg-orange-50 px-4 py-3 flex items-start gap-3">
+                <div className="rounded-lg border-2 border-orange-200 bg-orange-50 px-4 py-4 flex items-start gap-4">
                   <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center mt-0.5">
                     <svg
                       className="w-3 h-3 text-white"
@@ -336,7 +336,7 @@ export function OriginalBudgetEditModal({
 
               {/* Calculation Method */}
               {!isAggregatedRow && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div>
                     <p className="text-sm font-medium text-slate-800">
                       Calculation Method
@@ -352,7 +352,7 @@ export function OriginalBudgetEditModal({
                         <label
                           key={method}
                           className={cn(
-                            "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+                            "flex items-start gap-4 rounded-lg border p-4 cursor-pointer transition-all",
                             calculationMethod === method
                               ? "border-brand bg-brand/5 ring-1 ring-brand"
                               : "border-slate-200 bg-background hover:border-slate-300",
@@ -471,7 +471,7 @@ export function OriginalBudgetEditModal({
 
                   {/* Formula display for calculated method */}
                   {calculationMethod === "calculated" && (
-                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
                       <span className="font-medium">Formula:</span>{" "}
                       {unitQty || "0"} × {formatCurrencyInput(unitCost)} ={" "}
                       {formatCurrencyInput(originalBudget)}
@@ -503,18 +503,18 @@ export function OriginalBudgetEditModal({
               )}
 
               {!loading && !error && history.length > 0 && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {history.map((entry) => (
                     <div
                       key={entry.id}
                       className={cn(
-                        "border-l-4 pl-4 py-3 rounded-r-lg bg-background shadow-sm",
+                        "border-l-4 pl-4 py-4 rounded-r-lg bg-background shadow-sm",
                         entry.change_type === "create" && "border-green-500",
                         entry.change_type === "delete" && "border-red-500",
                         entry.change_type === "update" && "border-blue-500",
                       )}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-4">
                         <div
                           className={cn(
                             "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
@@ -631,7 +631,7 @@ export function OriginalBudgetEditModal({
 
         {/* Footer */}
         <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-4">
             <Button variant="outline" onClick={onClose}>
               {isAggregatedRow ? "Close" : "Cancel"}
             </Button>

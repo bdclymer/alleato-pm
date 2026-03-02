@@ -16,8 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/misc/status-badge";
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer , ProjectPageHeader } from "@/components/layout";
+
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
 import { Separator } from "@/components/ui/separator";
@@ -172,7 +172,7 @@ export default function InvoiceDetailPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Invoice Details" description="Loading..." />
+        <ProjectPageHeader title="Invoice Details" description="Loading..." />
         <PageContainer>
           <div className="flex justify-center items-center h-64">
             <Text tone="muted">Loading invoice...</Text>
@@ -185,7 +185,7 @@ export default function InvoiceDetailPage() {
   if (error || !invoice) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Invoice Details"
           description="Error loading invoice"
         />
@@ -210,7 +210,7 @@ export default function InvoiceDetailPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
         description={`Contract #${invoice.contract_id}`}
         actions={
@@ -343,7 +343,7 @@ export default function InvoiceDetailPage() {
               <CardTitle>Invoice Totals</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Text tone="muted">Subtotal</Text>
                   <Text weight="medium">

@@ -86,7 +86,7 @@ export function ResponsiveAuthUsersTable({
             <TableRow key={user.id}>
               {/* User info */}
               <TableCell>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-4">
                   <Avatar className="h-9 w-9">
                     <AvatarImage
                       src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name} ${user.last_name}`}

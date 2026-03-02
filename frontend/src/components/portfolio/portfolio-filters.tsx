@@ -112,7 +112,7 @@ export function PortfolioFilters({
   ).length;
 
   return (
-    <div className="flex items-center justify-between py-4 gap-3">
+    <div className="flex items-center justify-between py-4 gap-4">
       {/* Mobile: Compact layout with filter sheet */}
       <div className="flex lg:hidden items-center gap-2 flex-1">
         {/* Search */}
@@ -150,14 +150,14 @@ export function PortfolioFilters({
               </SheetDescription>
             </SheetHeader>
 
-            <div className="flex-1 overflow-y-auto -mx-6 px-6 pb-6 space-y-5">
+            <div className="flex-1 overflow-y-auto -mx-6 px-6 pb-6 space-y-4">
               {/* View Type Selection */}
               {!hideViewToggle && (
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     View Type
                   </h3>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-4 gap-2">
                     {viewTypes.map((type) => {
                       const Icon = type.icon;
                       return (
@@ -191,7 +191,7 @@ export function PortfolioFilters({
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Client
                   </h3>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {clientOptions?.map((client) => (
                       <button
                         type="button"
@@ -202,7 +202,7 @@ export function PortfolioFilters({
                           );
                         }}
                         className={cn(
-                          "px-3 py-1.5 text-xs rounded-full border transition-all",
+                          "px-4 py-1.5 text-xs rounded-full border transition-all",
                           clientFilter === client
                             ? "border-brand bg-brand/10 text-brand font-medium"
                             : "border-border text-foreground hover:border-border/80",
@@ -219,12 +219,12 @@ export function PortfolioFilters({
               {onPhaseFilterChange && (
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Phase</h3>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => onPhaseFilterChange(null)}
                       className={cn(
-                        "px-3 py-1.5 text-xs rounded-full border transition-all",
+                        "px-4 py-1.5 text-xs rounded-full border transition-all",
                         !phaseFilter
                           ? "border-brand bg-brand/10 text-brand font-medium"
                           : "border-border text-foreground hover:border-border/80",
@@ -238,7 +238,7 @@ export function PortfolioFilters({
                         key={phase}
                         onClick={() => onPhaseFilterChange(phase)}
                         className={cn(
-                          "px-3 py-1.5 text-xs rounded-full border transition-all capitalize",
+                          "px-4 py-1.5 text-xs rounded-full border transition-all capitalize",
                           phaseFilter === phase
                             ? "border-brand bg-brand/10 text-brand font-medium"
                             : "border-border text-foreground hover:border-border/80",
@@ -257,7 +257,7 @@ export function PortfolioFilters({
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Category
                   </h3>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {categoryOptions?.map((category) => (
                       <button
                         type="button"
@@ -268,7 +268,7 @@ export function PortfolioFilters({
                           );
                         }}
                         className={cn(
-                          "px-3 py-1.5 text-xs rounded-full border transition-all",
+                          "px-4 py-1.5 text-xs rounded-full border transition-all",
                           categoryFilter === category
                             ? "border-brand bg-brand/10 text-brand font-medium"
                             : "border-border text-foreground hover:border-border/80",
@@ -331,7 +331,7 @@ export function PortfolioFilters({
       </div>
 
       {/* Desktop: Full layout */}
-      <div className="hidden lg:flex items-center gap-3 flex-1">
+      <div className="hidden lg:flex items-center gap-4 flex-1">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

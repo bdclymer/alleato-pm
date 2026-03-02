@@ -8,6 +8,9 @@ import {
 import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
 import { useRouter } from "next/navigation";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -312,42 +315,51 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden px-6 sm:px-8 lg:px-12 pt-6 pb-8">
-        {/* Filters */}
-        <PortfolioFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          viewType={viewType}
-          onViewTypeChange={setViewType}
-          phaseFilter={phaseFilter}
-          onPhaseFilterChange={setPhaseFilter}
-          categoryFilter={categoryFilter}
-          onCategoryFilterChange={setCategoryFilter}
-          clientFilter={clientFilter}
-          onClientFilterChange={setClientFilter}
-          phaseOptions={phaseOptions}
-          categoryOptions={categoryOptions}
-          clientOptions={clientOptions}
-          onClearFilters={handleClearFilters}
-          onExport={handleExport}
-          onCreateProject={handleCreateProject}
-        />
+    <>
+      <ProjectPageHeader
+        title="Portfolio"
+        description="All projects across your organization"
+        actions={
+          <Button size="sm" onClick={handleCreateProject}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        }
+      />
+      <PageContainer maxWidth="full">
+        <div className="flex flex-col gap-4">
+          <PortfolioFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewType={viewType}
+            onViewTypeChange={setViewType}
+            phaseFilter={phaseFilter}
+            onPhaseFilterChange={setPhaseFilter}
+            categoryFilter={categoryFilter}
+            onCategoryFilterChange={setCategoryFilter}
+            clientFilter={clientFilter}
+            onClientFilterChange={setClientFilter}
+            phaseOptions={phaseOptions}
+            categoryOptions={categoryOptions}
+            clientOptions={clientOptions}
+            onClearFilters={handleClearFilters}
+            onExport={handleExport}
+            onCreateProject={handleCreateProject}
+          />
 
-        {/* Projects Table */}
-        <div className="flex-1 overflow-hidden bg-background rounded-lg shadow-sm">
-          {loading ? (
-            <LoadingSkeleton />
-          ) : (
-            <ProjectsTable
-              data={filteredProjects}
-              onProjectClick={handleProjectClick}
-              viewType={viewType === "list" ? "list" : "grid"}
-            />
-          )}
+          <div className="overflow-hidden bg-background rounded-lg border">
+            {loading ? (
+              <LoadingSkeleton />
+            ) : (
+              <ProjectsTable
+                data={filteredProjects}
+                onProjectClick={handleProjectClick}
+                viewType={viewType === "list" ? "list" : "grid"}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </>
   );
 }

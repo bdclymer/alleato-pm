@@ -1,4 +1,4 @@
-import { ProjectToolPage } from "@/components/layout/project-tool-page";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
@@ -108,113 +108,114 @@ export default async function ProjectPhotosPage({
   const folderPath = `projects/${numericProjectId}/photos`;
 
   return (
-    <ProjectToolPage
-      project={project.name || undefined}
-      client={project.client || undefined}
-      title="Photos"
-      description="Project photo documentation pulled directly from Supabase Storage"
-    >
-      <div className="space-y-4">
-        <Card
-          className="border-muted-foreground/20 bg-gradient-to-br from-muted/60 via-background to-background"
-          data-testid="photo-summary"
-        >
-          <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Storage bucket</div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{PHOTOS_BUCKET}</Badge>
-                <code className="rounded bg-muted px-2 py-1 text-xs">
-                  {folderPath}
-                </code>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <div className="rounded-lg bg-muted px-3 py-2">
-                <div className="text-muted-foreground">Images</div>
-                <div className="text-lg font-semibold">{photos.length}</div>
-              </div>
-              <div className="rounded-lg bg-muted px-3 py-2">
-                <div className="text-muted-foreground">Total size</div>
-                <div className="text-lg font-semibold">
-                  {formatFileSize(totalSize)}
-                </div>
-              </div>
-            </div>
-            {error ? (
-              <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                Unable to read from Supabase storage: {error}
-              </div>
-            ) : null}
-          </div>
-        </Card>
-
-        {photos.length === 0 ? (
-          <Card className="p-6" data-testid="photos-empty">
-            {error ? (
-              <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">
-                  Unable to load photos
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Supabase returned an error while reading{" "}
-                  <code>{folderPath}</code>: {error}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">
-                  No photos found for this project
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Upload images to the <code>{folderPath}</code> folder in the
-                  Supabase <strong>photos</strong> bucket to see them here.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  New uploads appear automatically once they are stored in
-                  Supabase.
-                </p>
-              </div>
-            )}
-          </Card>
-        ) : (
-          <div
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-            data-testid="photo-grid"
+    <>
+      <ProjectPageHeader
+        title="Photos"
+        description="Project photo documentation pulled directly from Supabase Storage"
+      />
+      <PageContainer maxWidth="full">
+        <div className="space-y-4">
+          <Card
+            className="border-muted-foreground/20 bg-gradient-to-br from-muted/60 via-background to-background"
+            data-testid="photo-summary"
           >
-            {photos.map((photo) => (
-              <Card
-                key={photo.name}
-                className="overflow-hidden border-muted-foreground/20"
-                data-testid="photo-card"
-              >
-                <div className="relative aspect-video bg-muted">
-                  <img
-                    src={photo.url}
-                    alt={photo.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
-                    <p className="truncate text-sm font-medium text-white">
-                      {photo.name}
-                    </p>
+            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="text-sm text-muted-foreground">Storage bucket</div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{PHOTOS_BUCKET}</Badge>
+                  <code className="rounded bg-muted px-2 py-1 text-xs">
+                    {folderPath}
+                  </code>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <div className="rounded-lg bg-muted px-4 py-2">
+                  <div className="text-muted-foreground">Images</div>
+                  <div className="text-lg font-semibold">{photos.length}</div>
+                </div>
+                <div className="rounded-lg bg-muted px-4 py-2">
+                  <div className="text-muted-foreground">Total size</div>
+                  <div className="text-lg font-semibold">
+                    {formatFileSize(totalSize)}
                   </div>
                 </div>
-                <div className="space-y-1 p-4 text-sm">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span>{photo.mimeType ?? "image"}</span>
-                    <span>{formatFileSize(photo.size)}</span>
-                  </div>
-                  <div className="text-muted-foreground">
-                    {formatDateString(photo.updatedAt)}
-                  </div>
+              </div>
+              {error ? (
+                <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                  Unable to read from Supabase storage: {error}
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </ProjectToolPage>
+              ) : null}
+            </div>
+          </Card>
+
+          {photos.length === 0 ? (
+            <Card className="p-6" data-testid="photos-empty">
+              {error ? (
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Unable to load photos
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Supabase returned an error while reading{" "}
+                    <code>{folderPath}</code>: {error}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    No photos found for this project
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Upload images to the <code>{folderPath}</code> folder in the
+                    Supabase <strong>photos</strong> bucket to see them here.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    New uploads appear automatically once they are stored in
+                    Supabase.
+                  </p>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <div
+              className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+              data-testid="photo-grid"
+            >
+              {photos.map((photo) => (
+                <Card
+                  key={photo.name}
+                  className="overflow-hidden border-muted-foreground/20"
+                  data-testid="photo-card"
+                >
+                  <div className="relative aspect-video bg-muted">
+                    <img
+                      src={photo.url}
+                      alt={photo.name}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
+                      <p className="truncate text-sm font-medium text-white">
+                        {photo.name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-1 p-4 text-sm">
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span>{photo.mimeType ?? "image"}</span>
+                      <span>{formatFileSize(photo.size)}</span>
+                    </div>
+                    <div className="text-muted-foreground">
+                      {formatDateString(photo.updatedAt)}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </PageContainer>
+    </>
   );
 }

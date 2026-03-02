@@ -83,7 +83,7 @@ export function EmptyState({
   // Icon wrapper styles
   const iconWrapperStyles =
     iconWithBackground || variant === "table"
-      ? "rounded-full bg-muted p-3"
+      ? "rounded-full bg-muted p-4"
       : "";
 
   return (

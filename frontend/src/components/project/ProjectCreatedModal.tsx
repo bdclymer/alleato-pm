@@ -133,7 +133,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
               transition={{ delay: 0.5, duration: 0.4 }}
               className="mb-8"
             >
-              <div className="flex items-center gap-3 mb-4 px-4">
+              <div className="flex items-center gap-4 mb-4 px-4">
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
                 <span className="text-xs font-mono uppercase tracking-widest text-slate-500">
                   Next Steps
@@ -141,7 +141,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-600 to-transparent" />
               </div>
 
-              <div className="space-y-3 relative">
+              <div className="space-y-4 relative">
                 {/* Vertical Timeline Line */}
                 <div className="absolute left-[2.6rem] top-0 bottom-0 w-px bg-gradient-to-b from-slate-600 via-slate-700 to-transparent" />
 

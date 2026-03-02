@@ -67,7 +67,7 @@ function BudgetTableSkeleton() {
   return (
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
       {/* Table header skeleton */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/50">
+      <div className="flex items-center gap-2 px-4 py-4 border-b bg-muted/50">
         <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-4 w-32 ml-4" />
@@ -78,7 +78,7 @@ function BudgetTableSkeleton() {
       </div>
       {/* Table rows skeleton */}
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2 px-4 py-3 border-b last:border-b-0">
+        <div key={i} className="flex items-center gap-2 px-4 py-4 border-b last:border-b-0">
           <Skeleton className="h-4 w-4" />
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-48 ml-4" />
@@ -89,7 +89,7 @@ function BudgetTableSkeleton() {
         </div>
       ))}
       {/* Grand total row skeleton */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-muted/30 border-t">
+      <div className="flex items-center gap-2 px-4 py-4 bg-muted/30 border-t">
         <Skeleton className="h-5 w-20" />
         <Skeleton className="h-5 w-28 ml-auto" />
         <Skeleton className="h-5 w-28" />
@@ -826,27 +826,27 @@ function BudgetPageContent() {
 
       <div className="flex flex-1 flex-col gap-4 pl-4 sm:pl-6 lg:pl-8 pt-2 pb-6 bg-muted/30">
         {activeTab === "settings" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm">
+          <div className="flex-1">
             <VerticalMarkupSettings projectId={projectId} />
           </div>
         ) : activeTab === "cost-codes" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm p-6">
+          <div className="flex-1 p-6">
             <CostCodesTab projectId={projectId} />
           </div>
         ) : activeTab === "forecasting" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm">
+          <div className="flex-1">
             <ForecastingTab projectId={projectId} />
           </div>
         ) : activeTab === "snapshots" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm">
+          <div className="flex-1">
             <SnapshotsTab projectId={projectId} />
           </div>
         ) : activeTab === "change-history" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm">
+          <div className="flex-1">
             <ChangeHistoryTab projectId={projectId} />
           </div>
         ) : activeTab === "budget-modifications" ? (
-          <div className="flex-1 rounded-lg border bg-background shadow-sm p-6">
+          <div className="flex-1 p-6">
             <BudgetModificationsTab
               projectId={projectId}
               onCreateClick={() => setShowModificationModal(true)}
@@ -1149,7 +1149,7 @@ export default function ProjectBudgetPage() {
     <Suspense
       fallback={
         <div className="flex flex-1 flex-col gap-4 p-6">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-6 w-20" />
           </div>

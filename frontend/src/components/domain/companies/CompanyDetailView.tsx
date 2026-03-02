@@ -312,9 +312,9 @@ export function CompanyDetailView({
                   ).users!.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-4 border rounded-lg"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
                             {user.first_name?.[0]}

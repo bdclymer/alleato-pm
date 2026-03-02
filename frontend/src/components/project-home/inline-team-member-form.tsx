@@ -153,9 +153,9 @@ export function InlineTeamMemberForm({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* Role Dropdown */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="text-xs font-medium text-neutral-600">Role</label>
           <Select value={selectedRole} onValueChange={setSelectedRole}>
             <SelectTrigger className="w-full bg-background">
@@ -172,7 +172,7 @@ export function InlineTeamMemberForm({
         </div>
 
         {/* Member Combobox with Search */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="text-xs font-medium text-neutral-600">Member</label>
           <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
             <PopoverTrigger asChild>
@@ -213,7 +213,7 @@ export function InlineTeamMemberForm({
                       </p>
                       <Link
                         href="/directory/contacts"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:text-brand/80 transition-colors"
+                        className="inline-flex items-center gap-2 text-xs font-medium text-brand hover:text-brand/80 transition-colors"
                         target="_blank"
                       >
                         <UserPlus className="h-3.5 w-3.5" />

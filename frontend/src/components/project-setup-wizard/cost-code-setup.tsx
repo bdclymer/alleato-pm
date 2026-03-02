@@ -490,7 +490,7 @@ export function CostCodeSetup({
                 <Label htmlFor="type">Type</Label>
                 <select
                   id="type"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2"
                   value={newCode.typeCode}
                   onChange={(e) =>
                     setNewCode({ ...newCode, typeCode: e.target.value })

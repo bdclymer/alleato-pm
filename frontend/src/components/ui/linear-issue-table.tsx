@@ -206,7 +206,7 @@ function LinearIssueGroupSection({
       {/* Group Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-muted/50 transition-colors group"
+        className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-muted/50 transition-colors group"
       >
         <ChevronRight
           className={cn(
@@ -267,7 +267,7 @@ function LinearIssueRow({ issue, onClick }: LinearIssueRowProps) {
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/50 cursor-pointer group transition-colors"
+      className="flex items-center gap-2 px-4 py-1.5 hover:bg-muted/50 cursor-pointer group transition-colors"
     >
       {/* Drag Handle */}
       <div className="opacity-0 group-hover:opacity-100 text-muted-foreground cursor-grab transition-opacity">
@@ -345,7 +345,7 @@ function LinearIssueRow({ issue, onClick }: LinearIssueRowProps) {
 
       {/* Labels */}
       {issue.labels && issue.labels.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {issue.labels.slice(0, 2).map((label) => (
             <span
               key={label.id}
@@ -440,7 +440,7 @@ export function LinearFilterBar({
   className,
 }: LinearFilterBarProps) {
   return (
-    <div className={cn("flex items-center gap-3 px-3 py-2", className)}>
+    <div className={cn("flex items-center gap-4 px-4 py-2", className)}>
       <h1 className="text-base font-semibold text-foreground">Active issues</h1>
       <span className="text-sm text-muted-foreground tabular-nums">
         {totalIssues}

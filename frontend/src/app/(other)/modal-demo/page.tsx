@@ -72,7 +72,7 @@ export default function ModalDemoPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Original Budget Modal */}
-              <div className="border border-border rounded-lg p-4 space-y-3">
+              <div className="border border-border rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-foreground">Original Budget</h3>
                 <p className="text-sm text-foreground">
                   Edit budget amount with calculation methods
@@ -86,7 +86,7 @@ export default function ModalDemoPage() {
               </div>
 
               {/* Unlock Budget Modal */}
-              <div className="border border-border rounded-lg p-4 space-y-3">
+              <div className="border border-border rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-foreground">Unlock Budget</h3>
                 <p className="text-sm text-foreground">
                   Confirmation dialog for unlocking
@@ -100,7 +100,7 @@ export default function ModalDemoPage() {
               </div>
 
               {/* Create Line Items Modal */}
-              <div className="border border-border rounded-lg p-4 space-y-3">
+              <div className="border border-border rounded-lg p-4 space-y-4">
                 <h3 className="font-medium text-foreground">Create Line Items</h3>
                 <p className="text-sm text-foreground">
                   Add multiple budget line items
@@ -116,7 +116,7 @@ export default function ModalDemoPage() {
           </div>
 
           <div className="border-t border-border pt-6">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Features Tested
             </h2>
             <ul className="space-y-2 text-sm text-foreground">
@@ -177,7 +177,7 @@ export default function ModalDemoPage() {
           </div>
 
           <div className="border-t border-border pt-6">
-            <h2 className="text-lg font-semibold text-foreground mb-3">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
               Testing Instructions
             </h2>
             <ol className="space-y-2 text-sm text-foreground list-decimal list-inside">

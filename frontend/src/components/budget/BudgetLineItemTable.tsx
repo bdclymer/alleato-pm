@@ -66,7 +66,7 @@ export function BudgetLineItemTable({
     <Card className="border-0 py-0 shadow-none sm:border sm:py-6 sm:shadow-sm">
       <Stack gap="sm">
         {/* Summary Bar */}
-        <div className="border-b bg-muted px-4 sm:px-6 py-3">
+        <div className="border-b bg-muted px-4 sm:px-6 py-4">
           <Inline justify="between" align="center">
             <Text size="sm" weight="medium" tone="default">
               {lineItems.length} Line Item{lineItems.length !== 1 ? "s" : ""}
@@ -85,7 +85,7 @@ export function BudgetLineItemTable({
         <div className="hidden sm:block overflow-x-auto">
           <div className="min-w-full">
             {/* Table Header */}
-            <div className="border-b bg-background px-4 py-3">
+            <div className="border-b bg-background px-4 py-4">
               <Inline gap="md" align="center">
                 <div className="flex-1 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Budget Code

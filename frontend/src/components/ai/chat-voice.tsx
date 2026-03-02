@@ -167,7 +167,7 @@ export default function Ai01() {
             className="flex items-center gap-2"
             style={{ gridArea: isExpanded ? "footer" : "trailing" }}
           >
-            <div className="ms-auto flex items-center gap-1.5">
+            <div className="ms-auto flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"

@@ -141,7 +141,7 @@ export function ProjectSetupWizard({ projectId }: ProjectSetupWizardProps) {
                     key={step.id}
                     onClick={() => handleStepClick(index)}
                     disabled={!isClickable}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-start gap-3 ${
+                    className={`w-full text-left px-4 py-4 rounded-lg transition-colors flex items-start gap-4 ${
                       isCurrent
                         ? "bg-primary text-primary-foreground"
                         : isCompleted

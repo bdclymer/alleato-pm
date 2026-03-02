@@ -257,7 +257,7 @@ export function RunnerOutput({ runnerEvents }: RunnerOutputProps) {
         icon={<MessageSquareMore className="h-4 w-4 text-blue-600" />}
       >
         <ScrollArea className="h-[calc(100%-2rem)] rounded-md border border-border bg-muted shadow-sm">
-          <div className="p-3 space-y-2.5">
+          <div className="p-4 space-y-2.5">
             {runnerEvents.length === 0 ? (
               <p className="text-center text-zinc-500 p-4">
                 No runner events yet
@@ -271,13 +271,13 @@ export function RunnerOutput({ runnerEvents }: RunnerOutputProps) {
                     key={key}
                     className="border border-border bg-background shadow-sm rounded-lg"
                   >
-                    <CardHeader className="flex flex-row items-center px-3 py-2">
+                    <CardHeader className="flex flex-row items-center px-4 py-2">
                       <span className="text-sm text-foreground font-medium">
                         {agentName}
                       </span>
                     </CardHeader>
 
-                    <CardContent className="p-3 pt-0 space-y-2">
+                    <CardContent className="p-4 pt-0 space-y-2">
                       {group.map((event) => (
                         <EventDetails key={event.id} event={event} />
                       ))}

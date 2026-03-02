@@ -8,13 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+  ModalTrigger,
+} from "@/components/ui/unified-modal";
 import {
   Table,
   TableBody,
@@ -141,21 +141,21 @@ export function ReviewerSettingsDialog({ projectId }: ReviewerSettingsDialogProp
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings2 className="mr-2 h-4 w-4" />
           Reviewers
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Change Order Reviewer Settings</DialogTitle>
-          <DialogDescription>
+      </ModalTrigger>
+      <ModalContent className="max-w-3xl">
+        <ModalHeader>
+          <ModalTitle>Change Order Reviewer Settings</ModalTitle>
+          <ModalDescription>
             Project admins are always reviewers. Use this list to assign additional
             reviewers.
-          </DialogDescription>
-        </DialogHeader>
+          </ModalDescription>
+        </ModalHeader>
 
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -233,7 +233,7 @@ export function ReviewerSettingsDialog({ projectId }: ReviewerSettingsDialogProp
             </TableBody>
           </Table>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }

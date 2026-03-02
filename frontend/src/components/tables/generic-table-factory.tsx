@@ -549,6 +549,8 @@ export interface RowActionConfig {
 export interface GenericTableConfig {
   title?: string;
   description?: string;
+  /** When true, suppresses the internal h1 header so a TablePageWrapper can own the header */
+  hideHeader?: boolean;
   columns: ColumnConfig[];
   filters?: FilterConfig[];
   searchFields: string[];
@@ -1553,7 +1555,7 @@ export function GenericDataTable({
       config.columns.find((c) => c.isSecondary) || config.columns[1];
 
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-4">
         {processedData.map((row, idx) => (
           <Card
             key={(row.id as string) || idx}
@@ -1565,8 +1567,8 @@ export function GenericDataTable({
             )}
             onClick={() => handleRowClick(row)}
           >
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-2 mb-3">
+            <CardContent className="p-4 sm:p-4">
+              <div className="flex items-start justify-between gap-2 mb-4">
                 <div className="flex items-start gap-2 flex-1 min-w-0">
                   {config.enableRowSelection && (
                     <Checkbox
@@ -1639,19 +1641,19 @@ export function GenericDataTable({
       config.columns.find((c) => c.isSecondary) || config.columns[1];
 
     return (
-      <div className="space-y-2 sm:space-y-3">
+      <div className="space-y-2 sm:space-y-4">
         {processedData.map((row, idx) => (
           <div
             key={(row.id as string) || idx}
             className={cn(
-              "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 hover-lift transition-smooth cursor-pointer",
+              "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 hover-lift transition-smooth cursor-pointer",
               "border border-neutral-200",
               selectedIds.has(row.id as string | number) &&
                 "ring-2 ring-primary border-primary/50",
             )}
             onClick={() => handleRowClick(row)}
           >
-            <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="flex items-start gap-4 flex-1 min-w-0">
               {config.enableRowSelection && (
                 <Checkbox
                   checked={selectedIds.has(row.id as string | number)}
@@ -2123,7 +2125,7 @@ export function GenericDataTable({
       {/* ========================================
           HEADER SECTION
           ======================================== */}
-      {config.title && (
+      {config.title && !config.hideHeader && (
         <div className="flex items-center justify-between">
           <div>
             <h1 className="mb-2 text-3xl">{config.title}</h1>
@@ -2149,7 +2151,7 @@ export function GenericDataTable({
           BULK ACTIONS (Shown when rows selected)
           ======================================== */}
       {config.bulkActions && selectedIds.size > 0 && (
-        <div className="flex items-center gap-2 p-3 bg-primary/10 border rounded-lg">
+        <div className="flex items-center gap-2 p-4 bg-primary/10 border rounded-lg">
           <span className="text-sm font-medium">
             {selectedIds.size} row{selectedIds.size === 1 ? "" : "s"} selected
           </span>
@@ -2193,9 +2195,9 @@ export function GenericDataTable({
       {/* ========================================
           FILTERS & CONTROLS
           ======================================== */}
-      <div className="flex flex-col gap-3 sm:gap-4">
+      <div className="flex flex-col gap-4 sm:gap-4">
         {/* Top row - Search and filters (mobile-first) */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-4">
           {/* Search Input - Full width on mobile */}
           <div className="relative flex-1 sm:flex-initial sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -2234,7 +2236,7 @@ export function GenericDataTable({
         </div>
 
         {/* Bottom row - View controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           {/* Result count - Show on mobile */}
           <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
             {config.enableRowSelection && selectedIds.size > 0 && (
@@ -2247,7 +2249,7 @@ export function GenericDataTable({
           </div>
 
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
             {/* View Switcher */}
             {config.enableViewSwitcher && (
               <Tabs
@@ -2256,15 +2258,15 @@ export function GenericDataTable({
                 className="w-full sm:w-auto"
               >
                 <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-                  <TabsTrigger value="table" className="gap-1.5 px-2 sm:px-3">
+                  <TabsTrigger value="table" className="gap-2 px-2 sm:px-4">
                     <Table2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Table</span>
                   </TabsTrigger>
-                  <TabsTrigger value="card" className="gap-1.5 px-2 sm:px-3">
+                  <TabsTrigger value="card" className="gap-2 px-2 sm:px-4">
                     <LayoutGrid className="h-4 w-4" />
                     <span className="hidden sm:inline">Card</span>
                   </TabsTrigger>
-                  <TabsTrigger value="list" className="gap-1.5 px-2 sm:px-3">
+                  <TabsTrigger value="list" className="gap-2 px-2 sm:px-4">
                     <List className="h-4 w-4" />
                     <span className="hidden sm:inline">List</span>
                   </TabsTrigger>

@@ -7,7 +7,7 @@ export function DistributionGroupListSkeleton({
   count?: number;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} className="p-4">
           <div className="flex items-center justify-between gap-4">
@@ -15,7 +15,7 @@ export function DistributionGroupListSkeleton({
               <Skeleton className="h-5 w-[200px]" />
               <Skeleton className="h-3 w-[150px]" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Skeleton className="h-6 w-16" />
               <Skeleton className="h-8 w-8 rounded" />
               <Skeleton className="h-8 w-8 rounded" />

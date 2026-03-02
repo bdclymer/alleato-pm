@@ -37,7 +37,7 @@ export function SubsectionHeader({
   className,
 }: SubsectionHeaderProps) {
   return (
-    <h3 className={cn("text-base font-medium text-foreground mb-3", className)}>
+    <h3 className={cn("text-base font-medium text-foreground mb-4", className)}>
       {children}
     </h3>
   );

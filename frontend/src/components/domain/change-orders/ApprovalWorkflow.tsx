@@ -113,7 +113,7 @@ export function ApprovalWorkflow({
 
                 {/* Show ChangeOrderReviewerResponse for active tier if user can approve */}
                 {review.status === "Pending" && currentUserCanApprove && (
-                  <div className="ml-8 mt-3">
+                  <div className="ml-8 mt-4">
                     <ChangeOrderReviewerResponse
                       changeOrderId={changeOrder.id}
                       contractId={changeOrder.contract_id}
@@ -148,13 +148,13 @@ export function ApprovalWorkflow({
             <CardTitle className="text-base">Review History</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {workflowReviews
                 .filter((r) => r.status === "Approved" || r.status === "Rejected")
                 .map((review) => (
                   <div
                     key={review.id}
-                    className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
+                    className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30"
                   >
                     <div className="mt-0.5">
                       {review.status === "Approved" ? (
@@ -201,7 +201,7 @@ function TimelineItem({
   const statusConfig = getStatusConfig(review.status);
 
   return (
-    <div className="relative flex items-start gap-3">
+    <div className="relative flex items-start gap-4">
       {/* Timeline Connector Line */}
       {!isLast && (
         <div className="absolute left-4 top-9 bottom-0 w-0.5 bg-border -translate-x-1/2" />
@@ -239,7 +239,7 @@ function TimelineItem({
 
         {/* Date/Notes */}
         {review.date && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
             <Calendar className="h-3 w-3" />
             {formatDate(review.date)}
           </div>

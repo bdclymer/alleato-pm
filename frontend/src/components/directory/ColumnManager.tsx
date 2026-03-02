@@ -91,7 +91,7 @@ function SortableColumnItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 rounded-md p-3",
+        "flex items-center gap-4 rounded-md p-4",
         isDragging && "opacity-50",
         !column.visible && "opacity-60",
       )}
@@ -230,7 +230,7 @@ export function ColumnManager({
 
           <Separator className="mb-4" />
 
-          <ScrollArea className="h-[300px] pr-3">
+          <ScrollArea className="h-[300px] pr-4">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}

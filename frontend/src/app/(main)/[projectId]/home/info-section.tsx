@@ -47,7 +47,7 @@ export function InfoSection({
           </Link>
         )}
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {displayItems.length > 0 ? (
           displayItems.map((item) => {
             const content = (

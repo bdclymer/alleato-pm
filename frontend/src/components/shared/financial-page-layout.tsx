@@ -48,7 +48,7 @@ export function FinancialPageLayout({
         title={title}
         description={description}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {headerActions}
             <Button
               size="sm"

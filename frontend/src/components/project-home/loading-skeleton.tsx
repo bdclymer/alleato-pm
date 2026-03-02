@@ -23,7 +23,7 @@ export function LoadingSkeleton() {
               {[1, 2, 3, 4].map((j) => (
                 <div
                   key={j}
-                  className="flex items-center gap-3 h-9 px-3 border-b border-neutral-100"
+                  className="flex items-center gap-4 h-9 px-4 border-b border-neutral-100"
                 >
                   <div className="h-4 w-4 bg-neutral-100 rounded animate-pulse" />
                   <div className="h-1.5 w-1.5 bg-neutral-100 rounded-full animate-pulse" />

@@ -34,7 +34,7 @@ export function Sidebar({ projectId }: SidebarProps) {
         onMouseLeave={() => setIsHover(false)}
         className="relative h-full flex flex-col px-2 pt-4 pb-2 overflow-y-auto"
       >
-        <Link href="/" className={cn("flex items-center mb-2", getOpenState() ? "justify-start px-3" : "justify-center") }>
+        <Link href="/" className={cn("flex items-center mb-2", getOpenState() ? "justify-start px-4" : "justify-center") }>
           {getOpenState() ? (
             <Image
               src="/Alleato-Group-Logo_Dark.png"

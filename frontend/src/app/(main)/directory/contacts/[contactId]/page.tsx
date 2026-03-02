@@ -1,9 +1,10 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,7 +94,7 @@ export default function ContactDetailsPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Contact Details"
           showProjectName={false}
         />
@@ -110,7 +111,7 @@ export default function ContactDetailsPage() {
   if (error || !contact) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Contact Details"
           showProjectName={false}
         />
@@ -137,7 +138,7 @@ export default function ContactDetailsPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title={fullName}
         description={contact.email || "No email provided"}
         showProjectName={false}

@@ -76,7 +76,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className={cn("space-y-4", className)}>
       {/* DEPRECATION WARNING - Remove after migration */}
-      <div className="bg-destructive text-white px-4 py-3 rounded-md font-semibold text-center">
+      <div className="bg-destructive text-white px-4 py-4 rounded-md font-semibold text-center">
         ⚠️ DEPRECATED: This page uses legacy DataTable. Migrate to GenericDataTable + TableLayout
       </div>
       {showToolbar && (

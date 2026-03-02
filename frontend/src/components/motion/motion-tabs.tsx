@@ -33,7 +33,7 @@ export function TabsTransitionPanel() {
           <button
             key={index}
             onClick={() => setActiveIndex(index)}
-            className={`rounded-md px-3 py-1 text-sm font-medium ${
+            className={`rounded-md px-4 py-1 text-sm font-medium ${
               activeIndex === index
                 ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
                 : "bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400"

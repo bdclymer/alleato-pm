@@ -177,7 +177,7 @@ export function ProjectChecklistSidebar({
                           href={item.href}
                           onClick={() => setOpen(false)}
                           className={cn(
-                            "group flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors",
+                            "group flex w-full items-start gap-4 rounded-lg p-4 text-left transition-colors",
                             "hover:bg-accent/50",
                             isCompleted && "opacity-60"
                           )}

@@ -138,13 +138,13 @@ export default function PrimeContractsConfigurePage() {
                   <p className="text-xs text-muted-foreground mb-2">
                     1-tier: single change order type. 2-tier: PCO (Potential Change Order) → PCCO (Prime Contract Change Order) workflow.
                   </p>
-                  <div className="flex gap-3">
+                  <div className="flex gap-4">
                     {([1, 2] as const).map((n) => (
                       <button
                         key={n}
                         type="button"
                         onClick={() => update("co_tier_count", n)}
-                        className={`flex-1 rounded-md border px-4 py-3 text-sm font-medium transition-colors ${
+                        className={`flex-1 rounded-md border px-4 py-4 text-sm font-medium transition-colors ${
                           settings.co_tier_count === n
                             ? "border-primary bg-primary text-primary-foreground"
                             : "border-input hover:bg-muted"
@@ -172,7 +172,7 @@ export default function PrimeContractsConfigurePage() {
                 Controls what standard-level project members can do.
               </p>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <Label htmlFor="allow-pcco" className="text-sm font-medium">
@@ -250,7 +250,7 @@ export default function PrimeContractsConfigurePage() {
                 Controls what information appears in generated PDFs and CSV exports.
               </p>
 
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <Label htmlFor="markup-co-pdf" className="text-sm font-medium">

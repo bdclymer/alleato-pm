@@ -705,7 +705,7 @@ export default function ChangeOrderDetailPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Financial Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Amount</span>
                     <span className="text-sm font-medium">
@@ -739,7 +739,7 @@ export default function ChangeOrderDetailPage() {
                 <CardHeader>
                   <CardTitle className="text-base">Timeline</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Created</span>
                     <span className="text-sm">{formatDate(changeOrder.created_at)}</span>
@@ -801,7 +801,7 @@ export default function ChangeOrderDetailPage() {
                     </Link>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   {isLoadingChangeEvent ? (
                     <div className="flex items-center justify-center py-4">
                       <Skeleton className="h-4 w-32" />
@@ -970,7 +970,7 @@ export default function ChangeOrderDetailPage() {
 
                     {attachmentsLoaded && attachments.length === 0 && (
                       <div className="text-center py-8">
-                        <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+                        <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                         <p className="text-sm text-muted-foreground">
                           No attachments yet. Upload files using the form above.
                         </p>
@@ -982,7 +982,7 @@ export default function ChangeOrderDetailPage() {
                         {attachments.map((attachment) => (
                           <div
                             key={attachment.id}
-                            className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                            className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                           >
                             <FileText className="h-8 w-8 flex-shrink-0 text-muted-foreground" />
                             <div className="min-w-0 flex-1">
@@ -1066,7 +1066,7 @@ export default function ChangeOrderDetailPage() {
                 <CardTitle>Change History</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Created</span>
                     <span>{formatDate(changeOrder.created_at)}</span>

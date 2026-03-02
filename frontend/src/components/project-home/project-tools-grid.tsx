@@ -55,7 +55,7 @@ export function ProjectToolsGrid({
   return (
     <div className="bg-background rounded-md border border-border p-6">
       <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {tools.map((tool) => {
           const Icon = iconMap[tool.icon] || FileText;
           const href = tool.href.replace("[projectId]", projectId);

@@ -434,8 +434,8 @@ export function InlineBudgetLineItemCreator({
           </div>
 
           {/* Smart Copy UOM Toggle */}
-          <div className="flex gap-3 text-xs mb-2">
-            <label className="flex items-center gap-1.5 cursor-pointer text-gray-700">
+          <div className="flex gap-4 text-xs mb-2">
+            <label className="flex items-center gap-2 cursor-pointer text-gray-700">
               <input
                 type="checkbox"
                 checked={smartCopyUOM}
@@ -447,8 +447,8 @@ export function InlineBudgetLineItemCreator({
           </div>
 
           {rows.map((row, index) => (
-            <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
-              <div className="grid grid-cols-12 gap-3">
+            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="grid grid-cols-12 gap-4">
                 {/* Budget Code Selector */}
                 <div className="col-span-4">
                   <Label className="text-xs">Budget Code*</Label>
@@ -680,7 +680,7 @@ export function InlineBudgetLineItemCreator({
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
-                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                <div className="border rounded-md p-4 text-sm text-muted-foreground">
                   Loading cost codes...
                 </div>
               ) : (
@@ -692,7 +692,7 @@ export function InlineBudgetLineItemCreator({
                         <button
                           type="button"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -752,7 +752,7 @@ export function InlineBudgetLineItemCreator({
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-3 bg-muted rounded-md">
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
                 {newCodeData.costCodeId ? (

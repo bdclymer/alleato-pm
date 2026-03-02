@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { format } from "date-fns";
-import { Video, Clock, Users, ArrowRight } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 import type { Database } from "@/types/database.types";
 
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
@@ -35,31 +35,26 @@ export function MeetingsSection({
   const displayMeetings = meetings.slice(0, maxItems);
 
   return (
-    <div className="pt-6 pb-6">
+    <div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Video className="h-5 w-5 text-brand" />
-          <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-brand">
-            Meetings
-          </h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
+          Meetings
           {meetings.length > 0 && (
-            <span className="ml-1 px-2 py-0.5 text-2xs font-medium text-neutral-500 bg-neutral-100 rounded-full">
-              {meetings.length}
-            </span>
+            <span className="ml-2 text-neutral-300 tabular-nums">{meetings.length}</span>
           )}
-        </div>
+        </h3>
         <Link
           href={`/${projectId}/meetings`}
-          className="text-xs text-neutral-500 font-medium hover:underline"
+          className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors"
         >
-          View All
+          View all
         </Link>
       </div>
 
       {/* Meeting Cards */}
       {displayMeetings.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {displayMeetings.map((meeting) => {
             const meetingDate = meeting.date
               ? new Date(meeting.date)
@@ -157,18 +152,6 @@ export function MeetingsSection({
         <p className="text-sm text-neutral-400">No meetings yet</p>
       )}
 
-      {/* Footer link */}
-      {meetings.length > maxItems && (
-        <div className="mt-4 pt-4 border-t border-neutral-100">
-          <Link
-            href={`/${projectId}/meetings`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-brand transition-colors"
-          >
-            View all {meetings.length} meetings
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

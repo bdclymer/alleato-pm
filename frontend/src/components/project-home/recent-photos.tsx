@@ -148,7 +148,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                 </div>
 
                 {/* Photo Info */}
-                <div className="p-3 space-y-1">
+                <div className="p-4 space-y-1">
                   <h4 className="text-sm font-medium text-foreground line-clamp-1">
                     {photo.title}
                   </h4>
@@ -187,7 +187,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                   </div>
 
                   {/* Photo Details */}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
                         {selectedPhoto.title}

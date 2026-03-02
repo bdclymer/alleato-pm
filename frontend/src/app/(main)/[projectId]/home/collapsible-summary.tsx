@@ -39,7 +39,7 @@ export function CollapsibleSummary({ summary }: CollapsibleSummaryProps) {
         </CardHeader>
         <CollapsibleContent>
           <CardContent>
-            <div className="text-sm text-foreground leading-relaxed space-y-3">
+            <div className="text-sm text-foreground leading-relaxed space-y-4">
               {summary
                 .split("\n")
                 .filter((paragraph) => paragraph.trim())

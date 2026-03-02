@@ -256,14 +256,14 @@ export function ChangeEventApprovalWorkflow({
 
         {/* Approval Status List */}
         {approvals.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="font-medium">Approval Status</h4>
             {approvals.map((approval) => (
               <div
                 key={approval.id}
-                className="flex items-start justify-between rounded-lg border p-3"
+                className="flex items-start justify-between rounded-lg border p-4"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-4">
                   {getStatusIcon(approval.approval_status)}
                   <div>
                     <p className="font-medium">{approval.approver_name}</p>
@@ -290,7 +290,7 @@ export function ChangeEventApprovalWorkflow({
             <p className="mb-4 text-sm text-muted-foreground">
               Review this change event and provide your approval decision.
             </p>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Textarea
                 placeholder="Add comments (optional)..."
                 value={approvalComment}
@@ -321,7 +321,7 @@ export function ChangeEventApprovalWorkflow({
         )}
 
         {/* Current Status Display */}
-        <div className="flex items-center justify-between rounded-lg bg-muted p-3">
+        <div className="flex items-center justify-between rounded-lg bg-muted p-4">
           <span className="text-sm font-medium">Current Status:</span>
           <Badge
             variant={

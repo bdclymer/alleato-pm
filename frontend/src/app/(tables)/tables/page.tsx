@@ -21,7 +21,7 @@ export default function AdminTablesPage() {
   return (
     <div className="container max-w-6xl py-8">
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-4 mb-2">
           <div className="rounded-lg bg-primary/10 p-2">
             <Database className="h-6 w-6 text-primary" />
           </div>
@@ -59,7 +59,7 @@ export default function AdminTablesPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {config.permissions.read && (
                       <Badge variant="secondary" className="text-xs">
                         Read

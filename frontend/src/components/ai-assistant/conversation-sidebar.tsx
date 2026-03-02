@@ -43,7 +43,7 @@ function SidebarContent({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between border-b px-4 py-3">
+      <div className="flex items-center justify-between border-b px-4 py-4">
         <h2 className="text-sm font-semibold">Conversations</h2>
         <Button
           size="icon"
@@ -56,7 +56,7 @@ function SidebarContent({
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2">
+      <div className="px-4 py-2">
         <div className="relative">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

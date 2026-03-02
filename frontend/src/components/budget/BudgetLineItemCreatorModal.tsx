@@ -613,8 +613,8 @@ export function BudgetLineItemCreatorModal({
               {/* Body */}
               <div className="p-6 max-h-[75vh] overflow-y-auto">
                 {/* Smart Copy UOM Toggle */}
-                <div className="flex gap-3 text-xs mb-4">
-                  <label className="flex items-center gap-1.5 cursor-pointer text-gray-700">
+                <div className="flex gap-4 text-xs mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-gray-700">
                     <input
                       type="checkbox"
                       checked={smartCopyUOM}
@@ -817,7 +817,7 @@ export function BudgetLineItemCreatorModal({
 
               {/* Footer with Running Total */}
               <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-foreground">
                     {rows.length} line item{rows.length !== 1 ? "s" : ""}
                   </span>
@@ -829,7 +829,7 @@ export function BudgetLineItemCreatorModal({
                               </span>
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   <Button
                     variant="outline"
                     onClick={onClose}
@@ -875,7 +875,7 @@ export function BudgetLineItemCreatorModal({
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
-                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                <div className="border rounded-md p-4 text-sm text-muted-foreground">
                   Loading cost codes...
                 </div>
               ) : (
@@ -887,7 +887,7 @@ export function BudgetLineItemCreatorModal({
                         <button
                           type="button"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -947,7 +947,7 @@ export function BudgetLineItemCreatorModal({
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-3 bg-muted rounded-md">
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
                 {newCodeData.costCodeId ? (

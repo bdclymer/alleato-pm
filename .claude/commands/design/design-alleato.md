@@ -54,3 +54,34 @@ Avoid generic AI-generated aesthetics:
 - Cookie-cutter design that lacks context-specific character
 
 Interpret creatively and make unexpected choices that feel genuinely designed for the context. Vary between light and dark themes, different fonts, different aesthetics. You still tend to converge on common choices (Space Grotesk, for example) across generations. Avoid this: it is critical that you think outside the box!
+
+## MANDATORY: Alleato Project Design System Constraint
+
+**When working in the Alleato project (this codebase), creative freedom is CONSTRAINED by the design system.**
+
+Before generating ANY code, read these files:
+
+1. **`frontend/src/design-system/page-archetypes.md`** -- Pick one of the 4 page templates
+2. **`frontend/src/design-system/tokens.md`** -- Use ONLY these colors, spacing, typography, shadows
+3. **`frontend/src/design-system/components.md`** -- Use ONLY these components and patterns
+
+**What this means in practice:**
+
+- **Page structure**: MUST use `ProjectPageHeader` + `PageContainer` from `@/components/layout`. No custom page shells.
+- **Colors**: MUST use semantic tokens (`text-foreground`, `bg-muted`, etc.). No raw hex, no arbitrary Tailwind colors.
+- **Spacing**: MUST use 8px grid (`space-y-4`, `gap-4`, `gap-6`). No odd values (`p-3`, `p-5`, `gap-1.5`).
+- **Typography**: MUST cap at `font-semibold`. No `font-bold`, no `font-extrabold`.
+- **Shadows**: MUST use `shadow-xs` or `shadow-sm` only. No `shadow-md`/`shadow-lg`/`shadow-xl`.
+- **Cards**: NEVER nest cards. Cards are for KPI tiles and compact modules only, NOT page scaffolding.
+- **Components**: Use shadcn/ui and unified modal/slideover. NEVER raw Dialog/Sheet.
+
+**Where creativity IS encouraged:**
+
+- Micro-interactions and transitions (within components, not layout)
+- Icon choices and illustration
+- Copy and content strategy
+- Data visualization and chart styling
+- Empty state illustrations
+- Loading animation style
+
+**The design system defines the bones. Creativity lives in the details.**

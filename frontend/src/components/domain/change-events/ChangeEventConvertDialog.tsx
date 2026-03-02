@@ -230,7 +230,7 @@ export function ChangeEventConvertDialog({
           {/* Line Items Summary */}
           <div className="space-y-2">
             <Label>Line Items to Convert</Label>
-            <div className="border rounded-lg p-3 space-y-2 max-h-40 overflow-y-auto">
+            <div className="border rounded-lg p-4 space-y-2 max-h-40 overflow-y-auto">
               {lineItems.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="truncate flex-1">{item.description}</span>
@@ -252,7 +252,7 @@ export function ChangeEventConvertDialog({
           </div>
 
           {/* Conversion Note */}
-          <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg text-sm">
+          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm">
             <Text as="div" size="sm" className="flex items-start gap-2">
               <FileCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>

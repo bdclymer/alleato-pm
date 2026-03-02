@@ -25,13 +25,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { BudgetItemDeleteDialog } from "@/components/budget/BudgetItemDeleteDialog";
 import {
   Command,
@@ -480,25 +480,25 @@ export default function NewBudgetLineItemPage() {
             <table className="w-full">
               <thead className="bg-muted border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-12">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-12">
                     #
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground min-w-[300px]">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-[300px]">
                     Budget Code*
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-24">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-24">
                     Qty
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-28">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-28">
                     UOM
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-32">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
                     Unit Cost
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-32">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
                     Amount*
                   </th>
-                  <th className="px-4 py-3 w-12">
+                  <th className="px-4 py-4 w-12">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -506,12 +506,12 @@ export default function NewBudgetLineItemPage() {
               <tbody className="divide-y">
                 {rows.map((row, index) => (
                   <tr key={row.id} className="hover:bg-muted">
-                    <td className="px-4 py-3 text-sm text-foreground">
+                    <td className="px-4 py-4 text-sm text-foreground">
                       {index + 1}
                     </td>
 
                     {/* Budget Code Selector */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Popover
                         open={openPopoverId === row.id}
                         onOpenChange={(open) =>
@@ -576,7 +576,7 @@ export default function NewBudgetLineItemPage() {
                     </td>
 
                     {/* Quantity */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Input
                         type="number"
                         step="0.001"
@@ -590,7 +590,7 @@ export default function NewBudgetLineItemPage() {
                     </td>
 
                     {/* UOM */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Select
                         value={row.uom}
                         onValueChange={(value) =>
@@ -614,7 +614,7 @@ export default function NewBudgetLineItemPage() {
                     </td>
 
                     {/* Unit Cost */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Input
                         type="number"
                         step="0.01"
@@ -628,7 +628,7 @@ export default function NewBudgetLineItemPage() {
                     </td>
 
                     {/* Amount */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <Input
                         type="number"
                         step="0.01"
@@ -642,7 +642,7 @@ export default function NewBudgetLineItemPage() {
                     </td>
 
                     {/* Delete */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       {rows.length > 1 && (
                         <Button
                           type="button"
@@ -662,7 +662,7 @@ export default function NewBudgetLineItemPage() {
           </div>
 
           {/* Add Row Button */}
-          <div className="px-4 py-3 border-t bg-muted">
+          <div className="px-4 py-4 border-t bg-muted">
             <Button
               type="button"
               variant="outline"
@@ -708,20 +708,20 @@ export default function NewBudgetLineItemPage() {
       </form>
 
       {/* Create Budget Code Modal */}
-      <Dialog open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Create New Budget Code</DialogTitle>
-            <DialogDescription>
+      <Modal open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
+        <ModalContent className="sm:max-w-[500px]">
+          <ModalHeader>
+            <ModalTitle>Create New Budget Code</ModalTitle>
+            <ModalDescription>
               Add a new budget code that can be used for line items in this
               project.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
-                <div className="border rounded-md p-3 text-sm text-muted-foreground">
+                <div className="border rounded-md p-4 text-sm text-muted-foreground">
                   Loading cost codes...
                 </div>
               ) : (
@@ -734,7 +734,7 @@ export default function NewBudgetLineItemPage() {
                         <button
                           type="button"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -798,7 +798,7 @@ export default function NewBudgetLineItemPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="p-3 bg-muted rounded-md">
+            <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
                 {newCodeData.costCodeId && previewCostCode ? (
@@ -813,7 +813,7 @@ export default function NewBudgetLineItemPage() {
               </p>
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               type="button"
               variant="outline"
@@ -830,9 +830,9 @@ export default function NewBudgetLineItemPage() {
             >
               {loading ? "Creating..." : "Create Budget Code"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Delete Confirmation Dialog */}
       <BudgetItemDeleteDialog

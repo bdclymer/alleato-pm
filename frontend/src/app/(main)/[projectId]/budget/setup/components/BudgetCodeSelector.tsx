@@ -144,7 +144,7 @@ export function BudgetCodeSelector({
       <PopoverContent className="w-[500px] p-0" align="start">
         <div className="flex flex-col">
           {/* Search Input */}
-          <div className="flex items-center border-b px-3 py-2">
+          <div className="flex items-center border-b px-4 py-2">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <input
               placeholder="Search budget codes..."
@@ -165,7 +165,7 @@ export function BudgetCodeSelector({
                 <div key={division}>
                   {/* Division Header */}
                   <div
-                    className="flex items-center w-full px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer"
+                    className="flex items-center w-full px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer"
                     onClick={(e) => toggleDivision(division, e)}
                   >
                     {expandedDivisions.has(division) ? (
@@ -190,7 +190,7 @@ export function BudgetCodeSelector({
                         <div
                           key={code.id}
                           className={cn(
-                            "relative flex cursor-pointer select-none items-center pl-8 pr-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                            "relative flex cursor-pointer select-none items-center pl-8 pr-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
                             isSelected && "bg-accent",
                           )}
                           onClick={() => handleSelect(code)}
@@ -213,7 +213,7 @@ export function BudgetCodeSelector({
           {/* Create New Button */}
           <div className="border-t">
             <div
-              className="flex items-center cursor-pointer px-3 py-2 text-sm text-link hover:bg-accent"
+              className="flex items-center cursor-pointer px-4 py-2 text-sm text-link hover:bg-accent"
               onClick={handleCreateNew}
             >
               <Plus className="mr-2 h-4 w-4" />

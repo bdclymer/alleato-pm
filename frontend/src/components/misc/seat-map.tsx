@@ -175,7 +175,7 @@ export function SeatMap({ onSeatSelect, selectedSeat }: SeatMapProps) {
         </div>
 
         {selectedSeat && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-center">
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg text-center">
             <p className="text-sm font-medium text-blue-800">
               Selected: Seat {selectedSeat}
             </p>

@@ -212,7 +212,7 @@ export function SupabaseDatabaseManager() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-xl border">
-              <div className="border-b px-4 py-3">
+              <div className="border-b px-4 py-4">
                 <p className="font-medium">Active replicas</p>
                 <p className="text-muted-foreground text-sm">
                   Low-latency access for regional project teams.
@@ -253,7 +253,7 @@ export function SupabaseDatabaseManager() {
             </div>
 
             <div className="rounded-xl border">
-              <div className="border-b px-4 py-3">
+              <div className="border-b px-4 py-4">
                 <p className="font-medium">Maintenance</p>
                 <p className="text-muted-foreground text-sm">
                   Supabase guardrails keep the cluster tuned.
@@ -363,7 +363,7 @@ export function SupabaseDatabaseManager() {
               </TableBody>
             </Table>
           </div>
-          <DrawerFooter className="gap-3">
+          <DrawerFooter className="gap-4">
             <Button variant="outline" onClick={() => setDrawerTarget(null)}>
               Close
             </Button>

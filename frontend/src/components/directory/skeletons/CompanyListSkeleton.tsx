@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 export function CompanyListSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} className="p-4">
           <div className="flex items-center justify-between gap-4">

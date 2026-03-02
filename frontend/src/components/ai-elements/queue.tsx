@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentProps } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -9,35 +11,34 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, PaperclipIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 
-export type QueueMessagePart = {
+export interface QueueMessagePart {
   type: string;
   text?: string;
   url?: string;
   filename?: string;
   mediaType?: string;
-};
+}
 
-export type QueueMessage = {
+export interface QueueMessage {
   id: string;
   parts: QueueMessagePart[];
-};
+}
 
-export type QueueTodo = {
+export interface QueueTodo {
   id: string;
   title: string;
   description?: string;
   status?: "pending" | "completed";
-};
+}
 
 export type QueueItemProps = ComponentProps<"li">;
 
 export const QueueItem = ({ className, ...props }: QueueItemProps) => (
   <li
     className={cn(
-      "group flex flex-col gap-1 rounded-md px-3 py-1 text-sm transition-colors hover:bg-muted",
-      className,
+      "group flex flex-col gap-1 rounded-md px-4 py-1 text-sm transition-colors hover:bg-muted",
+      className
     )}
     {...props}
   />
@@ -58,7 +59,7 @@ export const QueueItemIndicator = ({
       completed
         ? "border-muted-foreground/20 bg-muted-foreground/10"
         : "border-muted-foreground/50",
-      className,
+      className
     )}
     {...props}
   />
@@ -79,7 +80,7 @@ export const QueueItemContent = ({
       completed
         ? "text-muted-foreground/50 line-through"
         : "text-muted-foreground",
-      className,
+      className
     )}
     {...props}
   />
@@ -100,7 +101,7 @@ export const QueueItemDescription = ({
       completed
         ? "text-muted-foreground/40 line-through"
         : "text-muted-foreground",
-      className,
+      className
     )}
     {...props}
   />
@@ -127,7 +128,7 @@ export const QueueItemAction = ({
   <Button
     className={cn(
       "size-auto rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted-foreground/10 hover:text-foreground group-hover:opacity-100",
-      className,
+      className
     )}
     size="icon"
     type="button"
@@ -170,7 +171,7 @@ export const QueueItemFile = ({
   <span
     className={cn(
       "flex items-center gap-1 rounded border bg-muted px-2 py-1 text-xs",
-      className,
+      className
     )}
     {...props}
   >
@@ -186,7 +187,7 @@ export const QueueList = ({
   className,
   ...props
 }: QueueListProps) => (
-  <ScrollArea className={cn("-mb-1 mt-2", className)} {...props}>
+  <ScrollArea className={cn("mt-2 -mb-1", className)} {...props}>
     <div className="max-h-40 pr-4">
       <ul>{children}</ul>
     </div>
@@ -215,8 +216,8 @@ export const QueueSectionTrigger = ({
   <CollapsibleTrigger asChild>
     <button
       className={cn(
-        "group flex w-full items-center justify-between rounded-md bg-muted/40 px-3 py-2 text-left font-medium text-muted-foreground text-sm transition-colors hover:bg-muted",
-        className,
+        "group flex w-full items-center justify-between rounded-md bg-muted/40 px-4 py-2 text-left font-medium text-muted-foreground text-sm transition-colors hover:bg-muted",
+        className
       )}
       type="button"
       {...props}
@@ -241,7 +242,7 @@ export const QueueSectionLabel = ({
   ...props
 }: QueueSectionLabelProps) => (
   <span className={cn("flex items-center gap-2", className)} {...props}>
-    <ChevronDownIcon className="group-data-[state=closed]:-rotate-90 size-4 transition-transform" />
+    <ChevronDownIcon className="size-4 transition-transform group-data-[state=closed]:-rotate-90" />
     {icon}
     <span>
       {count} {label}
@@ -266,8 +267,8 @@ export type QueueProps = ComponentProps<"div">;
 export const Queue = ({ className, ...props }: QueueProps) => (
   <div
     className={cn(
-      "flex flex-col gap-2 rounded-xl border border-border bg-background px-3 pt-2 pb-2 shadow-xs",
-      className,
+      "flex flex-col gap-2 rounded-xl border border-border bg-background px-4 pt-2 pb-2 shadow-xs",
+      className
     )}
     {...props}
   />

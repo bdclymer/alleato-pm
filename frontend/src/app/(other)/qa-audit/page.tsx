@@ -22,11 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Slideover,
+  SlideoverContent,
+  SlideoverHeader,
+  SlideoverTitle,
+} from "@/components/ui/unified-slideover";
 import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { toast } from "sonner";
@@ -324,7 +324,7 @@ export default function QAAuditPage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 py-2 px-4 bg-muted/30 rounded-lg mb-2">
           {/* Stats */}
           <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-xs">Total:</span>
               <span className="font-semibold">{stats?.total || 0}</span>
             </div>
@@ -439,7 +439,7 @@ export default function QAAuditPage() {
 
         {/* Database Warning */}
         {!data?.usingDatabase && (
-          <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5 mb-2">
+          <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-4 py-1.5 mb-2">
             <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
             <span>Database not connected. Run migration to enable edits.</span>
           </div>
@@ -717,14 +717,14 @@ export default function QAAuditPage() {
       </PageContainer>
 
       {/* Detail Sidebar */}
-      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <SheetContent className="!w-[700px] !max-w-[700px] p-0 flex flex-col bg-white dark:bg-slate-950 border-l shadow-xl">
+      <Slideover open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SlideoverContent className="!w-[700px] !max-w-[700px] p-0 flex flex-col bg-white dark:bg-slate-950 border-l shadow-xl">
           {selectedPage && (
             <>
               {/* Sticky Header */}
               <div className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b px-6 py-4">
                 <div className="flex items-center justify-between mb-2">
-                  <SheetTitle className="text-xl font-semibold">{selectedPage.page_name}</SheetTitle>
+                  <SlideoverTitle className="text-xl font-semibold">{selectedPage.page_name}</SlideoverTitle>
                   <div className="flex items-center gap-2">
                     <a
                       href={getPageUrl(selectedPage.page_path)}
@@ -943,7 +943,7 @@ export default function QAAuditPage() {
                                 href={selectedPage.procore_screenshot}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center h-9 px-3 text-xs bg-muted rounded hover:bg-muted/80"
+                                className="inline-flex items-center justify-center h-9 px-4 text-xs bg-muted rounded hover:bg-muted/80"
                               >
                                 View
                               </a>
@@ -1015,8 +1015,8 @@ export default function QAAuditPage() {
               </div>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </SlideoverContent>
+      </Slideover>
     </>
   );
 }

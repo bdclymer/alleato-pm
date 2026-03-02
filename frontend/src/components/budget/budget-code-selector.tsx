@@ -111,7 +111,7 @@ function BudgetCodeSelector({
           aria-controls={commandListId}
           disabled={disabled}
           className={cn(
-            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-4 py-2 text-sm shadow-xs transition-colors",
             "focus-visible:border-neutral-400 focus-visible:outline-none",
             "disabled:cursor-not-allowed disabled:opacity-50",
             error && "border-destructive",

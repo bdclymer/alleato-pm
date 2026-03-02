@@ -186,7 +186,7 @@ export function DistributionGroupFormDialog({
                     {selectedMemberIds.length} selected)
                   </FormDescription>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <Input
                       placeholder="Search users..."
                       value={searchQuery}
@@ -194,7 +194,7 @@ export function DistributionGroupFormDialog({
                       className="w-full"
                     />
 
-                    <ScrollArea className="h-[250px] rounded-md border p-3">
+                    <ScrollArea className="h-[250px] rounded-md border p-4">
                       {loadingUsers ? (
                         <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                           Loading users...
@@ -216,7 +216,7 @@ export function DistributionGroupFormDialog({
                                 return (
                                   <FormItem
                                     key={user.id}
-                                    className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3 hover:bg-accent/50 transition-colors"
+                                    className="flex flex-row items-start space-x-4 space-y-0 rounded-md border p-4 hover:bg-accent/50 transition-colors"
                                   >
                                     <FormControl>
                                       <Checkbox
@@ -233,7 +233,7 @@ export function DistributionGroupFormDialog({
                                         }}
                                       />
                                     </FormControl>
-                                    <div className="flex items-center gap-3 flex-1">
+                                    <div className="flex items-center gap-4 flex-1">
                                       <Avatar className="h-8 w-8">
                                         <AvatarFallback className="text-xs">
                                           {getInitials(

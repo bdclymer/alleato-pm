@@ -12,9 +12,9 @@ export function PanelSection({ title, icon, children }: PanelSectionProps) {
   const [show, setShow] = useState(true);
 
   return (
-    <div className="mb-5">
+    <div className="mb-4">
       <h2
-        className="text-lg font-semibold mb-3 text-zinc-900 flex items-center justify-between cursor-pointer"
+        className="text-lg font-semibold mb-4 text-zinc-900 flex items-center justify-between cursor-pointer"
         onClick={() => setShow(!show)}
       >
         <div className="flex items-center">

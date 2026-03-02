@@ -304,7 +304,7 @@ export function renderCommitmentList(
 ): ReactElement {
   return (
     <div
-      className="flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
+      className="flex items-center justify-between py-2 px-4 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
       onClick={() => onClick(item)}
     >
       <div>

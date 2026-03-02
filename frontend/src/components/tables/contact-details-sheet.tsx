@@ -119,14 +119,14 @@ export function ContactDetailsSheet({
             {/* Edit Form */}
             <form className="flex flex-col gap-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Label htmlFor="first_name">First Name</Label>
                   <Input
                     id="first_name"
                     defaultValue={contact.first_name || ""}
                   />
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Label htmlFor="last_name">Last Name</Label>
                   <Input
                     id="last_name"
@@ -134,7 +134,7 @@ export function ContactDetailsSheet({
                   />
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -142,7 +142,7 @@ export function ContactDetailsSheet({
                   defaultValue={contact.email || ""}
                 />
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"

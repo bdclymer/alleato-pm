@@ -187,7 +187,7 @@ export function SupabaseAuthManager() {
                     {provider.lastUpdated}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-3">
+                <div className="flex flex-col items-end gap-4">
                   <Switch
                     checked={provider.status === "enabled"}
                     onCheckedChange={() => handleToggle(provider.id)}
@@ -215,7 +215,7 @@ export function SupabaseAuthManager() {
               changes.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4">
             {POLICIES.map((policy) => (
               <div key={policy.id} className="flex items-start justify-between">
                 <div>
@@ -233,7 +233,7 @@ export function SupabaseAuthManager() {
             ))}
 
             <div className="rounded-xl border">
-              <div className="border-b px-4 py-3">
+              <div className="border-b px-4 py-4">
                 <p className="font-medium">Recent audit events</p>
                 <p className="text-muted-foreground text-sm">
                   The last 24 hours of configuration activity.
@@ -308,7 +308,7 @@ export function SupabaseAuthManager() {
               />
             </div>
           </div>
-          <DialogFooter className="flex gap-3">
+          <DialogFooter className="flex gap-4">
             <Button variant="outline" onClick={() => setActiveProvider(null)}>
               Cancel
             </Button>

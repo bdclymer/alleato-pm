@@ -232,7 +232,7 @@ export function EmailCommitmentDialog({
 
         <div className="space-y-6 py-4">
           {/* Recipients Section */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label>Recipients</Label>
 
             {/* Selected Recipients */}
@@ -348,7 +348,7 @@ export function EmailCommitmentDialog({
           </div>
 
           {/* Options */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label>Email Options</Label>
             <div className="space-y-2">
               <div className="flex items-center space-x-2">

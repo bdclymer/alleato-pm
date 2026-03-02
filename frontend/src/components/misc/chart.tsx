@@ -173,12 +173,12 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+        "border-border/50 bg-background grid min-w-[8rem] items-start gap-2 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
         className,
       )}
     >
       {!nestLabel ? tooltipLabel : null}
-      <div className="grid gap-1.5">
+      <div className="grid gap-2">
         {payload
           .filter((item) => item.type !== "none")
           .map((item, index) => {
@@ -228,7 +228,7 @@ function ChartTooltipContent({
                         nestLabel ? "items-end" : "items-center",
                       )}
                     >
-                      <div className="grid gap-1.5">
+                      <div className="grid gap-2">
                         {nestLabel ? tooltipLabel : null}
                         <span className="text-muted-foreground">
                           {itemConfig?.label || item.name}
@@ -273,7 +273,7 @@ function ChartLegendContent({
     <div
       className={cn(
         "flex items-center justify-center gap-4",
-        verticalAlign === "top" ? "pb-3" : "pt-3",
+        verticalAlign === "top" ? "pb-4" : "pt-4",
         className,
       )}
     >
@@ -287,7 +287,7 @@ function ChartLegendContent({
             <div
               key={item.value}
               className={cn(
-                "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
+                "[&>svg]:text-muted-foreground flex items-center gap-2 [&>svg]:h-3 [&>svg]:w-3",
               )}
             >
               {itemConfig?.icon && !hideIcon ? (

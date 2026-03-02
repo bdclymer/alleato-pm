@@ -79,26 +79,26 @@ export function UnifiedModalDemo() {
                   <table className="w-full">
                     <thead className="bg-muted border-b">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-foreground min-w-[300px]">
+                        <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-[300px]">
                           Budget Code*
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-24">
+                        <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-24">
                           Qty
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-28">
+                        <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-28">
                           UOM
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-32">
+                        <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
                           Unit Cost
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-foreground w-32">
+                        <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
                           Amount*
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="hover:bg-muted">
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Select>
                             <SelectTrigger className="w-full h-9">
                               <SelectValue placeholder="Select budget code..." />
@@ -111,7 +111,7 @@ export function UnifiedModalDemo() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             type="number"
                             step="0.001"
@@ -119,7 +119,7 @@ export function UnifiedModalDemo() {
                             className="h-9 text-center"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Select>
                             <SelectTrigger className="h-9">
                               <SelectValue placeholder="UOM" />
@@ -135,7 +135,7 @@ export function UnifiedModalDemo() {
                             </SelectContent>
                           </Select>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             type="number"
                             step="0.01"
@@ -143,7 +143,7 @@ export function UnifiedModalDemo() {
                             className="h-9"
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-4">
                           <Input
                             type="number"
                             step="0.01"
@@ -157,7 +157,7 @@ export function UnifiedModalDemo() {
                   </table>
                 </div>
 
-                <div className="px-4 py-3 border-t bg-muted">
+                <div className="px-4 py-4 border-t bg-muted">
                   <Button
                     type="button"
                     variant="outline"
@@ -301,7 +301,7 @@ export function UnifiedModalDemo() {
                     <Input id="client" value="ABC Development Corp" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="start-date">Start Date</Label>
                       <Input id="start-date" type="date" value="2024-01-15" />
@@ -317,7 +317,7 @@ export function UnifiedModalDemo() {
                     <Textarea id="address" rows={2} value="123 Construction Ave\nDowntown, CA 90210" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="budget">Total Budget</Label>
                       <Input id="budget" value="$2,450,000" />
@@ -331,7 +331,7 @@ export function UnifiedModalDemo() {
 
                 {/* Quick Stats */}
                 <div className="bg-muted rounded-lg p-4">
-                  <h4 className="font-medium mb-3">Quick Stats</h4>
+                  <h4 className="font-medium mb-4">Quick Stats</h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <div className="text-muted-foreground">Active Tasks</div>
@@ -401,7 +401,7 @@ export function UnifiedModalDemo() {
                     <Textarea id="address" rows={3} value="456 Business Park Dr\nSuite 200\nCommerce, CA 90040" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="phone">Phone</Label>
                       <Input id="phone" value="(555) 987-6543" />
@@ -415,16 +415,16 @@ export function UnifiedModalDemo() {
 
                 {/* Key Contacts */}
                 <div>
-                  <h4 className="font-medium mb-3">Key Contacts</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-muted rounded">
+                  <h4 className="font-medium mb-4">Key Contacts</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-muted rounded">
                       <div>
                         <div className="font-medium text-sm">Mike Johnson</div>
                         <div className="text-xs text-muted-foreground">Project Manager</div>
                       </div>
                       <Button variant="ghost" size="sm">Contact</Button>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-muted rounded">
+                    <div className="flex items-center justify-between p-4 bg-muted rounded">
                       <div>
                         <div className="font-medium text-sm">Sarah Chen</div>
                         <div className="text-xs text-muted-foreground">Site Supervisor</div>
@@ -436,7 +436,7 @@ export function UnifiedModalDemo() {
 
                 {/* Project Stats */}
                 <div className="bg-muted rounded-lg p-4">
-                  <h4 className="font-medium mb-3">Project History</h4>
+                  <h4 className="font-medium mb-4">Project History</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Total Contracts</span>
@@ -485,7 +485,7 @@ export function UnifiedModalDemo() {
           </div>
         </div>
 
-        <div className="mt-4 p-3 bg-warning/10 border border-warning/20 rounded">
+        <div className="mt-4 p-4 bg-warning/10 border border-warning/20 rounded">
           <p className="text-sm text-warning">
             <strong>Try these examples:</strong> Notice how all overlays, animations, and interactions feel consistent across different content types.
           </p>

@@ -182,11 +182,11 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
               </div>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
               {forecast.forecastByCostCode.slice(0, 10).map((item) => (
                 <div
                   key={item.costCode}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex items-center justify-between p-4 border rounded-lg"
                 >
                   <div className="flex-1">
                     <div className="font-medium">{item.costCode}</div>

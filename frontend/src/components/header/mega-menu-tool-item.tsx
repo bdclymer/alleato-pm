@@ -33,7 +33,7 @@ export function MegaMenuToolItem({
         // The auto-close effect in useHeaderNav will close the panel on route change
       }}
       className={cn(
-        "flex items-start gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+        "flex items-start gap-4 rounded-md px-4 py-2 text-sm transition-colors",
         isDisabled
           ? "opacity-40 cursor-not-allowed"
           : "hover:bg-zinc-700/50",

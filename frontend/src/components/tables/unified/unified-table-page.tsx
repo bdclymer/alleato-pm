@@ -236,8 +236,8 @@ export function UnifiedTablePage<T>({
     <>
       <PageHeader title={header.title} description={header.description} actions={header.actions} />
 
-      <PageContainer className="pt-2 sm:pt-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <PageContainer className="pt-2 sm:pt-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           <TableToolbar
             className="w-full lg:w-auto"
@@ -399,7 +399,7 @@ export function UnifiedTablePage<T>({
         )}
 
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex flex-col gap-3 items-center justify-between pt-6 md:flex-row">
+          <div className="flex flex-col gap-4 items-center justify-between pt-6 md:flex-row">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Rows per page</span>
               <Select value={String(pagination.perPage)} onValueChange={pagination.onPerPageChange}>

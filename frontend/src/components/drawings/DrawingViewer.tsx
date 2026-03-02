@@ -319,7 +319,7 @@ export function DrawingViewer({
       {/* Toolbar */}
       <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         {/* Drawing Info */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
           <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -509,7 +509,7 @@ export function DrawingViewer({
       >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Loader2 className="h-6 w-6 animate-spin" />
               <span className="text-sm">Loading PDF...</span>
             </div>

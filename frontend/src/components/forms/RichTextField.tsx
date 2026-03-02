@@ -119,7 +119,7 @@ export function RichTextField({
           ref={editorRef}
           contentEditable={!disabled}
           onInput={handleInput}
-          className="min-h-[120px] p-3 focus:outline-none"
+          className="min-h-[120px] p-4 focus:outline-none"
           data-placeholder={placeholder}
           suppressContentEditableWarning={true}
         />

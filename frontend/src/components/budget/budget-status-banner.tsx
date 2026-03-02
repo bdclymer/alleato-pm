@@ -25,7 +25,7 @@ export function BudgetStatusBanner({
   };
 
   return (
-    <div className="bg-[hsl(var(--procore-info-bg))] text-[hsl(var(--procore-info-text))] px-4 py-3 flex items-center justify-between rounded-lg">
+    <div className="bg-[hsl(var(--procore-info-bg))] text-[hsl(var(--procore-info-text))] px-4 py-4 flex items-center justify-between rounded-lg">
       <div className="flex items-center gap-2">
         <Info className="w-4 h-4 flex-shrink-0" />
         <span className="text-xs">

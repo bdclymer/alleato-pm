@@ -161,7 +161,7 @@ export default function NewContractPage() {
         description="Create a new owner agreement"
       />
 
-      <PageContainer className="bg-gray-50">
+      <PageContainer className="bg-muted/30">
         <FormContainer maxWidth="xl" className="max-w-[1400px] bg-white rounded-lg border border-gray-200 p-8">
           <ContractForm
             initialData={initialData}

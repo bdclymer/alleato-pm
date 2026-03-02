@@ -104,22 +104,22 @@ export function MetricCard({
 }: MetricCardProps) {
   const sizeStyles = {
     sm: {
-      container: compact ? "p-3 sm:p-4" : "p-4 sm:p-5",
+      container: compact ? "p-4 sm:p-4" : "p-4 sm:p-4",
       label: "text-[9px] sm:text-2xs mb-1.5",
       value: "text-xl sm:text-2xl",
       change: "text-2xs mt-1.5",
     },
     md: {
-      container: compact ? "p-4 sm:p-5" : "p-5 sm:p-6",
+      container: compact ? "p-4 sm:p-4" : "p-4 sm:p-6",
       label: "text-2xs sm:text-[11px] mb-2",
       value: "text-2xl sm:text-3xl",
       change: "text-xs mt-2",
     },
     lg: {
-      container: compact ? "p-5 sm:p-6" : "p-6 sm:p-8",
-      label: "text-[11px] sm:text-xs mb-2 sm:mb-3",
+      container: compact ? "p-4 sm:p-6" : "p-6 sm:p-8",
+      label: "text-[11px] sm:text-xs mb-2 sm:mb-4",
       value: "text-3xl sm:text-4xl md:text-5xl",
-      change: "text-xs sm:text-sm mt-2 sm:mt-3",
+      change: "text-xs sm:text-sm mt-2 sm:mt-4",
     },
   };
 
@@ -163,7 +163,7 @@ export function MetricCard({
       </p>
 
       {/* Value and Change indicator */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-4">
         {/* Value */}
         <p className={cn(
           "font-light tabular-nums tracking-tight text-neutral-900",
@@ -239,9 +239,9 @@ export function MetricGrid({
   };
 
   const gapStyles = {
-    sm: "gap-3 sm:gap-4",
-    md: "gap-4 sm:gap-5",
-    lg: "gap-5 sm:gap-6",
+    sm: "gap-4 sm:gap-4",
+    md: "gap-4 sm:gap-4",
+    lg: "gap-4 sm:gap-6",
   };
 
   return (
@@ -267,7 +267,7 @@ interface MetricSummaryProps {
 export function MetricSummary({ items, className }: MetricSummaryProps) {
   return (
     <div className={cn(
-      "flex flex-wrap gap-x-6 gap-y-3 p-4 sm:p-5 bg-neutral-50/80 border border-neutral-200/60 rounded-md",
+      "flex flex-wrap gap-x-6 gap-y-3 p-4 sm:p-4 bg-neutral-50/80 border border-neutral-200/60 rounded-md",
       className
     )}>
       {items.map((item, index) => (

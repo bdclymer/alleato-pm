@@ -95,7 +95,7 @@ export function BudgetLineItemCard({
         </div>
 
         {/* 2-Column Grid: Qty + UOM */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Qty</Label>
             <Input
@@ -117,7 +117,7 @@ export function BudgetLineItemCard({
         </div>
 
         {/* 2-Column Grid: Unit Cost + Amount */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Unit Cost</Label>
             <div className="relative">

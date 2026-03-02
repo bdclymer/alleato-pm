@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
     // vendor chunk references for date-fns in webpack dev mode.
     optimizePackageImports: [],
   },
+  serverExternalPackages: [
+    "@mermaid-js/parser",
+    "mermaid",
+    "@streamdown/mermaid",
+  ],
   images: {
     remotePatterns: [
       {

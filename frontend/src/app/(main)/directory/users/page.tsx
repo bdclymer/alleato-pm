@@ -1,3 +1,4 @@
+import { ProjectPageHeader } from "@/components/layout";
 "use client";
 
 import * as React from "react";
@@ -16,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { useProjectUsers } from "@/hooks/use-project-users";
-import { PageHeader } from "@/components/layout/page-header-unified";
+
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Text } from "@/components/ui/text";
@@ -107,7 +108,7 @@ export default function DirectoryUsersPage() {
           <button
             type="button"
             onClick={() => setSelectedUser(user)}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left"
+            className="flex items-center gap-4 hover:opacity-80 transition-opacity text-left"
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/10 text-primary">
@@ -287,7 +288,7 @@ export default function DirectoryUsersPage() {
   if (isLoading) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -308,7 +309,7 @@ export default function DirectoryUsersPage() {
   if (error) {
     return (
       <>
-        <PageHeader
+        <ProjectPageHeader
           title="Directory"
           description="Manage companies, clients, contacts, users, and employees across your organization"
           showProjectName={false}
@@ -325,7 +326,7 @@ export default function DirectoryUsersPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
         showProjectName={false}

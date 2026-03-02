@@ -522,18 +522,18 @@ export function ImportExportModal({
 
               {/* Column Mapping */}
               {parsedData && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Label>Map Columns</Label>
                   <p className="text-sm text-muted-foreground">
                     Found {parsedData.rows.length} rows. Map CSV columns to task
                     fields:
                   </p>
 
-                  <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-md p-3">
+                  <div className="max-h-[200px] overflow-y-auto space-y-2 border rounded-md p-4">
                     {parsedData.headers.map((header) => (
                       <div
                         key={header}
-                        className="flex items-center gap-3 text-sm"
+                        className="flex items-center gap-4 text-sm"
                       >
                         <span className="w-32 truncate font-mono bg-muted px-2 py-1 rounded">
                           {header}
@@ -568,14 +568,14 @@ export function ImportExportModal({
 
             {/* Messages */}
             {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-4 rounded-md">
                 <AlertCircle className="h-4 w-4" />
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/20 p-3 rounded-md">
+              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/20 p-4 rounded-md">
                 <CheckCircle2 className="h-4 w-4" />
                 {success}
               </div>

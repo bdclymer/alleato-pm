@@ -97,7 +97,7 @@ export default function ExpandableCardDemo() {
                     layoutId={`button-${active.title}-${id}`}
                     href={active.ctaLink}
                     target="_blank"
-                    className="px-4 py-3 text-sm rounded-full font-bold bg-success text-white"
+                    className="px-4 py-4 text-sm rounded-full font-bold bg-success text-white"
                   >
                     {" "}
                     {active.ctaText}{" "}

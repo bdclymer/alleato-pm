@@ -55,10 +55,18 @@ export function SiteHeader() {
 
   const isProjectHome =
     Boolean(nav.projectId) && pathname === `/${nav.projectId}/home`;
+  const toolsMenuTools = headerNavGroups.flatMap((group) =>
+    group.tools.map((tool) => {
+      if (!nav.projectId && tool.name === "Meetings") {
+        return { ...tool, requiresProject: false };
+      }
+      return tool;
+    })
+  );
   const toolsGroup: HeaderNavGroupConfig = {
     id: "tools",
     label: "Tools",
-    tools: headerNavGroups.flatMap((group) => group.tools),
+    tools: toolsMenuTools,
     subGroups: headerNavGroups.map((group) => ({
       label: group.label,
       toolNames: group.tools.map((tool) => tool.name),
@@ -85,7 +93,7 @@ export function SiteHeader() {
           alt="Alleato"
           width={80}
           height={24}
-          className="hidden md:block ml-3 mt-[5px]"
+          className="hidden md:block ml-4 mt-[5px]"
         />
 
         {/* Mobile: Hamburger menu */}

@@ -216,9 +216,9 @@ export default function TablesDirectoryPage() {
       <div className="mt-6 flex items-center gap-4 text-sm text-neutral-500">
         <span className="font-medium">{tables.length} total tables</span>
         <span>•</span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {Object.entries(categoryColors).map(([category, color]) => (
-            <div key={category} className="flex items-center gap-1.5">
+            <div key={category} className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${color.split(' ')[0]}`} />
               <span className="text-xs">{category}</span>
             </div>

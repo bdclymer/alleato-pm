@@ -64,7 +64,7 @@ export function SidebarRight({
             return (
               <div key={step.id} className="relative">
                 {/* Step Item */}
-                <div className="flex items-center gap-3 py-2 group cursor-pointer hover:bg-accent/50 rounded-md px-2 transition-colors">
+                <div className="flex items-center gap-4 py-2 group cursor-pointer hover:bg-accent/50 rounded-md px-2 transition-colors">
                   {/* Icon */}
                   <div className="flex-shrink-0">
                     {step.completed ? (

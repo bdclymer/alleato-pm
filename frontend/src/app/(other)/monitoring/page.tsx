@@ -231,7 +231,7 @@ export default function MonitoringPage() {
 
               return (
                 <Card key={`summary-${project.id}`}>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-4">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                       <FileText className="w-4 h-4 text-muted-foreground" />
                       {project.name}
@@ -326,7 +326,7 @@ export default function MonitoringPage() {
                     <div key={project.id}>
                       {/* Project Header */}
                       <button
-                        className="w-full px-6 py-4 flex items-center gap-3 hover:bg-muted transition-colors text-left"
+                        className="w-full px-6 py-4 flex items-center gap-4 hover:bg-muted transition-colors text-left"
                         onClick={() => toggleProject(project)}
                       >
                         {isExpanded ? (
@@ -348,7 +348,7 @@ export default function MonitoringPage() {
                       {isExpanded && (
                         <div className="px-6 pb-6 bg-muted">
                           {isProjectLoading && !content && (
-                            <div className="space-y-3 py-4">
+                            <div className="space-y-4 py-4">
                               <Skeleton className="h-4 w-full" />
                               <Skeleton className="h-4 w-3/4" />
                               <Skeleton className="h-4 w-5/6" />
@@ -366,14 +366,14 @@ export default function MonitoringPage() {
                             <div className="space-y-6 py-4 max-h-[600px] overflow-y-auto">
                               {sections.map((section, sectionIdx) => (
                                 <div key={`${project.id}-section-${sectionIdx}`}>
-                                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
                                     {section.title}
                                   </h4>
                                   <div className="space-y-2 bg-background rounded-lg p-4">
                                     {section.tasks.map((task, taskIdx) => (
                                       <label
                                         key={`${project.id}-task-${sectionIdx}-${taskIdx}`}
-                                        className="flex items-start gap-3 py-1.5 cursor-default group"
+                                        className="flex items-start gap-4 py-1.5 cursor-default group"
                                       >
                                         <input
                                           type="checkbox"

@@ -341,7 +341,7 @@ export function ChangeOrderDetail({
                   control={form.control}
                   name="is_private"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
@@ -356,7 +356,7 @@ export function ChangeOrderDetail({
                   control={form.control}
                   name="apply_vertical_markup"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
@@ -417,7 +417,7 @@ export function ChangeOrderDetail({
           <CardHeader>
             <CardTitle className="text-base">Basic Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Change Order Number</span>
               <span className="text-sm font-medium">{changeOrder.co_number || "—"}</span>
@@ -460,7 +460,7 @@ export function ChangeOrderDetail({
           <CardHeader>
             <CardTitle className="text-base">Financial Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Amount</span>
               <span className="text-sm font-medium">{formatCurrency(changeOrder.amount)}</span>
@@ -492,7 +492,7 @@ export function ChangeOrderDetail({
         <CardHeader>
           <CardTitle className="text-base">Timeline</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Date Initiated</span>
             <span className="text-sm">{formatDate(changeOrder.created_at)}</span>

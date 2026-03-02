@@ -193,7 +193,7 @@ export function ExportDialog({
         <div className="space-y-6 py-4">
           {/* Format Selection - Only show for list export */}
           {!isIndividualExport && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label htmlFor="export-format">Export Format</Label>
               <RadioGroup
                 id="export-format"
@@ -224,7 +224,7 @@ export function ExportDialog({
 
           {/* Template Selection - Only show for list export (non-PDF) */}
           {!isIndividualExport && format !== "pdf" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label htmlFor="export-template">Template</Label>
               <RadioGroup
                 id="export-template"
@@ -279,7 +279,7 @@ export function ExportDialog({
           )}
 
           {/* Export Scope Info */}
-          <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+          <div className="rounded-md bg-muted/50 p-4 text-sm text-muted-foreground">
             <strong>Export scope:</strong> {exportScope}
           </div>
         </div>

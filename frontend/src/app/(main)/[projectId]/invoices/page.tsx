@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageContainer, PageTabs } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageContainer, PageTabs , ProjectPageHeader } from "@/components/layout";
+
 
 import type { Invoice } from "@/types/financial";
 
@@ -110,7 +110,7 @@ export default function ProjectInvoicesPage() {
 
   return (
     <>
-      <PageHeader
+      <ProjectPageHeader
         title="Invoices"
         description="Manage project invoices and billing"
         actions={

@@ -74,7 +74,7 @@ export function MegaMenuPanel({
 
             return (
               <div key={subGroup.label} className="min-w-[200px]">
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2 px-3">
+                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2 px-4">
                   {subGroup.label}
                 </h4>
                 <div className="space-y-0.5">
@@ -107,7 +107,7 @@ export function MegaMenuPanel({
         </div>
 
         {allToolsRequireProject && (
-          <div className="mt-4 pt-3 border-t border-zinc-700">
+          <div className="mt-4 pt-4 border-t border-zinc-700">
             <p className="text-xs text-amber-500 text-center">
               Select a project to access these tools
             </p>

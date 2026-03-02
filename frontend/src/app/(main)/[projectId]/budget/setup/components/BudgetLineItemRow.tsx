@@ -48,7 +48,7 @@ export function BudgetLineItemRow({
 }: BudgetLineItemRowProps) {
   return (
     <tr>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <BudgetCodeSelector
           projectCostCodes={projectCostCodes}
           selectedLabel={lineItem.costCodeLabel}
@@ -58,7 +58,7 @@ export function BudgetLineItemRow({
           onOpenChange={onPopoverOpenChange}
         />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <Input
           type="number"
           placeholder="0"
@@ -67,7 +67,7 @@ export function BudgetLineItemRow({
           className="w-24"
         />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <Select
           value={lineItem.uom}
           onValueChange={(value) => onFieldChange("uom", value)}
@@ -84,7 +84,7 @@ export function BudgetLineItemRow({
           </SelectContent>
         </Select>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <Input
           type="number"
           placeholder="$0.00"
@@ -93,7 +93,7 @@ export function BudgetLineItemRow({
           className="w-32"
         />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <Input
           type="number"
           placeholder="$0.00"
@@ -102,7 +102,7 @@ export function BudgetLineItemRow({
           className="w-32"
         />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4">
         <Button
           variant="ghost"
           size="sm"
