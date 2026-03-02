@@ -1,7 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type DataUIPart } from "ai";
+import type { CustomUIDataTypes } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
@@ -132,7 +133,10 @@ export function Chat({
       },
     }),
     onData: (dataPart) => {
-      setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+      setDataStream((ds) => [
+        ...ds,
+        dataPart as DataUIPart<CustomUIDataTypes>,
+      ]);
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
