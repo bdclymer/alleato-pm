@@ -1,5 +1,5 @@
-import { ProjectPageHeader } from "@/components/layout";
 "use client";
+import { ProjectPageHeader } from "@/components/layout";
 
 import * as React from "react";
 import { useParams, usePathname } from "next/navigation";

@@ -238,6 +238,77 @@ export default function ProjectChangeEventsPage(): ReactElement {
     });
   }, [activeFilters.scope, changeEvents, tableState.debouncedSearch]);
 
+  const handleExport = React.useCallback(() => {
+    const formatCurrencyValue = (value: number | null | undefined): string => {
+      if (value === null || value === undefined) return "";
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(value);
+    };
+
+    const formatDateValue = (dateValue: string | null | undefined): string => {
+      if (!dateValue) return "";
+      const parsed = new Date(dateValue);
+      if (Number.isNaN(parsed.getTime())) return "";
+      return parsed.toLocaleDateString();
+    };
+
+    const escapeCsvField = (field: string): string => {
+      if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+        return `"${field.replace(/"/g, '""')}"`;
+      }
+      return field;
+    };
+
+    const headers = ["#", "Title", "Status", "Scope", "Change Reason", "Estimated Impact", "Created", "Notes"];
+
+    const scopeDisplayMap: Record<string, string> = {
+      tbd: "TBD",
+      in_scope: "In Scope",
+      out_of_scope: "Out of Scope",
+    };
+    const statusDisplayMap: Record<string, string> = {
+      pending_approval: "Pending Approval",
+      open: "Open",
+      approved: "Approved",
+      rejected: "Rejected",
+      closed: "Closed",
+      pending: "Pending",
+    };
+
+    const rows = filteredEvents.map((event) => {
+      const number = event.number ?? `CE-${event.id}`;
+      const title = event.title ?? "";
+      const status = statusDisplayMap[(event.status ?? "").toLowerCase()] ?? (event.status ?? "");
+      const scope = scopeDisplayMap[(event.scope ?? "").toLowerCase()] ?? (event.scope ?? "");
+      const reason = event.reason ?? "";
+      const estimatedImpact = formatCurrencyValue(event.estimated_impact);
+      const createdAt = formatDateValue(event.created_at);
+      const notes = event.notes ?? "";
+
+      return [number, title, status, scope, reason, estimatedImpact, createdAt, notes]
+        .map(escapeCsvField)
+        .join(",");
+    });
+
+    const csvContent = [headers.map(escapeCsvField).join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "change-events-export.csv";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(
+      `Exported ${filteredEvents.length} change event${filteredEvents.length === 1 ? "" : "s"} to CSV`,
+    );
+  }, [filteredEvents]);
+
   const tableColumns = React.useMemo(() => buildChangeEventTableColumns(), []);
 
   const totalItems = changeEvents.length;
@@ -378,6 +449,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         columns: changeEventColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        onExport: handleExport,
         onBulkDelete: handleBulkDelete,
       }}
       data={{
@@ -434,7 +506,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         },
       }}
       features={{
-        enableExport: false,
+        enableExport: true,
         enableBulkDelete: true,
       }}
     />

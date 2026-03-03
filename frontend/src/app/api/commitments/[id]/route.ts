@@ -55,7 +55,7 @@ export async function GET(
       id, project_id, contract_number, title, description, status, executed,
       contract_company_id, start_date, estimated_completion_date,
       actual_completion_date, contract_date, signed_contract_received_date,
-      issued_on_date, default_retainage_percent, accounting_method,
+      issued_on_date, default_retainage_percent,
       is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
       invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
       inclusions, exclusions,
@@ -94,7 +94,7 @@ export async function GET(
           supabase
             .from("subcontract_sov_items")
             .select(
-              "id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order",
+              "id, line_number, budget_code, description, amount, billed_to_date, sort_order",
             )
             .eq("subcontract_id", id)
             .order("line_number", { ascending: true }),
@@ -126,7 +126,7 @@ export async function GET(
           supabase
             .from("purchase_order_sov_items")
             .select(
-              "id, line_number, budget_code, cost_code, description, title, amount, billed_to_date, sort_order",
+              "id, line_number, budget_code, description, amount, billed_to_date, sort_order",
             )
             .eq("purchase_order_id", id)
             .order("line_number", { ascending: true }),

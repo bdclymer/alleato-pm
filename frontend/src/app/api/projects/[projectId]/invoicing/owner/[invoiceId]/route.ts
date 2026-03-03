@@ -84,6 +84,115 @@ export async function GET(
   }
 }
 
+// PATCH /api/projects/[projectId]/invoicing/owner/[invoiceId]
+// Update an owner invoice (only if status is draft)
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ projectId: string; invoiceId: string }> },
+) {
+  try {
+    const supabase = await createClient();
+    const { projectId, invoiceId } = await context.params;
+
+    // Check authentication
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      return NextResponse.json(
+        { error: "Authentication failed", details: authError.message },
+        { status: 401 },
+      );
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const projectIdNum = parseInt(projectId, 10);
+    const invoiceIdNum = parseInt(invoiceId, 10);
+
+    // Parse and validate the request body
+    const body = await request.json();
+    const allowedFields = ["invoice_number", "period_start", "period_end", "status", "notes"];
+    const updatePayload: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (field in body) {
+        updatePayload[field] = body[field] === "" ? null : body[field];
+      }
+    }
+
+    if (Object.keys(updatePayload).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields provided for update" },
+        { status: 400 },
+      );
+    }
+
+    // Verify the invoice exists and belongs to the project
+    const { data: existing, error: fetchError } = await supabase
+      .from("owner_invoices")
+      .select(`id, status, contracts!inner(project_id)`)
+      .eq("id", invoiceIdNum)
+      .eq("contracts.project_id", projectIdNum)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === "PGRST116") {
+        return NextResponse.json(
+          { error: "Invoice not found" },
+          { status: 404 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Failed to verify invoice", details: fetchError.message },
+        { status: 500 },
+      );
+    }
+
+    // Only allow edits when the invoice is in draft status
+    if (existing.status !== "draft") {
+      return NextResponse.json(
+        {
+          error: "Cannot edit invoice",
+          message: `Invoice status is '${existing.status}'. Only draft invoices can be edited.`,
+        },
+        { status: 400 },
+      );
+    }
+
+    // Apply the update
+    const { data: updated, error: updateError } = await supabase
+      .from("owner_invoices")
+      .update(updatePayload)
+      .eq("id", invoiceIdNum)
+      .select()
+      .single();
+
+    if (updateError) {
+      if (updateError.code === "42501") {
+        return NextResponse.json(
+          { error: "Permission denied" },
+          { status: 403 },
+        );
+      }
+      return NextResponse.json(
+        { error: "Failed to update invoice", details: updateError.message },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ data: updated });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 // DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]
 // Delete an owner invoice (only if not approved or paid)
 export async function DELETE(

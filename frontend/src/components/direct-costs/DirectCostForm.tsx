@@ -14,7 +14,7 @@
 
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -212,19 +212,13 @@ export function DirectCostForm({
     name: 'line_items',
   })
 
-  // Watch for changes
-  const watchedValues = form.watch()
+  // Grand total state — updated via subscription callback, NOT via
+  // render-level form.watch() which causes infinite re-render loops
+  // when combined with useFieldArray + mode:'onChange'.
+  const [grandTotal, setGrandTotal] = useState(0)
 
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      setIsDirty(form.formState.isDirty)
-    })
-    return () => subscription.unsubscribe()
-  }, [form])
-
-  // Calculate grand total
-  const grandTotal = useMemo(() => {
-    return (watchedValues.line_items || []).reduce(
+  const computeTotal = useCallback((items: any[]) => {
+    return (items || []).reduce(
       (total: number, item: any) => {
         const quantity = Number(item.quantity) || 0
         const unitCost = Number(item.unit_cost) || 0
@@ -232,7 +226,22 @@ export function DirectCostForm({
       },
       0
     )
-  }, [watchedValues.line_items])
+  }, [])
+
+  useEffect(() => {
+    // Compute initial total
+    setGrandTotal(computeTotal(form.getValues('line_items')))
+
+    // Subscribe to ALL form changes via callback (safe — no render-level subscription)
+    const subscription = form.watch((_, { name }) => {
+      setIsDirty(form.formState.isDirty)
+      // Only recompute total when line items change
+      if (!name || name.startsWith('line_items')) {
+        setGrandTotal(computeTotal(form.getValues('line_items')))
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form, computeTotal])
 
   // Load dropdown options
   useEffect(() => {
@@ -269,7 +278,10 @@ export function DirectCostForm({
     loadOptions()
   }, [projectId])
 
-  // Auto-save functionality (edit mode only)
+  // Auto-save functionality (edit mode only).
+  // Depends only on isDirty and mode — NOT on a watched value object,
+  // which would create a new reference on every render and re-fire
+  // this effect continuously (infinite loop / page hang).
   useEffect(() => {
     if (!isDirty || mode !== 'edit') return
 
@@ -278,7 +290,8 @@ export function DirectCostForm({
     }, AUTO_SAVE_DELAY)
 
     return () => clearTimeout(timer)
-  }, [isDirty, watchedValues, mode])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDirty, mode])
 
   const handleAutoSave = async () => {
     if (!form.formState.isValid) return

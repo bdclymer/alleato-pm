@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { ArrowLeft, Edit, Trash2, Download, Check, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,13 +18,243 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Slideover,
+  SlideoverContent,
+  SlideoverHeader,
+  SlideoverTitle,
+} from "@/components/ui/unified-slideover";
 import { StatusBadge } from "@/components/misc/status-badge";
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+
+// ---------------------------------------------------------------------------
+// Edit form schema
+// ---------------------------------------------------------------------------
+
+const invoiceEditSchema = z.object({
+  invoice_number: z.string().trim().max(255).nullable().optional(),
+  period_start: z.string().nullable().optional(),
+  period_end: z.string().nullable().optional(),
+  status: z.enum(["draft", "submitted", "approved", "paid", "void"]),
+  notes: z.string().trim().max(2000).nullable().optional(),
+});
+
+type InvoiceEditValues = z.infer<typeof invoiceEditSchema>;
+
+// ---------------------------------------------------------------------------
+// Inline edit form
+// ---------------------------------------------------------------------------
+
+interface InvoiceEditFormProps {
+  invoice: OwnerInvoice;
+  projectId: number;
+  invoiceId: number;
+  onCancel: () => void;
+  onSuccess: (updated: OwnerInvoice) => void;
+}
+
+function InvoiceEditForm({
+  invoice,
+  projectId,
+  invoiceId,
+  onCancel,
+  onSuccess,
+}: InvoiceEditFormProps) {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const form = useForm<InvoiceEditValues>({
+    resolver: zodResolver(invoiceEditSchema),
+    defaultValues: {
+      invoice_number: invoice.invoice_number ?? "",
+      period_start: invoice.period_start
+        ? invoice.period_start.slice(0, 10)
+        : "",
+      period_end: invoice.period_end ? invoice.period_end.slice(0, 10) : "",
+      status: invoice.status,
+      notes: "",
+    },
+  });
+
+  const onSubmit = async (values: InvoiceEditValues) => {
+    setIsSaving(true);
+    try {
+      const payload: Record<string, string | null> = {
+        invoice_number: values.invoice_number || null,
+        period_start: values.period_start || null,
+        period_end: values.period_end || null,
+        status: values.status,
+        notes: values.notes || null,
+      };
+
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.message || body.error || "Failed to update invoice");
+      }
+
+      const body = await response.json();
+      toast.success("Invoice updated successfully");
+      onSuccess(body.data as OwnerInvoice);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update invoice",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-4">
+        <FormField
+          control={form.control}
+          name="invoice_number"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Invoice Number</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="e.g. INV-001"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="period_start"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Period Start</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="period_end"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Period End</FormLabel>
+                <FormControl>
+                  <Input type="date" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="submitted">Submitted</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="void">Void</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Optional notes about this invoice..."
+                  rows={4}
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
 
 /**
  * Invoice Detail Page
@@ -39,6 +272,9 @@ export default function InvoiceDetailPage() {
   const [invoice, setInvoice] = useState<OwnerInvoice | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   // Fetch invoice details
   const fetchInvoice = useCallback(async () => {
@@ -75,7 +311,17 @@ export default function InvoiceDetailPage() {
   };
 
   const handleEdit = () => {
-    toast.info("Edit invoice coming soon");
+    setIsEditOpen(true);
+  };
+
+  const handleEditSuccess = (updated: OwnerInvoice) => {
+    setIsEditOpen(false);
+    // Merge updated fields back, preserving line items already in state
+    setInvoice((prev) =>
+      prev
+        ? { ...prev, ...updated, owner_invoice_line_items: prev.owner_invoice_line_items }
+        : updated,
+    );
   };
 
   const handleSubmit = async () => {
@@ -127,15 +373,8 @@ export default function InvoiceDetailPage() {
   const handleDelete = async () => {
     if (!invoice) return;
 
-     
-    const confirmed = window.confirm(
-      `Are you sure you want to delete invoice ${invoice.invoice_number || invoice.id}?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
     try {
+      setIsDeleting(true);
       const response = await fetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
         {
@@ -152,6 +391,9 @@ export default function InvoiceDetailPage() {
       router.push(`/${projectId}/invoicing`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete invoice");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -245,7 +487,8 @@ export default function InvoiceDetailPage() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleDelete}
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={isDeleting}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete
@@ -370,6 +613,50 @@ export default function InvoiceDetailPage() {
           </Card>
         </div>
       </PageContainer>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice{" "}
+              {invoice?.invoice_number || invoice?.id}? This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Slideover */}
+      <Slideover
+        open={isEditOpen}
+        onOpenChange={(open) => !open && setIsEditOpen(false)}
+      >
+        <SlideoverContent
+          side="right"
+          className="w-[92vw] sm:max-w-lg overflow-y-auto p-0"
+        >
+          <SlideoverHeader className="border-b p-4">
+            <SlideoverTitle>Edit Invoice</SlideoverTitle>
+          </SlideoverHeader>
+          <InvoiceEditForm
+            invoice={invoice}
+            projectId={projectId}
+            invoiceId={invoiceId}
+            onCancel={() => setIsEditOpen(false)}
+            onSuccess={handleEditSuccess}
+          />
+        </SlideoverContent>
+      </Slideover>
     </>
   );
 }

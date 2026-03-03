@@ -1,11 +1,21 @@
 "use client";
 
-import { useState, useCallback, useMemo, memo } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit, Trash2, Download, Mail } from "lucide-react";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { Download, Edit, Mail, Trash2 } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
+import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
+import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
+import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
+import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
+import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
+import { ExportDialog } from "@/components/commitments/ExportDialog";
+import { ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,26 +23,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Stack } from "@/components/ui/stack";
-import { Text } from "@/components/ui/text";
-import { StatusBadge } from "@/components/misc/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProjectTitle } from "@/hooks/useProjectTitle";
-import type { Commitment } from "@/types/financial";
-import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
-import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
-import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
-import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
-import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
-import { ExportDialog } from "@/components/commitments/ExportDialog";
-import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
+import { Stack } from "@/components/ui/stack";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Text } from "@/components/ui/text";
 import { formatCurrency } from "@/config/tables";
-import { formatDate } from "@/lib/table-config/formatters";
 import {
-  useCommitmentDetail,
   commitmentKeys,
+  useCommitmentDetail,
 } from "@/hooks/use-commitments-query";
+import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { formatDate } from "@/lib/table-config/formatters";
+import type { Commitment } from "@/types/financial";
 
 type CommitmentDetail = Commitment & {
   project_id?: number;
@@ -235,10 +237,6 @@ export default function CommitmentDetailPage() {
   );
 
   // Action handlers
-  const handleBack = useCallback(() => {
-    router.push(`/${projectId}/commitments`);
-  }, [router, projectId]);
-
   const handleEdit = useCallback(() => {
     router.push(`/${projectId}/commitments/${commitmentId}/edit`);
   }, [router, projectId, commitmentId]);
@@ -284,115 +282,111 @@ export default function CommitmentDetailPage() {
     setIsEmailDialogOpen(true);
   }, []);
 
+  const breadcrumbs = [
+    { label: "Projects", href: "/" },
+    { label: "Project", href: `/${projectId}` },
+    { label: "Commitments", href: `/${projectId}/commitments` },
+    { label: "Details" },
+  ];
+
   if (isLoading) {
     return (
-      <Stack>
-        {/* Header skeleton */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-6 w-20 rounded-full" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-16" />
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-16" />
-          </div>
-        </div>
-        {/* Tab bar skeleton */}
-        <Skeleton className="h-10 w-full max-w-[600px]" />
-        {/* Content skeleton */}
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-5 w-32" />
+      <>
+        <ProjectPageHeader
+          title="Commitment Details"
+          description="Loading..."
+          breadcrumbs={breadcrumbs}
+        />
+        <PageContainer>
+          <Stack>
+            {/* Tab bar skeleton */}
+            <Skeleton className="h-10 w-full max-w-[600px]" />
+            {/* Content skeleton */}
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {["title", "status", "company", "method"].map((field) => (
+                    <div key={field} className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-5 w-32" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-32" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-        </Card>
-      </Stack>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          </Stack>
+        </PageContainer>
+      </>
     );
   }
 
   if (error || !commitment) {
     return (
-      <Stack>
-        <div className="flex items-center justify-between mb-4">
-          <Text size="xl" weight="bold">
-            Error
-          </Text>
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Commitments
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <Text tone="destructive">{error || "Commitment not found"}</Text>
-          </CardContent>
-        </Card>
-      </Stack>
+      <>
+        <ProjectPageHeader
+          title="Commitment Details"
+          description="Commitment not found"
+          breadcrumbs={breadcrumbs}
+        />
+        <PageContainer>
+          <Card>
+            <CardContent className="pt-6">
+              <Text tone="destructive">{error || "Commitment not found"}</Text>
+            </CardContent>
+          </Card>
+        </PageContainer>
+      </>
     );
   }
 
   return (
-    <Stack>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Text size="xl" weight="bold">
-            {commitment.number}
-          </Text>
-          <StatusBadge status={commitment.status} type="commitment" />
-          {commitment.private && (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-              Private
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleEmail}>
-            <Mail className="mr-2 h-4 w-4" />
-            Email
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDelete}
-            className="text-destructive hover:text-destructive"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
-        </div>
-      </div>
+    <>
+      <ProjectPageHeader
+        title={`${commitment.number} — ${commitment.title}`}
+        description={[
+          commitment.status.replace(/_/g, " "),
+          commitment.private ? "Private" : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        breadcrumbs={breadcrumbs}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleEmail}>
+              <Mail className="mr-2 h-4 w-4" />
+              Email
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        }
+      />
+      <PageContainer>
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
@@ -757,6 +751,7 @@ export default function CommitmentDetailPage() {
         companyId={commitment.contract_company_id}
         companyName={commitment.contract_company?.name}
       />
-    </Stack>
+      </PageContainer>
+    </>
   );
 }

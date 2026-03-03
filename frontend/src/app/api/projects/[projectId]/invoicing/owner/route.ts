@@ -1,6 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+// POST /api/projects/[projectId]/invoicing/owner
+// Create a new owner invoice for a project
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ projectId: string }> },
+) {
+  try {
+    const supabase = await createClient();
+    const { projectId } = await context.params;
+
+    // Check authentication
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError) {
+      return NextResponse.json(
+        { error: "Authentication failed", details: authError.message },
+        { status: 401 },
+      );
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const projectIdNum = parseInt(projectId, 10);
+    const body = await request.json();
+    const { contract_id, invoice_number, period_start, period_end, billing_period_id, status } = body;
+
+    // Validate required fields
+    if (!contract_id) {
+      return NextResponse.json(
+        { error: "contract_id is required" },
+        { status: 400 },
+      );
+    }
+
+    // Verify the contract belongs to this project
+    const { data: contract, error: contractError } = await supabase
+      .from("contracts")
+      .select("id")
+      .eq("id", contract_id)
+      .eq("project_id", projectIdNum)
+      .single();
+
+    if (contractError || !contract) {
+      return NextResponse.json(
+        { error: "Contract not found or does not belong to this project" },
+        { status: 404 },
+      );
+    }
+
+    // Insert the new owner invoice
+    const { data: invoice, error: insertError } = await supabase
+      .from("owner_invoices")
+      .insert({
+        contract_id: Number(contract_id),
+        invoice_number: invoice_number ?? null,
+        period_start: period_start ?? null,
+        period_end: period_end ?? null,
+        billing_period_id: billing_period_id ?? null,
+        status: status ?? "draft",
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      return NextResponse.json(
+        { error: "Failed to create owner invoice", details: insertError.message },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ data: invoice }, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 // GET /api/projects/[projectId]/invoicing/owner
 // Fetch all owner invoices for a project with their line items
 export async function GET(

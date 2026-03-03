@@ -8,6 +8,16 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -47,6 +57,8 @@ export default function ProjectInvoicingPage() {
   const [ownerInvoices, setOwnerInvoices] = useState<OwnerInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<OwnerInvoice | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch owner invoices
   const fetchOwnerInvoices = useCallback(async () => {
@@ -82,8 +94,8 @@ export default function ProjectInvoicingPage() {
 
   // Navigation handlers
   const handleCreateOwnerInvoice = useCallback(() => {
-    toast.info("Create owner invoice coming soon");
-  }, []);
+    router.push(`/${projectId}/invoicing/new`);
+  }, [router, projectId]);
 
   const handleCreateSubcontractorInvoice = useCallback(() => {
     toast.info("Create subcontractor invoice coming soon");
@@ -103,39 +115,32 @@ export default function ProjectInvoicingPage() {
     [router, projectId],
   );
 
-  const handleDelete = useCallback(
-    async (invoice: OwnerInvoice) => {
-       
-      const confirmed = window.confirm(
-        `Are you sure you want to delete invoice ${invoice.invoice_number || invoice.id}?`,
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!invoiceToDelete) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceToDelete.id}`,
+        { method: "DELETE" },
       );
-      if (!confirmed) {
-        return;
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete invoice");
       }
 
-      try {
-        const response = await fetch(
-          `/api/projects/${projectId}/invoicing/owner/${invoice.id}`,
-          {
-            method: "DELETE",
-          },
-        );
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to delete invoice");
-        }
-
-        toast.success("Invoice deleted successfully");
-        fetchOwnerInvoices();
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to delete invoice",
-        );
-      }
-    },
-    [projectId, fetchOwnerInvoices],
-  );
+      toast.success("Invoice deleted successfully");
+      fetchOwnerInvoices();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete invoice",
+      );
+    } finally {
+      setIsDeleting(false);
+      setInvoiceToDelete(null);
+    }
+  }, [invoiceToDelete, projectId, fetchOwnerInvoices]);
 
   // Column definitions with action handlers
   const columns: ColumnDef<OwnerInvoice>[] = useMemo(
@@ -169,7 +174,7 @@ export default function ProjectInvoicingPage() {
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => handleDelete(invoice)}
+                  onClick={() => setInvoiceToDelete(invoice)}
                   className="text-destructive"
                   disabled={invoice.status === "approved"}
                 >
@@ -182,7 +187,7 @@ export default function ProjectInvoicingPage() {
         },
       },
     ],
-    [handleView, handleEdit, handleDelete],
+    [handleView, handleEdit],
   );
 
   // Generate tabs

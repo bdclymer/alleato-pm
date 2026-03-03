@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import {
@@ -7,14 +6,10 @@ import {
   SectionHeader,
   MeetingListItem,
   NavSidebar,
-  PageHeader,
-  Button as RefButton,
   AvatarStack,
   PremiumTable,
   StatusDot,
-  ProjectHomeExample,
 } from "@/design-system/REFERENCE_COMPONENTS";
-import { Pencil, ChevronRight } from "lucide-react";
 
 interface SampleRow {
   id: number;
@@ -38,7 +33,7 @@ export function ReferenceComponentsSection() {
       </h2>
       <p className="mt-1 mb-8 text-sm text-muted-foreground">
         Custom domain components from REFERENCE_COMPONENTS.tsx — KPI blocks,
-        meeting lists, navigation sidebar, and page header patterns.
+        meeting lists, navigation sidebar, and table patterns.
       </p>
 
       {/* KPI Block */}
@@ -181,39 +176,12 @@ export function ReferenceComponentsSection() {
         </div>
       </div>
 
-      {/* Page Header */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Page Header
-        </h3>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <PageHeader
-            breadcrumbs={[
-              { label: "Projects", href: "#" },
-              { label: "Westfield Collective" },
-            ]}
-            projectCode="24-115"
-            title="Westfield Collective"
-            actions={
-              <>
-                <RefButton variant="secondary" icon={<Pencil className="h-3.5 w-3.5" />}>
-                  Edit Project
-                </RefButton>
-                <RefButton variant="primary" icon={<ChevronRight className="h-3.5 w-3.5" />}>
-                  Setup Checklist
-                </RefButton>
-              </>
-            }
-          />
-        </div>
-      </div>
-
       {/* Nav Sidebar */}
-      <div className="mb-8">
+      <div>
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
           Nav Sidebar
         </h3>
-        <div className="h-[400px] overflow-hidden rounded-lg border border-border">
+        <div className="h-96 overflow-hidden rounded-lg border border-border">
           <NavSidebar
             sections={[
               {
@@ -234,16 +202,6 @@ export function ReferenceComponentsSection() {
               },
             ]}
           />
-        </div>
-      </div>
-
-      {/* Full Page Example */}
-      <div>
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Complete Page Example — Project Home
-        </h3>
-        <div className="overflow-hidden rounded-lg border-2 border-border">
-          <ProjectHomeExample />
         </div>
       </div>
     </section>

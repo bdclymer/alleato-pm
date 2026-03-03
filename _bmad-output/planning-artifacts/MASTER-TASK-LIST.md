@@ -11,6 +11,7 @@
 This is the **single source of truth** for what needs to be done. Tasks are organized by priority phase. Within each phase, tasks are ordered by business value.
 
 **Status Key:**
+
 - `[ ]` — Not started
 - `[~]` — In progress
 - `[x]` — Done
@@ -132,56 +133,3 @@ These DB tables exist but may not need immediate frontend work:
 | `fm_*` (12 tables) | Facility Management | Specialized domain — defer unless business need |
 | `risks`, `decisions`, `issues`, `notes` | Project Intelligence | Could enhance Daily Log or be standalone tools |
 | AI/RAG tables (13 tables) | AI Pipeline | Backend infrastructure — may already be functional |
-
----
-
-## Recommended Execution Order
-
-### Week 1: Foundation
-1. **Phase 0** — Fix all immediate issues (half day)
-2. **Phase 1A** — Verify Tier A features with `/investigate` (1 day)
-3. Fix any critical bugs found in Phase 1A (1-2 days)
-
-### Week 2: Core Verification
-4. **Phase 1B** — Verify Tier B features (2 days)
-5. Fix critical bugs found in Phase 1B (2-3 days)
-
-### Week 3-4: Build Missing Core
-6. **Phase 2.1** — Submittals (highest value — 9 DB tables ready) (2-3 days)
-7. **Phase 2.2** — Daily Log (1 day)
-8. **Phase 2.3** — Documents (1-2 days)
-9. **Phase 2.4** — Invoicing consolidation (1-2 days)
-
-### Week 5-6: Remaining Features
-10. **Phase 3A** — Transmittals, Emails, Photos (1 week)
-11. **Phase 3B** — Secondary tools as prioritized (ongoing)
-
-### Ongoing
-12. **Phase 4** — Service layer refactoring, E2E tests (parallel with feature work)
-
----
-
-## Total Estimated Effort
-
-| Phase | Effort | Priority |
-|-------|--------|----------|
-| Phase 0: Immediate Fixes | 0.5 days | CRITICAL |
-| Phase 1: QA Verification | 3-5 days | HIGH |
-| Phase 2: Wire Up (DB ready) | 5-8 days | HIGH |
-| Phase 3A: Core Missing Features | 7-10 days | MEDIUM |
-| Phase 3B: Secondary Features | 15-25 days | LOW |
-| Phase 4: Polish/Architecture | 5-8 days | LOW |
-| **Total (Phases 0-3A)** | **~16-24 days** | — |
-| **Total (Everything)** | **~36-56 days** | — |
-
----
-
-## How to Use This Document
-
-1. **Start with Phase 0** — Fix the architectural issues first
-2. **Run `/investigate` for Phase 1** — This tells you what ACTUALLY works vs what's broken
-3. **Update this document** as tasks complete — change `[ ]` to `[x]`
-4. **For each Phase 2/3 task**, create a PRP with `/prp-create <feature>` before building
-5. **Verify with `/investigate <feature> --retest`** after each feature is built
-
-**This document replaces all previous task lists and provides the single source of truth for project completion.**

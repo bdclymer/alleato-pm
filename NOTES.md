@@ -1,5 +1,9 @@
 # NOTES
 
+## Direct Costs
+
+- not the design system is supposedly implemented with the gates redesign this page following that system
+
 ## Meetings
 
  extend meaning functionality to also show upcoming meetings and link to calendar/fireflies
@@ -58,8 +62,8 @@ Utilize historical data as well from past projects
 - Chad Tragesser Superintendent <ctragesser@alleatogroup.com>
 - Glenn Ducharme Project Manager <gducharme@alleatogroup.com>
 - Ty Inman Assistant Superintendent <tinman@alleatogroup.com>
-Milestone Date 
-Foundation Complete Fri 06/13/2025 
-RI complete Tue 10/07/2025 
-Dried In Fri 10/10/2025 
-Turn Over Building  Tue 12/23/2025 
+Milestone Date
+Foundation Complete Fri 06/13/2025
+RI complete Tue 10/07/2025
+Dried In Fri 10/10/2025
+Turn Over Building  Tue 12/23/2025
