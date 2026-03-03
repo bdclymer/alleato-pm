@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
 import { memo, useEffect, useMemo, useState } from "react";
-import DataGrid, { renderTextEditor } from "react-data-grid";
+import DataGrid, { type RenderEditCellProps } from "react-data-grid";
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
@@ -18,6 +18,33 @@ type SheetEditorProps = {
 
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
+
+type SheetEditorRow = Record<string, string | number>;
+
+function renderSheetTextEditor({
+  row,
+  column,
+  onRowChange,
+  onClose,
+}: RenderEditCellProps<SheetEditorRow, unknown>) {
+  const columnKey = String(column.key);
+  const value = row[columnKey];
+
+  return (
+    <input
+      autoFocus
+      className="h-full w-full border-0 px-2 text-sm outline-none"
+      value={typeof value === "string" ? value : value?.toString() ?? ""}
+      onBlur={() => onClose(true)}
+      onChange={(event) =>
+        onRowChange({
+          ...row,
+          [columnKey]: event.target.value,
+        })
+      }
+    />
+  );
+}
 
 const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
   const { resolvedTheme } = useTheme();
@@ -57,7 +84,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
       key: i.toString(),
       name: String.fromCharCode(65 + i),
-      renderEditCell: renderTextEditor,
+      renderEditCell: renderSheetTextEditor,
       width: 120,
       cellClass: cn("border-t dark:bg-zinc-950 dark:text-zinc-50", {
         "border-l": i !== 0,
