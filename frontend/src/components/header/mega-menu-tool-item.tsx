@@ -36,34 +36,24 @@ export function MegaMenuToolItem({
         "flex items-start gap-4 rounded-md px-4 py-2 text-sm transition-colors",
         isDisabled
           ? "opacity-40 cursor-not-allowed"
-          : "hover:bg-zinc-700/50",
-        isActive && "bg-zinc-700 text-white"
+          : "hover:bg-muted",
+        isActive && "bg-muted text-foreground"
       )}
     >
       {Icon && (
         <Icon
           className={cn(
             "h-5 w-5 shrink-0 mt-0.5",
-            isActive ? "text-white" : "text-zinc-400"
+            isActive ? "text-foreground" : "text-muted-foreground"
           )}
         />
       )}
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span
-          className={cn(
-            "font-medium truncate",
-            isActive ? "text-white" : "text-zinc-100"
-          )}
-        >
+        <span className="font-medium truncate text-foreground">
           {tool.name}
         </span>
         {tool.description && (
-          <span
-            className={cn(
-              "text-xs truncate",
-              isActive ? "text-zinc-300" : "text-zinc-400"
-            )}
-          >
+          <span className="text-xs truncate text-muted-foreground">
             {tool.description}
           </span>
         )}

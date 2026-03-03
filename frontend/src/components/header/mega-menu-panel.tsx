@@ -53,7 +53,7 @@ export function MegaMenuPanel({
   // If there are sub-groups, render them as columns
   if (group.subGroups && group.subGroups.length > 0) {
     return (
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl p-4">
+      <div className="rounded-lg border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
         <div className="flex gap-6">
           {group.subGroups.map((subGroup) => {
             // Get tools for this sub-group
@@ -73,11 +73,16 @@ export function MegaMenuPanel({
             if (visibleSubGroupTools.length === 0) return null;
 
             return (
-              <div key={subGroup.label} className="min-w-[200px]">
-                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2 px-4">
+              <div key={subGroup.label} className="w-56">
+                <h4 className="mb-2 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {subGroup.label}
                 </h4>
-                <div className="space-y-0.5">
+                <div
+                  className={cn(
+                    "space-y-0.5",
+                    subGroup.columns === 2 && "grid grid-cols-2 gap-x-2 gap-y-0.5 space-y-0"
+                  )}
+                >
                   {subGroupTools.map((tool) => {
                     const href = buildToolUrl(
                       tool.path,
@@ -107,8 +112,8 @@ export function MegaMenuPanel({
         </div>
 
         {allToolsRequireProject && (
-          <div className="mt-4 pt-4 border-t border-zinc-700">
-            <p className="text-xs text-amber-500 text-center">
+          <div className="mt-4 border-t border-border pt-4">
+            <p className="text-center text-xs text-status-warning">
               Select a project to access these tools
             </p>
           </div>
@@ -119,7 +124,7 @@ export function MegaMenuPanel({
 
   // No sub-groups - render as a simple list (Company group)
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl p-4 min-w-[240px]">
+    <div className="w-60 rounded-lg border border-border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
       <div className="space-y-0.5">
         {group.tools.map((tool) => {
           const href = buildToolUrl(tool.path, projectId, tool.requiresProject);

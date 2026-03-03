@@ -58,6 +58,7 @@ export interface HeaderNavigationTool extends NavigationTool {
 export interface HeaderSubGroup {
   label: string;
   toolNames: string[];
+  columns?: 1 | 2;
 }
 
 // A navigation group in the header (Planning, Finance, Company)
