@@ -483,6 +483,39 @@ function BudgetPageContent() {
     toast.info("Fullscreen mode coming soon");
   };
 
+  const handleOpenBudgetModificationsReport = React.useCallback(() => {
+    router.push(`/${projectId}/budget?tab=budget-modifications`);
+  }, [router, projectId]);
+
+  const handleOpenBuyoutSummaryReport = React.useCallback(() => {
+    router.push(`/${projectId}/reporting?report=buyout-summary`);
+  }, [router, projectId]);
+
+  const handleOpenLegacyBudgetDetailReport = React.useCallback(() => {
+    router.push(`/${projectId}/budget?tab=budget-details`);
+  }, [router, projectId]);
+
+  const handleOpenMonitoredResourcesReport = React.useCallback(() => {
+    router.push(`/${projectId}/budget?tab=forecasting&view=monitored-resources`);
+  }, [router, projectId]);
+
+  const handleOpenCustomReports = React.useCallback(() => {
+    router.push(`/${projectId}/reporting?type=custom`);
+  }, [router, projectId]);
+
+  const handleOpenErpIntegrations = React.useCallback(() => {
+    window.open(
+      "https://v2.support.procore.com/product-manuals/erp-integrations-company/tutorials/send-a-budget-to-erp-integrations-for-accounting-acceptance/",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }, []);
+
+  const handleConfigureBudgetViews = React.useCallback(() => {
+    router.push(`/${projectId}/budget`);
+    toast.info("Use the view selector beside filters to configure budget views.");
+  }, [router, projectId]);
+
   const handleLineItemSuccess = React.useCallback(() => {
     // Refresh budget data after creating line items
     const fetchData = async () => {
@@ -820,11 +853,18 @@ function BudgetPageContent() {
         onUnlockBudget={handleUnlockBudget}
         onImport={handleImport}
         onExport={handleExport}
+        onOpenBudgetModificationsReport={handleOpenBudgetModificationsReport}
+        onOpenBuyoutSummaryReport={handleOpenBuyoutSummaryReport}
+        onOpenLegacyBudgetDetailReport={handleOpenLegacyBudgetDetailReport}
+        onOpenMonitoredResourcesReport={handleOpenMonitoredResourcesReport}
+        onOpenCustomReports={handleOpenCustomReports}
+        onOpenErpIntegrations={handleOpenErpIntegrations}
+        onConfigureBudgetViews={handleConfigureBudgetViews}
       />
 
       <BudgetTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
-      <div className="flex flex-1 flex-col gap-4 pl-4 sm:pl-6 lg:pl-8 pt-2 pb-6 bg-muted/30">
+      <div className="flex flex-1 flex-col gap-4 bg-background pl-4 pt-2 pb-6 sm:pl-6 lg:pl-8">
         {activeTab === "settings" ? (
           <div className="flex-1">
             <VerticalMarkupSettings projectId={projectId} />

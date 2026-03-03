@@ -98,9 +98,8 @@ function getInitials(name: string): string {
 
 /**
  * KPI cell — used inside the full-width metric row.
- * Hairline gap between cells is handled by the parent grid (gap-px bg-border).
- * Value is large (text-3xl) because numbers here are the primary content.
- * ref: premium-patterns.md → KPI / Metric Components
+ * Sits inside a bento grid with shared border. Interior divided by hairlines.
+ * ref: CLAUDE_CODE_UI_GUIDE.md → Technique 1: Bento Grid with Shared Border
  */
 function KpiCell({
   label,
@@ -116,30 +115,30 @@ function KpiCell({
   highlight?: "warn" | "good";
 }) {
   const inner = (
-    <div className="bg-background p-5 lg:p-6 h-full flex flex-col justify-between">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
+    <div className="bg-card px-6 py-5 h-full flex flex-col justify-between">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
-      </p>
-      <div>
+      </span>
+      <div className="mt-1">
         <p
-          className={`text-3xl font-semibold tabular-nums leading-none ${
+          className={`text-2xl font-semibold tracking-tight tabular-nums leading-none ${
             highlight === "warn"
               ? "text-amber-600"
               : highlight === "good"
               ? "text-green-600"
-              : "text-neutral-900"
+              : "text-foreground"
           }`}
         >
           {value}
         </p>
-        {sub && <p className="text-xs text-neutral-400 mt-2 leading-relaxed">{sub}</p>}
+        {sub && <p className="text-xs text-muted-foreground/60 mt-2 leading-relaxed">{sub}</p>}
       </div>
     </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block group hover:bg-neutral-50 transition-colors">
+      <Link href={href} className="block group hover:bg-muted/30 transition-colors">
         {inner}
       </Link>
     );
@@ -148,9 +147,8 @@ function KpiCell({
 }
 
 /**
- * Section anchor label — very muted, tiny, tracking-widest.
- * Content is the hero; label is just wayfinding.
- * ref: premium-patterns.md → Typography Hierarchy
+ * Section anchor label — Tier 1 eyebrow typography.
+ * ref: CLAUDE_CODE_UI_GUIDE.md → Text Hierarchy → Tier 1
  */
 function SectionHeader({
   label,
@@ -164,17 +162,17 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
         {count !== undefined && count > 0 && (
-          <span className="text-[10px] text-neutral-300 tabular-nums">{count}</span>
+          <span className="text-[11px] text-muted-foreground/60 tabular-nums">{count}</span>
         )}
       </div>
       {href && (
         <Link
           href={href}
-          className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors"
+          className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         >
           View all
         </Link>
@@ -196,20 +194,20 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="flex items-center justify-between py-1.5 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+      className="flex items-center justify-between py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
     >
       <span>{label}</span>
       {count !== undefined && count > 0 && (
-        <span className="text-xs text-neutral-400 tabular-nums">{count}</span>
+        <span className="text-xs text-muted-foreground/60 tabular-nums">{count}</span>
       )}
     </Link>
   );
 }
 
-/** Sub-group label inside a sidebar box — barely visible anchor */
+/** Sub-group label inside the sidebar — Tier 1 eyebrow */
 function NavGroupLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] font-semibold uppercase tracking-[0.1em] text-neutral-300 mb-1">
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/70 mb-2">
       {children}
     </p>
   );
@@ -300,12 +298,12 @@ export function ProjectHomeClient({
       <div className="px-4 sm:px-6 lg:px-12 pt-4 pb-10">
 
         {/* Breadcrumb */}
-        <nav className="mb-4 flex items-center gap-1 text-sm text-neutral-500">
-          <Link href="/" className="hover:text-neutral-700 transition-colors font-medium">
+        <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition-colors font-medium">
             Projects
           </Link>
-          <ChevronRight className="h-4 w-4 text-neutral-400" />
-          <span className="text-neutral-700 truncate">
+          <ChevronRight className="h-4 w-4 text-muted-foreground/60" />
+          <span className="text-foreground truncate">
             {project.name || project["job number"] || "Project"}
           </span>
         </nav>
@@ -314,11 +312,11 @@ export function ProjectHomeClient({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             {project["job number"] && (
-              <p className="text-sm text-neutral-400 mb-0.5 tabular-nums">
+              <p className="text-sm text-muted-foreground mb-0.5 tabular-nums">
                 {project["job number"]}
               </p>
             )}
-            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">
+            <h1 className="text-2xl font-semibold text-foreground tracking-tight">
               {project.name || project["job number"] || "Untitled Project"}
             </h1>
           </div>
@@ -345,7 +343,7 @@ export function ProjectHomeClient({
             Technique: gap-px on bg-border container = hairline separators, no individual card borders.
             Numbers at text-3xl because they ARE the content on this row. */}
         {(hasBudgetData || openRfis.length > 0 || changeOrders.length > 0) && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-200 gap-px mb-12">
+          <div className="overflow-hidden rounded-lg border border-border bg-border grid grid-cols-2 lg:grid-cols-4 gap-px mb-12">
             <KpiCell
               label="Total Budget"
               value={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
@@ -415,16 +413,16 @@ export function ProjectHomeClient({
                     <Link
                       key={rfi.id}
                       href={`/${project.id}/rfis/${rfi.id}`}
-                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
                     >
-                      <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                      <p className="text-sm text-foreground truncate">
                         {rfi.subject || `RFI #${rfi.number}`}
                       </p>
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-md bg-yellow-50 text-yellow-600">
                           {rfi.status || "Open"}
                         </span>
-                        <span className="text-xs text-neutral-400">#{rfi.number}</span>
+                        <span className="text-xs text-muted-foreground/60">#{rfi.number}</span>
                       </div>
                     </Link>
                   ))}
@@ -445,17 +443,17 @@ export function ProjectHomeClient({
                     <Link
                       key={co.id}
                       href={`/${project.id}/change-orders/${co.id}`}
-                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                        <p className="text-sm text-foreground truncate">
                           {co.title || `Change Order #${co.co_number || co.id}`}
                         </p>
-                        <p className="text-xs text-neutral-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground/60 mt-0.5">
                           {co.co_number || `CO-${co.id}`}
                         </p>
                       </div>
-                      <span className="flex-shrink-0 text-sm font-medium text-neutral-700 tabular-nums">
+                      <span className="flex-shrink-0 text-sm font-medium text-foreground tabular-nums">
                         {formatCompactCurrency(co.amount || 0)}
                       </span>
                     </Link>
@@ -477,12 +475,12 @@ export function ProjectHomeClient({
                     <Link
                       key={task.id}
                       href={`/${project.id}/schedule`}
-                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded hover:bg-neutral-50 transition-colors"
+                      className="group flex items-center justify-between gap-4 py-2.5 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
                     >
-                      <p className="text-sm text-neutral-800 truncate group-hover:text-neutral-900">
+                      <p className="text-sm text-foreground truncate">
                         {task.task_description || `Task #${task.id}`}
                       </p>
-                      <span className="flex-shrink-0 text-xs text-neutral-400 tabular-nums">
+                      <span className="flex-shrink-0 text-xs text-muted-foreground/60 tabular-nums">
                         {task.due_date ? format(new Date(task.due_date), "MMM d") : "—"}
                       </span>
                     </Link>
@@ -503,17 +501,17 @@ export function ProjectHomeClient({
                   {teamMembers.slice(0, 6).map((member, i) => (
                     <div
                       key={`tm-${i}`}
-                      className="flex items-center gap-3 py-2 px-2 -mx-2 rounded"
+                      className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-md"
                     >
                       <Avatar className="h-6 w-6 flex-shrink-0">
-                        <AvatarFallback className="bg-neutral-100 text-neutral-500 text-[10px]">
+                        <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <p className="text-sm text-neutral-800 truncate">
+                      <p className="text-sm text-foreground truncate">
                         {member.name}
                         {member.role && (
-                          <span className="text-neutral-400 ml-2">· {member.role}</span>
+                          <span className="text-muted-foreground ml-2">· {member.role}</span>
                         )}
                       </p>
                     </div>
@@ -528,25 +526,23 @@ export function ProjectHomeClient({
               recentChangeOrders.length === 0 &&
               upcomingTasks.length === 0 && (
                 <div className="py-12 text-center">
-                  <TrendingUp className="h-8 w-8 text-neutral-200 mx-auto mb-3" />
-                  <p className="text-sm text-neutral-400">No activity yet.</p>
-                  <p className="text-xs text-neutral-300 mt-1">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">No activity yet.</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
                     Add meetings, RFIs, and tasks to see them here.
                   </p>
                 </div>
               )}
           </div>
 
-          {/* ── Right sidebar: 2 boxes ──
-              Dense navigation — links are the content here.
-              ref: premium-patterns.md → Density Spectrum → Sidebar: dense, 13px, tight */}
-          <div className="space-y-4">
+          {/* ── Right sidebar ──
+              No bordered boxes. Whitespace and eyebrow labels group the sections.
+              ref: CLAUDE_CODE_UI_GUIDE.md → Technique 5: Whitespace + Eyebrow Labels */}
+          <nav className="space-y-8 rounded-lg bg-muted/40 p-6">
 
-            {/* Box 1: Financial — nav links only (numbers are in the KPI row above) */}
-            <div className="rounded-lg border border-neutral-200 bg-background p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
-                Financial
-              </p>
+            {/* Financial */}
+            <div>
+              <NavGroupLabel>Financial</NavGroupLabel>
               <div className="space-y-0.5">
                 <NavLink href={`/${project.id}/budget`} label="Budget" />
                 <NavLink
@@ -574,11 +570,9 @@ export function ProjectHomeClient({
               </div>
             </div>
 
-            {/* Box 2: Project — tools + files + directory with sub-labels */}
-            <div className="rounded-lg border border-neutral-200 bg-background p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400 mb-3">
-                Project
-              </p>
+            {/* Project Tools */}
+            <div>
+              <NavGroupLabel>Project</NavGroupLabel>
               <div className="space-y-0.5">
                 <NavLink
                   href={`/${project.id}/schedule`}
@@ -603,23 +597,29 @@ export function ProjectHomeClient({
                   count={meetings.length || undefined}
                 />
               </div>
+            </div>
 
-              <div className="border-t border-neutral-100 mt-4 pt-4 space-y-0.5">
-                <NavGroupLabel>Files</NavGroupLabel>
+            {/* Files */}
+            <div>
+              <NavGroupLabel>Files</NavGroupLabel>
+              <div className="space-y-0.5">
                 <NavLink href={`/${project.id}/drawings`} label="Drawings" />
                 <NavLink href={`/${project.id}/documents`} label="Documents" />
                 <NavLink href={`/${project.id}/photos`} label="Photos" />
                 <NavLink href={`/${project.id}/specifications`} label="Specifications" />
               </div>
+            </div>
 
-              <div className="border-t border-neutral-100 mt-4 pt-4 space-y-0.5">
-                <NavGroupLabel>Directory</NavGroupLabel>
+            {/* Directory */}
+            <div>
+              <NavGroupLabel>Directory</NavGroupLabel>
+              <div className="space-y-0.5">
                 <NavLink href={`/${project.id}/directory/users`} label="Users" />
                 <NavLink href={`/${project.id}/directory/companies`} label="Companies" />
                 <NavLink href={`/${project.id}/directory/contacts`} label="Contacts" />
               </div>
             </div>
-          </div>
+          </nav>
         </div>
       </div>
 

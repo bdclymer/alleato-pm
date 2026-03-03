@@ -67,11 +67,18 @@ export function SiteHeader() {
     id: "tools",
     label: "Tools",
     tools: toolsMenuTools,
-    subGroups: headerNavGroups.map((group) => ({
-      label: group.label,
-      toolNames: group.tools.map((tool) => tool.name),
-      columns: group.id === "planning" ? 2 : 1,
-    })),
+    subGroups: [
+      // Planning sub-groups (from original nav config)
+      { label: "Scheduling", toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"] },
+      { label: "Correspondence", toolNames: ["RFIs", "Submittals", "Transmittals", "Emails"] },
+      { label: "Documents", toolNames: ["Photos", "Drawings", "Specifications", "Documents"] },
+      // Finance sub-groups
+      { label: "Budgeting", toolNames: ["Budget", "Direct Costs"] },
+      { label: "Contracts", toolNames: ["Prime Contracts", "Commitments", "Invoicing"] },
+      { label: "Changes", toolNames: ["Change Orders", "Change Events"] },
+      // Company
+      { label: "Company", toolNames: ["Projects", "Company Directory", "360 Reporting"] },
+    ],
   };
 
   return (

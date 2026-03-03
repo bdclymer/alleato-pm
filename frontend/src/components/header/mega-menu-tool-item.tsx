@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+
 import type { HeaderNavigationTool } from "@/lib/navigation-config";
+import { cn } from "@/lib/utils";
 
 interface MegaMenuToolItemProps {
   tool: HeaderNavigationTool;
@@ -10,6 +11,7 @@ interface MegaMenuToolItemProps {
   isActive: boolean;
   isDisabled: boolean;
   onClick: () => void;
+  showDescription?: boolean;
 }
 
 export function MegaMenuToolItem({
@@ -18,9 +20,8 @@ export function MegaMenuToolItem({
   isActive,
   isDisabled,
   onClick,
+  showDescription = true,
 }: MegaMenuToolItemProps) {
-  const Icon = tool.icon;
-
   return (
     <Link
       href={href}
@@ -29,35 +30,31 @@ export function MegaMenuToolItem({
           e.preventDefault();
           return;
         }
-        // Don't call onClick() here - let the navigation happen via Link
-        // The auto-close effect in useHeaderNav will close the panel on route change
       }}
       className={cn(
-        "flex items-start gap-4 rounded-md px-4 py-2 text-sm transition-colors",
+        "group block rounded-md px-1 py-1.5 transition-colors",
         isDisabled
-          ? "opacity-40 cursor-not-allowed"
-          : "hover:bg-muted",
-        isActive && "bg-muted text-foreground"
+          ? "cursor-not-allowed opacity-40"
+          : "hover:bg-accent/50"
       )}
     >
-      {Icon && (
-        <Icon
-          className={cn(
-            "h-5 w-5 shrink-0 mt-0.5",
-            isActive ? "text-foreground" : "text-muted-foreground"
-          )}
-        />
-      )}
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="font-medium truncate text-foreground">
-          {tool.name}
-        </span>
-        {tool.description && (
-          <span className="text-xs truncate text-muted-foreground">
-            {tool.description}
-          </span>
+      <span
+        className={cn(
+          "block text-[13.5px] font-medium leading-tight",
+          isDisabled
+            ? "text-muted-foreground"
+            : isActive
+              ? "text-primary font-semibold"
+              : "text-primary group-hover:text-primary/80"
         )}
-      </div>
+      >
+        {tool.name}
+      </span>
+      {showDescription && tool.description && (
+        <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+          {tool.description}
+        </span>
+      )}
     </Link>
   );
 }

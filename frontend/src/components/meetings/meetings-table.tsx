@@ -96,9 +96,10 @@ export function MeetingsTable({
       accessorKey: "participants",
       header: "Participants",
       cell: ({ row }) => {
-        if (!row.original.participants)
+        const arr = row.original.participants_array;
+        if (!arr || arr.length === 0)
           return <span className="text-neutral-400">—</span>;
-        const count = row.original.participants.split(",").length;
+        const count = arr.length;
         return (
           <span className="text-sm text-neutral-700">
             {count} {count === 1 ? "person" : "people"}

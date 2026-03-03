@@ -28,6 +28,7 @@ import {
   useUnifiedTableState,
   type FilterValue,
 } from "@/components/tables/unified";
+import { KpiRow } from "@/components/ds";
 import {
   useOwnerInvoicesList,
   useDeleteOwnerInvoice,
@@ -217,6 +218,31 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   const totalItems = sortedInvoices.length;
 
+  // ─── KPI Metrics ─────────────────────────────────────────────────────────
+
+  const kpiMetrics = React.useMemo(() => {
+    const fmt = (n: number) =>
+      new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+
+    const totalInvoiced = rawInvoices.reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
+    const pending = rawInvoices
+      .filter((inv) => inv.status === "draft" || inv.status === "submitted")
+      .reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
+    const approved = rawInvoices
+      .filter((inv) => inv.status === "approved")
+      .reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
+    const paid = rawInvoices
+      .filter((inv) => inv.status === "paid")
+      .reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
+
+    return [
+      { label: "Total Invoiced", value: fmt(totalInvoiced), context: `${rawInvoices.length} invoices` },
+      { label: "Pending", value: fmt(pending) },
+      { label: "Approved", value: fmt(approved) },
+      { label: "Paid", value: fmt(paid) },
+    ];
+  }, [rawInvoices]);
+
   // ─── Tabs ──────────────────────────────────────────────────────────────────
 
   const tabs = [
@@ -272,6 +298,13 @@ export default function ProjectInvoicingPage(): ReactElement {
           actions: createButton,
         }}
         tabs={tabs}
+        topContent={
+          rawInvoices.length > 0 ? (
+            <div className="px-6 pb-4">
+              <KpiRow metrics={kpiMetrics} />
+            </div>
+          ) : undefined
+        }
         toolbar={{
           totalItems,
           filteredItems: totalItems,

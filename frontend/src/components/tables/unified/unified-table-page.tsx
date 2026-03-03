@@ -319,7 +319,7 @@ export function UnifiedTablePage<T>({
         {showTable && shouldRenderTableView && (
           <div className={cn("mt-4", data.isFetching && "opacity-70")}>
             <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20 bg-background")}>
+              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
                 <TableRow>
                   {hasRowSelection && (
                     <TableHead className="w-[40px]">

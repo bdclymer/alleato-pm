@@ -1,4 +1,4 @@
-You are automating development tasks for Alleato-Procore.
+You are automating development tasks for Alleato-PM.
 
 **Project Context:**
 - Tech Stack: Next.js 15 + TypeScript + Supabase + Playwright

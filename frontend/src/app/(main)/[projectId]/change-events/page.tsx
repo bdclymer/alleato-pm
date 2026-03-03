@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -107,6 +108,20 @@ export default function ProjectChangeEventsPage(): ReactElement {
     enabled: hasValidProjectId,
   });
 
+  const deleteDialog = useConfirmationDialog({
+    title: "Delete Change Event",
+    description: "Move this change event to the recycle bin? You can restore it later manually.",
+    confirmLabel: "Delete",
+    variant: "destructive",
+  });
+
+  const bulkDeleteDialog = useConfirmationDialog({
+    title: "Delete Change Events",
+    description: "Move the selected change events to the recycle bin? You can restore them later manually.",
+    confirmLabel: "Delete All",
+    variant: "destructive",
+  });
+
   const handleView = React.useCallback(
     (item: ChangeEvent) => {
       router.push(`/${projectId}/change-events/${item.id}`);
@@ -122,84 +137,74 @@ export default function ProjectChangeEventsPage(): ReactElement {
   );
 
   const handleDelete = React.useCallback(
-    async (item: ChangeEvent) => {
-      const confirmed = window.confirm(
-        "Move this change event to the recycle bin? You can restore it later manually.",
-      );
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/projects/${projectId}/change-events/${item.id}`, {
-          method: "DELETE",
-        });
-
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(
-            message || "Unable to delete change event. Check permissions and try again.",
-          );
-        }
-
-        toast.success("Change event moved to recycle bin");
-        refetchChangeEvents();
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to delete change event");
-      }
-    },
-    [projectId, refetchChangeEvents],
-  );
-
-  const handleBulkDelete = React.useCallback(async () => {
-    const selectedIds = tableState.selectedIds;
-    if (selectedIds.length === 0) {
-      toast.info("Select at least one change event to delete.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Move ${selectedIds.length} change event${selectedIds.length === 1 ? "" : "s"} to the recycle bin? You can restore them later manually.`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      const results = await Promise.allSettled(
-        selectedIds.map(async (id) => {
-          const response = await fetch(`/api/projects/${projectId}/change-events/${id}`, {
+    (item: ChangeEvent) => {
+      deleteDialog.confirm(async () => {
+        try {
+          const response = await fetch(`/api/projects/${projectId}/change-events/${item.id}`, {
             method: "DELETE",
           });
 
           if (!response.ok) {
             const message = await response.text();
             throw new Error(
-              message || `Unable to delete change event ${id}. Check permissions and try again.`,
+              message || "Unable to delete change event. Check permissions and try again.",
             );
           }
-        }),
-      );
 
-      const failedCount = results.filter((result) => result.status === "rejected").length;
-      const successCount = results.length - failedCount;
+          toast.success("Change event moved to recycle bin");
+          refetchChangeEvents();
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Failed to delete change event");
+        }
+      });
+    },
+    [projectId, refetchChangeEvents, deleteDialog],
+  );
 
-      if (successCount > 0) {
-        toast.success(
-          `${successCount} change event${successCount === 1 ? "" : "s"} moved to recycle bin`,
-        );
-      }
-
-      if (failedCount > 0) {
-        toast.error(`Failed to delete ${failedCount} change event${failedCount === 1 ? "" : "s"}.`);
-      }
-
-      tableState.setSelectedIds([]);
-      refetchChangeEvents();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to bulk delete change events");
+  const handleBulkDelete = React.useCallback(() => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) {
+      toast.info("Select at least one change event to delete.");
+      return;
     }
-  }, [projectId, refetchChangeEvents, tableState]);
+
+    bulkDeleteDialog.confirm(async () => {
+      try {
+        const results = await Promise.allSettled(
+          selectedIds.map(async (id) => {
+            const response = await fetch(`/api/projects/${projectId}/change-events/${id}`, {
+              method: "DELETE",
+            });
+
+            if (!response.ok) {
+              const message = await response.text();
+              throw new Error(
+                message || `Unable to delete change event ${id}. Check permissions and try again.`,
+              );
+            }
+          }),
+        );
+
+        const failedCount = results.filter((result) => result.status === "rejected").length;
+        const successCount = results.length - failedCount;
+
+        if (successCount > 0) {
+          toast.success(
+            `${successCount} change event${successCount === 1 ? "" : "s"} moved to recycle bin`,
+          );
+        }
+
+        if (failedCount > 0) {
+          toast.error(`Failed to delete ${failedCount} change event${failedCount === 1 ? "" : "s"}.`);
+        }
+
+        tableState.setSelectedIds([]);
+        refetchChangeEvents();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to bulk delete change events");
+      }
+    });
+  }, [projectId, refetchChangeEvents, tableState, bulkDeleteDialog]);
 
   const handleFilterChange = React.useCallback(
     (nextFilters: ChangeEventFilterState) => {
@@ -412,6 +417,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   }
 
   return (
+    <>
     <UnifiedTablePage
       header={{
         title: "Change Events",
@@ -510,5 +516,8 @@ export default function ProjectChangeEventsPage(): ReactElement {
         enableBulkDelete: true,
       }}
     />
+    {deleteDialog.dialog}
+    {bulkDeleteDialog.dialog}
+    </>
   );
 }

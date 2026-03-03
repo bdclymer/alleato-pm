@@ -7,7 +7,7 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { Badge } from "@/components/ui/badge";
+import { Badge, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -114,24 +114,6 @@ function statusLabel(status: string | null | undefined): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function statusVariant(
-  status: string | null | undefined,
-): "default" | "secondary" | "outline" | "destructive" | "success" {
-  switch ((status ?? "").toLowerCase()) {
-    case "approved":
-      return "success";
-    case "pending":
-    case "submitted":
-      return "secondary";
-    case "rejected":
-      return "destructive";
-    case "executed":
-      return "default";
-    default:
-      return "outline";
-  }
-}
-
 function getReviewer(order: UnifiedChangeOrder): string {
   if (order.contractType !== "general") return "-";
   return order.designated_reviewer_id || "-";
@@ -163,11 +145,7 @@ export function buildChangeOrderTableColumns(): TableColumn<UnifiedChangeOrder>[
     },
     {
       ...changeOrderColumns[4],
-      render: (item) => (
-        <Badge variant={statusVariant(item.normalizedStatus)}>
-          {statusLabel(item.normalizedStatus)}
-        </Badge>
-      ),
+      render: (item) => <StatusBadge status={statusLabel(item.normalizedStatus)} />,
       sortValue: (item) => item.normalizedStatus ?? "",
     },
     {
@@ -240,9 +218,7 @@ export function renderChangeOrderCard(
           <p className="text-xs uppercase text-muted-foreground">{item.normalizedNumber || "-"}</p>
           <h3 className="font-medium">{item.normalizedTitle || "Untitled Change Order"}</h3>
         </div>
-        <Badge variant={statusVariant(item.normalizedStatus)}>
-          {statusLabel(item.normalizedStatus)}
-        </Badge>
+        <StatusBadge status={statusLabel(item.normalizedStatus)} />
       </div>
       <p className="text-sm text-muted-foreground">{contractTypeLabel(item.contractType)}</p>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -265,9 +241,7 @@ export function renderChangeOrderList(
         <p className="text-sm font-medium">{item.normalizedNumber || "-"}</p>
         <p className="text-xs text-muted-foreground">{item.normalizedTitle || "Untitled"}</p>
       </div>
-      <Badge variant={statusVariant(item.normalizedStatus)}>
-        {statusLabel(item.normalizedStatus)}
-      </Badge>
+      <StatusBadge status={statusLabel(item.normalizedStatus)} />
     </div>
   );
 }

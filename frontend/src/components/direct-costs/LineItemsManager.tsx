@@ -10,7 +10,7 @@
 'use client'
 
 import { useCallback, useMemo } from 'react'
-import { UseFormReturn } from 'react-hook-form'
+import { UseFormReturn, useFormState } from 'react-hook-form'
 import {
   DndContext,
   closestCenter,
@@ -109,6 +109,7 @@ interface LineItemsManagerProps {
 interface SortableLineItemRowProps {
   item: DirectCostLineItem & { id?: string }
   index: number
+  itemCount: number
   budgetCodes: BudgetCode[]
   onRemove: () => void
   onDuplicate: () => void
@@ -137,6 +138,7 @@ const KEYBOARD_SENSOR_OPTIONS = {
 function SortableLineItemRow({
   item,
   index,
+  itemCount,
   budgetCodes,
   onRemove,
   onDuplicate,
@@ -364,9 +366,7 @@ function SortableLineItemRow({
                   size="sm"
                   onClick={onRemove}
                   className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                  disabled={
-                    (form.getValues('line_items') || []).length === 1
-                  }
+                  disabled={itemCount === 1}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -403,6 +403,12 @@ export function LineItemsManager({
   onCreateBudgetCode,
   form,
 }: LineItemsManagerProps) {
+
+  // Subscribe to formState errors ONCE (isolated) — avoids N subscriptions inside items.map()
+  // which would cascade re-renders and cause infinite render loops in edit mode.
+  // Scoped to 'line_items' so this component only re-renders when line_items errors change,
+  // not on every top-level field state change (vendor, date, description, etc.)
+  const { errors: formErrors } = useFormState({ control: form.control, name: 'line_items' })
 
   // Stable sortable IDs — prevents DndContext from seeing new array ref every render
   const sortableIds = useMemo(
@@ -529,19 +535,19 @@ export function LineItemsManager({
                   </TableRow>
                 ) : (
                   items.map((item, index) => {
-                    const errors = (form.formState.errors.line_items as any[] | undefined)?.[index]
+                    const errors = (formErrors.line_items as any[] | undefined)?.[index]
                     const isValid =
                       !errors &&
-                      !!form.getValues(`line_items.${index}.budget_code_id`) &&
-                      !!form.getValues(`line_items.${index}.quantity`) &&
-                      form.getValues(`line_items.${index}.unit_cost`) !==
-                        undefined
+                      !!item.budget_code_id &&
+                      !!item.quantity &&
+                      item.unit_cost !== undefined
 
                     return (
                       <SortableLineItemRow
                         key={`line-item-${index}`}
                         item={item}
                         index={index}
+                        itemCount={items.length}
                         budgetCodes={budgetCodes}
                         onRemove={() => onRemove(index)}
                         onDuplicate={() => handleDuplicate(index)}

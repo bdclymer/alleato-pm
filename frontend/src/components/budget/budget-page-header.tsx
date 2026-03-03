@@ -21,6 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -46,6 +49,13 @@ interface BudgetPageHeaderProps {
   onUnlockBudget?: () => void;
   onImport?: () => void;
   onExport?: (format: string) => void;
+  onOpenBudgetModificationsReport?: () => void;
+  onOpenBuyoutSummaryReport?: () => void;
+  onOpenLegacyBudgetDetailReport?: () => void;
+  onOpenMonitoredResourcesReport?: () => void;
+  onOpenCustomReports?: () => void;
+  onOpenErpIntegrations?: () => void;
+  onConfigureBudgetViews?: () => void;
 }
 
 export function BudgetPageHeader({
@@ -60,6 +70,13 @@ export function BudgetPageHeader({
   onUnlockBudget,
   onImport,
   onExport,
+  onOpenBudgetModificationsReport,
+  onOpenBuyoutSummaryReport,
+  onOpenLegacyBudgetDetailReport,
+  onOpenMonitoredResourcesReport,
+  onOpenCustomReports,
+  onOpenErpIntegrations,
+  onConfigureBudgetViews,
 }: BudgetPageHeaderProps) {
   const [showLockDialog, setShowLockDialog] = React.useState(false);
 
@@ -165,9 +182,32 @@ export function BudgetPageHeader({
               Export to CSV
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Configure Columns</DropdownMenuItem>
-            <DropdownMenuItem>Budget Settings</DropdownMenuItem>
-            <DropdownMenuItem>View Audit Log</DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={onOpenBudgetModificationsReport}>
+                  Budget Modifications
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
+                  Buyout Summary Report
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenLegacyBudgetDetailReport}>
+                  Legacy Budget Detail
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenMonitoredResourcesReport}>
+                  Monitored Resources Report
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem onClick={onOpenCustomReports}>
+              Custom Reports
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onOpenErpIntegrations}>
+              ERP Integrations
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onConfigureBudgetViews}>
+              Configure Budget Views
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -265,10 +305,42 @@ export function BudgetPageHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Configure Columns</DropdownMenuItem>
-            <DropdownMenuItem>Budget Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Audit Log</DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={onOpenBudgetModificationsReport}>
+                  Budget Modifications
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
+                  Buyout Summary Report
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenLegacyBudgetDetailReport}>
+                  Legacy Budget Detail
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onOpenMonitoredResourcesReport}>
+                  Monitored Resources Report
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Custom Reports</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={onOpenCustomReports}>
+                  Open Custom Reports
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>ERP Integrations</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onClick={onOpenErpIntegrations}>
+                  Open ERP Integrations
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem onClick={onConfigureBudgetViews}>
+              Configure Budget Views
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

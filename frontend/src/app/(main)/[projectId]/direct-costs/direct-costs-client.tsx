@@ -320,11 +320,16 @@ export function DirectCostsClient({
     }
   };
 
-  const handleCloseEditSheet = (): void => {
+  const handleCloseEditSheet = React.useCallback((): void => {
     setIsEditSheetOpen(false);
     setEditingCostId(null);
     setEditingInitialData(undefined);
-  };
+  }, []);
+
+  const handleEditSuccess = React.useCallback((): void => {
+    handleCloseEditSheet();
+    router.refresh();
+  }, [handleCloseEditSheet, router]);
 
   const handleInlineStatusChange = async (costId: string, nextStatus: string): Promise<void> => {
     setUpdatingStatusId(costId);
@@ -816,10 +821,7 @@ export function DirectCostsClient({
                 initialData={editingInitialData}
                 projectId={Number(projectId)}
                 onCancel={handleCloseEditSheet}
-                onSuccess={() => {
-                  handleCloseEditSheet();
-                  router.refresh();
-                }}
+                onSuccess={handleEditSuccess}
               />
             )}
           </div>

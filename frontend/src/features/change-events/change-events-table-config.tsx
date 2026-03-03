@@ -7,7 +7,7 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,8 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ChangeEvent } from "@/hooks/use-change-events";
-
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive" | "success";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "open", label: "Open" },
@@ -62,23 +60,6 @@ export const changeEventFilters: FilterConfig[] = [
 export const changeEventDefaultVisibleColumns = changeEventColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
-
-function statusVariant(status: string | null | undefined): BadgeVariant {
-  switch ((status ?? "").toLowerCase()) {
-    case "approved":
-      return "success";
-    case "pending":
-    case "pending_approval":
-      return "secondary";
-    case "rejected":
-      return "destructive";
-    case "closed":
-      return "outline";
-    case "open":
-    default:
-      return "default";
-  }
-}
 
 function statusLabel(status: string | null | undefined): string {
   switch ((status ?? "").toLowerCase()) {
@@ -139,7 +120,7 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
     },
     {
       ...changeEventColumns[2],
-      render: (item) => <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>,
+      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
@@ -210,7 +191,7 @@ export function renderChangeEventCard(
           <p className="text-xs uppercase text-muted-foreground">{item.number || `CE-${item.id}`}</p>
           <h3 className="font-medium">{item.title || "Untitled Change Event"}</h3>
         </div>
-        <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
+        <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)}</p>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -233,7 +214,7 @@ export function renderChangeEventList(
         <p className="text-sm font-medium">{item.number || `CE-${item.id}`}</p>
         <p className="text-xs text-muted-foreground">{item.title || "Untitled Change Event"}</p>
       </div>
-      <Badge variant={statusVariant(item.status)}>{statusLabel(item.status)}</Badge>
+      <StatusBadge status={statusLabel(item.status)} />
     </div>
   );
 }

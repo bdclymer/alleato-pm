@@ -172,7 +172,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-right leading-tight cursor-help text-foreground hover:text-foreground transition-colors">
+        <div className="text-right leading-tight cursor-help text-muted-foreground hover:text-foreground transition-colors">
           {lines.map((line, index) => (
             <React.Fragment key={`${line}-${index}`}>
               {line}
@@ -274,12 +274,11 @@ function createSafeClickHandler(
 
 function EditableCurrencyCell({
   value,
-  hasChildren,
   onEdit,
   editable = false,
 }: {
   value: number;
-  hasChildren: boolean;
+  hasChildren?: boolean;
   onEdit?: () => void;
   editable?: boolean;
 }) {
@@ -293,9 +292,7 @@ function EditableCurrencyCell({
         aria-label={`Edit ${formatCurrency(value)}`}
         className={cn(
           "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full",
-          hasChildren
-            ? "hover:bg-muted/80 font-semibold underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground"
-            : "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
+          "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
         )}
         onClick={onEdit}
       >
@@ -520,13 +517,12 @@ export function BudgetTable({
         return (
           <div
             className={cn(
-              "font-medium",
-              isGroupRow ? "text-foreground font-semibold" : "text-foreground",
+              isGroupRow ? "text-foreground font-medium" : "text-foreground font-normal",
               getDepthPadding(row.depth),
             )}
           >
             {isGroupRow && (
-              <span className="text-foreground font-mono mr-2">
+              <span className="text-muted-foreground font-mono text-xs mr-2">
                 {row.original.costCode}
               </span>
             )}
@@ -541,7 +537,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="originalBudgetAmount"
-          lines={["Original Budget"]}
+          lines={["original"]}
         />
       ),
       cell: ({ row }) => {
@@ -567,7 +563,7 @@ export function BudgetTable({
     {
       accessorKey: "budgetModifications",
       header: () => (
-        <ColumnHeader columnKey="budgetModifications" lines={["Budget Mods"]} />
+        <ColumnHeader columnKey="budgetModifications" lines={["mods"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -617,7 +613,7 @@ export function BudgetTable({
     {
       accessorKey: "revisedBudget",
       header: () => (
-        <ColumnHeader columnKey="revisedBudget" lines={["Revised Budget"]} />
+        <ColumnHeader columnKey="revisedBudget" lines={["revised"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -694,7 +690,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="pendingChanges"
-          lines={["Pending", "Changes"]}
+          lines={["pending"]}
         />
       ),
       cell: ({ row }) => {
@@ -722,7 +718,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="projectedBudget"
-          lines={["Projected Budget"]}
+          lines={["Proj.", "Budget"]}
         />
       ),
       cell: ({ row }) => {
@@ -745,7 +741,7 @@ export function BudgetTable({
     {
       accessorKey: "committedCosts",
       header: () => (
-        <ColumnHeader columnKey="committedCosts" lines={["Committed Costs"]} />
+        <ColumnHeader columnKey="committedCosts" lines={["committed"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -772,7 +768,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="pendingCostChanges"
-          lines={["Pending Cost", "Changes"]}
+          lines={["pending", "changes"]}
         />
       ),
       cell: ({ row }) => {
@@ -798,7 +794,7 @@ export function BudgetTable({
     {
       accessorKey: "projectedCosts",
       header: () => (
-        <ColumnHeader columnKey="projectedCosts" lines={["Projected Costs"]} />
+        <ColumnHeader columnKey="projectedCosts" lines={["Proj. Costs"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -822,7 +818,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="forecastToComplete"
-          lines={["Forecast to", "Complete"]}
+          lines={["forecast"]}
         />
       ),
       cell: ({ row }) => {
@@ -850,7 +846,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="estimatedCostAtCompletion"
-          lines={["Estimated Cost at", "Completion"]}
+          lines={["Est. Total Cost"]}
         />
       ),
       cell: ({ row }) => {
@@ -875,7 +871,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="projectedOverUnder"
-          lines={["Projected", "Over / Under"]}
+          lines={["Proj. +/-"]}
         />
       ),
       cell: ({ row }) => {
@@ -918,7 +914,7 @@ export function BudgetTable({
   const isEmpty = !table.getRowModel().rows?.length && !showInlineCreate;
 
   return (
-    <div className="flex flex-col h-full rounded-md overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
       {/* Empty state - centered on page, outside of scrollable table */}
       {isEmpty && (
         <div className="flex-1 flex items-center justify-center py-16">
@@ -965,8 +961,8 @@ export function BudgetTable({
         <>
           {/* Hide scrollbar while maintaining scroll functionality */}
           <div className="flex-1 overflow-auto scrollbar-hide">
-            <Table className="min-w-[1200px]">
-              <TableHeader className="sticky top-0 bg-muted/50 backdrop-blur-sm z-10">
+            <Table className="min-w-[1200px] bg-background">
+              <TableHeader className="sticky top-0 bg-background z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
@@ -976,7 +972,7 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "text-xs font-semibold text-foreground py-2 bg-muted/50",
+                          "bg-background py-2 text-xs font-medium text-muted-foreground",
                           header.column.id === "select"
                             ? "pl-4 pr-0.5"
                             : header.column.id === "expander"
@@ -1007,8 +1003,7 @@ export function BudgetTable({
                       key={row.id}
                       className={cn(
                         "border-b border-border transition-colors",
-                        isGroupRow && "bg-muted/50 hover:bg-muted/60 font-semibold",
-                        !isGroupRow && "hover:bg-muted/30",
+                        "hover:bg-muted/20",
                         row.getIsSelected() && "bg-brand/5",
                       )}
                     >
@@ -1141,10 +1136,10 @@ export function BudgetTable({
 
           {/* Grand Totals Row - Fixed at bottom - Only show if there are rows */}
           {table.getRowModel().rows?.length > 0 && (
-        <div className="border-t-2 border-border bg-muted sticky bottom-0">
+        <div className="sticky bottom-0 border-t-2 border-border bg-background">
           <table className="w-full caption-bottom text-sm table-fixed">
             <tbody>
-              <tr className="font-semibold bg-muted border-b transition-colors">
+              <tr className="border-b bg-background font-semibold transition-colors">
                 <td className={cn("py-4 pl-4 pr-0.5", getWidthClass("select"))} />
                 <td className={cn("py-4 px-0.5", getWidthClass("expander"))} />
                 <td

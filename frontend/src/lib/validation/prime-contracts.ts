@@ -44,7 +44,7 @@ export const primeContractSchema = z
     approved_change_orders: z.number().nullable().optional(),
     pending_change_orders: z.number().nullable().optional(),
     draft_change_orders: z.number().nullable().optional(),
-    invoiced: z.number().nullable().optional(),
+    invoiced_amount: z.number().nullable().optional(),
     payments_received: z.number().nullable().optional(),
     remaining_balance: z.number().nullable().optional(),
   })

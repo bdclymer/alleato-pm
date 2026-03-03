@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, useFormState } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   DirectCostCreateSchema,
@@ -127,7 +127,7 @@ export function DirectCostForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [autoSaving, setAutoSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [isDirty, setIsDirty] = useState(false)
+  // isDirty is now derived from useFormState below (avoids formState proxy access)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
 
   // Stable budget codes list for LineItemsManager (prevents new array ref on every render)
@@ -245,6 +245,10 @@ export function DirectCostForm({
     name: 'line_items',
   })
 
+  // Isolated formState subscription — avoids render-level proxy access
+  // which triggers resolver on every render and causes infinite loops
+  const { errors: formErrors, isDirty } = useFormState({ control: form.control })
+
   // Grand total state — updated via subscription callback, NOT via
   // render-level form.watch() which causes infinite re-render loops
   // when combined with useFieldArray + mode:'onChange'.
@@ -267,7 +271,7 @@ export function DirectCostForm({
 
     // Subscribe to ALL form changes via callback (safe — no render-level subscription)
     const subscription = form.watch((_, { name }) => {
-      setIsDirty(form.formState.isDirty)
+      // isDirty is tracked by useFormState above — no direct proxy access here
       // Only recompute total when line items change
       if (!name || name.startsWith('line_items')) {
         setGrandTotal(computeTotal(form.getValues('line_items')))
@@ -345,8 +349,7 @@ export function DirectCostForm({
 
       if (response.ok) {
         setLastSaved(new Date())
-        setIsDirty(false)
-        form.reset(values)
+        form.reset(values) // resets RHF isDirty to false automatically
       }
     } catch (error) {
       console.error('Auto-save failed:', error)
@@ -398,8 +401,9 @@ export function DirectCostForm({
     }
   }
 
-  // Line item handlers
-  const handleAddLineItem = () => {
+  // Line item handlers — wrapped in useCallback so LineItemsManager doesn't
+  // see new function refs on every DirectCostForm re-render (e.g. from formState subscription)
+  const handleAddLineItem = useCallback(() => {
     append({
       budget_code_id: '',
       description: '',
@@ -407,15 +411,15 @@ export function DirectCostForm({
       uom: 'LOT',
       unit_cost: 0,
     } as never)
-  }
+  }, [append])
 
-  const handleRemoveLineItem = (index: number) => {
+  const handleRemoveLineItem = useCallback((index: number) => {
     remove(index)
-  }
+  }, [remove])
 
-  const handleUpdateLineItem = (index: number, item: DirectCostLineItem) => {
+  const handleUpdateLineItem = useCallback((index: number, item: DirectCostLineItem) => {
     update(index, item as never)
-  }
+  }, [update])
 
   return (
     <div className="space-y-8">
@@ -753,17 +757,15 @@ export function DirectCostForm({
                 onRemove={handleRemoveLineItem}
                 onUpdate={handleUpdateLineItem}
                 onCreateBudgetCode={() => {
-                  // TODO: Open budget code creation modal
                   toast.info('Create budget code feature coming soon')
                 }}
                 form={form as never}
               />
-
-              {form.formState.errors.line_items?.root && (
+              {(formErrors.line_items as any)?.root && (
                 <Alert variant="destructive" className="mt-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    {String(form.formState.errors.line_items.root.message)}
+                    {String((formErrors.line_items as any).root.message)}
                   </AlertDescription>
                 </Alert>
               )}
@@ -844,7 +846,7 @@ export function DirectCostForm({
                 {/* Submit */}
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !form.formState.isValid}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>

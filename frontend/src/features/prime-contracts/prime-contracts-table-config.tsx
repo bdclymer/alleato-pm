@@ -2,7 +2,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,8 +29,6 @@ const STATUS_LABELS: Record<
   terminated: "Terminated",
 };
 
-type Variant = "default" | "secondary" | "outline" | "destructive";
-
 export const primeContractColumns: ColumnConfig[] = [
   { id: "contract_number", label: "Number", alwaysVisible: true },
   { id: "client_name", label: "Owner/Client", defaultVisible: true },
@@ -42,7 +40,7 @@ export const primeContractColumns: ColumnConfig[] = [
   { id: "revised_contract_value", label: "Revised Amount", defaultVisible: true },
   { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
   { id: "draft_change_orders", label: "Draft COs", defaultVisible: true },
-  { id: "invoiced", label: "Invoiced", defaultVisible: true },
+  { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
   { id: "payments_received", label: "Payments Received", defaultVisible: false },
   { id: "remaining_balance", label: "Remaining Balance", defaultVisible: false },
   { id: "start_date", label: "Start Date", defaultVisible: false },
@@ -64,22 +62,6 @@ export const primeContractFilters: FilterConfig[] = [
 export const primeContractDefaultVisibleColumns = primeContractColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
-
-function getStatusVariant(status: PrimeContract["status"]): Variant {
-  switch (status) {
-    case "approved":
-      return "default";
-    case "complete":
-      return "outline";
-    case "terminated":
-      return "destructive";
-    case "out_for_bid":
-    case "out_for_signature":
-      return "secondary";
-    default:
-      return "secondary";
-  }
-}
 
 export function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined) return "-";
@@ -126,11 +108,12 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[3],
-      render: (item) => (
-        <Badge variant={getStatusVariant(item.status ?? null)}>
-          {item.status ? STATUS_LABELS[item.status] : "-"}
-        </Badge>
-      ),
+      render: (item) =>
+        item.status ? (
+          <StatusBadge status={STATUS_LABELS[item.status]} />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        ),
       csvValue: (item) => (item.status ? STATUS_LABELS[item.status] : ""),
       sortValue: (item) => item.status ?? "",
     },
@@ -172,9 +155,9 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[10],
-      render: (item) => <span>{formatCurrency(item.invoiced)}</span>,
-      csvValue: (item) => String(item.invoiced ?? ""),
-      sortValue: (item) => item.invoiced ?? 0,
+      render: (item) => <span>{formatCurrency(item.invoiced_amount)}</span>,
+      csvValue: (item) => String(item.invoiced_amount ?? ""),
+      sortValue: (item) => item.invoiced_amount ?? 0,
     },
     {
       ...primeContractColumns[11],
@@ -246,9 +229,11 @@ export function renderPrimeContractCard(
           <p className="text-xs uppercase text-muted-foreground">{item.contract_number ?? "-"}</p>
           <h3 className="font-medium">{item.title ?? "Untitled Contract"}</h3>
         </div>
-        <Badge variant={getStatusVariant(item.status ?? null)}>
-          {item.status ? STATUS_LABELS[item.status] : "-"}
-        </Badge>
+        {item.status ? (
+          <StatusBadge status={STATUS_LABELS[item.status]} />
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">{item.client?.name ?? "Owner"}</p>
       <p className="text-sm text-muted-foreground mt-2">
@@ -271,9 +256,11 @@ export function renderPrimeContractList(
         <p className="text-sm font-medium">{item.contract_number ?? "-"}</p>
         <p className="text-xs text-muted-foreground">{item.title ?? "Untitled Contract"}</p>
       </div>
-      <Badge variant={getStatusVariant(item.status ?? null)}>
-        {item.status ? STATUS_LABELS[item.status] : "-"}
-      </Badge>
+      {item.status ? (
+        <StatusBadge status={STATUS_LABELS[item.status]} />
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      )}
     </div>
   );
 }

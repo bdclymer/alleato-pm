@@ -7,7 +7,7 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,7 +27,7 @@ export interface OwnerInvoice {
   period_start: string | null;
   period_end: string | null;
   status: "draft" | "submitted" | "approved" | "paid" | "void";
-  billing_period_id: number | null;
+  billing_period_id: string | null;
   created_at: string;
   updated_at: string;
   total_amount?: number;
@@ -56,33 +56,9 @@ function formatDate(dateStr: string | null | undefined): string {
   });
 }
 
-type BadgeVariant = "default" | "secondary" | "outline" | "destructive" | "success";
-
-function statusVariant(status: string | null | undefined): BadgeVariant {
-  switch ((status ?? "").toLowerCase()) {
-    case "approved":
-      return "success";
-    case "paid":
-      return "success";
-    case "submitted":
-      return "secondary";
-    case "void":
-      return "destructive";
-    case "draft":
-    default:
-      return "outline";
-  }
-}
-
 function statusLabel(status: string | null | undefined): string {
-  switch ((status ?? "").toLowerCase()) {
-    case "draft": return "Draft";
-    case "submitted": return "Submitted";
-    case "approved": return "Approved";
-    case "paid": return "Paid";
-    case "void": return "Void";
-    default: return status || "—";
-  }
+  if (!status) return "—";
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 }
 
 // =============================================================================
@@ -174,9 +150,7 @@ export function buildInvoiceTableColumns(
       label: "Status",
       defaultVisible: true,
       render: (invoice) => (
-        <Badge variant={statusVariant(invoice.status)}>
-          {statusLabel(invoice.status)}
-        </Badge>
+        <StatusBadge status={statusLabel(invoice.status)} />
       ),
     },
     {
@@ -262,9 +236,7 @@ export function renderInvoiceCard(invoice: OwnerInvoice): ReactElement {
             Contract #{invoice.contract_id}
           </p>
         </div>
-        <Badge variant={statusVariant(invoice.status)}>
-          {statusLabel(invoice.status)}
-        </Badge>
+        <StatusBadge status={statusLabel(invoice.status)} />
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <span className="text-xs text-muted-foreground">Total</span>
@@ -294,9 +266,7 @@ export function renderInvoiceList(invoice: OwnerInvoice): ReactElement {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <Badge variant={statusVariant(invoice.status)}>
-          {statusLabel(invoice.status)}
-        </Badge>
+        <StatusBadge status={statusLabel(invoice.status)} />
         <span className="text-sm font-medium tabular-nums w-24 text-right">
           {formatCurrency(invoice.total_amount)}
         </span>

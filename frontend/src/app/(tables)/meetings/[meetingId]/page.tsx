@@ -119,7 +119,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
 
   const participantsList = [
     ...new Set<string>(
-      meeting.participants?.split(',').map((p: string) => p.trim()) || []
+      meeting.participants_array?.map((p: string) => p.trim()).filter(Boolean) || []
     ),
   ]
 

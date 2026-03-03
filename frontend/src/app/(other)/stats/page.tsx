@@ -127,9 +127,7 @@ function MeetingCard({
   compact?: boolean;
 }) {
   const participantCount =
-    meeting.participants_array?.length ||
-    meeting.participants?.split(",").length ||
-    0;
+    meeting.participants_array?.length || 0;
 
   return (
     <Link href={`/meetings/${meeting.id}`}>

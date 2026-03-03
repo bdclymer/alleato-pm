@@ -256,13 +256,16 @@ See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
 1. Read `frontend/src/design-system/tokens.md` for allowed colors, spacing, shadows
 2. Read `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` for copy-paste patterns
-3. Import components from `@/components/ds` (the SINGLE import path)
+3. Import components from `@/components/ds` or `@/components/ui` (both are valid)
 
 **COMPONENT IMPORT RULES:**
 
+Importing from `@/components/ui/` (base shadcn primitives) or `@/components/ds/` (design system components) are **both acceptable**. The key rule is: **use existing components, never create one-off custom components that duplicate or deviate from the system.**
+
 | Need | Import From | Example |
 |------|------------|---------|
-| ANY UI component | `@/components/ds` | `import { Button, StatusBadge, KpiBlock } from "@/components/ds"` |
+| Base shadcn primitive | `@/components/ui/{component}` | `import { Button } from "@/components/ui/button"` |
+| Design system component | `@/components/ds` | `import { StatusBadge, KpiBlock } from "@/components/ds"` |
 | Status display | `StatusBadge` from `@/components/ds` | `<StatusBadge status="Draft" />` — color is automatic |
 | Status dot (tables) | `StatusDot` from `@/components/ds` | `<StatusDot status="Approved" />` — color is automatic |
 | Plain status text | `StatusText` from `@/components/ds` | `<StatusText status="Not synced" />` — muted, no pill |
@@ -275,19 +278,19 @@ See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
 **NEVER:**
 
-- Import directly from `@/components/ui/` in page files (use `@/components/ds` barrel instead)
+- Create one-off custom components that duplicate existing `ui/` or `ds/` components (e.g., `budget-button.tsx`, `CustomInput`)
 - Use hardcoded colors (`bg-gray-200`, `text-gray-600`, `bg-white`, `border-gray-200`)
 - Use arbitrary spacing (`p-[10px]`, `gap-[14px]`, `p-7`)
 - Use `shadow-md`, `shadow-lg`, `shadow-xl` (only `shadow-xs` and `shadow-sm` allowed)
 - Use `bg-orange-500` or `text-orange-600` (use `bg-primary`, `text-primary`)
-- Write raw `<button className="...">` (use `<Button>` from `@/components/ds`)
+- Write raw `<button className="...">` (use `<Button>` from `ui/` or `ds/`)
 - Use `rounded-sm` or bare `rounded` (use `rounded-md` default)
 - Manually map status strings to colors (use `StatusBadge` — it handles this automatically)
 - Add non-shadcn components to `@/components/ui/` (that folder is ONLY for base shadcn primitives)
 
 **ALWAYS:**
 
-- Import ALL components from `@/components/ds` (single barrel export)
+- Use existing components from `@/components/ui/` or `@/components/ds/` — never build one-off replacements
 - Use `StatusBadge` for status display — pass the status string, colors are baked in
 - Use semantic tokens: `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`
 - Use `<Button>` component with variant props (not raw buttons)
@@ -296,8 +299,8 @@ See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 **ESLint enforces this:** 3 rules active as **ERRORS** — `design-system/no-hardcoded-colors`, `design-system/no-arbitrary-spacing`, `design-system/require-semantic-colors`. Violations BLOCK the build.
 
 **Component architecture:**
-- `@/components/ui/` = Pure shadcn base primitives ONLY. Do not add custom components here.
-- `@/components/ds/` = Custom design system components + barrel re-exports of ui/ primitives. This is THE import path.
+- `@/components/ui/` = Pure shadcn base primitives ONLY. Do not add custom components here. Importing from here is fine.
+- `@/components/ds/` = Custom design system components + barrel re-exports of ui/ primitives.
 - `@/components/layout/` = Page structure (also re-exported from ds/).
 - `@/components/domain/` = Domain-specific components (forms, detail views).
 
@@ -604,7 +607,7 @@ Before claiming tests pass:
 
 ## UI/UX Design Standards
 
-**Single import path: `import { ... } from "@/components/ds"`**
+**Import from `@/components/ui/` (base primitives) or `@/components/ds/` (design system components) — both are valid.**
 
 **Design system docs** (read before building UI): `frontend/src/design-system/`
 
@@ -632,7 +635,7 @@ Before claiming tests pass:
 | `Eyebrow` | 11px uppercase tracking-wider label |
 
 **Every page must use a page archetype. No exceptions.**
-**Every component must come from `@/components/ds`. No custom styling. No direct ui/ imports in pages.**
+**Every component must come from `@/components/ui/` or `@/components/ds/`. No one-off custom components. No duplicating existing primitives.**
 **Every color/spacing/font must use a design token. No hex codes or arbitrary values.**
 
 ### Code Quality Standards

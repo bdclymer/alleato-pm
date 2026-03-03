@@ -27,9 +27,11 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   active: "success",
   accepted: "success",
   completed: "success",
+  complete: "success",
   closed: "success",
   paid: "success",
   synced: "success",
+  executed: "success",
 
   // Warning statuses
   pending: "warning",
@@ -40,6 +42,8 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   submitted: "warning",
   open: "warning",
   partial: "warning",
+  "out for bid": "warning",
+  "out for signature": "warning",
 
   // Error statuses
   rejected: "error",
@@ -48,6 +52,7 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   cancelled: "error",
   void: "error",
   deleted: "error",
+  terminated: "error",
 
   // Info statuses
   "not synced": "info",

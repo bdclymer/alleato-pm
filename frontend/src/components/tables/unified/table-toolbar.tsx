@@ -385,7 +385,7 @@ function ColumnToggle({
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>Columns</TooltipContent>
+          <TooltipContent>Select which columns to display</TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <DropdownMenuContent align="end" className="w-60">

@@ -37,16 +37,18 @@ export function MeetingsSection({
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-[10px] font-semibold uppercase tracking-[0.08em] text-neutral-400">
-          Meetings
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Meetings
+          </h3>
           {meetings.length > 0 && (
-            <span className="ml-2 text-neutral-300 tabular-nums">{meetings.length}</span>
+            <span className="text-[11px] text-muted-foreground/60 tabular-nums">{meetings.length}</span>
           )}
-        </h3>
+        </div>
         <Link
           href={`/${projectId}/meetings`}
-          className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors"
+          className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         >
           View all
         </Link>
@@ -59,30 +61,23 @@ export function MeetingsSection({
             const meetingDate = meeting.date
               ? new Date(meeting.date)
               : null;
-            const participants = meeting.participants
-              ? [
-                  ...new Set(
-                    meeting.participants
-                      .split(",")
-                      .map((p) => p.trim())
-                      .filter(Boolean)
-                  ),
-                ]
+            const participants = meeting.participants_array
+              ? [...new Set(meeting.participants_array.map((p) => p.trim()).filter(Boolean))]
               : [];
 
             return (
               <Link
                 key={meeting.id}
                 href={`/${projectId}/meetings/${meeting.id}`}
-                className="group flex gap-4 p-4 -mx-2 rounded-lg border border-transparent hover:border-neutral-200 hover:bg-neutral-50/50 transition-all"
+                className="group flex gap-4 py-3 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
               >
                 {/* Date Badge */}
                 {meetingDate && (
                   <div className="flex-shrink-0 w-12 text-center">
-                    <div className="text-2xs font-semibold uppercase tracking-wider text-brand">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-primary">
                       {format(meetingDate, "MMM")}
                     </div>
-                    <div className="text-xl font-light text-neutral-900 leading-tight">
+                    <div className="text-xl font-light text-foreground leading-tight">
                       {format(meetingDate, "d")}
                     </div>
                   </div>
@@ -91,13 +86,13 @@ export function MeetingsSection({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Title */}
-                  <div className="text-sm font-medium text-neutral-900 group-hover:text-brand truncate transition-colors">
+                  <div className="text-sm font-medium text-foreground group-hover:text-primary truncate transition-colors">
                     {meeting.title || "Untitled Meeting"}
                   </div>
 
                   {/* Summary snippet */}
                   {meeting.summary && (
-                    <p className="text-xs text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                       {meeting.summary}
                     </p>
                   )}
@@ -105,13 +100,13 @@ export function MeetingsSection({
                   {/* Meta row */}
                   <div className="flex items-center gap-4 mt-2">
                     {meeting.duration_minutes != null && meeting.duration_minutes > 0 && (
-                      <span className="inline-flex items-center gap-1 text-2xs text-neutral-400">
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
                         <Clock className="h-3 w-3" />
                         {meeting.duration_minutes} min
                       </span>
                     )}
                     {participants.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-2xs text-neutral-400">
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60">
                         <Users className="h-3 w-3" />
                         {participants.length} attendee{participants.length !== 1 ? "s" : ""}
                       </span>
@@ -126,17 +121,17 @@ export function MeetingsSection({
                       {participants.slice(0, 3).map((email, idx) => (
                         <div
                           key={`${meeting.id}-${idx}`}
-                          className="h-7 w-7 rounded-full bg-neutral-100 border-2 border-white flex items-center justify-center"
+                          className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center"
                           title={email}
                         >
-                          <span className="text-[10px] font-medium text-neutral-500">
+                          <span className="text-[10px] font-medium text-muted-foreground">
                             {getInitials(email)}
                           </span>
                         </div>
                       ))}
                       {participants.length > 3 && (
-                        <div className="h-7 w-7 rounded-full bg-neutral-200 border-2 border-white flex items-center justify-center">
-                          <span className="text-[10px] font-medium text-neutral-500">
+                        <div className="h-7 w-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                          <span className="text-[10px] font-medium text-muted-foreground">
                             +{participants.length - 3}
                           </span>
                         </div>
@@ -149,7 +144,7 @@ export function MeetingsSection({
           })}
         </div>
       ) : (
-        <p className="text-sm text-neutral-400">No meetings yet</p>
+        <p className="text-sm text-muted-foreground">No meetings yet</p>
       )}
 
     </div>

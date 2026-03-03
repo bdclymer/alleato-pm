@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { getSupabaseConfig } from "./config";
 import type { Database } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
+import { getBestSupabaseAuthToken } from "./auth-cookie";
 
 /**
  * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
@@ -66,50 +67,10 @@ export async function getApiRouteUser(): Promise<Pick<User, "id" | "email"> | nu
 async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null> {
   try {
     const cookieStore = await cookies();
-    const allCookies = cookieStore.getAll();
+    const tokenData = getBestSupabaseAuthToken(cookieStore.getAll());
+    if (!tokenData?.userId) return null;
 
-    // Supabase SSR stores auth in chunked cookies: sb-<ref>-auth-token.0, .1, etc.
-    const authCookieParts = allCookies
-      .filter((c) => /^sb-[^-]+-auth-token(?:\.\d+)?$/.test(c.name))
-      .sort((a, b) => {
-        const aChunk = Number(a.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
-        const bChunk = Number(b.name.match(/\.([0-9]+)$/)?.[1] ?? "0");
-        return aChunk - bChunk;
-      });
-
-    if (authCookieParts.length === 0) return null;
-
-    let sessionJson = authCookieParts.map((c) => c.value).join("");
-
-    if (!sessionJson || sessionJson.length < 10) {
-      return null;
-    }
-
-    // @supabase/ssr v0.5+ stores cookies as "base64-<base64url_encoded>" format.
-    // Convert base64url to standard base64 for reliable cross-version decoding.
-    if (sessionJson.startsWith("base64-")) {
-      const b64url = sessionJson.slice(7).replace(/-/g, "+").replace(/_/g, "/");
-      const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
-      const padded = b64url + padding;
-      sessionJson = Buffer.from(padded, "base64").toString("utf-8");
-    }
-
-    const sessionData = JSON.parse(sessionJson);
-
-    if (!sessionData?.access_token) return null;
-
-    // Decode JWT payload (header.payload.signature) — no verification needed
-    // since we only use this as a fallback and data ops use service role client
-    const parts = sessionData.access_token.split(".");
-    if (parts.length !== 3) return null;
-
-    const payload = JSON.parse(
-      Buffer.from(parts[1], "base64url").toString(),
-    );
-
-    if (!payload?.sub) return null;
-
-    return { id: payload.sub, email: payload.email ?? "" };
+    return { id: tokenData.userId, email: tokenData.email };
   } catch {
     return null;
   }
