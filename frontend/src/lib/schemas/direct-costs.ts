@@ -21,7 +21,7 @@ import { Database } from '@/types/database.types';
 export const CostTypes = ['Expense', 'Invoice', 'Subcontractor Invoice'] as const;
 export type CostType = (typeof CostTypes)[number];
 
-export const CostStatuses = ['Draft', 'Pending', 'Approved', 'Rejected', 'Paid'] as const;
+export const CostStatuses = ['Draft', 'Pending', 'Revise and Resubmit', 'Approved'] as const;
 export type DirectCostStatus = (typeof CostStatuses)[number];
 
 export const UnitTypes = [
@@ -66,9 +66,9 @@ const optionalUuidSchema = z
   .uuid('Must be a valid UUID')
   .nullable()
   .optional();
-const optionalUuidOrEmptySchema = z.preprocess(
-  (value) => (value === '' ? null : value),
-  z.string().uuid('Must be a valid UUID').nullable().optional()
+const requiredUuidOrEmptySchema = z.preprocess(
+  (value) => (typeof value === 'string' ? value.trim() : ''),
+  z.string().min(1, 'Budget code is required').uuid('Budget code is required')
 );
 
 // =============================================================================
@@ -77,7 +77,7 @@ const optionalUuidOrEmptySchema = z.preprocess(
 
 export const DirectCostLineItemSchema = z.object({
   id: uuidSchema.optional(), // Optional for new items
-  budget_code_id: optionalUuidOrEmptySchema,
+  budget_code_id: requiredUuidOrEmptySchema,
   description: optionalString,
   quantity: positiveNumber,
   uom: z.enum(UnitTypes).default('LOT'),
@@ -148,7 +148,7 @@ export const DirectCostStatusChangeSchema = z.object({
 
 export const DirectCostApprovalSchema = z.object({
   id: uuidSchema,
-  action: z.enum(['approve', 'reject']),
+  action: z.enum(['approve', 'revise']),
   reason: z
     .string()
     .trim()

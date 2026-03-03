@@ -34,6 +34,7 @@ import {
   useDeleteCommitment,
 } from "@/hooks/use-commitments-query";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
+import { formatCurrency } from "@/lib/utils";
 import {
   buildCommitmentTableColumns,
   commitmentColumns,
@@ -136,6 +137,35 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const totalItems = response?.meta.total ?? commitments.length;
   const totalPages = response?.meta.totalPages ?? 1;
+
+  const financialTotals = React.useMemo(() => {
+    return commitments.reduce(
+      (acc, item) => ({
+        original_amount: acc.original_amount + item.original_amount,
+        approved_change_orders: acc.approved_change_orders + item.approved_change_orders,
+        pending_change_orders: acc.pending_change_orders + item.pending_change_orders,
+        draft_change_orders: acc.draft_change_orders + item.draft_change_orders,
+        revised_contract_amount: acc.revised_contract_amount + item.revised_contract_amount,
+        invoiced_amount: acc.invoiced_amount + item.invoiced_amount,
+        billed_to_date: acc.billed_to_date + item.billed_to_date,
+        payments_issued: acc.payments_issued + item.payments_issued,
+        remaining_balance: acc.remaining_balance + item.remaining_balance,
+        balance_to_finish: acc.balance_to_finish + item.balance_to_finish,
+      }),
+      {
+        original_amount: 0,
+        approved_change_orders: 0,
+        pending_change_orders: 0,
+        draft_change_orders: 0,
+        revised_contract_amount: 0,
+        invoiced_amount: 0,
+        billed_to_date: 0,
+        payments_issued: 0,
+        remaining_balance: 0,
+        balance_to_finish: 0,
+      },
+    );
+  }, [commitments]);
 
   const tableColumns = buildCommitmentTableColumns();
   const sortedCommitments = React.useMemo(() => {
@@ -356,6 +386,21 @@ export default function ProjectCommitmentsPage(): ReactElement {
               Create your first commitment
             </Button>
           ),
+        }}
+        footerTotals={{
+          label: "Totals",
+          values: {
+            original_amount: <span className="font-semibold">{formatCurrency(financialTotals.original_amount)}</span>,
+            approved_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.approved_change_orders)}</span>,
+            pending_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.pending_change_orders)}</span>,
+            draft_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.draft_change_orders)}</span>,
+            revised_contract_amount: <span className="font-semibold">{formatCurrency(financialTotals.revised_contract_amount)}</span>,
+            invoiced_amount: <span className="font-semibold">{formatCurrency(financialTotals.invoiced_amount)}</span>,
+            billed_to_date: <span className="font-semibold">{formatCurrency(financialTotals.billed_to_date)}</span>,
+            payments_issued: <span className="font-semibold">{formatCurrency(financialTotals.payments_issued)}</span>,
+            remaining_balance: <span className="font-semibold">{formatCurrency(financialTotals.remaining_balance)}</span>,
+            balance_to_finish: <span className="font-semibold">{formatCurrency(financialTotals.balance_to_finish)}</span>,
+          },
         }}
         pagination={{
           page: tableState.page,

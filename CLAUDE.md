@@ -239,6 +239,32 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
 See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
+### 12. Design System Gate (MANDATORY)
+
+**BEFORE** building ANY UI component, page, or modifying styles:
+
+1. Read `frontend/src/design-system/tokens.md` for allowed colors, spacing, shadows
+2. Read `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` for copy-paste patterns
+3. Use `frontend/src/design-system/REFERENCE_COMPONENTS.tsx` as a reference
+
+**NEVER:**
+
+- Use hardcoded colors (`bg-gray-200`, `text-gray-600`, `bg-white`, `border-gray-200`)
+- Use arbitrary spacing (`p-[10px]`, `gap-[14px]`, `p-7`)
+- Use `shadow-md`, `shadow-lg`, `shadow-xl` (only `shadow-xs` and `shadow-sm` allowed)
+- Use `bg-orange-500` or `text-orange-600` (use `bg-primary`, `text-primary`)
+- Write raw `<button className="...">` (use `<Button>` from `@/components/ui/button`)
+- Use `rounded-sm` or bare `rounded` (use `rounded-md` default)
+
+**ALWAYS:**
+
+- Use semantic tokens: `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`
+- Use `<Button>` component with variant props (not raw buttons)
+- Use status colors only for status: `bg-green-50 text-green-600`, `bg-red-50 text-red-600`
+- Run `npx eslint --rule 'design-system/require-semantic-colors: warn' <file>` to check
+
+**ESLint enforces this:** 3 rules active as warnings — `design-system/no-hardcoded-colors`, `design-system/no-arbitrary-spacing`, `design-system/require-semantic-colors`.
+
 ---
 
 ## Scaffolding System
@@ -547,12 +573,13 @@ Before building ANY UI, read the design system. It contains:
 
 | File | What |
 |------|------|
-| `README.md` | Quick start, decision tree |
-| `principles.md` | Philosophy, hard constraints, card policy |
+| `CLAUDE_CODE_UI_GUIDE.md` | **READ FIRST** — Exact Tailwind classes, copy-paste patterns |
+| `REFERENCE_COMPONENTS.tsx` | Copy-paste-ready React components |
+| `tokens.md` | Colors, spacing, typography, shadows, interactive states |
 | `page-archetypes.md` | The 4 page types with copy-paste templates |
-| `tokens.md` | Colors, spacing, typography, shadows |
 | `components.md` | Which component to use for what |
 | `patterns.md` | Loading, errors, empty states, forms, modals |
+| `principles.md` | Philosophy, hard constraints, card policy |
 
 **Every page must use a page archetype. No exceptions.**
 **Every component must come from `@/components/ui/` or `@/components/layout/`. No custom styling.**

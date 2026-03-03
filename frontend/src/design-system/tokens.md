@@ -150,14 +150,93 @@ ring-* with glow effects                             → not our aesthetic
 
 ## Interactive States
 
-All interactive elements must implement these states:
+Every interactive element must implement all 5 states. No exceptions.
 
-| State | Pattern |
-|-------|---------|
-| Hover | `hover:bg-accent` or `hover:bg-muted` |
-| Focus | `focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:border-ring` |
-| Active | `active:scale-[0.98]` (buttons only, optional) |
-| Disabled | `disabled:opacity-50 disabled:pointer-events-none` |
+### The 5 States (all required)
+
+| State | What Happens | Key Classes |
+|-------|-------------|-------------|
+| **Default** | Resting state — visible border, subtle shadow | `border-input shadow-xs bg-background` |
+| **Hover** | Background shifts, shadow lifts slightly | `hover:bg-accent hover:text-accent-foreground` |
+| **Focus** | Brand-colored ring appears around element | `focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50` |
+| **Active** | Slight scale-down for tactile feedback | `active:scale-[0.98]` (buttons only) |
+| **Disabled** | Faded, non-interactive | `disabled:opacity-50 disabled:pointer-events-none` |
+
+### Button Interactive States (copy-paste ready)
+
+**Primary Button** (brand CTA — max 1-2 per screen):
+
+```
+bg-primary text-primary-foreground shadow-xs
+hover:bg-primary/90
+focus-visible:ring-[3px] focus-visible:ring-ring/50
+active:scale-[0.98]
+disabled:opacity-50 disabled:pointer-events-none
+```
+
+**Secondary / Outline Button**:
+
+```
+border border-input bg-background text-foreground shadow-xs
+hover:bg-accent hover:text-accent-foreground
+focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50
+active:scale-[0.98]
+disabled:opacity-50 disabled:pointer-events-none
+```
+
+**Ghost Button**:
+
+```
+text-muted-foreground
+hover:bg-accent hover:text-accent-foreground
+focus-visible:ring-[3px] focus-visible:ring-ring/50
+disabled:opacity-50 disabled:pointer-events-none
+```
+
+**Destructive Button**:
+
+```
+bg-destructive text-destructive-foreground shadow-xs
+hover:bg-destructive/90
+focus-visible:ring-[3px] focus-visible:ring-ring/50
+active:scale-[0.98]
+disabled:opacity-50 disabled:pointer-events-none
+```
+
+### Link / Text Interactive States
+
+```
+text-muted-foreground
+hover:text-foreground
+transition-colors
+```
+
+For brand-accent hover (e.g., list item titles):
+
+```
+text-foreground
+group-hover:text-primary
+transition-colors
+```
+
+### Row / Card Interactive States
+
+Entire-row hover (for list items, table rows):
+
+```
+group rounded-md transition-colors
+hover:bg-muted
+```
+
+### Banned Interactive Patterns
+
+```
+hover:bg-gray-50, hover:bg-gray-100      → use hover:bg-accent or hover:bg-muted
+hover:text-orange-600, hover:bg-orange-*  → use hover:text-primary or hover:bg-primary
+focus:ring-orange-500                     → use focus-visible:ring-ring/50
+focus:outline-none (alone)                → must ALSO have ring — focus needs visible indicator
+ring-2 ring-offset-2                      → use ring-[3px] ring-ring/50 (matches shadcn)
+```
 
 ### Component Consistency Matrix
 
@@ -173,3 +252,16 @@ All form-level interactive elements must match:
 | Padding | `px-3 py-2` | `px-3 py-2` | `px-3 py-2` |
 
 **Any deviation from this matrix is a bug.**
+
+### CSS Variable Reference (what the tokens resolve to)
+
+These are defined in `globals.css` — never use the raw values, always use the Tailwind tokens above.
+
+| Token | CSS Variable | Light Mode Value | Resolves To |
+|-------|-------------|-----------------|-------------|
+| `primary` | `--primary` | `29 71% 52%` | Procore orange (#DB802D) |
+| `ring` | `--ring` | `215 20% 65%` | Neutral blue-gray focus ring |
+| `brand` | `--brand` | `29 71% 52%` | Same as primary |
+| `destructive` | `--destructive` | `0 84.2% 60.2%` | Red |
+| `muted` | `--muted` | `0 0% 96.1%` | Light gray |
+| `accent` | `--accent` | `0 0% 96.1%` | Light gray (hover bg) |

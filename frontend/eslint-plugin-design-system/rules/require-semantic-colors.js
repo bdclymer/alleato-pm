@@ -35,12 +35,16 @@ module.exports = {
       return {};
     }
 
-    // Direct color names that should be avoided (except neutral)
+    // Direct color names that should be avoided (except status colors)
     const directColorNames = [
-      'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
-      'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose',
+      'orange', 'amber', 'lime', 'emerald', 'teal',
+      'cyan', 'sky', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose',
       'slate', 'zinc', 'stone'
     ];
+
+    // Status colors that ARE allowed per design system tokens
+    // green-50/500/600, red-50/500/600, yellow-50/500/600, blue-50/500/600
+    const allowedStatusPatterns = /^(text|bg)-(green|red|yellow|blue)-(50|500|600)$/;
 
     // Semantic tokens that should be preferred
     const semanticTokens = [
@@ -93,6 +97,11 @@ module.exports = {
         // Check for direct color names
         const classes = classValue.split(/\s+/);
         classes.forEach(className => {
+          // Skip allowed status color patterns (green/red/yellow/blue 50/500/600)
+          if (allowedStatusPatterns.test(className)) {
+            return;
+          }
+
           directColorNames.forEach(color => {
             // Match patterns like text-red-500, bg-blue-100, border-green-700
             const colorPattern = new RegExp(`^(text|bg|border|ring|outline)-(${color})-(\\d{2,3}|[a-z]+)$`);

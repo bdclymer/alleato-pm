@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus, Upload } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import {
@@ -19,6 +19,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
 import {
   type CostCodeDetailRow,
@@ -26,14 +29,13 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   DIRECT_COST_FILTERS,
   SUMMARY_COLUMNS,
-  csvCell,
   formatAmount,
   formatDate,
-  getStatusVariant,
 } from "./direct-costs-table-utils";
 import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
 import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
 import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
+import { ExportDialog } from "@/components/direct-costs/ExportDialog";
 import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
 
 export type DirectCostRow = {
@@ -49,10 +51,13 @@ export type DirectCostRow = {
   created_at: string;
   updated_at: string;
   vendor: { name: string } | null;
+  erp_status?: string | null;
 };
 
 type DirectCostFilterState = Record<string, FilterValue>;
 type SummaryTab = "summary" | "cost-code";
+
+type BulkActionType = "approve" | "revise" | "delete";
 
 interface DirectCostsClientProps {
   projectId: string;
@@ -61,10 +66,53 @@ interface DirectCostsClientProps {
   costCodeDetails: CostCodeDetailRow[];
 }
 
-const EMPTY_FILTERS: DirectCostFilterState = { status: undefined, costType: undefined };
+const STATUS_OPTIONS = ["Draft", "Pending", "Revise and Resubmit", "Approved"] as const;
+
+const EMPTY_FILTERS: DirectCostFilterState = {
+  status: undefined,
+  costType: undefined,
+  dateFrom: undefined,
+  dateTo: undefined,
+  minAmount: undefined,
+  maxAmount: undefined,
+};
+
+const SORT_OPTIONS = [
+  { value: "date:desc", label: "Newest date" },
+  { value: "date:asc", label: "Oldest date" },
+  { value: "total_amount:desc", label: "Highest amount" },
+  { value: "total_amount:asc", label: "Lowest amount" },
+  { value: "vendor:asc", label: "Vendor A-Z" },
+  { value: "status:asc", label: "Status A-Z" },
+];
 
 function hasAllVisibleColumns(current: string[], required: string[]): boolean {
   return required.every((column) => current.includes(column));
+}
+
+function normalize(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function statusClass(status: string): string {
+  switch (status) {
+    case "Approved":
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    case "Revise and Resubmit":
+      return "bg-rose-100 text-rose-700 border-rose-200";
+    case "Pending":
+      return "bg-amber-100 text-amber-700 border-amber-200";
+    default:
+      return "bg-muted text-muted-foreground border-border";
+  }
+}
+
+function toDateInputValue(value: string | null): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
 }
 
 export function DirectCostsClient({
@@ -85,7 +133,7 @@ export function DirectCostsClient({
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table"],
+      allowedViews: ["table", "list"],
       page: 1,
       perPage: 25,
       search: "",
@@ -95,6 +143,10 @@ export function DirectCostsClient({
       filters: {
         status: searchParams.get("status") || undefined,
         costType: searchParams.get("costType") || undefined,
+        dateFrom: searchParams.get("date_from") || undefined,
+        dateTo: searchParams.get("date_to") || undefined,
+        minAmount: searchParams.get("amount_min") || undefined,
+        maxAmount: searchParams.get("amount_max") || undefined,
       },
     },
   });
@@ -106,19 +158,34 @@ export function DirectCostsClient({
   const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false);
   const [isEditLoading, setIsEditLoading] = React.useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
+  const [bulkAction, setBulkAction] = React.useState<BulkActionType | null>(null);
 
   React.useEffect(() => {
     if (summaryTab !== "summary") return;
-    const nextStatus = searchParams.get("status") ?? "";
-    const nextCostType = searchParams.get("costType") ?? "";
+
+    const nextFilters: DirectCostFilterState = {
+      status: searchParams.get("status") || undefined,
+      costType: searchParams.get("costType") || undefined,
+      dateFrom: searchParams.get("date_from") || undefined,
+      dateTo: searchParams.get("date_to") || undefined,
+      minAmount: searchParams.get("amount_min") || undefined,
+      maxAmount: searchParams.get("amount_max") || undefined,
+    };
 
     tableState.setActiveFilters((prev) => {
-      const normalizedStatus = nextStatus || undefined;
-      const normalizedCostType = nextCostType || undefined;
-      if (prev.status === normalizedStatus && prev.costType === normalizedCostType) {
+      if (
+        prev.status === nextFilters.status &&
+        prev.costType === nextFilters.costType &&
+        prev.dateFrom === nextFilters.dateFrom &&
+        prev.dateTo === nextFilters.dateTo &&
+        prev.minAmount === nextFilters.minAmount &&
+        prev.maxAmount === nextFilters.maxAmount
+      ) {
         return prev;
       }
-      return { status: normalizedStatus, costType: normalizedCostType };
+      return nextFilters;
     });
   }, [searchParams, summaryTab, tableState.setActiveFilters]);
 
@@ -142,51 +209,96 @@ export function DirectCostsClient({
   ];
 
   const activeFilters = tableState.activeFilters as DirectCostFilterState;
+
   const filteredSummaryItems = React.useMemo(() => {
     const searchValue = tableState.debouncedSearch.trim().toLowerCase();
-    const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : "";
-    const typeFilter = typeof activeFilters.costType === "string" ? activeFilters.costType : "";
+    const statusFilter = normalize(activeFilters.status);
+    const typeFilter = normalize(activeFilters.costType);
+    const dateFromFilter = typeof activeFilters.dateFrom === "string" ? activeFilters.dateFrom : "";
+    const dateToFilter = typeof activeFilters.dateTo === "string" ? activeFilters.dateTo : "";
+    const minAmount = activeFilters.minAmount !== undefined && activeFilters.minAmount !== "" ? Number(activeFilters.minAmount) : null;
+    const maxAmount = activeFilters.maxAmount !== undefined && activeFilters.maxAmount !== "" ? Number(activeFilters.maxAmount) : null;
 
     return directCosts.filter((item) => {
-      if (statusFilter && item.status !== statusFilter) return false;
-      if (typeFilter && item.cost_type !== typeFilter) return false;
+      const normalizedItemStatus = normalize(item.status);
+      const normalizedItemCostType = normalize(item.cost_type);
+
+      if (statusFilter && statusFilter !== "all" && normalizedItemStatus !== statusFilter) return false;
+      if (typeFilter && typeFilter !== "all" && normalizedItemCostType !== typeFilter) return false;
+
+      if (dateFromFilter && item.date < dateFromFilter) return false;
+      if (dateToFilter && item.date > dateToFilter) return false;
+      if (Number.isFinite(minAmount) && item.total_amount < (minAmount as number)) return false;
+      if (Number.isFinite(maxAmount) && item.total_amount > (maxAmount as number)) return false;
+
       if (!searchValue) return true;
 
-      const vendorName = item.vendor?.name ?? "";
-      const description = item.description ?? "";
-      const invoiceNumber = item.invoice_number ?? "";
+      const dateDisplay = formatDate(item.date).toLowerCase();
+      const receivedDisplay = formatDate(item.received_date).toLowerCase();
+      const paidDisplay = formatDate(item.paid_date).toLowerCase();
+      const amountDisplay = formatAmount(item.total_amount).toLowerCase();
+      const searchable = [
+        item.vendor?.name ?? "",
+        item.description ?? "",
+        item.invoice_number ?? "",
+        item.status,
+        item.erp_status ?? "",
+        item.cost_type,
+        item.date,
+        dateDisplay,
+        receivedDisplay,
+        paidDisplay,
+        amountDisplay,
+        String(item.total_amount),
+      ].join(" ").toLowerCase();
 
-      return (
-        vendorName.toLowerCase().includes(searchValue) ||
-        description.toLowerCase().includes(searchValue) ||
-        invoiceNumber.toLowerCase().includes(searchValue)
-      );
+      return searchable.includes(searchValue);
     });
-  }, [activeFilters.costType, activeFilters.status, directCosts, tableState.debouncedSearch]);
+  }, [
+    activeFilters.costType,
+    activeFilters.dateFrom,
+    activeFilters.dateTo,
+    activeFilters.maxAmount,
+    activeFilters.minAmount,
+    activeFilters.status,
+    directCosts,
+    tableState.debouncedSearch,
+  ]);
 
-  const summaryTableColumns = React.useMemo(
-    () => [
-      { id: "date", label: "Date", defaultVisible: true, render: (item: DirectCostRow) => formatDate(item.date), sortValue: (item: DirectCostRow) => item.date },
-      { id: "vendor", label: "Vendor", defaultVisible: true, render: (item: DirectCostRow) => item.vendor?.name ?? "Internal", sortValue: (item: DirectCostRow) => item.vendor?.name ?? "" },
-      { id: "cost_type", label: "Type", defaultVisible: true, render: (item: DirectCostRow) => item.cost_type, sortValue: (item: DirectCostRow) => item.cost_type },
-      { id: "invoice_number", label: "Invoice #", defaultVisible: true, render: (item: DirectCostRow) => item.invoice_number ?? "-", sortValue: (item: DirectCostRow) => item.invoice_number ?? "" },
-      { id: "status", label: "Status", defaultVisible: true, render: (item: DirectCostRow) => <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>, sortValue: (item: DirectCostRow) => item.status },
-      { id: "total_amount", label: "Amount", defaultVisible: true, render: (item: DirectCostRow) => formatAmount(item.total_amount), sortValue: (item: DirectCostRow) => item.total_amount },
-      { id: "received_date", label: "Received", defaultVisible: true, render: (item: DirectCostRow) => formatDate(item.received_date), sortValue: (item: DirectCostRow) => item.received_date },
-      { id: "paid_date", label: "Paid", defaultVisible: false, render: (item: DirectCostRow) => formatDate(item.paid_date), sortValue: (item: DirectCostRow) => item.paid_date },
-      { id: "description", label: "Description", defaultVisible: false, render: (item: DirectCostRow) => item.description ?? "-", sortValue: (item: DirectCostRow) => item.description ?? "" },
-    ],
-    [],
-  );
+  const totalPages = Math.max(1, Math.ceil(filteredSummaryItems.length / tableState.perPage));
 
-  const handleFilterChange = (nextFilters: DirectCostFilterState): void => {
+  React.useEffect(() => {
+    if (tableState.page > totalPages) {
+      tableState.setPage(totalPages);
+      tableState.setSearchParams({ page: String(totalPages) });
+    }
+  }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
+
+  const selectedSet = React.useMemo(() => new Set(tableState.selectedIds), [tableState.selectedIds]);
+
+  const applyFilters = (nextFilters: DirectCostFilterState): void => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
       status: typeof nextFilters.status === "string" ? nextFilters.status : null,
       costType: typeof nextFilters.costType === "string" ? nextFilters.costType : null,
+      date_from: typeof nextFilters.dateFrom === "string" ? nextFilters.dateFrom : null,
+      date_to: typeof nextFilters.dateTo === "string" ? nextFilters.dateTo : null,
+      amount_min: typeof nextFilters.minAmount === "string" ? nextFilters.minAmount : null,
+      amount_max: typeof nextFilters.maxAmount === "string" ? nextFilters.maxAmount : null,
       page: "1",
     });
     tableState.setPage(1);
+  };
+
+  const handleFilterChange = (nextFilters: DirectCostFilterState): void => {
+    applyFilters(nextFilters);
+  };
+
+  const handleAdvancedFilterValue = (key: keyof typeof EMPTY_FILTERS, value: string): void => {
+    applyFilters({
+      ...activeFilters,
+      [key]: value || undefined,
+    });
   };
 
   const handleDeleteConfirm = async (): Promise<void> => {
@@ -239,26 +351,275 @@ export function DirectCostsClient({
     setEditingInitialData(undefined);
   };
 
-  const handleExportSummary = (): void => {
-    if (filteredSummaryItems.length === 0) {
-      toast.info("No direct costs to export");
+  const handleInlineStatusChange = async (costId: string, nextStatus: string): Promise<void> => {
+    setUpdatingStatusId(costId);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/direct-costs/${costId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      if (!response.ok) {
+        const errData = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(errData.error || "Failed to update status");
+      }
+
+      toast.success(`Status updated to ${nextStatus}`);
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update status";
+      toast.error(message);
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const runBulkStatusUpdate = async (status: "Approved" | "Revise and Resubmit"): Promise<void> => {
+    if (tableState.selectedIds.length === 0) return;
+
+    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation: "status-update",
+        ids: tableState.selectedIds,
+        status,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      success_count?: number;
+      failed_count?: number;
+      total?: number;
+    };
+
+    if (!response.ok && response.status !== 207) {
+      toast.error(payload.error || `Failed to ${status === "Approved" ? "approve" : "revise"} selected costs`);
       return;
     }
 
-    const visibleColumns = summaryTableColumns.filter((column) => tableState.visibleColumns.includes(column.id));
-    const headers = visibleColumns.map((column) => column.label);
-    const rows = filteredSummaryItems.map((item) =>
-      visibleColumns.map((column) => csvCell(column.sortValue ? column.sortValue(item) : "")).join(","),
-    );
+    if ((payload.failed_count ?? 0) > 0) {
+      toast.warning(
+        `Updated ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`,
+      );
+    } else {
+      toast.success(`${status === "Approved" ? "Approved" : "Revised"} ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
+    }
 
-    const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `direct-costs-${projectId}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    tableState.setSelectedIds([]);
+    router.refresh();
   };
+
+  const runBulkDelete = async (): Promise<void> => {
+    if (tableState.selectedIds.length === 0) return;
+
+    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation: "delete",
+        ids: tableState.selectedIds,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as {
+      error?: string;
+      success_count?: number;
+      failed_count?: number;
+      total?: number;
+    };
+
+    if (!response.ok && response.status !== 207) {
+      toast.error(payload.error || "Failed to delete selected costs");
+      return;
+    }
+
+    if ((payload.failed_count ?? 0) > 0) {
+      toast.warning(`Deleted ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`);
+    } else {
+      toast.success(`Deleted ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
+    }
+
+    tableState.setSelectedIds([]);
+    router.refresh();
+  };
+
+  const executeBulkAction = async (): Promise<void> => {
+    if (!bulkAction) return;
+
+    if (bulkAction === "approve") {
+      await runBulkStatusUpdate("Approved");
+    }
+
+    if (bulkAction === "revise") {
+      await runBulkStatusUpdate("Revise and Resubmit");
+    }
+
+    if (bulkAction === "delete") {
+      await runBulkDelete();
+    }
+
+    setBulkAction(null);
+  };
+
+  const summaryTableColumns = React.useMemo(
+    () => [
+      {
+        id: "date",
+        label: "Date",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => formatDate(item.date),
+        sortValue: (item: DirectCostRow) => item.date,
+      },
+      {
+        id: "vendor",
+        label: "Vendor",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => item.vendor?.name ?? "Internal",
+        sortValue: (item: DirectCostRow) => item.vendor?.name ?? "",
+      },
+      {
+        id: "cost_type",
+        label: "Type",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => item.cost_type,
+        sortValue: (item: DirectCostRow) => item.cost_type,
+      },
+      {
+        id: "invoice_number",
+        label: "Invoice #",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => item.invoice_number ?? "-",
+        sortValue: (item: DirectCostRow) => item.invoice_number ?? "",
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => (
+          <div onClick={(event) => event.stopPropagation()}>
+            {updatingStatusId === item.id ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            ) : (
+              <Select
+                value={STATUS_OPTIONS.includes(item.status as (typeof STATUS_OPTIONS)[number]) ? item.status : undefined}
+                onValueChange={(nextStatus) => {
+                  if (nextStatus !== item.status) {
+                    void handleInlineStatusChange(item.id, nextStatus);
+                  }
+                }}
+              >
+                <SelectTrigger className={`h-7 w-[180px] text-xs ${statusClass(item.status)}`} aria-label="Quick edit status">
+                  <SelectValue placeholder={item.status} />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ),
+        sortValue: (item: DirectCostRow) => item.status,
+      },
+      {
+        id: "erp_status",
+        label: "ERP Status",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => {
+          const value = item.erp_status?.trim() ? item.erp_status : "Not synced";
+          return <Badge variant="outline">{value}</Badge>;
+        },
+        sortValue: (item: DirectCostRow) => item.erp_status ?? "Not synced",
+      },
+      {
+        id: "total_amount",
+        label: "Amount",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => <span className="font-medium">{formatAmount(item.total_amount)}</span>,
+        sortValue: (item: DirectCostRow) => item.total_amount,
+      },
+      {
+        id: "received_date",
+        label: "Received",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => formatDate(item.received_date),
+        sortValue: (item: DirectCostRow) => item.received_date,
+      },
+      {
+        id: "paid_date",
+        label: "Paid",
+        defaultVisible: false,
+        render: (item: DirectCostRow) => formatDate(item.paid_date),
+        sortValue: (item: DirectCostRow) => item.paid_date,
+      },
+      {
+        id: "description",
+        label: "Description",
+        defaultVisible: false,
+        render: (item: DirectCostRow) => item.description ?? "-",
+        sortValue: (item: DirectCostRow) => item.description ?? "",
+      },
+    ],
+    [updatingStatusId],
+  );
+
+  const costTypeBreakdown = React.useMemo(() => {
+    const totals = new Map<string, number>();
+    let max = 0;
+
+    for (const item of filteredSummaryItems) {
+      const next = (totals.get(item.cost_type) ?? 0) + item.total_amount;
+      totals.set(item.cost_type, next);
+      max = Math.max(max, next);
+    }
+
+    return Array.from(totals.entries())
+      .map(([type, amount]) => ({ type, amount, ratio: max > 0 ? (amount / max) * 100 : 0 }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [filteredSummaryItems]);
+
+  const pendingCount = React.useMemo(
+    () => filteredSummaryItems.filter((item) => item.status === "Pending").length,
+    [filteredSummaryItems],
+  );
+
+  const overdueCount = React.useMemo(() => {
+    const now = new Date();
+    return filteredSummaryItems.filter((item) => {
+      if (item.status !== "Pending") return false;
+      const itemDate = new Date(item.date);
+      if (Number.isNaN(itemDate.getTime())) return false;
+      const diffDays = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays > 14;
+    }).length;
+  }, [filteredSummaryItems]);
+
+  const highValueCount = React.useMemo(
+    () => filteredSummaryItems.filter((item) => item.total_amount >= 25000).length,
+    [filteredSummaryItems],
+  );
+
+  const totalAmount = React.useMemo(
+    () => filteredSummaryItems.reduce((sum, item) => sum + item.total_amount, 0),
+    [filteredSummaryItems],
+  );
+
+  const summaryIsFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.costType) ||
+    Boolean(activeFilters.dateFrom) ||
+    Boolean(activeFilters.dateTo) ||
+    Boolean(activeFilters.minAmount) ||
+    Boolean(activeFilters.maxAmount);
 
   if (summaryTab === "cost-code") {
     return (
@@ -279,9 +640,6 @@ export function DirectCostsClient({
     );
   }
 
-  const summaryIsFiltered =
-    Boolean(tableState.searchInput) || Boolean(activeFilters.status) || Boolean(activeFilters.costType);
-
   return (
     <>
       <UnifiedTablePage
@@ -290,11 +648,11 @@ export function DirectCostsClient({
           description: "Track and manage direct project costs",
           actions: (
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)}>
+              <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)} title="Import direct costs from CSV">
                 <Upload className="mr-2 h-4 w-4" />
                 Import CSV
               </Button>
-              <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
+              <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)} title="Add a new direct cost">
                 <Plus className="mr-2 h-4 w-4" />
                 New Direct Cost
               </Button>
@@ -308,10 +666,10 @@ export function DirectCostsClient({
           selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search direct costs...",
+          searchPlaceholder: "Search vendor, invoice, date, amount, status...",
           currentView: tableState.currentView,
           onViewChange: tableState.setCurrentView,
-          enabledViews: ["table"],
+          enabledViews: ["table", "list"],
           filters: DIRECT_COST_FILTERS,
           activeFilters,
           onFilterChange: handleFilterChange,
@@ -319,32 +677,180 @@ export function DirectCostsClient({
           columns: SUMMARY_COLUMNS,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
-          onExport: handleExportSummary,
-          onBulkDelete: async () => {
-            if (tableState.selectedIds.length === 0) return;
+          onExport: () => setIsExportDialogOpen(true),
+          onBulkDelete: undefined,
+        }}
+        topContent={
+          <>
+            {tableState.selectedIds.length > 0 && (
+              <div className="rounded-md border bg-muted/30 p-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-foreground">
+                    <span className="font-medium">{tableState.selectedIds.length}</span> direct cost(s) selected
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setBulkAction("approve")}>
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setBulkAction("revise")}>
+                      Revise
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+                      Export Selected
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => setBulkAction("delete")}>
+                      Delete
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => tableState.setSelectedIds([])}>
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-            const deleteResults = await Promise.all(
-              tableState.selectedIds.map(async (id) => {
-                const response = await fetch(`/api/projects/${projectId}/direct-costs/${id}`, { method: "DELETE" });
-                return response.ok;
-              }),
-            );
+            <section className="space-y-3 rounded-md border p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-sm font-semibold text-foreground">Advanced Filters & Sorting</h2>
+                <Select
+                  value={`${tableState.sortBy ?? "date"}:${tableState.sortDirection}`}
+                  onValueChange={(value) => {
+                    const [sortBy, direction] = value.split(":") as [string, "asc" | "desc"];
+                    tableState.setSortBy(sortBy);
+                    tableState.setSortDirection(direction);
+                    tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[190px]">
+                    <SelectValue placeholder="Sort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            const failedDeletes = deleteResults.filter((success) => !success).length;
-            if (failedDeletes > 0) {
-              toast.error(`Failed to delete ${failedDeletes} direct cost(s)`);
-              return;
-            }
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="direct-cost-date-from">Date from</Label>
+                  <Input
+                    id="direct-cost-date-from"
+                    type="date"
+                    value={toDateInputValue(typeof activeFilters.dateFrom === "string" ? activeFilters.dateFrom : null)}
+                    onChange={(event) => handleAdvancedFilterValue("dateFrom", event.target.value)}
+                  />
+                </div>
 
-            toast.success(`Deleted ${tableState.selectedIds.length} direct cost(s)`);
-            tableState.setSelectedIds([]);
-            router.refresh();
+                <div className="space-y-1.5">
+                  <Label htmlFor="direct-cost-date-to">Date to</Label>
+                  <Input
+                    id="direct-cost-date-to"
+                    type="date"
+                    value={toDateInputValue(typeof activeFilters.dateTo === "string" ? activeFilters.dateTo : null)}
+                    onChange={(event) => handleAdvancedFilterValue("dateTo", event.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="direct-cost-min-amount">Min amount</Label>
+                  <Input
+                    id="direct-cost-min-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={typeof activeFilters.minAmount === "string" ? activeFilters.minAmount : ""}
+                    onChange={(event) => handleAdvancedFilterValue("minAmount", event.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="direct-cost-max-amount">Max amount</Label>
+                  <Input
+                    id="direct-cost-max-amount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={typeof activeFilters.maxAmount === "string" ? activeFilters.maxAmount : ""}
+                    onChange={(event) => handleAdvancedFilterValue("maxAmount", event.target.value)}
+                    placeholder="100000.00"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-4 rounded-md border p-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-md border bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">Total filtered costs</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{formatAmount(totalAmount)}</p>
+                </div>
+                <div className="rounded-md border bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">Pending approvals</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{pendingCount}</p>
+                </div>
+                <div className="rounded-md border bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">High-value items ({">="} $25,000)</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{highValueCount}</p>
+                </div>
+              </div>
+
+              {(pendingCount > 0 || overdueCount > 0 || highValueCount > 0) && (
+                <div className="flex flex-wrap gap-2">
+                  {pendingCount > 0 && (
+                    <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                      {pendingCount} pending approval
+                    </Badge>
+                  )}
+                  {overdueCount > 0 && (
+                    <Badge variant="outline" className="text-rose-700 border-rose-300 bg-rose-50">
+                      {overdueCount} overdue pending ({">"}14 days)
+                    </Badge>
+                  )}
+                  {highValueCount > 0 && (
+                    <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50">
+                      {highValueCount} exceed threshold
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">Cost Type Distribution</p>
+                {costTypeBreakdown.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No data for current filters.</p>
+                ) : (
+                  costTypeBreakdown.map((entry) => (
+                    <div key={entry.type} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{entry.type}</span>
+                        <span className="font-medium text-foreground">{formatAmount(entry.amount)}</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-muted">
+                        <div className="h-2 rounded-full bg-primary" style={{ width: `${entry.ratio}%` }} />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          </>
+        }
+        footerTotals={{
+          label: "Totals",
+          values: {
+            total_amount: <span className="font-semibold">{formatAmount(totalAmount)}</span>,
           },
         }}
         data={{ items: filteredSummaryItems, isLoading: false, isFetching: false }}
         table={{
           columns: summaryTableColumns,
           getRowId: (item) => item.id,
+          stickyHeader: true,
           onRowClick: (item) => router.push(`/${projectId}/direct-costs/${item.id}`),
           rowActions: (item) => (
             <DropdownMenu>
@@ -393,6 +899,7 @@ export function DirectCostsClient({
           },
           onSelectRow: (id, checked) => {
             if (checked) {
+              if (selectedSet.has(id)) return;
               tableState.setSelectedIds((prev) => [...prev, id]);
               return;
             }
@@ -410,8 +917,53 @@ export function DirectCostsClient({
             </Button>
           ),
         }}
-        features={{ enableViews: false }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          clientSide: true,
+          onPageChange: (page) => {
+            tableState.setPage(page);
+            tableState.setSearchParams({ page: String(page) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            tableState.setPerPage(Number(nextPerPage));
+            tableState.setPage(1);
+            tableState.setSearchParams({ per_page: nextPerPage, page: "1" });
+          },
+        }}
       />
+
+      <AlertDialog open={Boolean(bulkAction)} onOpenChange={(open) => !open && setBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkAction === "approve" && "Approve Selected Direct Costs"}
+              {bulkAction === "revise" && "Revise Selected Direct Costs"}
+              {bulkAction === "delete" && "Delete Selected Direct Costs"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkAction === "approve" &&
+                `Approve ${tableState.selectedIds.length} selected direct cost(s)?`}
+              {bulkAction === "revise" &&
+                `Set ${tableState.selectedIds.length} selected direct cost(s) to Revise and Resubmit?`}
+              {bulkAction === "delete" &&
+                `Delete ${tableState.selectedIds.length} selected direct cost(s)? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void executeBulkAction();
+              }}
+              className={bulkAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -425,7 +977,9 @@ export function DirectCostsClient({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={() => {
+                void handleDeleteConfirm();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete Direct Cost
@@ -466,6 +1020,13 @@ export function DirectCostsClient({
         onOpenChange={setIsImportDialogOpen}
         projectId={projectId}
         onImported={() => router.refresh()}
+      />
+
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        projectId={Number(projectId)}
+        selectedCostIds={tableState.selectedIds.length > 0 ? tableState.selectedIds : undefined}
       />
     </>
   );

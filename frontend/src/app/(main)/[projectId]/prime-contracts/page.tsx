@@ -25,6 +25,7 @@ import {
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   buildPrimeContractTableColumns,
+  formatCurrency,
   primeContractColumns,
   primeContractDefaultVisibleColumns,
   primeContractFilters,
@@ -180,6 +181,31 @@ export default function ProjectContractsPage(): ReactElement {
   const pageStart = (tableState.page - 1) * tableState.perPage;
   const pageEnd = pageStart + tableState.perPage;
   const pagedContracts = sortedContracts.slice(pageStart, pageEnd);
+
+  const contractTotals = React.useMemo(() => {
+    return filteredContracts.reduce(
+      (acc, contract) => ({
+        original_contract_value: acc.original_contract_value + (contract.original_contract_value ?? 0),
+        approved_change_orders: acc.approved_change_orders + (contract.approved_change_orders ?? 0),
+        revised_contract_value: acc.revised_contract_value + (contract.revised_contract_value ?? 0),
+        pending_change_orders: acc.pending_change_orders + (contract.pending_change_orders ?? 0),
+        draft_change_orders: acc.draft_change_orders + (contract.draft_change_orders ?? 0),
+        invoiced: acc.invoiced + (contract.invoiced ?? 0),
+        payments_received: acc.payments_received + (contract.payments_received ?? 0),
+        remaining_balance: acc.remaining_balance + (contract.remaining_balance ?? 0),
+      }),
+      {
+        original_contract_value: 0,
+        approved_change_orders: 0,
+        revised_contract_value: 0,
+        pending_change_orders: 0,
+        draft_change_orders: 0,
+        invoiced: 0,
+        payments_received: 0,
+        remaining_balance: 0,
+      },
+    );
+  }, [filteredContracts]);
 
   React.useEffect(() => {
     if (tableState.page > totalPages) {
@@ -389,6 +415,19 @@ export default function ProjectContractsPage(): ReactElement {
         views={{
           card: (item) => renderPrimeContractCard(item, handleRowClick),
           list: (item) => renderPrimeContractList(item, handleRowClick),
+        }}
+        footerTotals={{
+          label: "Totals",
+          values: {
+            original_contract_value: <span className="font-semibold">{formatCurrency(contractTotals.original_contract_value)}</span>,
+            approved_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.approved_change_orders)}</span>,
+            revised_contract_value: <span className="font-semibold">{formatCurrency(contractTotals.revised_contract_value)}</span>,
+            pending_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.pending_change_orders)}</span>,
+            draft_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.draft_change_orders)}</span>,
+            invoiced: <span className="font-semibold">{formatCurrency(contractTotals.invoiced)}</span>,
+            payments_received: <span className="font-semibold">{formatCurrency(contractTotals.payments_received)}</span>,
+            remaining_balance: <span className="font-semibold">{formatCurrency(contractTotals.remaining_balance)}</span>,
+          },
         }}
         emptyState={{
           title: "No contracts found",

@@ -269,6 +269,14 @@ export function ChangeOrdersClient({
 
   const tableColumns = React.useMemo(() => buildChangeOrderTableColumns(), []);
 
+  const totalAmount = React.useMemo(
+    () => filteredItems.reduce((sum, item) => sum + (item.normalizedAmount ?? 0), 0),
+    [filteredItems],
+  );
+
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+
   const handleFilterChange = (nextFilters: ChangeOrderFilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
@@ -392,6 +400,12 @@ export function ChangeOrdersClient({
       views={{
         card: (item) => renderChangeOrderCard(item, handleView),
         list: (item) => renderChangeOrderList(item, handleView),
+      }}
+      footerTotals={{
+        label: "Totals",
+        values: {
+          amount: <span className="font-semibold">{formatCurrency(totalAmount)}</span>,
+        },
       }}
       emptyState={{
         title: "No change orders found",

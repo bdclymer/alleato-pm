@@ -46,11 +46,30 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# 5. Run lint-staged to check and fix staged files
+# 5. Design system check on staged .tsx files
+echo ""
+echo "🎨 Checking design system compliance..."
+STAGED_TSX=$(git diff --cached --name-only --diff-filter=ACM | grep '\.tsx$' | grep '^frontend/src/' || true)
+if [ -n "$STAGED_TSX" ]; then
+  cd frontend
+  DS_WARNINGS=$(npx eslint --no-error-on-unmatched-pattern --rule 'design-system/no-hardcoded-colors: warn' --rule 'design-system/require-semantic-colors: warn' $STAGED_TSX 2>&1 | grep "design-system/" | wc -l | tr -d ' ')
+  cd ..
+  if [ "$DS_WARNINGS" -gt 0 ]; then
+    echo "⚠️  Design system: $DS_WARNINGS warning(s) found in staged .tsx files"
+    echo "   Run: cd frontend && npx eslint --rule 'design-system/require-semantic-colors: warn' <file>"
+    echo "   Ref: frontend/src/design-system/tokens.md"
+  else
+    echo "✅ Design system: No violations found"
+  fi
+else
+  echo "   No .tsx files staged — skipping"
+fi
+
+# 6. Run lint-staged to check and fix staged files
 echo ""
 npx lint-staged
 
-# If lint-staged fails, block the commit
+# If lint-staged fails, block the commit (step 6)
 if [ $? -ne 0 ]; then
   echo "❌ Pre-commit checks FAILED"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

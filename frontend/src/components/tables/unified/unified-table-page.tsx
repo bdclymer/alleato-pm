@@ -9,7 +9,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SimplePagination } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -83,6 +83,7 @@ export interface UnifiedTablePageProps<T> {
     rowActions?: (item: T) => ReactNode;
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
+    stickyHeader?: boolean;
   };
   sorting?: {
     sortBy: string | null;
@@ -111,7 +112,15 @@ export interface UnifiedTablePageProps<T> {
     perPage: number;
     onPageChange: (page: number) => void;
     onPerPageChange: (perPage: string) => void;
+    clientSide?: boolean;
   };
+  footerTotals?: {
+    /** Label shown in the first visible column (default: "Totals") */
+    label?: string;
+    /** Map of column ID → rendered value for the footer row */
+    values: Record<string, ReactNode>;
+  };
+  topContent?: ReactNode;
   features?: UnifiedTableFeatures;
 }
 
@@ -126,6 +135,8 @@ export function UnifiedTablePage<T>({
   views,
   emptyState,
   pagination,
+  footerTotals,
+  topContent,
   features,
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
@@ -205,6 +216,13 @@ export function UnifiedTablePage<T>({
     return sorted;
   }, [data.items, sorting?.sortBy, sorting?.sortDirection, table.columns]);
 
+  const paginatedItems = React.useMemo(() => {
+    if (!pagination?.clientSide) return sortedItems;
+    const start = (pagination.page - 1) * pagination.perPage;
+    const end = start + pagination.perPage;
+    return sortedItems.slice(start, end);
+  }, [pagination?.clientSide, pagination?.page, pagination?.perPage, sortedItems]);
+
   const allSelected =
     sortedItems.length > 0 &&
     sortedItems.every((item) => selectedIds.includes(table.getRowId(item)));
@@ -282,6 +300,8 @@ export function UnifiedTablePage<T>({
           </div>
         )}
 
+        {topContent && <div className="mt-4 space-y-4">{topContent}</div>}
+
         {showEmptyState && (
           <div className="mt-4">
             <EmptyState
@@ -299,7 +319,7 @@ export function UnifiedTablePage<T>({
         {showTable && shouldRenderTableView && (
           <div className={cn("mt-4 border rounded-lg", data.isFetching && "opacity-70")}>
             <Table>
-              <TableHeader>
+              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20 bg-background")}>
                 <TableRow>
                   {hasRowSelection && (
                     <TableHead className="w-[40px]">
@@ -336,7 +356,7 @@ export function UnifiedTablePage<T>({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedItems.map((item) => (
+                {paginatedItems.map((item) => (
                   <TableRow
                     key={table.getRowId(item)}
                     className={cn(
@@ -368,6 +388,32 @@ export function UnifiedTablePage<T>({
                   </TableRow>
                 ))}
               </TableBody>
+              {footerTotals && (
+                <TableFooter>
+                  <TableRow className="bg-muted/50 font-medium">
+                    {hasRowSelection && <TableCell />}
+                    {table.columns
+                      .filter((column) => visibleColumns.includes(column.id))
+                      .map((column, index) => {
+                        const value = footerTotals.values[column.id];
+                        // Show label in first visible column if no explicit value
+                        if (index === 0 && !value) {
+                          return (
+                            <TableCell key={column.id} className="font-semibold">
+                              {footerTotals.label ?? "Totals"}
+                            </TableCell>
+                          );
+                        }
+                        return (
+                          <TableCell key={column.id} className="font-semibold">
+                            {value ?? null}
+                          </TableCell>
+                        );
+                      })}
+                    {hasRowActions && <TableCell />}
+                  </TableRow>
+                </TableFooter>
+              )}
             </Table>
           </div>
         )}

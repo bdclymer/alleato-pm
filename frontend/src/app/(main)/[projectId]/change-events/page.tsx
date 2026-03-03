@@ -243,6 +243,15 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const totalItems = changeEvents.length;
   const filteredItems = filteredEvents.length;
 
+  const totalEstimatedImpact = React.useMemo(
+    () =>
+      filteredEvents.reduce((sum, event) => sum + (event.estimated_impact ?? 0), 0),
+    [filteredEvents],
+  );
+
+  const formatCurrency = (value: number): string =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+
   const statusCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
     changeEvents.forEach((event) => {
@@ -415,6 +424,14 @@ export default function ProjectChangeEventsPage(): ReactElement {
             Add change event
           </Button>
         ),
+      }}
+      footerTotals={{
+        label: "Totals",
+        values: {
+          estimated_impact: (
+            <span className="font-semibold">{formatCurrency(totalEstimatedImpact)}</span>
+          ),
+        },
       }}
       features={{
         enableExport: false,

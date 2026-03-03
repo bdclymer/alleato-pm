@@ -2,6 +2,7 @@ import path from 'node:path'
 import { FlatCompat } from '@eslint/eslintrc'
 import turboPlugin from 'eslint-plugin-turbo'
 import tseslint from '@typescript-eslint/eslint-plugin'
+import designSystemPlugin from './eslint-plugin-design-system/index.js'
 
 const compat = new FlatCompat({
   baseDirectory: path.resolve(),
@@ -29,7 +30,7 @@ const IGNORE_PATTERNS = [
   'verify-transcript*.js',
   'verify-transcript*.mjs',
   'drizzle/**',
-  'eslint-plugin-design-system/**',
+  'eslint-plugin-design-system/**', // Plugin source - excluded from linting but imported above
   'src/types/**',
 ]
 
@@ -42,6 +43,7 @@ const config = [
     plugins: {
       turbo: turboPlugin,
       '@typescript-eslint': tseslint,
+      'design-system': designSystemPlugin,
     },
     rules: {
       // MANDATORY RULES - Errors that BLOCK commits/pushes
@@ -65,12 +67,10 @@ const config = [
       'react/display-name': 'off',
       '@next/next/no-img-element': 'off',
 
-      // Design System Enforcement - Warnings for now, will become errors
-      'react/forbid-component-props': 'off',
-      'react/forbid-dom-props': 'off',
-
-      // Design System - Prevent raw HTML elements that should be components
-      'no-restricted-syntax': 'off'
+      // Design System Enforcement
+      'design-system/no-hardcoded-colors': 'warn',
+      'design-system/no-arbitrary-spacing': 'warn',
+      'design-system/require-semantic-colors': 'warn',
     },
   },
 ]

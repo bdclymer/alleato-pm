@@ -1,142 +1,213 @@
-import { ProjectPageHeader } from "@/components/layout";
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { FormLayout } from '@/components/layouts'
-import { PageHeader } from '@/components/layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { formatCurrency, formatDate } from '@/lib/table-config/formatters'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { toast } from "sonner";
+import { formatCurrency, formatDate } from "@/lib/table-config/formatters";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
+import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
+import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
 
 interface DirectCostDetailPageProps {
   params: Promise<{
-    projectId: string
-    costId: string
-  }>
+    projectId: string;
+    costId: string;
+  }>;
 }
 
-interface DirectCost {
-  id: string
-  project_id: number
-  description?: string
-  cost_type?: string
-  amount: number
-  vendor_name?: string
-  budget_code?: string
-  budget_description?: string
-  incurred_date?: string
-  invoice_number?: string
-  status?: string
-  created_at: string
-  updated_at?: string
+interface LineItem {
+  id: string;
+  description: string | null;
+  quantity: number;
+  uom: string;
+  unit_cost: number;
+  line_total: number;
+  line_order: number;
+  budget_code: { code: string; description: string } | null;
 }
 
-export default function DirectCostDetailPage({ params }: DirectCostDetailPageProps) {
-  const router = useRouter()
-  const [directCost, setDirectCost] = useState<DirectCost | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [resolvedParams, setResolvedParams] = useState<{ projectId: string; costId: string } | null>(null)
+interface DirectCostDetail {
+  id: string;
+  project_id: number;
+  date: string;
+  cost_type: string;
+  status: string;
+  description: string | null;
+  total_amount: number;
+  invoice_number: string | null;
+  received_date: string | null;
+  paid_date: string | null;
+  erp_status: string | null;
+  created_at: string;
+  updated_at: string;
+  vendor: { id: string; name: string } | null;
+  employee: { id: string; first_name: string; last_name: string } | null;
+  line_items: LineItem[];
+}
 
-  useEffect(() => {
-    params.then(setResolvedParams)
-  }, [params])
-
-  useEffect(() => {
-    if (resolvedParams) {
-      fetchDirectCost()
-    }
-  }, [resolvedParams?.costId])
-
-  const fetchDirectCost = async () => {
-    try {
-      setIsLoading(true)
-      // Use project-specific API endpoint for proper RLS context
-      const response = await fetch(`/api/projects/${resolvedParams?.projectId}/direct-costs/${resolvedParams?.costId}`)
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch direct cost')
-      }
-
-      const data = await response.json()
-      setDirectCost(data)
-    } catch (error) {
-      toast.error('Failed to load direct cost details')
-    } finally {
-      setIsLoading(false)
-    }
+function statusVariant(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "Approved":
+      return "default";
+    case "Pending":
+      return "secondary";
+    case "Revise and Resubmit":
+      return "destructive";
+    default:
+      return "outline";
   }
+}
+
+export default function DirectCostDetailPage({
+  params,
+}: DirectCostDetailPageProps) {
+  const router = useRouter();
+  const [directCost, setDirectCost] = useState<DirectCostDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editData, setEditData] = useState<DirectCostUpdate | undefined>(
+    undefined,
+  );
+  const [isEditLoading, setIsEditLoading] = useState(false);
+  const [resolvedParams, setResolvedParams] = useState<{
+    projectId: string;
+    costId: string;
+  } | null>(null);
+
+  useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
+
+  useEffect(() => {
+    if (!resolvedParams) return;
+
+    const fetchDirectCost = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(
+          `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch direct cost");
+        }
+
+        const data = await response.json();
+        setDirectCost(data);
+      } catch {
+        toast.error("Failed to load direct cost details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDirectCost();
+  }, [resolvedParams]);
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this direct cost? This action cannot be undone.')) {
-      return
-    }
+    if (!resolvedParams) return;
 
     try {
-      setIsDeleting(true)
-      // Use project-specific API endpoint for proper RLS context
-      const response = await fetch(`/api/projects/${resolvedParams?.projectId}/direct-costs/${resolvedParams?.costId}`, {
-        method: 'DELETE',
-      })
+      setIsDeleting(true);
+      const response = await fetch(
+        `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
+        { method: "DELETE" },
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to delete direct cost')
+        throw new Error("Failed to delete direct cost");
       }
 
-      toast.success('Direct cost deleted successfully')
-
-      router.push(`/${resolvedParams?.projectId}/direct-costs`)
-    } catch (error) {
-      toast.error('Failed to delete direct cost')
+      toast.success("Direct cost deleted successfully");
+      router.push(`/${resolvedParams.projectId}/direct-costs`);
+    } catch {
+      toast.error("Failed to delete direct cost");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
-  }
+  };
 
-  const getCostTypeBadge = (type?: string): "default" | "secondary" | "destructive" | "outline" => {
-    const variants = {
-      labor: 'default',
-      materials: 'secondary',
-      equipment: 'outline',
-      other: 'destructive',
-    } as const
-    return variants[type as keyof typeof variants] || 'outline'
-  }
+  const handleOpenEdit = async () => {
+    if (!resolvedParams) return;
+    setIsEditOpen(true);
+    setIsEditLoading(true);
+    setEditData(undefined);
 
-  const getStatusBadge = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
-    const variants = {
-      draft: 'outline',
-      pending: 'secondary',
-      approved: 'default',
-      paid: 'destructive',
-      rejected: 'destructive',
-    } as const
-    return variants[status as keyof typeof variants] || 'outline'
-  }
+    try {
+      const response = await fetch(
+        `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
+      );
+      if (!response.ok) throw new Error("Failed to load for editing");
+      const payload = (await response.json()) as DirectCostUpdate;
+      setEditData(payload);
+    } catch {
+      toast.error("Failed to load direct cost for editing");
+      setIsEditOpen(false);
+    } finally {
+      setIsEditLoading(false);
+    }
+  };
+
+  const breadcrumbs = [
+    { label: "Projects", href: "/" },
+    {
+      label: "Project",
+      href: `/${resolvedParams?.projectId || ""}`,
+    },
+    {
+      label: "Direct Costs",
+      href: `/${resolvedParams?.projectId || ""}/direct-costs`,
+    },
+    { label: "Details" },
+  ];
 
   if (!resolvedParams || isLoading) {
     return (
       <>
         <ProjectPageHeader
           title="Direct Cost Details"
-          description="Loading direct cost information"
-          breadcrumbs={[
-            { label: 'Projects', href: '/' },
-            { label: 'Project', href: `/${resolvedParams?.projectId || ''}` },
-            { label: 'Direct Costs', href: `/${resolvedParams?.projectId || ''}/direct-costs` },
-            { label: 'Details' }
-          ]}
+          description="Loading..."
+          breadcrumbs={breadcrumbs}
         />
-        <FormLayout>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Loading direct cost details...</div>
+        <PageContainer>
+          <div className="space-y-6">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-32 w-full" />
           </div>
-        </FormLayout>
+        </PageContainer>
       </>
-    )
+    );
   }
 
   if (!directCost) {
@@ -145,138 +216,323 @@ export default function DirectCostDetailPage({ params }: DirectCostDetailPagePro
         <ProjectPageHeader
           title="Direct Cost Details"
           description="Direct cost not found"
-          breadcrumbs={[
-            { label: 'Projects', href: '/' },
-            { label: 'Project', href: `/${resolvedParams?.projectId}` },
-            { label: 'Direct Costs', href: `/${resolvedParams?.projectId}/direct-costs` },
-            { label: 'Details' }
-          ]}
+          breadcrumbs={breadcrumbs}
         />
-        <FormLayout>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Direct cost not found</div>
+        <PageContainer>
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <p className="text-muted-foreground">Direct cost not found</p>
+            <Button
+              variant="outline"
+              onClick={() =>
+                router.push(`/${resolvedParams.projectId}/direct-costs`)
+              }
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Direct Costs
+            </Button>
           </div>
-        </FormLayout>
+        </PageContainer>
       </>
-    )
+    );
   }
+
+  const lineItemsTotal = directCost.line_items?.reduce(
+    (sum, li) => sum + (li.line_total ?? li.quantity * li.unit_cost),
+    0,
+  ) ?? 0;
 
   return (
     <>
       <ProjectPageHeader
         title="Direct Cost Details"
-        description={`Direct cost #${directCost.id.slice(0, 8)}`}
-        breadcrumbs={[
-          { label: 'Projects', href: '/' },
-          { label: 'Project', href: `/${resolvedParams?.projectId}` },
-          { label: 'Direct Costs', href: `/${resolvedParams?.projectId}/direct-costs` },
-          { label: 'Details' }
-        ]}
+        description={`${directCost.invoice_number ? `Invoice #${directCost.invoice_number}` : `#${directCost.id.slice(0, 8)}`}`}
+        breadcrumbs={breadcrumbs}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleOpenEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </div>
+        }
       />
-      <FormLayout>
-
-      <div className="mt-8 space-y-6">
-        {/* Main Details Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Cost Information</CardTitle>
-              <div className="flex gap-2">
-                <Badge variant={getCostTypeBadge(directCost.cost_type)}>
-                  {directCost.cost_type || 'Other'}
-                </Badge>
-                <Badge variant={getStatusBadge(directCost.status)}>
-                  {directCost.status || 'Draft'}
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Description</label>
-                <p className="mt-1">{directCost.description || 'No description'}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Amount</label>
-                <p className="mt-1 text-2xl font-semibold">{formatCurrency(directCost.amount)}</p>
-              </div>
-
-              {directCost.vendor_name && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Vendor</label>
-                  <p className="mt-1">{directCost.vendor_name}</p>
+      <PageContainer>
+        <div className="space-y-6">
+          {/* Main Details */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Cost Information</CardTitle>
+                <div className="flex gap-2">
+                  <Badge variant="outline">{directCost.cost_type}</Badge>
+                  <Badge variant={statusVariant(directCost.status)}>
+                    {directCost.status}
+                  </Badge>
                 </div>
-              )}
-
-              {directCost.incurred_date && (
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Date Incurred</label>
-                  <p className="mt-1">{formatDate(directCost.incurred_date)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Amount
+                  </p>
+                  <p className="mt-1 text-2xl font-semibold">
+                    {formatCurrency(directCost.total_amount)}
+                  </p>
                 </div>
-              )}
 
-              {directCost.invoice_number && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Invoice Number</label>
-                  <p className="mt-1">{directCost.invoice_number}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Date
+                  </p>
+                  <p className="mt-1">{formatDate(directCost.date)}</p>
                 </div>
-              )}
 
-              {directCost.budget_code && (
+                {directCost.vendor && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Vendor
+                    </p>
+                    <p className="mt-1">{directCost.vendor.name}</p>
+                  </div>
+                )}
+
+                {directCost.employee && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Employee
+                    </p>
+                    <p className="mt-1">
+                      {directCost.employee.first_name}{" "}
+                      {directCost.employee.last_name}
+                    </p>
+                  </div>
+                )}
+
+                {directCost.invoice_number && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Invoice Number
+                    </p>
+                    <p className="mt-1">{directCost.invoice_number}</p>
+                  </div>
+                )}
+
+                {directCost.received_date && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Received Date
+                    </p>
+                    <p className="mt-1">
+                      {formatDate(directCost.received_date)}
+                    </p>
+                  </div>
+                )}
+
+                {directCost.paid_date && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Paid Date
+                    </p>
+                    <p className="mt-1">{formatDate(directCost.paid_date)}</p>
+                  </div>
+                )}
+
+                {directCost.erp_status && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      ERP Status
+                    </p>
+                    <Badge variant="outline">{directCost.erp_status}</Badge>
+                  </div>
+                )}
+
+                {directCost.description && (
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Description
+                    </p>
+                    <p className="mt-1">{directCost.description}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Line Items */}
+          {directCost.line_items && directCost.line_items.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  Line Items ({directCost.line_items.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Budget Code</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead>UOM</TableHead>
+                        <TableHead className="text-right">Unit Cost</TableHead>
+                        <TableHead className="text-right">
+                          Line Total
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {directCost.line_items
+                        .sort((a, b) => a.line_order - b.line_order)
+                        .map((li) => (
+                          <TableRow key={li.id}>
+                            <TableCell className="font-medium">
+                              {li.budget_code?.code ?? "-"}
+                            </TableCell>
+                            <TableCell>
+                              {li.description ??
+                                li.budget_code?.description ??
+                                "-"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {li.quantity}
+                            </TableCell>
+                            <TableCell>{li.uom}</TableCell>
+                            <TableCell className="text-right">
+                              {formatCurrency(li.unit_cost)}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(
+                                li.line_total ?? li.quantity * li.unit_cost,
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell colSpan={5} className="font-semibold">
+                          Total
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {formatCurrency(lineItemsTotal)}
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Metadata */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Record Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Budget Code</label>
-                  <p className="mt-1">{directCost.budget_code}</p>
-                  {directCost.budget_description && (
-                    <p className="text-sm text-muted-foreground">{directCost.budget_description}</p>
+                  <p className="font-medium text-muted-foreground">Created</p>
+                  <p className="mt-1">
+                    {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
+                  </p>
+                </div>
+                {directCost.updated_at &&
+                  directCost.updated_at !== directCost.created_at && (
+                    <div>
+                      <p className="font-medium text-muted-foreground">
+                        Last Updated
+                      </p>
+                      <p className="mt-1">
+                        {formatDate(
+                          directCost.updated_at,
+                          "MMM d, yyyy HH:mm",
+                        )}
+                      </p>
+                    </div>
                   )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Metadata Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Record Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Created</label>
-                <p className="mt-1">{formatDate(directCost.created_at, 'MMM d, yyyy HH:mm')}</p>
               </div>
-
-              {directCost.updated_at && directCost.updated_at !== directCost.created_at && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Last Updated</label>
-                  <p className="mt-1">{formatDate(directCost.updated_at, 'MMM d, yyyy HH:mm')}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex gap-2 justify-end">
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/${resolvedParams?.projectId}/direct-costs/${resolvedParams?.costId}/edit`)}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-      </FormLayout>
+      </PageContainer>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Direct Cost</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this direct cost? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Slideover */}
+      <Slideover
+        open={isEditOpen}
+        onOpenChange={(open) => !open && setIsEditOpen(false)}
+      >
+        <SlideoverContent
+          side="right"
+          className="w-[92vw] sm:max-w-3xl overflow-y-auto p-0"
+        >
+          <SlideoverHeader className="border-b p-4">
+            <SlideoverTitle>Edit Direct Cost</SlideoverTitle>
+          </SlideoverHeader>
+          <div className="p-4">
+            {isEditLoading || !editData ? (
+              <div className="py-8 text-sm text-muted-foreground">
+                Loading direct cost...
+              </div>
+            ) : (
+              <DirectCostForm
+                mode="edit"
+                initialData={editData}
+                projectId={Number(resolvedParams.projectId)}
+                onCancel={() => setIsEditOpen(false)}
+                onSuccess={() => {
+                  setIsEditOpen(false);
+                  router.refresh();
+                  // Re-fetch to update the detail view
+                  const fetchUpdated = async () => {
+                    const response = await fetch(
+                      `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
+                    );
+                    if (response.ok) {
+                      setDirectCost(await response.json());
+                    }
+                  };
+                  fetchUpdated();
+                }}
+              />
+            )}
+          </div>
+        </SlideoverContent>
+      </Slideover>
     </>
-  )
+  );
 }

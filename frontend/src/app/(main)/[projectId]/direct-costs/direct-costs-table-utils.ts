@@ -26,9 +26,8 @@ export const DIRECT_COST_FILTERS: FilterConfig[] = [
     options: [
       { value: "Draft", label: "Draft" },
       { value: "Pending", label: "Pending" },
+      { value: "Revise and Resubmit", label: "Revise and Resubmit" },
       { value: "Approved", label: "Approved" },
-      { value: "Rejected", label: "Rejected" },
-      { value: "Paid", label: "Paid" },
     ],
   },
   {
@@ -49,6 +48,7 @@ export const SUMMARY_COLUMNS = [
   { id: "cost_type", label: "Type", defaultVisible: true },
   { id: "invoice_number", label: "Invoice #", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "total_amount", label: "Amount", defaultVisible: true },
   { id: "received_date", label: "Received", defaultVisible: true },
   { id: "paid_date", label: "Paid", defaultVisible: false },
@@ -88,9 +88,9 @@ export function formatAmount(value: number): string {
 }
 
 export function getStatusVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
-  if (status === "Approved" || status === "Paid") return "default";
+  if (status === "Approved") return "default";
   if (status === "Draft") return "secondary";
-  if (status === "Rejected") return "destructive";
+  if (status === "Revise and Resubmit") return "destructive";
   return "outline";
 }
 

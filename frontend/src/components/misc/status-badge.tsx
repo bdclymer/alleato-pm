@@ -66,11 +66,10 @@ const statusConfigs: Record<StatusType, Record<string, StatusConfig>> = {
     void: { label: "Void", variant: "destructive" },
   },
   "direct-cost": {
-    draft: { label: "Draft", variant: "secondary" },
-    pending_approval: { label: "Pending Approval", variant: "warning" },
-    approved: { label: "Approved", variant: "success" },
-    paid: { label: "Paid", variant: "success", className: "bg-success/80" },
-    void: { label: "Void", variant: "destructive" },
+    Draft: { label: "Draft", variant: "secondary" },
+    Pending: { label: "Pending", variant: "warning" },
+    "Revise and Resubmit": { label: "Revise and Resubmit", variant: "destructive" },
+    Approved: { label: "Approved", variant: "success" },
   },
 };
 

@@ -51,13 +51,15 @@ interface BudgetCode {
 
 type ParsedRow = Record<string, string>;
 
-const STATUS_MAP: Record<string, "Draft" | "Pending" | "Approved" | "Rejected" | "Paid"> = {
+const STATUS_MAP: Record<string, "Draft" | "Pending" | "Revise and Resubmit" | "Approved"> = {
   draft: "Draft",
   pending: "Pending",
   approved: "Approved",
-  reject: "Rejected",
-  rejected: "Rejected",
-  paid: "Paid",
+  paid: "Approved",
+  revise: "Revise and Resubmit",
+  resubmit: "Revise and Resubmit",
+  "revise and resubmit": "Revise and Resubmit",
+  rejected: "Revise and Resubmit",
 };
 
 const COST_TYPE_MAP: Record<string, "Expense" | "Invoice" | "Subcontractor Invoice"> = {
@@ -133,7 +135,7 @@ function toIsoDate(date: Date): string {
   return date.toISOString().split("T")[0];
 }
 
-function normalizeStatus(value: string): "Draft" | "Pending" | "Approved" | "Rejected" | "Paid" {
+function normalizeStatus(value: string): "Draft" | "Pending" | "Revise and Resubmit" | "Approved" {
   return STATUS_MAP[value.trim().toLowerCase()] ?? "Draft";
 }
 
