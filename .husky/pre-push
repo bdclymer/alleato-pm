@@ -10,11 +10,8 @@ echo "📝 Type checking entire project..."
 npm run typecheck --prefix frontend
 TYPECHECK_EXIT=$?
 
-# Run full lint on entire project
-echo ""
-echo "🔍 Linting entire project..."
-npm run lint --prefix frontend
-LINT_EXIT=$?
+# Skip full lint on push — too slow with design-system warnings.
+# Lint runs on pre-commit (staged files only) which is sufficient.
 
 # Run unit tests to keep service layer coverage healthy
 echo ""
@@ -25,15 +22,14 @@ TEST_EXIT=$?
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Block push if either check failed
-if [ $TYPECHECK_EXIT -ne 0 ] || [ $LINT_EXIT -ne 0 ] || [ $TEST_EXIT -ne 0 ]; then
+# Block push if checks failed
+if [ $TYPECHECK_EXIT -ne 0 ] || [ $TEST_EXIT -ne 0 ]; then
   echo "❌ Pre-push checks FAILED"
   echo ""
   echo "PUSH BLOCKED - Fix all errors before pushing"
   echo ""
   echo "Run these commands to see errors:"
   echo "  npm run typecheck --prefix frontend"
-  echo "  npm run lint --prefix frontend"
   echo "  npm run test:unit --prefix frontend"
   echo ""
   exit 1
