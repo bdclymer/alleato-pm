@@ -70,6 +70,7 @@ export function SiteHeader() {
     subGroups: headerNavGroups.map((group) => ({
       label: group.label,
       toolNames: group.tools.map((tool) => tool.name),
+      columns: group.id === "planning" ? 2 : 1,
     })),
   };
 
