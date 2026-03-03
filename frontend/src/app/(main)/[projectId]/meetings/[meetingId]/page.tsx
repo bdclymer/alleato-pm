@@ -21,31 +21,8 @@ import { format } from 'date-fns';
 import { getProjectInfo } from '@/lib/supabase/project-fetcher';
 import type { Database } from '@/types/database.types';
 import { PageContainer } from '@/components/layout';
+import { AttendeeAvatarStack } from '@/components/meetings/attendee-avatar-stack';
 import Link from 'next/link';
-
-function formatParticipantName(email: string): string {
-  const localPart = email.split('@')[0];
-  if (!localPart) return email;
-  const parts = localPart.split(/[._-]/);
-  if (parts.length >= 2) {
-    const firstName =
-      parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
-    const lastName =
-      parts[parts.length - 1].charAt(0).toUpperCase() +
-      parts[parts.length - 1].slice(1).toLowerCase();
-    return `${firstName} ${lastName}`;
-  }
-  return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
-}
-
-function getEmailInitials(email: string): string {
-  const localPart = email.split('@')[0];
-  const parts = localPart.split(/[._-]/);
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  }
-  return localPart.slice(0, 2).toUpperCase();
-}
 
 type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & {
   opportunities?: unknown[];
@@ -309,29 +286,6 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
 
         {/* Sidebar */}
         <aside className="space-y-6">
-          {/* Topics */}
-          {parsedSections?.keywords && (
-            <div className="space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Topics
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {parsedSections.keywords
-                  .split(',')
-                  .map((k) => k.trim())
-                  .filter(Boolean)
-                  .map((keyword, idx) => (
-                    <span
-                      key={`${keyword}-${idx}`}
-                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-              </div>
-            </div>
-          )}
-
           {/* Action Snapshot */}
           {hasActionItems && (
             <div className="space-y-4 border-t border-border pt-4">
@@ -380,25 +334,30 @@ export default async function ProjectMeetingDetailPage({ params }: PageProps) {
                 <Users className="h-3.5 w-3.5" />
                 Attendees ({participantsList.length})
               </div>
-              <ul className="space-y-3">
-                {participantsList.map((participant, idx) => {
-                  const name = formatParticipantName(participant);
-                  const initials = getEmailInitials(participant);
-                  return (
-                    <li key={`${participant}-${idx}`} className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <span className="text-xs font-semibold text-muted-foreground">
-                          {initials}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{participant}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+              <AttendeeAvatarStack participants={participantsList} />
+            </div>
+          )}
+
+          {/* Topics */}
+          {parsedSections?.keywords && (
+            <div className="space-y-2 border-t border-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Topics
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {parsedSections.keywords
+                  .split(',')
+                  .map((k) => k.trim())
+                  .filter(Boolean)
+                  .map((keyword, idx) => (
+                    <span
+                      key={`${keyword}-${idx}`}
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+              </div>
             </div>
           )}
 

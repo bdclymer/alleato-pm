@@ -1,1 +1,0 @@
-../../../../../.agent-platform/.claude/commands/PRPs/prp-validate/archive/prp-validate3.md

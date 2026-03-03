@@ -14,7 +14,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -130,6 +130,17 @@ export function DirectCostForm({
   const [isDirty, setIsDirty] = useState(false)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
 
+  // Stable budget codes list for LineItemsManager (prevents new array ref on every render)
+  const mappedBudgetCodes = useMemo(
+    () =>
+      budgetCodes.map((bc) => ({
+        ...bc,
+        costType: bc.category || null,
+        fullLabel: `${bc.code} - ${bc.description}`,
+      })),
+    [budgetCodes]
+  )
+
   // Auto-fill button visibility - only shown in development
   const showAutoFill = process.env.NODE_ENV === 'development'
 
@@ -184,12 +195,34 @@ export function DirectCostForm({
     }
   }
 
+  // Sanitize initialData: strip extra API response fields (line_total, budget_code, vendor,
+  // employee) that aren't in the Zod schema. Extra fields in defaultValues cause RHF to
+  // immediately compute isDirty=true on mount, which triggers a render cascade.
+  const sanitizedInitialData = useMemo(() => {
+    if (!initialData) return undefined
+    const data = initialData as any
+    return {
+      ...data,
+      line_items: Array.isArray(data.line_items)
+        ? data.line_items.map((item: any) => ({
+            id: item.id,
+            budget_code_id: item.budget_code_id,
+            description: item.description,
+            quantity: item.quantity,
+            uom: item.uom,
+            unit_cost: item.unit_cost,
+            line_order: item.line_order,
+          }))
+        : data.line_items,
+    }
+  }, [initialData])
+
   // Form setup
   const form = useForm<any>({
     resolver: zodResolver(
       (mode === 'create' ? DirectCostCreateSchema : DirectCostUpdateSchema) as any
     ),
-    defaultValues: (initialData || {
+    defaultValues: (sanitizedInitialData || {
       cost_type: 'Expense',
       status: 'Draft',
       date: new Date(),
@@ -203,7 +236,7 @@ export function DirectCostForm({
         },
       ],
     }) as any,
-    mode: 'onChange',
+    mode: 'onBlur',
   })
 
   // Field array for line items
@@ -715,11 +748,7 @@ export function DirectCostForm({
             <CardContent className="pt-1">
               <LineItemsManager
                 items={fields as any}
-                budgetCodes={budgetCodes.map(bc => ({
-                  ...bc,
-                  costType: bc.category || null,
-                  fullLabel: `${bc.code} - ${bc.description}`,
-                }))}
+                budgetCodes={mappedBudgetCodes}
                 onAdd={handleAddLineItem}
                 onRemove={handleRemoveLineItem}
                 onUpdate={handleUpdateLineItem}

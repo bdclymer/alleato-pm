@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -9,46 +9,48 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Input,
+  Label,
+} from "@/components/ds";
 import { MoreHorizontal, Pencil, Trash2, Copy } from "lucide-react";
 
 export function OverlaysSection() {
   return (
     <section id="overlays" className="scroll-mt-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Overlays
-      </h2>
-      <p className="mt-1 mb-8 text-sm text-muted-foreground">
-        Modal dialogs, sheets, popovers, and dropdown menus. Click each button
-        to see the overlay in action.
-      </p>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
+        <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">
+          08
+        </span>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Overlays
+          </h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Modal dialogs, sheets, popovers, and dropdown menus. Click each
+            button to see the overlay in action.
+          </p>
+        </div>
+      </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-px rounded-xl overflow-hidden bg-border shadow-sm sm:grid-cols-2">
         {/* Dialog */}
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 bg-card p-6">
           <h3 className="text-sm font-medium text-foreground">Dialog</h3>
           <p className="text-xs text-muted-foreground">
             Centered modal for confirmations and forms.
@@ -81,7 +83,7 @@ export function OverlaysSection() {
         </div>
 
         {/* Sheet */}
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 bg-card p-6">
           <h3 className="text-sm font-medium text-foreground">Sheet</h3>
           <p className="text-xs text-muted-foreground">
             Slide-in panel from the side for detail views.
@@ -99,7 +101,7 @@ export function OverlaysSection() {
                   View and edit item properties.
                 </SheetDescription>
               </SheetHeader>
-              <div className="space-y-4 py-6">
+              <div className="space-y-4 px-6 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="sheet-name">Name</Label>
                   <Input id="sheet-name" defaultValue="Westfield Collective" />
@@ -114,7 +116,7 @@ export function OverlaysSection() {
         </div>
 
         {/* Popover */}
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 bg-card p-6">
           <h3 className="text-sm font-medium text-foreground">Popover</h3>
           <p className="text-xs text-muted-foreground">
             Floating content panel anchored to a trigger.
@@ -139,7 +141,7 @@ export function OverlaysSection() {
         </div>
 
         {/* Dropdown Menu */}
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 bg-card p-6">
           <h3 className="text-sm font-medium text-foreground">
             Dropdown Menu
           </h3>

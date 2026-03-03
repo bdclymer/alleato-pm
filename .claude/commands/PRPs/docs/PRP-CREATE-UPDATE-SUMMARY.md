@@ -1,1 +1,0 @@
-../../../../.agent-platform/.claude/commands/PRPs/docs/PRP-CREATE-UPDATE-SUMMARY.md

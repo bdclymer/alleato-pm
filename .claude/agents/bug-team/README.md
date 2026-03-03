@@ -1,73 +1,146 @@
-# Bug Investigation Team
+# Financial Tools Bug Team
 
-A multi-agent team that systematically audits features against Procore reference data to find real bugs with evidence.
+A multi-agent team that systematically investigates, fixes, and verifies all 7 Alleato financial tools.
 
-## The Problem This Solves
+## The 7 Financial Tools
 
-Agents have claimed features were "complete and tested" when they weren't. Code was built on top of broken foundations. This team exists to independently verify that what's built actually works.
+| Tool | URL | Priority |
+|------|-----|----------|
+| Budget | /67/budget | Medium |
+| Prime Contracts | /67/prime-contracts | High |
+| Commitments | /67/commitments | Low (reference impl) |
+| Change Events | /67/change-events | High |
+| Change Orders | /67/change-orders | High |
+| Direct Costs | /67/direct-costs | **Critical** (form hang) |
+| Invoicing | /67/invoicing | **Critical** (needs full migration) |
 
 ## Team Members
 
 | Agent | File | Role |
 |-------|------|------|
-| **Procore Feature Expert** | `procore-feature-expert.md` | Knows what Procore looks like from crawl data |
-| **Code Auditor** | `code-auditor.md` | Reads source code, finds gaps vs Procore reference |
-| **Live Tester** | `live-tester.md` | Runs the app, tests CRUD, captures evidence |
-| **Orchestrator** | `investigation-orchestrator.md` | Coordinates the team, synthesizes findings |
+| **Team Lead** | `financial-tools-lead.md` | Coordinates full cycle, orchestrates teammates |
+| **Investigation Orchestrator** | `investigation-orchestrator.md` | Detailed investigation workflow |
+| **Procore Feature Expert** | `procore-feature-expert.md` | Procore reference specs from crawl data |
+| **Code Auditor** | `code-auditor.md` | Source code analysis vs Procore reference |
+| **Live Tester** | `live-tester.md` | Browser testing with evidence |
+| **Financial Implementor** | `financial-implementor.md` | Code fixes for confirmed issues |
 
-## Usage
+## How to Start the Agent Team
 
-```bash
-# Full investigation of a single feature
-/investigate budget
+### Prerequisites
+1. Agent teams must be enabled (already done in `.claude/settings.json`)
+2. Dev server should be running: `cd frontend && npm run dev`
 
-# Quick triage of all features
-/investigate --all
+### Start the Full Financial Tools Completion Cycle
 
-# Re-test after fixes
-/investigate commitments --retest
+In Claude Code, use this prompt to kick off the agent team:
+
+```
+Create an agent team to finalize all 7 Alleato financial tools.
+
+The financial tools are: Budget, Prime Contracts, Commitments, Change Events, Change Orders, Direct Costs, and Invoicing.
+
+Team structure:
+1. Spawn 7 investigation teammates in PARALLEL — one per tool. Each investigator should:
+   - Read .claude/agents/bug-team/procore-feature-expert.md for the Procore reference
+   - Read .claude/agents/bug-team/code-auditor.md for the code audit protocol
+   - Read .claude/agents/bug-team/live-tester.md for the live testing protocol
+   - Produce investigation reports in .claude/investigations/{tool}/
+
+2. After all investigations complete, spawn implementor teammates (start with Direct Costs and Invoicing in parallel — they're most critical):
+   - Each implementor reads .claude/agents/bug-team/financial-implementor.md
+   - Require plan approval before any implementor makes changes
+
+3. After implementation, spawn verification teammates in parallel to confirm fixes work
+
+4. Produce a final completion report at .claude/investigations/COMPLETION-REPORT.md
+
+Dev server is at http://localhost:3000. Test project ID is 67.
+Agent instructions are in .claude/agents/bug-team/financial-tools-lead.md
+```
+
+### Quick Single-Tool Investigation
+
+```
+Spawn an agent team to investigate and fix the Direct Costs tool only.
+1. One investigator teammate: audit code + live test + produce report in .claude/investigations/direct-costs/
+2. One implementor teammate: fix the form hang bug (priority 1) and any other confirmed issues
+3. Verify the fix works in the browser
+
+Read .claude/agents/bug-team/financial-implementor.md for the implementor's protocol.
+Test at http://localhost:3000/67/direct-costs. Project ID: 67.
+```
+
+### Re-test After Fixes
+
+```
+Spawn a live tester teammate to re-test the {TOOL} tool.
+Read .claude/agents/bug-team/live-tester.md for the full protocol.
+Test at http://localhost:3000/67/{tool}. Project ID: 67.
+Save results to .claude/investigations/{tool}/verification-report.md
 ```
 
 ## How It Works
 
-1. **Feature Expert** reads Procore crawl data (DOM snapshots, analysis JSON) to produce a reference specification of what the feature should look like
-2. **Code Auditor** compares our source code against that reference — finds missing CRUD operations, wrong columns, broken patterns
-3. **Live Tester** runs the actual app and tests everything works — captures evidence for every claim
-4. **Orchestrator** combines findings into a prioritized report
+```
+Phase 1 (Parallel): Investigation
+├── Investigator-Budget          → .claude/investigations/budget/
+├── Investigator-Prime-Contracts → .claude/investigations/prime-contracts/
+├── Investigator-Commitments     → .claude/investigations/commitments/
+├── Investigator-Change-Events   → .claude/investigations/change-events/
+├── Investigator-Change-Orders   → .claude/investigations/change-orders/
+├── Investigator-Direct-Costs    → .claude/investigations/direct-costs/
+└── Investigator-Invoicing       → .claude/investigations/invoicing/
 
-## Key Principle
+Phase 2 (Priority Order): Implementation
+├── 2a (Critical, Parallel): Direct Costs + Invoicing
+├── 2b (High, Parallel): Prime Contracts + Change Events + Change Orders
+└── 2c (Medium): Budget + Commitments (if needed)
+
+Phase 3 (Parallel): Verification
+└── Verifier-{Tool} for each tool that had fixes
+
+Phase 4: Final report → .claude/investigations/COMPLETION-REPORT.md
+```
+
+## Key Principles
 
 **Evidence over assumptions.** Every finding must have proof:
 - Code Auditor: file paths and line numbers
 - Live Tester: screenshots, console errors, network failures
-- No "it seems like" or "it might be" — only confirmed facts
 
-## Crawl Data Sources
+**Fix confirmed issues only.** Implementors work from investigation reports, not guesses.
 
-The Feature Expert draws from:
-- `scripts/screenshot-capture/outputs/dom/` — Full HTML snapshots of Procore pages
-- `scripts/screenshot-capture/outputs/analysis-json/` — Structured metadata extractions
-- `scripts/screenshot-capture/outputs/{feature}/` — Feature-specific crawl data
-- `scripts/screenshot-capture/scripts/crawlers/` — Crawler scripts (show URL patterns and flows)
+**Commitments is the gold standard.** All other tools should match its patterns:
+- `frontend/src/features/commitments/feature-config.ts`
+- `frontend/src/hooks/use-commitments.ts`
 
 ## Output Location
 
-All investigation results go to `.claude/investigations/`:
 ```
 .claude/investigations/
-├── triage/                     # Quick sweep results per feature
-├── {feature}/                  # Deep dive results
-│   ├── procore-reference.md    # What Procore looks like
-│   ├── code-audit.md           # Source code analysis
-│   ├── live-test.md            # Browser test results
-│   └── investigation-report.md # Combined prioritized findings
-└── INVESTIGATION-SUMMARY.md    # Cross-feature overview
+├── triage/                         # Quick sweep results (if run)
+├── {tool}/                         # Per-tool investigation
+│   ├── procore-reference.md        # Procore spec
+│   ├── code-audit.md               # Source analysis
+│   ├── live-test.md                # Browser test results
+│   ├── investigation-report.md     # Combined findings
+│   ├── implementation-report.md    # What was fixed
+│   └── verification-report.md      # Post-fix verification
+└── COMPLETION-REPORT.md            # Final overall status
 ```
 
-## When to Use This Team
+## Agent Teams vs Subagents
 
-- After a batch of features has been "completed" by development agents
-- Before a demo or release
-- When the user suspects something is broken
-- Periodically as a health check
-- After significant refactoring
+This team works in both modes:
+
+**Agent Teams (recommended for full cycle):**
+- Teammates run as separate Claude sessions
+- Can investigate all 7 tools simultaneously
+- Significantly faster but uses more tokens
+- Enable with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` in settings (already done)
+
+**Subagents (for single-tool work):**
+- Use the Task tool in your current session
+- Lower token cost for focused work
+- Sequential unless you spawn multiple Tasks in one message

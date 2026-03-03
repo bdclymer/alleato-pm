@@ -1,31 +1,42 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@/components/ds";
 
 export function NavigationSection() {
   return (
     <section id="navigation" className="scroll-mt-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Navigation
-      </h2>
-      <p className="mt-1 mb-8 text-sm text-muted-foreground">
-        Tabs, breadcrumbs, and navigation patterns used across the app.
-      </p>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
+        <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">
+          09
+        </span>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Navigation
+          </h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Tabs, breadcrumbs, and navigation patterns used across the app.
+          </p>
+        </div>
+      </div>
 
       {/* Tabs */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
+      <div className="mb-10">
+        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Tabs
         </h3>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <Tabs defaultValue="overview">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -54,10 +65,10 @@ export function NavigationSection() {
 
       {/* Breadcrumbs */}
       <div>
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
+        <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Breadcrumbs
         </h3>
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

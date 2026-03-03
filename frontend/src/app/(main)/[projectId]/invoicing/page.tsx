@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useCallback, useState } from "react";
-import { Plus, ChevronDown, Eye, Edit, Trash2 } from "lucide-react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ColumnDef } from "@tanstack/react-table";
+import * as React from "react";
+import type { ReactElement } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ChevronDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,218 +16,229 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { StatusBadge } from "@/components/misc/status-badge";
-import { DataTablePage } from "@/components/templates";
-import { Stack } from "@/components/ui/stack";
-import { Text } from "@/components/ui/text";
-import { Link } from "@/components/ui/link";
-import { MobileCard } from "@/components/ui/mobile-card";
-import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
-  getOwnerInvoicesColumns,
-  getInvoicingTabs,
-  invoiceStatusOptions,
-  invoicingMobileColumns,
-  formatCurrency,
-  getOwnerInvoicesSummaryCards,
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
+import {
+  useOwnerInvoicesList,
+  useDeleteOwnerInvoice,
+} from "@/hooks/use-invoicing";
+import {
+  buildInvoiceTableColumns,
+  invoiceColumns,
+  invoiceDefaultVisibleColumns,
+  invoiceFilters,
+  renderInvoiceCard,
+  renderInvoiceList,
+  renderInvoiceRowActions,
   type OwnerInvoice,
-} from "@/config/tables";
+} from "@/features/invoicing/invoicing-table-config";
 
-/**
- * Project Invoicing Page
- *
- * Displays and manages owner and subcontractor invoices for a project.
- * Uses the standardized DataTablePage template for consistent styling.
- */
-export default function ProjectInvoicingPage() {
+// =============================================================================
+// Constants
+// =============================================================================
+
+const EMPTY_FILTERS: Record<string, FilterValue> = {
+  status: undefined,
+};
+
+type FilterState = Record<string, FilterValue>;
+
+// =============================================================================
+// Page Component
+// =============================================================================
+
+export default function ProjectInvoicingPage(): ReactElement {
+  const params = useParams<{ projectId: string }>();
+  const pathname = usePathname();
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const projectId = parseInt(params.projectId as string);
-  const tab = searchParams.get("tab") || "owner";
-  useProjectTitle("Invoicing");
+  const projectId = params.projectId ?? "";
 
-  const [ownerInvoices, setOwnerInvoices] = useState<OwnerInvoice[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [invoiceToDelete, setInvoiceToDelete] = useState<OwnerInvoice | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = React.useState<OwnerInvoice | null>(null);
 
-  // Fetch owner invoices
-  const fetchOwnerInvoices = useCallback(async () => {
-    if (!projectId) return;
+  // Active tab from URL (owner | subcontractor | billing-periods)
+  const activeTab = searchParams.get("tab") ?? "owner";
 
-    setIsLoading(true);
-    setError(null);
+  // Initial filter state from URL
+  const initialFilters: FilterState = {
+    status: searchParams.get("status") ?? undefined,
+  };
 
-    try {
-      const response = await fetch(
-        `/api/projects/${projectId}/invoicing/owner`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch owner invoices");
+  // ─── Table State ───────────────────────────────────────────────────────────
+
+  const tableState = useUnifiedTableState({
+    entityKey: "invoicing",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "created_at",
+      sortDirection: "desc",
+      visibleColumns: invoiceDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  // Sync URL filter params → table state
+  React.useEffect(() => {
+    const nextStatus = searchParams.get("status") ?? "";
+    tableState.setActiveFilters((prev) => {
+      const normalized = nextStatus || undefined;
+      if (prev.status === normalized) return prev;
+      return { status: normalized };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  const activeFilters = tableState.activeFilters as FilterState;
+
+  // ─── Data ──────────────────────────────────────────────────────────────────
+
+  const statusFilter =
+    searchParams.get("status") ||
+    (typeof activeFilters.status === "string" ? activeFilters.status : undefined);
+
+  const { data: rawInvoices = [], isLoading, isFetching, error } = useOwnerInvoicesList(
+    projectId,
+    { status: statusFilter },
+  );
+
+  const resolvedError =
+    error instanceof Error ? error : error ? new Error("Failed to load invoices") : undefined;
+
+  const deleteInvoice = useDeleteOwnerInvoice(projectId);
+
+  // ─── Client-side filtering / sorting ───────────────────────────────────────
+
+  const invoices = React.useMemo(() => {
+    let items = rawInvoices;
+
+    // Search filter (client-side)
+    const search = tableState.debouncedSearch.toLowerCase().trim();
+    if (search) {
+      items = items.filter((inv) => {
+        const num = inv.invoice_number?.toLowerCase() ?? "";
+        const id = `inv-${inv.id}`;
+        return num.includes(search) || id.includes(search);
+      });
+    }
+
+    // Status filter (client-side supplemental — API already filters, but be safe)
+    if (statusFilter) {
+      items = items.filter((inv) => inv.status === statusFilter);
+    }
+
+    return items;
+  }, [rawInvoices, tableState.debouncedSearch, statusFilter]);
+
+  const tableColumns = buildInvoiceTableColumns(handleView, handleEdit);
+
+  const sortedInvoices = React.useMemo(() => {
+    if (!tableState.sortBy) return invoices;
+    const col = tableColumns.find((c) => c.id === tableState.sortBy);
+    const getSortValue = col?.sortValue;
+    if (!getSortValue) return invoices;
+
+    return [...invoices].sort((a, b) => {
+      const va = getSortValue(a);
+      const vb = getSortValue(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
+      if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
+      if (typeof va === "number" && typeof vb === "number") {
+        return tableState.sortDirection === "asc" ? va - vb : vb - va;
       }
+      const cmp = String(va).localeCompare(String(vb));
+      return tableState.sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [invoices, tableColumns, tableState.sortBy, tableState.sortDirection]);
 
-      const data = await response.json();
-      setOwnerInvoices(data.data || []);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch owner invoices",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [projectId]);
+  // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (tab === "owner" || !tab) {
-      fetchOwnerInvoices();
-    }
-  }, [tab, fetchOwnerInvoices]);
+  function handleView(invoice: OwnerInvoice) {
+    router.push(`/${projectId}/invoicing/${invoice.id}`);
+  }
 
-  // Navigation handlers
-  const handleCreateOwnerInvoice = useCallback(() => {
-    router.push(`/${projectId}/invoicing/new`);
-  }, [router, projectId]);
+  function handleEdit(invoice: OwnerInvoice) {
+    router.push(`/${projectId}/invoicing/${invoice.id}`);
+  }
 
-  const handleCreateSubcontractorInvoice = useCallback(() => {
-    toast.info("Create subcontractor invoice coming soon");
-  }, []);
+  function handleDeleteIntent(invoice: OwnerInvoice) {
+    setInvoiceToDelete(invoice);
+    setDeleteDialogOpen(true);
+  }
 
-  const handleView = useCallback(
-    (invoice: OwnerInvoice) => {
-      router.push(`/${projectId}/invoicing/${invoice.id}`);
-    },
-    [router, projectId],
-  );
-
-  const handleEdit = useCallback(
-    (invoice: OwnerInvoice) => {
-      router.push(`/${projectId}/invoicing/${invoice.id}`);
-    },
-    [router, projectId],
-  );
-
-  const handleDeleteConfirm = useCallback(async () => {
+  async function handleDeleteConfirm() {
     if (!invoiceToDelete) return;
-
     try {
-      setIsDeleting(true);
-      const response = await fetch(
-        `/api/projects/${projectId}/invoicing/owner/${invoiceToDelete.id}`,
-        { method: "DELETE" },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete invoice");
-      }
-
-      toast.success("Invoice deleted successfully");
-      fetchOwnerInvoices();
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete invoice",
-      );
+      await deleteInvoice.mutateAsync(invoiceToDelete.id);
     } finally {
-      setIsDeleting(false);
+      setDeleteDialogOpen(false);
       setInvoiceToDelete(null);
     }
-  }, [invoiceToDelete, projectId, fetchOwnerInvoices]);
+  }
 
-  // Column definitions with action handlers
-  const columns: ColumnDef<OwnerInvoice>[] = useMemo(
-    () => [
-      ...getOwnerInvoicesColumns(handleView),
-      {
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const invoice = row.original;
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <span className="sr-only">Open menu</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleView(invoice)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleEdit(invoice)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setInvoiceToDelete(invoice)}
-                  className="text-destructive"
-                  disabled={invoice.status === "approved"}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
-    ],
-    [handleView, handleEdit],
-  );
+  function handleFilterChange(nextFilters: FilterState) {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  }
 
-  // Generate tabs
-  const tabs = useMemo(() => getInvoicingTabs(projectId), [projectId]);
+  function handleTabChange(tab: string) {
+    if (tab === "subcontractor" || tab === "billing-periods") {
+      toast.info(`${tab === "subcontractor" ? "Subcontractor invoices" : "Billing periods"} coming soon`);
+      return;
+    }
+    tableState.setSearchParams({ tab: null });
+  }
 
-  // Generate summary cards
-  const summaryCards = useMemo(
-    () => getOwnerInvoicesSummaryCards(ownerInvoices),
-    [ownerInvoices],
-  );
+  // ─── Derived ───────────────────────────────────────────────────────────────
 
-  // Mobile card renderer
-  const mobileCardRenderer = useCallback(
-    (invoice: OwnerInvoice) => (
-      <MobileCard>
-        <MobileCard.Header>
-          <Stack gap="xs">
-            <Link>{invoice.invoice_number || `INV-${invoice.id}`}</Link>
-            <Text size="sm" tone="muted">
-              Contract #{invoice.contract_id}
-            </Text>
-            <Text size="sm" tone="muted">
-              {invoice.period_start} - {invoice.period_end}
-            </Text>
-          </Stack>
-          <StatusBadge status={invoice.status} type="invoice" />
-        </MobileCard.Header>
-        <MobileCard.Footer>
-          <Text size="sm" tone="muted">
-            Total Amount
-          </Text>
-          <Text weight="medium">
-            {formatCurrency(invoice.total_amount || 0)}
-          </Text>
-        </MobileCard.Footer>
-      </MobileCard>
-    ),
-    [],
-  );
+  const isFiltered =
+    Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
-  // Create action button
+  const totalItems = sortedInvoices.length;
+
+  // ─── Tabs ──────────────────────────────────────────────────────────────────
+
+  const tabs = [
+    {
+      label: "Owner Invoices",
+      href: `/${projectId}/invoicing`,
+      isActive: activeTab === "owner" || !searchParams.get("tab"),
+    },
+    {
+      label: "Subcontractor",
+      href: `/${projectId}/invoicing?tab=subcontractor`,
+      isActive: activeTab === "subcontractor",
+    },
+    {
+      label: "Billing Periods",
+      href: `/${projectId}/invoicing?tab=billing-periods`,
+      isActive: activeTab === "billing-periods",
+    },
+  ];
+
+  // ─── Action Button ─────────────────────────────────────────────────────────
+
   const createButton = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -239,11 +249,11 @@ export default function ProjectInvoicingPage() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleCreateOwnerInvoice}>
+        <DropdownMenuItem onClick={() => router.push(`/${projectId}/invoicing/new`)}>
           <Plus className="h-4 w-4 mr-2" />
           Owner Invoice
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleCreateSubcontractorInvoice}>
+        <DropdownMenuItem onClick={() => toast.info("Subcontractor invoice coming soon")}>
           <Plus className="h-4 w-4 mr-2" />
           Subcontractor Invoice
         </DropdownMenuItem>
@@ -251,66 +261,136 @@ export default function ProjectInvoicingPage() {
     </DropdownMenu>
   );
 
-  // Render based on active tab
-  if (tab === "billing-periods") {
-    return (
-      <DataTablePage
-        title="Invoicing"
-        description="Manage project invoicing and billing periods"
-        tabs={tabs}
-        actions={createButton}
-        columns={[]}
-        data={[]}
-        loading={false}
-        emptyMessage="Billing periods coming soon"
-      />
-    );
-  }
+  // ─── Render ────────────────────────────────────────────────────────────────
 
-  if (tab === "subcontractor") {
-    return (
-      <DataTablePage
-        title="Invoicing"
-        description="Manage project invoicing and billing periods"
-        tabs={tabs}
-        actions={createButton}
-        columns={[]}
-        data={[]}
-        loading={false}
-        emptyMessage="Subcontractor invoices coming soon"
-      />
-    );
-  }
-
-  // Default: Owner invoices tab
   return (
-    <DataTablePage<OwnerInvoice>
-      title="Invoicing"
-      description="Manage project invoicing and billing periods"
-      tabs={tabs}
-      actions={createButton}
-      columns={columns}
-      data={ownerInvoices}
-      loading={isLoading}
-      error={error}
-      onRetry={fetchOwnerInvoices}
-      emptyMessage="No owner invoices found"
-      emptyAction={
-        <Button onClick={handleCreateOwnerInvoice}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create your first owner invoice
-        </Button>
-      }
-      onRowClick={handleView}
-      searchKey="invoice_number"
-      searchPlaceholder="Search invoices..."
-      filterOptions={invoiceStatusOptions}
-      mobileColumns={invoicingMobileColumns}
-      mobileCardRenderer={mobileCardRenderer}
-      showExportButton={true}
-      onExportCSV={() => toast.info("CSV export coming soon")}
-      onExportPDF={() => toast.info("PDF export coming soon")}
-      summaryCards={summaryCards}
-    />
+    <>
+      <UnifiedTablePage
+        header={{
+          title: "Invoicing",
+          description: "Manage owner invoices and billing periods",
+          actions: createButton,
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems,
+          filteredItems: totalItems,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search invoices...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: invoiceFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: invoiceColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: sortedInvoices,
+          isLoading,
+          isFetching,
+          error: resolvedError,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => String(item.id),
+          onRowClick: handleView,
+          rowActions: (item) =>
+            renderInvoiceRowActions(item, handleView, handleEdit, handleDeleteIntent),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: (checked) => {
+            tableState.setSelectedIds(
+              checked ? sortedInvoices.map((inv) => String(inv.id)) : [],
+            );
+          },
+          onSelectRow: (id, checked) => {
+            tableState.setSelectedIds((prev) =>
+              checked
+                ? [...prev, String(id)]
+                : prev.filter((x) => x !== String(id)),
+            );
+          },
+        }}
+        views={{
+          card: (item) => renderInvoiceCard(item),
+          list: (item) => renderInvoiceList(item),
+        }}
+        emptyState={{
+          title: "No invoices found",
+          description: "You have not created any owner invoices yet.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered,
+          action: (
+            <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create your first invoice
+            </Button>
+          ),
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages: Math.max(1, Math.ceil(totalItems / tableState.perPage)),
+          perPage: tableState.perPage,
+          onPageChange: (nextPage) => {
+            tableState.setPage(nextPage);
+            tableState.setSearchParams({ page: String(nextPage) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            const parsed = Number(nextPerPage);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            tableState.setPerPage(parsed);
+            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice{" "}
+              <strong>
+                {invoiceToDelete?.invoice_number || `INV-${invoiceToDelete?.id}`}
+              </strong>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Invoice
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

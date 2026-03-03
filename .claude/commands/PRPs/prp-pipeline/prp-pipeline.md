@@ -1,1 +1,0 @@
-../../../../.agent-platform/.claude/commands/PRPs/prp-pipeline/prp-pipeline.md

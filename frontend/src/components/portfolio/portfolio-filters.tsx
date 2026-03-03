@@ -5,8 +5,7 @@ import {
   Search,
   List,
   LayoutGrid,
-  BarChart3,
-  Map as MapIcon,
+  Filter,
   X,
   SlidersHorizontal,
   ChevronDown,
@@ -37,6 +36,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PortfolioViewType } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -103,8 +103,6 @@ export function PortfolioFilters({
   }[] = [
     { value: "list", icon: List, label: "List View" },
     { value: "thumbnails", icon: LayoutGrid, label: "Thumbnails View" },
-    { value: "overview", icon: BarChart3, label: "Overview" },
-    { value: "map", icon: MapIcon, label: "Map View" },
   ];
 
   const activeFiltersCount = [phaseFilter, categoryFilter, clientFilter].filter(
@@ -343,94 +341,122 @@ export function PortfolioFilters({
           />
         </div>
 
-        {/* Client Filter Select */}
-        {onClientFilterChange && (
-          <Select
-            value={clientFilter || "all"}
-            onValueChange={(value) =>
-              onClientFilterChange(value === "all" ? null : value)
-            }
-          >
-            <SelectTrigger className="h-10 w-[180px] text-sm border-border focus:border-brand">
-              <SelectValue placeholder="All Clients" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Clients</SelectItem>
-              {clientOptions?.map((client) => (
-                <SelectItem key={client} value={client}>
-                  {client}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-
-        {/* Phase Filter Dropdown */}
-        {onPhaseFilterChange && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 text-sm capitalize border-border hover:border-border/80">
-                {phaseFilter || "All Phases"}
-                <ChevronDown className="w-4 h-4 ml-2 shrink-0" />
+        {/* Filter popover */}
+        {(onClientFilterChange || onPhaseFilterChange || onCategoryFilterChange) && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="relative h-10 w-10 border-border hover:border-border/80"
+                aria-label="Open filters"
+              >
+                <Filter className="h-4 w-4" />
+                {activeFiltersCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[12rem]">
-              <DropdownMenuItem onClick={() => onPhaseFilterChange(null)}>
-                All Phases
-              </DropdownMenuItem>
-              {phaseOptions?.length && (
-                <>
-                  <DropdownMenuSeparator />
-                  {phaseOptions.map((phase) => (
-                    <DropdownMenuItem
-                      key={phase}
-                      onClick={() => onPhaseFilterChange(phase)}
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-80 p-4">
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Filters</p>
+
+                {onClientFilterChange && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Client
+                    </span>
+                    <Select
+                      value={clientFilter || "all"}
+                      onValueChange={(value) =>
+                        onClientFilterChange(value === "all" ? null : value)
+                      }
                     >
-                      <span className="capitalize">{phase}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All Clients" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Clients</SelectItem>
+                        {clientOptions?.map((client) => (
+                          <SelectItem key={client} value={client}>
+                            {client}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-        {/* Category Filter Dropdown */}
-        {onCategoryFilterChange && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-10 text-sm border-border hover:border-border/80">
-                {categoryFilter || "All Categories"}
-                <ChevronDown className="w-4 h-4 ml-2 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[12rem]">
-              {categoryOptions?.length ? (
-                categoryOptions.map((category) => (
-                  <DropdownMenuItem
-                    key={category}
-                    onClick={() => onCategoryFilterChange(category)}
-                  >
-                    {category}
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>
-                  No categories found
-                </DropdownMenuItem>
-              )}
-              {categoryFilter && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => onCategoryFilterChange(null)}
-                  >
-                    Clear filter
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {onPhaseFilterChange && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Phase
+                    </span>
+                    <Select
+                      value={phaseFilter || "all"}
+                      onValueChange={(value) =>
+                        onPhaseFilterChange(value === "all" ? null : value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 text-sm capitalize">
+                        <SelectValue placeholder="All Phases" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Phases</SelectItem>
+                        {phaseOptions?.map((phase) => (
+                          <SelectItem key={phase} value={phase}>
+                            <span className="capitalize">{phase}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {onCategoryFilterChange && (
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Category
+                    </span>
+                    <Select
+                      value={categoryFilter || "all"}
+                      onValueChange={(value) =>
+                        onCategoryFilterChange(value === "all" ? null : value)
+                      }
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="All Categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categoryOptions?.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {activeFiltersCount > 0 && (
+                  <>
+                    <div className="h-px bg-border" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-center text-xs"
+                      onClick={onClearFilters}
+                    >
+                      Clear filters
+                    </Button>
+                  </>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
 
 

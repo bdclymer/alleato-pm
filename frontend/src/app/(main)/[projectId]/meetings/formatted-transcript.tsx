@@ -10,6 +10,19 @@ interface FormattedTranscriptProps {
   participants?: string[];
 }
 
+const SPEAKER_WORD_TO_NUMBER: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
 function formatParticipantName(email: string): string {
   const localPart = email.split("@")[0];
   if (!localPart) return email;
@@ -25,6 +38,36 @@ function formatParticipantName(email: string): string {
   return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase();
 }
 
+function getParticipantBySpeakerLabel(
+  speakerLabel: string,
+  participants: string[]
+): string | null {
+  const normalized = speakerLabel.trim().toLowerCase();
+  const numericMatch = normalized.match(/^\d+$/);
+  if (numericMatch) {
+    const numericIndex = Number.parseInt(normalized, 10);
+    return participants[numericIndex] ? formatParticipantName(participants[numericIndex]) : null;
+  }
+
+  const speakerNumericMatch = normalized.match(/^speaker\s+(\d+)$/);
+  if (speakerNumericMatch) {
+    const speakerNumber = Number.parseInt(speakerNumericMatch[1], 10);
+    const idx = speakerNumber > 0 ? speakerNumber - 1 : speakerNumber;
+    return participants[idx] ? formatParticipantName(participants[idx]) : null;
+  }
+
+  const speakerWordMatch = normalized.match(/^speaker\s+([a-z]+)$/);
+  if (speakerWordMatch) {
+    const speakerWord = speakerWordMatch[1];
+    const speakerNumber = SPEAKER_WORD_TO_NUMBER[speakerWord];
+    if (!speakerNumber) return null;
+    const idx = speakerNumber - 1;
+    return participants[idx] ? formatParticipantName(participants[idx]) : null;
+  }
+
+  return null;
+}
+
 /**
  * Renders markdown-formatted transcript content with proper styling.
  * Maps numbered speaker labels (e.g. **0:**) to actual participant names
@@ -35,13 +78,24 @@ export function FormattedTranscript({
   participants = [],
 }: FormattedTranscriptProps) {
   const formattedContent = content
-    // Replace **0:**, **1:** etc. with actual participant names (or "Speaker N" fallback)
+    // Replace **0:**, **1:**, **Speaker 1:**, **Speaker One:** with participant names.
     .replace(/\*\*(\d+):\*\*/g, (_, n) => {
       const idx = parseInt(n, 10);
       if (participants[idx]) {
         return `**${formatParticipantName(participants[idx])}:**`;
       }
       return `**Speaker ${idx + 1}:**`;
+    })
+    .replace(/\*\*(speaker\s+(?:\d+|[a-z]+)):\*\*/gi, (fullMatch, speakerLabel) => {
+      const participantName = getParticipantBySpeakerLabel(speakerLabel, participants);
+      if (!participantName) return fullMatch;
+      return `**${participantName}:**`;
+    })
+    .replace(/(^|\n)(speaker\s+(?:\d+|[a-z]+):)/gi, (fullMatch, prefix, speakerLabel) => {
+      const normalizedLabel = speakerLabel.slice(0, -1);
+      const participantName = getParticipantBySpeakerLabel(normalizedLabel, participants);
+      if (!participantName) return fullMatch;
+      return `${prefix}${participantName}:`;
     })
     // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
     .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")

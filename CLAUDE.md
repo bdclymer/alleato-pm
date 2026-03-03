@@ -4,6 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Browser Automation
+
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
+
+Core workflow:
+
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
 ## 🚨 STOP REPEATING MISTAKES - READ THIS FIRST
 
 **Before starting ANY task, check:** `.claude/PREVENTION-CHECKLIST.md`
@@ -245,25 +256,50 @@ See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
 1. Read `frontend/src/design-system/tokens.md` for allowed colors, spacing, shadows
 2. Read `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` for copy-paste patterns
-3. Use `frontend/src/design-system/REFERENCE_COMPONENTS.tsx` as a reference
+3. Import components from `@/components/ds` (the SINGLE import path)
+
+**COMPONENT IMPORT RULES:**
+
+| Need | Import From | Example |
+|------|------------|---------|
+| ANY UI component | `@/components/ds` | `import { Button, StatusBadge, KpiBlock } from "@/components/ds"` |
+| Status display | `StatusBadge` from `@/components/ds` | `<StatusBadge status="Draft" />` — color is automatic |
+| Status dot (tables) | `StatusDot` from `@/components/ds` | `<StatusDot status="Approved" />` — color is automatic |
+| Plain status text | `StatusText` from `@/components/ds` | `<StatusText status="Not synced" />` — muted, no pill |
+| KPI/metrics | `KpiBlock`, `KpiRow` from `@/components/ds` | `<KpiRow metrics={[...]} />` |
+| Data tables | `DataTable` from `@/components/ds` | `<DataTable columns={[...]} rows={data} />` |
+| Section titles | `SectionHeader` from `@/components/ds` | `<SectionHeader title="Details" count={5} />` |
+| Avatar groups | `AvatarStack` from `@/components/ds` | `<AvatarStack avatars={["JD","MH"]} />` |
+| Empty states | `EmptyState` from `@/components/ds` | Design-system-correct empty state |
+| Eyebrow labels | `Eyebrow` from `@/components/ds` | 11px uppercase tracking-wider |
 
 **NEVER:**
 
+- Import directly from `@/components/ui/` in page files (use `@/components/ds` barrel instead)
 - Use hardcoded colors (`bg-gray-200`, `text-gray-600`, `bg-white`, `border-gray-200`)
 - Use arbitrary spacing (`p-[10px]`, `gap-[14px]`, `p-7`)
 - Use `shadow-md`, `shadow-lg`, `shadow-xl` (only `shadow-xs` and `shadow-sm` allowed)
 - Use `bg-orange-500` or `text-orange-600` (use `bg-primary`, `text-primary`)
-- Write raw `<button className="...">` (use `<Button>` from `@/components/ui/button`)
+- Write raw `<button className="...">` (use `<Button>` from `@/components/ds`)
 - Use `rounded-sm` or bare `rounded` (use `rounded-md` default)
+- Manually map status strings to colors (use `StatusBadge` — it handles this automatically)
+- Add non-shadcn components to `@/components/ui/` (that folder is ONLY for base shadcn primitives)
 
 **ALWAYS:**
 
+- Import ALL components from `@/components/ds` (single barrel export)
+- Use `StatusBadge` for status display — pass the status string, colors are baked in
 - Use semantic tokens: `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`
 - Use `<Button>` component with variant props (not raw buttons)
 - Use status colors only for status: `bg-green-50 text-green-600`, `bg-red-50 text-red-600`
-- Run `npx eslint --rule 'design-system/require-semantic-colors: warn' <file>` to check
 
-**ESLint enforces this:** 3 rules active as warnings — `design-system/no-hardcoded-colors`, `design-system/no-arbitrary-spacing`, `design-system/require-semantic-colors`.
+**ESLint enforces this:** 3 rules active as **ERRORS** — `design-system/no-hardcoded-colors`, `design-system/no-arbitrary-spacing`, `design-system/require-semantic-colors`. Violations BLOCK the build.
+
+**Component architecture:**
+- `@/components/ui/` = Pure shadcn base primitives ONLY. Do not add custom components here.
+- `@/components/ds/` = Custom design system components + barrel re-exports of ui/ primitives. This is THE import path.
+- `@/components/layout/` = Page structure (also re-exported from ds/).
+- `@/components/domain/` = Domain-specific components (forms, detail views).
 
 ---
 
@@ -565,29 +601,44 @@ Before claiming tests pass:
 ### Save all documentation in the docs-ai folder.
 
 - file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs
+
 ## UI/UX Design Standards
 
-**Single source of truth: `frontend/src/design-system/`**
+**Single import path: `import { ... } from "@/components/ds"`**
 
-Before building ANY UI, read the design system. It contains:
+**Design system docs** (read before building UI): `frontend/src/design-system/`
 
 | File | What |
 |------|------|
 | `CLAUDE_CODE_UI_GUIDE.md` | **READ FIRST** — Exact Tailwind classes, copy-paste patterns |
-| `REFERENCE_COMPONENTS.tsx` | Copy-paste-ready React components |
 | `tokens.md` | Colors, spacing, typography, shadows, interactive states |
 | `page-archetypes.md` | The 4 page types with copy-paste templates |
 | `components.md` | Which component to use for what |
 | `patterns.md` | Loading, errors, empty states, forms, modals |
 | `principles.md` | Philosophy, hard constraints, card policy |
 
+**Production components** (import these, don't recreate): `frontend/src/components/ds/`
+
+| Component | What |
+|-----------|------|
+| `StatusBadge` | Pass status string → correct colors automatically |
+| `StatusDot` | Minimal inline dot + label for tables |
+| `StatusText` | Plain muted text for non-emphasized statuses |
+| `KpiBlock` / `KpiRow` | Metric display with 3-tier text hierarchy |
+| `DataTable` | Premium table with correct header/row/hover styling |
+| `SectionHeader` | Title + count + action link |
+| `AvatarStack` | Overlapping avatar initials |
+| `EmptyState` | Icon + title + description + action |
+| `Eyebrow` | 11px uppercase tracking-wider label |
+
 **Every page must use a page archetype. No exceptions.**
-**Every component must come from `@/components/ui/` or `@/components/layout/`. No custom styling.**
+**Every component must come from `@/components/ds`. No custom styling. No direct ui/ imports in pages.**
 **Every color/spacing/font must use a design token. No hex codes or arbitrary values.**
 
 ### Code Quality Standards
 
 **Component Organization:**
+
 1. Import statements
 2. Type definitions
 3. Component function
@@ -595,11 +646,13 @@ Before building ANY UI, read the design system. It contains:
 5. Exports
 
 **TypeScript Requirements:**
+
 - All props typed explicitly
 - No `any` types (use `unknown` if necessary)
 - Event handlers properly typed
 
 **Performance:**
+
 - Memoize expensive calculations
 - Use proper key props in lists
 - Lazy load heavy components
@@ -608,6 +661,7 @@ Before building ANY UI, read the design system. It contains:
 ### Testing Requirements
 
 **Before marking complete:**
+
 1. Test on mobile viewport (375px)
 2. Test keyboard navigation
 3. Verify all interactive states (hover, focus, active, disabled)
@@ -616,6 +670,7 @@ Before building ANY UI, read the design system. It contains:
 6. Screenshot comparison if updating existing UI
 
 **DO NOT claim completion without:**
+
 - Running the dev server and visually verifying the changes
 - Testing all interactive elements
 - Confirming responsive behavior

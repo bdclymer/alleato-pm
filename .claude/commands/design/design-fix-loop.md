@@ -3,12 +3,11 @@
 Autonomous fix-and-verify loop that fixes violations without user intervention.
 
 ## Usage
-
-```bash
+```
 /design-fix-loop [max-iterations]
 ```
-**Arguments:**
 
+**Arguments:**
 - `max-iterations` - Maximum number of fix cycles (default: 5)
 
 ## Instructions
@@ -16,14 +15,13 @@ Autonomous fix-and-verify loop that fixes violations without user intervention.
 You are running an autonomous fix-and-verify loop. This command runs WITHOUT user intervention until all fixable violations are resolved.
 
 ### Configuration
-
 - Max iterations: $ARGUMENTS (default: 5)
 - Max attempts per violation: 3
 - Stop on: All violations fixed OR max iterations reached OR critical error
 
 ### The Loop
 
-```bash
+```
 ITERATION = 0
 while ITERATION < MAX_ITERATIONS:
     ITERATION += 1
@@ -91,13 +89,12 @@ while ITERATION < MAX_ITERATIONS:
 ### Final Verification Pass
 
 After the loop completes:
-
 1. Run `/design-verify all` to confirm all fixes
 2. Generate final report
 
 ### Final Report Format
 
-```yaml
+```
 ========================================
 DESIGN FIX LOOP COMPLETE
 ========================================

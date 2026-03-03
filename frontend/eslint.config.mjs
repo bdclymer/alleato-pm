@@ -67,10 +67,10 @@ const config = [
       'react/display-name': 'off',
       '@next/next/no-img-element': 'off',
 
-      // Design System Enforcement
-      'design-system/no-hardcoded-colors': 'warn',
-      'design-system/no-arbitrary-spacing': 'warn',
-      'design-system/require-semantic-colors': 'warn',
+      // Design System Enforcement — ERRORS (violations block builds)
+      'design-system/no-hardcoded-colors': 'error',
+      'design-system/no-arbitrary-spacing': 'error',
+      'design-system/require-semantic-colors': 'error',
     },
   },
 ]

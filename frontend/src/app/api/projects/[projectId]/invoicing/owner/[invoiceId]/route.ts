@@ -38,7 +38,7 @@ export async function GET(
         `
         *,
         owner_invoice_line_items(*),
-        contracts!inner(project_id)
+        contracts!inner(project_id, retention_percentage)
       `,
       )
       .eq("id", invoiceIdNum)
@@ -67,13 +67,19 @@ export async function GET(
       0,
     );
 
-    // Remove the contracts join data from response
+    // Extract retention_percentage from contracts join, then strip join data
+    const contractRetentionPercentage =
+      Array.isArray(invoice.contracts)
+        ? (invoice.contracts[0]?.retention_percentage ?? null)
+        : (invoice.contracts as { retention_percentage: number | null } | null)?.retention_percentage ?? null;
+
     const { contracts, ...invoiceData } = invoice;
 
     return NextResponse.json({
       data: {
         ...invoiceData,
         total_amount,
+        contract_retention_percentage: contractRetentionPercentage,
       },
     });
   } catch (error) {

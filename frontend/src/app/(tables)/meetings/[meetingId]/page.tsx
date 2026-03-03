@@ -19,6 +19,7 @@ import { parseTranscriptSections } from '@/app/(main)/[projectId]/meetings/[meet
 import { MarkdownSummary } from '@/app/(main)/[projectId]/meetings/[meetingId]/markdown-summary'
 import type { Database } from '@/types/database.types'
 import { PageContainer } from '@/components/layout'
+import { AttendeeAvatarStack } from '@/components/meetings/attendee-avatar-stack'
 import Link from 'next/link'
 import { CollapsibleSection } from './collapsible-section'
 
@@ -28,20 +29,6 @@ type MeetingSegment = Database['public']['Tables']['meeting_segments']['Row'] & 
 
 type DocumentMetadata = Database['public']['Tables']['document_metadata']['Row'] & {
   duration?: number
-}
-
-function formatParticipantName(email: string): string {
-  const localPart = email.split('@')[0]
-  if (!localPart) return email
-  const parts = localPart.split(/[._-]/)
-  if (parts.length >= 2) {
-    const firstName = parts[0].charAt(0).toUpperCase() + '.'
-    const lastName =
-      parts[parts.length - 1].charAt(0).toUpperCase() +
-      parts[parts.length - 1].slice(1).toLowerCase()
-    return `${firstName} ${lastName}`
-  }
-  return localPart.charAt(0).toUpperCase() + localPart.slice(1).toLowerCase()
 }
 
 interface PageProps {
@@ -257,7 +244,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           {/* Full Transcript */}
           {parsedSections?.transcript ? (
             <section className="border-t border-border pt-6">
-              <FormattedTranscript content={parsedSections.transcript} />
+              <FormattedTranscript
+                content={parsedSections.transcript}
+                participants={participantsList}
+              />
             </section>
           ) : null}
 
@@ -282,39 +272,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                 <Users className="h-3.5 w-3.5" />
                 Attendees ({participantsList.length})
               </div>
-              <ul className="space-y-2">
-                {participantsList.map((participant, idx) => (
-                  <li key={`${participant}-${idx}`} className="text-sm">
-                    <p className="font-medium text-foreground">
-                      {formatParticipantName(participant)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{participant}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Keywords */}
-          {parsedSections?.keywords && (
-            <div className="space-y-2 border-t border-border pt-4">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Topics
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {parsedSections.keywords
-                  .split(',')
-                  .map((k) => k.trim())
-                  .filter(Boolean)
-                  .map((keyword, idx) => (
-                    <span
-                      key={`${keyword}-${idx}`}
-                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-              </div>
+              <AttendeeAvatarStack participants={participantsList} />
             </div>
           )}
 
@@ -356,6 +314,29 @@ export default async function MeetingDetailPage({ params }: PageProps) {
                   items={allOpportunities}
                 />
               )}
+            </div>
+          )}
+
+          {/* Keywords */}
+          {parsedSections?.keywords && (
+            <div className="space-y-2 border-t border-border pt-4">
+              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
+                Topics
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {parsedSections.keywords
+                  .split(',')
+                  .map((k) => k.trim())
+                  .filter(Boolean)
+                  .map((keyword, idx) => (
+                    <span
+                      key={`${keyword}-${idx}`}
+                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {keyword}
+                    </span>
+                  ))}
+              </div>
             </div>
           )}
         </aside>

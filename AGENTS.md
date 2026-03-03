@@ -71,6 +71,17 @@ Full agent + workflow list: `_bmad/_config/agent-manifest.csv`, `_bmad/_config/w
 
 ---
 
+## Browser Automation
+
+Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
+
+Core workflow:
+
+1. `agent-browser open <url>` - Navigate to page
+2. `agent-browser snapshot -i` - Get interactive elements with refs (@e1, @e2)
+3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
+4. Re-snapshot after page changes
+
 ## Project Overview
 
 **Alleato-Procore** — construction project management platform (Next.js 15 frontend + Supabase backend). Mirrors Procore functionality: budgets, contracts, change orders, directory, scheduling, and more.
@@ -178,6 +189,7 @@ When encountering a bug: **fix it immediately, then report what you fixed.** Do 
 When asked to design/build a page, default to **Linear/Supabase-style minimal UI**.
 
 **Hard constraints:**
+
 - No nested cards (`Card` inside `Card` is forbidden)
 - No decorative wrapper cards around whole sections
 - Max 2 visual container levels: page shell + section content
@@ -185,6 +197,7 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - No mixed accent palette (pick one accent and stay consistent)
 
 **Default page structure:**
+
 ```tsx
 <>
   <ProjectPageHeader title="..." description="..." actions={<div>...</div>} />
@@ -200,16 +213,19 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 ```
 
 **Use cards only when semantically necessary:**
+
 - KPI/metric tiles
 - Distinct records in mobile list view
 - Isolated modules like activity feed or attachments
 
 **Spacing/typography baseline:**
+
 - 8px spacing rhythm (`space-y-2/4/6/8`, `gap-4/6`)
 - Section spacing: `space-y-8`; group spacing: `space-y-4`
 - Heading weights capped at semibold (`font-semibold`)
 
 **Data-heavy UX principle:**
+
 - Simplify complexity into insight
 - Prioritize fast findability and low-friction scanning
 - Use navigation aids (search, breadcrumbs, back actions) as support, not a crutch for unclear information architecture

@@ -1,3 +1,27 @@
 {
-    "claudeCodeChat.permissions.yoloMode": true
+    "claudeCodeChat.permissions.yoloMode": true,
+    "favorites.resources": [
+        {
+            "filePath": "frontend/src/design-system/examples/premium-examples-light.html",
+            "group": "Default"
+        },
+        {
+            "filePath": "frontend/src/design-system/examples/premium-examples.html",
+            "group": "Default"
+        },
+        {
+            "filePath": "frontend/src/app/(main)/[projectId]/home/project-home-client.tsx",
+            "group": "Default"
+        }
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/.gemini": true,
+        ".gemini": true
+    },
+    "explorerExclude.backup": {}
 }

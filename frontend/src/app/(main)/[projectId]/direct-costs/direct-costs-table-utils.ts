@@ -40,6 +40,10 @@ export const DIRECT_COST_FILTERS: FilterConfig[] = [
       { value: "Subcontractor Invoice", label: "Subcontractor Invoice" },
     ],
   },
+  { id: "dateFrom", label: "Date From", type: "date" },
+  { id: "dateTo", label: "Date To", type: "date" },
+  { id: "minAmount", label: "Min Amount", type: "number", placeholder: "0.00" },
+  { id: "maxAmount", label: "Max Amount", type: "number", placeholder: "100,000.00" },
 ];
 
 export const SUMMARY_COLUMNS = [

@@ -1,31 +1,39 @@
 "use client";
 
 import * as React from "react";
-import {
-  PortfolioFilters,
-  ProjectsTable,
-} from "@/components/portfolio";
-import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
-import { useRouter } from "next/navigation";
-import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { Project } from "@/types/portfolio";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type ColumnConfig,
+  type FilterConfig,
+  type FilterValue,
+  type TableColumn,
+} from "@/components/tables/unified";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
+const PROJECT_COLUMNS: ColumnConfig[] = [
+  { id: "name", label: "Project", alwaysVisible: true },
+  { id: "jobNumber", label: "Job Number", defaultVisible: true },
+  { id: "client", label: "Client", defaultVisible: true },
+  { id: "startDate", label: "Start Date", defaultVisible: true },
+  { id: "state", label: "State", defaultVisible: true },
+  { id: "phase", label: "Phase", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+];
 
 export default function PortfolioPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] =
-    React.useState<StatusFilter>("active");
-  const [viewType, setViewType] =
-    React.useState<PortfolioViewType>("thumbnails");
-  const [phaseFilter, setPhaseFilter] = React.useState<string | null>(
-    "Current",
-  );
-  const [categoryFilter, setCategoryFilter] = React.useState<string | null>(
-    null,
-  );
-  const [clientFilter, setClientFilter] = React.useState<string | null>(null);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -54,11 +62,7 @@ export default function PortfolioPage() {
       try {
         setLoading(true);
         const baseParams = new URLSearchParams();
-
-        if (searchQuery) baseParams.append("search", searchQuery);
-        if (statusFilter === "active") baseParams.append("archived", "false");
-        else if (statusFilter === "inactive")
-          baseParams.append("archived", "true");
+        baseParams.append("archived", "false");
 
         const allProjectRows: Record<string, unknown>[] = [];
         let page = 1;
@@ -142,7 +146,7 @@ export default function PortfolioPage() {
     };
 
     fetchProjects();
-  }, [searchQuery, statusFilter, parseProjectsResponse]);
+  }, [parseProjectsResponse]);
 
   // Extract unique phase, category, and client options from projects
   const phaseOptions = React.useMemo(() => {
@@ -166,200 +170,253 @@ export default function PortfolioPage() {
     return Array.from(clients).sort();
   }, [projects]);
 
-  // Filter projects based on phase, category, and client (search and status are handled server-side)
-  const filteredProjects = React.useMemo(() => {
-    return projects.filter((project) => {
-      // Phase filter (case insensitive)
-      if (
-        phaseFilter &&
-        phaseFilter !== "all" &&
-        project.phase?.toLowerCase() !== phaseFilter.toLowerCase()
-      )
-        return false;
-
-      // Category filter
-      if (categoryFilter && project.category !== categoryFilter) return false;
-
-      // Client filter
-      if (clientFilter && project.client !== clientFilter) return false;
-
-      return true;
-    });
-  }, [projects, phaseFilter, categoryFilter, clientFilter]);
-
-  const handleExport = (format: "pdf" | "csv") => {
-    // Export to CSV
-    if (format === "csv") {
-      const headers = [
-        "Job Number",
-        "Project Name",
-        "Client",
-        "Phase",
-        "Category",
-        "State",
-        "Status",
-      ];
-      const csvData = filteredProjects.map((project) => [
-        project.jobNumber,
-        project.name,
-        project.client || "",
-        project.phase || "",
-        project.category || "",
-        project.state || "",
-        project.status,
-      ]);
-
-      const csvContent = [
-        headers.join(","),
-        ...csvData.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-      ].join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `portfolio-${new Date().toISOString().split("T")[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
-
-    // Export to PDF
-    else if (format === "pdf") {
-      // For PDF, we'll open a print dialog as a simple solution
-      // In production, you might want to use a library like jsPDF
-      const printWindow = window.open("", "", "width=800,height=600");
-      if (printWindow) {
-        const htmlContent = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Portfolio Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              h1 { color: #333; }
-              table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; font-weight: bold; }
-              tr:nth-child(even) { background-color: #f9f9f9; }
-              .header { margin-bottom: 20px; }
-              .date { color: #666; font-size: 14px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Portfolio Report</h1>
-              <p class="date">Generated on: ${new Date().toLocaleDateString()}</p>
-              <p>Total Projects: ${filteredProjects.length}</p>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Job Number</th>
-                  <th>Project Name</th>
-                  <th>Client</th>
-                  <th>Phase</th>
-                  <th>Category</th>
-                  <th>State</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${filteredProjects
-                  .map(
-                    (project) => `
-                  <tr>
-                    <td>${project.jobNumber}</td>
-                    <td>${project.name}</td>
-                    <td>${project.client || "-"}</td>
-                    <td>${project.phase || "-"}</td>
-                    <td>${project.category || "-"}</td>
-                    <td>${project.state || "-"}</td>
-                    <td>${project.status}</td>
-                  </tr>
-                `,
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-          </body>
-          </html>
-        `;
-
-        printWindow.document.write(htmlContent);
-        printWindow.document.close();
-        printWindow.focus();
-
-        // Give it time to render then trigger print
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 250);
-      }
-    }
-  };
-
-  const handleClearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter("active");
-    setPhaseFilter("Current");
-    setCategoryFilter(null);
-    setClientFilter(null);
-  };
-
-  const handleProjectClick = (project: Project) => {
-    router.push(`/${project.id}/home`);
-  };
-
   const handleCreateProject = () => {
     router.push("/create-project");
   };
 
+  const projectFilters = React.useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "client",
+        label: "Client",
+        type: "select",
+        options: clientOptions.map((client) => ({ value: client, label: client })),
+      },
+      {
+        id: "phase",
+        label: "Phase",
+        type: "select",
+        options: phaseOptions.map((phase) => ({ value: phase, label: phase })),
+      },
+      {
+        id: "category",
+        label: "Category",
+        type: "select",
+        options: categoryOptions.map((category) => ({ value: category, label: category })),
+      },
+    ],
+    [categoryOptions, clientOptions, phaseOptions],
+  );
+
+  const defaultVisibleColumns = React.useMemo(
+    () => PROJECT_COLUMNS.filter((column) => column.defaultVisible !== false).map((column) => column.id),
+    [],
+  );
+
+  const tableState = useUnifiedTableState({
+    entityKey: "homepage-projects",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "name",
+      sortDirection: "asc",
+      visibleColumns: defaultVisibleColumns,
+      filters: {
+        client: undefined,
+        phase: undefined,
+        category: undefined,
+      },
+    },
+  });
+
+  React.useEffect(() => {
+    if (tableState.visibleColumns.length === 0) {
+      tableState.setVisibleColumns(defaultVisibleColumns);
+    }
+  }, [defaultVisibleColumns, tableState]);
+
+  const activeFilters = tableState.activeFilters;
+
+  const filteredProjects = React.useMemo(() => {
+    const normalizedSearch = tableState.debouncedSearch.trim().toLowerCase();
+
+    return projects.filter((project) => {
+      const clientMatch =
+        !activeFilters.client ||
+        (project.client ?? "").toLowerCase() ===
+          String(activeFilters.client).toLowerCase();
+      const phaseMatch =
+        !activeFilters.phase ||
+        (project.phase ?? "").toLowerCase() ===
+          String(activeFilters.phase).toLowerCase();
+      const categoryMatch =
+        !activeFilters.category ||
+        (project.category ?? "").toLowerCase() ===
+          String(activeFilters.category).toLowerCase();
+
+      if (!clientMatch || !phaseMatch || !categoryMatch) return false;
+
+      if (!normalizedSearch) return true;
+
+      return [
+        project.name,
+        project.jobNumber,
+        project.client,
+        project.phase,
+        project.category,
+        project.state,
+      ]
+        .map((value) => (value ?? "").toLowerCase())
+        .some((value) => value.includes(normalizedSearch));
+    });
+  }, [activeFilters.category, activeFilters.client, activeFilters.phase, projects, tableState.debouncedSearch]);
+
+  const handleFilterChange = (nextFilters: Record<string, FilterValue>) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      client:
+        typeof nextFilters.client === "string" ? nextFilters.client : null,
+      phase: typeof nextFilters.phase === "string" ? nextFilters.phase : null,
+      category:
+        typeof nextFilters.category === "string" ? nextFilters.category : null,
+      page: "1",
+    });
+  };
+
+  const PROJECT_TABLE_COLUMNS: TableColumn<Project>[] = [
+    {
+      ...PROJECT_COLUMNS[0],
+      render: (item) => <span className="font-medium">{item.name}</span>,
+      sortValue: (item) => item.name,
+    },
+    {
+      ...PROJECT_COLUMNS[1],
+      render: (item) => <span>{item.jobNumber ?? "-"}</span>,
+      sortValue: (item) => item.jobNumber ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[2],
+      render: (item) => <span>{item.client || "-"}</span>,
+      sortValue: (item) => item.client ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[3],
+      render: (item) => <span>{item.startDate || "-"}</span>,
+      sortValue: (item) => item.startDate ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[4],
+      render: (item) => <span>{item.state || "-"}</span>,
+      sortValue: (item) => item.state ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[5],
+      render: (item) => <Badge variant="outline">{item.phase || "-"}</Badge>,
+      sortValue: (item) => item.phase ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[6],
+      render: (item) => <span>{item.category || "-"}</span>,
+      sortValue: (item) => item.category ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[7],
+      render: (item) => (
+        <Badge variant={item.status === "Active" ? "default" : "secondary"}>
+          {item.status}
+        </Badge>
+      ),
+      sortValue: (item) => item.status,
+    },
+  ];
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(filteredProjects.map((project) => project.id));
+      return;
+    }
+    tableState.setSelectedIds([]);
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((previous) => [...previous, id]);
+      return;
+    }
+    tableState.setSelectedIds((previous) =>
+      previous.filter((itemId) => itemId !== id),
+    );
+  };
+
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.client) ||
+    Boolean(activeFilters.phase) ||
+    Boolean(activeFilters.category);
+
   return (
-    <>
-      <ProjectPageHeader
-        title="Portfolio"
-        description="All projects across your organization"
-        actions={
+    <UnifiedTablePage
+      header={{
+        title: "Portfolio",
+        description: "All projects across your organization",
+        actions: (
           <Button size="sm" onClick={handleCreateProject}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             New Project
           </Button>
-        }
-      />
-      <PageContainer maxWidth="full">
-        <div className="flex flex-col gap-4">
-          <PortfolioFilters
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            viewType={viewType}
-            onViewTypeChange={setViewType}
-            phaseFilter={phaseFilter}
-            onPhaseFilterChange={setPhaseFilter}
-            categoryFilter={categoryFilter}
-            onCategoryFilterChange={setCategoryFilter}
-            clientFilter={clientFilter}
-            onClientFilterChange={setClientFilter}
-            phaseOptions={phaseOptions}
-            categoryOptions={categoryOptions}
-            clientOptions={clientOptions}
-            onClearFilters={handleClearFilters}
-            onExport={handleExport}
-            onCreateProject={handleCreateProject}
-          />
-
-          <div className="overflow-hidden bg-background rounded-lg border">
-            {loading ? (
-              <LoadingSkeleton />
-            ) : (
-              <ProjectsTable
-                data={filteredProjects}
-                onProjectClick={handleProjectClick}
-                viewType={viewType === "list" ? "list" : "grid"}
-              />
-            )}
-          </div>
-        </div>
-      </PageContainer>
-    </>
+        ),
+      }}
+      toolbar={{
+        totalItems: projects.length,
+        filteredItems: filteredProjects.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search projects...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        filters: projectFilters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () =>
+          handleFilterChange({
+            client: undefined,
+            phase: undefined,
+            category: undefined,
+          }),
+        columns: PROJECT_COLUMNS,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredProjects,
+        isLoading: loading,
+      }}
+      table={{
+        columns: PROJECT_TABLE_COLUMNS,
+        getRowId: (item) => item.id,
+        onRowClick: (item) => {
+          router.push(`/${item.id}/home`);
+        },
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+        },
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
+      }}
+      emptyState={{
+        title: "No projects found",
+        description: "No projects are available yet.",
+        filteredDescription: "No projects match your current search or filters.",
+        isFiltered,
+      }}
+    />
   );
 }

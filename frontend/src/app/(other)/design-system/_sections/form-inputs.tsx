@@ -1,32 +1,41 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  Input,
+  Label,
+  Textarea,
+  Checkbox,
+  Switch,
+  RadioGroup,
+  RadioGroupItem,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
+  Slider,
+} from "@/components/ds";
 
 export function FormInputsSection() {
   return (
     <section id="form-inputs" className="scroll-mt-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Form Inputs
-      </h2>
-      <p className="mt-1 mb-8 text-sm text-muted-foreground">
-        All form elements from shadcn/ui with consistent height (h-9), border
-        (border-input), and focus ring (ring-ring/50).
-      </p>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
+        <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">
+          05
+        </span>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Form Inputs
+          </h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            All form elements with consistent height (h-9), border
+            (border-input), and focus ring (ring-ring/50).
+          </p>
+        </div>
+      </div>
 
-      <div className="grid gap-8 sm:grid-cols-2">
+      <div className="grid gap-8 rounded-xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2">
         {/* Text Input */}
         <div className="space-y-2">
           <Label htmlFor="demo-input">Text Input</Label>

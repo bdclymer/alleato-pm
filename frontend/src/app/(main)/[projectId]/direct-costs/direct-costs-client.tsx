@@ -19,8 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
 import {
@@ -33,6 +31,7 @@ import {
   formatDate,
 } from "./direct-costs-table-utils";
 import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
+
 import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
 import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
@@ -77,15 +76,6 @@ const EMPTY_FILTERS: DirectCostFilterState = {
   maxAmount: undefined,
 };
 
-const SORT_OPTIONS = [
-  { value: "date:desc", label: "Newest date" },
-  { value: "date:asc", label: "Oldest date" },
-  { value: "total_amount:desc", label: "Highest amount" },
-  { value: "total_amount:asc", label: "Lowest amount" },
-  { value: "vendor:asc", label: "Vendor A-Z" },
-  { value: "status:asc", label: "Status A-Z" },
-];
-
 function hasAllVisibleColumns(current: string[], required: string[]): boolean {
   return required.every((column) => current.includes(column));
 }
@@ -105,14 +95,6 @@ function statusClass(status: string): string {
     default:
       return "bg-muted text-muted-foreground border-border";
   }
-}
-
-function toDateInputValue(value: string | null): string {
-  if (!value) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "";
-  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
 }
 
 export function DirectCostsClient({
@@ -294,13 +276,6 @@ export function DirectCostsClient({
     applyFilters(nextFilters);
   };
 
-  const handleAdvancedFilterValue = (key: keyof typeof EMPTY_FILTERS, value: string): void => {
-    applyFilters({
-      ...activeFilters,
-      [key]: value || undefined,
-    });
-  };
-
   const handleDeleteConfirm = async (): Promise<void> => {
     if (!directCostToDelete) return;
 
@@ -472,7 +447,7 @@ export function DirectCostsClient({
         id: "date",
         label: "Date",
         defaultVisible: true,
-        render: (item: DirectCostRow) => formatDate(item.date),
+        render: (item: DirectCostRow) => <span className="font-medium text-foreground">{formatDate(item.date)}</span>,
         sortValue: (item: DirectCostRow) => item.date,
       },
       {
@@ -534,7 +509,10 @@ export function DirectCostsClient({
         label: "ERP Status",
         defaultVisible: true,
         render: (item: DirectCostRow) => {
-          const value = item.erp_status?.trim() ? item.erp_status : "Not synced";
+          const value = item.erp_status?.trim();
+          if (!value) {
+            return <span className="text-xs text-muted-foreground">Not synced</span>;
+          }
           return <Badge variant="outline">{value}</Badge>;
         },
         sortValue: (item: DirectCostRow) => item.erp_status ?? "Not synced",
@@ -543,7 +521,7 @@ export function DirectCostsClient({
         id: "total_amount",
         label: "Amount",
         defaultVisible: true,
-        render: (item: DirectCostRow) => <span className="font-medium">{formatAmount(item.total_amount)}</span>,
+        render: (item: DirectCostRow) => <span className="tabular-nums text-muted-foreground">{formatAmount(item.total_amount)}</span>,
         sortValue: (item: DirectCostRow) => item.total_amount,
       },
       {
@@ -571,41 +549,6 @@ export function DirectCostsClient({
     [updatingStatusId],
   );
 
-  const costTypeBreakdown = React.useMemo(() => {
-    const totals = new Map<string, number>();
-    let max = 0;
-
-    for (const item of filteredSummaryItems) {
-      const next = (totals.get(item.cost_type) ?? 0) + item.total_amount;
-      totals.set(item.cost_type, next);
-      max = Math.max(max, next);
-    }
-
-    return Array.from(totals.entries())
-      .map(([type, amount]) => ({ type, amount, ratio: max > 0 ? (amount / max) * 100 : 0 }))
-      .sort((a, b) => b.amount - a.amount);
-  }, [filteredSummaryItems]);
-
-  const pendingCount = React.useMemo(
-    () => filteredSummaryItems.filter((item) => item.status === "Pending").length,
-    [filteredSummaryItems],
-  );
-
-  const overdueCount = React.useMemo(() => {
-    const now = new Date();
-    return filteredSummaryItems.filter((item) => {
-      if (item.status !== "Pending") return false;
-      const itemDate = new Date(item.date);
-      if (Number.isNaN(itemDate.getTime())) return false;
-      const diffDays = (now.getTime() - itemDate.getTime()) / (1000 * 60 * 60 * 24);
-      return diffDays > 14;
-    }).length;
-  }, [filteredSummaryItems]);
-
-  const highValueCount = React.useMemo(
-    () => filteredSummaryItems.filter((item) => item.total_amount >= 25000).length,
-    [filteredSummaryItems],
-  );
 
   const totalAmount = React.useMemo(
     () => filteredSummaryItems.reduce((sum, item) => sum + item.total_amount, 0),
@@ -681,169 +624,37 @@ export function DirectCostsClient({
           onBulkDelete: undefined,
         }}
         topContent={
-          <>
-            {tableState.selectedIds.length > 0 && (
-              <div className="rounded-md border bg-muted/30 p-3">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="text-sm text-foreground">
-                    <span className="font-medium">{tableState.selectedIds.length}</span> direct cost(s) selected
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setBulkAction("approve")}>
-                      Approve
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setBulkAction("revise")}>
-                      Revise
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)}>
-                      Export Selected
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => setBulkAction("delete")}>
-                      Delete
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => tableState.setSelectedIds([])}>
-                      Clear
-                    </Button>
-                  </div>
+          tableState.selectedIds.length > 0 ? (
+            <div className="rounded-md border bg-muted/30 p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-foreground">
+                  <span className="font-medium">{tableState.selectedIds.length}</span> direct cost(s) selected
                 </div>
-              </div>
-            )}
-
-            <section className="space-y-3 rounded-md border p-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-sm font-semibold text-foreground">Advanced Filters & Sorting</h2>
-                <Select
-                  value={`${tableState.sortBy ?? "date"}:${tableState.sortDirection}`}
-                  onValueChange={(value) => {
-                    const [sortBy, direction] = value.split(":") as [string, "asc" | "desc"];
-                    tableState.setSortBy(sortBy);
-                    tableState.setSortDirection(direction);
-                    tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[190px]">
-                    <SelectValue placeholder="Sort" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SORT_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="direct-cost-date-from">Date from</Label>
-                  <Input
-                    id="direct-cost-date-from"
-                    type="date"
-                    value={toDateInputValue(typeof activeFilters.dateFrom === "string" ? activeFilters.dateFrom : null)}
-                    onChange={(event) => handleAdvancedFilterValue("dateFrom", event.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="direct-cost-date-to">Date to</Label>
-                  <Input
-                    id="direct-cost-date-to"
-                    type="date"
-                    value={toDateInputValue(typeof activeFilters.dateTo === "string" ? activeFilters.dateTo : null)}
-                    onChange={(event) => handleAdvancedFilterValue("dateTo", event.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="direct-cost-min-amount">Min amount</Label>
-                  <Input
-                    id="direct-cost-min-amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={typeof activeFilters.minAmount === "string" ? activeFilters.minAmount : ""}
-                    onChange={(event) => handleAdvancedFilterValue("minAmount", event.target.value)}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="direct-cost-max-amount">Max amount</Label>
-                  <Input
-                    id="direct-cost-max-amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={typeof activeFilters.maxAmount === "string" ? activeFilters.maxAmount : ""}
-                    onChange={(event) => handleAdvancedFilterValue("maxAmount", event.target.value)}
-                    placeholder="100000.00"
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-4 rounded-md border p-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-md border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">Total filtered costs</p>
-                  <p className="mt-1 text-lg font-semibold text-foreground">{formatAmount(totalAmount)}</p>
-                </div>
-                <div className="rounded-md border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">Pending approvals</p>
-                  <p className="mt-1 text-lg font-semibold text-foreground">{pendingCount}</p>
-                </div>
-                <div className="rounded-md border bg-muted/20 p-3">
-                  <p className="text-xs text-muted-foreground">High-value items ({">="} $25,000)</p>
-                  <p className="mt-1 text-lg font-semibold text-foreground">{highValueCount}</p>
-                </div>
-              </div>
-
-              {(pendingCount > 0 || overdueCount > 0 || highValueCount > 0) && (
                 <div className="flex flex-wrap gap-2">
-                  {pendingCount > 0 && (
-                    <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
-                      {pendingCount} pending approval
-                    </Badge>
-                  )}
-                  {overdueCount > 0 && (
-                    <Badge variant="outline" className="text-rose-700 border-rose-300 bg-rose-50">
-                      {overdueCount} overdue pending ({">"}14 days)
-                    </Badge>
-                  )}
-                  {highValueCount > 0 && (
-                    <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50">
-                      {highValueCount} exceed threshold
-                    </Badge>
-                  )}
+                  <Button size="sm" variant="outline" onClick={() => setBulkAction("approve")}>
+                    Approve
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setBulkAction("revise")}>
+                    Revise
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+                    Export Selected
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => setBulkAction("delete")}>
+                    Delete
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => tableState.setSelectedIds([])}>
+                    Clear
+                  </Button>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Cost Type Distribution</p>
-                {costTypeBreakdown.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No data for current filters.</p>
-                ) : (
-                  costTypeBreakdown.map((entry) => (
-                    <div key={entry.type} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{entry.type}</span>
-                        <span className="font-medium text-foreground">{formatAmount(entry.amount)}</span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-muted">
-                        <div className="h-2 rounded-full bg-primary" style={{ width: `${entry.ratio}%` }} />
-                      </div>
-                    </div>
-                  ))
-                )}
               </div>
-            </section>
-          </>
+            </div>
+          ) : undefined
         }
         footerTotals={{
           label: "Totals",
           values: {
-            total_amount: <span className="font-semibold">{formatAmount(totalAmount)}</span>,
+            total_amount: <span className="font-semibold tabular-nums">{formatAmount(totalAmount)}</span>,
           },
         }}
         data={{ items: filteredSummaryItems, isLoading: false, isFetching: false }}

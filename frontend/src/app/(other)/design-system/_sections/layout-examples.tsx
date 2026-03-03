@@ -46,7 +46,7 @@ function LinkGrid({ links }: { links: LayoutLink[] }) {
         <Link
           key={link.href}
           href={link.href}
-          className="group flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted"
+          className="group flex items-start gap-3 rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:bg-muted"
         >
           <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
           <div>
@@ -64,17 +64,25 @@ function LinkGrid({ links }: { links: LayoutLink[] }) {
 export function LayoutExamplesSection() {
   return (
     <section id="layouts" className="scroll-mt-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Layout Examples
-      </h2>
-      <p className="mt-1 mb-8 text-sm text-muted-foreground">
-        Every page uses one of 4 archetypes. Click any link to see the layout
-        in action. All use ProjectPageHeader + PageContainer.
-      </p>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
+        <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">
+          10
+        </span>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Layout Examples
+          </h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Every page uses one of 4 archetypes. Click any link to see the
+            layout in action. All use ProjectPageHeader + PageContainer.
+          </p>
+        </div>
+      </div>
 
       {/* Table Page */}
       <div className="mb-8">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+        <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Table Page
         </h3>
         <p className="mb-4 text-xs text-muted-foreground">
@@ -85,7 +93,7 @@ export function LayoutExamplesSection() {
 
       {/* Form Page */}
       <div className="mb-8">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+        <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Form Page
         </h3>
         <p className="mb-4 text-xs text-muted-foreground">
@@ -96,7 +104,7 @@ export function LayoutExamplesSection() {
 
       {/* Content Page */}
       <div className="mb-8">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+        <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Content Page
         </h3>
         <p className="mb-4 text-xs text-muted-foreground">
@@ -107,7 +115,7 @@ export function LayoutExamplesSection() {
 
       {/* Cross-Project Tables */}
       <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-primary">
+        <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Tables Layout (Cross-Project)
         </h3>
         <p className="mb-4 text-xs text-muted-foreground">

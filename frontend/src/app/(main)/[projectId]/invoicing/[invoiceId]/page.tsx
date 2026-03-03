@@ -407,7 +407,8 @@ export default function InvoiceDetailPage() {
     (sum, item) => sum + (item.approved_amount || 0),
     0,
   );
-  const retentionRate = 0.05; // 5% retention (placeholder)
+  // retention_percentage stored as a percentage (e.g. 5.0 = 5%); fall back to 0 if not set
+  const retentionRate = ((invoice?.contract_retention_percentage ?? 0) / 100);
   const retention = subtotal * retentionRate;
   const totalDue = subtotal - retention;
 
@@ -593,14 +594,16 @@ export default function InvoiceDetailPage() {
                     {formatCurrency(subtotal)}
                   </Text>
                 </div>
-                <div className="flex justify-between items-center">
-                  <Text tone="muted">
-                    Retention ({(retentionRate * 100).toFixed(0)}%)
-                  </Text>
-                  <Text weight="medium" tone="destructive">
-                    -{formatCurrency(retention)}
-                  </Text>
-                </div>
+                {retentionRate > 0 && (
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">
+                      Retention ({(retentionRate * 100).toFixed(1)}%)
+                    </Text>
+                    <Text weight="medium" tone="destructive">
+                      -{formatCurrency(retention)}
+                    </Text>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between items-center">
                   <Text size="lg" weight="semibold">Total Due</Text>

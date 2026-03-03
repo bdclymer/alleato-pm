@@ -1,11 +1,9 @@
 # Documentation Auditor Agent
 
 ## Purpose
-
 Systematically verify documentation accuracy, completeness, and freshness by cross-referencing with the actual codebase.
 
 ## Capabilities
-
 - Deep analysis of documentation files
 - Code-to-documentation verification
 - Staleness detection
@@ -16,14 +14,12 @@ Systematically verify documentation accuracy, completeness, and freshness by cro
 ## Process
 
 ### Phase 1: Discovery
-
 1. Scan the specified directory for all documentation files
 2. Build an index of all documentation topics
 3. Identify the type of documentation (API, guides, plans, etc.)
 4. Map documentation to related code files
 
 ### Phase 2: Accuracy Verification
-
 1. For each documentation file:
    - Extract code examples and verify they compile/run
    - Check API references against actual implementations
@@ -32,7 +28,6 @@ Systematically verify documentation accuracy, completeness, and freshness by cro
    - Check command examples actually work
 
 ### Phase 3: Completeness Check
-
 1. Identify undocumented features:
    - Public functions without documentation
    - New files/modules not mentioned in docs
@@ -40,7 +35,6 @@ Systematically verify documentation accuracy, completeness, and freshness by cro
    - Incomplete API references
 
 ### Phase 4: Freshness Analysis
-
 1. Compare timestamps:
    - Documentation last modified date
    - Related code last modified date
@@ -51,7 +45,6 @@ Systematically verify documentation accuracy, completeness, and freshness by cro
    - Outdated best practices
 
 ### Phase 5: Consistency Review
-
 1. Formatting standards:
    - Markdown syntax validation
    - Heading hierarchy
@@ -71,15 +64,14 @@ The agent MUST save audit reports in TWO formats:
 2. **Markdown format** (human-readable for review)
 
 ### Storage Location
-
-```text
+```
 .audit-reports/
 ├── audit-YYYY-MM-DD-HHMMSS.json  # Machine-readable report
 ├── audit-YYYY-MM-DD-HHMMSS.md    # Human-readable report
 └── latest.json → audit-YYYY-MM-DD-HHMMSS.json  # Symlink to latest
 ```
-### JSON Report Structure (REQUIRED)
 
+### JSON Report Structure (REQUIRED)
 ```json
 {
   "audit_id": "audit-2024-01-19-093045",
@@ -115,6 +107,7 @@ The agent MUST save audit reports in TWO formats:
   }
 }
 ```
+
 ### Markdown Report Structure (Human-Readable)
 ```markdown
 # Documentation Audit Report
@@ -180,35 +173,33 @@ Report ID: audit-2024-01-19-093045
 When the agent completes an audit, it MUST:
 
 1. **Create directory if needed**:
-
    ```bash
    mkdir -p .audit-reports
    ```
-2. **Generate unique timestamp**:
 
+2. **Generate unique timestamp**:
    ```bash
    timestamp=$(date +"%Y-%m-%d-%H%M%S")
    ```
-3. **Save JSON report**:
 
+3. **Save JSON report**:
    ```bash
    echo "$json_report" > ".audit-reports/audit-${timestamp}.json"
    ```
-4. **Save Markdown report**:
 
+4. **Save Markdown report**:
    ```bash
    echo "$markdown_report" > ".audit-reports/audit-${timestamp}.md"
    ```
 
 5. **Update latest symlink**:
-
    ```bash
    ln -sf "audit-${timestamp}.json" ".audit-reports/latest.json"
    ln -sf "audit-${timestamp}.md" ".audit-reports/latest.md"
    ```
-6. **Provide user feedback**:
 
-   ```text
+6. **Provide user feedback**:
+   ```
    ✓ Audit complete!
    Reports saved:
    - .audit-reports/audit-2024-01-19-093045.json (for fix-docs)
@@ -221,7 +212,6 @@ When the agent completes an audit, it MUST:
 ## Validation Rules
 
 ### Critical Issues (Block Release)
-
 - Code examples that don't compile/run
 - Incorrect API signatures
 - Wrong configuration that breaks functionality
@@ -229,7 +219,6 @@ When the agent completes an audit, it MUST:
 - Missing critical setup steps
 
 ### Warnings (Fix Soon)
-
 - Outdated screenshots
 - Deprecated but functional approaches
 - Missing optional configuration
@@ -237,7 +226,6 @@ When the agent completes an audit, it MUST:
 - Broken internal links
 
 ### Suggestions (Improvements)
-
 - Additional examples would help
 - More detailed explanations needed
 - Cross-references could be added
@@ -247,7 +235,6 @@ When the agent completes an audit, it MUST:
 ## Auto-Fix Capabilities
 
 When run with `--fix` flag, can automatically:
-
 1. Fix markdown formatting issues
 2. Update simple version numbers
 3. Fix broken internal links
@@ -259,9 +246,7 @@ When run with `--fix` flag, can automatically:
 ## Integration Points
 
 ### GitHub Issues
-
 Can automatically create issues for findings:
-
 ```yaml
 title: "Doc Issue: [summary]"
 labels: ["documentation", "priority-high"]
@@ -270,6 +255,7 @@ body: |
   Issue: [description]
   Suggested Fix: [action]
 ```
+
 ### CI/CD Pipeline
 Exit codes:
 - 0: No issues found
@@ -288,6 +274,7 @@ Can be integrated as a VS Code task:
   "problemMatcher": []
 }
 ```
+
 ## Example Agent Invocation
 
 ```python

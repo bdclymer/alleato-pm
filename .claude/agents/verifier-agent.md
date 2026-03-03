@@ -13,49 +13,44 @@
 ```bash
 npx tsx .agents/tools/generate-verification-report.ts {feature}
 ```
+
 This script:
 1. Runs `npm run typecheck --prefix frontend`
 2. Runs Playwright tests for the feature
 3. Collects screenshots from test execution
 4. Generates HTML report with embedded evidence
-```
 
 ### Step 2: Open Generated Report
 
-```
+```bash
 # Report location:
-docs-ai/contents/docs/PRPs/{feature}/verification/index.html
+documentation/*project-mgmt/verification-reports/{feature}/index.html
 ```
 
 ### Step 3: Review EVERY Section
 
 **Dashboard Metrics:**
-
 - Test pass rate (must be >= 80%)
 - TypeScript errors (must be 0)
 - Pages verified (screenshot count)
 - Blockers (must be 0 for PASS)
 
 **Screenshot Thumbnails:**
-
 - Click EACH thumbnail
 - Verify UI renders correctly
 - Compare with Procore reference if available
 
 **Test Output:**
-
 - Read failure messages
 - Identify root causes
 - Note any skipped tests
 
 **API Response Logs (if applicable):**
-
 - Check for 200 OK responses
 - Identify authentication errors
 - Note any 4xx/5xx errors
 
 **Database State (if applicable):**
-
 - Verify expected rows exist
 - Check data integrity
 - Confirm RLS policies work
@@ -77,7 +72,6 @@ docs-ai/contents/docs/PRPs/{feature}/verification/index.html
 ### Step 5: Report Results
 
 **Format:**
-
 ```
 Verification complete. Report: file:///{absolute-path}/index.html
 
@@ -107,7 +101,7 @@ Overall status: {PASS/FAIL}
 ### Evidence File Structure
 
 ```
-docs-ai/contents/docs/PRPs/{feature}/verification
+documentation/*project-mgmt/verification-reports/{feature}/
 ├── index.html                          # Main report (REQUIRED)
 ├── screenshots/
 │   ├── 01-list-page.png               # Actual PNG file
@@ -165,15 +159,13 @@ docs-ai/contents/docs/PRPs/{feature}/verification
 ### When Called
 
 The verifier agent should be invoked:
-
 1. After implementation is "complete"
 2. Before claiming task completion to user
 3. After fixing issues flagged in previous verification
 
 ### Handoff Format
 
-**From prp-execute Agent:**
-
+**From Implementation Agent:**
 ```
 Feature implementation complete. Ready for verification.
 Feature: {feature-name}
@@ -181,8 +173,7 @@ Tests: {test-file-path}
 Expected behavior: {brief description}
 ```
 
-**To prp-execute Agent (if FAILED):**
-
+**To Implementation Agent (if FAILED):**
 ```
 Verification FAILED. Issues to fix:
 1. {Issue 1 with specific file:line}
@@ -196,7 +187,7 @@ Re-run verification after fixes.
 
 ## Quick Reference
 
-```
+```bash
 # Generate verification report
 npx tsx .agents/tools/generate-verification-report.ts {feature}
 
@@ -214,14 +205,13 @@ cd frontend && npx playwright test tests/e2e/{feature}*.spec.ts --reporter=html
 ### Scenario: Direct Costs Feature
 
 **1. Run Script:**
-```
+```bash
 npx tsx .agents/tools/generate-verification-report.ts direct-costs
 ```
 
 **2. Review Output:**
-
 ```
-📁 Created report structure at: docs-ai/contents/docs/PRPs/{feature}/verification
+📁 Created report structure at: documentation/*project-mgmt/verification-reports/direct-costs
 🔍 Running quality checks...
 🧪 Running Playwright tests...
 📸 Collecting screenshots...
@@ -229,7 +219,7 @@ npx tsx .agents/tools/generate-verification-report.ts direct-costs
 📝 Generating HTML report...
 
 ✅ Report generated successfully!
-📄 Open: docs-ai/contents/docs/PRPs/{feature}/verification/index.html
+📄 Open: documentation/*project-mgmt/verification-reports/direct-costs/index.html
 
 📊 Summary:
    Tests: 27/32 passed (84%)
@@ -239,9 +229,8 @@ npx tsx .agents/tools/generate-verification-report.ts direct-costs
 ```
 
 **3. Report to User:**
-
 ```
-Verification complete. Report: docs-ai/contents/docs/PRPs/{feature}/verification/index.html
+Verification complete. Report: documentation/*project-mgmt/verification-reports/direct-costs/index.html
 
 Overall status: PASS
 - Tests: 27/32 passed (84%)

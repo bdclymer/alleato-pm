@@ -35,15 +35,20 @@ export function useCreateConversation() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
       });
-      if (!res.ok) throw new Error("Failed to create conversation");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const details = body?.details ?? body?.error ?? "unknown error";
+        console.error("[useCreateConversation] API error", res.status, body);
+        throw new Error(details);
+      }
       const data = await res.json();
       return data.conversation as RagConversation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
-    onError: () => {
-      toast.error("Failed to create conversation");
+    onError: (err: Error) => {
+      toast.error(`Failed to create conversation: ${err.message}`);
     },
   });
 }

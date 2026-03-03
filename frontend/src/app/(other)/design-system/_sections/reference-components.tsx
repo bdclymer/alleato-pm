@@ -1,47 +1,169 @@
 "use client";
 
 import {
+  StatusBadge,
+  StatusDot,
+  StatusText,
   KpiBlock,
   KpiRow,
   SectionHeader,
-  MeetingListItem,
-  NavSidebar,
   AvatarStack,
-  PremiumTable,
-  StatusDot,
-} from "@/design-system/REFERENCE_COMPONENTS";
+  DataTable,
+  EmptyState,
+  Eyebrow,
+} from "@/components/ds";
+import { FileText } from "lucide-react";
+
+// ---------------------------------------------------------------------------
+// Sample data for table demo
+// ---------------------------------------------------------------------------
 
 interface SampleRow {
   id: number;
   name: string;
-  status: "Active" | "Pending" | "Inactive";
+  status: string;
   amount: string;
+  date: string;
 }
 
 const sampleRows: SampleRow[] = [
-  { id: 1, name: "Westfield Collective", status: "Active", amount: "$142,800" },
-  { id: 2, name: "Harbor View Towers", status: "Pending", amount: "$89,200" },
-  { id: 3, name: "Pine Street Renovation", status: "Active", amount: "$234,500" },
-  { id: 4, name: "Downtown Commons", status: "Inactive", amount: "$0" },
+  { id: 1, name: "Westfield Collective", status: "Approved", amount: "$142,800", date: "Jan 15, 2026" },
+  { id: 2, name: "Harbor View Towers", status: "Pending", amount: "$89,200", date: "Feb 3, 2026" },
+  { id: 3, name: "Pine Street Renovation", status: "Draft", amount: "$234,500", date: "Feb 20, 2026" },
+  { id: 4, name: "Downtown Commons", status: "Rejected", amount: "$67,100", date: "Mar 1, 2026" },
+  { id: 5, name: "Riverside Plaza", status: "In Progress", amount: "$198,000", date: "Mar 3, 2026" },
 ];
+
+// ---------------------------------------------------------------------------
+// All domain statuses for the status showcase
+// ---------------------------------------------------------------------------
+
+const allStatuses = [
+  "Approved", "Active", "Completed", "Paid",
+  "Pending", "Pending Approval", "In Progress", "Submitted",
+  "Rejected", "Overdue", "Cancelled",
+  "Draft", "Inactive", "Archived",
+];
+
+// ---------------------------------------------------------------------------
+// Subsection header used throughout this page
+// ---------------------------------------------------------------------------
+
+function SubHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
+      {children}
+    </h3>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Reference Components (now importing from @/components/ds)
+// ---------------------------------------------------------------------------
 
 export function ReferenceComponentsSection() {
   return (
     <section id="reference" className="scroll-mt-8">
-      <h2 className="text-lg font-semibold tracking-tight text-foreground">
-        Reference Components
-      </h2>
-      <p className="mt-1 mb-8 text-sm text-muted-foreground">
-        Custom domain components from REFERENCE_COMPONENTS.tsx — KPI blocks,
-        meeting lists, navigation sidebar, and table patterns.
-      </p>
+      {/* Section Header */}
+      <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border">
+        <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">
+          11
+        </span>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            Design System Components
+          </h2>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Production components from <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">@/components/ds</code>.
+            Import everything from this single path — never from <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">@/components/ui/</code> directly.
+          </p>
+        </div>
+      </div>
 
-      {/* KPI Block */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          KPI Block
-        </h3>
-        <div className="grid grid-cols-3 gap-12">
+      {/* ================================================================
+          STATUS INDICATORS — The most critical ds/ components
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>StatusBadge — Automatic status → color mapping</SubHeader>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Pass any status string. Colors are baked in. No manual variant selection.
+        </p>
+
+        {/* All statuses grid */}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap gap-2">
+            {allStatuses.map((status) => (
+              <StatusBadge key={status} status={status} />
+            ))}
+          </div>
+
+          {/* Usage code */}
+          <div className="mt-6 rounded-md bg-muted/50 p-4">
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">Usage</p>
+            <code className="text-xs font-mono text-foreground">
+              {'import { StatusBadge } from "@/components/ds"'}
+            </code>
+            <br />
+            <code className="text-xs font-mono text-muted-foreground">
+              {'<StatusBadge status="Approved" />  // green automatically'}
+            </code>
+            <br />
+            <code className="text-xs font-mono text-muted-foreground">
+              {'<StatusBadge status="Draft" />     // neutral automatically'}
+            </code>
+          </div>
+        </div>
+      </div>
+
+      {/* StatusDot */}
+      <div className="mb-12">
+        <SubHeader>StatusDot — Minimal inline dot for tables</SubHeader>
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap gap-6">
+            <StatusDot status="Active" />
+            <StatusDot status="Pending" />
+            <StatusDot status="Rejected" />
+            <StatusDot status="Draft" />
+            <StatusDot status="Completed" />
+          </div>
+        </div>
+      </div>
+
+      {/* StatusText */}
+      <div className="mb-12">
+        <SubHeader>StatusText — Plain muted text (no pill, no color)</SubHeader>
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex flex-wrap gap-6">
+            <StatusText status="Not synced" />
+            <StatusText status="No ERP status" />
+            <StatusText status="N/A" />
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================================
+          EYEBROW — Tier 1 text element
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>Eyebrow — 11px uppercase label (Tier 1 text)</SubHeader>
+        <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+          <div>
+            <Eyebrow>Total Budget</Eyebrow>
+            <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">$9.3M</p>
+          </div>
+          <div>
+            <Eyebrow>Project Status</Eyebrow>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-foreground">In Progress</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================================
+          KPI BLOCK — Metric display
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>KpiBlock — Single metric with 3-tier hierarchy</SubHeader>
+        <div className="grid grid-cols-3 gap-12 rounded-lg border border-border bg-card p-6">
           <KpiBlock
             label="Total Budget"
             value="$9.3M"
@@ -63,25 +185,23 @@ export function ReferenceComponentsSection() {
       </div>
 
       {/* KPI Row */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          KPI Row (Bento)
-        </h3>
+      <div className="mb-12">
+        <SubHeader>KpiRow — Shared container with dividers (avoids card trap)</SubHeader>
         <KpiRow
           metrics={[
             { label: "Total Budget", value: "$9.3M", context: "Original contract value" },
-            { label: "Committed", value: "—", context: "No contracts yet" },
-            { label: "Remaining", value: "$9.3M", delta: { value: "100%", positive: true }, context: "100% unallocated" },
-            { label: "Open Items", value: "—", context: "Nothing pending" },
+            { label: "Committed", value: "$4.1M", delta: { value: "44%", positive: false }, context: "44% allocated" },
+            { label: "Remaining", value: "$5.2M", delta: { value: "56%", positive: true }, context: "56% unallocated" },
+            { label: "Open Items", value: "12", context: "Pending approval" },
           ]}
         />
       </div>
 
-      {/* Section Header */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Section Header
-        </h3>
+      {/* ================================================================
+          SECTION HEADER
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>SectionHeader — Title + count + action</SubHeader>
         <div className="space-y-4 rounded-lg border border-border bg-card p-6">
           <SectionHeader
             title="Meetings"
@@ -94,114 +214,121 @@ export function ReferenceComponentsSection() {
           <SectionHeader
             title="Documents"
             count={234}
-            action={{ label: "Upload", href: "#" }}
+            action={{ label: "Upload", onClick: () => {} }}
           />
         </div>
       </div>
 
-      {/* Meeting List Item */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Meeting List Item
-        </h3>
-        <div className="rounded-lg border border-border bg-card px-4">
-          <div className="divide-y divide-border">
-            <MeetingListItem
-              month="Feb"
-              day="24"
-              title="OAC- Westfield Collective"
-              summary="Construction is nearing completion with key installations in plumbing, electrical, and wood trim starting soon."
-              attendeeCount={15}
-              attendeeAvatars={["BC", "JD"]}
-              overflowCount={12}
-              duration="1 min read"
-              href="#"
-            />
-            <MeetingListItem
-              month="Feb"
-              day="17"
-              title="Westfield Collective: Beer Line Discussion"
-              summary="The team discussed the rerouting of 4.5-inch PVC beer lines under the bar to prevent interference with coolers."
-              attendeeCount={6}
-              attendeeAvatars={["AL", "DS"]}
-              overflowCount={3}
-              duration="2 min read"
-              href="#"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Premium Table */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Premium Table
-        </h3>
+      {/* ================================================================
+          DATA TABLE
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>DataTable — The ONE table component</SubHeader>
+        <p className="mb-4 text-xs text-muted-foreground">
+          11px uppercase headers, primary column emphasis, row hover, tabular-nums for currency. Status via StatusBadge.
+        </p>
         <div className="rounded-lg border border-border bg-card p-6">
-          <PremiumTable<SampleRow>
+          <DataTable<SampleRow>
             columns={[
               { key: "name", header: "Project", primary: true, render: (row) => row.name },
               {
                 key: "status",
                 header: "Status",
-                render: (row) => (
-                  <StatusDot
-                    variant={row.status === "Active" ? "success" : row.status === "Pending" ? "warning" : "neutral"}
-                    label={row.status}
-                  />
-                ),
+                render: (row) => <StatusBadge status={row.status} />,
               },
               { key: "amount", header: "Contract Value", align: "right", render: (row) => row.amount },
+              { key: "date", header: "Date", render: (row) => row.date },
             ]}
             rows={sampleRows}
             onRowClick={(row) => alert(`Clicked: ${row.name}`)}
           />
         </div>
+
+        {/* Table with StatusDot instead */}
+        <div className="mt-6 rounded-lg border border-border bg-card p-6">
+          <p className="mb-4 text-xs text-muted-foreground">Same table, using StatusDot instead of StatusBadge:</p>
+          <DataTable<SampleRow>
+            columns={[
+              { key: "name", header: "Project", primary: true, render: (row) => row.name },
+              {
+                key: "status",
+                header: "Status",
+                render: (row) => <StatusDot status={row.status} />,
+              },
+              { key: "amount", header: "Value", align: "right", render: (row) => row.amount },
+            ]}
+            rows={sampleRows.slice(0, 3)}
+          />
+        </div>
       </div>
 
-      {/* Avatar Stack */}
-      <div className="mb-8">
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Avatar Stack
-        </h3>
-        <div className="flex items-end gap-12">
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground">Small</p>
-            <AvatarStack avatars={["BC", "JD", "MH", "AL", "TK"]} max={3} size="sm" />
-          </div>
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground">Medium</p>
-            <AvatarStack avatars={["BC", "JD", "MH", "AL", "TK", "RP"]} max={4} size="md" />
+      {/* ================================================================
+          AVATAR STACK
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>AvatarStack — Overlapping initials</SubHeader>
+        <div className="rounded-lg border border-border bg-card p-6">
+          <div className="flex items-end gap-12">
+            <div>
+              <p className="mb-2 text-xs text-muted-foreground">Small (default)</p>
+              <AvatarStack avatars={["BC", "JD", "MH", "AL", "TK"]} max={3} size="sm" />
+            </div>
+            <div>
+              <p className="mb-2 text-xs text-muted-foreground">Medium</p>
+              <AvatarStack avatars={["BC", "JD", "MH", "AL", "TK", "RP"]} max={4} size="md" />
+            </div>
+            <div>
+              <p className="mb-2 text-xs text-muted-foreground">No overflow</p>
+              <AvatarStack avatars={["BC", "JD"]} size="md" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Nav Sidebar */}
-      <div>
-        <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">
-          Nav Sidebar
-        </h3>
-        <div className="h-96 overflow-hidden rounded-lg border border-border">
-          <NavSidebar
-            sections={[
-              {
-                label: "Financial",
-                items: [
-                  { name: "Budget", href: "#" },
-                  { name: "Prime Contracts", href: "#", count: 1 },
-                  { name: "Commitments", href: "#" },
-                  { name: "Direct Costs", href: "#" },
-                ],
-              },
-              {
-                label: "Project",
-                items: [
-                  { name: "Schedule", href: "#" },
-                  { name: "Meetings", href: "#", count: 57, active: true },
-                ],
-              },
-            ]}
+      {/* ================================================================
+          EMPTY STATE
+          ================================================================ */}
+      <div className="mb-12">
+        <SubHeader>EmptyState — Icon + title + description + action</SubHeader>
+        <div className="rounded-lg border border-border bg-card">
+          <EmptyState
+            icon={<FileText className="h-6 w-6 text-muted-foreground" />}
+            title="No direct costs yet"
+            description="Add your first direct cost to start tracking expenses for this project."
+            action={{ label: "Add Direct Cost", onClick: () => {} }}
           />
+        </div>
+      </div>
+
+      {/* ================================================================
+          IMPORT REFERENCE
+          ================================================================ */}
+      <div className="rounded-lg border border-border bg-muted/30 p-6">
+        <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/60">
+          Single import path
+        </p>
+        <div className="space-y-1">
+          <code className="block text-xs font-mono text-foreground">
+            {'import {'}
+          </code>
+          <code className="block pl-4 text-xs font-mono text-muted-foreground">
+            {'StatusBadge, StatusDot, StatusText,'}
+          </code>
+          <code className="block pl-4 text-xs font-mono text-muted-foreground">
+            {'KpiBlock, KpiRow,'}
+          </code>
+          <code className="block pl-4 text-xs font-mono text-muted-foreground">
+            {'DataTable, SectionHeader, AvatarStack,'}
+          </code>
+          <code className="block pl-4 text-xs font-mono text-muted-foreground">
+            {'EmptyState, Eyebrow,'}
+          </code>
+          <code className="block pl-4 text-xs font-mono text-muted-foreground">
+            {'Button, Badge, Input, Select, // ...shadcn re-exports'}
+          </code>
+          <code className="block text-xs font-mono text-foreground">
+            {'} from "@/components/ds"'}
+          </code>
         </div>
       </div>
     </section>

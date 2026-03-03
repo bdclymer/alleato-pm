@@ -7,14 +7,13 @@ command: /delegate-audit-tasks
 # Delegate Audit Tasks Command
 
 ## Purpose
-
 Takes audit findings and intelligently routes them to specialized agents based on task type.
 
 ## Usage
-
 ```bash
 /delegate-audit-tasks --report <audit-report>
 ```
+
 ## Task Routing Matrix
 
 ### 1. **Code-Verification Agent** (`task-verification-enforcer`)
@@ -78,8 +77,8 @@ Analyzes codebase for documentation gaps:
 ```bash
 /delegate-audit-tasks --report latest
 ```
-### Step 2: Automatic Task Assignment
 
+### Step 2: Automatic Task Assignment
 ```yaml
 Parsing audit report...
 Found 15 tasks to delegate:
@@ -107,6 +106,7 @@ ANALYSIS TASKS (2) → pattern-analyzer:
 ✓ Find undocumented functions
 ✓ Analyze documentation coverage
 ```
+
 ### Step 3: Parallel Execution
 ```bash
 Launching agents in parallel...
@@ -118,7 +118,6 @@ Launching agents in parallel...
 ```
 
 ### Step 4: Consolidated Report
-
 ```markdown
 ## Delegation Results
 
@@ -147,6 +146,7 @@ Launching agents in parallel...
 2. Complex feature documentation
 3. Business logic explanations
 ```
+
 ## Example Delegation Commands
 
 ### Delegate Everything
@@ -154,8 +154,8 @@ Launching agents in parallel...
 # Parse audit and delegate all tasks
 /delegate-audit-tasks --report latest --auto
 ```
-### Selective Delegation
 
+### Selective Delegation
 ```bash
 # Only delegate verification tasks
 /delegate-audit-tasks --report latest --only verification
@@ -163,6 +163,7 @@ Launching agents in parallel...
 # Only delegate safe cleanup tasks
 /delegate-audit-tasks --report latest --only cleanup --safe
 ```
+
 ### Interactive Delegation
 ```bash
 /delegate-audit-tasks --report latest --interactive
@@ -213,7 +214,6 @@ After delegation completes, remaining tasks can be handled by fix-docs:
 ## Success Metrics
 
 Track delegation effectiveness:
-
 - Tasks completed: 85% target
 - Time saved: 75% faster than manual
 - Accuracy improvement: 95% correct fixes

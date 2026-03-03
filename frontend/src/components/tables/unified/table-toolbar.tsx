@@ -5,7 +5,6 @@ import type { ReactElement } from "react";
 import { useState, useRef, useEffect } from "react";
 import {
   Search,
-  LayoutList,
   LayoutGrid,
   List,
   Filter,
@@ -14,6 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,13 +30,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
 // Types
@@ -45,7 +48,7 @@ export type ViewMode = "table" | "card" | "list";
 export interface FilterConfig {
   id: string;
   label: string;
-  type: "select" | "multiSelect" | "dateRange" | "text" | "boolean";
+  type: "select" | "multiSelect" | "dateRange" | "text" | "boolean" | "date" | "number";
   options?: { value: string; label: string }[];
   placeholder?: string;
 }
@@ -182,7 +185,7 @@ function ExpandableSearch({
   );
 }
 
-// View switcher component
+// View switcher component — uses the same TabsList / TabsTrigger as the design system
 function ViewSwitcher({
   currentView,
   onViewChange,
@@ -193,36 +196,23 @@ function ViewSwitcher({
   enabledViews?: ViewMode[];
 }): ReactElement {
   const views: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
-    { mode: "table", icon: <LayoutList className="h-4 w-4" />, label: "Table view" },
-    { mode: "card", icon: <LayoutGrid className="h-4 w-4" />, label: "Card view" },
-    { mode: "list", icon: <List className="h-4 w-4" />, label: "List view" },
+    { mode: "table", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
+    { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
   ];
 
   return (
-    <TooltipProvider>
-      <div className="flex items-center rounded-md border bg-muted/30 p-0.5">
+    <Tabs value={currentView} onValueChange={(v) => onViewChange(v as ViewMode)}>
+      <TabsList className="h-8">
         {views
           .filter((v) => enabledViews.includes(v.mode))
           .map((view) => (
-            <Tooltip key={view.mode}>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "h-7 w-7 rounded-sm",
-                    currentView === view.mode && "bg-background shadow-sm"
-                  )}
-                  onClick={() => onViewChange(view.mode)}
-                >
-                  {view.icon}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{view.label}</TooltipContent>
-            </Tooltip>
+            <TabsTrigger key={view.mode} value={view.mode} className="h-6 gap-1.5 px-2.5">
+              {view.icon}
+              <span className="text-[12px]">{view.label}</span>
+            </TabsTrigger>
           ))}
-      </div>
-    </TooltipProvider>
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -242,12 +232,15 @@ function FilterMenu({
     (v) => v !== undefined && v !== "" && v !== null
   ).length;
 
+  const selectFilters = filters.filter((f) => f.type === "select" && f.options);
+  const inputFilters = filters.filter((f) => f.type === "date" || f.type === "number");
+
   return (
-    <DropdownMenu>
+    <Popover>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
+            <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2">
                 <Filter className="h-4 w-4" />
                 <span className="text-sm">Filter</span>
@@ -260,68 +253,97 @@ function FilterMenu({
                   </Badge>
                 )}
               </Button>
-            </DropdownMenuTrigger>
+            </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent>Filter</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel>Filters</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {filters.map((filter) => {
-          if (filter.type === "select" && filter.options) {
+      <PopoverContent align="start" className="w-72 p-3">
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-foreground">Filters</p>
+
+          {selectFilters.map((filter) => {
             const currentValue =
               typeof activeFilters[filter.id] === "string"
                 ? (activeFilters[filter.id] as string)
                 : "";
             return (
-              <DropdownMenuSub key={filter.id}>
-                <DropdownMenuSubTrigger>
-                  <span>{filter.label}</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-56">
-                  <DropdownMenuRadioGroup
-                    value={currentValue}
-                    onValueChange={(nextValue) =>
-                      onFilterChange({
-                        ...activeFilters,
-                        [filter.id]: nextValue || undefined,
-                      })
-                    }
-                  >
-                    <DropdownMenuRadioItem value="">
-                      All {filter.label}
-                    </DropdownMenuRadioItem>
-                    {filter.options.map((opt) => (
-                      <DropdownMenuRadioItem
-                        key={opt.value}
-                        value={opt.value}
-                      >
+              <div key={filter.id} className="space-y-1">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {filter.label}
+                </span>
+                <Select
+                  value={currentValue || "all"}
+                  onValueChange={(nextValue) =>
+                    onFilterChange({
+                      ...activeFilters,
+                      [filter.id]: nextValue === "all" ? undefined : nextValue,
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue placeholder={`All ${filter.label}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All {filter.label}</SelectItem>
+                    {filter.options?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
                         {opt.label}
-                      </DropdownMenuRadioItem>
+                      </SelectItem>
                     ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+                  </SelectContent>
+                </Select>
+              </div>
             );
-          }
+          })}
 
-          return (
-            <DropdownMenuItem key={filter.id} disabled>
-              {filter.label}
-            </DropdownMenuItem>
-          );
-        })}
-        {activeCount > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onClearFilters}>
-              Clear filters
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {selectFilters.length > 0 && inputFilters.length > 0 && (
+            <div className="h-px bg-border" />
+          )}
+
+          {inputFilters.map((filter) => (
+            <div key={filter.id} className="space-y-1">
+              <label htmlFor={`filter-${filter.id}`} className="text-xs font-medium text-muted-foreground">
+                {filter.label}
+              </label>
+              <Input
+                id={`filter-${filter.id}`}
+                type={filter.type === "date" ? "date" : "number"}
+                className="h-8 text-sm"
+                min={filter.type === "number" ? "0" : undefined}
+                step={filter.type === "number" ? "0.01" : undefined}
+                placeholder={filter.placeholder}
+                value={
+                  typeof activeFilters[filter.id] === "string"
+                    ? (activeFilters[filter.id] as string)
+                    : ""
+                }
+                onChange={(e) =>
+                  onFilterChange({
+                    ...activeFilters,
+                    [filter.id]: e.target.value || undefined,
+                  })
+                }
+              />
+            </div>
+          ))}
+
+          {activeCount > 0 && (
+            <>
+              <div className="h-px bg-border" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center text-xs"
+                onClick={onClearFilters}
+              >
+                Clear filters
+              </Button>
+            </>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -359,11 +381,11 @@ function ColumnToggle({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2">
                 <Columns3 className="h-4 w-4" />
-                <span className="text-sm">Display</span>
+                <span className="text-sm">Columns</span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent>Display options</TooltipContent>
+          <TooltipContent>Columns</TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <DropdownMenuContent align="end" className="w-60">
@@ -480,7 +502,7 @@ export function TableToolbar({
                   className="h-8 w-8"
                   onClick={onExport}
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Export</TooltipContent>
@@ -519,7 +541,7 @@ export function TableToolbar({
         {hasRightActions && <div className="h-4 w-px bg-border mx-1" />}
 
         {/* Item count */}
-        <span className="inline-flex h-8 items-center rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground whitespace-nowrap">
+        <span className="inline-flex h-8 items-center px-2.5 text-xs text-muted-foreground whitespace-nowrap">
           {filteredItems === totalItems
             ? `${totalItems} items`
             : `${filteredItems} of ${totalItems}`}

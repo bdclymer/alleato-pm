@@ -9,7 +9,7 @@
 
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import {
   DndContext,
@@ -92,8 +92,7 @@ interface BudgetCode {
   id: string
   code: string
   description: string
-  category?: string
-  costType?: string | null
+  costType: string | null
   fullLabel: string
 }
 
@@ -118,6 +117,18 @@ interface SortableLineItemRowProps {
   errors?: unknown
   isValid: boolean
 }
+
+// =============================================================================
+// STABLE SENSOR OPTIONS
+// Module-level constants so useSensor/useSensors see the same object reference
+// every render. Inline object literals create new refs each render, defeating
+// useMemo inside useSensor and causing DndContext to re-initialize sensors.
+// =============================================================================
+
+const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } } as const
+const KEYBOARD_SENSOR_OPTIONS = {
+  coordinateGetter: sortableKeyboardCoordinates,
+} as const
 
 // =============================================================================
 // SORTABLE LINE ITEM ROW COMPONENT
@@ -182,11 +193,7 @@ function SortableLineItemRow({
                 <BudgetCodeSelector
                   value={field.value || ''}
                   onValueChange={(value) => field.onChange(value)}
-                  budgetCodes={budgetCodes.map(code => ({
-                    ...code,
-                    costType: code.costType || code.category || null,
-                    fullLabel: code.fullLabel || `${code.code} - ${code.description}`,
-                  }))}
+                  budgetCodes={budgetCodes}
                   onCreateNew={onCreateBudgetCode}
                   placeholder="Select budget code..."
                   error={!!errors && typeof errors === 'object' && errors !== null && 'budget_code_id' in errors}
@@ -397,15 +404,16 @@ export function LineItemsManager({
   form,
 }: LineItemsManagerProps) {
 
+  // Stable sortable IDs — prevents DndContext from seeing new array ref every render
+  const sortableIds = useMemo(
+    () => items.map((_, index) => `line-item-${index}`),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items.length]
+  )
+
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, POINTER_SENSOR_OPTIONS),
+    useSensor(KeyboardSensor, KEYBOARD_SENSOR_OPTIONS)
   )
 
   // Calculate totals
@@ -474,7 +482,7 @@ export function LineItemsManager({
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={items.map((_, index) => `line-item-${index}`)}
+          items={sortableIds}
           strategy={verticalListSortingStrategy}
         >
           <div className="overflow-hidden rounded-lg border border-border/70 bg-muted/20">
@@ -521,7 +529,7 @@ export function LineItemsManager({
                   </TableRow>
                 ) : (
                   items.map((item, index) => {
-                    const errors = form.formState.errors.line_items?.[index]
+                    const errors = (form.formState.errors.line_items as any[] | undefined)?.[index]
                     const isValid =
                       !errors &&
                       !!form.getValues(`line_items.${index}.budget_code_id`) &&

@@ -25,6 +25,7 @@ export interface OwnerInvoice {
   created_at: string;
   updated_at: string;
   total_amount?: number;
+  contract_retention_percentage?: number | null;
   owner_invoice_line_items?: OwnerInvoiceLineItem[];
 }
 

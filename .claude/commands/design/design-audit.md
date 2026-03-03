@@ -3,13 +3,11 @@
 Run a comprehensive design system audit on the specified scope.
 
 ## Usage
-
-```bash
+```
 /design-audit [scope]
 ```
 
 **Scopes:**
-
 - `all` - Full codebase audit (default)
 - `ui` - Core UI components only
 - `layout` - Layout components only
@@ -22,7 +20,7 @@ Run a comprehensive design system audit on the specified scope.
 
 You are performing a design system audit. Follow these steps:
 
-1. **Read the design system rules** from `frontend/src/design-system/` (start with README.md, then tokens.md and principles.md for specific rules)
+1. **Read the design system rules** from `.claude/design-audit/design-system-rules.md`
 
 2. **Determine scope** from the argument: $ARGUMENTS
    - If empty or "all", audit all sections

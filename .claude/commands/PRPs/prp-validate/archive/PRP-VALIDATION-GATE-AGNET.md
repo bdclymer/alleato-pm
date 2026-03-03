@@ -1,1 +1,0 @@
-../../../../../.agent-platform/.claude/commands/PRPs/prp-validate/archive/PRP-VALIDATION-GATE-AGNET.md
