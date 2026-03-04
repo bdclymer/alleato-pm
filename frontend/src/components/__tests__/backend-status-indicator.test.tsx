@@ -24,9 +24,7 @@ describe("BackendStatusIndicator", () => {
     );
 
     render(<BackendStatusIndicator />);
-    // There are two "Checking..." texts (one for Backend, one for OpenAI)
-    const checkingTexts = screen.getAllByText("Checking...");
-    expect(checkingTexts.length).toBeGreaterThan(0);
+    expect(screen.getByText("Connecting...")).toBeInTheDocument();
   });
 
   it("shows connected state when backend is healthy", async () => {
@@ -43,7 +41,7 @@ describe("BackendStatusIndicator", () => {
     render(<BackendStatusIndicator />);
 
     await waitFor(() => {
-      expect(screen.getByText("Connected")).toBeInTheDocument();
+      expect(screen.getByText("Backend online")).toBeInTheDocument();
     });
   });
 
@@ -55,11 +53,11 @@ describe("BackendStatusIndicator", () => {
     render(<BackendStatusIndicator />);
 
     await waitFor(() => {
-      expect(screen.getByText("Disconnected")).toBeInTheDocument();
+      expect(screen.getByText("Backend offline")).toBeInTheDocument();
     });
   });
 
-  it("shows OpenAI not configured when openai_configured is false", async () => {
+  it("shows AI not configured when openai_configured is false", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -73,7 +71,7 @@ describe("BackendStatusIndicator", () => {
     render(<BackendStatusIndicator />);
 
     await waitFor(() => {
-      expect(screen.getByText("Not configured")).toBeInTheDocument();
+      expect(screen.getByText("AI not configured")).toBeInTheDocument();
     });
   });
 
