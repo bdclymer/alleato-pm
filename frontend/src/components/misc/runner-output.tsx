@@ -1,6 +1,5 @@
 "use client";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import type { AgentEvent } from "@/lib/types";
 import {
   ArrowRightLeft,
@@ -256,33 +255,27 @@ export function RunnerOutput({ runnerEvents }: RunnerOutputProps) {
         title="Runner Output"
         icon={<MessageSquareMore className="h-4 w-4 text-blue-600" />}
       >
-        <ScrollArea className="h-[calc(100%-2rem)] rounded-md border border-border bg-muted shadow-sm">
-          <div className="p-4 space-y-2.5">
+        <ScrollArea className="h-[calc(100%-2rem)]">
+          <div className="space-y-4">
             {runnerEvents.length === 0 ? (
-              <p className="text-center text-zinc-500 p-4">
-                No runner events yet
+              <p className="text-center text-muted-foreground py-6 text-sm">
+                No events yet
               </p>
             ) : (
               groupedEvents.map((group) => {
                 const agentName = group[0]?.agent ?? "Agent";
                 const key = group.map((ev) => ev.id).join("-");
                 return (
-                  <Card
-                    key={key}
-                    className="border border-border bg-background shadow-sm rounded-lg"
-                  >
-                    <CardHeader className="flex flex-row items-center px-4 py-2">
-                      <span className="text-sm text-foreground font-medium">
-                        {agentName}
-                      </span>
-                    </CardHeader>
-
-                    <CardContent className="p-4 pt-0 space-y-2">
+                  <div key={key} className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                      {agentName}
+                    </p>
+                    <div className="space-y-1.5">
                       {group.map((event) => (
                         <EventDetails key={event.id} event={event} />
                       ))}
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })
             )}

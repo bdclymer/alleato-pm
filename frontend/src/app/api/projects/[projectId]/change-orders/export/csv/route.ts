@@ -106,7 +106,7 @@ export async function GET(
     if (includeLineItems) {
       const changeOrderIds = changeOrders.map((co) => co.id);
       const { data: lineItems } = await supabase
-        .from("change_order_line_items")
+        .from("change_order_lines")
         .select("*")
         .in("change_order_id", changeOrderIds)
         .order("sort_order", { ascending: true });

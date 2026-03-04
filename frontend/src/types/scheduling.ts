@@ -203,6 +203,7 @@ export interface GanttChartItem {
   finish_date: string;
   duration_days: number;
   percent_complete: number;
+  status: TaskStatus;
   is_milestone: boolean;
   parent_task_id: string | null;
   level: number;

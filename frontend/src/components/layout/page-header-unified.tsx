@@ -165,7 +165,7 @@ export function PageHeader({
     <div className={cn(className)}>
       <div className="px-4 sm:px-6 lg:px-8">
         {/* Title and Actions */}
-        <div className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between min-w-0">
+        <div className="flex flex-col gap-4 py-3 md:flex-row md:items-center md:justify-between min-w-0">
           <div className="min-w-0 flex-1 overflow-hidden">
             {/* Project Name */}
             {shouldShowProjectName && (

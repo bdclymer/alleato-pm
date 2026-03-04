@@ -84,7 +84,6 @@ module.exports = {
         const grayRegex = /(text|bg|border)-(gray)-(\d{2,3})/g;
         let match;
         while ((match = grayRegex.exec(classValue)) !== null) {
-          const prefix = match[1]; // text, bg, or border
           const value = match[3]; // 50, 100, 200, etc.
 
           context.report({
@@ -93,6 +92,18 @@ module.exports = {
             data: { value },
           });
         }
+
+        // Check for bg-white, text-white, bg-black, text-black
+        // These should use semantic tokens: bg-background, bg-card, text-foreground, etc.
+        const allClasses = classValue.split(/\s+/);
+        allClasses.forEach(cls => {
+          if (/^(bg|text)-(white|black)$/.test(cls)) {
+            context.report({
+              node,
+              messageId: 'useSemanticToken',
+            });
+          }
+        });
 
         // Check for direct color names
         const classes = classValue.split(/\s+/);

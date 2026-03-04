@@ -22,7 +22,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { TaskTable } from "@/components/scheduling/task-table";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
 import { ImportExportModal } from "@/components/scheduling/import-export-modal";
@@ -37,35 +36,24 @@ import {
   ScheduleTimelineView,
 } from "@/components/scheduling/schedule-views";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { TableToolbar, type FilterConfig, type ColumnConfig } from "@/components/tables/unified/table-toolbar";
 import {
   Plus,
-  Table2,
-  BarChart3,
   Columns,
-  Download,
   Upload,
-  MoreHorizontal,
   RefreshCw,
-  Loader2,
   Calendar,
-  CheckCircle,
-  Clock,
   AlertCircle,
-  Flag,
-  LayoutGrid,
+  Table2,
   Kanban,
   CalendarDays,
   GanttChart as GanttIcon,
-  Filter,
-  Share2,
   ChevronDown,
   Trash2,
   X,
@@ -87,6 +75,41 @@ import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
 
 type ViewMode = "grid" | "board" | "schedule" | "timeline" | "calendar";
 
+const SCHEDULE_FILTERS: FilterConfig[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "not_started", label: "Not Started" },
+      { value: "in_progress", label: "In Progress" },
+      { value: "complete", label: "Complete" },
+      { value: "on_hold", label: "On Hold" },
+    ],
+  },
+  {
+    id: "is_milestone",
+    label: "Type",
+    type: "select",
+    options: [
+      { value: "true", label: "Milestones" },
+      { value: "false", label: "Tasks" },
+    ],
+  },
+];
+
+const SCHEDULE_COLUMNS: ColumnConfig[] = [
+  { id: "name", label: "Task Name", alwaysVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "start_date", label: "Start Date", defaultVisible: true },
+  { id: "finish_date", label: "Finish Date", defaultVisible: true },
+  { id: "duration_days", label: "Duration", defaultVisible: true },
+  { id: "percent_complete", label: "% Complete", defaultVisible: true },
+  { id: "assigned_to", label: "Assigned To", defaultVisible: false },
+  { id: "wbs_code", label: "WBS Code", defaultVisible: false },
+  { id: "constraint_type", label: "Constraint", defaultVisible: false },
+];
+
 // =============================================================================
 // VIEW MODE TABS (Microsoft Planner Style)
 // =============================================================================
@@ -94,12 +117,12 @@ type ViewMode = "grid" | "board" | "schedule" | "timeline" | "calendar";
 const viewModeConfig: {
   mode: ViewMode;
   label: string;
-  icon: typeof LayoutGrid;
+  icon: typeof Table2;
 }[] = [
-  { mode: "grid", label: "Grid", icon: LayoutGrid },
+  { mode: "grid", label: "Gantt", icon: GanttIcon },
+  { mode: "schedule", label: "Table", icon: Table2 },
   { mode: "board", label: "Board", icon: Kanban },
-  { mode: "schedule", label: "Schedule", icon: Columns },
-  { mode: "timeline", label: "Timeline", icon: GanttIcon },
+  { mode: "timeline", label: "Timeline", icon: Columns },
   { mode: "calendar", label: "Calendar", icon: CalendarDays },
 ];
 
@@ -111,64 +134,27 @@ function ViewModeTabs({
   onChange: (mode: ViewMode) => void;
 }) {
   return (
-    <nav className="flex items-center space-x-6 border-b -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8" aria-label="View mode">
-      {viewModeConfig.map(({ mode: viewMode, label, icon: Icon }) => (
-        <button
-          type="button"
-          key={viewMode}
-          onClick={() => onChange(viewMode)}
-          aria-label={`Switch to ${label} view`}
-          className={cn(
-            "inline-flex items-center gap-2 py-4 px-1 text-sm font-medium transition-all duration-200 border-b-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-t-sm",
-            mode === viewMode
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-          )}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </button>
-      ))}
+    <nav className="flex overflow-x-auto" aria-label="View mode">
+      <div className="flex min-w-max space-x-5">
+        {viewModeConfig.map(({ mode: viewMode, label, icon: Icon }) => (
+          <button
+            type="button"
+            key={viewMode}
+            onClick={() => onChange(viewMode)}
+            aria-label={`Switch to ${label} view`}
+            className={cn(
+              "group inline-flex items-center gap-2 whitespace-nowrap pb-2 pt-2 text-sm font-medium transition-colors",
+              mode === viewMode
+                ? "text-brand"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
     </nav>
-  );
-}
-
-// =============================================================================
-// SUMMARY STRIP COMPONENT
-// =============================================================================
-
-function SummaryCards({ summary }: { summary: { total_tasks: number; completed_tasks: number; in_progress_tasks: number; not_started_tasks: number; milestones_count: number; overdue_tasks: number } }) {
-  const stats = [
-    { label: "Total Tasks", value: summary.total_tasks, icon: Calendar, color: "text-foreground" },
-    { label: "Completed", value: summary.completed_tasks, icon: CheckCircle, color: "text-[hsl(var(--status-success))]" },
-    { label: "In Progress", value: summary.in_progress_tasks, icon: Clock, color: "text-[hsl(var(--status-info))]" },
-    { label: "Not Started", value: summary.not_started_tasks, icon: AlertCircle, color: "text-muted-foreground" },
-    { label: "Milestones", value: summary.milestones_count, icon: Flag, color: "text-[hsl(var(--status-warning))]" },
-  ];
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2">
-      {stats.map((stat, index) => (
-        <div key={stat.label} className="flex items-center gap-2">
-          <stat.icon className={cn("h-4 w-4", stat.color)} />
-          <p className="text-sm text-muted-foreground">
-            {stat.label}
-            <span className="ml-1.5 font-semibold text-foreground tabular-nums">
-              {stat.value}
-            </span>
-          </p>
-          {index < stats.length - 1 && <div className="h-4 w-px bg-border/70" />}
-        </div>
-      ))}
-      {summary.overdue_tasks > 0 && (
-        <div className="inline-flex items-center gap-2 rounded-full border border-destructive/25 bg-destructive/10 px-2.5 py-1">
-          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-          <span className="text-xs font-medium text-destructive">
-            Overdue {summary.overdue_tasks}
-          </span>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -615,10 +601,6 @@ export default function ProjectSchedulePage() {
     }
   }, [projectId, copiedTask, apiUrl, refetch]);
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
   const handleBulkStatusUpdate = useCallback(
     async (status: TaskStatus) => {
       const percentComplete = status === "complete" ? 100 : status === "in_progress" ? 50 : 0;
@@ -691,45 +673,26 @@ export default function ProjectSchedulePage() {
     [apiUrl, projectId, refetch]
   );
 
-  // Actions for header
+  // State for toolbar
+  const [searchValue, setSearchValue] = useState("");
+  const [activeFilters, setActiveFilters] = useState<Record<string, string | number | boolean | string[] | null | undefined>>({});
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    SCHEDULE_COLUMNS.filter((c) => c.defaultVisible !== false || c.alwaysVisible).map((c) => c.id)
+  );
+
+  const totalTaskCount = useMemo(() => {
+    const count = (tasks: ScheduleTaskWithHierarchy[]): number =>
+      tasks.reduce((acc, t) => acc + 1 + (t.children ? count(t.children) : 0), 0);
+    return data?.tasks ? count(data.tasks) : 0;
+  }, [data?.tasks]);
+
+  // Actions for header — just the primary action, like every other page
   const headerActions = (
-    <div className="flex items-center gap-4">
-      <Button onClick={() => handleAddTask()} size="sm">
-        <Plus className="h-4 w-4 mr-2" />
+    <div className="flex items-center gap-2">
+      <Button size="sm" onClick={() => handleAddTask()}>
+        <Plus className="h-4 w-4" />
         Add Task
       </Button>
-
-      <Button variant="ghost" size="sm">
-        <Filter className="h-4 w-4 mr-2" />
-        Filters
-      </Button>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-            <ChevronDown className="h-3 w-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setIsImportExportModalOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import Schedule
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsImportExportModalOpen(true)}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Schedule
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw
-              className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")}
-            />
-            Refresh
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 
@@ -738,26 +701,27 @@ export default function ProjectSchedulePage() {
     return (
       <>
         <ProjectPageHeader
+          variant="compact"
           title="Schedule"
-          description="Track project schedule tasks and milestones"
+          description=""
           actions={headerActions}
         />
-        <PageContainer className="space-y-4">
-          {/* Skeleton summary strip */}
-          <div className="flex flex-wrap items-center gap-4 py-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2 animate-pulse">
-                <div className="h-4 w-4 rounded-full bg-muted" />
-                <div className="h-4 w-20 rounded bg-muted" />
-              </div>
-            ))}
+        <PageContainer>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+            <div className="flex items-center gap-2 pb-2 animate-pulse">
+              <div className="h-8 w-8 rounded bg-muted" />
+              <div className="h-8 w-20 rounded bg-muted" />
+              <div className="h-8 w-24 rounded bg-muted" />
+              <div className="h-4 w-px bg-border mx-1" />
+              <div className="h-4 w-16 rounded bg-muted" />
+            </div>
           </div>
-          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
           {/* Skeleton table rows */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="mt-4 overflow-hidden">
             <div className="h-10 bg-muted/50 border-b" />
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-4 border-b last:border-0 animate-pulse">
+            {["s1","s2","s3","s4","s5","s6","s7","s8"].map((key) => (
+              <div key={key} className="flex items-center gap-4 px-4 py-4 border-b last:border-0 animate-pulse">
                 <div className="h-4 w-4 rounded bg-muted" />
                 <div className="h-4 flex-1 rounded bg-muted" style={{ maxWidth: `${60 + Math.random() * 30}%` }} />
                 <div className="h-4 w-20 rounded bg-muted" />
@@ -779,12 +743,15 @@ export default function ProjectSchedulePage() {
     return (
       <>
         <ProjectPageHeader
+          variant="compact"
           title="Schedule"
-          description="Track project schedule tasks and milestones"
+          description=""
           actions={headerActions}
         />
         <PageContainer>
-          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+          </div>
           <div
             data-testid="error-state"
             className="flex flex-col items-center justify-center py-16 px-4 animate-reveal"
@@ -846,16 +813,34 @@ export default function ProjectSchedulePage() {
     <>
       <ProjectPageHeader
         title="Schedule"
-        description="Track project schedule tasks and milestones"
+        description=""
         actions={headerActions}
       />
-      <PageContainer className="space-y-4">
-        {/* Summary strip shown above tabs because it applies to every view */}
-        {data?.summary && data.summary.total_tasks > 0 && (
-          <SummaryCards summary={data.summary} />
-        )}
-
-        <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+      <PageContainer className="!overflow-x-visible">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+          <TableToolbar
+            className="w-full lg:w-auto"
+            totalItems={totalTaskCount}
+            filteredItems={totalTaskCount}
+            selectedCount={selectedIds.size}
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            searchPlaceholder="Search tasks..."
+            currentView="table"
+            onViewChange={() => {}}
+            enableViews={false}
+            filters={SCHEDULE_FILTERS}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            onClearFilters={() => setActiveFilters({})}
+            columns={SCHEDULE_COLUMNS}
+            visibleColumns={visibleColumns}
+            onColumnVisibilityChange={setVisibleColumns}
+            onExport={() => setIsImportExportModalOpen(true)}
+            enableBulkDelete={false}
+          />
+        </div>
 
         {/* Bulk Action Bar */}
         {selectedIds.size > 0 && (
@@ -869,7 +854,7 @@ export default function ProjectSchedulePage() {
 
         {/* Empty State */}
         {data && (!data.tasks || data.tasks.length === 0) && (
-          <div className="flex flex-col items-center justify-center py-20 px-4 animate-reveal">
+          <div className="mt-4 flex flex-col items-center justify-center py-20 px-4 animate-reveal">
             <div className="rounded-full bg-primary/10 p-4 mb-4">
               <Calendar className="h-7 w-7 text-primary" />
             </div>
@@ -891,9 +876,23 @@ export default function ProjectSchedulePage() {
         )}
 
         {/* Main Content */}
-        {data && data.tasks && data.tasks.length > 0 && (
-        <div key={viewMode} className="flex-1 min-h-[600px] animate-reveal">
-          {viewMode === "grid" && <ScheduleGridView {...viewProps} />}
+        {data?.tasks && data.tasks.length > 0 && (
+        <div key={viewMode} className="mt-2 flex-1 min-h-[600px] animate-reveal">
+          {viewMode === "grid" && (
+            <div className="-mr-4 sm:-mr-6 lg:-mr-8 overflow-x-auto">
+              <GanttChart
+                data={data?.ganttData || []}
+                onTaskClick={(taskId) => {
+                  const fullTask = data?.tasks
+                    ? findTaskById(data.tasks, taskId)
+                    : null;
+                  if (fullTask) {
+                    handleEditTask(fullTask);
+                  }
+                }}
+              />
+            </div>
+          )}
 
           {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
 
@@ -901,39 +900,7 @@ export default function ProjectSchedulePage() {
 
           {viewMode === "timeline" && <ScheduleTimelineView {...viewProps} />}
 
-          {viewMode === "schedule" && (
-            <div className="grid grid-cols-2 gap-4 min-h-[600px]">
-              <div className="overflow-auto border rounded-lg">
-                <TaskTable
-                  tasks={data?.tasks || []}
-                  selectedIds={selectedIds}
-                  onSelectionChange={setSelectedIds}
-                  onTaskClick={handleTaskClick}
-                  onAddSubtask={handleAddTask}
-                  onEditTask={handleEditTask}
-                  onDeleteTask={handleDeleteTask}
-                  onIndentTask={handleIndentTask}
-                  onOutdentTask={handleOutdentTask}
-                  onUpdateTask={handleUpdateTask}
-                  onContextMenu={openContextMenu}
-                  isLoading={isLoading}
-                />
-              </div>
-              <div className="overflow-auto border rounded-lg">
-                <GanttChart
-                  data={data?.ganttData || []}
-                  onTaskClick={(taskId) => {
-                    const fullTask = data?.tasks
-                      ? findTaskById(data.tasks, taskId)
-                      : null;
-                    if (fullTask) {
-                      handleEditTask(fullTask);
-                    }
-                  }}
-                />
-              </div>
-            </div>
-          )}
+          {viewMode === "schedule" && <ScheduleGridView {...viewProps} />}
         </div>
         )}
 

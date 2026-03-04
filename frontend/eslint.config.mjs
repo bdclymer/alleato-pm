@@ -67,8 +67,8 @@ const config = [
       'react/display-name': 'off',
       '@next/next/no-img-element': 'off',
 
-      // Design System Enforcement — warnings (flag violations without blocking builds)
-      'design-system/no-hardcoded-colors': 'warn',
+      // Design System Enforcement — errors (block builds to prevent design drift)
+      'design-system/no-hardcoded-colors': 'error',
       'design-system/no-arbitrary-spacing': 'warn',
       'design-system/require-semantic-colors': 'warn',
     },

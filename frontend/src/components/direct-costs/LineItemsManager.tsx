@@ -572,7 +572,7 @@ export function LineItemsManager({
             type="button"
             size="default"
             onClick={onAdd}
-            className="h-10 gap-2 bg-brand px-4 text-white hover:bg-brand-hover"
+            className="h-10 gap-2 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             Add Line Item

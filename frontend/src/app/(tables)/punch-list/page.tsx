@@ -135,34 +135,6 @@ export default function PunchListTablePage() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Draft</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((item) => item.status === "draft").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Work Required</div>
-          <div className="text-2xl font-bold text-orange-600 mt-1">
-            {data.filter((item) => item.status === "work_required").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Initiated</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">
-            {data.filter((item) => item.status === "initiated").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Closed</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">
-            {data.filter((item) => item.status === "closed").length}
-          </div>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="flex-1 bg-background rounded-lg border overflow-hidden">
         {isLoading ? (

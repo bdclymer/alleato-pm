@@ -31,8 +31,9 @@ export function PageContainer({
         "mx-auto w-full",
         maxWidthClasses[maxWidth],
         // Mobile-first responsive padding following 8px grid system
-        // Mobile: 16px (comfortable minimum), Tablet: 24px, Desktop: 32px
-        padding && "px-4 sm:px-6 lg:px-8 py-4 sm:py-6",
+        // Horizontal: Mobile 16px, Tablet 24px, Desktop 32px
+        // Vertical: tight to reduce gap between header and content
+        padding && "px-4 sm:px-6 lg:px-8 py-2 sm:py-3",
         // Prevent horizontal overflow on all screen sizes
         "overflow-x-hidden",
         className,

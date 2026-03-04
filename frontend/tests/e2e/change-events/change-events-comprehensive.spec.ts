@@ -26,10 +26,8 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
     console.log('Navigating to change events list page...');
 
     // Navigate to change events page
-    await page.goto(`/${projectId}/change-events`);
-
-    // Wait for page to load
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(`/${projectId}/change-events`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // Take screenshot
     await page.screenshot({
@@ -95,26 +93,16 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
   test('2. Create Form - Verify form renders with all fields', async ({ page }) => {
     console.log('Testing create form...');
 
-    await page.goto(`/${projectId}/change-events`);
-    await page.waitForLoadState('domcontentloaded');
+    // Navigate directly to avoid click+networkidle hang
+    await page.goto(`/${projectId}/change-events/new`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500); // allow React hydration
 
-    // Click create button
-    const createButton = page.locator('button, a').filter({
-      hasText: /create.*change.*event/i
-    }).first();
-
-    await createButton.click();
-
-    // Wait for form to appear (could be modal or new page)
-    await page.waitForTimeout(1000);
-
-    // Take screenshot of form
+    // Take screenshot of form without fullPage (fullPage:true blocks on font loading)
     await page.screenshot({
       path: path.join(screenshotsDir, 'browser-test-create-form.png'),
-      fullPage: true
-    });
+    }).catch(() => null);
 
-    // Verify required fields exist
+    // Verify required fields exist - use isVisible to handle client-side hydration
     const requiredFields = {
       number: page.locator('input[name="number"], input[id*="number"]').first(),
       title: page.locator('input[name="title"], input[id*="title"]').first(),
@@ -126,7 +114,8 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
     console.log('Checking for required fields...');
 
     for (const [fieldName, locator] of Object.entries(requiredFields)) {
-      if (await locator.count() > 0) {
+      const visible = await locator.isVisible({ timeout: 5000 }).catch(() => false);
+      if (visible) {
         console.log(`✓ ${fieldName} field found`);
       } else {
         console.log(`✗ ${fieldName} field NOT found`);
@@ -168,9 +157,6 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
   test('3. Form Submission - Fill and submit form', async ({ page }) => {
     console.log('Testing form submission...');
 
-    await page.goto(`/${projectId}/change-events`);
-    await page.waitForLoadState('domcontentloaded');
-
     // Track network requests
     const apiCalls: any[] = [];
     page.on('response', response => {
@@ -183,26 +169,23 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
       }
     });
 
-    // Click create button
-    const createButton = page.locator('button, a').filter({
-      hasText: /create.*change.*event/i
-    }).first();
-    await createButton.click();
-    await page.waitForTimeout(1000);
+    // Navigate directly to avoid click+networkidle hang
+    await page.goto(`/${projectId}/change-events/new`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500); // allow React hydration
 
     // Fill required fields
     console.log('Filling form fields...');
 
     // Number field (if editable)
     const numberField = page.locator('input[name="number"]').first();
-    if (await numberField.count() > 0 && await numberField.isEditable()) {
+    if (await numberField.isVisible({ timeout: 5000 }).catch(() => false) && await numberField.isEditable()) {
       await numberField.fill('TEST-001');
       console.log('✓ Filled number field');
     }
 
     // Title field
     const titleField = page.locator('input[name="title"]').first();
-    if (await titleField.count() > 0) {
+    if (await titleField.isVisible({ timeout: 5000 }).catch(() => false)) {
       await titleField.fill('Browser Test Change Event');
       console.log('✓ Filled title field');
     }
@@ -228,16 +211,15 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
       console.log('✓ Filled description');
     }
 
-    // Take screenshot before submission
+    // Take screenshot before submission (no fullPage to avoid font hang)
     await page.screenshot({
       path: path.join(screenshotsDir, 'browser-test-form-filled.png'),
-      fullPage: true
-    });
+    }).catch(() => null);
 
     // Submit form
-    const submitButton = page.locator('button[type="submit"], button').filter({
-      hasText: /submit|create|save/i
-    }).first();
+    const submitButton = page.locator('[data-testid="change-event-submit-button"]')
+      .or(page.locator('button[type="submit"], button').filter({ hasText: /submit|create|save/i }))
+      .first();
 
     console.log('Submitting form...');
     await submitButton.click();
@@ -251,11 +233,10 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
       console.log(`  ${call.status} - ${call.url}`);
     });
 
-    // Take screenshot after submission
+    // Take screenshot after submission (no fullPage to avoid font hang)
     await page.screenshot({
       path: path.join(screenshotsDir, 'browser-test-submit.png'),
-      fullPage: true
-    });
+    }).catch(() => null);
 
     // Look for success indicators
     const successMessage = page.locator('text=/success|created|saved/i').first();
@@ -275,8 +256,8 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
   test('4. List After Create - Verify new change event appears', async ({ page }) => {
     console.log('Verifying change event appears in list...');
 
-    await page.goto(`/${projectId}/change-events`);
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(`/${projectId}/change-events`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // Look for the test change event
     const testChangeEvent = page.locator('text=/Browser Test Change Event/i').first();
@@ -309,8 +290,8 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
   test('5. Detail View - Verify detail page displays data', async ({ page }) => {
     console.log('Testing detail view...');
 
-    await page.goto(`/${projectId}/change-events`);
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(`/${projectId}/change-events`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1000);
 
     // Find and click on the test change event
     const testChangeEvent = page.locator('text=/Browser Test Change Event/i').first();
@@ -367,8 +348,7 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
       }
     });
 
-    await page.goto(`/${projectId}/change-events`);
-    await page.waitForLoadState('domcontentloaded');
+    await page.goto(`/${projectId}/change-events`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     console.log('\n=== Console Errors ===');

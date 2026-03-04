@@ -172,33 +172,6 @@ export default function DrawingsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Total</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {drawings.length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Approved</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {drawings.filter((d) => d.status === "approved").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Under Review</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {drawings.filter((d) => d.status === "under_review").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Draft</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {drawings.filter((d) => d.status === "draft").length}
-          </div>
-        </div>
-      </div>
-
       <div className="flex-1 bg-background rounded-lg border overflow-hidden">
         <DataTable
           columns={columns}

@@ -15,15 +15,7 @@
  * - Deadline indicators
  */
 
-import { useMemo, useState, useRef, useEffect, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useMemo, useRef, useEffect, useCallback, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -31,7 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { ZoomIn, ZoomOut, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Circle, Clock, CheckCircle2, ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   format,
@@ -40,12 +32,10 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  eachWeekOfInterval,
   eachMonthOfInterval,
   isWeekend,
-  isSameMonth,
 } from "date-fns";
-import { GanttChartItem, DependencyType } from "@/types/scheduling";
+import type { TaskStatus, GanttChartItem, DependencyType } from "@/types/scheduling";
 
 // =============================================================================
 // TYPES
@@ -69,14 +59,22 @@ interface TimelineRange {
 // =============================================================================
 
 const ROW_HEIGHT = 36;
-const HEADER_HEIGHT = 60;
+const HEADER_ROW_1 = 30; // Month row
+const HEADER_ROW_2 = 30; // Day row
+const HEADER_HEIGHT = HEADER_ROW_1 + HEADER_ROW_2;
 const TASK_BAR_HEIGHT = 20;
 const MILESTONE_SIZE = 12;
-const LEFT_PANEL_WIDTH = 250;
+const LEFT_PANEL_WIDTH = 340;
+
+const ganttStatusConfig: Record<TaskStatus, { label: string; icon: typeof Circle; iconColor: string }> = {
+  not_started: { label: "Not started", icon: Circle, iconColor: "text-muted-foreground" },
+  in_progress: { label: "In progress", icon: Clock, iconColor: "text-[hsl(var(--status-info))]" },
+  complete: { label: "Complete", icon: CheckCircle2, iconColor: "text-[hsl(var(--status-success))]" },
+};
 
 const ZOOM_CONFIG: Record<ZoomLevel, { dayWidth: number; format: string }> = {
   day: { dayWidth: 40, format: "d" },
-  week: { dayWidth: 20, format: "d" },
+  week: { dayWidth: 36, format: "EEEEE d" },
   month: { dayWidth: 8, format: "MMM" },
 };
 
@@ -342,13 +340,51 @@ function TaskBar({ task, index, dayWidth, startDate, onTaskClick }: TaskBarProps
 // =============================================================================
 
 export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
-  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>("week");
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const zoomLevel: ZoomLevel = "week";
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
   const { dayWidth } = ZOOM_CONFIG[zoomLevel];
   const dateRange = useMemo(() => getDateRange(data), [data]);
+
+  // Determine which tasks are parents (have children)
+  const parentIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const task of data) {
+      if (task.parent_task_id) ids.add(task.parent_task_id);
+    }
+    return ids;
+  }, [data]);
+
+  // Filter out collapsed children
+  const visibleData = useMemo(() => {
+    if (collapsedIds.size === 0) return data;
+    // Build a set of all collapsed ancestor IDs (transitive)
+    const hiddenParents = new Set<string>();
+    const isHidden = (task: GanttChartItem): boolean => {
+      if (!task.parent_task_id) return false;
+      if (collapsedIds.has(task.parent_task_id)) return true;
+      if (hiddenParents.has(task.parent_task_id)) return true;
+      // Check ancestors
+      const parent = data.find((t) => t.id === task.parent_task_id);
+      if (parent && isHidden(parent)) {
+        hiddenParents.add(task.parent_task_id);
+        return true;
+      }
+      return false;
+    };
+    return data.filter((task) => !isHidden(task));
+  }, [data, collapsedIds]);
+
+  const toggleCollapse = useCallback((taskId: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(taskId)) next.delete(taskId);
+      else next.add(taskId);
+      return next;
+    });
+  }, []);
 
   // Generate timeline days
   const timelineDays = useMemo(() => {
@@ -356,16 +392,16 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   }, [dateRange]);
 
   const totalWidth = timelineDays.length * dayWidth;
-  const totalHeight = HEADER_HEIGHT + data.length * ROW_HEIGHT;
+  const totalHeight = HEADER_HEIGHT + visibleData.length * ROW_HEIGHT;
 
   // Create task index map for dependency arrows
   const taskIndexMap = useMemo(() => {
     const map = new Map<string, number>();
-    data.forEach((task, index) => {
+    visibleData.forEach((task, index) => {
       map.set(task.id, index);
     });
     return map;
-  }, [data]);
+  }, [visibleData]);
 
   // Scroll to today on mount
   useEffect(() => {
@@ -377,126 +413,76 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
     }
   }, [dateRange.start, dayWidth]);
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    setScrollLeft((e.target as HTMLDivElement).scrollLeft);
-  }, []);
+  const handleScroll = useCallback(() => {}, []);
 
-  const scrollToToday = useCallback(() => {
-    const today = new Date();
-    const todayOffset = differenceInDays(today, dateRange.start);
-    const scrollTo = Math.max(0, todayOffset * dayWidth - 200);
-    scrollContainerRef.current?.scrollTo({ left: scrollTo, behavior: "smooth" });
-  }, [dateRange.start, dayWidth]);
-
-  // Generate timeline header based on zoom level
+  // Generate timeline header (months + days for week zoom)
   const renderTimelineHeader = useMemo(() => {
-    if (zoomLevel === "day" || zoomLevel === "week") {
-      // Show months row + days row
-      const months = eachMonthOfInterval({ start: dateRange.start, end: dateRange.end });
-
-      return (
-        <>
-          {/* Months row */}
-          <g className="months-header">
-            {months.map((month, i) => {
-              const monthStart = i === 0 ? dateRange.start : startOfMonth(month);
-              const monthEnd =
-                i === months.length - 1 ? dateRange.end : endOfMonth(month);
-              const startOffset = differenceInDays(monthStart, dateRange.start);
-              const monthDays = differenceInDays(monthEnd, monthStart) + 1;
-
-              return (
-                <g key={month.toISOString()}>
-                  <rect
-                    x={startOffset * dayWidth}
-                    y={0}
-                    width={monthDays * dayWidth}
-                    height={30}
-                    fill="hsl(var(--muted))"
-                    stroke="hsl(var(--border))"
-                  />
-                  <text
-                    x={startOffset * dayWidth + (monthDays * dayWidth) / 2}
-                    y={20}
-                    textAnchor="middle"
-                    className="text-xs font-medium fill-foreground"
-                  >
-                    {format(month, "MMMM yyyy")}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-
-          {/* Days row */}
-          <g className="days-header">
-            {timelineDays.map((day, i) => {
-              const isWknd = isWeekend(day);
-              return (
-                <g key={day.toISOString()}>
-                  <rect
-                    x={i * dayWidth}
-                    y={30}
-                    width={dayWidth}
-                    height={30}
-                    fill={isWknd ? "hsl(var(--muted))" : "transparent"}
-                    stroke="hsl(var(--border))"
-                  />
-                  <text
-                    x={i * dayWidth + dayWidth / 2}
-                    y={50}
-                    textAnchor="middle"
-                    className={cn(
-                      "text-2xs fill-muted-foreground",
-                      isWknd && "fill-muted-foreground/50"
-                    )}
-                  >
-                    {format(day, ZOOM_CONFIG[zoomLevel].format)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        </>
-      );
-    }
-
-    // Month zoom - show quarters + months
     const months = eachMonthOfInterval({ start: dateRange.start, end: dateRange.end });
 
     return (
-      <g className="months-header">
-        {months.map((month) => {
-          const startOffset = differenceInDays(
-            startOfMonth(month),
-            dateRange.start
-          );
-          const monthDays = differenceInDays(endOfMonth(month), startOfMonth(month)) + 1;
+      <>
+        {/* Months row */}
+        <g className="months-header">
+          {months.map((month, i) => {
+            const monthStart = i === 0 ? dateRange.start : startOfMonth(month);
+            const monthEnd =
+              i === months.length - 1 ? dateRange.end : endOfMonth(month);
+            const startOffset = differenceInDays(monthStart, dateRange.start);
+            const monthDays = differenceInDays(monthEnd, monthStart) + 1;
 
-          return (
-            <g key={month.toISOString()}>
-              <rect
-                x={startOffset * dayWidth}
-                y={0}
-                width={monthDays * dayWidth}
-                height={HEADER_HEIGHT}
-                fill="hsl(var(--muted))"
-                stroke="hsl(var(--border))"
-              />
-              <text
-                x={startOffset * dayWidth + (monthDays * dayWidth) / 2}
-                y={35}
-                textAnchor="middle"
-                className="text-xs font-medium fill-foreground"
-              >
-                {format(month, "MMM yyyy")}
-              </text>
-            </g>
-          );
-        })}
-      </g>
+            return (
+              <g key={month.toISOString()}>
+                <rect
+                  x={startOffset * dayWidth}
+                  y={0}
+                  width={monthDays * dayWidth}
+                  height={HEADER_ROW_1}
+                  fill="hsl(var(--muted))"
+                  stroke="hsl(var(--border))"
+                />
+                <text
+                  x={startOffset * dayWidth + (monthDays * dayWidth) / 2}
+                  y={HEADER_ROW_1 - 10}
+                  textAnchor="middle"
+                  className="text-xs font-medium fill-foreground"
+                >
+                  {format(month, "MMMM yyyy")}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+
+        {/* Days row — abbreviation + number (e.g., "M 3") */}
+        <g className="days-header">
+          {timelineDays.map((day, i) => {
+            const isWknd = isWeekend(day);
+            return (
+              <g key={day.toISOString()}>
+                <rect
+                  x={i * dayWidth}
+                  y={HEADER_ROW_1}
+                  width={dayWidth}
+                  height={HEADER_ROW_2}
+                  fill="transparent"
+                  stroke="hsl(var(--border))"
+                />
+                <text
+                  x={i * dayWidth + dayWidth / 2}
+                  y={HEADER_ROW_1 + HEADER_ROW_2 - 10}
+                  textAnchor="middle"
+                  className="text-2xs"
+                  fill={isWknd ? "hsl(var(--muted-foreground) / 0.6)" : "hsl(var(--muted-foreground))"}
+                >
+                  {format(day, "EEEEE d")}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      </>
     );
-  }, [zoomLevel, dateRange, dayWidth, timelineDays]);
+  }, [dateRange, dayWidth, timelineDays]);
 
   // Render grid lines
   const renderGridLines = useMemo(() => {
@@ -530,7 +516,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
           />
         ))}
         {/* Horizontal lines */}
-        {data.map((_, i) => (
+        {visibleData.map((_, i) => (
           <line
             key={`h-${i}`}
             x1={0}
@@ -543,7 +529,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
         ))}
       </g>
     );
-  }, [timelineDays, dayWidth, totalHeight, totalWidth, data]);
+  }, [timelineDays, dayWidth, totalHeight, totalWidth, visibleData]);
 
   // Render today line
   const renderTodayLine = useMemo(() => {
@@ -565,86 +551,98 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   }, [dateRange.start, dayWidth, totalHeight, timelineDays.length]);
 
   return (
-    <div className={cn("flex flex-col border rounded-lg", className)} ref={containerRef}>
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/30">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={scrollToToday}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Today
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="transition-colors duration-150"
-            onClick={() =>
-              setZoomLevel((prev) =>
-                prev === "day" ? "day" : prev === "week" ? "day" : "week"
-              )
-            }
-            disabled={zoomLevel === "day"}
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Select value={zoomLevel} onValueChange={(v) => setZoomLevel(v as ZoomLevel)}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="transition-colors duration-150"
-            onClick={() =>
-              setZoomLevel((prev) =>
-                prev === "month" ? "month" : prev === "week" ? "month" : "week"
-              )
-            }
-            disabled={zoomLevel === "month"}
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <div className={cn("flex flex-col", className)} ref={containerRef}>
       {/* Chart Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Panel - Task Names */}
+        {/* Left Panel - Task List */}
         <div
           className="flex-shrink-0 border-r bg-background"
           style={{ width: LEFT_PANEL_WIDTH }}
         >
-          {/* Header */}
+          {/* Two-row header aligned with SVG timeline (total = HEADER_HEIGHT) */}
+          {/* Row 1: aligned with month row — light bg to match SVG */}
+          <div className="bg-muted/50" style={{ height: HEADER_ROW_1 }} />
+          {/* Row 2: column headers aligned with day row */}
           <div
-            className="border-b bg-muted/30 px-4 flex items-center"
-            style={{ height: HEADER_HEIGHT }}
+            className="border-b border-border bg-muted/50 flex items-center text-[11px] font-normal text-muted-foreground"
+            style={{ height: HEADER_ROW_2 }}
           >
-            <span className="text-sm font-medium">Task Name</span>
+            <div className="flex-1 pl-[42px]">Title</div>
+            <div className="w-[72px] pl-2">Start</div>
+            <div className="w-[52px] text-center">Status</div>
           </div>
 
           {/* Task List */}
           <div className="overflow-hidden">
-            {data.map((task) => (
-              <div
-                key={task.id}
-                className="border-b px-4 flex items-center gap-2 hover:bg-accent cursor-pointer transition-colors duration-150"
-                style={{
-                  height: ROW_HEIGHT,
-                  paddingLeft: `${12 + task.level * 16}px`,
-                }}
-                onClick={() => onTaskClick?.(task.id)}
-              >
-                <span className="text-sm truncate">{task.name}</span>
-              </div>
-            ))}
+            {visibleData.map((task) => {
+              const isParent = parentIds.has(task.id);
+              const isCollapsed = collapsedIds.has(task.id);
+              const statusInfo = ganttStatusConfig[task.status];
+              const StatusIcon = statusInfo.icon;
+              return (
+                <div
+                  key={task.id}
+                  className="border-b border-border/50 flex items-center hover:bg-accent/50 transition-colors duration-100"
+                  style={{ height: ROW_HEIGHT }}
+                >
+                  {/* Checkbox + chevron + name */}
+                  <div
+                    className="flex-1 flex items-center gap-1 min-w-0"
+                    style={{ paddingLeft: `${2 + task.level * 16}px` }}
+                  >
+                    {/* Expand/collapse chevron for parents */}
+                    {isParent ? (
+                      <button
+                        type="button"
+                        className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+                        onClick={() => toggleCollapse(task.id)}
+                        aria-label={isCollapsed ? "Expand" : "Collapse"}
+                      >
+                        {isCollapsed ? (
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </button>
+                    ) : (
+                      <span className="w-[18px] flex-shrink-0" />
+                    )}
+                    {/* Square checkbox */}
+                    <button
+                      type="button"
+                      className="flex-shrink-0 rounded-sm border border-border hover:border-foreground/40 transition-colors h-3.5 w-3.5 flex items-center justify-center"
+                      onClick={() => onTaskClick?.(task.id)}
+                      aria-label={`Select ${task.name}`}
+                    >
+                      {task.percent_complete === 100 && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--status-success))]" />
+                      )}
+                    </button>
+                    {/* Task name */}
+                    <button
+                      type="button"
+                      className={cn(
+                        "text-[13px] truncate text-left bg-transparent border-none p-0 ml-1.5 cursor-pointer hover:underline",
+                        isParent ? "font-semibold text-foreground" : "font-normal text-foreground"
+                      )}
+                      onClick={() => onTaskClick?.(task.id)}
+                    >
+                      {task.name}
+                    </button>
+                  </div>
+                  {/* Start date */}
+                  <div className="w-[72px] pl-2">
+                    <span className="text-[12px] text-muted-foreground">
+                      {format(new Date(task.start_date), "MMM d")}
+                    </span>
+                  </div>
+                  {/* Status icon */}
+                  <div className="w-[52px] flex items-center justify-center">
+                    <StatusIcon className={cn("h-4 w-4", statusInfo.iconColor)} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -666,9 +664,9 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             {renderGridLines}
 
             {/* Dependency Arrows */}
-            {data.map((task) =>
+            {visibleData.map((task) =>
               task.dependencies?.map((dep) => {
-                const predecessor = data.find((t) => t.id === dep.predecessor_id);
+                const predecessor = visibleData.find((t) => t.id === dep.predecessor_id);
                 if (!predecessor) return null;
                 return (
                   <DependencyArrow
@@ -686,7 +684,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             )}
 
             {/* Task Bars */}
-            {data.map((task, index) => (
+            {visibleData.map((task, index) => (
               <TaskBar
                 key={task.id}
                 task={task}

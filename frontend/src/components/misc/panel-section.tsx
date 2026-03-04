@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 interface PanelSectionProps {
   title: string;
@@ -12,23 +12,20 @@ export function PanelSection({ title, icon, children }: PanelSectionProps) {
   const [show, setShow] = useState(true);
 
   return (
-    <div className="mb-4">
-      <h2
-        className="text-lg font-semibold mb-4 text-zinc-900 flex items-center justify-between cursor-pointer"
+    <div className="mb-6">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between mb-3 text-left group"
         onClick={() => setShow(!show)}
       >
-        <div className="flex items-center">
-          <span className="bg-blue-600 bg-opacity-10 p-1.5 rounded-md mr-2 shadow-sm">
-            {icon}
-          </span>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {icon}
           <span>{title}</span>
         </div>
-        {show ? (
-          <ChevronDown className="h-4 w-4 text-zinc-900" />
-        ) : (
-          <ChevronRight className="h-4 w-4 text-zinc-900" />
-        )}
-      </h2>
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${show ? "" : "-rotate-90"}`}
+        />
+      </button>
       {show && children}
     </div>
   );

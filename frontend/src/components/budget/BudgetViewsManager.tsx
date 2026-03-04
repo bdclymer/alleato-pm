@@ -38,7 +38,7 @@ export function BudgetViewsManager({
   onViewChange,
 }: BudgetViewsManagerProps) {
   const [views, setViews] = React.useState<BudgetViewDefinition[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalMode, setModalMode] = React.useState<"create" | "edit">("create");
   const [selectedView, setSelectedView] =
@@ -49,8 +49,11 @@ export function BudgetViewsManager({
 
   // Fetch views
   const fetchViews = React.useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget/views`);
+      const response = await fetch(`/api/projects/${projectId}/budget/views`, {
+        signal: AbortSignal.timeout(5000),
+      });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Budget views fetch error:", {

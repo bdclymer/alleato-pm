@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
 
 interface HealthStatus {
   status: "healthy" | "error" | "loading";
@@ -46,49 +45,37 @@ export function BackendStatusIndicator() {
   }, []);
 
   return (
-    <div className="flex items-center gap-4 p-2 bg-muted/50">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Backend:</span>
-        {health.status === "loading" ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : health.backend ? (
-          <CheckCircle className="h-4 w-4 text-success" />
-        ) : (
-          <XCircle className="h-4 w-4 text-destructive" />
-        )}
-        <span className="text-sm text-muted-foreground">
+    <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-1.5">
+        <span
+          className={`h-2 w-2 rounded-full ${
+            health.status === "loading"
+              ? "bg-muted-foreground animate-pulse"
+              : health.backend
+                ? "bg-green-500"
+                : "bg-destructive"
+          }`}
+        />
+        <span className="text-xs text-muted-foreground">
           {health.status === "loading"
-            ? "Checking..."
+            ? "Connecting..."
             : health.backend
-              ? "Connected"
-              : "Disconnected"}
+              ? "Backend online"
+              : "Backend offline"}
         </span>
       </div>
-
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">OpenAI:</span>
-        {health.status === "loading" ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        ) : health.openai_configured ? (
-          <CheckCircle className="h-4 w-4 text-success" />
-        ) : health.backend ? (
-          <AlertCircle className="h-4 w-4 text-warning" />
-        ) : (
-          <XCircle className="h-4 w-4 text-destructive" />
-        )}
-        <span className="text-sm text-muted-foreground">
-          {health.status === "loading"
-            ? "Checking..."
-            : !health.backend
-              ? "Backend required"
-              : health.openai_configured
-                ? "Configured"
-                : "Not configured"}
-        </span>
-      </div>
-
+      {health.status !== "loading" && health.backend && (
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`h-2 w-2 rounded-full ${health.openai_configured ? "bg-green-500" : "bg-amber-400"}`}
+          />
+          <span className="text-xs text-muted-foreground">
+            {health.openai_configured ? "AI configured" : "AI not configured"}
+          </span>
+        </div>
+      )}
       {health.error && (
-        <div className="text-xs text-destructive ml-auto">{health.error}</div>
+        <span className="text-xs text-destructive ml-auto">{health.error}</span>
       )}
     </div>
   );

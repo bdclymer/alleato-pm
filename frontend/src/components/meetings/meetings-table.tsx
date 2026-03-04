@@ -131,6 +131,28 @@ export function MeetingsTable({
       },
     },
     {
+      id: "embedded",
+      header: "Embedded",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const isEmbedded = status?.toLowerCase() === "complete";
+        return (
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+              isEmbedded ? "text-green-700" : "text-neutral-400"
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isEmbedded ? "bg-green-500" : "bg-neutral-300"
+              }`}
+            />
+            {isEmbedded ? "Yes" : "No"}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: "access_level",
       header: "Access",
       cell: ({ row }) => {

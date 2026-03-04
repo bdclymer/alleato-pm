@@ -250,6 +250,23 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
 See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
+### 13. Chat & UI Premium Feel Gate (MANDATORY)
+
+**NEVER add borders, cards, or visual boxes around chat sections.** The only element that may have a border in a chat UI is the message input field itself.
+
+**Specific rules:**
+- **NO** `<Alert>` or `<Card>` wrappers around informational text in chat — just render the text directly
+- **NO** `border` class on chat content area divs (e.g., `<div className="border">` wrapping chat)
+- **NO** robot/bot icons (`Bot` from lucide-react) — they look cheap. Use brand initials ("A"), `BriefcaseIcon`, or no icon at all
+- **NO** `<User>` icon for user messages — use initials or just a styled bubble
+- **NO** `Minimize2` icon — use `Shrink2` for compress/minimize actions
+- Loading states: use animated dots (`animate-bounce` spans) not spinner icons inside send buttons
+- Assistant message avatar: small circle with brand initial "A" and `bg-primary/10 text-primary`
+- User messages: `bg-primary text-primary-foreground` (never hardcoded `bg-blue-600`)
+- Prompt suggestion chips: `rounded-full`, borderless or very subtle `border-border/50`, no card wrapper
+
+**Philosophy:** Borders create visual noise. Every border must earn its place. In chat UI, only the input field needs one.
+
 ### 12. Design System Gate (MANDATORY)
 
 **BEFORE** building ANY UI component, page, or modifying styles:

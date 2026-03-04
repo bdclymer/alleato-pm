@@ -1,5 +1,7 @@
 # NOTES
 
+
+
 ## Direct Costs
 
 - not the design system is supposedly implemented with the gates redesign this page following that system
@@ -38,6 +40,7 @@ file:///Users/meganharrison/Downloads/CLAUDE_DESIGN_EXAMPLES_LIGHT.html#states
 ## Project Home
 
 - KPI metris with charts and graphs
+- change default to table view
 
 ## AI
 

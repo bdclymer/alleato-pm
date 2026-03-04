@@ -231,10 +231,10 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
         <CardContent className="pt-4">
           <Stack gap="xs">
             <div className="flex items-center gap-2">
-              <FileEdit className="h-4 w-4 text-gray-500" />
+              <FileEdit className="h-4 w-4 text-muted-foreground" />
               <Text size="sm" tone="muted">Draft</Text>
             </div>
-            <Text size="lg" weight="bold" className="text-gray-500">
+            <Text size="lg" weight="bold" className="text-muted-foreground">
               {formatCurrency(totals.draft)}
             </Text>
           </Stack>

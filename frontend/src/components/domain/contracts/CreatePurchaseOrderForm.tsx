@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Plus, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Upload, X, Plus, Loader2, AlertCircle, Package } from "lucide-react";
 import {
   CreatePurchaseOrderSchema,
   type CreatePurchaseOrderInput,
@@ -41,6 +41,22 @@ interface BudgetCodeSummary {
 
 interface BudgetCodesResponse {
   budgetCodes: BudgetCodeSummary[];
+}
+
+interface FormSectionHeadingProps {
+  title: string;
+  description?: string;
+}
+
+function FormSectionHeading({ title, description }: FormSectionHeadingProps) {
+  return (
+    <div className="border-b pb-2">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {description ? (
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      ) : null}
+    </div>
+  );
 }
 
 const UNIT_OF_MEASURES = [
@@ -117,9 +133,7 @@ export function CreatePurchaseOrderForm({
     const fetchBudgetCodes = async () => {
       try {
         setBudgetCodesError(null);
-        const response = await fetch(
-          `/api/projects/${projectId}/budget-codes`,
-        );
+        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
         if (!response.ok) {
           const payload = (await response.json().catch(() => ({}))) as {
             error?: string;
@@ -133,7 +147,9 @@ export function CreatePurchaseOrderForm({
       } catch (error) {
         if (!isMounted) return;
         setBudgetCodesError(
-          error instanceof Error ? error.message : "Failed to load budget codes",
+          error instanceof Error
+            ? error.message
+            : "Failed to load budget codes",
         );
         setBudgetCodes([]);
       } finally {
@@ -261,711 +277,738 @@ export function CreatePurchaseOrderForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmitWrapper)} className="space-y-8">
-      {/* General Information Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          General Information
-        </h2>
+    <form
+      onSubmit={handleSubmit(handleFormSubmitWrapper)}
+      className="space-y-8"
+    >
+      <div className="space-y-8 rounded-lg border bg-card p-4 sm:p-6">
+        {/* General Information Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="General Information"
+            description="Define the purchase order identity, vendor, and commercial terms."
+          />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="contractNumber">Contract #</Label>
-            <Input
-              id="contractNumber"
-              {...register("contractNumber")}
-              disabled={isSubmitting}
-            />
-            {errors.contractNumber && (
-              <p className="text-sm text-red-600">
-                {errors.contractNumber.message}
-              </p>
-            )}
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contractNumber">Contract #</Label>
+              <Input
+                id="contractNumber"
+                {...register("contractNumber")}
+                disabled={isSubmitting}
+              />
+              {errors.contractNumber && (
+                <p className="text-sm text-red-600">
+                  {errors.contractNumber.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="contractCompanyId">Contract Company</Label>
-            <Select
-              value={watch("contractCompanyId") || ""}
-              onValueChange={(value) => setValue("contractCompanyId", value)}
-              disabled={isSubmitting || isLoadingCompanies}
-            >
-              <SelectTrigger>
-                {isLoadingCompanies ? (
-                  <span className="flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading companies...
-                  </span>
-                ) : (
-                  <SelectValue placeholder="Select company" />
-                )}
-              </SelectTrigger>
-              <SelectContent>
-                {companyOptions.length === 0 ? (
-                  <SelectItem value="_no_companies" disabled>
-                    No companies available
-                  </SelectItem>
-                ) : (
-                  companyOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+            <div className="space-y-2">
+              <Label htmlFor="contractCompanyId">Contract Company</Label>
+              <Select
+                value={watch("contractCompanyId") || ""}
+                onValueChange={(value) => setValue("contractCompanyId", value)}
+                disabled={isSubmitting || isLoadingCompanies}
+              >
+                <SelectTrigger>
+                  {isLoadingCompanies ? (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading companies...
+                    </span>
+                  ) : (
+                    <SelectValue placeholder="Select company" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {companyOptions.length === 0 ? (
+                    <SelectItem value="_no_companies" disabled>
+                      No companies available
                     </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+                  ) : (
+                    companyOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
-          <Input id="title" {...register("title")} disabled={isSubmitting} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="status">Status*</Label>
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" {...register("title")} disabled={isSubmitting} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">Status*</Label>
+              <Select
+                value={watch("status")}
+                onValueChange={(value) => setValue("status", value as "Draft")}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Sent">Sent to Vendor</SelectItem>
+                  <SelectItem value="Acknowledged">Acknowledged</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.status && (
+                <p className="text-sm text-red-600">{errors.status.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 pt-8">
+                <Checkbox
+                  id="executed"
+                  checked={watch("executed")}
+                  onCheckedChange={(checked) =>
+                    setValue("executed", checked as boolean)
+                  }
+                  disabled={isSubmitting}
+                />
+                <Label htmlFor="executed" className="text-sm font-normal">
+                  Executed
+                </Label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="defaultRetainagePercent"
+                  type="number"
+                  step="0.01"
+                  {...register("defaultRetainagePercent", {
+                    valueAsNumber: true,
+                  })}
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-foreground">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignedTo">Assigned To</Label>
             <Select
-              value={watch("status")}
-              onValueChange={(value) => setValue("status", value as "Draft")}
+              value={watch("assignedTo") || ""}
+              onValueChange={(value) => setValue("assignedTo", value)}
               disabled={isSubmitting}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select person" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Sent">Sent to Vendor</SelectItem>
-                <SelectItem value="Acknowledged">Acknowledged</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
+                {/* TODO: Load users from database */}
+                <SelectItem value="user1">John Doe</SelectItem>
+                <SelectItem value="user2">Jane Smith</SelectItem>
               </SelectContent>
             </Select>
-            {errors.status && (
-              <p className="text-sm text-red-600">{errors.status.message}</p>
-            )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2 pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="billTo">Bill To</Label>
+              <Textarea
+                id="billTo"
+                {...register("billTo")}
+                disabled={isSubmitting}
+                className="min-h-[80px]"
+                placeholder="Billing address..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="shipTo">Ship To</Label>
+              <Textarea
+                id="shipTo"
+                {...register("shipTo")}
+                disabled={isSubmitting}
+                className="min-h-[80px]"
+                placeholder="Shipping address..."
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="paymentTerms">Payment Terms</Label>
+              <Input
+                id="paymentTerms"
+                {...register("paymentTerms")}
+                disabled={isSubmitting}
+                placeholder="e.g., Net 30"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="shipVia">Ship Via</Label>
+              <Input
+                id="shipVia"
+                {...register("shipVia")}
+                disabled={isSubmitting}
+                placeholder="Shipping method"
+              />
+            </div>
+          </div>
+
+          <RichTextField
+            label="Description"
+            value={watch("description")}
+            onChange={(val) =>
+              setValue("description", val, { shouldDirty: true })
+            }
+            disabled={isSubmitting}
+            placeholder="Purchase order description..."
+          />
+        </section>
+
+        {/* Attachments Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="Attachments"
+            description="Upload source documents, drawings, and supporting files."
+          />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            aria-label="File upload"
+          />
+
+          <div
+            className="border-2 border-dashed rounded-lg p-8 text-center"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <div className="flex flex-col items-center gap-4">
+              <Upload className="h-8 w-8 text-muted-foreground" />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                >
+                  Attach Files
+                </Button>
+                <span className="text-sm text-foreground">or Drag & Drop</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Display attached files */}
+          {attachments.length > 0 && (
+            <div className="space-y-2">
+              {attachments.map((file, index) => (
+                <div
+                  key={`${file.name}-${index}`}
+                  className="flex items-center justify-between p-4 bg-muted rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-foreground" />
+                    <span className="text-sm">{file.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({(file.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveAttachment(index)}
+                    disabled={isSubmitting}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Schedule of Values Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="Schedule of Values"
+            description="Build line items and totals that define the PO financial breakdown."
+          />
+
+          {/* Accounting Method Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-blue-900">
+                This purchase order&apos;s accounting method is{" "}
+                {accountingMethod === "unit-quantity"
+                  ? "unit/quantity-based"
+                  : "amount-based"}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setAccountingMethod(
+                    accountingMethod === "unit-quantity"
+                      ? "amount"
+                      : "unit-quantity",
+                  )
+                }
+                disabled={isSubmitting}
+              >
+                Change to{" "}
+                {accountingMethod === "unit-quantity"
+                  ? "Amount-Based"
+                  : "Unit/Quantity"}
+              </Button>
+            </div>
+          </div>
+
+          {budgetCodesError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Budget codes unavailable</AlertTitle>
+              <AlertDescription>{budgetCodesError}</AlertDescription>
+            </Alert>
+          )}
+
+          {budgetCodesLoaded && unbudgetedLines.length > 0 && (
+            <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Unbudgeted line items</AlertTitle>
+              <AlertDescription className="text-yellow-800">
+                Line items{" "}
+                {unbudgetedLines
+                  .map((line) => `${line.lineNumber} (${line.code})`)
+                  .join(", ")}{" "}
+                are not on the project budget. Add them to the budget or update
+                these line items before approval.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* SOV Table */}
+          {sovLines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="text-muted-foreground">
+                <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
+                  <Package className="h-10 w-10" />
+                </div>
+              </div>
+              <p className="text-lg font-medium text-foreground">
+                You Have No Line Items Yet
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={addSOVLine}
+                  disabled={isSubmitting}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Line
+                </Button>
+                <Button type="button" variant="outline" disabled={isSubmitting}>
+                  Import SOV from CSV
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={addSOVLine}
+                  size="sm"
+                  disabled={isSubmitting}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Line
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isSubmitting}
+                >
+                  Import SOV from CSV
+                </Button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-foreground w-12">
+                        #
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
+                        Change Event
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
+                        Budget Code
+                      </th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
+                        Description
+                      </th>
+                      {accountingMethod === "unit-quantity" && (
+                        <>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
+                            Qty
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
+                            UOM
+                          </th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
+                            Unit Cost
+                          </th>
+                        </>
+                      )}
+                      <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
+                        Amount
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
+                        Billed to Date
+                      </th>
+                      <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
+                        Amount Remaining
+                      </th>
+                      <th className="px-4 py-2 w-12" aria-label="Actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-background divide-y">
+                    {sovLines.map((line, index) => (
+                      <tr
+                        key={
+                          (line as PurchaseOrderSovLineItem & { _id?: string })
+                            ._id || `line-${index}`
+                        }
+                      >
+                        <td className="px-4 py-2 text-sm">{index + 1}</td>
+                        <td className="px-4 py-2">
+                          <Input
+                            className="text-sm"
+                            placeholder="Change Event"
+                            value={line.changeEventLineItem || ""}
+                            onChange={(e) =>
+                              updateSOVLine(
+                                index,
+                                "changeEventLineItem",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Input
+                            className="text-sm"
+                            placeholder="Budget Code"
+                            value={line.budgetCode || ""}
+                            onChange={(e) =>
+                              updateSOVLine(index, "budgetCode", e.target.value)
+                            }
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Input
+                            className="text-sm"
+                            placeholder="Description"
+                            value={line.description || ""}
+                            onChange={(e) =>
+                              updateSOVLine(
+                                index,
+                                "description",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        {accountingMethod === "unit-quantity" && (
+                          <>
+                            <td className="px-4 py-2">
+                              <Input
+                                className="text-sm text-right"
+                                type="number"
+                                step="0.01"
+                                placeholder="0"
+                                value={line.quantity || 0}
+                                onChange={(e) =>
+                                  updateSOVLine(
+                                    index,
+                                    "quantity",
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="px-4 py-2">
+                              <Select
+                                value={line.uom || ""}
+                                onValueChange={(value) =>
+                                  updateSOVLine(index, "uom", value)
+                                }
+                              >
+                                <SelectTrigger className="text-sm">
+                                  <SelectValue placeholder="UOM" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {UNIT_OF_MEASURES.map((uom) => (
+                                    <SelectItem
+                                      key={uom.value}
+                                      value={uom.value}
+                                    >
+                                      {uom.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </td>
+                            <td className="px-4 py-2">
+                              <Input
+                                className="text-sm text-right"
+                                type="number"
+                                step="0.01"
+                                placeholder="$0.00"
+                                value={line.unitCost || 0}
+                                onChange={(e) =>
+                                  updateSOVLine(
+                                    index,
+                                    "unitCost",
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                              />
+                            </td>
+                          </>
+                        )}
+                        <td className="px-4 py-2 text-sm text-right">
+                          ${(line.amount || 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right">
+                          ${(line.billedToDate || 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-right">
+                          $
+                          {(
+                            (line.amount || 0) - (line.billedToDate || 0)
+                          ).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeSOVLine(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-muted font-semibold">
+                    <tr>
+                      <td
+                        colSpan={accountingMethod === "unit-quantity" ? 7 : 4}
+                        className="px-4 py-2 text-sm"
+                      >
+                        Total:
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        ${totals.amount.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        ${totals.billedToDate.toFixed(2)}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-right">
+                        ${totals.amountRemaining.toFixed(2)}
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Contract Dates Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="Contract Dates"
+            description="Capture timing milestones used for procurement and tracking."
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="dates.contractDate">Contract Date</Label>
+              <Input
+                id="dates.contractDate"
+                type="text"
+                {...register("dates.contractDate")}
+                disabled={isSubmitting}
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dates.deliveryDate">Delivery Date</Label>
+              <Input
+                id="dates.deliveryDate"
+                type="text"
+                {...register("dates.deliveryDate")}
+                disabled={isSubmitting}
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dates.signedPoReceivedDate">
+                Signed PO Received Date
+              </Label>
+              <Input
+                id="dates.signedPoReceivedDate"
+                type="text"
+                {...register("dates.signedPoReceivedDate")}
+                disabled={isSubmitting}
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dates.issuedOnDate">Issued On Date</Label>
+              <Input
+                id="dates.issuedOnDate"
+                type="text"
+                {...register("dates.issuedOnDate")}
+                disabled={isSubmitting}
+                placeholder="mm/dd/yyyy"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Contract Privacy Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="Privacy & Access"
+            description="Control which non-admin users can access this commitment."
+          />
+
+          <p className="text-sm text-foreground">
+            Using the privacy setting allows only project admins and select
+            non-admin users access.
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
               <Checkbox
-                id="executed"
-                checked={watch("executed")}
+                id="privacy.isPrivate"
+                checked={privacyIsPrivate}
                 onCheckedChange={(checked) =>
-                  setValue("executed", checked as boolean)
+                  setValue("privacy.isPrivate", checked as boolean)
                 }
                 disabled={isSubmitting}
               />
-              <Label htmlFor="executed" className="text-sm font-normal">
-                Executed
+              <Label
+                htmlFor="privacy.isPrivate"
+                className="text-sm font-normal"
+              >
+                Private
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="privacy.nonAdminUserIds">
+                Access for Non-Admin Users
+              </Label>
+              <Input
+                id="privacy.nonAdminUserIds"
+                disabled={isSubmitting || !privacyIsPrivate}
+                placeholder={
+                  privacyIsPrivate
+                    ? "Select users..."
+                    : "Enable Private to use this field"
+                }
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="privacy.allowNonAdminViewSovItems"
+                checked={watch("privacy.allowNonAdminViewSovItems")}
+                onCheckedChange={(checked) =>
+                  setValue(
+                    "privacy.allowNonAdminViewSovItems",
+                    checked as boolean,
+                  )
+                }
+                disabled={isSubmitting || !privacyIsPrivate}
+              />
+              <Label
+                htmlFor="privacy.allowNonAdminViewSovItems"
+                className="text-sm font-normal"
+              >
+                Allow these non-admin users to view the SOV items.
               </Label>
             </div>
           </div>
+        </section>
 
-          <div className="space-y-2">
-            <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="defaultRetainagePercent"
-                type="number"
-                step="0.01"
-                {...register("defaultRetainagePercent", {
-                  valueAsNumber: true,
-                })}
-                disabled={isSubmitting}
-              />
-              <span className="text-sm text-foreground">%</span>
-            </div>
-          </div>
-        </div>
+        {/* Invoice Contacts Section */}
+        <section className="space-y-4">
+          <FormSectionHeading
+            title="Invoice Contacts"
+            description="Define who can submit and manage invoice communication."
+          />
 
-        <div className="space-y-2">
-          <Label htmlFor="assignedTo">Assigned To</Label>
-          <Select
-            value={watch("assignedTo") || ""}
-            onValueChange={(value) => setValue("assignedTo", value)}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select person" />
-            </SelectTrigger>
-            <SelectContent>
-              {/* TODO: Load users from database */}
-              <SelectItem value="user1">John Doe</SelectItem>
-              <SelectItem value="user2">Jane Smith</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="billTo">Bill To</Label>
-            <Textarea
-              id="billTo"
-              {...register("billTo")}
-              disabled={isSubmitting}
-              className="min-h-[80px]"
-              placeholder="Billing address..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="shipTo">Ship To</Label>
-            <Textarea
-              id="shipTo"
-              {...register("shipTo")}
-              disabled={isSubmitting}
-              className="min-h-[80px]"
-              placeholder="Shipping address..."
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="paymentTerms">Payment Terms</Label>
-            <Input
-              id="paymentTerms"
-              {...register("paymentTerms")}
-              disabled={isSubmitting}
-              placeholder="e.g., Net 30"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="shipVia">Ship Via</Label>
-            <Input
-              id="shipVia"
-              {...register("shipVia")}
-              disabled={isSubmitting}
-              placeholder="Shipping method"
-            />
-          </div>
-        </div>
-
-        <RichTextField
-          label="Description"
-          value={watch("description")}
-          onChange={(val) => setValue("description", val, { shouldDirty: true })}
-          disabled={isSubmitting}
-          placeholder="Purchase order description..."
-        />
-      </section>
-
-      {/* Attachments Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">Attachments</h2>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-          aria-label="File upload"
-        />
-
-        <div
-          className="border-2 border-dashed rounded-lg p-8 text-center"
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-        >
-          <div className="flex flex-col items-center gap-4">
-            <Upload className="h-8 w-8 text-muted-foreground" />
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isSubmitting}
-              >
-                Attach Files
-              </Button>
-              <span className="text-sm text-foreground">or Drag & Drop</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Display attached files */}
-        {attachments.length > 0 && (
-          <div className="space-y-2">
-            {attachments.map((file, index) => (
-              <div
-                key={`${file.name}-${index}`}
-                className="flex items-center justify-between p-4 bg-muted rounded-lg"
-              >
-                <div className="flex items-center gap-2">
-                  <Upload className="h-4 w-4 text-foreground" />
-                  <span className="text-sm">{file.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({(file.size / 1024).toFixed(1)} KB)
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveAttachment(index)}
-                  disabled={isSubmitting}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Schedule of Values Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          Schedule of Values
-        </h2>
-
-        {/* Accounting Method Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-blue-900">
-              This purchase order&apos;s accounting method is{" "}
-              {accountingMethod === "unit-quantity"
-                ? "unit/quantity-based"
-                : "amount-based"}
+          {!contractCompanyId ? (
+            <p className="text-sm text-foreground">
+              Please select a Contract Company first
             </p>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="invoiceContacts">Invoice Contacts</Label>
+              <Input
+                id="invoiceContacts"
+                disabled={isSubmitting}
+                placeholder="Select invoice contacts..."
+              />
+            </div>
+          )}
+        </section>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between border-t pt-6">
+          <p className="text-sm text-foreground">*Required fields</p>
+          <div className="flex gap-4">
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              onClick={() =>
-                setAccountingMethod(
-                  accountingMethod === "unit-quantity"
-                    ? "amount"
-                    : "unit-quantity",
-                )
-              }
+              onClick={onCancel}
               disabled={isSubmitting}
             >
-              Change to{" "}
-              {accountingMethod === "unit-quantity"
-                ? "Amount-Based"
-                : "Unit/Quantity"}
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Purchase Order"}
             </Button>
           </div>
-        </div>
-
-        {budgetCodesError && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Budget codes unavailable</AlertTitle>
-            <AlertDescription>{budgetCodesError}</AlertDescription>
-          </Alert>
-        )}
-
-        {budgetCodesLoaded && unbudgetedLines.length > 0 && (
-          <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Unbudgeted line items</AlertTitle>
-            <AlertDescription className="text-yellow-800">
-              Line items{" "}
-              {unbudgetedLines
-                .map((line) => `${line.lineNumber} (${line.code})`)
-                .join(", ")}{" "}
-              are not on the project budget. Add them to the budget or update
-              these line items before approval.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* SOV Table */}
-        {sovLines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <div className="text-muted-foreground">
-              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                <span className="text-4xl">📦</span>
-              </div>
-            </div>
-            <p className="text-lg font-medium text-foreground">
-              You Have No Line Items Yet
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={addSOVLine}
-                disabled={isSubmitting}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
-                Import SOV from CSV
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={addSOVLine}
-                size="sm"
-                disabled={isSubmitting}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isSubmitting}
-              >
-                Import SOV from CSV
-              </Button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full border">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground w-12">
-                      #
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
-                      Change Event
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
-                      Budget Code
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
-                      Description
-                    </th>
-                    {accountingMethod === "unit-quantity" && (
-                      <>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
-                          Qty
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-foreground">
-                          UOM
-                        </th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
-                          Unit Cost
-                        </th>
-                      </>
-                    )}
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
-                      Amount
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
-                      Billed to Date
-                    </th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">
-                      Amount Remaining
-                    </th>
-                    <th className="px-4 py-2 w-12" aria-label="Actions"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y">
-                  {sovLines.map((line, index) => (
-                    <tr
-                      key={
-                        (line as PurchaseOrderSovLineItem & { _id?: string })
-                          ._id || `line-${index}`
-                      }
-                    >
-                      <td className="px-4 py-2 text-sm">{index + 1}</td>
-                      <td className="px-4 py-2">
-                        <Input
-                          className="text-sm"
-                          placeholder="Change Event"
-                          value={line.changeEventLineItem || ""}
-                          onChange={(e) =>
-                            updateSOVLine(
-                              index,
-                              "changeEventLineItem",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <Input
-                          className="text-sm"
-                          placeholder="Budget Code"
-                          value={line.budgetCode || ""}
-                          onChange={(e) =>
-                            updateSOVLine(index, "budgetCode", e.target.value)
-                          }
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <Input
-                          className="text-sm"
-                          placeholder="Description"
-                          value={line.description || ""}
-                          onChange={(e) =>
-                            updateSOVLine(index, "description", e.target.value)
-                          }
-                        />
-                      </td>
-                      {accountingMethod === "unit-quantity" && (
-                        <>
-                          <td className="px-4 py-2">
-                            <Input
-                              className="text-sm text-right"
-                              type="number"
-                              step="0.01"
-                              placeholder="0"
-                              value={line.quantity || 0}
-                              onChange={(e) =>
-                                updateSOVLine(
-                                  index,
-                                  "quantity",
-                                  parseFloat(e.target.value) || 0,
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Select
-                              value={line.uom || ""}
-                              onValueChange={(value) =>
-                                updateSOVLine(index, "uom", value)
-                              }
-                            >
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="UOM" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {UNIT_OF_MEASURES.map((uom) => (
-                                  <SelectItem key={uom.value} value={uom.value}>
-                                    {uom.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              className="text-sm text-right"
-                              type="number"
-                              step="0.01"
-                              placeholder="$0.00"
-                              value={line.unitCost || 0}
-                              onChange={(e) =>
-                                updateSOVLine(
-                                  index,
-                                  "unitCost",
-                                  parseFloat(e.target.value) || 0,
-                                )
-                              }
-                            />
-                          </td>
-                        </>
-                      )}
-                      <td className="px-4 py-2 text-sm text-right">
-                        ${(line.amount || 0).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        ${(line.billedToDate || 0).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        $
-                        {(
-                          (line.amount || 0) - (line.billedToDate || 0)
-                        ).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSOVLine(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-muted font-semibold">
-                  <tr>
-                    <td
-                      colSpan={accountingMethod === "unit-quantity" ? 7 : 4}
-                      className="px-4 py-2 text-sm"
-                    >
-                      Total:
-                    </td>
-                    <td className="px-4 py-2 text-sm text-right">
-                      ${totals.amount.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-right">
-                      ${totals.billedToDate.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-right">
-                      ${totals.amountRemaining.toFixed(2)}
-                    </td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Contract Dates Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">Contract Dates</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="dates.contractDate">Contract Date</Label>
-            <Input
-              id="dates.contractDate"
-              type="text"
-              {...register("dates.contractDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dates.deliveryDate">Delivery Date</Label>
-            <Input
-              id="dates.deliveryDate"
-              type="text"
-              {...register("dates.deliveryDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dates.signedPoReceivedDate">
-              Signed PO Received Date
-            </Label>
-            <Input
-              id="dates.signedPoReceivedDate"
-              type="text"
-              {...register("dates.signedPoReceivedDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="dates.issuedOnDate">Issued On Date</Label>
-            <Input
-              id="dates.issuedOnDate"
-              type="text"
-              {...register("dates.issuedOnDate")}
-              disabled={isSubmitting}
-              placeholder="mm/dd/yyyy"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Contract Privacy Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          Privacy & Access
-        </h2>
-
-        <p className="text-sm text-foreground">
-          Using the privacy setting allows only project admins and select
-          non-admin users access.
-        </p>
-
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="privacy.isPrivate"
-              checked={privacyIsPrivate}
-              onCheckedChange={(checked) =>
-                setValue("privacy.isPrivate", checked as boolean)
-              }
-              disabled={isSubmitting}
-            />
-            <Label htmlFor="privacy.isPrivate" className="text-sm font-normal">
-              Private
-            </Label>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="privacy.nonAdminUserIds">
-              Access for Non-Admin Users
-            </Label>
-            <Input
-              id="privacy.nonAdminUserIds"
-              disabled={isSubmitting || !privacyIsPrivate}
-              placeholder={
-                privacyIsPrivate
-                  ? "Select users..."
-                  : "Enable Private to use this field"
-              }
-            />
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="privacy.allowNonAdminViewSovItems"
-              checked={watch("privacy.allowNonAdminViewSovItems")}
-              onCheckedChange={(checked) =>
-                setValue(
-                  "privacy.allowNonAdminViewSovItems",
-                  checked as boolean,
-                )
-              }
-              disabled={isSubmitting || !privacyIsPrivate}
-            />
-            <Label
-              htmlFor="privacy.allowNonAdminViewSovItems"
-              className="text-sm font-normal"
-            >
-              Allow these non-admin users to view the SOV items.
-            </Label>
-          </div>
-        </div>
-      </section>
-
-      {/* Invoice Contacts Section */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold border-b pb-2">
-          Invoice Contacts
-        </h2>
-
-        {!contractCompanyId ? (
-          <p className="text-sm text-foreground">
-            Please select a Contract Company first
-          </p>
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="invoiceContacts">Invoice Contacts</Label>
-            <Input
-              id="invoiceContacts"
-              disabled={isSubmitting}
-              placeholder="Select invoice contacts..."
-            />
-          </div>
-        )}
-      </section>
-
-      {/* Footer Actions */}
-      <div className="flex items-center justify-between pt-6 border-t">
-        <p className="text-sm text-foreground">*Required fields</p>
-        <div className="flex gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Purchase Order"}
-          </Button>
         </div>
       </div>
     </form>

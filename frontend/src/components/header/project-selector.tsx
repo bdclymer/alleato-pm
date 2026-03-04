@@ -45,31 +45,10 @@ export function ProjectSelector({
   onViewAll,
 }: ProjectSelectorProps) {
   const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-
-  const filteredProjects = React.useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return projects;
-
-    return projects.filter((project) => {
-      const name = project.name.toLowerCase();
-      const jobNumber = project["job number"]?.toLowerCase() ?? "";
-      return name.includes(query) || jobNumber.includes(query);
-    });
-  }, [projects, searchQuery]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) onFetchProjects();
-    if (!nextOpen) setSearchQuery("");
-  };
-
-  const handleProjectSelect = (value: string) => {
-    const selectedProjectId = Number.parseInt(value, 10);
-    if (!Number.isNaN(selectedProjectId)) {
-      onProjectSelect(selectedProjectId);
-      setOpen(false);
-    }
   };
 
   return (
@@ -81,20 +60,20 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 w-[120px] sm:w-[160px] lg:w-[200px] border-0 bg-zinc-700/60 hover:bg-zinc-600/70 justify-between px-4 focus-visible:ring-0 focus-visible:ring-offset-0",
-            !currentProject && "text-zinc-300"
+            "h-8 max-w-[200px] border-0 bg-transparent hover:bg-transparent justify-between px-2 focus-visible:ring-0 focus-visible:ring-offset-0",
+            !currentProject && "text-zinc-500"
           )}
         >
           {currentProject ? (
-            <span className="font-medium truncate text-xs sm:text-sm text-white">
+            <span className="truncate text-xs sm:text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
               {currentProject.name}
             </span>
           ) : (
-            <span className="text-zinc-300 text-xs sm:text-sm">
+            <span className="text-zinc-500 text-xs sm:text-sm">
               Select Project
             </span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-70" />
+          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-600" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -102,22 +81,26 @@ export function ProjectSelector({
         sideOffset={6}
         className="w-[300px] p-0"
       >
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search projects..."
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
+        <Command
+          filter={(value, search) => {
+            if (!search) return 1;
+            return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Search projects..." />
           <CommandList className="max-h-[280px]">
             <CommandEmpty>
               {loadingProjects ? "Loading..." : "No projects found"}
             </CommandEmpty>
             <CommandGroup heading="Projects">
-              {filteredProjects.map((project) => (
+              {projects.map((project) => (
                 <CommandItem
                   key={project.id}
-                  value={project.id.toString()}
-                  onSelect={handleProjectSelect}
+                  value={`${project.name}${project["job number"] ? ` ${project["job number"]}` : ""}`}
+                  onSelect={() => {
+                    onProjectSelect(project.id);
+                    setOpen(false);
+                  }}
                   className="cursor-pointer"
                 >
                   <Check
@@ -140,7 +123,7 @@ export function ProjectSelector({
             <CommandSeparator />
             <CommandGroup>
               <CommandItem
-                value="view-all"
+                value="view-all-projects"
                 onSelect={() => {
                   onViewAll();
                   setOpen(false);

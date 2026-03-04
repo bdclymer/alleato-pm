@@ -6,6 +6,7 @@ type RagChatKitPanelProps = {
   initialThreadId?: string | null;
   onThreadChange?: (threadId: string | null) => void;
   onResponseEnd?: () => void;
+  onError?: (error: Error) => void;
 };
 
 const CHATKIT_DOMAIN_KEY =
@@ -15,6 +16,7 @@ export function RagChatKitPanel({
   initialThreadId,
   onThreadChange,
   onResponseEnd,
+  onError,
 }: RagChatKitPanelProps) {
   const chatkit = useChatKit({
     api: {
@@ -77,11 +79,12 @@ export function RagChatKitPanel({
       retry: true,
     },
     // Event handlers
-    onThreadChange: ({ threadId }: { threadId: string | null }) => onThreadChange?.(threadId ?? null),
+    onThreadChange: ({ threadId }: { threadId: string | null }) =>
+      onThreadChange?.(threadId ?? null),
     onResponseEnd: () => onResponseEnd?.(),
     onError: ({ error }: { error: Error }) => {
-      void error;
-      },
+      onError?.(error);
+    },
   });
 
   return (

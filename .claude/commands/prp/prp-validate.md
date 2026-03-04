@@ -1,22 +1,22 @@
 ---
-description: "Validate that a PRP executed as planned, run the required tests, capture evidence, and loop failures back to execution"
+description: "Validate that a PRP/Plan executed as planned, run the required tests, capture evidence, and loop failures back to execution"
 argument-hint: "<path/to/prp.md> [--feature <feature-name>]"
 ---
 
-# PRP Validation + Testing Gate
+# PRP/Plan Validation + Testing Gate
 
-Use this command when the implementation work is complete and you need an evidence-backed judgment: validate the PRP execution, write/run the required tests, and escalate any failures back through implementation.
+Use this command when the implementation work is complete and you need an evidence-backed judgment: validate the PRP/Plan execution, write/run the required tests, and escalate any failures back through implementation.
 
 ## Inputs
 
-- `{prp_path}`: Exact relative path to the PRP document in `docs-ai/contents/docs/PRPs/{feature}/`.
+- `{prp_path}`: Exact relative path to the PRP/Plan document in `/Users/meganharrison/Documents/alleato-pm/_bmad-output/planning-artifacts/{FEATURE.md}`.
 - `--feature {feature-name}`: Optional override for the feature slug. When omitted, derive the slug from the PRP folder (the directory immediately under `docs-ai/contents/docs/PRPs/` that contains the PRP).
 
 Record the resolved feature name; it is required for locating `TASKS.md`, the verification report, and test artifacts.
 
-## Phase 1 — Evidence-Based Validation (Did we build what the PRP promised?)
+## Phase 1 — Evidence-Based Validation (Did we build what the PRP/Plan promised?)
 
-1. **Load the PRP** and extract:
+1. **Load the PRP/Plan** and extract:
    - Final Validation Checklist.
    - Goal / Deliverable / Success Definition statements from the “Goal” section.
    - Success criteria listed under “What”.
@@ -32,25 +32,25 @@ Record the resolved feature name; it is required for locating `TASKS.md`, the ve
    - Ensure documentation, README updates, and env config notes exist.
    - Make sure no development-only code paths remain.
 4. **Evidence requirements**:
-   - Final report must reference tangible artifacts (`docs-ai/contents/docs/PRPs/{feature}/verification/index.html`, screenshots, test-output logs, API/db evidence).
+   - Final report must reference tangible artifacts, screenshots, test-output logs, API/db evidence).
    - Every claim that a step passed must include either a file path, command output, or screenshot (never “seems fine”).
 
 ## Phase 2 — Testing + Task Loop (Write, run, repair)
 
 This validation gate is paired with the testing command. Follow this precise choreography:
 
-1. **Write or confirm the tests** described in the PRP:
-   - If the PRP lists specific tests (Playwright flows, unit suites, API checks), ensure the tests exist in the repository.
+1. **Write or confirm the tests** described in the PRP/Plan:
+   - If the PRP/Plan lists specific tests (Playwright flows, unit suites, API checks), ensure the tests exist in the repository.
    - If tests are missing, author them in the appropriate location (`frontend/tests/...`, `backend/tests/...`, etc.) and document the intent in `TASKS.md`.
-   - Do not guess; tests must mirror the PRP’s stated success criteria.
+   - Do not guess; tests must mirror the PRP/Plan’s stated success criteria.
 2. **Run every required test set**:
    - `npx tsx .agents/tools/generate-verification-report.ts {feature}` (runs frontend typecheck + Playwright + generates verification report).
-   - `npm run lint --prefix frontend`, `npm run lint --prefix backend` (as specified by PRP).
-   - `npm run typecheck --prefix frontend/backend` if the PRP calls it out separately.
+   - `npm run lint --prefix frontend`, `npm run lint --prefix backend` (as specified by PRP/Plan).
+   - `npm run typecheck --prefix frontend/backend` if the PRP/Plan calls it out separately.
    - Any additional commands (API smoke tests, `route-check`, supabase query tests, etc.) listed in the Final Validation Checklist.
 3. **Failure handling**:
    - When a test fails, capture the failure output and identify the responsible file/step.
-   - Append a TODO entry to `docs-ai/contents/docs/PRPs/{feature}/TASKS.md` (this file already tracks implementation work) in the style:
+   - Append a TODO entry toto the file in the style:
 
      ```
      - [ ] Investigate "{test-name}" failure – {short failure summary} (status: needs execution fix)
@@ -61,7 +61,7 @@ This validation gate is paired with the testing command. Follow this precise cho
    - Do not proceed to Phase 3 until the failing tests are fixed and mark the failure in the conversation and report as blocking.
 4. **Passing tests**:
    - When every test command succeeds, note the pass rate (must be ≥ 80% from the verification report) and confirm TypeScript error count is zero.
-   - Ensure screenshots exist under `docs-ai/contents/docs/PRPs/{feature}/verification/screenshots/`.
+   - Ensure screenshots exist in the folder with the original planning and research files.
    - Confirm the verification folder contains `index.html`, `screenshots/`, `test-output/`, and any applicable `api-responses/` or `database/` subfolders.
 
 ## Phase 3 — Report & Decision
@@ -69,9 +69,9 @@ This validation gate is paired with the testing command. Follow this precise cho
 Produce a final validation report with this structure and keep it evidence-heavy:
 
 ```
-# PRP Validation Report
+# PRP/Plan Validation Report
 
-**PRP File**: {prp_path}
+**PRP/Plan File**: {prp_path}
 **Feature**: {feature}
 **Validation Date**: {timestamp}
 **Overall Status**: PASS / FAIL
@@ -103,7 +103,7 @@ Produce a final validation report with this structure and keep it evidence-heavy
 - Env/config noted: {yes/no + file}
 
 ## Evidence Artifacts
-- Verification report: `docs-ai/contents/docs/PRPs/{feature}/verification/index.html`
+- Verification report: `file-path`
 - Screenshots: {count}
 - API logs: {file(s)} (if applicable)
 - Database evidence: {file(s)} (if applicable)

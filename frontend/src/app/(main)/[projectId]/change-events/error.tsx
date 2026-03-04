@@ -15,7 +15,7 @@ export default function ChangeEventsError({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
+    <div className="flex flex-col items-center justify-center min-h-96 gap-4 p-8">
       <div className="rounded-full bg-destructive/10 p-4">
         <svg
           className="h-6 w-6 text-destructive"

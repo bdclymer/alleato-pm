@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 
@@ -82,21 +82,21 @@ export default function NewChangeEventPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Create Change Event"
-        description="Document a potential change to the project scope, schedule, or budget."
+    <ProjectFormPageLayout
+      title="Create Change Event"
+      description="Document a potential change to project scope, schedule, or budget."
+      onBack={handleCancel}
+      backLabel="Back to Change Events"
+      maxWidth="md"
+    >
+      <ChangeEventForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSaving}
+        mode="create"
+        projectId={projectId}
       />
-      <PageContainer maxWidth="md">
-        <ChangeEventForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isSubmitting={isSaving}
-          mode="create"
-          projectId={projectId}
-        />
-      </PageContainer>
-    </>
+    </ProjectFormPageLayout>
   );
 }

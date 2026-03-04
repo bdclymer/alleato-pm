@@ -29,6 +29,8 @@ import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/C
 import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
 import { ChangeEventAttachmentsSection } from "@/components/domain/change-events/ChangeEventAttachmentsSection";
 import { ChangeEventLineItemsGrid } from "@/components/domain/change-events/ChangeEventLineItemsGrid";
+import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
+import { useProjectChangeEventRfqs } from "@/hooks/use-change-event-rfqs";
 
 interface LineItem {
   id: number;
@@ -67,7 +69,11 @@ export default function ChangeEventDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [showRfqForm, setShowRfqForm] = useState(false);
+  const [isCreatingRfq, setIsCreatingRfq] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+
+  const { rfqs, createRfq } = useProjectChangeEventRfqs(projectId);
 
   useProjectTitle(
     changeEvent
@@ -379,6 +385,9 @@ export default function ChangeEventDetailPage() {
           <TabsTrigger value="history" data-testid="change-event-tab-history">
             History
           </TabsTrigger>
+          <TabsTrigger value="rfqs" data-testid="change-event-tab-rfqs">
+            RFQs ({rfqs.filter((r) => r.change_event_id === changeEventId).length})
+          </TabsTrigger>
         </TabsList>
 
         {/* General Tab */}
@@ -574,6 +583,85 @@ export default function ChangeEventDetailPage() {
               <div className="text-center py-8">
                 <Text tone="muted">History tracking coming soon</Text>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* RFQs Tab */}
+        <TabsContent value="rfqs">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Requests for Quote</CardTitle>
+                  <CardDescription>
+                    Manage RFQs associated with this change event
+                  </CardDescription>
+                </div>
+                {!showRfqForm && (
+                  <Button size="sm" onClick={() => setShowRfqForm(true)}>
+                    + New RFQ
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {showRfqForm && changeEvent && (
+                <div className="mb-6 border rounded-md p-4">
+                  <ChangeEventRfqForm
+                    changeEvents={[changeEvent]}
+                    isSubmitting={isCreatingRfq}
+                    onSubmit={async (values) => {
+                      setIsCreatingRfq(true);
+                      try {
+                        await createRfq({
+                          changeEventId: values.changeEventId,
+                          title: values.title,
+                          dueDate: values.dueDate,
+                          includeAttachments: values.includeAttachments,
+                          notes: values.notes,
+                        });
+                        setShowRfqForm(false);
+                        toast.success("RFQ created successfully");
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error ? err.message : "Failed to create RFQ",
+                        );
+                      } finally {
+                        setIsCreatingRfq(false);
+                      }
+                    }}
+                    onCancel={() => setShowRfqForm(false)}
+                  />
+                </div>
+              )}
+
+              {rfqs.filter((r) => r.change_event_id === changeEventId).length > 0 ? (
+                <div className="space-y-2">
+                  {rfqs
+                    .filter((r) => r.change_event_id === changeEventId)
+                    .map((rfq) => (
+                      <div
+                        key={rfq.id}
+                        className="flex items-center justify-between p-3 border rounded-md"
+                      >
+                        <div>
+                          <p className="font-medium text-sm">{rfq.rfq_number} — {rfq.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Status: {rfq.status} · {rfq.response_count} response{rfq.response_count !== 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <Badge variant="outline">{rfq.status}</Badge>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                !showRfqForm && (
+                  <div className="text-center py-8">
+                    <Text tone="muted">No RFQs created yet</Text>
+                  </div>
+                )
+              )}
             </CardContent>
           </Card>
         </TabsContent>

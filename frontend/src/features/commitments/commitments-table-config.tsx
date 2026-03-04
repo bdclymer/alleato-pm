@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,20 +86,11 @@ function formatDate(value: string | null | undefined): string {
   return date.toLocaleDateString();
 }
 
-function statusVariant(status: string | null | undefined): "default" | "secondary" | "outline" | "destructive" {
-  switch (status) {
-    case "approved":
-    case "executed":
-    case "complete":
-      return "default";
-    case "terminated":
-      return "destructive";
-    case "pending":
-    case "out_for_signature":
-      return "secondary";
-    default:
-      return "outline";
-  }
+// Converts snake_case DB values to display strings that StatusBadge can look up.
+// e.g., "out_for_signature" → "out for signature"
+function statusLabel(status: string | null | undefined): string {
+  if (!status) return "-";
+  return status.replace(/_/g, " ");
 }
 
 function typeVariant(type: string | null | undefined): "default" | "secondary" | "outline" {
@@ -142,7 +134,7 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentListItem>[]
     },
     {
       ...commitmentColumns[3],
-      render: (item) => <Badge variant={statusVariant(item.status)}>{item.status}</Badge>,
+      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       csvValue: (item) => item.status,
       sortValue: (item) => item.status,
     },
@@ -288,7 +280,7 @@ export function renderCommitmentCard(
           <p className="text-xs uppercase text-muted-foreground">{item.number}</p>
           <h3 className="font-medium">{item.title ?? "Untitled Commitment"}</h3>
         </div>
-        <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
+        <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="text-sm text-muted-foreground">{item.contract_company?.name ?? "-"}</p>
       <p className="text-sm text-muted-foreground mt-2">
@@ -311,7 +303,7 @@ export function renderCommitmentList(
         <p className="text-sm font-medium">{item.number}</p>
         <p className="text-xs text-muted-foreground">{item.title ?? "Untitled"}</p>
       </div>
-      <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
+      <StatusBadge status={statusLabel(item.status)} />
     </div>
   );
 }

@@ -24,6 +24,9 @@ import {
 import { DataTablePagination } from "./DataTablePagination";
 import { DataTableToolbar } from "./DataTableToolbar";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Card } from "@/components/ui/card";
+import { ChevronRight } from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -46,6 +49,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder,
 }: DataTableProps<TData, TValue>) {
+  const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -75,10 +79,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* DEPRECATION WARNING - Remove after migration */}
-      <div className="bg-destructive text-white px-4 py-4 rounded-md font-semibold text-center">
-        ⚠️ DEPRECATED: This page uses legacy DataTable. Migrate to GenericDataTable + TableLayout
-      </div>
       {showToolbar && (
         <DataTableToolbar
           table={table}
@@ -86,60 +86,128 @@ export function DataTable<TData, TValue>({
           searchPlaceholder={searchPlaceholder}
         />
       )}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
+
+      {isMobile ? (
+        <div className="space-y-3">
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => {
+              const visibleCells = row.getVisibleCells();
+              const [primaryCell, ...restCells] = visibleCells;
+
+              return (
+                <Card
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
                   className={cn(
-                    onRowClick && "cursor-pointer hover:bg-muted/50",
+                    "border px-4 py-3",
+                    onRowClick && "cursor-pointer active:bg-muted/50",
                   )}
                   onClick={() => onRowClick?.(row.original)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="text-sm font-medium text-foreground truncate">
+                        {primaryCell
+                          ? flexRender(
+                              primaryCell.column.columnDef.cell,
+                              primaryCell.getContext(),
+                            )
+                          : "-"}
+                      </div>
+                      <div className="space-y-1.5">
+                        {restCells.slice(0, 3).map((cell) => {
+                          const headerLabel =
+                            typeof cell.column.columnDef.header === "string"
+                              ? cell.column.columnDef.header
+                              : cell.column.id;
+
+                          return (
+                            <div
+                              key={cell.id}
+                              className="flex items-center justify-between gap-3"
+                            >
+                              <span className="text-xs text-muted-foreground truncate">
+                                {headerLabel}
+                              </span>
+                              <span className="text-xs font-medium text-foreground truncate text-right">
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    {onRowClick && (
+                      <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    )}
+                  </div>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="border px-4 py-10 text-center text-sm text-muted-foreground">
+              No results.
+            </Card>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={cn(
+                      onRowClick && "cursor-pointer hover:bg-muted/50",
+                    )}
+                    onClick={() => onRowClick?.(row.original)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       {showPagination && <DataTablePagination table={table} />}
     </div>
   );

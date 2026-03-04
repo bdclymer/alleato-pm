@@ -283,6 +283,7 @@ function enhanceForm(form: HTMLFormElement): void {
   row.className = "mb-4 flex items-center justify-end";
   row.appendChild(button);
 
+  form.setAttribute(FORM_ENHANCED_ATTR, "true");
   form.prepend(row);
 }
 

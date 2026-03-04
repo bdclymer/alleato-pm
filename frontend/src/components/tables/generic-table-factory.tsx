@@ -159,6 +159,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ============================================================================
 // TYPE DEFINITIONS - View Mode
@@ -617,6 +618,7 @@ export function GenericDataTable({
   onDeleteRow,
 }: GenericDataTableProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   // ============================================================================
   // STATE MANAGEMENT
@@ -663,6 +665,8 @@ export function GenericDataTable({
   const [viewMode, setViewMode] = useState<ViewMode>(
     config.defaultViewMode || "table",
   );
+  const resolvedViewMode: ViewMode =
+    isMobile && viewMode === "table" ? "card" : viewMode;
 
   // Sorting state - now supports multi-column sorting
   const [sortConfigs, setSortConfigs] = useState<SortConfig[]>(
@@ -2290,7 +2294,7 @@ export function GenericDataTable({
                     size="sm"
                     className={cn(
                       "flex-1 sm:flex-initial",
-                      viewMode !== "table" && "hidden sm:flex"
+                      resolvedViewMode !== "table" && "hidden sm:flex"
                     )}
                   >
                     <Columns3 className="h-4 w-4 sm:mr-2" />
@@ -2328,9 +2332,9 @@ export function GenericDataTable({
       {/* ========================================
           CONTENT (View-based rendering)
           ======================================== */}
-      {viewMode === "table" && renderTableView()}
-      {viewMode === "card" && renderCardView()}
-      {viewMode === "list" && renderListView()}
+      {resolvedViewMode === "table" && renderTableView()}
+      {resolvedViewMode === "card" && renderCardView()}
+      {resolvedViewMode === "list" && renderListView()}
 
       {/* ========================================
           DELETE CONFIRMATION

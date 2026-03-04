@@ -162,7 +162,7 @@ export default function NewContractPage() {
       />
 
       <PageContainer className="bg-muted/30">
-        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-white rounded-lg border border-gray-200 p-8">
+        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-card rounded-lg border border-border p-8">
           <ContractForm
             initialData={initialData}
             onSubmit={handleSubmit}

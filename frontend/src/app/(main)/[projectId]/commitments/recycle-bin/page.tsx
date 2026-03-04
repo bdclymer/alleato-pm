@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   GenericDataTable,
   type GenericTableConfig,
@@ -11,7 +12,7 @@ import { TableLayout } from "@/components/layouts";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-const config: GenericTableConfig = {
+const BASE_CONFIG: Omit<GenericTableConfig, "rowActions"> = {
   searchFields: ["number", "title", "description"],
   exportFilename: "commitments-recycle-bin-export.csv",
   columns: [
@@ -98,6 +99,35 @@ export default function CommitmentsRecycleBinPage() {
   const [activeCount, setActiveCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleRestore = useCallback(async (row: Record<string, unknown>) => {
+    const id = row.id as string;
+    const title = (row.title as string) ?? "Commitment";
+    try {
+      const response = await fetch(`/api/commitments/${id}/restore`, { method: "POST" });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({})) as { message?: string };
+        throw new Error(data.message ?? "Failed to restore commitment");
+      }
+      toast.success(`"${title}" restored to commitments`);
+      setDeletedCommitments((prev) => prev.filter((c) => c.id !== id));
+      setActiveCount((prev) => prev + 1);
+    } catch (err) {
+      toast.error(`Failed to restore: ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
+  }, []);
+
+  const config: GenericTableConfig = useMemo(() => ({
+    ...BASE_CONFIG,
+    rowActions: [
+      {
+        id: "restore",
+        label: "Restore",
+        icon: "pencil" as const,
+        onClick: handleRestore,
+      },
+    ],
+  }), [handleRestore]);
 
   useEffect(() => {
     async function fetchData() {

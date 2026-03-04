@@ -280,8 +280,10 @@ Only after core UI AND usage consistency is verified, audit pages for:
 ### Banned in Pages
 - ❌ Raw HTML (`<button>`, `<input>`, `<select>`, `<table>`)
 - ❌ Inline styles (`style={{...}}`)
-- ❌ Custom Tailwind styling (should be in components)
+- ❌ Custom one-off components that duplicate existing `ui/` or `ds/` primitives (e.g., `budget-button.tsx`, `CustomInput`)
 - ❌ Direct use of Radix primitives (use wrapped components)
+
+**Note:** Importing from `@/components/ui/` or `@/components/ds/` are both acceptable. The import path does not matter — what matters is using the canonical component, not a one-off duplicate.
 
 ---
 

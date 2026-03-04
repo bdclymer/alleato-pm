@@ -12,6 +12,18 @@ description: UI ChangeEvents documentation
 - Revenue values (`match_latest_cost`, `manual_entry`, etc.) and attachment payloads (`files` key) do not match the validation schema of the API, so the UI currently rejects submissions before the backend sees the data.
 - The approval workflow component is wired to `/approvals` endpoints that do not exist and hard-codes numeric approver IDs, so it cannot submit or display real approvals.
 
+## Deliverables
+
+1. ChangeEventsListPage
+2. ChangeEventForm
+   1. ChangeEventGeneralSection
+   2. ChangeEventRevenueSection
+   3. ChangeEventLineItemsGrid
+   4. ChangeEventAttachmentsSection
+3. ChangeEventsTableColumns
+4. ChangeEventApprovalWorkflow
+5. ChangeEventConvertDialog
+
 ## Component Specifications
 
 ### 1. ChangeEventsListPage
@@ -35,7 +47,9 @@ interface ChangeEventsListPageProps {
   };
 }
 ```
+
 #### Layout Structure
+
 ```typescript
 ┌─────────────────────────────────────────────────────────────┐
 │ HEADER                                                      │
@@ -56,7 +70,9 @@ interface ChangeEventsListPageProps {
 └─────────────────────────────────────────────────────────────┘
 
 ```
+
 #### State Management
+
 ```typescript
 interface ListPageState {
   changeEvents: ChangeEventSummary[];
@@ -88,7 +104,9 @@ interface ChangeEventFormProps {
   disabled?: boolean;
 }
 ```
+
 #### Layout Structure
+
 ```typescript
 ┌─────────────────────────────────────────────┐
 │ FORM HEADER                                 │
@@ -105,7 +123,9 @@ interface ChangeEventFormProps {
 └─────────────────────────────────────────────┘
 
 ```
+
 #### Component Architecture
+
 ```typescript
 const ChangeEventForm = ({ mode, initialData, projectId, onSubmit, onCancel }: ChangeEventFormProps) => {
   // Form state and validation
@@ -133,13 +153,13 @@ const ChangeEventForm = ({ mode, initialData, projectId, onSubmit, onCancel }: C
 
 > ⚠️ Reality: The running implementation does not use React Hook Form; instead, `ChangeEventForm` manages its own `data`/`onChange` props and the new change event page submits via the `createChangeEvent` hook directly to Supabase, bypassing the API and never sending the revenue/attachment payload.
 
-### 3. ChangeEventGeneralSection
+#### a. ChangeEventGeneralSection
 
 **File**: `/frontend/src/components/domain/change-events/ChangeEventGeneralSection.tsx`
 **Purpose**: Basic change event information fields
 **Screenshot**: General section layout in form captures
 
-#### Props Interface
+##### Props Interface
 
 ```typescript
 interface ChangeEventGeneralSectionProps {
@@ -149,7 +169,9 @@ interface ChangeEventGeneralSectionProps {
   projectId: number;
 }
 ```
-#### Layout Structure
+
+##### Layout Structure
+
 ```javascript
 ┌─────────────────────────────────────────────┐
 │ GENERAL INFORMATION                         │
@@ -169,7 +191,9 @@ interface ChangeEventGeneralSectionProps {
 └─────────────────────────────────────────────┘
 
 ```
-#### Field Dependencies
+
+##### Field Dependencies
+
 ```typescript
 // Reason options depend on Type selection
 const reasonOptions = useMemo(() => {
@@ -182,13 +206,13 @@ const reasonOptions = useMemo(() => {
 }, [selectedType]);
 ```
 
-### 4. ChangeEventRevenueSection
+#### b. ChangeEventRevenueSection
 
 **File**: `/frontend/src/components/domain/change-events/ChangeEventRevenueSection.tsx`
 **Purpose**: Revenue configuration and prime contract selection
 **Screenshot**: Revenue section toggle behavior
 
-#### Props Interface
+##### Props Interface
 
 ```typescript
 interface ChangeEventRevenueSectionProps {
@@ -197,7 +221,9 @@ interface ChangeEventRevenueSectionProps {
   projectId: number;
 }
 ```
-#### Layout Structure
+
+##### Layout Structure
+
 ```javascript
 ┌─────────────────────────────────────────────┐
 │ REVENUE SETTINGS                            │
@@ -212,7 +238,9 @@ interface ChangeEventRevenueSectionProps {
 └─────────────────────────────────────────────┘
 
 ```
-#### Conditional Display Logic
+
+##### Conditional Display Logic
+
 ```typescript
 const RevenueSection = ({ form, visible }: Props) => {
   if (!visible) return null;
@@ -231,13 +259,13 @@ const RevenueSection = ({ form, visible }: Props) => {
 
 > ⚠️ Reality: The live component receives `data` and `onChange` props, not a `form`, and the options it renders are slug values (`match_latest_cost`, etc.) that must be translated into the backend's `LineItemRevenueSource` enum before submission.
 
-### 5. ChangeEventLineItemsGrid
+#### c. ChangeEventLineItemsGrid
 
 **File**: `/frontend/src/components/domain/change-events/ChangeEventLineItemsGrid.tsx`
 **Purpose**: Editable data grid for line items with inline editing
 **Screenshot**: Grid layout with add/edit/delete actions
 
-#### Props Interface
+##### Props Interface
 
 ```typescript
 interface ChangeEventLineItemsGridProps {
@@ -248,9 +276,11 @@ interface ChangeEventLineItemsGridProps {
   projectId: string;
 }
 ```
+
 > ⚠️ Reality: The grid hits `/api/projects/{projectId}/change-events/{changeEventId}/line-items`, but that endpoint currently casts `changeEventId` to an integer so no data is returned or saved until the API uses UUIDs.
 
-#### Layout Structure
+##### Layout Structure
+
 ```sql
 ┌──────────────────────────────────────────────────────────────────────┐
 │ LINE ITEMS                                           [+ Add Line Item] │
@@ -280,14 +310,17 @@ interface ChangeEventLineItemsGridProps {
 └──────────┴─────────────┴──────────┴──────────┴─────────┘
 
 ```
-#### Grid Features
+
+##### Grid Features
+
 - **Inline Editing**: Click cells to edit directly
 - **Add/Remove Rows**: Dynamic row management
 - **Auto-calculations**: Extended amounts calculated on quantity/price changes
 - **Drag-and-drop**: Reorder rows by dragging
 - **Bulk Actions**: Select multiple rows for batch operations
 
-#### State Management
+##### State Management
+
 ```typescript
 interface GridState {
   items: ChangeEventLineItem[];
@@ -323,13 +356,13 @@ const useLineItemsGrid = () => {
 };
 ```
 
-### 6. ChangeEventAttachmentsSection
+#### d. ChangeEventAttachmentsSection
 
 **File**: `/frontend/src/components/domain/change-events/ChangeEventAttachmentsSection.tsx`
 **Purpose**: File upload and attachment management
 **Screenshot**: File upload interface and attachment list
 
-#### Props Interface
+##### Props Interface
 
 ```typescript
 interface ChangeEventAttachmentsSectionProps {
@@ -342,7 +375,9 @@ interface ChangeEventAttachmentsSectionProps {
   readonly?: boolean;
 }
 ```
-#### Layout Structure
+
+##### Layout Structure
+
 ```typescript
 ┌─────────────────────────────────────────────┐
 │ ATTACHMENTS                                 │
@@ -363,7 +398,9 @@ interface ChangeEventAttachmentsSectionProps {
 └─────────────────────────────────────────────┘
 
 ```
-#### File Upload Features
+
+##### File Upload Features
+
 - **Drag-and-drop**: Drop zone for easy file uploads
 - **File Validation**: Size and type restrictions
 - **Progress Indicators**: Upload progress with cancel option
@@ -373,12 +410,14 @@ interface ChangeEventAttachmentsSectionProps {
 
 > ⚠️ Reality: The current attachment code posts the files under the `files` key and the API casts `changeEventId` to an integer before querying, so uploads and downloads never succeed until the payload shape and ID handling match the backend.
 
-### 7. ChangeEventsTableColumns
+### 3. ChangeEventsTableColumns
+
 **File**: `/frontend/src/components/domain/change-events/ChangeEventsTableColumns.tsx`
 **Purpose**: Table column definitions for data table
 **Screenshot**: Table layout with sorting and actions
 
 #### Column Configuration
+
 ```typescript
 export const changeEventsTableColumns: ColumnDef<ChangeEventSummary>[] = [
   {
@@ -439,7 +478,7 @@ export const changeEventsTableColumns: ColumnDef<ChangeEventSummary>[] = [
 ];
 ```
 
-### 8. ChangeEventApprovalWorkflow
+### 4. ChangeEventApprovalWorkflow
 
 **File**: `/frontend/src/components/domain/change-events/ChangeEventApprovalWorkflow.tsx`
 **Purpose**: Approval process management and status display
@@ -457,7 +496,9 @@ interface ChangeEventApprovalWorkflowProps {
   onRequestChanges: (comments: string) => Promise<void>;
 }
 ```
+
 #### Layout Structure
+
 ```typescript
 ┌─────────────────────────────────────────────┐
 │ APPROVAL WORKFLOW                           │
@@ -476,14 +517,17 @@ interface ChangeEventApprovalWorkflowProps {
 └─────────────────────────────────────────────┘
 
 ```
+
 > ⚠️ Reality: The live component posts to `/api/projects/{projectId}/change-events/{changeEventId}/approvals`, but those routes do not exist and the component hardcodes numeric approver IDs, so no approvals are ever recorded.
 
-### 9. ChangeEventConvertDialog
+### 5. ChangeEventConvertDialog
+
 **File**: `/frontend/src/components/domain/change-events/ChangeEventConvertDialog.tsx`
 **Purpose**: Convert change event to change order dialog
 **Screenshot**: Conversion dialog interface
 
 #### Props Interface
+
 ```typescript
 interface ChangeEventConvertDialogProps {
   changeEvent: ChangeEvent;
@@ -520,6 +564,7 @@ interface ChangeEventConvertDialogProps {
 │                   [Cancel] [Convert]        │
 └─────────────────────────────────────────────┘
 ```
+
 ## Responsive Design Details
 
 ### Breakpoint Strategy
@@ -532,13 +577,16 @@ const breakpoints = {
   wide: '1280px'      // Extra wide for detailed views
 };
 ```
+
 ### Mobile Adaptations
+
 - **Forms**: Single column layout with collapsible sections
 - **Tables**: Horizontal scroll with sticky first column
 - **Grids**: Card layout instead of table layout
 - **Navigation**: Hamburger menu for tabs
 
 ### Tablet Adaptations
+
 - **Forms**: Two-column layout where space permits
 - **Tables**: Hide less critical columns
 - **Modals**: Adjusted padding and sizing
@@ -546,6 +594,7 @@ const breakpoints = {
 ## State Management Patterns
 
 ### Component State Architecture
+
 ```typescript
 // Global app state
 const ChangeEventsContext = createContext<{

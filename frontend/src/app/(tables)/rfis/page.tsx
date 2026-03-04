@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
@@ -51,7 +50,7 @@ const mockRFIs: RFI[] = [
 ];
 
 export default function RFIsPage() {
-  const [data, setData] = React.useState<RFI[]>(mockRFIs);
+  const data = mockRFIs;
 
   const columns: ColumnDef<RFI>[] = [
     {
@@ -165,34 +164,6 @@ export default function RFIsPage() {
           <Plus className="h-4 w-4 mr-2" />
           Create RFI
         </Button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Draft</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((item) => item.status === "draft").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Open</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((item) => item.status === "open").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Answered</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((item) => item.status === "answered").length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Closed</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((item) => item.status === "closed").length}
-          </div>
-        </div>
       </div>
 
       {/* Table */}

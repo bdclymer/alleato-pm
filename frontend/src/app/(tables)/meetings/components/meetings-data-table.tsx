@@ -272,6 +272,7 @@ export function MeetingsDataTable({
       source: meeting.source,
       url: meeting.url,
       project: meeting.project,
+      project_id: meeting.project_id,
       participants: meeting.participants,
       summary: meeting.summary,
     });
@@ -731,17 +732,28 @@ export function MeetingsDataTable({
               <div className="grid gap-2">
                 <Label>Project</Label>
                 <Select
-                  value={editData.project || ""}
-                  onValueChange={(value) =>
-                    setEditData({ ...editData, project: value })
-                  }
+                  value={editData.project_id?.toString() || ""}
+                  onValueChange={(value) => {
+                    const selectedProjectId = Number.parseInt(value, 10);
+                    const selectedProject = projects.find(
+                      (project) => project.id === selectedProjectId,
+                    );
+
+                    setEditData({
+                      ...editData,
+                      project_id: Number.isNaN(selectedProjectId)
+                        ? null
+                        : selectedProjectId,
+                      project: selectedProject?.name || null,
+                    });
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
                     {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.name || ""}>
+                      <SelectItem key={project.id} value={project.id.toString()}>
                         {project.name || "Unnamed Project"}
                       </SelectItem>
                     ))}

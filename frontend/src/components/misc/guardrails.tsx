@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Shield, CheckCircle, XCircle } from "lucide-react";
 import { PanelSection } from "./panel-section";
@@ -18,9 +17,8 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
   };
 
   const guardrailDescriptionMap: Record<string, string> = {
-    "Relevance Guardrail": "Ensure messages are relevant to airline support",
-    "Jailbreak Guardrail":
-      "Detect and block attempts to bypass or override system instructions",
+    "Relevance Guardrail": "Ensures messages are relevant to scope",
+    "Jailbreak Guardrail": "Blocks attempts to bypass system instructions",
   };
 
   const extractGuardrailName = (rawName: string): string =>
@@ -28,9 +26,7 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
 
   const guardrailsToShow: GuardrailCheck[] = inputGuardrails.map((rawName) => {
     const existing = guardrails.find((gr) => gr.name === rawName);
-    if (existing) {
-      return existing;
-    }
+    if (existing) return existing;
     return {
       id: rawName,
       name: rawName,
@@ -44,44 +40,39 @@ export function Guardrails({ guardrails, inputGuardrails }: GuardrailsProps) {
   return (
     <PanelSection
       title="Guardrails"
-      icon={<Shield className="h-4 w-4 text-blue-600" />}
+      icon={<Shield className="h-3.5 w-3.5" />}
     >
-      <div className="grid grid-cols-3 gap-4">
-        {guardrailsToShow.map((gr) => (
-          <Card
-            key={gr.id}
-            className={`bg-background border-border transition-all ${
-              !gr.input ? "opacity-60" : ""
-            }`}
-          >
-            <CardHeader className="p-4 pb-1">
-              <CardTitle className="text-sm flex items-center text-zinc-900">
-                {extractGuardrailName(gr.name)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-1">
-              <p className="text-xs font-light text-zinc-500 mb-1">
-                {(() => {
-                  const title = extractGuardrailName(gr.name);
-                  return guardrailDescriptionMap[title] ?? gr.input;
-                })()}
-              </p>
-              <div className="flex text-xs">
-                {!gr.input || gr.passed ? (
-                  <Badge className="mt-2 px-2 py-1 bg-emerald-500 hover:bg-emerald-600 flex items-center text-white">
-                    <CheckCircle className="h-4 w-4 mr-1 text-white" />
-                    Passed
-                  </Badge>
-                ) : (
-                  <Badge className="mt-2 px-2 py-1 bg-red-500 hover:bg-red-600 flex items-center text-white">
-                    <XCircle className="h-4 w-4 mr-1 text-white" />
-                    Failed
-                  </Badge>
-                )}
+      <div className="space-y-1">
+        {guardrailsToShow.map((gr) => {
+          const label = extractGuardrailName(gr.name);
+          const passed = !gr.input || gr.passed;
+          return (
+            <div
+              key={gr.id}
+              className={`flex items-center justify-between rounded-lg px-3 py-2.5 ${!gr.input ? "opacity-50" : ""}`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground leading-tight">
+                  {label}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {guardrailDescriptionMap[label] ?? gr.input}
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {passed ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">Pass</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-destructive">
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">Fail</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </PanelSection>
   );

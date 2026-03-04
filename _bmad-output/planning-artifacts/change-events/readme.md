@@ -15,7 +15,7 @@ This directory contains the standardized documentation for the Change Events mod
 - **PLANS-ChangeEvents.md** - Implementation plan with file paths and current status
 - **SCHEMA-ChangeEvents.md** - Complete database schema and migration scripts
 - **FORMS-ChangeEvents.md** - Form specifications with layouts and validation
-- **API_ENDPOINTS-ChangeEvents.md** - API documentation with examples
+- **API_ChangeEvents.md** - API documentation with examples
 - **UI-ChangeEvents.md** - Component breakdown and UI specifications
 
 ### Supporting Documentation
@@ -81,6 +81,7 @@ frontend/
 ├── drizzle/migrations/0001_create_change_events.sql
 └── tests/e2e/change-events-*.spec.ts           # Tests
 ```
+
 ### Documentation Files
 
 ```text

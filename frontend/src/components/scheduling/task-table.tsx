@@ -27,7 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
+
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -43,7 +43,7 @@ import {
   Plus,
   Trash2,
   Pencil,
-  Copy,
+
   ArrowRight,
   ArrowLeft,
   Calendar,
@@ -52,6 +52,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Circle,
+  Clock,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -147,11 +150,11 @@ function SortableHeader({
 
 const statusConfig: Record<
   TaskStatus,
-  { label: string; variant: "default" | "secondary" | "outline" | "success" | "destructive" }
+  { label: string; variant: "default" | "secondary" | "outline" | "success" | "destructive"; icon: typeof Circle; iconColor: string }
 > = {
-  not_started: { label: "Not Started", variant: "outline" },
-  in_progress: { label: "In Progress", variant: "default" },
-  complete: { label: "Complete", variant: "success" },
+  not_started: { label: "Not Started", variant: "outline", icon: Circle, iconColor: "text-muted-foreground" },
+  in_progress: { label: "In Progress", variant: "default", icon: Clock, iconColor: "text-[hsl(var(--status-info))]" },
+  complete: { label: "Complete", variant: "success", icon: CheckCircle2, iconColor: "text-[hsl(var(--status-success))]" },
 };
 
 const formatDate = (date: string | null): string => {
@@ -360,13 +363,16 @@ function TaskRow({
         </TableCell>
 
         {/* Progress */}
-        <TableCell className="w-[140px]">
-          <div className="flex items-center gap-2">
-            <Progress value={task.percent_complete} className="h-2 flex-1" />
-            <span className="text-xs text-muted-foreground w-8">
-              {task.percent_complete}%
-            </span>
-          </div>
+        <TableCell className="w-[100px]">
+          {(() => {
+            const StatusIcon = statusConfig[task.status].icon;
+            return (
+              <div className="flex items-center gap-2">
+                <StatusIcon className={cn("h-4 w-4", statusConfig[task.status].iconColor)} />
+                <span className="text-sm text-muted-foreground">{statusConfig[task.status].label}</span>
+              </div>
+            );
+          })()}
         </TableCell>
 
         {/* Status */}

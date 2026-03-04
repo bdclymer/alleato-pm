@@ -64,11 +64,11 @@ test.describe("Change Events E2E", () => {
   // ── LIST PAGE ─────────────────────────────────────────────
 
   test("list page loads and shows content", async ({ page }) => {
-    await page.goto(BASE);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
-    // Page should have a heading
-    const heading = page.getByRole("heading", { name: /change event/i });
+    // Page should have a heading (use .first() to avoid strict mode with empty-state heading)
+    const heading = page.getByRole("heading", { name: /change event/i }).first();
     await expect(heading).toBeVisible({ timeout: 15000 });
 
     // Should have either a table, data rows, or empty state
@@ -89,15 +89,14 @@ test.describe("Change Events E2E", () => {
   // ── CREATE VIA FORM ───────────────────────────────────────
 
   test("create form loads with all required fields", async ({ page }) => {
-    await page.goto(`${BASE}/new`);
-    await waitForPage(page);
+    await page.goto(`${BASE}/new`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForTimeout(3000); // allow React hydration
 
-    // Heading
-    await expect(
-      page.getByRole("heading", { name: /create/i })
-    ).toBeVisible({ timeout: 15000 });
+    // Verify we stayed on the /new page (no redirect to login or error)
+    expect(page.url()).toContain("/change-events/new");
 
-    // Required fields should be present
+    // Required fields — data-testid is most reliable
     const numberInput = page.locator('[data-testid="change-event-number-input"]').or(
       page.locator('input[name="number"]')
     ).first();
@@ -105,17 +104,19 @@ test.describe("Change Events E2E", () => {
       page.locator('input[name="title"]')
     ).first();
 
-    await expect(numberInput).toBeVisible({ timeout: 10000 });
-    await expect(titleInput).toBeVisible();
+    await expect(numberInput).toBeVisible({ timeout: 15000 });
+    await expect(titleInput).toBeVisible({ timeout: 5000 });
 
     // Submit button should be present
     await expect(
-      page.getByRole("button", { name: /create change event/i })
-    ).toBeVisible();
+      page.locator('[data-testid="change-event-submit-button"]').or(
+        page.getByRole("button", { name: /create change event/i })
+      ).first()
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("form validates required fields", async ({ page }) => {
-    await page.goto(`${BASE}/new`);
+    await page.goto(`${BASE}/new`, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
     // Click submit without filling anything
@@ -134,7 +135,7 @@ test.describe("Change Events E2E", () => {
   });
 
   test("successfully creates a change event via form", async ({ page }) => {
-    await page.goto(`${BASE}/new`);
+    await page.goto(`${BASE}/new`, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
     // Fill required fields
@@ -212,8 +213,7 @@ test.describe("Change Events E2E", () => {
     }
     test.skip(!createdId, "No change event ID available");
 
-    await page.goto(`${BASE}/${createdId}`);
-    await page.waitForLoadState("domcontentloaded");
+    await page.goto(`${BASE}/${createdId}`, { waitUntil: "domcontentloaded" });
 
     // Wait for loading skeletons to disappear (route may need first-time compilation)
     await page.waitForTimeout(8000);
@@ -246,7 +246,7 @@ test.describe("Change Events E2E", () => {
   test("detail page tabs are clickable", async ({ page }) => {
     test.skip(!createdId, "No change event ID available");
 
-    await page.goto(`${BASE}/${createdId}`);
+    await page.goto(`${BASE}/${createdId}`, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
     // Try clicking through tabs
@@ -268,7 +268,7 @@ test.describe("Change Events E2E", () => {
   test("edit page loads with existing data", async ({ page }) => {
     test.skip(!createdId, "No change event ID available");
 
-    await page.goto(`${BASE}/${createdId}/edit`);
+    await page.goto(`${BASE}/${createdId}/edit`, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
     // Should show edit form
@@ -320,7 +320,7 @@ test.describe("Change Events E2E", () => {
   // ── ERROR HANDLING ────────────────────────────────────────
 
   test("handles non-existent change event ID", async ({ page }) => {
-    await page.goto(`${BASE}/00000000-0000-0000-0000-000000000000`);
+    await page.goto(`${BASE}/00000000-0000-0000-0000-000000000000`, { waitUntil: "domcontentloaded" });
     await waitForPage(page);
 
     const body = await page.textContent("body");

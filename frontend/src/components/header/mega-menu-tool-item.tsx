@@ -11,7 +11,7 @@ interface MegaMenuToolItemProps {
   isActive: boolean;
   isDisabled: boolean;
   onClick: () => void;
-  showDescription?: boolean;
+  variant?: "featured" | "default";
 }
 
 export function MegaMenuToolItem({
@@ -20,8 +20,10 @@ export function MegaMenuToolItem({
   isActive,
   isDisabled,
   onClick,
-  showDescription = true,
+  variant = "default",
 }: MegaMenuToolItemProps) {
+  const isFeatured = variant === "featured";
+
   return (
     <Link
       href={href}
@@ -30,31 +32,33 @@ export function MegaMenuToolItem({
           e.preventDefault();
           return;
         }
+        onClick();
       }}
       className={cn(
-        "group block rounded-md px-1 py-1.5 transition-colors",
+        "block transition-colors",
+        isFeatured ? "py-1" : "py-[3px]",
         isDisabled
-          ? "cursor-not-allowed opacity-40"
-          : "hover:bg-accent/50"
+          ? "cursor-not-allowed opacity-30"
+          : "hover:text-white"
       )}
     >
       <span
         className={cn(
-          "block text-[13.5px] font-medium leading-tight",
+          "block leading-snug",
+          isFeatured
+            ? "text-xl font-semibold tracking-tight"
+            : "text-sm",
           isDisabled
-            ? "text-muted-foreground"
+            ? "text-zinc-600"
             : isActive
-              ? "text-primary font-semibold"
-              : "text-primary group-hover:text-primary/80"
+              ? "text-white font-semibold"
+              : isFeatured
+                ? "text-zinc-100"
+                : "text-zinc-400"
         )}
       >
         {tool.name}
       </span>
-      {showDescription && tool.description && (
-        <span className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
-          {tool.description}
-        </span>
-      )}
     </Link>
   );
 }

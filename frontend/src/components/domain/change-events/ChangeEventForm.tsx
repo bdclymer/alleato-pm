@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Loader2 } from "lucide-react";
 
 import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 import { Button } from "@/components/ui/button";
@@ -102,7 +103,7 @@ export function ChangeEventForm({
         />
       </div>
 
-      <div className="flex justify-between items-center gap-4 pt-6">
+      <div className="flex justify-between items-center gap-4 border-t pt-6">
         <DevAutoFillButton
           formType="changeEvent"
           onAutoFill={(data) =>
@@ -121,7 +122,7 @@ export function ChangeEventForm({
             {isSubmitting ? (
               <>
                 <span className="mr-2">Saving...</span>
-                <span className="animate-spin">⏳</span>
+                <Loader2 className="h-4 w-4 animate-spin" />
               </>
             ) : mode === "create" ? (
               "Create Change Event"

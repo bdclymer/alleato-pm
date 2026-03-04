@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScheduleTask } from "@/types/scheduling";
+import { toast } from "sonner";
 
 // =============================================================================
 // TYPES
@@ -144,7 +145,9 @@ function parseCSV(content: string): { headers: string[]; rows: string[][] } {
   const lines = content.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length === 0) return { headers: [], rows: [] };
 
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+  const headers = lines[0]
+    .split(",")
+    .map((h) => h.trim().replace(/^"|"$/g, "").replace(/^\uFEFF/, ""));
   const rows = lines.slice(1).map((line) => {
     // Simple CSV parsing (doesn't handle all edge cases)
     const values: string[] = [];
@@ -168,6 +171,17 @@ function parseCSV(content: string): { headers: string[]; rows: string[][] } {
   });
 
   return { headers, rows };
+}
+
+function normalizeImportedStatus(value: string): ScheduleTask["status"] {
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, "_");
+
+  if (normalized === "in_progress") return "in_progress";
+  if (normalized === "complete" || normalized === "completed" || normalized === "done") {
+    return "complete";
+  }
+
+  return "not_started";
 }
 
 function autoMapColumns(headers: string[]): ColumnMapping {
@@ -281,6 +295,20 @@ export function ImportExportModal({
     }
   }, [tasks, projectId, exportFormat]);
 
+  const handleDownloadTemplate = useCallback(() => {
+    try {
+      const link = document.createElement("a");
+      link.href = "/alleato-schedule-template.csv";
+      link.download = `schedule-template-project-${projectId}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Schedule template downloaded");
+    } catch {
+      toast.error("Failed to download schedule template");
+    }
+  }, [projectId]);
+
   // Handle file selection
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -353,9 +381,12 @@ export function ImportExportModal({
           switch (targetKey) {
             case "name":
             case "wbs_code":
-            case "status":
             case "constraint_type":
               (task as Record<string, unknown>)[targetKey] = value;
+              break;
+            case "status":
+              (task as Record<string, unknown>)[targetKey] =
+                normalizeImportedStatus(value);
               break;
             case "start_date":
             case "finish_date":
@@ -509,6 +540,25 @@ export function ImportExportModal({
           {/* Import Tab */}
           <TabsContent value="import" className="space-y-4">
             <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg border">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Need a template?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Download the schedule CSV template and upload it after filling in tasks.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadTemplate}
+                  className="shrink-0"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Template
+                </Button>
+              </div>
+
               {/* File Selection */}
               <div className="space-y-2">
                 <Label>Select CSV File</Label>

@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
@@ -67,7 +66,7 @@ const mockEmails: Email[] = [
 ];
 
 export default function EmailsPage() {
-  const [data, setData] = React.useState<Email[]>(mockEmails);
+  const data = mockEmails;
 
   const columns: ColumnDef<Email>[] = [
     {
@@ -184,42 +183,6 @@ export default function EmailsPage() {
           <Plus className="h-4 w-4 mr-2" />
           Compose Email
         </Button>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Total Emails</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Unread</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((email) => !email.read).length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            With Attachments
-          </div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.filter((email) => email.hasAttachments).length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Today</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {
-              data.filter(
-                (email) =>
-                  new Date(email.sentAt).toDateString() ===
-                  new Date().toDateString(),
-              ).length
-            }
-          </div>
-        </div>
       </div>
 
       {/* Table */}

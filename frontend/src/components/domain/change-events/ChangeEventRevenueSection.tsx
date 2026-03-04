@@ -12,19 +12,18 @@ interface ChangeEventRevenueSectionProps {
   projectId: number;
 }
 
-// Map UI slug values to display values for database storage
+// Map UI slug values to display values — must match the API's LineItemRevenueSource enum:
+// "Match Latest Cost" | "Latest Cost" | "Latest Price"
 const REVENUE_SOURCE_SLUG_TO_DISPLAY: Record<string, string> = {
   match_latest_cost: "Match Latest Cost",
-  manual_entry: "Manual Entry",
-  percentage_markup: "Percentage Markup",
-  fixed_amount: "Fixed Amount",
+  latest_cost: "Latest Cost",
+  latest_price: "Latest Price",
 };
 
 const REVENUE_SOURCE_DISPLAY_TO_SLUG: Record<string, string> = {
   "Match Latest Cost": "match_latest_cost",
-  "Manual Entry": "manual_entry",
-  "Percentage Markup": "percentage_markup",
-  "Fixed Amount": "fixed_amount",
+  "Latest Cost": "latest_cost",
+  "Latest Price": "latest_price",
 };
 
 export function ChangeEventRevenueSection({
@@ -32,12 +31,11 @@ export function ChangeEventRevenueSection({
   onChange,
   projectId,
 }: ChangeEventRevenueSectionProps) {
-  // Revenue source calculation methods
+  // Revenue source options — values must match the API's LineItemRevenueSource enum
   const revenueSourceOptions = [
     { value: "match_latest_cost", label: "Match Revenue to Latest Cost" },
-    { value: "manual_entry", label: "Manual Entry" },
-    { value: "percentage_markup", label: "Percentage Markup" },
-    { value: "fixed_amount", label: "Fixed Amount" },
+    { value: "latest_cost", label: "Latest Cost" },
+    { value: "latest_price", label: "Latest Price" },
   ];
 
   // State for prime contracts
@@ -120,8 +118,7 @@ export function ChangeEventRevenueSection({
             required
           />
 
-          {(currentSlug === "match_latest_cost" ||
-            currentSlug === "percentage_markup") && (
+          {currentSlug === "match_latest_cost" && (
             <SelectField
               label="Prime Contract for Markup Estimates"
               options={primeContractOptions}

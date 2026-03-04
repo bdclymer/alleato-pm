@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Menu } from "lucide-react";
@@ -12,18 +12,25 @@ import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
 import { EnhancedDevPanel } from "@/components/dev-tools/enhanced-dev-panel";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
-import { headerNavGroups, type HeaderNavGroup as HeaderNavGroupConfig } from "@/lib/navigation-config";
+import { headerNavGroups } from "@/lib/navigation-config";
 
 import { useHeaderNav } from "./use-header-nav";
-import { HeaderNavGroup } from "./header-nav-group";
+import { MegaMenuPanel } from "./mega-menu-panel";
 import { ProjectSelector } from "./project-selector";
 import { HeaderUserMenu } from "./header-user-menu";
 import { HeaderAdminMenu } from "./header-admin-menu";
 import { HeaderMobileMenu } from "./header-mobile-menu";
+import { cn } from "@/lib/utils";
+
+// Display labels for each group in the header nav
+const GROUP_LABELS: Record<string, string> = {
+  operations: "Operations",
+  finance: "Financial",
+  company: "Company Tools",
+};
 
 export function SiteHeader() {
   const router = useRouter();
-  const pathname = usePathname();
   const nav = useHeaderNav();
   const { toggleSidebar } = useSidebar();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
@@ -33,17 +40,102 @@ export function SiteHeader() {
   const [user, setUser] = useState<User | null>(null);
   const supabase = createClient();
 
+  // ── Hover state for Apple-style nav ──────────────────────────────────────
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const clearCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const startCloseTimeout = useCallback(() => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setHoveredGroup(null);
+    }, 250);
+  }, [clearCloseTimeout]);
+
+  const handleNavItemEnter = useCallback(
+    (groupId: string) => {
+      clearCloseTimeout();
+      setHoveredGroup(groupId);
+    },
+    [clearCloseTimeout]
+  );
+
+  const handleNavItemLeave = useCallback(() => {
+    startCloseTimeout();
+  }, [startCloseTimeout]);
+
+  const handlePanelEnter = useCallback(() => {
+    clearCloseTimeout();
+  }, [clearCloseTimeout]);
+
+  const handlePanelLeave = useCallback(() => {
+    startCloseTimeout();
+  }, [startCloseTimeout]);
+
+  const closeMenu = useCallback(() => {
+    clearCloseTimeout();
+    setHoveredGroup(null);
+  }, [clearCloseTimeout]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!hoveredGroup) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenu();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [hoveredGroup, closeMenu]);
+
+  // Close on click outside nav + panel
+  useEffect(() => {
+    if (!hoveredGroup) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        navRef.current &&
+        !navRef.current.contains(e.target as Node) &&
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node)
+      ) {
+        closeMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [hoveredGroup, closeMenu]);
+
+  // Close on route change — track previous tool to detect navigation
+  const prevToolRef = useRef(nav.activeToolName);
+  useEffect(() => {
+    if (prevToolRef.current !== nav.activeToolName) {
+      prevToolRef.current = nav.activeToolName;
+      setHoveredGroup(null);
+    }
+  });
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => clearCloseTimeout();
+  }, [clearCloseTimeout]);
+
   // Fetch current user on mount
   useEffect(() => {
     const fetchUser = async () => {
       const {
-        data: { user },
+        data: { user: u },
       } = await supabase.auth.getUser();
-      setUser(user);
+      setUser(u);
     };
     fetchUser();
 
-    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,108 +145,87 @@ export function SiteHeader() {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const isProjectHome =
-    Boolean(nav.projectId) && pathname === `/${nav.projectId}/home`;
-  const toolsMenuTools = headerNavGroups.flatMap((group) =>
-    group.tools.map((tool) => {
-      if (!nav.projectId && tool.name === "Meetings") {
-        return { ...tool, requiresProject: false };
-      }
-      return tool;
-    })
-  );
-  const toolsGroup: HeaderNavGroupConfig = {
-    id: "tools",
-    label: "Tools",
-    tools: toolsMenuTools,
-    subGroups: [
-      // Planning sub-groups (from original nav config)
-      { label: "Scheduling", toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"] },
-      { label: "Correspondence", toolNames: ["RFIs", "Submittals", "Transmittals", "Emails"] },
-      { label: "Documents", toolNames: ["Photos", "Drawings", "Specifications", "Documents"] },
-      // Finance sub-groups
-      { label: "Budgeting", toolNames: ["Budget", "Direct Costs"] },
-      { label: "Contracts", toolNames: ["Prime Contracts", "Commitments", "Invoicing"] },
-      { label: "Changes", toolNames: ["Change Orders", "Change Events"] },
-      // Company
-      { label: "Company", toolNames: ["Projects", "Company Directory", "360 Reporting"] },
-    ],
-  };
-
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) overflow-hidden bg-[#252525] text-zinc-100">
-      <div className="flex w-full items-center gap-1 px-2 sm:px-4 lg:gap-2 lg:px-6 min-w-0">
-        {/* Desktop: Sidebar trigger (hamburger lines) */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="-ml-1 hidden md:flex p-2 h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+    <header className="flex h-14 shrink-0 items-center py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-14 overflow-visible bg-[#252525] text-zinc-300 relative z-50">
+      <div className="flex w-full items-center px-2 sm:px-4 lg:px-6 min-w-0 relative">
+        {/* ── Left section: Logo + Breadcrumbs ── */}
+        <div className="flex items-center gap-1 lg:gap-2 min-w-0 flex-shrink">
+          {/* Desktop: Sidebar trigger */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="-ml-1 hidden md:flex p-2 h-8 w-8 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-        {/* Alleato Logo */}
-        <Image
-          src="/Alleato-Group-Logo_Light.png"
-          alt="Alleato"
-          width={80}
-          height={24}
-          className="hidden md:block ml-4 mt-[5px]"
-        />
+          {/* Alleato Logo */}
+          <Image
+            src="/Alleato-Group-Logo_Light.png"
+            alt="Alleato"
+            width={80}
+            height={24}
+            className="hidden md:block ml-4 mt-[5px]"
+          />
 
-        {/* Mobile: Hamburger menu */}
-        <HeaderMobileMenu
-          projectId={nav.projectId}
-          currentProject={nav.currentProject}
-          activeToolName={nav.activeToolName}
-          permissions={permissions}
-          isAppAdmin={isAppAdmin}
-          userType={userType}
-          projects={nav.projects}
-          loadingProjects={nav.loadingProjects}
-          onFetchProjects={nav.fetchProjects}
-          onProjectSelect={nav.handleProjectSelect}
-          onViewAll={() => router.push("/")}
-        />
+          {/* Mobile: Hamburger menu */}
+          <HeaderMobileMenu
+            projectId={nav.projectId}
+            currentProject={nav.currentProject}
+            activeToolName={nav.activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+            projects={nav.projects}
+            loadingProjects={nav.loadingProjects}
+            onFetchProjects={nav.fetchProjects}
+            onProjectSelect={nav.handleProjectSelect}
+            onViewAll={() => router.push("/")}
+          />
 
-        {!isProjectHome && (
-          <>
-            <Separator
-              orientation="vertical"
-              className="mx-2 data-[orientation=vertical]:h-4 hidden md:block bg-zinc-700"
-            />
-
-            {/* Breadcrumbs - Desktop only */}
-            <div className="hidden lg:flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
-              {nav.breadcrumbs.map((crumb, index) => (
-                <span key={`${crumb.href}-${index}`} className="flex items-center gap-1">
-                  {index > 0 && (
-                    <ChevronRight className="h-4 w-4 text-zinc-500 flex-shrink-0" />
-                  )}
-                  {index === nav.breadcrumbs.length - 1 ? (
-                    <span className="text-white truncate">{crumb.label}</span>
-                  ) : (
-                    <Link
-                      href={crumb.href}
-                      className="text-zinc-400 hover:text-white transition-colors truncate"
-                    >
-                      {crumb.label}
-                    </Link>
-                  )}
-                </span>
-              ))}
-            </div>
-          </>
-        )}
+          {/* Breadcrumbs - Desktop only */}
+          {nav.activeToolName !== "Projects" && (
+            <>
+              <Separator
+                orientation="vertical"
+                className="mx-2 data-[orientation=vertical]:h-4 hidden lg:block bg-zinc-700"
+              />
+              <div className="hidden lg:flex items-center gap-1 text-sm font-medium min-w-0 overflow-hidden">
+                {nav.breadcrumbs.map((crumb, index) => (
+                  <span
+                    key={`${crumb.href}-${index}`}
+                    className="flex items-center gap-1"
+                  >
+                    {index > 0 && (
+                      <ChevronRight className="h-4 w-4 text-zinc-600 flex-shrink-0" />
+                    )}
+                    {index === nav.breadcrumbs.length - 1 ? (
+                      <span className="text-zinc-200 truncate">
+                        {crumb.label}
+                      </span>
+                    ) : (
+                      <Link
+                        href={crumb.href}
+                        className="text-zinc-500 hover:text-zinc-200 transition-colors truncate"
+                      >
+                        {crumb.label}
+                      </Link>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         <div className="md:hidden flex-1 min-w-0" />
 
-        {/* Right side controls */}
+        {/* ── Right section: Project + nav + controls ── */}
         <div className="ml-auto flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          {/* Project Selector (desktop) */}
-          <div className="hidden md:flex items-center gap-2 mr-2">
+          {/* Project name — simplified, no background */}
+          <div className="hidden md:flex items-center">
             <ProjectSelector
               projectId={nav.projectId}
               currentProject={nav.currentProject}
@@ -166,23 +237,36 @@ export function SiteHeader() {
             />
           </div>
 
-          {/* Tools Navigation (desktop only) */}
-          <nav className="hidden md:flex items-center gap-0.5 mr-2">
-            <HeaderNavGroup
-              group={toolsGroup}
-              isOpen={nav.openPanel === toolsGroup.id}
-              onToggle={() => nav.togglePanel(toolsGroup.id)}
-              onClose={nav.closePanels}
-              projectId={nav.projectId}
-              activeToolName={nav.activeToolName}
-              activeGroupId={nav.activeGroupId ? toolsGroup.id : null}
-              permissions={permissions}
-              isAppAdmin={isAppAdmin}
-              userType={userType}
-            />
+          {/* Nav group links — right of project selector */}
+          <nav
+            ref={navRef}
+            className="hidden md:flex items-center gap-3 ml-2"
+          >
+            {headerNavGroups.map((group) => {
+              const isHovered = hoveredGroup === group.id;
+              return (
+                <button
+                  key={group.id}
+                  type="button"
+                  onMouseEnter={() => handleNavItemEnter(group.id)}
+                  onMouseLeave={handleNavItemLeave}
+                  onClick={() =>
+                    setHoveredGroup((prev) =>
+                      prev === group.id ? null : group.id
+                    )
+                  }
+                  className={cn(
+                    "px-2 py-1.5 text-sm font-medium transition-colors",
+                    "text-zinc-400 hover:text-zinc-200",
+                    isHovered && "text-zinc-200"
+                  )}
+                >
+                  {GROUP_LABELS[group.id] || group.label}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Admin/Settings Menu */}
           <HeaderAdminMenu
             projectId={nav.projectId}
             activeToolName={nav.activeToolName}
@@ -191,13 +275,38 @@ export function SiteHeader() {
             userType={userType}
           />
 
-          {/* Dev Tools Panel (dev only) */}
           <EnhancedDevPanel />
-
-          {/* User Menu */}
           <HeaderUserMenu user={user} />
         </div>
       </div>
+
+      {/* ── Full-width mega menu panel (Apple-style) ───────────────────────── */}
+      {hoveredGroup && (
+        <>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 top-14"
+            onClick={closeMenu}
+            aria-hidden="true"
+          />
+          <div
+            ref={panelRef}
+            className="fixed left-0 right-0 z-50 top-14 animate-in fade-in duration-150"
+            onMouseEnter={handlePanelEnter}
+            onMouseLeave={handlePanelLeave}
+          >
+            <MegaMenuPanel
+              activeGroupId={hoveredGroup}
+              projectId={nav.projectId}
+              activeToolName={nav.activeToolName}
+              onToolClick={closeMenu}
+              permissions={permissions}
+              isAppAdmin={isAppAdmin}
+              userType={userType}
+            />
+          </div>
+        </>
+      )}
     </header>
   );
 }

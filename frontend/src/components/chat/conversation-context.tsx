@@ -1,7 +1,6 @@
 "use client";
 
 import { PanelSection } from "../misc/panel-section";
-import { Card, CardContent } from "@/components/ui/card";
 import { BookText } from "lucide-react";
 
 interface ConversationContextProps {
@@ -15,37 +14,28 @@ interface ConversationContextProps {
 }
 
 export function ConversationContext({ context }: ConversationContextProps) {
+  const entries = Object.entries(context);
+  if (entries.length === 0) return null;
+
   return (
     <PanelSection
       title="Conversation Context"
-      icon={<BookText className="h-4 w-4 text-blue-600" />}
+      icon={<BookText className="h-3.5 w-3.5" />}
     >
-      <Card className="bg-gradient-to-r from-white to-gray-50 border-border shadow-sm">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(context).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex items-center gap-2 bg-background p-2 rounded-md border border-border shadow-sm transition-all"
-              >
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <div className="text-xs">
-                  <span className="text-zinc-500 font-light">{key}:</span>{" "}
-                  <span
-                    className={
-                      value
-                        ? "text-zinc-900 font-light"
-                        : "text-muted-foreground italic"
-                    }
-                  >
-                    {value || "null"}
-                  </span>
-                </div>
-              </div>
-            ))}
+      <div className="space-y-1 px-1">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-muted-foreground capitalize">
+              {key.replace(/_/g, " ")}
+            </span>
+            <span
+              className={`text-xs font-medium ${value ? "text-foreground" : "text-muted-foreground italic"}`}
+            >
+              {value || "—"}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
     </PanelSection>
   );
 }

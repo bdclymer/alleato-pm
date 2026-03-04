@@ -5,6 +5,7 @@ export { PageContainer } from "./PageContainer";
 export { FormContainer } from "./FormContainer";
 export { PageHeader } from "./page-header-unified";
 export { PageHeader as ProjectPageHeader } from "./page-header-unified";
+export { ProjectFormPageLayout } from "./ProjectFormPageLayout";
 export { PageToolbar } from "./PageToolbar";
 export { PageTabs } from "./PageTabs";
 export { PageTabsV2 } from "./PageTabsV2";

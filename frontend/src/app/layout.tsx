@@ -8,6 +8,7 @@ import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
 import { AIChatWidget } from "@/components/chat/ai-chat-widget";
 import { DevAutoFillForms } from "@/components/dev/DevAutoFillForms";
+import { Agentation } from "agentation";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({
         </QueryProvider>
         <Toaster />
         <AIChatWidget />
+        {process.env.NODE_ENV === "development" && <Agentation />}
       </body>
     </html>
   );

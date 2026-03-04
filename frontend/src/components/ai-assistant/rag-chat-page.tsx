@@ -47,10 +47,23 @@ function extractToolTraces(
   return tracesByMessageId;
 }
 
+function extractSources(
+  messages: ChatHistoryMessage[],
+): Record<string, unknown[]> {
+  const sourcesByMessageId: Record<string, unknown[]> = {};
+  messages.forEach((msg) => {
+    if (Array.isArray(msg.sources) && msg.sources.length > 0) {
+      sourcesByMessageId[msg.id] = msg.sources;
+    }
+  });
+  return sourcesByMessageId;
+}
+
 function ChatWithSession({
   sessionId,
   initialMessages,
   toolTracesByMessageId,
+  sourcesByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
   onFinishMessage,
@@ -58,6 +71,7 @@ function ChatWithSession({
   sessionId: string;
   initialMessages: UIMessage[];
   toolTracesByMessageId: Record<string, ToolTraceItem[]>;
+  sourcesByMessageId: Record<string, unknown[]>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
   onFinishMessage: (sessionId: string) => void;
@@ -121,6 +135,7 @@ function ChatWithSession({
     <ChatArea
       messages={messages}
       toolTracesByMessageId={toolTracesByMessageId}
+      sourcesByMessageId={sourcesByMessageId}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
@@ -145,6 +160,9 @@ export function RagChatPage() {
   const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
     Record<string, ToolTraceItem[]>
   >({});
+  const [sourcesByMessageId, setSourcesByMessageId] = useState<
+    Record<string, unknown[]>
+  >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
 
@@ -164,9 +182,11 @@ export function RagChatPage() {
       const msgs: UIMessage[] = historyMessages.map((m) => dbMessageToUIMessage(m));
       setInitialMessages(msgs);
       setToolTracesByMessageId(extractToolTraces(historyMessages));
+      setSourcesByMessageId(extractSources(historyMessages));
     } catch {
       setInitialMessages([]);
       setToolTracesByMessageId({});
+      setSourcesByMessageId({});
     } finally {
       setIsLoadingMessages(false);
     }
@@ -178,6 +198,7 @@ export function RagChatPage() {
     if (!sessionId) {
       setInitialMessages([]);
       setToolTracesByMessageId({});
+      setSourcesByMessageId({});
       return;
     }
     void loadSessionMessages(sessionId);
@@ -263,7 +284,7 @@ export function RagChatPage() {
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0">
+    <div className="flex h-full min-h-0 w-full min-w-0 bg-background">
       <ConversationSidebar
         conversations={conversations}
         activeSessionId={effectiveSessionId}
@@ -279,6 +300,7 @@ export function RagChatPage() {
           sessionId={effectiveSessionId}
           initialMessages={initialMessages}
           toolTracesByMessageId={toolTracesByMessageId}
+          sourcesByMessageId={sourcesByMessageId}
           isLoadingMessages={isLoadingMessages}
           pendingFirstMessage={pendingFirstMessage}
           onFinishMessage={handleFinishMessage}

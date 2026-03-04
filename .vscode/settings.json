@@ -12,6 +12,14 @@
         {
             "filePath": "frontend/src/app/(main)/[projectId]/home/project-home-client.tsx",
             "group": "Default"
+        },
+        {
+            "filePath": ".claude/commands/workflow/iterate_plan.md",
+            "group": "Default"
+        },
+        {
+            "filePath": ".claude/commands/feature-crawl.md",
+            "group": "Default"
         }
     ],
     "files.exclude": {

@@ -14,7 +14,7 @@ import { createProjectTools } from "@/lib/ai/tools/project-tools";
 
 export const maxDuration = 120;
 
-const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
 
 function extractTextFromParts(parts: UIMessage["parts"]): string {
   return parts

@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -31,14 +30,14 @@ function SidebarContent({
   onDelete,
 }: ConversationSidebarProps) {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-b-black/5 px-4 py-4">
-        <h2 className="text-sm font-semibold">Conversations</h2>
+      <div className="flex shrink-0 items-center justify-between px-3 py-3">
+        <h2 className="text-sm font-semibold text-foreground">Chats</h2>
         <Button
           size="icon"
           variant="ghost"
-          className="h-8 w-8"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground"
           onClick={onNewChat}
         >
           <PlusIcon className="h-4 w-4" />
@@ -46,25 +45,22 @@ function SidebarContent({
       </div>
 
       {/* List */}
-      <ScrollArea className="flex-1 px-2">
-        <div className="px-2 pb-1 pt-2 text-xs font-medium text-muted-foreground">
-          Your chats
-        </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="space-y-2 p-2">
+          <div className="space-y-1 px-2">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-14 animate-pulse rounded-lg bg-muted"
+                className="h-10 animate-pulse rounded-lg bg-muted"
               />
             ))}
           </div>
         ) : conversations.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
+          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
             No conversations yet
           </div>
         ) : (
-          <div className="space-y-0.5 py-1">
+          <div className="space-y-0.5 px-2 py-1">
             {conversations.map((convo) => (
               <ConversationListItem
                 key={convo.session_id}
@@ -77,7 +73,7 @@ function SidebarContent({
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -86,19 +82,19 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden w-80 shrink-0 border-r border-r-black/5 bg-[#f7f7f8] md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col overflow-hidden border-r border-border/40 bg-muted/30 md:flex">
         <SidebarContent {...props} />
       </aside>
 
       {/* Mobile sidebar (Sheet) */}
-      <div className="flex items-center border-b border-b-black/5 bg-[#f7f7f8] px-2 py-1 md:hidden">
+      <div className="flex items-center border-b border-border/40 bg-muted/30 px-2 py-1 md:hidden">
         <Sheet>
           <SheetTrigger asChild>
             <Button size="icon" variant="ghost" className="h-9 w-9">
               <MenuIcon className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-80 p-0">
+          <SheetContent side="left" className="w-64 p-0">
             <SidebarContent {...props} />
           </SheetContent>
         </Sheet>

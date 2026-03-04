@@ -19,6 +19,7 @@ All design decisions live here. Nowhere else.
 | `frontend/src/design-system/components.md` | Component decision trees, layout components, modals, banned patterns | ACTIVE |
 | `frontend/src/design-system/patterns.md` | Loading, errors, empty states, forms, modals, responsive patterns | ACTIVE |
 | `frontend/src/design-system/DESIGN-INDEX.md` | This file — complete file accounting | ACTIVE |
+| `frontend/src/design-system/form-page-archetype.md` | **Form tier system (Tier 1/2/3), sticky action bars, sidebar TOC, field grid rules, 13 anti-patterns** — Read before writing ANY form | ACTIVE |
 | `frontend/src/design-system/premium-patterns.md` | Premium hierarchy techniques: surface elevation, KPI components, bento grids, the card trap, anti-patterns checklist | ACTIVE |
 | `frontend/src/design-system/premium-examples.html` | Visual wrong-vs-right reference: live HTML examples of KPI cells, tables, navigation, inverted pyramid layout (dark mode) | ACTIVE |
 | `frontend/src/design-system/premium-examples-light.html` | Same wrong-vs-right reference in light mode — matches Alleato's actual theme | ACTIVE |

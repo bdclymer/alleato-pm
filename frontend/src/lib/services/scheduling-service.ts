@@ -566,6 +566,7 @@ export class SchedulingService {
       finish_date: task.finish_date || today,
       duration_days: task.duration_days || 0,
       percent_complete: task.percent_complete || 0,
+      status: (task.status || "not_started") as "not_started" | "in_progress" | "complete",
       is_milestone: task.is_milestone || false,
       parent_task_id: task.parent_task_id,
       level: levelMap.get(task.id) || 0,

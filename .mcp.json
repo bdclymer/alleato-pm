@@ -6,6 +6,12 @@
         "playwright",
         "run-test-mcp-server"
       ]
+    },
+    "agentation": {
+      "command": "npx",
+      "args": [
+        "agentation-mcp"
+      ]
     }
   }
 }

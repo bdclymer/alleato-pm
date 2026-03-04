@@ -108,6 +108,7 @@
     "@vercel/blob": "^2.3.0",
     "@vercel/functions": "^3.4.3",
     "@xyflow/react": "^12.10.0",
+    "agentation": "^2.2.1",
     "ai": "^6.0.105",
     "ansi-to-react": "^6.2.6",
     "bcrypt-ts": "^8.0.1",

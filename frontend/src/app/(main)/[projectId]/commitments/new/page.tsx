@@ -1,14 +1,12 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { ProjectFormPageLayout } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
 
@@ -131,44 +129,30 @@ export default function NewCommitmentPage() {
         : "New Commitment";
 
   return (
-    <>
-      <ProjectPageHeader
-        title={title}
-        description={
-          type === "subcontract"
-            ? "Create a new subcontract commitment"
-            : "Create a new purchase order commitment"
-        }
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        }
-      />
-
-      <PageContainer>
-        <FormContainer maxWidth="xl">
-          {type === "purchase_order" ? (
-            <CreatePurchaseOrderForm
-              projectId={projectId}
-              onSubmit={handleSubmitPurchaseOrder}
-              onCancel={handleCancel}
-            />
-          ) : (
-            <CreateSubcontractForm
-              projectId={projectId}
-              onSubmit={handleSubmitSubcontract}
-              onCancel={handleCancel}
-            />
-          )}
-        </FormContainer>
-      </PageContainer>
-    </>
+    <ProjectFormPageLayout
+      title={title}
+      description={
+        type === "subcontract"
+          ? "Create a new subcontract commitment"
+          : "Create a new purchase order commitment"
+      }
+      onBack={() => router.back()}
+      backLabel="Back"
+      maxWidth="xl"
+    >
+      {type === "purchase_order" ? (
+        <CreatePurchaseOrderForm
+          projectId={projectId}
+          onSubmit={handleSubmitPurchaseOrder}
+          onCancel={handleCancel}
+        />
+      ) : (
+        <CreateSubcontractForm
+          projectId={projectId}
+          onSubmit={handleSubmitSubcontract}
+          onCancel={handleCancel}
+        />
+      )}
+    </ProjectFormPageLayout>
   );
 }
