@@ -26,6 +26,7 @@ import {
   CostTypes,
   CostStatuses,
 } from '@/lib/schemas/direct-costs'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -43,7 +44,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Form,
@@ -62,6 +64,8 @@ import {
   X,
   AlertCircle,
   Calendar,
+  Check,
+  ChevronsUpDown,
   DollarSign,
   Wand2,
 } from 'lucide-react'
@@ -129,6 +133,8 @@ export function DirectCostForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   // isDirty is now derived from useFormState below (avoids formState proxy access)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
+  const [vendorPopoverOpen, setVendorPopoverOpen] = useState(false)
+  const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false)
 
   // Stable budget codes list for LineItemsManager (prevents new array ref on every render)
   const mappedBudgetCodes = useMemo(
@@ -432,7 +438,7 @@ export function DirectCostForm({
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8" data-dev-autofill-disabled>
           {/* Basic Information */}
           <Card className="gap-4 border-border/70 shadow-sm">
             <CardHeader className="border-b border-border/60 pb-4">
@@ -531,19 +537,29 @@ export function DirectCostForm({
                   )}
                 />
 
-                {/* Invoice Number */}
+                {/* Payment Terms */}
                 <FormField
                   control={form.control}
-                  name="invoice_number"
+                  name="terms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invoice Number</FormLabel>
+                      <FormLabel>Payment Terms</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter invoice number"
-                          {...field}
-                          value={field.value || ''}
-                        />
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment terms" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['Due on Receipt', 'Net 10', 'Net 15', 'Net 30', 'Net 60', 'Net 90'].map((term) => (
+                              <SelectItem key={term} value={term}>
+                                {term}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -554,76 +570,135 @@ export function DirectCostForm({
                 <FormField
                   control={form.control}
                   name="vendor_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vendor</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value || undefined}
-                          disabled={isLoadingOptions}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select vendor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {vendors.map((vendor) => (
-                              <SelectItem key={vendor.id} value={vendor.id}>
-                                {vendor.vendor_name}
-                                {vendor.company && (
-                                  <span className="text-xs text-muted-foreground ml-2">
-                                    ({vendor.company})
-                                  </span>
+                  render={({ field }) => {
+                    const selectedVendor = vendors.find((v) => v.id === field.value)
+                    return (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Vendor</FormLabel>
+                        <Popover open={vendorPopoverOpen} onOpenChange={setVendorPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  'w-full justify-between text-left font-normal',
+                                  !field.value && 'text-muted-foreground',
                                 )}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormDescription>
-                        Optional - for subcontractor costs
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                                disabled={isLoadingOptions}
+                              >
+                                {selectedVendor
+                                  ? `${selectedVendor.vendor_name}${selectedVendor.company ? ` (${selectedVendor.company})` : ''}`
+                                  : 'Search vendors...'}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Type to search vendors..." />
+                              <CommandList>
+                                <CommandEmpty>No vendors found.</CommandEmpty>
+                                <CommandGroup>
+                                  {vendors.map((vendor) => (
+                                    <CommandItem
+                                      key={vendor.id}
+                                      value={`${vendor.vendor_name} ${vendor.company || ''}`}
+                                      onSelect={() => {
+                                        field.onChange(vendor.id)
+                                        setVendorPopoverOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          field.value === vendor.id ? 'opacity-100' : 'opacity-0',
+                                        )}
+                                      />
+                                      {vendor.vendor_name}
+                                      {vendor.company && (
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                          ({vendor.company})
+                                        </span>
+                                      )}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>
+                          Optional - for subcontractor costs
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
                 />
 
                 {/* Employee */}
                 <FormField
                   control={form.control}
                   name="employee_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Employee</FormLabel>
-                      <FormControl>
-                        <Select
-                          onValueChange={(value) =>
-                            field.onChange(value || null)
-                          }
-                          value={field.value || undefined}
-                          disabled={isLoadingOptions}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select employee" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {employees.map((employee) => (
-                              <SelectItem
-                                key={employee.id}
-                                value={employee.id}
+                  render={({ field }) => {
+                    const selectedEmployee = employees.find((e) => e.id === field.value)
+                    return (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Employee</FormLabel>
+                        <Popover open={employeePopoverOpen} onOpenChange={setEmployeePopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  'w-full justify-between text-left font-normal',
+                                  !field.value && 'text-muted-foreground',
+                                )}
+                                disabled={isLoadingOptions}
                               >
-                                {employee.first_name} {employee.last_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormDescription>
-                        Optional - for labor costs
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                                {selectedEmployee
+                                  ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
+                                  : 'Search employees...'}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Type to search employees..." />
+                              <CommandList>
+                                <CommandEmpty>No employees found.</CommandEmpty>
+                                <CommandGroup>
+                                  {employees.map((employee) => (
+                                    <CommandItem
+                                      key={employee.id}
+                                      value={`${employee.first_name} ${employee.last_name}`}
+                                      onSelect={() => {
+                                        field.onChange(employee.id)
+                                        setEmployeePopoverOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          field.value === employee.id ? 'opacity-100' : 'opacity-0',
+                                        )}
+                                      />
+                                      {employee.first_name} {employee.last_name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>
+                          Optional - for labor costs
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )
+                  }}
                 />
               </div>
 
@@ -638,25 +713,6 @@ export function DirectCostForm({
                       <Textarea
                         placeholder="Enter cost description or notes"
                         rows={3}
-                        {...field}
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Terms */}
-              <FormField
-                control={form.control}
-                name="terms"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Terms</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Enter payment terms"
                         {...field}
                         value={field.value || ''}
                       />

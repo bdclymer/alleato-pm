@@ -84,16 +84,16 @@ function normalize(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-function statusClass(status: string): string {
+function statusDotColor(status: string): string {
   switch (status) {
     case "Approved":
-      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      return "bg-emerald-500";
     case "Revise and Resubmit":
-      return "bg-rose-100 text-rose-700 border-rose-200";
+      return "bg-rose-500";
     case "Pending":
-      return "bg-amber-100 text-amber-700 border-amber-200";
+      return "bg-amber-500";
     default:
-      return "bg-muted text-muted-foreground border-border";
+      return "bg-muted-foreground";
   }
 }
 
@@ -143,6 +143,7 @@ export function DirectCostsClient({
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
   const [bulkAction, setBulkAction] = React.useState<BulkActionType | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
 
   React.useEffect(() => {
     if (summaryTab !== "summary") return;
@@ -177,6 +178,33 @@ export function DirectCostsClient({
       tableState.setVisibleColumns(requiredColumns);
     }
   }, [summaryTab, tableState.visibleColumns, tableState.setVisibleColumns]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const applyViewport = (): void => setIsMobileViewport(mediaQuery.matches);
+
+    applyViewport();
+    mediaQuery.addEventListener("change", applyViewport);
+    return () => mediaQuery.removeEventListener("change", applyViewport);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (summaryTab !== "summary") return;
+    if (!isMobileViewport) return;
+    if (tableState.currentView !== "table") return;
+
+    tableState.setCurrentView("list");
+    tableState.setSearchParams({ view: "list" });
+  }, [
+    isMobileViewport,
+    summaryTab,
+    tableState.currentView,
+    tableState.setCurrentView,
+    tableState.setSearchParams,
+  ]);
 
   const buildTabHref = (tab: SummaryTab): string => {
     const params = new URLSearchParams(searchParams.toString());
@@ -470,13 +498,6 @@ export function DirectCostsClient({
         sortValue: (item: DirectCostRow) => item.cost_type,
       },
       {
-        id: "invoice_number",
-        label: "Invoice #",
-        defaultVisible: true,
-        render: (item: DirectCostRow) => item.invoice_number ?? "-",
-        sortValue: (item: DirectCostRow) => item.invoice_number ?? "",
-      },
-      {
         id: "status",
         label: "Status",
         defaultVisible: true,
@@ -493,13 +514,17 @@ export function DirectCostsClient({
                   }
                 }}
               >
-                <SelectTrigger className={`h-7 w-[180px] text-xs ${statusClass(item.status)}`} aria-label="Quick edit status">
-                  <SelectValue placeholder={item.status} />
+                <SelectTrigger className="h-7 w-auto gap-1.5 border-none bg-transparent px-1.5 text-xs text-muted-foreground shadow-none hover:bg-muted/60 focus:ring-0" aria-label="Quick edit status">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(item.status)}`} />
+                  {item.status}
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
-                      {status}
+                      <span className="flex items-center gap-2">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(status)}`} />
+                        {status}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -512,7 +537,7 @@ export function DirectCostsClient({
       {
         id: "erp_status",
         label: "ERP Status",
-        defaultVisible: true,
+        defaultVisible: false,
         render: (item: DirectCostRow) => {
           const value = item.erp_status?.trim();
           if (!value) {
@@ -539,26 +564,60 @@ export function DirectCostsClient({
       {
         id: "paid_date",
         label: "Paid",
-        defaultVisible: false,
+        defaultVisible: true,
         render: (item: DirectCostRow) => formatDate(item.paid_date),
         sortValue: (item: DirectCostRow) => item.paid_date,
       },
       {
         id: "description",
         label: "Description",
-        defaultVisible: false,
-        render: (item: DirectCostRow) => item.description ?? "-",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => <span className="max-w-[200px] truncate block">{item.description ?? "-"}</span>,
         sortValue: (item: DirectCostRow) => item.description ?? "",
+      },
+      {
+        id: "invoice_number",
+        label: "Invoice #",
+        defaultVisible: true,
+        render: (item: DirectCostRow) => item.invoice_number ?? "-",
+        sortValue: (item: DirectCostRow) => item.invoice_number ?? "",
       },
     ],
     [updatingStatusId],
   );
 
-
-  const totalAmount = React.useMemo(
-    () => filteredSummaryItems.reduce((sum, item) => sum + item.total_amount, 0),
-    [filteredSummaryItems],
+  const renderSummaryListItem = React.useCallback(
+    (item: DirectCostRow): ReactElement => (
+      <button
+        type="button"
+        onClick={() => router.push(`/${projectId}/direct-costs/${item.id}`)}
+        className="w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:bg-muted/30"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="truncate text-sm font-medium text-foreground">
+              {item.vendor?.name ?? "Internal"}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {item.invoice_number ?? "No invoice"} · {item.cost_type}
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+            {formatAmount(item.total_amount)}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(item.status)}`} />
+            {item.status}
+          </span>
+          <span className="text-xs text-muted-foreground">{formatDate(item.date)}</span>
+        </div>
+      </button>
+    ),
+    [projectId, router],
   );
+
 
   const summaryIsFiltered =
     Boolean(tableState.searchInput) ||
@@ -593,18 +652,25 @@ export function DirectCostsClient({
       <UnifiedTablePage
         header={{
           title: "Direct Costs",
-          description: "Track and manage direct project costs",
           actions: (
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => setIsImportDialogOpen(true)} title="Import direct costs from CSV">
-                <Upload className="mr-2 h-4 w-4" />
-                Import CSV
-              </Button>
-              <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)} title="Add a new direct cost">
-                <Plus className="mr-2 h-4 w-4" />
-                New Direct Cost
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Direct Cost
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import CSV
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ),
         }}
         tabs={tabs}
@@ -615,8 +681,16 @@ export function DirectCostsClient({
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search vendor, invoice, date, amount, status...",
-          currentView: tableState.currentView,
-          onViewChange: tableState.setCurrentView,
+          currentView: isMobileViewport ? "list" : tableState.currentView,
+          onViewChange: (view) => {
+            if (isMobileViewport) {
+              tableState.setCurrentView("list");
+              tableState.setSearchParams({ view: "list" });
+              return;
+            }
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
           enabledViews: ["table", "list"],
           filters: DIRECT_COST_FILTERS,
           activeFilters,
@@ -626,6 +700,19 @@ export function DirectCostsClient({
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: () => setIsExportDialogOpen(true),
+          mobilePanelActions: (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => {
+                setIsImportDialogOpen(true);
+              }}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import CSV
+            </Button>
+          ),
           onBulkDelete: undefined,
         }}
         topContent={
@@ -656,12 +743,6 @@ export function DirectCostsClient({
             </div>
           ) : undefined
         }
-        footerTotals={{
-          label: "Totals",
-          values: {
-            total_amount: <span className="font-semibold tabular-nums">{formatAmount(totalAmount)}</span>,
-          },
-        }}
         data={{ items: filteredSummaryItems, isLoading: false, isFetching: false }}
         table={{
           columns: summaryTableColumns,
@@ -694,6 +775,9 @@ export function DirectCostsClient({
               </DropdownMenuContent>
             </DropdownMenu>
           ),
+        }}
+        views={{
+          list: renderSummaryListItem,
         }}
         sorting={{
           sortBy: tableState.sortBy,

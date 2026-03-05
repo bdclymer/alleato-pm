@@ -82,6 +82,28 @@ export function ChangeOrdersClient({
       filters: initialFilters,
     },
   });
+  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const applyViewport = () => setIsMobileViewport(mediaQuery.matches);
+    applyViewport();
+    mediaQuery.addEventListener("change", applyViewport);
+    return () => mediaQuery.removeEventListener("change", applyViewport);
+  }, []);
+
+  React.useEffect(() => {
+    if (!isMobileViewport) return;
+    if (tableState.currentView !== "table") return;
+    tableState.setCurrentView("list");
+    tableState.setSearchParams({ view: "list" });
+  }, [
+    isMobileViewport,
+    tableState.currentView,
+    tableState.setCurrentView,
+    tableState.setSearchParams,
+  ]);
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
@@ -354,8 +376,14 @@ export function ChangeOrdersClient({
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search change orders...",
-        currentView: tableState.currentView,
+        currentView: isMobileViewport ? "list" : tableState.currentView,
         onViewChange: (view) => {
+          if (isMobileViewport) {
+            tableState.setCurrentView("list");
+            tableState.setSearchParams({ view: "list" });
+            return;
+          }
+
           tableState.setCurrentView(view);
           tableState.setSearchParams({ view });
         },

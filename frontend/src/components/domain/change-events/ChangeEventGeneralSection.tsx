@@ -80,8 +80,8 @@ export function ChangeEventGeneralSection({
   return (
     <>
       <FormSection
-        title="Change Event Information"
-        description="Basic information about the change event"
+        title="Core Details"
+        description="Capture the key identifiers and classification for this change event."
       >
         <TextField
           label="Number"
@@ -90,7 +90,6 @@ export function ChangeEventGeneralSection({
           onChange={(e) => onChange({ number: e.target.value })}
           required
           placeholder="CE-001"
-          hint="Unique identifier for this change event"
           data-testid="change-event-number-input"
           error={errors?.number}
         />
@@ -123,7 +122,6 @@ export function ChangeEventGeneralSection({
           value={data.origin}
           onValueChange={(value) => onChange({ origin: value })}
           placeholder="Select the source of this change"
-          hint="Who or what initiated this change event?"
         />
 
         <SelectField
@@ -132,7 +130,6 @@ export function ChangeEventGeneralSection({
           value={data.type}
           onValueChange={(value) => onChange({ type: value })}
           placeholder="Select the type of change"
-          hint="What category does this change fall under?"
         />
 
         <SelectField
@@ -141,7 +138,6 @@ export function ChangeEventGeneralSection({
           value={data.changeReason}
           onValueChange={(value) => onChange({ changeReason: value })}
           placeholder="Select the reason for this change"
-          hint="Why is this change necessary?"
         />
 
         <SelectField
@@ -150,13 +146,12 @@ export function ChangeEventGeneralSection({
           value={data.scope}
           onValueChange={(value) => onChange({ scope: value })}
           placeholder="Select scope classification"
-          hint="Is this change within the original project scope?"
         />
       </FormSection>
 
       <FormSection
         title="Details"
-        description="Additional information about the change event"
+        description="Add supporting narrative and optional cost impact details."
       >
         <TextareaField
           label="Description"
@@ -166,7 +161,6 @@ export function ChangeEventGeneralSection({
           placeholder="Detailed description of the change event..."
           rows={4}
           fullWidth
-          hint="Provide a comprehensive explanation of the change"
         />
 
         <NumberField
@@ -176,7 +170,6 @@ export function ChangeEventGeneralSection({
           onChange={(value) => onChange({ estimatedImpact: value })}
           prefix="$"
           placeholder="0.00"
-          hint="Preliminary cost estimate (if known)"
         />
 
         <TextareaField

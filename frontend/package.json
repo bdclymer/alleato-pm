@@ -53,7 +53,6 @@
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs"
   },
   "dependencies": {
-    "@ai-sdk/gateway": "^3.0.59",
     "@ai-sdk/openai": "^3.0.25",
     "@ai-sdk/react": "^3.0.71",
     "@codemirror/lang-python": "^6.2.1",
@@ -65,9 +64,12 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
+    "@langfuse/otel": "^4.6.1",
     "@once-ui-system/core": "^1.6.0",
     "@openai/chatkit": "^1.5.0",
     "@openai/chatkit-react": "^1.4.3",
+    "@opentelemetry/sdk-node": "^0.213.0",
+    "@opentelemetry/sdk-trace-node": "^2.6.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",

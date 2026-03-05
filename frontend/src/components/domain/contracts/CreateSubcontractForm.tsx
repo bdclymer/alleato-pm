@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Select,
@@ -14,10 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus,
-  Sparkles,
   AlertCircle,
   Loader2,
   Info,
@@ -34,7 +33,6 @@ import {
   CommitmentStatusValues,
   AccountingMethodValues,
 } from "@/lib/schemas/create-subcontract-schema";
-import { generateAutofillData } from "@/lib/utils/autofill-subcontract";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { DateField } from "@/components/forms/DateField";
@@ -90,10 +88,12 @@ interface FormSectionHeadingProps {
 
 function FormSectionHeading({ title, description }: FormSectionHeadingProps) {
   return (
-    <div className="border-b pb-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="pb-2">
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
       {description ? (
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
       ) : null}
     </div>
   );
@@ -163,6 +163,8 @@ export function CreateSubcontractForm({
     >
   >({});
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
+  const [openContractCompanyPopover, setOpenContractCompanyPopover] =
+    React.useState(false);
 
   // Use the companies hook
   const { options: companyOptions, isLoading: isLoadingCompanies } =
@@ -226,6 +228,10 @@ export function CreateSubcontractForm({
   const contractCompanyId = watch("contractCompanyId");
   const privacyIsPrivate = watch("privacy.isPrivate") ?? true;
   const accountingMethod = watch("accountingMethod");
+  const selectedContractCompany = React.useMemo(
+    () => companyOptions.find((option) => option.value === contractCompanyId),
+    [companyOptions, contractCompanyId],
+  );
 
   // Fetch company contacts when a company is selected
   const { options: invoiceContactOptions, isLoading: isLoadingContacts } =
@@ -415,60 +421,6 @@ export function CreateSubcontractForm({
     }
   };
 
-  const handleAutofill = () => {
-    const autofillData = generateAutofillData();
-
-    // Set all form fields
-    setValue("contractNumber", autofillData.contractNumber || "");
-    setValue("contractCompanyId", autofillData.contractCompanyId || "");
-    setValue("title", autofillData.title || "");
-    setValue("status", autofillData.status || "Draft");
-    setValue("executed", autofillData.executed || false);
-    setValue("defaultRetainagePercent", autofillData.defaultRetainagePercent);
-    setValue("description", autofillData.description || "");
-    setValue("inclusions", autofillData.inclusions || "");
-    setValue("exclusions", autofillData.exclusions || "");
-
-    // Set dates
-    if (autofillData.dates) {
-      setValue("dates.startDate", autofillData.dates.startDate || undefined);
-      setValue(
-        "dates.estimatedCompletionDate",
-        autofillData.dates.estimatedCompletionDate || undefined,
-      );
-      setValue(
-        "dates.actualCompletionDate",
-        autofillData.dates.actualCompletionDate || undefined,
-      );
-      setValue(
-        "dates.contractDate",
-        autofillData.dates.contractDate || undefined,
-      );
-      setValue(
-        "dates.signedContractReceivedDate",
-        autofillData.dates.signedContractReceivedDate || undefined,
-      );
-      setValue(
-        "dates.issuedOnDate",
-        autofillData.dates.issuedOnDate || undefined,
-      );
-    }
-
-    // Set privacy
-    if (autofillData.privacy) {
-      setValue("privacy.isPrivate", autofillData.privacy.isPrivate ?? true);
-      setValue(
-        "privacy.allowNonAdminViewSovItems",
-        autofillData.privacy.allowNonAdminViewSovItems || false,
-      );
-    }
-
-    // Set SOV lines
-    if (autofillData.sovLines) {
-      setSovLines(autofillData.sovLines);
-    }
-  };
-
   const handleFormSubmit = async (data: CreateSubcontractInput) => {
     setIsSubmitting(true);
     setSubmitError(null);
@@ -653,7 +605,7 @@ export function CreateSubcontractForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      <div className="space-y-8 rounded-lg border bg-card p-4 sm:p-6">
+      <div className="space-y-4 rounded-lg bg-muted/30 shadow-sm p-6 lg:p-8">
         {/* Hidden CSV file input */}
         <input
           ref={csvInputRef}
@@ -662,20 +614,6 @@ export function CreateSubcontractForm({
           className="hidden"
           onChange={handleCSVImport}
         />
-        {/* Autofill Test Data Button */}
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAutofill}
-            disabled={isSubmitting}
-            className="gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Autofill Test Data
-          </Button>
-        </div>
-
         {/* Error Display */}
         {submitError && (
           <Alert variant="destructive">
@@ -706,13 +644,12 @@ export function CreateSubcontractForm({
         )}
 
         {/* General Information Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="General Information"
-            description="Set subcontract identity, vendor context, and default commercial settings."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="title">
                 Title <span className="text-destructive">*</span>
@@ -745,42 +682,67 @@ export function CreateSubcontractForm({
                 </p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="contractCompanyId">
                 Contract Company <span className="text-destructive">*</span>
               </Label>
-              <Select
-                value={watch("contractCompanyId") || ""}
-                onValueChange={(value) => setValue("contractCompanyId", value)}
-                disabled={isSubmitting || isLoadingCompanies}
+              <Popover
+                open={openContractCompanyPopover}
+                onOpenChange={setOpenContractCompanyPopover}
               >
-                <SelectTrigger>
-                  {isLoadingCompanies ? (
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading companies...
+                <PopoverTrigger asChild>
+                  <Button
+                    id="contractCompanyId"
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    className="w-full justify-between text-left font-normal"
+                    disabled={isSubmitting || isLoadingCompanies}
+                  >
+                    <span className="truncate">
+                      {isLoadingCompanies ? (
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading companies...
+                        </span>
+                      ) : (
+                        selectedContractCompany?.label || "Select company"
+                      )}
                     </span>
-                  ) : (
-                    <SelectValue placeholder="Select company" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  {companyOptions.length === 0 ? (
-                    <SelectItem value="_no_companies" disabled>
-                      No companies available
-                    </SelectItem>
-                  ) : (
-                    companyOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                  <Command>
+                    <CommandInput placeholder="Type to search companies..." />
+                    <CommandList>
+                      <CommandEmpty>
+                        {isLoadingCompanies
+                          ? "Loading companies..."
+                          : "No companies found."}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {companyOptions.map((option) => (
+                          <CommandItem
+                            key={option.value}
+                            value={option.label}
+                            onSelect={() => {
+                              setValue("contractCompanyId", option.value, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                              setOpenContractCompanyPopover(false);
+                            }}
+                          >
+                            {option.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {errors.contractCompanyId && (
                 <p className="text-sm text-destructive">
                   {errors.contractCompanyId.message}
@@ -821,8 +783,8 @@ export function CreateSubcontractForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
+            <div>
               <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -886,10 +848,9 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Attachments Section */}
-        <section className="space-y-4">
+        <section className="space-y-6 pt-8">
           <FormSectionHeading
             title="Attachments"
-            description="Add drawings, proposals, and supporting contract files."
           />
 
           <FileUploadField
@@ -906,7 +867,7 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Schedule of Values Section */}
-        <section className="space-y-4" data-testid="sov-section">
+        <section className="space-y-6" data-testid="sov-section">
           <FormSectionHeading
             title="Schedule of Values"
             description="Organize groupings and line items that drive commitment totals."
@@ -953,7 +914,7 @@ export function CreateSubcontractForm({
                   if (value === "add_group") addGroup();
                 }}
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-36">
                   <SelectValue placeholder="Add Group" />
                 </SelectTrigger>
                 <SelectContent>
@@ -977,7 +938,7 @@ export function CreateSubcontractForm({
                   <th className="px-4 py-4 text-left text-sm font-medium text-foreground w-12">
                     #
                   </th>
-                  <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-[300px]">
+                  <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-72">
                     <div className="flex items-center gap-1">
                       Budget Code
                       <TooltipProvider>
@@ -1115,10 +1076,7 @@ export function CreateSubcontractForm({
                                 <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[400px] p-0"
-                              align="start"
-                            >
+                            <PopoverContent className="w-96 p-0" align="start">
                               <Command>
                                 <CommandInput
                                   placeholder="Search budget codes..."
@@ -1313,7 +1271,7 @@ export function CreateSubcontractForm({
                 if (value === "csv") csvInputRef.current?.click();
               }}
             >
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-24">
                 <SelectValue placeholder="Import" />
               </SelectTrigger>
               <SelectContent>
@@ -1325,7 +1283,7 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Inclusions & Exclusions Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Inclusions & Exclusions"
             description="Clarify what scope is explicitly covered versus excluded."
@@ -1363,13 +1321,13 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Contract Dates Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Contract Dates"
             description="Capture key execution and delivery milestones for this subcontract."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             <Controller
               name="dates.startDate"
               control={control}
@@ -1463,7 +1421,7 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Contract Privacy Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Contract Privacy"
             description="Restrict access and SOV visibility for non-admin project users."
@@ -1524,10 +1482,6 @@ export function CreateSubcontractForm({
                       />
                     )}
                   />
-                  <p className="text-sm text-muted-foreground">
-                    These non-admin users will have access to view this
-                    contract.
-                  </p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1556,7 +1510,7 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Invoice Contacts Section - Conditional on Company Selection */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Invoice Contacts"
             description="Select external contacts who are authorized to submit invoices."
@@ -1565,8 +1519,7 @@ export function CreateSubcontractForm({
           {!contractCompanyId ? (
             <div className="bg-muted/50 rounded-md p-4">
               <p className="text-sm text-muted-foreground">
-                Please select a Contract Company first to enable invoice
-                contacts selection.
+                Select a contract company to enable invoice contacts.
               </p>
             </div>
           ) : (
@@ -1588,7 +1541,6 @@ export function CreateSubcontractForm({
                           ? "No contacts found for this company"
                           : "Select contacts who can submit invoices..."
                     }
-                    hint="These contacts will be able to submit invoices for this contract."
                   />
                 )}
               />
@@ -1597,11 +1549,11 @@ export function CreateSubcontractForm({
         </section>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t pt-6">
+        <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
           <p className="text-sm text-muted-foreground">
             <span className="text-destructive">*</span> Required fields
           </p>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="outline"
@@ -1619,7 +1571,7 @@ export function CreateSubcontractForm({
               ) : mode === "edit" ? (
                 "Save Changes"
               ) : (
-                "Create"
+                "Create Subcontract"
               )}
             </Button>
           </div>
@@ -1631,7 +1583,7 @@ export function CreateSubcontractForm({
         open={showCreateBudgetCodeModal}
         onOpenChange={setShowCreateBudgetCodeModal}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Create New Budget Code</DialogTitle>
             <DialogDescription>
@@ -1647,7 +1599,7 @@ export function CreateSubcontractForm({
                   Loading cost codes...
                 </div>
               ) : (
-                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                <div className="border rounded-md max-h-96 overflow-y-auto">
                   {Object.entries(groupedCostCodes)
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (

@@ -290,6 +290,7 @@ export async function POST(
     const {
       title,
       type,
+      status,
       reason,
       scope,
       origin,
@@ -321,7 +322,7 @@ export async function POST(
       type,
       reason: reason || null,
       scope,
-      status: 'Open',
+      status: status || "Open",
       origin: origin || 'Internal',
       expecting_revenue: expectingRevenue,
       line_item_revenue_source: lineItemRevenueSource || null,
@@ -352,7 +353,7 @@ export async function POST(
         change_event_id: data.id,
         field_name: 'status',
         old_value: null,
-        new_value: 'Open',
+        new_value: status || "Open",
         changed_by: user.id,
         change_type: 'CREATE',
       })

@@ -22,6 +22,7 @@ import {
   Table,
   Home,
   Briefcase,
+  Bot,
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
 
@@ -119,6 +120,12 @@ export const adminTools: NavigationTool[] = [
   {
     name: "Document Pipeline",
     path: "/admin/documents/pipeline",
+    requiresProject: false,
+    adminOnly: true,
+  },
+  {
+    name: "Company Knowledge",
+    path: "/admin/company-knowledge",
     requiresProject: false,
     adminOnly: true,
   },
@@ -397,6 +404,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: TrendingUp,
         description: "Company-wide analytics",
         adminOnly: true,
+      },
+      {
+        name: "AI Strategist",
+        path: "ai-assistant",
+        requiresProject: false,
+        icon: Bot,
+        description: "AI-powered project guidance",
       },
     ],
   },

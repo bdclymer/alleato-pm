@@ -44,23 +44,17 @@ export function ProjectFormPageLayout({
   ) : null;
 
   return (
-    <>
+    <div
+      className={cn("mx-auto w-full", formWidthClassMap[maxWidth])}
+    >
       <ProjectPageHeader
         title={title}
         description={description}
         actions={headerActions ?? defaultBackAction}
       />
-      <PageContainer className="space-y-8">
-        <div
-          className={cn(
-            "mx-auto w-full space-y-8",
-            formWidthClassMap[maxWidth],
-            className,
-          )}
-        >
-          {children}
-        </div>
+      <PageContainer className={cn("space-y-8", className)}>
+        {children}
       </PageContainer>
-    </>
+    </div>
   );
 }

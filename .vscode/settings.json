@@ -31,5 +31,7 @@
         "**/.gemini": true,
         ".gemini": true
     },
-    "explorerExclude.backup": {}
+    "explorerExclude.backup": {},
+    "markdown-pdf.convertOnSave": false,
+    "markdown-preview-enhanced.enableScriptExecution": false
 }

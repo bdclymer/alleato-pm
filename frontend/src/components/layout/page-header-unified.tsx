@@ -98,6 +98,9 @@ export function PageHeader({
   onExportPDF,
   exportLabel = "Export",
 }: PageHeaderProps) {
+  // Subheadings are intentionally suppressed globally to keep page headers tighter.
+  void description;
+
   // Note: breadcrumbs are accepted for API compatibility but not yet rendered
   // in the unified component. Pages using breadcrumbs should use the layout's
   // breadcrumb component separately or this can be enhanced later.
@@ -128,11 +131,6 @@ export function PageHeader({
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-light tracking-tight">
               {title}
             </h1>
-            {description && (
-              <Text size="lg" tone="muted" className="max-w-3xl">
-                {description}
-              </Text>
-            )}
             {actions && (
               <Inline gap="sm" className="pt-2">
                 {actions}
@@ -165,7 +163,7 @@ export function PageHeader({
     <div className={cn(className)}>
       <div className="px-4 sm:px-6 lg:px-8">
         {/* Title and Actions */}
-        <div className="flex flex-col gap-4 py-3 md:flex-row md:items-center md:justify-between min-w-0">
+        <div className="flex items-start justify-between gap-3 py-3 min-w-0 sm:items-center">
           <div className="min-w-0 flex-1 overflow-hidden">
             {/* Project Name */}
             {shouldShowProjectName && (
@@ -195,17 +193,11 @@ export function PageHeader({
               </Inline>
             )}
 
-            {/* Description */}
-            {description && (
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {description}
-              </p>
-            )}
           </div>
 
           {/* Actions */}
           {(actions || showExportButton) && (
-            <div className="flex w-full flex-col gap-4 md:w-auto md:flex-row md:items-center md:flex-shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               {showExportButton && (onExportCSV || onExportPDF) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

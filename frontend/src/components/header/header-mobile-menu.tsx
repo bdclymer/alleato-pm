@@ -63,7 +63,7 @@ export function HeaderMobileMenu({
         <Button
           variant="ghost"
           size="sm"
-          className="md:hidden p-2 h-8 w-8 text-zinc-300 hover:text-white hover:bg-zinc-800"
+          className="h-8 w-8 p-2 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 md:hidden"
           aria-label="Open navigation menu"
         >
           <Menu className="h-4 w-4" />

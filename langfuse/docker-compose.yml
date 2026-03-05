@@ -1,0 +1,92 @@
+# Langfuse Self-Hosted — AI Observability for Alleato PM
+#
+# Start:  docker compose -f langfuse/docker-compose.yml up -d
+# Stop:   docker compose -f langfuse/docker-compose.yml down
+# UI:     http://localhost:3100
+#
+# After first launch:
+#   1. Go to http://localhost:3100
+#   2. Create an account (local only, no email verification)
+#   3. Create a project → copy the Public Key + Secret Key
+#   4. Add keys to .env as LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY
+
+version: "3.8"
+
+services:
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: langfuse-alleato
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
+      NEXTAUTH_URL: http://localhost:3100
+      NEXTAUTH_SECRET: alleato-langfuse-secret-change-in-production
+      SALT: alleato-langfuse-salt-change-in-production
+      ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      TELEMETRY_ENABLED: "true"
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse-clickhouse:9000
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: 6379
+      REDIS_AUTH: langfuse-redis-secret
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+      langfuse-clickhouse:
+        condition: service_healthy
+
+  langfuse-db:
+    image: postgres:16-alpine
+    container_name: langfuse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  langfuse-redis:
+    image: redis:7-alpine
+    container_name: langfuse-redis
+    restart: unless-stopped
+    command: redis-server --requirepass langfuse-redis-secret
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "langfuse-redis-secret", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: langfuse-clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: clickhouse
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user clickhouse --password clickhouse --query 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  langfuse_postgres_data:
+  langfuse_redis_data:
+  langfuse_clickhouse_data:

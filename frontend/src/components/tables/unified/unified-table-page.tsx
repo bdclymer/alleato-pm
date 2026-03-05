@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SimplePagination } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
-import { ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -71,6 +71,7 @@ export interface UnifiedTablePageProps<T> {
     onColumnVisibilityChange?: (columns: string[]) => void;
     onExport?: () => void;
     onBulkDelete?: () => void;
+    mobilePanelActions?: ReactNode;
   };
   data: {
     items: T[];
@@ -240,13 +241,13 @@ export function UnifiedTablePage<T>({
 
   const renderSortIcon = (columnId: string) => {
     if (!sorting || sorting.sortBy !== columnId) {
-      return <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />;
+      return <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground transition-colors" />;
     }
 
     return sorting.sortDirection === "asc" ? (
-      <ChevronUp className="ml-1 h-3.5 w-3.5" />
+      <ChevronUp className="ml-1 h-3 w-3" />
     ) : (
-      <ChevronDown className="ml-1 h-3.5 w-3.5" />
+      <ChevronDown className="ml-1 h-3 w-3" />
     );
   };
 
@@ -277,6 +278,7 @@ export function UnifiedTablePage<T>({
             onColumnVisibilityChange={handleColumnVisibilityChange}
             onExport={toolbar.onExport}
             onBulkDelete={toolbar.onBulkDelete}
+            mobilePanelActions={toolbar.mobilePanelActions}
             enableSearch={resolvedFeatures.enableSearch}
             enableViews={resolvedFeatures.enableViews}
             enableFilters={resolvedFeatures.enableFilters}
@@ -318,103 +320,105 @@ export function UnifiedTablePage<T>({
 
         {showTable && shouldRenderTableView && (
           <div className={cn("mt-4", data.isFetching && "opacity-70")}>
-            <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
-                <TableRow>
-                  {hasRowSelection && (
-                    <TableHead className="w-[40px]">
-                      <Checkbox
-                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                      />
-                    </TableHead>
-                  )}
-                  {table.columns
-                    .filter((column) => visibleColumns.includes(column.id))
-                    .map((column) => {
-                      const isSortable = column.sortable !== false && Boolean(sorting);
-                      return (
-                        <TableHead
-                          key={column.id}
-                          className={cn(
-                            isSortable && "cursor-pointer select-none",
-                          )}
-                          onClick={() => {
-                            if (isSortable) {
-                              handleSortClick(column.id);
-                            }
-                          }}
-                        >
-                          <div className="flex items-center">
-                            {column.label}
-                            {isSortable && renderSortIcon(column.id)}
-                          </div>
-                        </TableHead>
-                      );
-                    })}
-                  {hasRowActions && <TableHead className="w-[50px]" />}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedItems.map((item) => (
-                  <TableRow
-                    key={table.getRowId(item)}
-                    className={cn(
-                      "cursor-pointer",
-                      selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
-                    )}
-                    onClick={() => table.onRowClick?.(item)}
-                  >
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
+                  <TableRow>
                     {hasRowSelection && (
-                      <TableCell onClick={(event) => event.stopPropagation()}>
+                      <TableHead className="w-[40px]">
                         <Checkbox
-                          checked={selectedIds.includes(table.getRowId(item))}
-                          onCheckedChange={(checked) =>
-                            handleSelectRow(table.getRowId(item), Boolean(checked))
-                          }
+                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                         />
-                      </TableCell>
+                      </TableHead>
                     )}
                     {table.columns
                       .filter((column) => visibleColumns.includes(column.id))
-                      .map((column) => (
-                        <TableCell key={column.id}>{column.render(item)}</TableCell>
-                      ))}
-                    {hasRowActions && (
-                      <TableCell onClick={(event) => event.stopPropagation()}>
-                        {table.rowActions?.(item)}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-              {footerTotals && (
-                <TableFooter>
-                  <TableRow className="bg-muted/50 font-medium">
-                    {hasRowSelection && <TableCell />}
-                    {table.columns
-                      .filter((column) => visibleColumns.includes(column.id))
-                      .map((column, index) => {
-                        const value = footerTotals.values[column.id];
-                        // Show label in first visible column if no explicit value
-                        if (index === 0 && !value) {
-                          return (
-                            <TableCell key={column.id} className="font-semibold">
-                              {footerTotals.label ?? "Totals"}
-                            </TableCell>
-                          );
-                        }
+                      .map((column) => {
+                        const isSortable = column.sortable !== false && Boolean(sorting);
                         return (
-                          <TableCell key={column.id} className="font-semibold">
-                            {value ?? null}
-                          </TableCell>
+                          <TableHead
+                            key={column.id}
+                            className={cn(
+                              isSortable && "cursor-pointer select-none group/th",
+                            )}
+                            onClick={() => {
+                              if (isSortable) {
+                                handleSortClick(column.id);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center">
+                              {column.label}
+                              {isSortable && renderSortIcon(column.id)}
+                            </div>
+                          </TableHead>
                         );
                       })}
-                    {hasRowActions && <TableCell />}
+                    {hasRowActions && <TableHead className="w-[50px]" />}
                   </TableRow>
-                </TableFooter>
-              )}
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedItems.map((item) => (
+                    <TableRow
+                      key={table.getRowId(item)}
+                      className={cn(
+                        "cursor-pointer",
+                        selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
+                      )}
+                      onClick={() => table.onRowClick?.(item)}
+                    >
+                      {hasRowSelection && (
+                        <TableCell onClick={(event) => event.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.includes(table.getRowId(item))}
+                            onCheckedChange={(checked) =>
+                              handleSelectRow(table.getRowId(item), Boolean(checked))
+                            }
+                          />
+                        </TableCell>
+                      )}
+                      {table.columns
+                        .filter((column) => visibleColumns.includes(column.id))
+                        .map((column) => (
+                          <TableCell key={column.id}>{column.render(item)}</TableCell>
+                        ))}
+                      {hasRowActions && (
+                        <TableCell onClick={(event) => event.stopPropagation()}>
+                          {table.rowActions?.(item)}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+                {footerTotals && (
+                  <TableFooter>
+                    <TableRow className="bg-muted/50 font-medium">
+                      {hasRowSelection && <TableCell />}
+                      {table.columns
+                        .filter((column) => visibleColumns.includes(column.id))
+                        .map((column, index) => {
+                          const value = footerTotals.values[column.id];
+                          // Show label in first visible column if no explicit value
+                          if (index === 0 && !value) {
+                            return (
+                              <TableCell key={column.id} className="font-semibold">
+                                {footerTotals.label ?? "Totals"}
+                              </TableCell>
+                            );
+                          }
+                          return (
+                            <TableCell key={column.id} className="font-semibold">
+                              {value ?? null}
+                            </TableCell>
+                          );
+                        })}
+                      {hasRowActions && <TableCell />}
+                    </TableRow>
+                  </TableFooter>
+                )}
+              </Table>
+            </div>
           </div>
         )}
 

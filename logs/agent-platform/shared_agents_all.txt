@@ -780,7 +780,7 @@ skills/prp-skills/prp-create/agents/openai.yaml
 skills/prp-skills/prp-create/references/EXAMPLE_multi_agent_prp.md
 skills/prp-skills/prp-create/references/prp-create.md
 skills/prp-skills/prp-create/references/prp-readme.md
-skills/prp-skills/prp-create/references/prp_template.md
+skills/prp-skills/prp-create/references/TEMPLATE-PRP.md
 skills/prp-skills/prp-create/scripts/prp-to-html.js
 skills/prp-skills/prp-execute/SKILLS.md
 skills/prp-skills/prp-execute/references/scaffolds/api-route.ts

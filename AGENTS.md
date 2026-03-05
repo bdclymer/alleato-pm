@@ -75,6 +75,11 @@ Full agent + workflow list: `_bmad/_config/agent-manifest.csv`, `_bmad/_config/w
 
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
 
+**Default policy (mandatory):**
+- For frontend user-journey and manual-style E2E verification, use `agent-browser` first.
+- Use Playwright code-based suites when deterministic CI coverage or deep crawl/extraction workflows are required.
+- Never claim "verified" without evidence artifacts (screenshots, video, markdown summary).
+
 Core workflow:
 
 1. `agent-browser open <url>` - Navigate to page
@@ -252,6 +257,10 @@ npm run check:routes           # verify no dynamic route conflicts
 ## Testing Commands
 
 ```bash
+# From repo root (default browser verification path)
+npm run verify:browser           # agent-browser run with screenshots + video + markdown summary
+npm run verify:browser:cleanup   # remove agent-browser artifacts older than 48h
+
 # From frontend/ directory
 npm run test                   # Playwright E2E (headless)
 npm run test:headed            # Playwright with browser visible
@@ -262,6 +271,11 @@ npm run test:unit:watch        # Jest watch mode
 # Run a specific Playwright spec
 npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 ```
+
+**agent-browser verification artifacts:**
+- Output root: `tests/agent-browser-runs/<timestamp>-<run-name>/`
+- Required evidence per run: `session.webm`, before/after screenshots, snapshots, action log, `VERIFICATION_SUMMARY.md`
+- Optional scripted actions file template: `scripts/templates/agent-browser-actions.example.txt`
 
 **Auth is pre-configured.** Playwright uses saved session at `tests/.auth/user.json`. Never add login code to individual tests. If the session expires, run `npx playwright test tests/auth.setup.ts` once to refresh it. Credentials are in `.env` as `PROCORE_USER` / `PROCORE_PASSWORD`.
 
@@ -282,7 +296,7 @@ npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 - **UI:** shadcn/ui, Radix UI primitives, Framer Motion
 - **State:** React Query (TanStack Query), Zustand
 - **Backend:** Supabase (PostgreSQL, Auth, RLS), Python FastAPI
-- **Testing:** Playwright (E2E), Jest (unit)
+- **Testing:** agent-browser (primary interactive E2E), Playwright (scripted/CI E2E), Jest (unit)
 - **Forms:** React Hook Form + Zod validation
 
 ---

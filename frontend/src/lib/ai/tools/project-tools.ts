@@ -1,6 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createFinancialTools } from "./financial";
+import { createAcumaticaTools } from "./acumatica";
+import { createOperationalTools } from "./operational";
 
 type AnyRow = Record<string, any>;
 
@@ -62,7 +65,20 @@ export function createProjectTools(
 ) {
   const supabase = createServiceClient();
 
+  // Financial tools (commitments, COs, direct costs, budget lines, trends, margin)
+  const financialTools = createFinancialTools(_userId, options);
+
+  // Acumatica ERP tools (live AP/AR aging, cash position, vendor spend, POs)
+  const acumaticaTools = createAcumaticaTools(_userId, options);
+
+  // Operational tools (schedule, people, vendors, RFIs, submittals, cross-project, trends, forecast, semantic search)
+  const operationalTools = createOperationalTools(_userId, options);
+
   return {
+    ...financialTools,
+    ...acumaticaTools,
+    ...operationalTools,
+
     getPortfolioOverview: tool({
       description:
         "Get a strategic overview of the project portfolio. By default shows only CURRENT-phase " +
@@ -179,10 +195,11 @@ export function createProjectTools(
           const overview = m.summary || m.overview;
           if (!overview) return;
           recentMeetingInsights.push({
+            sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
             meeting: m.title,
             date: m.date,
             project: nameMap.get(m.project_id) ?? m.project,
-            keyPoints: overview.substring(0, 400),
+            keyPoints: overview.substring(0, 800),
           });
         });
 
@@ -236,6 +253,7 @@ export function createProjectTools(
         );
 
         return {
+          sourceRef: `[Source: Portfolio Overview - ${phase ?? "All"} Projects]`,
           portfolioSummary: {
             phase,
             totalProjects: enrichedProjects.length,
@@ -250,10 +268,11 @@ export function createProjectTools(
           projects: enrichedProjects,
           recentMeetingInsights: recentMeetingInsights.slice(0, 15),
           recentMeetings: meetings.slice(0, 10).map((m) => ({
+            sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
             title: m.title,
             date: m.date,
             project: nameMap.get(m.project_id) ?? m.project,
-            summary: (m.summary || m.overview || "").substring(0, 300),
+            summary: (m.summary || m.overview || "").substring(0, 800),
             participants: m.participants,
           })),
         };
@@ -411,6 +430,7 @@ export function createProjectTools(
         );
 
         return {
+          sourceRef: `[Source: Risk Analysis - ${resolvedName ?? project?.name ?? `Project ${resolvedId}`}]`,
           project: {
             id: resolvedId,
             name: resolvedName ?? project?.name,
@@ -472,9 +492,10 @@ export function createProjectTools(
             lineCount: budgetLines.length,
           },
           recentMeetings: recentMeetings.slice(0, 5).map((m) => ({
+            sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
             title: m.title,
             date: m.date,
-            keyPoints: (m.summary || m.overview || "").substring(0, 400),
+            keyPoints: (m.summary || m.overview || "").substring(0, 800),
             participants: m.participants,
           })),
         };
@@ -583,6 +604,7 @@ export function createProjectTools(
         }
 
         return {
+          sourceRef: "[Source: Financial Analysis - Portfolio]",
           summary: {
             totalOriginalContractValue: totalOriginalContracts,
             totalRevisedContractValue: totalRevisedContracts,
@@ -731,6 +753,7 @@ export function createProjectTools(
           };
 
           return {
+            sourceRef: `[Source: Budget Summary - ${resolvedProject?.name ?? projectName ?? `Project ${resolvedId}`}]`,
             project: {
               id: resolvedId,
               name: resolvedProject?.name ?? projectName ?? null,
@@ -837,6 +860,7 @@ export function createProjectTools(
         const overdueRFIs = (rfiRows ?? []) as AnyRow[];
 
         return {
+          sourceRef: "[Source: Action Items & Insights]",
           priorityItems: priorityInsights.map((i) => ({
             title: i.title,
             description: i.description,
@@ -857,10 +881,11 @@ export function createProjectTools(
             businessImpact: i.business_impact,
           })),
           meetingInsights: docs.map((d) => ({
+            sourceRef: `[Source: Meeting - "${d.title}" - ${d.date}]`,
             meeting: d.title,
             date: d.date,
             project: d.project,
-            keyPoints: (d.summary || d.overview || "").substring(0, 400),
+            keyPoints: (d.summary || d.overview || "").substring(0, 800),
           })),
           overdueRFIs: overdueRFIs.map((r) => ({
             number: r.number,
@@ -911,6 +936,7 @@ export function createProjectTools(
           if (docs.length) {
             return {
               results: docs.map((d) => ({
+                sourceRef: `[Source: ${d.category === "meeting" ? "Meeting" : "Document"} - "${d.title}" - ${d.date}]`,
                 id: d.id,
                 title: d.title,
                 date: d.date,
@@ -943,6 +969,7 @@ export function createProjectTools(
 
         return {
           results: results.map((r) => ({
+            sourceRef: `[Source: ${r.category === "meeting" ? "Meeting" : "Document"} - "${r.title}" - ${r.date}]`,
             id: r.id,
             title: r.title,
             date: r.date,
@@ -1001,7 +1028,7 @@ export function createProjectTools(
           await Promise.all([
             supabase
               .from("prime_contracts")
-              .select("id, title, status, contract_amount, executed_date")
+              .select("id, title, status, original_contract_value, executed_at")
               .eq("project_id", project.id)
               .limit(10),
             supabase
@@ -1030,6 +1057,7 @@ export function createProjectTools(
         const recentDocs = (recentDocsRes.data ?? []) as AnyRow[];
 
         return {
+          sourceRef: `[Source: Project Details - ${project.name}]`,
           project: {
             id: project.id,
             name: project.name,
@@ -1064,9 +1092,10 @@ export function createProjectTools(
             dueDate: r.due_date,
           })),
           recentMeetings: recentDocs.map((d) => ({
+            sourceRef: `[Source: Meeting - "${d.title}" - ${d.date}]`,
             title: d.title,
             date: d.date,
-            keyPoints: (d.summary || d.overview || "").substring(0, 400),
+            keyPoints: (d.summary || d.overview || "").substring(0, 800),
             participants: d.participants,
           })),
         };

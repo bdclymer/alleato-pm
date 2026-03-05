@@ -18,10 +18,14 @@ export function FormSection({
 }: FormSectionProps) {
   return (
     <div className={cn("space-y-6", className)}>
-      <div>
-        <h3 className="text-lg font-medium leading-6 text-foreground">{title}</h3>
+      <div className="border-b pb-4">
+        <h3 className="text-base font-semibold tracking-tight text-foreground">
+          {title}
+        </h3>
         {description && (
-          <p className="mt-1 text-sm text-foreground">{description}</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {description}
+          </p>
         )}
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">{children}</div>

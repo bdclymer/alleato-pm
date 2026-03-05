@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import type { ReactElement } from "react";
-import { useState, useRef, useEffect } from "react";
+import type { ReactElement, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Search,
   LayoutGrid,
@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
@@ -40,9 +41,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 
-// Types
 export type ViewMode = "table" | "card" | "list";
 
 export interface FilterConfig {
@@ -63,48 +64,34 @@ export interface ColumnConfig {
 type FilterValue = string | string[] | number | boolean | null | undefined;
 
 export interface TableToolbarProps {
-  // Data counts
   totalItems: number;
   filteredItems: number;
   selectedCount: number;
-
-  // Search
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
-
-  // Views
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
   enabledViews?: ViewMode[];
-
-  // Filters
   filters?: FilterConfig[];
   activeFilters: Record<string, FilterValue>;
   onFilterChange: (filters: Record<string, FilterValue>) => void;
   onClearFilters: () => void;
-
-  // Columns
   columns?: ColumnConfig[];
   visibleColumns: string[];
   onColumnVisibilityChange: (columns: string[]) => void;
-
-  // Actions
   onExport?: () => void;
   onBulkDelete?: () => void;
-
-  // Feature flags
+  mobilePanelActions?: ReactNode;
   enableSearch?: boolean;
   enableViews?: boolean;
   enableFilters?: boolean;
   enableColumnToggle?: boolean;
   enableExport?: boolean;
   enableBulkDelete?: boolean;
-
   className?: string;
 }
 
-// Search component with expand animation
 function ExpandableSearch({
   value,
   onChange,
@@ -123,18 +110,9 @@ function ExpandableSearch({
     }
   }, [isExpanded]);
 
-  // Keep expanded if there's a value
   useEffect(() => {
-    if (value) {
-      setIsExpanded(true);
-    }
+    if (value) setIsExpanded(true);
   }, [value]);
-
-  const handleBlur = () => {
-    if (!value) {
-      setIsExpanded(false);
-    }
-  };
 
   return (
     <div className="relative flex items-center">
@@ -161,8 +139,10 @@ function ExpandableSearch({
             ref={inputRef}
             type="text"
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={handleBlur}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={() => {
+              if (!value) setIsExpanded(false);
+            }}
             placeholder={placeholder}
             className="h-8 w-[200px] pl-8 pr-8 text-sm"
           />
@@ -185,7 +165,6 @@ function ExpandableSearch({
   );
 }
 
-// View switcher component — uses the same TabsList / TabsTrigger as the design system
 function ViewSwitcher({
   currentView,
   onViewChange,
@@ -195,20 +174,20 @@ function ViewSwitcher({
   onViewChange: (view: ViewMode) => void;
   enabledViews?: ViewMode[];
 }): ReactElement {
-  const views: { mode: ViewMode; icon: React.ReactNode; label: string }[] = [
+  const views: { mode: ViewMode; icon: ReactNode; label: string }[] = [
     { mode: "table", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
     { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
   ];
 
   return (
-    <Tabs value={currentView} onValueChange={(v) => onViewChange(v as ViewMode)}>
+    <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
       <TabsList className="h-8">
         {views
-          .filter((v) => enabledViews.includes(v.mode))
+          .filter((view) => enabledViews.includes(view.mode))
           .map((view) => (
             <TabsTrigger key={view.mode} value={view.mode} className="h-6 gap-1.5 px-2.5">
               {view.icon}
-              <span className="text-[12px]">{view.label}</span>
+              <span className="hidden text-[12px] sm:inline">{view.label}</span>
             </TabsTrigger>
           ))}
       </TabsList>
@@ -216,7 +195,86 @@ function ViewSwitcher({
   );
 }
 
-// Filter panel component
+function FilterFields({
+  filters,
+  activeFilters,
+  onFilterChange,
+}: {
+  filters: FilterConfig[];
+  activeFilters: Record<string, FilterValue>;
+  onFilterChange: (filters: Record<string, FilterValue>) => void;
+}): ReactElement {
+  const selectFilters = filters.filter((filter) => filter.type === "select" && filter.options);
+  const inputFilters = filters.filter((filter) => filter.type === "date" || filter.type === "number");
+
+  return (
+    <div className="space-y-3">
+      {selectFilters.map((filter) => {
+        const currentValue =
+          typeof activeFilters[filter.id] === "string"
+            ? (activeFilters[filter.id] as string)
+            : "";
+
+        return (
+          <div key={filter.id} className="space-y-1">
+            <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+            <Select
+              value={currentValue || "all"}
+              onValueChange={(nextValue) =>
+                onFilterChange({
+                  ...activeFilters,
+                  [filter.id]: nextValue === "all" ? undefined : nextValue,
+                })
+              }
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue placeholder={`All ${filter.label}`} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All {filter.label}</SelectItem>
+                {filter.options?.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        );
+      })}
+
+      {selectFilters.length > 0 && inputFilters.length > 0 && <div className="h-px bg-border" />}
+
+      {inputFilters.map((filter) => (
+        <div key={filter.id} className="space-y-1">
+          <label htmlFor={`filter-${filter.id}`} className="text-xs font-medium text-muted-foreground">
+            {filter.label}
+          </label>
+          <Input
+            id={`filter-${filter.id}`}
+            type={filter.type === "date" ? "date" : "number"}
+            className="h-8 text-sm"
+            min={filter.type === "number" ? "0" : undefined}
+            step={filter.type === "number" ? "0.01" : undefined}
+            placeholder={filter.placeholder}
+            value={
+              typeof activeFilters[filter.id] === "string"
+                ? (activeFilters[filter.id] as string)
+                : ""
+            }
+            onChange={(event) =>
+              onFilterChange({
+                ...activeFilters,
+                [filter.id]: event.target.value || undefined,
+              })
+            }
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FilterMenu({
   filters,
   activeFilters,
@@ -229,11 +287,8 @@ function FilterMenu({
   onClearFilters: () => void;
 }): ReactElement {
   const activeCount = Object.values(activeFilters).filter(
-    (v) => v !== undefined && v !== "" && v !== null
+    (value) => value !== undefined && value !== "" && value !== null,
   ).length;
-
-  const selectFilters = filters.filter((f) => f.type === "select" && f.options);
-  const inputFilters = filters.filter((f) => f.type === "date" || f.type === "number");
 
   return (
     <Popover>
@@ -243,12 +298,9 @@ function FilterMenu({
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2">
                 <Filter className="h-4 w-4" />
-                <span className="text-sm">Filter</span>
+                <span className="hidden text-sm sm:inline">Filter</span>
                 {activeCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="h-5 min-w-[20px] px-1.5 text-[11px]"
-                  >
+                  <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[11px]">
                     {activeCount}
                   </Badge>
                 )}
@@ -261,73 +313,11 @@ function FilterMenu({
       <PopoverContent align="start" className="w-72 p-3">
         <div className="space-y-3">
           <p className="text-sm font-medium text-foreground">Filters</p>
-
-          {selectFilters.map((filter) => {
-            const currentValue =
-              typeof activeFilters[filter.id] === "string"
-                ? (activeFilters[filter.id] as string)
-                : "";
-            return (
-              <div key={filter.id} className="space-y-1">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {filter.label}
-                </span>
-                <Select
-                  value={currentValue || "all"}
-                  onValueChange={(nextValue) =>
-                    onFilterChange({
-                      ...activeFilters,
-                      [filter.id]: nextValue === "all" ? undefined : nextValue,
-                    })
-                  }
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue placeholder={`All ${filter.label}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All {filter.label}</SelectItem>
-                    {filter.options?.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            );
-          })}
-
-          {selectFilters.length > 0 && inputFilters.length > 0 && (
-            <div className="h-px bg-border" />
-          )}
-
-          {inputFilters.map((filter) => (
-            <div key={filter.id} className="space-y-1">
-              <label htmlFor={`filter-${filter.id}`} className="text-xs font-medium text-muted-foreground">
-                {filter.label}
-              </label>
-              <Input
-                id={`filter-${filter.id}`}
-                type={filter.type === "date" ? "date" : "number"}
-                className="h-8 text-sm"
-                min={filter.type === "number" ? "0" : undefined}
-                step={filter.type === "number" ? "0.01" : undefined}
-                placeholder={filter.placeholder}
-                value={
-                  typeof activeFilters[filter.id] === "string"
-                    ? (activeFilters[filter.id] as string)
-                    : ""
-                }
-                onChange={(e) =>
-                  onFilterChange({
-                    ...activeFilters,
-                    [filter.id]: e.target.value || undefined,
-                  })
-                }
-              />
-            </div>
-          ))}
-
+          <FilterFields
+            filters={filters}
+            activeFilters={activeFilters}
+            onFilterChange={onFilterChange}
+          />
           {activeCount > 0 && (
             <>
               <div className="h-px bg-border" />
@@ -347,7 +337,6 @@ function FilterMenu({
   );
 }
 
-// Column visibility dropdown
 function ColumnToggle({
   columns,
   visibleColumns,
@@ -358,20 +347,8 @@ function ColumnToggle({
   onColumnVisibilityChange: (columns: string[]) => void;
 }): ReactElement {
   const defaultColumns = columns
-    .filter((col) => col.defaultVisible !== false || col.alwaysVisible)
-    .map((col) => col.id);
-
-  const handleReset = () => {
-    onColumnVisibilityChange(
-      Array.from(new Set(defaultColumns.concat(
-        columns.filter((col) => col.alwaysVisible).map((col) => col.id),
-      )))
-    );
-  };
-
-  const handleShowAll = () => {
-    onColumnVisibilityChange(columns.map((col) => col.id));
-  };
+    .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
+    .map((column) => column.id);
 
   return (
     <DropdownMenu>
@@ -381,7 +358,7 @@ function ColumnToggle({
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-2">
                 <Columns3 className="h-4 w-4" />
-                <span className="text-sm">Columns</span>
+                <span className="hidden text-sm sm:inline">Columns</span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
@@ -392,7 +369,7 @@ function ColumnToggle({
         <DropdownMenuLabel>Columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {columns
-          .filter((col) => !col.alwaysVisible)
+          .filter((column) => !column.alwaysVisible)
           .map((column) => (
             <DropdownMenuCheckboxItem
               key={column.id}
@@ -401,9 +378,7 @@ function ColumnToggle({
                 if (checked) {
                   onColumnVisibilityChange([...visibleColumns, column.id]);
                 } else {
-                  onColumnVisibilityChange(
-                    visibleColumns.filter((c) => c !== column.id)
-                  );
+                  onColumnVisibilityChange(visibleColumns.filter((existing) => existing !== column.id));
                 }
               }}
             >
@@ -411,14 +386,29 @@ function ColumnToggle({
             </DropdownMenuCheckboxItem>
           ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleShowAll}>Show all</DropdownMenuItem>
-        <DropdownMenuItem onClick={handleReset}>Reset to defaults</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onColumnVisibilityChange(columns.map((column) => column.id))}>
+          Show all
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            onColumnVisibilityChange(
+              Array.from(
+                new Set(
+                  defaultColumns.concat(
+                    columns.filter((column) => column.alwaysVisible).map((column) => column.id),
+                  ),
+                ),
+              ),
+            )
+          }
+        >
+          Reset to defaults
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-// Main toolbar component
 export function TableToolbar({
   totalItems,
   filteredItems,
@@ -438,6 +428,7 @@ export function TableToolbar({
   onColumnVisibilityChange,
   onExport,
   onBulkDelete,
+  mobilePanelActions,
   enableSearch = true,
   enableViews = true,
   enableFilters = true,
@@ -446,50 +437,240 @@ export function TableToolbar({
   enableBulkDelete = true,
   className,
 }: TableToolbarProps): ReactElement {
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const apply = (): void => setIsMobile(mediaQuery.matches);
+
+    apply();
+    mediaQuery.addEventListener("change", apply);
+    return () => mediaQuery.removeEventListener("change", apply);
+  }, []);
+
   const hasRightActions =
     (enableFilters && filters.length > 0) ||
     (enableColumnToggle && columns.length > 0) ||
     (enableExport && Boolean(onExport)) ||
     (enableBulkDelete && Boolean(onBulkDelete));
 
+  const activeFilterCount = Object.values(activeFilters).filter(
+    (value) => value !== undefined && value !== "" && value !== null,
+  ).length;
+
+  if (isMobile) {
+    return (
+      <div className={cn("py-2", className)}>
+        <div className="flex items-center gap-2">
+          {enableSearch && (
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchValue}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder={searchPlaceholder}
+                className="h-9 pl-8 pr-8 text-sm"
+              />
+              {searchValue ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-9 w-9"
+                  onClick={() => onSearchChange("")}
+                  aria-label="Clear search"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              ) : null}
+            </div>
+          )}
+
+          <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative h-9 w-9 shrink-0 p-0"
+                aria-label="Open table controls"
+              >
+                <Filter className="h-4 w-4" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[320px] p-0 sm:w-[360px]">
+              <SheetHeader className="border-b px-4 py-4">
+                <SheetTitle>Table Controls</SheetTitle>
+              </SheetHeader>
+              <div className="max-h-[calc(100vh-88px)] space-y-5 overflow-y-auto px-4 py-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Search</p>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={searchValue}
+                      onChange={(event) => onSearchChange(event.target.value)}
+                      placeholder={searchPlaceholder}
+                      className="h-9 pl-8 pr-8 text-sm"
+                    />
+                    {searchValue ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-9 w-9"
+                        onClick={() => onSearchChange("")}
+                        aria-label="Clear search"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {enableViews && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">View</p>
+                    <ViewSwitcher
+                      currentView={currentView}
+                      onViewChange={onViewChange}
+                      enabledViews={enabledViews}
+                    />
+                  </div>
+                )}
+
+                {enableFilters && filters.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>
+                      {activeFilterCount > 0 ? (
+                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearFilters}>
+                          Clear
+                        </Button>
+                      ) : null}
+                    </div>
+                    <FilterFields
+                      filters={filters}
+                      activeFilters={activeFilters}
+                      onFilterChange={onFilterChange}
+                    />
+                  </div>
+                )}
+
+                {enableColumnToggle && columns.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Columns</p>
+                    <div className="space-y-2 rounded-md border p-3">
+                      {columns
+                        .filter((column) => !column.alwaysVisible)
+                        .map((column) => (
+                          <label key={column.id} className="flex items-center gap-2 text-sm text-foreground">
+                            <Checkbox
+                              checked={visibleColumns.includes(column.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  onColumnVisibilityChange([...visibleColumns, column.id]);
+                                } else {
+                                  onColumnVisibilityChange(
+                                    visibleColumns.filter((existing) => existing !== column.id),
+                                  );
+                                }
+                              }}
+                            />
+                            <span>{column.label}</span>
+                          </label>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {(enableExport && onExport) || mobilePanelActions || (enableBulkDelete && onBulkDelete) ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
+                    <div className="space-y-2">
+                      {mobilePanelActions}
+                      {enableExport && onExport ? (
+                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={onExport}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Export
+                        </Button>
+                      ) : null}
+                      {enableBulkDelete && onBulkDelete ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="w-full justify-start"
+                          disabled={selectedCount === 0}
+                          onClick={onBulkDelete}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete selected
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                <p className="text-xs text-muted-foreground">
+                  {filteredItems === totalItems
+                    ? `${totalItems} items`
+                    : `${filteredItems} of ${totalItems} items`}
+                </p>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("flex items-center justify-between gap-4 py-2", className)}>
-      {/* Left side: Search + Views */}
-      <div className="flex items-center gap-4">
+    <div className={cn("py-2", className)}>
+      <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {enableSearch && (
-          <ExpandableSearch
-            value={searchValue}
-            onChange={onSearchChange}
-            placeholder={searchPlaceholder}
-          />
+          <div className="shrink-0">
+            <ExpandableSearch
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder={searchPlaceholder}
+            />
+          </div>
         )}
 
         {enableViews && (
-          <ViewSwitcher
-            currentView={currentView}
-            onViewChange={onViewChange}
-            enabledViews={enabledViews}
-          />
+          <div className="shrink-0">
+            <ViewSwitcher
+              currentView={currentView}
+              onViewChange={onViewChange}
+              enabledViews={enabledViews}
+            />
+          </div>
         )}
-      </div>
 
-      {/* Right side: Actions + Count */}
-      <div className="flex items-center gap-2">
         {enableFilters && filters.length > 0 && (
-          <FilterMenu
-            filters={filters}
-            activeFilters={activeFilters}
-            onFilterChange={onFilterChange}
-            onClearFilters={onClearFilters}
-          />
+          <div className="shrink-0">
+            <FilterMenu
+              filters={filters}
+              activeFilters={activeFilters}
+              onFilterChange={onFilterChange}
+              onClearFilters={onClearFilters}
+            />
+          </div>
         )}
 
         {enableColumnToggle && columns.length > 0 && (
-          <ColumnToggle
-            columns={columns}
-            visibleColumns={visibleColumns}
-            onColumnVisibilityChange={onColumnVisibilityChange}
-          />
+          <div className="shrink-0">
+            <ColumnToggle
+              columns={columns}
+              visibleColumns={visibleColumns}
+              onColumnVisibilityChange={onColumnVisibilityChange}
+            />
+          </div>
         )}
 
         {enableExport && onExport && (
@@ -499,7 +680,7 @@ export function TableToolbar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 shrink-0"
                   onClick={onExport}
                 >
                   <Download className="h-5 w-5" />
@@ -517,14 +698,14 @@ export function TableToolbar({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 shrink-0"
                   disabled={selectedCount === 0}
                   onClick={onBulkDelete}
                 >
                   <Trash2
                     className={cn(
                       "h-4 w-4",
-                      selectedCount > 0 && "text-destructive"
+                      selectedCount > 0 && "text-destructive",
                     )}
                   />
                 </Button>
@@ -538,10 +719,9 @@ export function TableToolbar({
           </TooltipProvider>
         )}
 
-        {hasRightActions && <div className="h-4 w-px bg-border mx-1" />}
+        {hasRightActions && <div className="mx-1 h-4 w-px shrink-0 bg-border" />}
 
-        {/* Item count */}
-        <span className="inline-flex h-8 items-center px-2.5 text-xs text-muted-foreground whitespace-nowrap">
+        <span className="inline-flex h-8 shrink-0 items-center px-2.5 text-xs text-muted-foreground">
           {filteredItems === totalItems
             ? `${totalItems} items`
             : `${filteredItems} of ${totalItems}`}

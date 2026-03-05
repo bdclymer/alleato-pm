@@ -6,6 +6,7 @@ const DEV_ONLY = process.env.NODE_ENV !== "production";
 const FORM_ENHANCED_ATTR = "data-dev-autofill-enhanced";
 const BUTTON_ATTR = "data-dev-autofill-button";
 const DISABLED_ATTR = "data-dev-autofill-disabled";
+const AUTOFILL_EVENT = "dev-autofill-form";
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -262,7 +263,7 @@ function createButton(form: HTMLFormElement): HTMLButtonElement {
   button.addEventListener("click", () => {
     const count = fillForm(form);
     if (DEV_ONLY) {
-      console.warn(`[DevAutofill] Filled ${count} fields`, form);
+      console.warn(`[DevAutofill] Filled ${count} fields`);
     }
   });
 
@@ -302,6 +303,19 @@ export function DevAutoFillForms() {
 
     enhanceAllForms();
 
+    const handleAutoFillRequest = (event: Event) => {
+      const customEvent = event as CustomEvent<{ selector?: string }>;
+      const selector = customEvent.detail?.selector;
+
+      if (selector) {
+        const form = document.querySelector<HTMLFormElement>(selector);
+        if (form) {
+          const count = fillForm(form);
+          console.warn(`[DevAutofill] Filled ${count} fields`);
+        }
+      }
+    };
+
     const observer = new MutationObserver(() => {
       enhanceAllForms();
     });
@@ -311,8 +325,11 @@ export function DevAutoFillForms() {
       childList: true,
     });
 
+    window.addEventListener(AUTOFILL_EVENT, handleAutoFillRequest);
+
     return () => {
       observer.disconnect();
+      window.removeEventListener(AUTOFILL_EVENT, handleAutoFillRequest);
     };
   }, []);
 

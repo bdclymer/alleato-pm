@@ -6,29 +6,23 @@ import {
   streamText,
   type UIMessage,
 } from "ai";
+import { after } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { ragAssistantSystemPrompt } from "@/lib/ai/rag-assistant-prompt";
-import { createProjectTools } from "@/lib/ai/tools/project-tools";
+import {
+  createStrategistTools,
+  getStrategistSystemPrompt,
+  STRATEGIST_MODEL,
+} from "@/lib/ai/orchestrator";
 
 export const maxDuration = 120;
-
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
 
 function extractTextFromParts(parts: UIMessage["parts"]): string {
   return parts
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("");
-}
-
-function isProjectBudgetQuestion(message: string): boolean {
-  const text = message.toLowerCase();
-  const mentionsBudget = /\bbudget\b/.test(text);
-  const asksAmount = /(total|amount|value|status|how much)/.test(text);
-  const notPortfolio = !/(portfolio|all projects|across projects)/.test(text);
-  return mentionsBudget && asksAmount && notPortfolio;
 }
 
 export async function POST(request: Request) {
@@ -52,6 +46,13 @@ export async function POST(request: Request) {
   const supabase = createServiceClient();
   const toolTrace: Array<Record<string, unknown>> = [];
 
+  // Token usage tracking — populated inside execute(), read in onFinish()
+  let totalUsage: {
+    inputTokens: number | undefined;
+    outputTokens: number | undefined;
+    totalTokens: number | undefined;
+  } | undefined;
+
   // Persist the latest user message
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
   if (lastUserMessage) {
@@ -66,32 +67,47 @@ export async function POST(request: Request) {
     }
   }
 
+  // Build C-Suite Strategist tools — includes consultCFO + base project tools.
+  // When the Strategist decides a question is financial, it calls consultCFO,
+  // which spawns a separate CFO agent with financial tools. The Strategist
+  // synthesizes the CFO's analysis with cross-functional context.
   const modelMessages = await convertToModelMessages(messages);
-  const tools = createProjectTools(user.id, {
+  const tools = createStrategistTools(user.id, {
     onTrace: (trace) => {
       toolTrace.push(trace);
     },
   });
-  const latestUserText = lastUserMessage
-    ? extractTextFromParts(lastUserMessage.parts)
-    : "";
-  const systemPrompt = isProjectBudgetQuestion(latestUserText)
-    ? `${ragAssistantSystemPrompt}
-
-You MUST call getProjectBudgetSummary for this request before drafting the answer. Use budgetSummary totals as the source of truth for budget values. If you include contract totals, label them separately as contract context.`
-    : ragAssistantSystemPrompt;
+  const systemPrompt = getStrategistSystemPrompt();
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       const result = streamText({
-        model: getLanguageModel(DEFAULT_MODEL),
+        model: getLanguageModel(STRATEGIST_MODEL),
         system: systemPrompt,
         messages: modelMessages,
         tools,
+        // Strategist gets 7 steps to route, consult specialists, and synthesize.
+        // Each specialist gets up to 5 internal tool-call steps.
         stopWhen: stepCountIs(7),
+        // LangFuse AI Observability — traces appear at https://us.cloud.langfuse.com
+        experimental_telemetry: {
+          isEnabled: true,
+          functionId: "strategist-chat",
+          metadata: {
+            userId: user.id,
+            sessionId,
+            agent: "strategist",
+            architecture: "csuite",
+          },
+        },
       });
 
       writer.merge(result.toUIMessageStream());
+
+      // Await totalUsage AFTER merge — resolves when stream completes.
+      // totalUsage accumulates across ALL agent steps (not just the last),
+      // which is correct for multi-step agents using stopWhen.
+      totalUsage = await result.totalUsage;
     },
     onFinish: async ({ messages: finishedMessages }) => {
       // Persist assistant messages
@@ -107,7 +123,15 @@ You MUST call getProjectBudgetSummary for this request before drafting the answe
               metadata: JSON.parse(
                 JSON.stringify({
                   tool_trace: toolTrace,
-                  model: DEFAULT_MODEL,
+                  model: STRATEGIST_MODEL,
+                  architecture: "csuite",
+                  usage: totalUsage
+                    ? {
+                        inputTokens: totalUsage.inputTokens ?? 0,
+                        outputTokens: totalUsage.outputTokens ?? 0,
+                        totalTokens: totalUsage.totalTokens ?? 0,
+                      }
+                    : null,
                 }),
               ),
             });
@@ -122,6 +146,19 @@ You MUST call getProjectBudgetSummary for this request before drafting the answe
         .eq("session_id", sessionId);
     },
     onError: () => "An error occurred while generating a response. Please try again.",
+  });
+
+  // Flush Langfuse span processor AFTER the response is sent.
+  // Without this, streamText spans are dropped because the batch processor
+  // hasn't shipped them before the serverless function shuts down.
+  after(async () => {
+    const processor = (globalThis as Record<string, unknown>)
+      .__langfuseSpanProcessor as
+      | { forceFlush: () => Promise<void> }
+      | undefined;
+    if (processor) {
+      await processor.forceFlush();
+    }
   });
 
   return createUIMessageStreamResponse({ stream });

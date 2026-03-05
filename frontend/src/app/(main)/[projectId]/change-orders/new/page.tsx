@@ -28,7 +28,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { ProjectFormPageLayout } from "@/components/layout";
 import { useUsers } from "@/hooks/use-users";
@@ -108,7 +107,11 @@ export default function NewChangeOrderPage() {
     manualAmount > 0 &&
     Math.abs(manualAmount - lineItemsTotal) > 0.01;
 
-  const { users, options: userOptions, isLoading: isLoadingUsers } = useUsers({
+  const {
+    users,
+    options: userOptions,
+    isLoading: isLoadingUsers,
+  } = useUsers({
     personType: "user",
   });
 
@@ -133,7 +136,8 @@ export default function NewChangeOrderPage() {
               id: contract.id,
               contract_number: contract.contract_number,
               title: contract.title,
-              company_name: contract.vendor?.name || contract.client?.name || null,
+              company_name:
+                contract.vendor?.name || contract.client?.name || null,
               contract_type: "prime_contract" as const,
             }),
           );
@@ -182,7 +186,9 @@ export default function NewChangeOrderPage() {
         apiData.designated_reviewer_id === "__none__"
           ? null
           : apiData.designated_reviewer_id;
-      const contract_id = apiData.contract_id ? Number(apiData.contract_id) : null;
+      const contract_id = apiData.contract_id
+        ? Number(apiData.contract_id)
+        : null;
 
       const response = await fetch(`/api/projects/${projectId}/change-orders`, {
         method: "POST",
@@ -231,7 +237,10 @@ export default function NewChangeOrderPage() {
           );
 
           if (!lineItemResponse.ok) {
-            console.error("Failed to create line item:", await lineItemResponse.text());
+            console.error(
+              "Failed to create line item:",
+              await lineItemResponse.text(),
+            );
           }
 
           return lineItemResponse;
@@ -277,29 +286,37 @@ export default function NewChangeOrderPage() {
       backLabel="Back to Change Orders"
       maxWidth="lg"
     >
-      <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+      <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm leading-6 text-muted-foreground">
         Complete core details first, then add line items for the final total.
       </div>
 
-      <div className="rounded-lg border bg-card p-4 sm:p-6">
+      <div className="rounded-lg border bg-card p-6 lg:p-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-            <section className="space-y-4">
-              <div className="border-b pb-2">
-                <h2 className="text-lg font-semibold">Basic Information</h2>
-                <p className="text-sm text-muted-foreground">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-10"
+          >
+            <section className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Basic Information
+                </h2>
+                <p className="text-sm leading-6 text-muted-foreground">
                   Identify the change order and provide a concise summary.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
                   <FormField
                     control={form.control}
                     name="co_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Change Order Number *</FormLabel>
+                        <FormLabel>
+                          Change Order Number{" "}
+                          <span className="text-destructive">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -317,8 +334,13 @@ export default function NewChangeOrderPage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>
+                          Status <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="change-order-status">
                               <SelectValue placeholder="Select status" />
@@ -344,7 +366,9 @@ export default function NewChangeOrderPage() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title *</FormLabel>
+                      <FormLabel>
+                        Title <span className="text-destructive">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -379,11 +403,14 @@ export default function NewChangeOrderPage() {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <div className="border-b pb-2">
-                <h2 className="text-lg font-semibold">Contract & Financial Details</h2>
-                <p className="text-sm text-muted-foreground">
-                  Link this change to its contract and define the pricing target.
+            <section className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Contract & Financial Details
+                </h2>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Link this change to its contract and define the pricing
+                  target.
                 </p>
               </div>
 
@@ -404,14 +431,22 @@ export default function NewChangeOrderPage() {
 
                     return (
                       <FormItem>
-                        <FormLabel>Associated Contract *</FormLabel>
+                        <FormLabel>
+                          Associated Contract{" "}
+                          <span className="text-destructive">*</span>
+                        </FormLabel>
                         <Select
                           value={field.value || ""}
                           onValueChange={(value) => {
                             field.onChange(value);
-                            const selected = contracts.find((c) => c.id === value);
+                            const selected = contracts.find(
+                              (c) => c.id === value,
+                            );
                             if (selected) {
-                              form.setValue("change_order_type", selected.contract_type);
+                              form.setValue(
+                                "change_order_type",
+                                selected.contract_type,
+                              );
                             }
                           }}
                           disabled={isLoadingContracts}
@@ -436,7 +471,7 @@ export default function NewChangeOrderPage() {
                                       </span>
                                     )}
                                     {selectedContract.company_name && (
-                                      <span className="text-sm text-muted-foreground">
+                                      <span className="text-sm leading-6 text-muted-foreground">
                                         ({selectedContract.company_name})
                                       </span>
                                     )}
@@ -452,7 +487,10 @@ export default function NewChangeOrderPage() {
                                   Prime Contracts
                                 </div>
                                 {primeContracts.map((contract) => (
-                                  <SelectItem key={contract.id} value={contract.id}>
+                                  <SelectItem
+                                    key={contract.id}
+                                    value={contract.id}
+                                  >
                                     <div className="flex flex-col gap-0.5">
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium">
@@ -477,12 +515,17 @@ export default function NewChangeOrderPage() {
 
                             {commitments.length > 0 && (
                               <>
-                                {primeContracts.length > 0 && <div className="my-1 border-t" />}
+                                {primeContracts.length > 0 && (
+                                  <div className="my-1 border-t" />
+                                )}
                                 <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                                   Commitments
                                 </div>
                                 {commitments.map((contract) => (
-                                  <SelectItem key={contract.id} value={contract.id}>
+                                  <SelectItem
+                                    key={contract.id}
+                                    value={contract.id}
+                                  >
                                     <div className="flex flex-col gap-0.5">
                                       <div className="flex items-center gap-2">
                                         <span className="font-medium">
@@ -495,7 +538,10 @@ export default function NewChangeOrderPage() {
                                         )}
                                         {contract.commitment_type && (
                                           <span className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                                            {contract.commitment_type.replace("_", " ")}
+                                            {contract.commitment_type.replace(
+                                              "_",
+                                              " ",
+                                            )}
                                           </span>
                                         )}
                                       </div>
@@ -511,22 +557,19 @@ export default function NewChangeOrderPage() {
                             )}
 
                             {contracts.length === 0 && !isLoadingContracts && (
-                              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                              <div className="px-2 py-6 text-center text-sm leading-6 text-muted-foreground">
                                 No contracts found for this project
                               </div>
                             )}
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          Select the prime contract or commitment this change order affects.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     );
                   }}
                 />
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
                   <FormField
                     control={form.control}
                     name="amount"
@@ -575,12 +618,14 @@ export default function NewChangeOrderPage() {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <div className="border-b pb-2">
-                <h2 className="text-lg font-semibold">Line Items</h2>
-                <p className="text-sm text-muted-foreground">
-                  Add cost code line items. If line items exist, their total becomes the
-                  final amount.
+            <section className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Line Items
+                </h2>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Add cost code line items. If line items exist, their total
+                  becomes the final amount.
                 </p>
               </div>
 
@@ -589,10 +634,11 @@ export default function NewChangeOrderPage() {
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Amount Mismatch:</strong> You entered a manual amount of{" "}
-                      <strong>${manualAmount.toFixed(2)}</strong>, but line items total{" "}
-                      <strong>${lineItemsTotal.toFixed(2)}</strong>. The line items total
-                      will be used when you submit.
+                      <strong>Amount Mismatch:</strong> You entered a manual
+                      amount of <strong>${manualAmount.toFixed(2)}</strong>, but
+                      line items total{" "}
+                      <strong>${lineItemsTotal.toFixed(2)}</strong>. The line
+                      items total will be used when you submit.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -606,17 +652,19 @@ export default function NewChangeOrderPage() {
 
                 {lineItems.length > 0 && (
                   <div className="flex items-center justify-end gap-4 border-t pt-2">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm leading-6 text-muted-foreground">
                       Change Order Total (from line items):
                     </span>
-                    <span className="text-2xl font-bold">${lineItemsTotal.toFixed(2)}</span>
+                    <span className="text-2xl font-bold">
+                      ${lineItemsTotal.toFixed(2)}
+                    </span>
                   </div>
                 )}
 
                 {lineItems.length === 0 && (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    No line items added yet. You can add line items now or later from
-                    the detail page.
+                  <p className="py-4 text-center text-sm leading-6 text-muted-foreground">
+                    No line items added yet. You can add line items now or later
+                    from the detail page.
                     {manualAmount > 0 &&
                       ` The manual amount of $${manualAmount.toFixed(2)} will be used.`}
                   </p>
@@ -624,16 +672,19 @@ export default function NewChangeOrderPage() {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <div className="border-b pb-2">
-                <h2 className="text-lg font-semibold">Scope & Schedule Impact</h2>
-                <p className="text-sm text-muted-foreground">
-                  Capture whether this affects contract scope and project schedule.
+            <section className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Scope & Schedule Impact
+                </h2>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Capture whether this affects contract scope and project
+                  schedule.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
                   <FormField
                     control={form.control}
                     name="scope"
@@ -648,12 +699,18 @@ export default function NewChangeOrderPage() {
                           >
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="in_scope" id="in_scope" />
-                              <Label htmlFor="in_scope" className="cursor-pointer font-normal">
+                              <Label
+                                htmlFor="in_scope"
+                                className="cursor-pointer font-normal"
+                              >
                                 In Scope
                               </Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="out_of_scope" id="out_of_scope" />
+                              <RadioGroupItem
+                                value="out_of_scope"
+                                id="out_of_scope"
+                              />
                               <Label
                                 htmlFor="out_of_scope"
                                 className="cursor-pointer font-normal"
@@ -663,9 +720,6 @@ export default function NewChangeOrderPage() {
                             </div>
                           </RadioGroup>
                         </FormControl>
-                        <FormDescription>
-                          Is this change within the original project scope?
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -677,21 +731,23 @@ export default function NewChangeOrderPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Schedule Impact</FormLabel>
-                        <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="change-order-schedule-impact">
                               <SelectValue placeholder="Select impact" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="yes">Yes - Impacts Schedule</SelectItem>
+                            <SelectItem value="yes">
+                              Yes - Impacts Schedule
+                            </SelectItem>
                             <SelectItem value="no">No - No Impact</SelectItem>
                             <SelectItem value="unknown">Unknown</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          Will this change affect the project schedule?
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -700,10 +756,12 @@ export default function NewChangeOrderPage() {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <div className="border-b pb-2">
-                <h2 className="text-lg font-semibold">Workflow & Review</h2>
-                <p className="text-sm text-muted-foreground">
+            <section className="space-y-6">
+              <div className="border-b pb-4">
+                <h2 className="text-base font-semibold tracking-tight">
+                  Workflow & Review
+                </h2>
+                <p className="text-sm leading-6 text-muted-foreground">
                   Assign reviewer and visibility before submitting.
                 </p>
               </div>
@@ -713,7 +771,9 @@ export default function NewChangeOrderPage() {
                   control={form.control}
                   name="designated_reviewer_id"
                   render={({ field }) => {
-                    const selectedUser = users.find((u) => u.id === field.value);
+                    const selectedUser = users.find(
+                      (u) => u.id === field.value,
+                    );
 
                     return (
                       <FormItem>
@@ -735,10 +795,11 @@ export default function NewChangeOrderPage() {
                                 {selectedUser && (
                                   <span className="flex items-center gap-2">
                                     <span className="font-medium">
-                                      {selectedUser.first_name} {selectedUser.last_name}
+                                      {selectedUser.first_name}{" "}
+                                      {selectedUser.last_name}
                                     </span>
                                     {selectedUser.email && (
-                                      <span className="text-sm text-muted-foreground">
+                                      <span className="text-sm leading-6 text-muted-foreground">
                                         ({selectedUser.email})
                                       </span>
                                     )}
@@ -755,12 +816,19 @@ export default function NewChangeOrderPage() {
                             </SelectItem>
 
                             {userOptions.map((option) => {
-                              const user = users.find((u) => u.id === option.value);
+                              const user = users.find(
+                                (u) => u.id === option.value,
+                              );
                               return (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   <div className="flex flex-col gap-0.5">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-medium">{option.label}</span>
+                                      <span className="font-medium">
+                                        {option.label}
+                                      </span>
                                       {user?.job_title && (
                                         <span className="text-xs text-muted-foreground">
                                           • {user.job_title}
@@ -778,16 +846,12 @@ export default function NewChangeOrderPage() {
                             })}
 
                             {userOptions.length === 0 && !isLoadingUsers && (
-                              <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+                              <div className="px-2 py-6 text-center text-sm leading-6 text-muted-foreground">
                                 No users found
                               </div>
                             )}
                           </SelectContent>
                         </Select>
-                        <FormDescription>
-                          Select the person designated to review and approve this
-                          change order.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     );
@@ -807,10 +871,9 @@ export default function NewChangeOrderPage() {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel htmlFor="is_private">Private Change Order</FormLabel>
-                        <FormDescription>
-                          Restrict visibility to authorized users only.
-                        </FormDescription>
+                        <FormLabel htmlFor="is_private">
+                          Private Change Order
+                        </FormLabel>
                       </div>
                     </FormItem>
                   )}
@@ -818,23 +881,28 @@ export default function NewChangeOrderPage() {
               </div>
             </section>
 
-            <div className="flex justify-end gap-4 border-t pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-testid="change-order-submit"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Creating..." : "Create Change Order"}
-              </Button>
+            <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+              <p className="text-sm text-muted-foreground">
+                <span className="text-destructive">*</span> Required fields
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  data-testid="change-order-submit"
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {isSubmitting ? "Creating..." : "Create Change Order"}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

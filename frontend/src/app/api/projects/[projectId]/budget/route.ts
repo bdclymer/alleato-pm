@@ -19,7 +19,7 @@ const JTD_COST_TYPES = [
  * Per Procore: Invoice, Expense, Payroll only
  */
 const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
-const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
 
 /**
  * Pending commitment statuses for Pending Cost Changes calculation
@@ -99,6 +99,7 @@ export async function GET(
     const [
       budgetLinesRes,
       directCostsRes,
+      projectCostCodesRes,
       subcontractSovRes,
       poSovRes,
       pendingPrimeChangeOrdersRes,
@@ -139,6 +140,13 @@ export async function GET(
         )
         .eq("direct_costs.project_id", projectIdNum)
         .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
+
+      // project_cost_codes: maps project_cost_codes.id -> cost_codes.id
+      // needed to translate direct_cost_line_items.budget_code_id to cost_code_id
+      supabase
+        .from("project_cost_codes")
+        .select("id, cost_code_id")
+        .eq("project_id", projectIdNum),
 
       // Subcontract SOV items with pending status for Pending Cost Changes
       supabase
@@ -232,12 +240,25 @@ export async function GET(
       }
     };
 
+    // Build translation map: project_cost_codes.id -> cost_codes.id
+    // direct_cost_line_items.budget_code_id stores project_cost_codes.id,
+    // but budget lines use cost_codes.id — we need this map to join them.
+    const pccToCostCodeId: Record<string, string> = {};
+    for (const pcc of projectCostCodesRes.data || []) {
+      if (pcc.id && pcc.cost_code_id) {
+        pccToCostCodeId[pcc.id] = pcc.cost_code_id;
+      }
+    }
+
     // SOURCE 1 & 2: Direct Costs (approved only)
     // Per Procore:
     // - JTD Cost Detail = ALL approved types including Subcontractor Invoice
     // - Direct Costs = Approved types EXCLUDING Subcontractor Invoice
     for (const cost of (directCostsRes.data || []) as DirectCostWithRelations[]) {
-      const codeId = cost.budget_code_id;
+      // Translate project_cost_codes.id -> cost_codes.id to match budget_lines.cost_code_id
+      const codeId = cost.budget_code_id
+        ? (pccToCostCodeId[cost.budget_code_id] ?? null)
+        : null;
       if (!codeId) continue;
 
       ensureCostEntry(codeId);

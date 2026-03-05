@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { IconLogout, IconUserCircle } from "@tabler/icons-react";
 import type { User } from "@supabase/supabase-js";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,13 +18,50 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 import { logout } from "@/lib/supabase/logout";
+import {
+  adminSettingsTools,
+  buildToolUrl,
+  filterToolsByPermission,
+} from "@/lib/navigation-config";
 
 interface HeaderUserMenuProps {
   user: User | null;
+  projectId: number | null;
+  activeToolName: string;
+  permissions: Record<string, string[]>;
+  isAppAdmin: boolean;
+  userType: string | null;
 }
 
-export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
+export function HeaderUserMenu({
+  user,
+  projectId,
+  activeToolName,
+  permissions,
+  isAppAdmin,
+  userType,
+}: HeaderUserMenuProps) {
   const router = useRouter();
+
+  const settingsTools = useMemo(
+    () =>
+      adminSettingsTools.filter(
+        (tool) => tool.name === "Settings" || tool.name === "Admin Panel"
+      ),
+    []
+  );
+
+  const visibleSettingsTools = useMemo(
+    () =>
+      filterToolsByPermission(
+        settingsTools,
+        projectId,
+        permissions,
+        isAppAdmin,
+        userType
+      ),
+    [settingsTools, projectId, permissions, isAppAdmin, userType]
+  );
 
   // Generate avatar data from user
   const userEmail = user?.email || "";
@@ -57,7 +96,7 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="flex items-center rounded-full border-2 border-zinc-600 p-0.5 transition-all hover:border-zinc-400 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
+          className="flex items-center rounded-full border-2 border-zinc-300 p-0.5 transition-all hover:scale-105 hover:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-white"
           aria-label="Open user menu"
         >
           <Avatar className="h-7 w-7 sm:h-8 sm:w-8 rounded-full">
@@ -88,6 +127,39 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
             Profile
           </Link>
         </DropdownMenuItem>
+        {visibleSettingsTools.length > 0 && (
+          <>
+            <DropdownMenuSeparator />
+            {settingsTools.map((tool) => {
+              const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
+              const isActive = tool.name === activeToolName;
+              const isDisabled =
+                (tool.requiresProject && !projectId) ||
+                !visibleSettingsTools.includes(tool);
+              const Icon = tool.icon;
+
+              return (
+                <DropdownMenuItem
+                  key={tool.name}
+                  asChild
+                  disabled={isDisabled}
+                  className={cn(isActive && "bg-accent")}
+                >
+                  <Link
+                    href={href}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2",
+                      isDisabled && "pointer-events-none cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    <span>{tool.name}</span>
+                  </Link>
+                </DropdownMenuItem>
+              );
+            })}
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"

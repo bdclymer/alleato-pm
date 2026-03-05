@@ -106,7 +106,7 @@ export interface UseMeetingsTableResult {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableResult {
+export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string): UseMeetingsTableResult {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -344,7 +344,11 @@ export function useMeetingsTable(initialMeetings: Meeting[]): UseMeetingsTableRe
   };
 
   const handleRowClick = (meeting: Meeting) => {
-    router.push(`/meetings/${meeting.id}`);
+    if (projectId) {
+      router.push(`/${projectId}/meetings/${meeting.id}`);
+    } else {
+      router.push(`/meetings/${meeting.id}`);
+    }
   };
 
   const handleEdit = (meeting: Meeting) => {

@@ -19,7 +19,7 @@
  * - Context menu actions
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
@@ -225,6 +225,23 @@ export default function ProjectSchedulePage() {
     null
   );
   const [copiedTask, setCopiedTask] = useState<ScheduleTask | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const applyViewport = () => setIsMobileViewport(mediaQuery.matches);
+    applyViewport();
+    mediaQuery.addEventListener("change", applyViewport);
+    return () => mediaQuery.removeEventListener("change", applyViewport);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileViewport) return;
+    if (viewMode === "grid") {
+      setViewMode("board");
+    }
+  }, [isMobileViewport, viewMode]);
 
   // Fetch data using the same pattern as other pages (commitments, companies, etc.)
   const { data, error, isLoading, refetch } = useScheduleTasks({
@@ -689,9 +706,14 @@ export default function ProjectSchedulePage() {
   // Actions for header — just the primary action, like every other page
   const headerActions = (
     <div className="flex items-center gap-2">
-      <Button size="sm" onClick={() => handleAddTask()}>
-        <Plus className="h-4 w-4" />
-        Add Task
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10 sm:h-8 sm:w-auto sm:rounded-md sm:border-input sm:px-3 sm:text-foreground"
+        onClick={() => handleAddTask()}
+      >
+        <Plus className="h-4 w-4 sm:mr-2" />
+        <span className="hidden sm:inline">Add Task</span>
       </Button>
     </div>
   );

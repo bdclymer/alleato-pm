@@ -187,7 +187,7 @@ Step 4    /prp-validate <path/to/fix-prp.md>
 | Crawl data | `docs-ai/contents/docs/PRPs/<feature>/crawl/` |
 | Fix PRPs | `docs-ai/contents/docs/PRPs/<feature>/prp-<feature>-fix.md` |
 | Scaffolds | `.claude/scaffolds/crud-resource/` |
-| PRP template | `.claude/templates/prp_template.md` |
+| PRP template | `.claude/templates/TEMPLATE-PRP.md` |
 | Tasks template | `.claude/templates/tasks_template.md` |
 | Incident log | `docs-ai/contents/docs/patterns/INCIDENT-LOG.md` |
 | Pattern files | `docs-ai/contents/docs/patterns/` |

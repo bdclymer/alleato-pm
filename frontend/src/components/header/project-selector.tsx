@@ -65,7 +65,7 @@ export function ProjectSelector({
           )}
         >
           {currentProject ? (
-            <span className="truncate text-xs sm:text-sm text-zinc-400 hover:text-zinc-200 transition-colors">
+            <span className="truncate text-xs text-zinc-700 transition-colors hover:text-zinc-900 sm:text-sm">
               {currentProject.name}
             </span>
           ) : (
@@ -73,7 +73,7 @@ export function ProjectSelector({
               Select Project
             </span>
           )}
-          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-600" />
+          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-500" />
         </Button>
       </PopoverTrigger>
       <PopoverContent

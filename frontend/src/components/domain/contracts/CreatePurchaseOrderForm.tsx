@@ -50,10 +50,12 @@ interface FormSectionHeadingProps {
 
 function FormSectionHeading({ title, description }: FormSectionHeadingProps) {
   return (
-    <div className="border-b pb-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="border-b pb-4">
+      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
       {description ? (
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          {description}
+        </p>
       ) : null}
     </div>
   );
@@ -281,31 +283,35 @@ export function CreatePurchaseOrderForm({
       onSubmit={handleSubmit(handleFormSubmitWrapper)}
       className="space-y-8"
     >
-      <div className="space-y-8 rounded-lg border bg-card p-4 sm:p-6">
+      <div className="space-y-10 rounded-lg border bg-card p-6 lg:p-8">
         {/* General Information Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="General Information"
             description="Define the purchase order identity, vendor, and commercial terms."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="contractNumber">Contract #</Label>
+              <Label htmlFor="contractNumber">
+                Contract # <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="contractNumber"
                 {...register("contractNumber")}
                 disabled={isSubmitting}
               />
               {errors.contractNumber && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-destructive">
                   {errors.contractNumber.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="contractCompanyId">Contract Company</Label>
+              <Label htmlFor="contractCompanyId">
+                Contract Company <span className="text-destructive">*</span>
+              </Label>
               <Select
                 value={watch("contractCompanyId") || ""}
                 onValueChange={(value) => setValue("contractCompanyId", value)}
@@ -335,17 +341,34 @@ export function CreatePurchaseOrderForm({
                   )}
                 </SelectContent>
               </Select>
+              {errors.contractCompanyId && (
+                <p className="text-sm text-destructive">
+                  {errors.contractCompanyId.message}
+                </p>
+              )}
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" {...register("title")} disabled={isSubmitting} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status*</Label>
+              <Label htmlFor="title">
+                Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
+                {...register("title")}
+                disabled={isSubmitting}
+                placeholder="Enter purchase order title"
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">
+                Status <span className="text-destructive">*</span>
+              </Label>
               <Select
                 value={watch("status")}
                 onValueChange={(value) => setValue("status", value as "Draft")}
@@ -363,9 +386,14 @@ export function CreatePurchaseOrderForm({
                 </SelectContent>
               </Select>
               {errors.status && (
-                <p className="text-sm text-red-600">{errors.status.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.status.message}
+                </p>
               )}
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
 
             <div className="space-y-2">
               <div className="flex items-center space-x-2 pt-8">
@@ -418,14 +446,14 @@ export function CreatePurchaseOrderForm({
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
             <div className="space-y-2">
               <Label htmlFor="billTo">Bill To</Label>
               <Textarea
                 id="billTo"
                 {...register("billTo")}
                 disabled={isSubmitting}
-                className="min-h-[80px]"
+                rows={4}
                 placeholder="Billing address..."
               />
             </div>
@@ -436,13 +464,13 @@ export function CreatePurchaseOrderForm({
                 id="shipTo"
                 {...register("shipTo")}
                 disabled={isSubmitting}
-                className="min-h-[80px]"
+                rows={4}
                 placeholder="Shipping address..."
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
             <div className="space-y-2">
               <Label htmlFor="paymentTerms">Payment Terms</Label>
               <Input
@@ -476,7 +504,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Attachments Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Attachments"
             description="Upload source documents, drawings, and supporting files."
@@ -544,7 +572,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Schedule of Values Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Schedule of Values"
             description="Build line items and totals that define the PO financial breakdown."
@@ -848,13 +876,13 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Contract Dates Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Contract Dates"
             description="Capture timing milestones used for procurement and tracking."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             <div className="space-y-2">
               <Label htmlFor="dates.contractDate">Contract Date</Label>
               <Input
@@ -904,7 +932,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Contract Privacy Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Privacy & Access"
             description="Control which non-admin users can access this commitment."
@@ -971,15 +999,15 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Invoice Contacts Section */}
-        <section className="space-y-4">
+        <section className="space-y-6">
           <FormSectionHeading
             title="Invoice Contacts"
             description="Define who can submit and manage invoice communication."
           />
 
           {!contractCompanyId ? (
-            <p className="text-sm text-foreground">
-              Please select a Contract Company first
+            <p className="rounded-md bg-muted/50 p-4 text-sm text-muted-foreground">
+              Select a contract company to enable invoice contacts.
             </p>
           ) : (
             <div className="space-y-2">
@@ -994,9 +1022,11 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t pt-6">
-          <p className="text-sm text-foreground">*Required fields</p>
-          <div className="flex gap-4">
+        <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+          <p className="text-sm text-muted-foreground">
+            <span className="text-destructive">*</span> Required fields
+          </p>
+          <div className="flex gap-3">
             <Button
               type="button"
               variant="outline"
@@ -1006,7 +1036,14 @@ export function CreatePurchaseOrderForm({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Purchase Order"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Purchase Order"
+              )}
             </Button>
           </div>
         </div>

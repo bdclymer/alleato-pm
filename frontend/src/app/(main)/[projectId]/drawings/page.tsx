@@ -28,6 +28,8 @@ import {
   FileUp,
   Filter,
   Layers,
+  MoreHorizontal,
+  Plus,
   Search,
 } from "lucide-react";
 import { DrawingLogTable } from "@/components/drawings/DrawingLogTable";
@@ -71,7 +73,7 @@ export default function ProjectDrawingsPage() {
         title="Drawings"
         description="Manage construction drawings with revision tracking"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 sm:flex">
             <DrawingUploadDialog projectId={projectId}>
               <Button variant="outline" size="sm" className="gap-2">
                 <FileUp className="h-4 w-4" />
@@ -114,6 +116,39 @@ export default function ProjectDrawingsPage() {
           </div>
         }
       />
+      <div className="px-4 sm:hidden">
+        <div className="flex items-center justify-end gap-2">
+          <DrawingUploadDialog projectId={projectId}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
+              aria-label="Upload drawings"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </DrawingUploadDialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Drawing actions">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/${projectId}/drawings/board`}>Board View</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Drawing Log</DropdownMenuItem>
+              <DropdownMenuItem>Download Log</DropdownMenuItem>
+              <DropdownMenuItem>Open Items</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Export PDF</DropdownMenuItem>
+              <DropdownMenuItem>Export CSV</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
       <PageContainer>
         <div className="space-y-6">
           {/* Drawing Areas Sidebar + Main Content */}

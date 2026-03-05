@@ -283,6 +283,7 @@ interface ChatAreaProps {
   isLoadingMessages: boolean;
   isStreaming: boolean;
   input: string;
+  sessionId?: string;
   onInputChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onStop: () => void;
@@ -295,6 +296,7 @@ export function ChatArea({
   isLoadingMessages,
   isStreaming,
   input,
+  sessionId,
   onInputChange,
   onSubmit,
   onStop,
@@ -310,13 +312,30 @@ export function ChatArea({
     toast.success("Copied to clipboard");
   }, []);
 
-  const handleFeedback = useCallback((type: "up" | "down") => {
-    toast.success(
-      type === "up"
-        ? "Thanks for the feedback!"
-        : "Sorry about that — I'll do better.",
-    );
-  }, []);
+  const handleFeedback = useCallback(
+    (type: "up" | "down", messageContent?: string) => {
+      toast.success(
+        type === "up"
+          ? "Thanks for the feedback!"
+          : "Sorry about that — I'll do better.",
+      );
+      // Persist feedback to database for AI observability
+      if (sessionId) {
+        fetch("/api/ai-assistant/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sessionId,
+            feedback: type,
+            messageContent: messageContent?.slice(0, 500),
+          }),
+        }).catch(() => {
+          // Silent fail — feedback is best-effort
+        });
+      }
+    },
+    [sessionId],
+  );
 
   const handleSuggestionClick = useCallback(
     (suggestion: string) => {
@@ -483,13 +502,13 @@ export function ChatArea({
                         </MessageAction>
                         <MessageAction
                           tooltip="Good response"
-                          onClick={() => handleFeedback("up")}
+                          onClick={() => handleFeedback("up", text)}
                         >
                           <ThumbsUpIcon className="h-3.5 w-3.5" />
                         </MessageAction>
                         <MessageAction
                           tooltip="Poor response"
-                          onClick={() => handleFeedback("down")}
+                          onClick={() => handleFeedback("down", text)}
                         >
                           <ThumbsDownIcon className="h-3.5 w-3.5" />
                         </MessageAction>

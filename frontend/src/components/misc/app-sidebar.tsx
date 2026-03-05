@@ -26,6 +26,7 @@ import {
   IconReportMoney,
   IconSend,
   IconSettings,
+  IconShieldCheck,
   IconTable,
   IconUsers,
   IconWorldWww,
@@ -78,6 +79,7 @@ const financialManagementTools = [
 ];
 
 const adminTools = [
+  { name: "Financial Insights", path: "/financial-insights", icon: IconShieldCheck, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: IconWorldWww, requiresProject: false },
   { name: "Executive", path: "/executive", icon: IconChartBar, requiresProject: false },
   { name: "Crawled Pages", path: "/crawled-pages", icon: IconWorldWww, requiresProject: false },

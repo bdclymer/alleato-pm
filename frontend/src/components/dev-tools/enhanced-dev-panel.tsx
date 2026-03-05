@@ -60,6 +60,43 @@ interface ApiCall {
   error?: string
 }
 
+function serializeConsoleArg(arg: unknown): string {
+  if (typeof arg === "string") return arg
+
+  if (arg instanceof Error) {
+    return `${arg.name}: ${arg.message}`
+  }
+
+  if (arg instanceof HTMLElement) {
+    const id = arg.id ? `#${arg.id}` : ""
+    const classNames =
+      typeof arg.className === "string" && arg.className.trim()
+        ? `.${arg.className.trim().split(/\s+/).join(".")}`
+        : ""
+    return `<${arg.tagName.toLowerCase()}${id}${classNames}>`
+  }
+
+  try {
+    const seen = new WeakSet<object>()
+    return JSON.stringify(arg, (_key, value) => {
+      if (typeof value === "function") {
+        return `[Function ${value.name || "anonymous"}]`
+      }
+      if (value instanceof HTMLElement) {
+        const id = value.id ? `#${value.id}` : ""
+        return `<${value.tagName.toLowerCase()}${id}>`
+      }
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) return "[Circular]"
+        seen.add(value)
+      }
+      return value
+    })
+  } catch {
+    return String(arg)
+  }
+}
+
 // FK Type Reference - from incident log
 const FK_TYPE_REFERENCE = [
   { table: "projects", pk: "id: number", fk: "project_id INTEGER" },
@@ -97,7 +134,7 @@ export function EnhancedDevPanel() {
 
     console.error = (...args) => {
       originalError(...args)
-      const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ')
+      const message = args.map(serializeConsoleArg).join(" ")
       setConsoleErrors(prev => [
         { message, timestamp: Date.now(), type: "error" },
         ...prev.slice(0, 49), // Keep last 50
@@ -106,7 +143,7 @@ export function EnhancedDevPanel() {
 
     console.warn = (...args) => {
       originalWarn(...args)
-      const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ')
+      const message = args.map(serializeConsoleArg).join(" ")
       setConsoleErrors(prev => [
         { message, timestamp: Date.now(), type: "warning" },
         ...prev.slice(0, 49),

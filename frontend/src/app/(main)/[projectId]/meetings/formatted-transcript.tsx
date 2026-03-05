@@ -1,13 +1,29 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { toast } from "sonner";
 import { SectionHeader } from "@/components/ui/section-header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FormattedTranscriptProps {
   content: string;
   /** Ordered list of participant emails — index 0 = speaker "0", index 1 = speaker "1", etc. */
   participants?: string[];
+  meetingId?: string;
+  meetingTitle?: string | null;
+  projectId?: number | null;
 }
 
 const SPEAKER_WORD_TO_NUMBER: Record<string, number> = {
@@ -76,37 +92,194 @@ function getParticipantBySpeakerLabel(
 export function FormattedTranscript({
   content,
   participants = [],
+  meetingId,
+  meetingTitle,
+  projectId,
 }: FormattedTranscriptProps) {
-  const formattedContent = content
+  const transcriptContainerRef = useRef<HTMLDivElement | null>(null);
+  const [selectedText, setSelectedText] = useState("");
+  const [selectionPosition, setSelectionPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [noteTitle, setNoteTitle] = useState("");
+  const [noteBody, setNoteBody] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const formattedContent = useMemo(
+    () =>
+      content
     // Replace **0:**, **1:**, **Speaker 1:**, **Speaker One:** with participant names.
-    .replace(/\*\*(\d+):\*\*/g, (_, n) => {
-      const idx = parseInt(n, 10);
-      if (participants[idx]) {
-        return `**${formatParticipantName(participants[idx])}:**`;
+      .replace(/\*\*(\d+):\*\*/g, (_, n) => {
+        const idx = parseInt(n, 10);
+        if (participants[idx]) {
+          return `**${formatParticipantName(participants[idx])}:**`;
+        }
+        return `**Speaker ${idx + 1}:**`;
+      })
+      .replace(/\*\*(speaker\s+(?:\d+|[a-z]+)):\*\*/gi, (fullMatch, speakerLabel) => {
+        const participantName = getParticipantBySpeakerLabel(speakerLabel, participants);
+        if (!participantName) return fullMatch;
+        return `**${participantName}:**`;
+      })
+      .replace(/(^|\n)(speaker\s+(?:\d+|[a-z]+):)/gi, (fullMatch, prefix, speakerLabel) => {
+        const normalizedLabel = speakerLabel.slice(0, -1);
+        const participantName = getParticipantBySpeakerLabel(normalizedLabel, participants);
+        if (!participantName) return fullMatch;
+        return `${prefix}${participantName}:`;
+      })
+      // Replace "Speaker 1\n" (no colon, no bold) with participant name
+      .replace(/(^|\n)(speaker\s+(\d+))\s*\n/gi, (fullMatch, prefix, _label, num) => {
+        const speakerNumber = Number.parseInt(num, 10);
+        const idx = speakerNumber > 0 ? speakerNumber - 1 : speakerNumber;
+        if (participants[idx]) {
+          return `${prefix}**${formatParticipantName(participants[idx])}:**\n`;
+        }
+        return fullMatch;
+      })
+      // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
+      .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")
+      // Add double line breaks before speaker name labels
+      .replace(/(\*\*[^*]+:\*\*)/g, "\n\n$1 ")
+      // Normalise excessive blank lines
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
+    [content, participants]
+  );
+
+  const resetSelectionUi = useCallback(() => {
+    setSelectionPosition(null);
+    setSelectedText("");
+  }, []);
+
+  const inferDefaultTitle = useCallback((value: string) => {
+    const compact = value.replace(/\s+/g, " ").trim();
+    if (!compact) return "";
+    return compact.length <= 72 ? compact : `${compact.slice(0, 71)}…`;
+  }, []);
+
+  useEffect(() => {
+    const handleSelection = () => {
+      const container = transcriptContainerRef.current;
+      if (!container) return;
+
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+        resetSelectionUi();
+        return;
       }
-      return `**Speaker ${idx + 1}:**`;
-    })
-    .replace(/\*\*(speaker\s+(?:\d+|[a-z]+)):\*\*/gi, (fullMatch, speakerLabel) => {
-      const participantName = getParticipantBySpeakerLabel(speakerLabel, participants);
-      if (!participantName) return fullMatch;
-      return `**${participantName}:**`;
-    })
-    .replace(/(^|\n)(speaker\s+(?:\d+|[a-z]+):)/gi, (fullMatch, prefix, speakerLabel) => {
-      const normalizedLabel = speakerLabel.slice(0, -1);
-      const participantName = getParticipantBySpeakerLabel(normalizedLabel, participants);
-      if (!participantName) return fullMatch;
-      return `${prefix}${participantName}:`;
-    })
-    // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
-    .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")
-    // Add double line breaks before speaker name labels
-    .replace(/(\*\*[^*]+:\*\*)/g, "\n\n$1 ")
-    // Normalise excessive blank lines
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+
+      const anchorNode = selection.anchorNode;
+      const focusNode = selection.focusNode;
+      if (!anchorNode || !focusNode) {
+        resetSelectionUi();
+        return;
+      }
+
+      if (!container.contains(anchorNode) || !container.contains(focusNode)) {
+        resetSelectionUi();
+        return;
+      }
+
+      const selectedValue = selection.toString().trim();
+      if (!selectedValue) {
+        resetSelectionUi();
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      setSelectedText(selectedValue);
+      setSelectionPosition({
+        top: Math.max(8, rect.top - 40),
+        left: Math.min(window.innerWidth - 180, Math.max(8, rect.left)),
+      });
+    };
+
+    document.addEventListener("mouseup", handleSelection);
+    document.addEventListener("keyup", handleSelection);
+    return () => {
+      document.removeEventListener("mouseup", handleSelection);
+      document.removeEventListener("keyup", handleSelection);
+    };
+  }, [resetSelectionUi]);
+
+  const handleOpenNoteDialog = useCallback(() => {
+    if (!selectedText) return;
+    setNoteTitle(inferDefaultTitle(selectedText));
+    setNoteBody("");
+    setIsDialogOpen(true);
+  }, [inferDefaultTitle, selectedText]);
+
+  const handleSaveNote = useCallback(async () => {
+    if (!meetingId) {
+      toast.error("Unable to save highlight note", {
+        description: "Missing meeting context.",
+      });
+      return;
+    }
+
+    if (!projectId) {
+      toast.error("Unable to save highlight note", {
+        description: "This meeting is not associated with a project.",
+      });
+      return;
+    }
+
+    if (!selectedText.trim()) {
+      toast.error("No highlighted text selected.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/notes/highlight", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          meetingId,
+          selectedText,
+          title: noteTitle.trim() || undefined,
+          noteBody: noteBody.trim() || undefined,
+        }),
+      });
+
+      const payload: { error?: string; title?: string } = await response.json();
+      if (!response.ok) {
+        toast.error(payload.error || "Failed to save note");
+        return;
+      }
+
+      toast.success("Highlight saved as note", {
+        description: payload.title || meetingTitle || "Meeting note created",
+      });
+      setIsDialogOpen(false);
+      setNoteBody("");
+      setNoteTitle("");
+      resetSelectionUi();
+      window.getSelection()?.removeAllRanges();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unexpected error saving note";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    meetingId,
+    meetingTitle,
+    noteBody,
+    noteTitle,
+    projectId,
+    resetSelectionUi,
+    selectedText,
+  ]);
 
   return (
-    <div className="space-y-2">
+    <div ref={transcriptContainerRef} className="space-y-2">
       <SectionHeader className="mb-1">Full Transcript</SectionHeader>
 
       <ReactMarkdown
@@ -215,6 +388,78 @@ export function FormattedTranscript({
       >
         {formattedContent}
       </ReactMarkdown>
+
+      {selectionPosition && selectedText ? (
+        <div
+          className="fixed z-40"
+          style={{ top: selectionPosition.top, left: selectionPosition.left }}
+        >
+          <Button
+            size="sm"
+            className="h-8 px-2.5 text-xs"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={handleOpenNoteDialog}
+          >
+            Save as note
+          </Button>
+        </div>
+      ) : null}
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Create Note from Highlight</DialogTitle>
+            <DialogDescription>
+              Save this transcript selection as a project note with source context.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-md border border-border bg-muted/30 p-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
+                Selected transcript text
+              </p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{selectedText}</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor="highlight-note-title">
+                Note title
+              </label>
+              <Input
+                id="highlight-note-title"
+                value={noteTitle}
+                onChange={(event) => setNoteTitle(event.target.value)}
+                placeholder="Optional title"
+                maxLength={200}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground" htmlFor="highlight-note-body">
+                Your note
+              </label>
+              <Textarea
+                id="highlight-note-body"
+                value={noteBody}
+                onChange={(event) => setNoteBody(event.target.value)}
+                placeholder="Add your context, follow-up, or decision"
+                rows={5}
+                maxLength={8000}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveNote} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save note"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

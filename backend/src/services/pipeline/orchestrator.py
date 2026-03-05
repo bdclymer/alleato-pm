@@ -13,12 +13,59 @@ import time
 from typing import Any, Dict
 
 from .parser import run_parser
+from .document_parser import run_document_parser
 from .embedder import run_embedder
 from .extractor import run_extractor
 from .digest import run_digest
 from ..supabase_helpers import get_supabase_client
 
 logger = logging.getLogger(__name__)
+
+# Categories that should use the meeting parser (Fireflies transcripts)
+_MEETING_CATEGORIES = {"meeting", "transcript", "meeting_transcript"}
+
+
+def _is_generic_document(client, metadata_id: str) -> bool:
+    """Detect whether a document_metadata row is a generic document or a meeting.
+
+    Returns True for PDFs, DOCX, and non-meeting categories — these go through
+    the document_parser. Returns False for Fireflies transcripts — those use
+    the legacy run_parser.
+    """
+    try:
+        resp = (
+            client.table("document_metadata")
+            .select("category, file_name, file_path, source")
+            .eq("id", metadata_id)
+            .single()
+            .execute()
+        )
+        row = resp.data or {}
+    except Exception:
+        return False  # default to meeting parser on error
+
+    category = (row.get("category") or "").lower().strip()
+    source = (row.get("source") or "").lower().strip()
+    file_name = (row.get("file_name") or row.get("file_path") or "").lower()
+
+    # Explicit meeting categories → meeting parser
+    if category in _MEETING_CATEGORIES:
+        return False
+
+    # Fireflies source → meeting parser
+    if source == "fireflies":
+        return False
+
+    # Files with PDF/DOCX extension → document parser
+    if file_name.endswith((".pdf", ".docx", ".doc")):
+        return True
+
+    # Non-meeting category → document parser
+    if category and category not in _MEETING_CATEGORIES:
+        return True
+
+    # Default: meeting parser (backwards-compatible)
+    return False
 
 
 def _is_transient_db_timeout(exc: Exception) -> bool:
@@ -51,11 +98,18 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
     client = get_supabase_client()
     results: Dict[str, Any] = {"metadataId": metadata_id}
 
+    # Detect document type to select the right Stage 1 parser
+    is_document = _is_generic_document(client, metadata_id)
+
     max_retries = int(os.getenv("PIPELINE_TRANSIENT_RETRIES", "2"))
     for attempt in range(max_retries + 1):
         try:
-            logger.info("[Pipeline] Stage 1/4: Parser → %s", metadata_id)
-            results["parser"] = run_parser(metadata_id)
+            if is_document:
+                logger.info("[Pipeline] Stage 1/4: Document Parser → %s", metadata_id)
+                results["parser"] = run_document_parser(metadata_id)
+            else:
+                logger.info("[Pipeline] Stage 1/4: Meeting Parser → %s", metadata_id)
+                results["parser"] = run_parser(metadata_id)
             logger.info("[Pipeline] Parser done: %s", results["parser"])
 
             logger.info("[Pipeline] Stage 2/4: Embedder → %s", metadata_id)

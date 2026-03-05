@@ -26,9 +26,10 @@ import { useMeetingsTable, EMPTY_FILTERS } from "@/features/meetings/use-meeting
 
 interface MeetingsTablePageProps {
   initialMeetings: Meeting[];
+  projectId?: string;
 }
 
-export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): ReactElement {
+export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTablePageProps): ReactElement {
   const {
     tableState,
     pagedMeetings,
@@ -56,7 +57,7 @@ export function MeetingsTablePage({ initialMeetings }: MeetingsTablePageProps): 
     handleOpenSource,
     handleOpenRecording,
     handleExport,
-  } = useMeetingsTable(initialMeetings);
+  } = useMeetingsTable(initialMeetings, projectId);
 
   return (
     <>

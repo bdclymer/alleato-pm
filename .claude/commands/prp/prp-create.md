@@ -332,7 +332,7 @@ If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
 
 ### Step 1: Choose Template
 
-Use `.claude/templates/prp_template.md` as your template structure - it contains all necessary sections and formatting specific to TypeScript/React development.
+Use `.claude/templates/TEMPLATE-PRP.md` as your template structure - it contains all necessary sections and formatting specific to TypeScript/React development.
 
 ### Step 2: Context Completeness Validation
 

@@ -184,17 +184,17 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
       <TooltipContent
         side="bottom"
         align="center"
-        className="max-w-xs space-y-2 text-left leading-snug text-white"
+        className="max-w-xs space-y-2 text-left leading-snug"
       >
         <div>
-          <p className="font-semibold text-xs text-white">{tooltip.title}</p>
+          <p className="font-semibold text-xs">{tooltip.title}</p>
           {tooltip.type && (
-            <p className="text-2xs text-white/70 mt-0.5">{tooltip.type}</p>
+            <p className="text-2xs opacity-70 mt-0.5">{tooltip.type}</p>
           )}
-          <p className="text-xs mt-1 text-white">{tooltip.formula}</p>
+          <p className="text-xs mt-1">{tooltip.formula}</p>
         </div>
         {tooltip.details?.length ? (
-          <ul className="list-disc space-y-1 pl-4 text-xs text-white">
+          <ul className="list-disc space-y-1 pl-4 text-xs">
             {tooltip.details.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}

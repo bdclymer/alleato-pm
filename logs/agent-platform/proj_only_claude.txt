@@ -144,7 +144,7 @@ templates/TEMPLATE-INITIAL.md
 templates/feature-context.md
 templates/feature-status.md
 templates/migration-template.md
-templates/prp_template.md
+templates/TEMPLATE-PRP.md
 templates/tasks_template.md
 templates/verification-template.html
 testing/ANTI-PATTERNS.md

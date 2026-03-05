@@ -29,6 +29,8 @@
     "gen:playwright-prompt:all": "node scripts/generate-playwright-skill-prompts-batch.cjs",
     "dashboard:playwright": "node scripts/build-playwright-dashboard.cjs",
     "dashboard:playwright:open": "npm run dashboard:playwright && open output/playwright/dashboard/index.html",
+    "verify:browser": "node scripts/agent-browser-verify.mjs",
+    "verify:browser:cleanup": "node scripts/agent-browser-cleanup.mjs --hours 48",
     "lint:md": "markdownlint-cli2",
     "lint:md:fix": "markdownlint-cli2 --fix",
     "cache:verify": "npx tsx scripts/verify-cache-setup.ts",

@@ -21,6 +21,7 @@ export const ChangeEventStatus = z.enum([
   "Approved",
   "Rejected",
   "Closed",
+  "Void",
   "Converted",
 ]);
 export const ChangeEventOrigin = z.enum(["Internal", "RFI", "Field"]);
@@ -32,6 +33,7 @@ export const LineItemRevenueSource = z.enum([
 export const createChangeEventSchema = z.object({
   title: z.string().min(1).max(255, "Title must be less than 255 characters"),
   type: ChangeEventType,
+  status: ChangeEventStatus.optional(),
   reason: z.string().max(100).optional(),
   scope: ChangeEventScope,
   origin: ChangeEventOrigin.optional(),

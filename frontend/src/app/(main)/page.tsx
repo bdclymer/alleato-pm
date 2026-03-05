@@ -4,7 +4,8 @@ import * as React from "react";
 import { Project } from "@/types/portfolio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Check, X, MapPin, Calendar, Building2 } from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -30,6 +31,232 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "status", label: "Status", defaultVisible: true },
 ];
 
+// Map frontend field keys to database column names
+const FIELD_TO_DB_COLUMN: Record<string, string> = {
+  name: "name",
+  client: "client",
+  startDate: "start date",
+  state: "state",
+  phase: "phase",
+  category: "category",
+};
+
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// ── Inline Editable Cell ────────────────────────────────────────────────
+function EditableCell({
+  value,
+  projectId,
+  field,
+  onSave,
+  type = "text",
+  displayValue,
+}: {
+  value: string;
+  projectId: string;
+  field: string;
+  onSave: (projectId: string, field: string, value: string) => Promise<void>;
+  type?: "text" | "date";
+  displayValue?: string;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(value);
+  const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  // Sync draft when value changes externally
+  React.useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [value, editing]);
+
+  const handleSave = async () => {
+    if (draft === value) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    try {
+      await onSave(projectId, field, draft);
+      setEditing(false);
+    } catch {
+      setDraft(value);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSave();
+    if (e.key === "Escape") handleCancel();
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <Input
+          ref={inputRef}
+          type={type}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleSave}
+          className="h-7 min-w-[80px] text-sm"
+          disabled={saving}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onClick={(e) => { e.stopPropagation(); handleSave(); }}
+          disabled={saving}
+        >
+          <Check className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 shrink-0"
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleCancel(); }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <span
+      className="cursor-text rounded px-1 py-0.5 hover:bg-muted/60 transition-colors"
+      onClick={(e) => {
+        e.stopPropagation();
+        setEditing(true);
+      }}
+      title="Click to edit"
+    >
+      {displayValue ?? (value || "-")}
+    </span>
+  );
+}
+
+// ── Project Card View ───────────────────────────────────────────────────
+function ProjectCard({
+  project,
+  onClick,
+}: {
+  project: Project;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/20"
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate font-medium text-foreground">{project.name}</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            #{project.jobNumber}
+          </p>
+        </div>
+        <Badge variant={project.status === "Active" ? "default" : "secondary"} className="shrink-0">
+          {project.status}
+        </Badge>
+      </div>
+
+      <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+        {project.client && (
+          <div className="flex items-center gap-1.5">
+            <Building2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{project.client}</span>
+          </div>
+        )}
+        {project.state && (
+          <div className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span>{project.state}</span>
+          </div>
+        )}
+        {project.startDate && (
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            <span>{formatDate(project.startDate)}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+        {project.phase && (
+          <Badge variant="outline" className="text-xs">{project.phase}</Badge>
+        )}
+        {project.category && (
+          <Badge variant="secondary" className="text-xs">{project.category}</Badge>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Project List View ───────────────────────────────────────────────────
+function ProjectListItem({
+  project,
+  onClick,
+}: {
+  project: Project;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      className="group flex cursor-pointer items-center gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:bg-muted/50"
+      onClick={onClick}
+    >
+      <div className="min-w-0 flex-1">
+        <span className="font-medium text-foreground">{project.name}</span>
+        <span className="ml-2 text-sm text-muted-foreground">#{project.jobNumber}</span>
+      </div>
+      <div className="hidden items-center gap-3 text-sm text-muted-foreground sm:flex">
+        {project.client && <span>{project.client}</span>}
+        {project.state && <span>{project.state}</span>}
+        {project.startDate && <span>{formatDate(project.startDate)}</span>}
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {project.phase && (
+          <Badge variant="outline" className="text-xs">{project.phase}</Badge>
+        )}
+        <Badge
+          variant={project.status === "Active" ? "default" : "secondary"}
+          className="text-xs"
+        >
+          {project.status}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ───────────────────────────────────────────────────────────
+
 export default function PortfolioPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,7 +271,7 @@ export default function PortfolioPage() {
       if (contentType.includes("application/json")) {
         try {
           return await response.json();
-        } catch (error) {
+        } catch {
           return null;
         }
       }
@@ -148,6 +375,30 @@ export default function PortfolioPage() {
     fetchProjects();
   }, [parseProjectsResponse]);
 
+  // ── Inline edit save handler ────────────────────────────────────────
+  const handleInlineSave = React.useCallback(
+    async (projectId: string, field: string, value: string) => {
+      const dbColumn = FIELD_TO_DB_COLUMN[field];
+      if (!dbColumn) return;
+
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [dbColumn]: value || null }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      // Optimistic update local state
+      setProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId ? { ...p, [field]: value } : p,
+        ),
+      );
+    },
+    [],
+  );
+
   // Extract unique phase, category, and client options from projects
   const phaseOptions = React.useMemo(() => {
     const phases = new Set(
@@ -217,9 +468,9 @@ export default function PortfolioPage() {
       sortDirection: "asc",
       visibleColumns: defaultVisibleColumns,
       filters: {
-        client: undefined,
-        phase: undefined,
-        category: undefined,
+        client: searchParams.get("client") ?? undefined,
+        phase: searchParams.get("phase") ?? "Current",
+        category: searchParams.get("category") ?? undefined,
       },
     },
   });
@@ -281,37 +532,87 @@ export default function PortfolioPage() {
   const PROJECT_TABLE_COLUMNS: TableColumn<Project>[] = [
     {
       ...PROJECT_COLUMNS[0],
-      render: (item) => <span className="font-medium">{item.name}</span>,
+      render: (item) => (
+        <span
+          className="font-medium text-primary hover:underline cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/${item.id}/home`);
+          }}
+        >
+          {item.name}
+        </span>
+      ),
       sortValue: (item) => item.name,
     },
     {
       ...PROJECT_COLUMNS[1],
-      render: (item) => <span>{item.jobNumber ?? "-"}</span>,
+      render: (item) => (
+        <span className="text-muted-foreground">{item.jobNumber ?? "-"}</span>
+      ),
       sortValue: (item) => item.jobNumber ?? "",
     },
     {
       ...PROJECT_COLUMNS[2],
-      render: (item) => <span>{item.client || "-"}</span>,
+      render: (item) => (
+        <EditableCell
+          value={item.client || ""}
+          projectId={item.id}
+          field="client"
+          onSave={handleInlineSave}
+        />
+      ),
       sortValue: (item) => item.client ?? "",
     },
     {
       ...PROJECT_COLUMNS[3],
-      render: (item) => <span>{item.startDate || "-"}</span>,
+      render: (item) => (
+        <EditableCell
+          value={item.startDate || ""}
+          projectId={item.id}
+          field="startDate"
+          onSave={handleInlineSave}
+          type="date"
+          displayValue={formatDate(item.startDate)}
+        />
+      ),
       sortValue: (item) => item.startDate ?? "",
     },
     {
       ...PROJECT_COLUMNS[4],
-      render: (item) => <span>{item.state || "-"}</span>,
+      render: (item) => (
+        <EditableCell
+          value={item.state || ""}
+          projectId={item.id}
+          field="state"
+          onSave={handleInlineSave}
+        />
+      ),
       sortValue: (item) => item.state ?? "",
     },
     {
       ...PROJECT_COLUMNS[5],
-      render: (item) => <Badge variant="outline">{item.phase || "-"}</Badge>,
+      render: (item) => (
+        <EditableCell
+          value={item.phase || ""}
+          projectId={item.id}
+          field="phase"
+          onSave={handleInlineSave}
+          displayValue={item.phase || "-"}
+        />
+      ),
       sortValue: (item) => item.phase ?? "",
     },
     {
       ...PROJECT_COLUMNS[6],
-      render: (item) => <span>{item.category || "-"}</span>,
+      render: (item) => (
+        <EditableCell
+          value={item.category || ""}
+          projectId={item.id}
+          field="category"
+          onSave={handleInlineSave}
+        />
+      ),
       sortValue: (item) => item.category ?? "",
     },
     {
@@ -346,8 +647,14 @@ export default function PortfolioPage() {
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.client) ||
-    Boolean(activeFilters.phase) ||
+    (Boolean(activeFilters.phase) &&
+      String(activeFilters.phase).toLowerCase() !== "current") ||
     Boolean(activeFilters.category);
+
+  const navigateToProject = React.useCallback(
+    (project: Project) => router.push(`/${project.id}/home`),
+    [router],
+  );
 
   return (
     <UnifiedTablePage
@@ -379,7 +686,7 @@ export default function PortfolioPage() {
         onClearFilters: () =>
           handleFilterChange({
             client: undefined,
-            phase: undefined,
+            phase: "Current",
             category: undefined,
           }),
         columns: PROJECT_COLUMNS,
@@ -393,9 +700,22 @@ export default function PortfolioPage() {
       table={{
         columns: PROJECT_TABLE_COLUMNS,
         getRowId: (item) => item.id,
-        onRowClick: (item) => {
-          router.push(`/${item.id}/home`);
-        },
+      }}
+      views={{
+        card: (item) => (
+          <ProjectCard
+            key={item.id}
+            project={item}
+            onClick={() => navigateToProject(item)}
+          />
+        ),
+        list: (item) => (
+          <ProjectListItem
+            key={item.id}
+            project={item}
+            onClick={() => navigateToProject(item)}
+          />
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,

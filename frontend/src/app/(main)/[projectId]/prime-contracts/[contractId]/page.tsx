@@ -8,16 +8,11 @@ import {
   Calculator,
   Check,
   ChevronDown,
-  ChevronRight,
   Download,
   DollarSign,
   FileText,
   History,
-  Lock,
   Mail,
-  Maximize2,
-  Minimize2,
-  MoreVertical,
   Pencil,
   Plus,
   Settings,
@@ -28,18 +23,10 @@ import {
 import { toast } from "sonner";
 
 import { ProjectPageHeader } from "@/components/layout";
-import { cn } from "@/lib/utils";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
-import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +43,6 @@ import {
 } from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -66,139 +52,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-// Local type aligned with contract_change_orders DB table (UUID-based, for prime contracts)
-interface PrimeContractCO {
-  id: string;
-  contract_id: string;
-  change_order_number: string;
-  description: string;
-  amount: number;
-  status: string;
-  requested_by: string | null;
-  requested_date: string;
-  approved_by: string | null;
-  approved_date: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  updated_at: string;
-}
-import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
-
-interface PaymentApplication {
-  id: string;
-  contract_id: string;
-  project_id: number;
-  application_number: string;
-  status: "draft" | "submitted" | "approved" | "rejected";
-  amount: number;
-  retention_amount: number;
-  net_amount: number;
-  period_from: string | null;
-  period_to: string | null;
-  submitted_at: string | null;
-  submitted_by: string | null;
-  approved_at: string | null;
-  approved_by: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Payment {
-  id: string;
-  contract_id: string;
-  project_id: number;
-  payment_application_id: string | null;
-  payment_number: string | null;
-  amount: number;
-  payment_date: string;
-  method: string | null;
-  reference_number: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  payment_application?: {
-    id: string;
-    application_number: string;
-    amount: number;
-    status: string;
-  } | null;
-}
-
-interface VerticalMarkup {
-  id: string;
-  markup_type: string;
-  percentage: number;
-  calculation_order: number;
-  compound: boolean;
-  project_id: number;
-}
-
-interface MarkupCalculationResult {
-  markup_type: string;
-  percentage: number;
-  compound: boolean;
-  baseAmount: number;
-  markupAmount: number;
-  runningTotal: number;
-}
-
-interface MarkupCalculationResponse {
-  baseAmount: number;
-  calculations: MarkupCalculationResult[];
-  totalMarkup: number;
-  finalAmount: number;
-}
-
-interface Contract {
-  id: string;
-  contract_number: string | null;
-  title: string;
-  status: "draft" | "out_for_bid" | "out_for_signature" | "approved" | "complete" | "terminated";
-  executed: boolean;
-  executed_at: string | null;
-  original_contract_value: number;
-  revised_contract_value: number;
-  start_date: string | null;
-  end_date: string | null;
-  substantial_completion_date: string | null;
-  actual_completion_date: string | null;
-  signed_contract_received_date: string | null;
-  contract_termination_date: string | null;
-  retention_percentage: number;
-  payment_terms: string | null;
-  billing_schedule: string | null;
-  description: string | null;
-  inclusions: string | null;
-  exclusions: string | null;
-  is_private: boolean;
-  created_at: string;
-  created_by: string | null;
-  vendor_id: string | null;
-  client_id: number | null;
-  project_id: number;
-  vendor?: { id: string; name: string } | null;
-  client?: { id: number; name: string } | null;
-  // Calculated financial fields from contract_financial_summary_mv
-  approved_change_orders: number;
-  pending_change_orders: number;
-  draft_change_orders: number;
-  pending_revised_contract_amount: number;
-  invoiced_amount: number;
-  payments_received: number;
-  remaining_balance: number;
-  percent_paid: number;
-}
-
-interface BudgetCode {
-  id: string;
-  code: string;
-  description: string;
-  costType: string | null;
-  fullLabel: string;
-  costTypeId?: string | null;
-}
+import { PrimeContractTabs } from "./components/PrimeContractTabs";
+import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
+import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
+import type {
+  BudgetCode,
+  ChangeOrderFormState,
+  Contract,
+  ContractAttachment,
+  ContractLineItem,
+  ContractTab,
+  InvoiceFormState,
+  LineItemFormState,
+  MarkupCalculationResponse,
+  Payment,
+  PaymentApplication,
+  PaymentFormState,
+  PrimeContractCO,
+  VerticalMarkup,
+} from "./types";
 
 export default function ProjectContractDetailPage() {
   const router = useRouter();
@@ -213,7 +87,7 @@ export default function ProjectContractDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [generalInfoOpen, setGeneralInfoOpen] = useState(true);
   const [contractSummaryOpen, setContractSummaryOpen] = useState(true);
-  const [lineItems, setLineItems] = useState<ContractLineItemWithCostCode[]>([]);
+  const [lineItems, setLineItems] = useState<ContractLineItem[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
   const [changeOrdersLoading, setChangeOrdersLoading] = useState(false);
@@ -224,7 +98,7 @@ export default function ProjectContractDetailPage() {
   const [paymentsReceivedLoading, setPaymentsReceivedLoading] = useState(false);
   const [showAddInvoiceDialog, setShowAddInvoiceDialog] = useState(false);
   const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
-  const [invoiceForm, setInvoiceForm] = useState({
+  const [invoiceForm, setInvoiceForm] = useState<InvoiceFormState>({
     application_number: "",
     amount: "",
     retention_amount: "",
@@ -232,7 +106,7 @@ export default function ProjectContractDetailPage() {
     period_to: "",
     notes: "",
   });
-  const [paymentForm, setPaymentForm] = useState({
+  const [paymentForm, setPaymentForm] = useState<PaymentFormState>({
     amount: "",
     payment_date: "",
     payment_application_id: "",
@@ -248,11 +122,11 @@ export default function ProjectContractDetailPage() {
   const [previewBaseAmount, setPreviewBaseAmount] = useState<string>("10000");
   const [calculationResult, setCalculationResult] = useState<MarkupCalculationResponse | null>(null);
   const [calculationLoading, setCalculationLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<ContractTab>("overview");
   const [isSovFullscreen, setIsSovFullscreen] = useState(false);
   const [isSovOpen, setIsSovOpen] = useState(true);
   const [showAddLineItemDialog, setShowAddLineItemDialog] = useState(false);
-  const [lineItemForm, setLineItemForm] = useState({
+  const [lineItemForm, setLineItemForm] = useState<LineItemFormState>({
     lineNumber: "",
     description: "",
     quantity: "1",
@@ -261,25 +135,21 @@ export default function ProjectContractDetailPage() {
     budgetCodeId: "",
   });
   const [isSubmittingLineItem, setIsSubmittingLineItem] = useState(false);
+  const [lineItemToDelete, setLineItemToDelete] = useState<ContractLineItem | null>(null);
+  const [isDeletingLineItem, setIsDeletingLineItem] = useState(false);
   const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     useState(false);
 
   // Attachments state
-  const [attachments, setAttachments] = useState<Array<{
-    id: string;
-    fileName: string;
-    url: string;
-    uploadedBy: { id: string; email: string } | null;
-    uploadedAt: string;
-  }>>([]);
+  const [attachments, setAttachments] = useState<ContractAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
   // Change Order create/reject dialog state
   const [showNewCoDialog, setShowNewCoDialog] = useState(false);
-  const [coForm, setCoForm] = useState({
+  const [coForm, setCoForm] = useState<ChangeOrderFormState>({
     change_order_number: "",
     description: "",
     amount: "",
@@ -732,6 +602,32 @@ export default function ProjectContractDetailPage() {
     }
   };
 
+  const handleDeleteLineItem = async () => {
+    if (!lineItemToDelete) return;
+
+    setIsDeletingLineItem(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemToDelete.id}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete line item");
+        return;
+      }
+
+      setLineItems((prev) => prev.filter((li) => li.id !== lineItemToDelete.id));
+      toast.success("Line item deleted");
+    } catch {
+      toast.error("Failed to delete line item");
+    } finally {
+      setIsDeletingLineItem(false);
+      setLineItemToDelete(null);
+    }
+  };
+
   // Fetch attachments when overview tab is active
   useEffect(() => {
     if (!contract) return;
@@ -1135,695 +1031,44 @@ export default function ProjectContractDetailPage() {
         }
       />
 
-      {/* Site-standard tabs with border-bottom and brand orange */}
-      <div className="px-4 sm:px-6 lg:px-8 mb-[var(--card-gap)]">
-        <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Contract tabs">
-          <div className="flex min-w-max space-x-6 md:space-x-8">
-            <button
-              type="button"
-              onClick={() => setActiveTab("overview")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "overview"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "overview" ? "page" : undefined}
-            >
-              General
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("change-orders")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "change-orders"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "change-orders" ? "page" : undefined}
-            >
-              <span>Change Orders</span>
-              {changeOrdersCount > 0 && (
-                <span
-                  className={cn(
-                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    activeTab === "change-orders"
-                      ? "bg-brand/10 text-brand"
-                      : "bg-muted text-foreground",
-                  )}
-                >
-                  {changeOrdersCount}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("invoices")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "invoices"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "invoices" ? "page" : undefined}
-            >
-              <span>Invoices</span>
-              {paymentApplications.length > 0 && (
-                <span
-                  className={cn(
-                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    activeTab === "invoices"
-                      ? "bg-brand/10 text-brand"
-                      : "bg-muted text-foreground",
-                  )}
-                >
-                  {paymentApplications.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("payments")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "payments"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "payments" ? "page" : undefined}
-            >
-              <span>Payments Received</span>
-              {payments.length > 0 && (
-                <span
-                  className={cn(
-                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    activeTab === "payments"
-                      ? "bg-brand/10 text-brand"
-                      : "bg-muted text-foreground",
-                  )}
-                >
-                  {payments.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("emails")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "emails"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "emails" ? "page" : undefined}
-            >
-              Emails
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("history")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "history"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "history" ? "page" : undefined}
-            >
-              Change History
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("financial-markup")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "financial-markup"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "financial-markup" ? "page" : undefined}
-            >
-              Financial Markup
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("advanced-settings")}
-              className={cn(
-                "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                activeTab === "advanced-settings"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-              )}
-              aria-current={activeTab === "advanced-settings" ? "page" : undefined}
-            >
-              Advanced Settings
-            </button>
-          </div>
-        </nav>
-      </div>
+      <PrimeContractTabs
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        changeOrdersCount={changeOrdersCount}
+        paymentApplicationsCount={paymentApplications.length}
+        paymentsCount={payments.length}
+      />
 
       <TableLayout>
-        {activeTab === "overview" && (
-          <div className="space-y-6 pb-20">
-            <section className="rounded-2xl bg-background">
-              <div className="pb-6 pt-4">
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                  <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-base font-semibold">Parties & Terms</h3>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2"
-                          onClick={() => setGeneralInfoOpen((prev) => !prev)}
-                        >
-                          {generalInfoOpen ? "Hide" : "Show"}
-                          <ChevronRight
-                            className={cn(
-                              "h-4 w-4 transition-transform",
-                              generalInfoOpen ? "rotate-90" : "rotate-0",
-                            )}
-                          />
-                        </Button>
-                      </div>
-                      <Collapsible open={generalInfoOpen}>
-                        <CollapsibleContent>
-                          <dl className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Title
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-semibold leading-6">
-                                {contract.title}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Contract #
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-semibold leading-6">
-                                {contract.contract_number || "Not set"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Owner/Client
-                              </dt>
-                              <dd
-                                className={cn(
-                                  "mt-1 text-[15px] leading-6",
-                                  contract.client?.name
-                                    ? "font-semibold text-blue-600 hover:underline cursor-pointer"
-                                    : "font-normal italic text-muted-foreground",
-                                )}
-                              >
-                                {contract.client?.name || "Not set"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Contractor
-                              </dt>
-                              <dd
-                                className={cn(
-                                  "mt-1 text-[15px] leading-6",
-                                  contract.vendor?.name
-                                    ? "font-semibold text-blue-600 hover:underline cursor-pointer"
-                                    : "font-normal italic text-muted-foreground",
-                                )}
-                              >
-                                {contract.vendor?.name || "Not set"}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Architect/Engineer
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-normal italic leading-6 text-muted-foreground">
-                                Not set
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Default Retainage
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-semibold leading-6">
-                                {contract.retention_percentage ?? 0}%
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Status
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-semibold leading-6">
-                                {formatStatusLabel(contract.status)}
-                              </dd>
-                            </div>
-                            <div>
-                              <dt className="text-xs font-medium text-muted-foreground">
-                                Executed
-                              </dt>
-                              <dd className="mt-1 text-[15px] font-semibold leading-6">
-                                {contract.executed ? "Yes" : "No"}
-                              </dd>
-                            </div>
-                          </dl>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </div>
-
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <h3 className="text-base font-semibold">Description</h3>
-                      <div className="mt-4 grid gap-6">
-                        <div>
-                          <p
-                            className={cn(
-                              "mt-2 text-[15px] leading-7",
-                              getTextValue(contract.description).isMissing
-                                ? "font-normal italic text-muted-foreground"
-                                : "text-foreground/80",
-                            )}
-                          >
-                            {getTextValue(contract.description).text}
-                          </p>
-                        </div>
-                        <div className="rounded-lg border border-border bg-muted/30 p-4">
-                          <div className="flex items-center justify-between mb-4">
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Attachments {attachments.length > 0 && `(${attachments.length})`}
-                            </p>
-                            <label className="cursor-pointer">
-                              <input
-                                type="file"
-                                className="sr-only"
-                                disabled={isUploadingAttachment}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleUploadAttachment(file);
-                                  e.target.value = "";
-                                }}
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                disabled={isUploadingAttachment}
-                              >
-                                <span>
-                                  <Plus className="h-4 w-4 mr-2" />
-                                  {isUploadingAttachment ? "Uploading..." : "Add Attachment"}
-                                </span>
-                              </Button>
-                            </label>
-                          </div>
-                          {attachmentsLoading ? (
-                            <p className="text-sm text-muted-foreground italic">Loading...</p>
-                          ) : attachments.length === 0 ? (
-                            <p className="text-sm italic text-muted-foreground">No attachments yet</p>
-                          ) : (
-                            <ul className="space-y-2">
-                              {attachments.map((att) => (
-                                <li key={att.id} className="flex items-center justify-between text-sm">
-                                  <a
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline truncate max-w-[60%]"
-                                  >
-                                    {att.fileName}
-                                  </a>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(att.uploadedAt)}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <h3 className="text-base font-semibold">Inclusions & Exclusions</h3>
-                      <div className="mt-4 space-y-6">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Inclusions</p>
-                          {inclusionsList.length === 0 ? (
-                            <p className="mt-2 text-[15px] italic text-muted-foreground">Not set</p>
-                          ) : (
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] leading-7 text-foreground/80">
-                              {inclusionsList.map((item) => (
-                                <li key={item}>{item}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Exclusions</p>
-                          {exclusionsList.length === 0 ? (
-                            <p className="mt-2 text-[15px] italic text-muted-foreground">Not set</p>
-                          ) : (
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-[15px] leading-7 text-foreground/80">
-                              {exclusionsList.map((item) => (
-                                <li key={item}>{item}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-base font-semibold">Financial Snapshot</h3>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2"
-                          onClick={() => setContractSummaryOpen((prev) => !prev)}
-                        >
-                          {contractSummaryOpen ? "Hide" : "Show"}
-                          <ChevronRight
-                            className={cn(
-                              "h-4 w-4 transition-transform",
-                              contractSummaryOpen ? "rotate-90" : "rotate-0",
-                            )}
-                          />
-                        </Button>
-                      </div>
-                      <Collapsible open={contractSummaryOpen}>
-                        <CollapsibleContent>
-                          <dl className="mt-4 space-y-4 text-sm">
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Original Contract Amount</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.original_contract_value)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Revised Contract Amount</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.revised_contract_value)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Pending Revised Contract Amount</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.pending_revised_contract_amount)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Pending Change Orders</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.pending_change_orders)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Approved Change Orders</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.approved_change_orders)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Draft Change Orders</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.draft_change_orders)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Invoices</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.invoiced_amount)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Payments Received</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.payments_received)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <dt className="text-muted-foreground">Remaining Balance</dt>
-                              <dd className="text-right font-semibold tabular-nums">
-                                {formatCurrency(contract.remaining_balance)}
-                              </dd>
-                            </div>
-                            <div className="flex items-center justify-between pt-4">
-                              <dt className="text-muted-foreground">Percent Paid</dt>
-                              <dd className="text-right text-base font-semibold tabular-nums">{contract.percent_paid}%</dd>
-                            </div>
-                          </dl>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </div>
-
-                    <div className="rounded-xl bg-muted/40 p-4">
-                      <h3 className="text-base font-semibold">Key Dates</h3>
-                      <dl className="mt-4 space-y-4 text-sm">
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Start Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.start_date ? formatDate(contract.start_date) : "Not set"}
-                          </dd>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Estimated Completion Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.end_date ? formatDate(contract.end_date) : "Not set"}
-                          </dd>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Substantial Completion Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.substantial_completion_date
-                              ? formatDate(contract.substantial_completion_date)
-                              : "Not set"}
-                          </dd>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Actual Completion Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.actual_completion_date
-                              ? formatDate(contract.actual_completion_date)
-                              : "Not set"}
-                          </dd>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Signed Contract Received Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.signed_contract_received_date
-                              ? formatDate(contract.signed_contract_received_date)
-                              : "Not set"}
-                          </dd>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <dt className="text-muted-foreground">Contract Termination Date</dt>
-                          <dd className="text-right font-medium">
-                            {contract.contract_termination_date
-                              ? formatDate(contract.contract_termination_date)
-                              : "Not set"}
-                          </dd>
-                        </div>
-                      </dl>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section
-              className={cn(
-                "rounded-xl bg-muted/40 px-6 py-6",
-                isSovFullscreen && "fixed inset-3 z-50 overflow-auto rounded-2xl bg-background shadow-2xl",
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsSovOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-4"
-                >
-                  <ChevronRight
-                    className={cn("h-5 w-5 transition-transform", isSovOpen ? "rotate-90" : "")}
-                  />
-                  <h3 className="text-2xl font-semibold">Schedule of Values</h3>
-                </button>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSovFullscreen((prev) => !prev)}
-                  >
-                    {isSovFullscreen ? (
-                      <Minimize2 className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Maximize2 className="h-4 w-4 mr-2" />
-                    )}
-                    {isSovFullscreen ? "Close Fullscreen" : "Open Fullscreen"}
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setIsSovFullscreen(true)}>
-                    Edit
-                  </Button>
-                </div>
-              </div>
-
-              {isSovOpen && (
-                <div className="mt-4 space-y-4">
-                  <Button variant="outline" size="sm" className="min-w-[180px] justify-between">
-                    Add Group
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-
-                  {isSovFullscreen && (
-                    <div className="rounded-md border-l-4 border-amber-500 bg-amber-50 p-4 text-sm">
-                      <p className="font-semibold">Any changes will only apply to future invoices</p>
-                      <p>Existing invoices will not be affected.</p>
-                    </div>
-                  )}
-
-                  {lineItemsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Loading schedule of values...
-                    </div>
-                  ) : lineItems.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                      <p>No SOV lines yet</p>
-                      <p className="text-xs mt-2">
-                        Add SOV lines with budget codes to track the contract value
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-border bg-background overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          {isSovFullscreen ? (
-                            <TableRow>
-                              <TableHead className="w-16">#</TableHead>
-                              <TableHead>Budget Code</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
-                              <TableHead className="text-right">Billed to Date</TableHead>
-                              <TableHead className="text-right">Amount Remaining</TableHead>
-                              <TableHead className="w-14" />
-                            </TableRow>
-                          ) : (
-                            <TableRow>
-                              <TableHead>Budget Code</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                          )}
-                        </TableHeader>
-                        <TableBody>
-                          {lineItems.map((item, index) => {
-                            const code = item.cost_code?.code || "--";
-                            const name = item.cost_code?.name || "";
-                            const amount = item.total_cost ?? 0;
-                            const billedToDate = amount;
-                            const amountRemaining = 0;
-
-                            return isSovFullscreen ? (
-                              <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell>{item.line_number || index + 1}</TableCell>
-                                <TableCell>
-                                  <div className="font-medium">{code}</div>
-                                  <div className="text-muted-foreground text-sm">{name}</div>
-                                </TableCell>
-                                <TableCell>{item.description || "--"}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amount)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(billedToDate)}
-                                </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amountRemaining)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  {index < lineItems.length - 1 ? (
-                                    <Lock className="ml-auto h-4 w-4 text-muted-foreground" />
-                                  ) : (
-                                    <MoreVertical className="ml-auto h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell>
-                                  <div className="font-medium">{code}</div>
-                                  <div className="text-muted-foreground text-sm">{name}</div>
-                                </TableCell>
-                                <TableCell>{item.description || "--"}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amount)}
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                        <tfoot>
-                          {isSovFullscreen ? (
-                            <TableRow className="bg-muted/60 font-medium">
-                              <TableCell colSpan={3} className="text-right">
-                                Total:
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovTotal)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovBilledToDateTotal)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovRemainingTotal)}
-                              </TableCell>
-                              <TableCell />
-                            </TableRow>
-                          ) : (
-                            <TableRow className="bg-muted/60 font-medium">
-                              <TableCell>
-                                <Button size="sm" onClick={() => setShowAddLineItemDialog(true)}>
-                                  Add Line
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-right">Total:</TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovTotal)}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </tfoot>
-                      </Table>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <Button variant="outline" size="sm" className="min-w-[100px] justify-between">
-                      Import
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                    {isSovFullscreen && (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={() => setIsSovFullscreen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={() => setIsSovFullscreen(false)}>Save</Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-        )}
+        <PrimeContractOverviewTab
+          activeTab={activeTab}
+          contract={contract}
+          generalInfoOpen={generalInfoOpen}
+          setGeneralInfoOpen={setGeneralInfoOpen}
+          contractSummaryOpen={contractSummaryOpen}
+          setContractSummaryOpen={setContractSummaryOpen}
+          attachments={attachments}
+          attachmentsLoading={attachmentsLoading}
+          isUploadingAttachment={isUploadingAttachment}
+          handleUploadAttachment={handleUploadAttachment}
+          formatDate={formatDate}
+          getTextValue={getTextValue}
+          inclusionsList={inclusionsList}
+          exclusionsList={exclusionsList}
+          formatStatusLabel={formatStatusLabel}
+          formatCurrency={formatCurrency}
+          isSovFullscreen={isSovFullscreen}
+          setIsSovFullscreen={setIsSovFullscreen}
+          isSovOpen={isSovOpen}
+          setIsSovOpen={setIsSovOpen}
+          lineItemsLoading={lineItemsLoading}
+          lineItems={lineItems}
+          setLineItemToDelete={setLineItemToDelete}
+          sovTotal={sovTotal}
+          sovBilledToDateTotal={sovBilledToDateTotal}
+          sovRemainingTotal={sovRemainingTotal}
+          setShowAddLineItemDialog={setShowAddLineItemDialog}
+        />
 
         
 {activeTab === "change-orders" && (
@@ -2733,254 +1978,38 @@ export default function ProjectContractDetailPage() {
         )}
       </TableLayout>
 
-      {/* Add Line Item Dialog */}
-      <Modal open={showAddLineItemDialog} onOpenChange={setShowAddLineItemDialog}>
-        <ModalContent className="sm:max-w-[500px]">
-          <ModalHeader>
-            <ModalTitle>Add Schedule of Values Line</ModalTitle>
-            <ModalDescription>
-              Add a new line to the Schedule of Values for this contract.
-            </ModalDescription>
-          </ModalHeader>
-
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Budget Code</Label>
-              <BudgetCodeSelector
-                value={lineItemForm.budgetCodeId}
-                onValueChange={(value) =>
-                  setLineItemForm((prev) => ({ ...prev, budgetCodeId: value }))
-                }
-                budgetCodes={budgetCodes}
-                loading={budgetCodesLoading}
-                onCreateNew={() => setShowCreateBudgetCodeModal(true)}
-                placeholder="Select budget code..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="line-number">
-                Line Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="line-number"
-                type="number"
-                min="1"
-                step="1"
-                value={lineItemForm.lineNumber}
-                onChange={(e) =>
-                  setLineItemForm({ ...lineItemForm, lineNumber: e.target.value })
-                }
-                placeholder="1"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="description">
-                Description <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="description"
-                value={lineItemForm.description}
-                onChange={(e) =>
-                  setLineItemForm({ ...lineItemForm, description: e.target.value })
-                }
-                placeholder="Enter line item description"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity</Label>
-                <Input
-                  id="quantity"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={lineItemForm.quantity}
-                  onChange={(e) =>
-                    setLineItemForm({ ...lineItemForm, quantity: e.target.value })
-                  }
-                  placeholder="1"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="unit-cost">Unit Cost</Label>
-                <Input
-                  id="unit-cost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={lineItemForm.unitCost}
-                  onChange={(e) =>
-                    setLineItemForm({ ...lineItemForm, unitCost: e.target.value })
-                  }
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="unit-of-measure">Unit of Measure</Label>
-              <Input
-                id="unit-of-measure"
-                value={lineItemForm.unitOfMeasure}
-                onChange={(e) =>
-                  setLineItemForm({ ...lineItemForm, unitOfMeasure: e.target.value })
-                }
-                placeholder="e.g., SF, LF, EA"
-              />
-            </div>
-
-            <div className="rounded-lg bg-muted p-4 text-sm">
-              <p className="font-medium mb-1">Total Cost</p>
-              <p className="text-lg">
-                {formatCurrency(
-                  parseFloat(lineItemForm.quantity || "0") *
-                    parseFloat(lineItemForm.unitCost || "0")
-                )}
-              </p>
-            </div>
-          </div>
-
-          <ModalFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowAddLineItemDialog(false)}
-              disabled={isSubmittingLineItem}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleAddLineItem} disabled={isSubmittingLineItem}>
-              {isSubmittingLineItem ? "Adding..." : "Add SOV Line"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      <CreateBudgetCodeModal
-        open={showCreateBudgetCodeModal}
-        onOpenChange={setShowCreateBudgetCodeModal}
+      <PrimeContractDialogs
+        showAddLineItemDialog={showAddLineItemDialog}
+        setShowAddLineItemDialog={setShowAddLineItemDialog}
+        lineItemForm={lineItemForm}
+        setLineItemForm={setLineItemForm}
+        budgetCodes={budgetCodes}
+        budgetCodesLoading={budgetCodesLoading}
+        setShowCreateBudgetCodeModal={setShowCreateBudgetCodeModal}
+        showCreateBudgetCodeModal={showCreateBudgetCodeModal}
         projectId={projectId}
-        onSuccess={handleBudgetCodeCreated}
+        handleBudgetCodeCreated={handleBudgetCodeCreated}
+        isSubmittingLineItem={isSubmittingLineItem}
+        handleAddLineItem={handleAddLineItem}
+        formatCurrency={formatCurrency}
+        showNewCoDialog={showNewCoDialog}
+        setShowNewCoDialog={setShowNewCoDialog}
+        coForm={coForm}
+        setCoForm={setCoForm}
+        isSubmittingCo={isSubmittingCo}
+        handleCreateCo={handleCreateCo}
+        showRejectCoDialog={showRejectCoDialog}
+        setShowRejectCoDialog={setShowRejectCoDialog}
+        setRejectingCoId={setRejectingCoId}
+        rejectionReason={rejectionReason}
+        setRejectionReason={setRejectionReason}
+        isRejectingCo={isRejectingCo}
+        handleRejectCo={handleRejectCo}
+        lineItemToDelete={lineItemToDelete}
+        setLineItemToDelete={setLineItemToDelete}
+        isDeletingLineItem={isDeletingLineItem}
+        handleDeleteLineItem={handleDeleteLineItem}
       />
-
-      {/* New Change Order Dialog */}
-      <Modal open={showNewCoDialog} onOpenChange={setShowNewCoDialog}>
-        <ModalContent className="sm:max-w-md">
-          <ModalHeader>
-            <ModalTitle>New Change Order</ModalTitle>
-            <ModalDescription>
-              Create a new change order for this contract.
-            </ModalDescription>
-          </ModalHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="co-number">
-                CO Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="co-number"
-                value={coForm.change_order_number}
-                onChange={(e) => setCoForm((prev) => ({ ...prev, change_order_number: e.target.value }))}
-                placeholder="CO-001"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="co-description">
-                Description <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="co-description"
-                value={coForm.description}
-                onChange={(e) => setCoForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe the change order..."
-                rows={3}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="co-amount">
-                Amount <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="co-amount"
-                type="number"
-                step="0.01"
-                value={coForm.amount}
-                onChange={(e) => setCoForm((prev) => ({ ...prev, amount: e.target.value }))}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="co-status">Status</Label>
-              <select
-                id="co-status"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                value={coForm.status}
-                onChange={(e) => setCoForm((prev) => ({ ...prev, status: e.target.value as "draft" | "pending" }))}
-              >
-                <option value="draft">Draft</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-          </div>
-          <ModalFooter>
-            <Button variant="outline" onClick={() => setShowNewCoDialog(false)} disabled={isSubmittingCo}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateCo} disabled={isSubmittingCo}>
-              {isSubmittingCo ? "Creating..." : "Create Change Order"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Reject Change Order Dialog */}
-      <Modal open={showRejectCoDialog} onOpenChange={setShowRejectCoDialog}>
-        <ModalContent className="sm:max-w-md">
-          <ModalHeader>
-            <ModalTitle>Reject Change Order</ModalTitle>
-            <ModalDescription>
-              Provide a reason for rejecting this change order.
-            </ModalDescription>
-          </ModalHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="rejection-reason">
-                Rejection Reason <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="rejection-reason"
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Explain why this change order is being rejected..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <ModalFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowRejectCoDialog(false);
-                setRejectingCoId(null);
-                setRejectionReason("");
-              }}
-              disabled={isRejectingCo}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleRejectCo}
-              disabled={isRejectingCo || !rejectionReason.trim()}
-            >
-              {isRejectingCo ? "Rejecting..." : "Reject Change Order"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </>
   );
 }

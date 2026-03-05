@@ -15,6 +15,7 @@ import {
   Headphones,
   ExternalLink,
   MoreHorizontal,
+  Sparkles,
 } from "lucide-react";
 import {
   Table,
@@ -31,6 +32,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ds";
 import { format } from "date-fns";
 import Link from "next/link";
 import type { Database } from "@/types/database.types";
@@ -51,6 +53,16 @@ export function MeetingsTable({
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "date", desc: true },
   ]);
+  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const applyViewport = () => setIsMobileViewport(mediaQuery.matches);
+    applyViewport();
+    mediaQuery.addEventListener("change", applyViewport);
+    return () => mediaQuery.removeEventListener("change", applyViewport);
+  }, []);
 
   const columns: ColumnDef<Meeting>[] = [
     {
@@ -113,21 +125,7 @@ export function MeetingsTable({
       cell: ({ row }) => {
         const status = row.original.status;
         if (!status) return <span className="text-neutral-400">—</span>;
-
-        const statusColors: Record<string, string> = {
-          complete: "bg-green-100 text-green-800",
-          processing: "bg-blue-100 text-blue-800",
-          pending: "bg-yellow-100 text-yellow-800",
-          error: "bg-red-100 text-red-800",
-        };
-
-        return (
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status.toLowerCase()] || "bg-neutral-100 text-neutral-800"}`}
-          >
-            {status}
-          </span>
-        );
+        return <StatusBadge status={status} />;
       },
     },
     {
@@ -237,6 +235,12 @@ export function MeetingsTable({
                 View details
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href={`/${projectId}/meetings/${row.original.id}/prep`}>
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                Meeting Prep
+              </Link>
+            </DropdownMenuItem>
             {onEdit && (
               <DropdownMenuItem onClick={() => onEdit(row.original)}>
                 Edit meeting
@@ -258,6 +262,47 @@ export function MeetingsTable({
       sorting,
     },
   });
+
+  if (isMobileViewport) {
+    return (
+      <div className="space-y-2">
+        {meetings.length === 0 ? (
+          <div className="rounded-lg border p-6 text-center text-sm text-muted-foreground">
+            No meetings found.
+          </div>
+        ) : (
+          meetings.map((meeting) => (
+            <div key={meeting.id} className="rounded-lg border bg-background p-3">
+              <div className="flex items-start justify-between gap-2">
+                <Link
+                  href={`/${projectId}/meetings/${meeting.id}`}
+                  className="text-sm font-medium text-foreground"
+                >
+                  {meeting.title || "Untitled Meeting"}
+                </Link>
+                {meeting.status ? (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {meeting.status}
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {meeting.date ? format(new Date(meeting.date), "MMM d, yyyy") : "No date"}
+                {meeting.duration_minutes ? ` · ${meeting.duration_minutes} min` : ""}
+              </div>
+              {onEdit ? (
+                <div className="mt-3">
+                  <Button variant="outline" size="sm" className="h-8" onClick={() => onEdit(meeting)}>
+                    Edit
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="border border-neutral-200 bg-background">

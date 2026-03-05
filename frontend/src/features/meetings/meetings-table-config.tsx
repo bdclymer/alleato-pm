@@ -275,22 +275,9 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     // ── Title: link to project detail page ──────────────────────────────────
     {
       ...meetingColumns[0],
-      render: (item) => {
-        const projectId = (item as { project_id?: number | null }).project_id;
-        if (projectId) {
-          return (
-            <a
-              href={`/${projectId}/home`}
-              onClick={(e) => e.stopPropagation()}
-              className="font-medium hover:underline underline-offset-2 text-foreground"
-              title={`Go to project: ${item.project ?? ""}`}
-            >
-              {item.title ?? "Untitled"}
-            </a>
-          );
-        }
-        return <span className="font-medium">{item.title ?? "Untitled"}</span>;
-      },
+      render: (item) => (
+        <span className="font-medium">{item.title ?? "Untitled"}</span>
+      ),
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
     },

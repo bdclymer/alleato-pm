@@ -139,6 +139,7 @@ function ChatWithSession({
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
+      sessionId={sessionId}
       onInputChange={setInput}
       onSubmit={handleSubmit}
       onStop={stop}

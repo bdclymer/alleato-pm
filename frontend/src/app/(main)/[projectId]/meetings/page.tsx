@@ -1,12 +1,11 @@
-import { Calendar, Clock } from "lucide-react";
-
-import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
-
+import { createClient } from "@/lib/supabase/server";
+import { MeetingsTablePage } from "@/features/meetings/meetings-table-page";
+import { meetingsSchema } from "@/lib/validation/meetings";
+import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 
-import { MeetingsTableWrapper } from "./meetings-table-wrapper";
-import { MeetingsActions } from "./meetings-actions";
+const PAGE_TITLE = "Meetings";
+const PAGE_DESCRIPTION = "View and manage project meetings";
 
 interface PageProps {
   params: Promise<{ projectId: string }>;
@@ -14,9 +13,10 @@ interface PageProps {
 
 export default async function ProjectMeetingsPage({ params }: PageProps) {
   const { projectId } = await params;
-  const { numericProjectId, supabase } = await getProjectInfo(projectId);
+  const { numericProjectId } = await getProjectInfo(projectId);
 
-  // Fetch meetings for this project
+  const supabase = await createClient();
+
   const { data: meetings, error } = await supabase
     .from("document_metadata")
     .select("*")
@@ -25,64 +25,25 @@ export default async function ProjectMeetingsPage({ params }: PageProps) {
     .order("date", { ascending: false });
 
   if (error) {
-    console.error("Failed to fetch meetings:", error);
+    return (
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading meetings. Please try again later.
+        </div>
+      </TablePageWrapper>
+    );
   }
 
-  // Calculate meeting statistics
-  const totalMeetings = meetings?.length || 0;
-  const thisMonth =
-    meetings?.filter((m) => {
-      if (!m.date) return false;
-      const meetingDate = new Date(m.date);
-      const now = new Date();
-      return (
-        meetingDate.getMonth() === now.getMonth() &&
-        meetingDate.getFullYear() === now.getFullYear()
-      );
-    }).length || 0;
-
-  return (
-    <>
-      <ProjectPageHeader
-        title="Meetings"
-        actions={<MeetingsActions projectId={projectId} />}
-      />
-
-      <PageContainer>
-        {/* Meeting Statistics */}
-        <div className="flex items-center lg:gap-12 gap-4 mb-6">
-          <div className="flex items-center lg:gap-4 gap-2">
-            <Calendar className="h-4 w-4 text-brand" />
-            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
-              {totalMeetings} Total Meetings
-            </p>
-          </div>
-          <div className="flex items-center gap-2 lg:gap-4">
-            <Clock className="h-4 w-4 text-brand" />
-            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
-              {thisMonth} This Month
-            </p>
-          </div>
+  const parsed = meetingsSchema.safeParse(meetings ?? []);
+  if (!parsed.success) {
+    return (
+      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+        <div className="text-center text-destructive p-6">
+          Error loading meetings. Please try again later.
         </div>
+      </TablePageWrapper>
+    );
+  }
 
-        {/* Meetings Table */}
-        {!meetings || meetings.length === 0 ? (
-          <EmptyState
-            icon={<Calendar className="h-12 w-12" />}
-            title="No meetings found"
-            description="No meeting records for this project yet. Meetings will appear here once they are uploaded or synced from your meeting platform."
-          />
-        ) : (
-          <div className="space-y-6">
-            <div className="mb-8"></div>
-
-            <MeetingsTableWrapper
-              meetings={meetings || []}
-              projectId={projectId}
-            />
-          </div>
-        )}
-      </PageContainer>
-    </>
-  );
+  return <MeetingsTablePage initialMeetings={parsed.data} projectId={projectId} />;
 }

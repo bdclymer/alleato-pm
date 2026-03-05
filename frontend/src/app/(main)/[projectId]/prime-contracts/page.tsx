@@ -25,7 +25,6 @@ import {
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   buildPrimeContractTableColumns,
-  formatCurrency,
   primeContractColumns,
   primeContractDefaultVisibleColumns,
   primeContractFilters,
@@ -82,6 +81,8 @@ export default function ProjectContractsPage(): ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [contractToDelete, setContractToDelete] = React.useState<PrimeContract | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
@@ -98,6 +99,15 @@ export default function ProjectContractsPage(): ReactElement {
       tableState.setVisibleColumns(primeContractDefaultVisibleColumns);
     }
   }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth >= 768) return;
+    if (tableState.currentView !== "table") return;
+
+    tableState.setCurrentView("list");
+    tableState.setSearchParams({ view: "list" });
+  }, [tableState.currentView, tableState.setCurrentView, tableState.setSearchParams]);
 
   React.useEffect(() => {
     const fetchContracts = async () => {
@@ -182,31 +192,6 @@ export default function ProjectContractsPage(): ReactElement {
   const pageEnd = pageStart + tableState.perPage;
   const pagedContracts = sortedContracts.slice(pageStart, pageEnd);
 
-  const contractTotals = React.useMemo(() => {
-    return filteredContracts.reduce(
-      (acc, contract) => ({
-        original_contract_value: acc.original_contract_value + (contract.original_contract_value ?? 0),
-        approved_change_orders: acc.approved_change_orders + (contract.approved_change_orders ?? 0),
-        revised_contract_value: acc.revised_contract_value + (contract.revised_contract_value ?? 0),
-        pending_change_orders: acc.pending_change_orders + (contract.pending_change_orders ?? 0),
-        draft_change_orders: acc.draft_change_orders + (contract.draft_change_orders ?? 0),
-        invoiced_amount: acc.invoiced_amount + (contract.invoiced_amount ?? 0),
-        payments_received: acc.payments_received + (contract.payments_received ?? 0),
-        remaining_balance: acc.remaining_balance + (contract.remaining_balance ?? 0),
-      }),
-      {
-        original_contract_value: 0,
-        approved_change_orders: 0,
-        revised_contract_value: 0,
-        pending_change_orders: 0,
-        draft_change_orders: 0,
-        invoiced_amount: 0,
-        payments_received: 0,
-        remaining_balance: 0,
-      },
-    );
-  }, [filteredContracts]);
-
   React.useEffect(() => {
     if (tableState.page > totalPages) {
       tableState.setPage(1);
@@ -263,6 +248,49 @@ export default function ProjectContractsPage(): ReactElement {
     }
   };
 
+  const handleBulkDeleteConfirm = async () => {
+    const ids = tableState.selectedIds;
+    if (ids.length === 0) return;
+
+    setIsBulkDeleting(true);
+    const errors: string[] = [];
+
+    for (const id of ids) {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/contracts/${id}`,
+          { method: "DELETE" },
+        );
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          const contract = contracts.find((c) => c.id === id);
+          errors.push(
+            `${contract?.contract_number ?? id}: ${data.error || "Failed to delete"}`,
+          );
+        }
+      } catch {
+        errors.push(`${id}: Network error`);
+      }
+    }
+
+    const deletedIds = ids.filter(
+      (id) => !errors.some((err) => err.startsWith(id)),
+    );
+    setContracts((prev) => prev.filter((item) => !deletedIds.includes(item.id)));
+    tableState.setSelectedIds([]);
+
+    if (errors.length > 0) {
+      toast.error(
+        `${deletedIds.length} deleted, ${errors.length} failed:\n${errors.join("\n")}`,
+      );
+    } else {
+      toast.success(`${deletedIds.length} contract${deletedIds.length === 1 ? "" : "s"} deleted`);
+    }
+
+    setIsBulkDeleting(false);
+    setBulkDeleteDialogOpen(false);
+  };
+
   const handleExport = () => {
     if (filteredContracts.length === 0) {
       toast.info("No contracts to export");
@@ -312,26 +340,20 @@ export default function ProjectContractsPage(): ReactElement {
 
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
-  const approvedCount = contracts.filter((contract) => contract.status === "approved").length;
-  const completeCount = contracts.filter((contract) => contract.status === "complete").length;
-
   const tabs = [
     {
       label: "All Contracts",
       href: `/${projectId}/prime-contracts`,
-      count: contracts.length,
       isActive: !statusFilter,
     },
     {
       label: "Approved",
       href: `/${projectId}/prime-contracts?status=approved`,
-      count: approvedCount,
       isActive: statusFilter === "approved",
     },
     {
       label: "Complete",
       href: `/${projectId}/prime-contracts?status=complete`,
-      count: completeCount,
       isActive: statusFilter === "complete",
     },
   ];
@@ -341,20 +363,26 @@ export default function ProjectContractsPage(): ReactElement {
       <UnifiedTablePage
         header={{
           title: "Prime Contracts",
-          description: "Manage prime contracts and owner agreements",
           actions: (
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
+                className="hidden h-8 sm:inline-flex"
                 onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
+                aria-label="Configure prime contracts"
               >
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="mr-2 h-4 w-4" />
                 Configure
               </Button>
-              <Button size="sm" onClick={() => router.push(`/${projectId}/prime-contracts/new`)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Contract
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-9 w-9 border-input bg-background text-foreground hover:bg-muted hover:text-foreground sm:h-8 sm:w-8"
+                onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
+                aria-label="Create new contract"
+              >
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
           ),
@@ -380,6 +408,20 @@ export default function ProjectContractsPage(): ReactElement {
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
+          onBulkDelete: tableState.selectedIds.length > 0
+            ? () => setBulkDeleteDialogOpen(true)
+            : undefined,
+          mobilePanelActions: (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Configure
+            </Button>
+          ),
         }}
         data={{
           items: pagedContracts,
@@ -415,19 +457,6 @@ export default function ProjectContractsPage(): ReactElement {
         views={{
           card: (item) => renderPrimeContractCard(item, handleRowClick),
           list: (item) => renderPrimeContractList(item, handleRowClick),
-        }}
-        footerTotals={{
-          label: "Totals",
-          values: {
-            original_contract_value: <span className="font-semibold">{formatCurrency(contractTotals.original_contract_value)}</span>,
-            approved_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.approved_change_orders)}</span>,
-            revised_contract_value: <span className="font-semibold">{formatCurrency(contractTotals.revised_contract_value)}</span>,
-            pending_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.pending_change_orders)}</span>,
-            draft_change_orders: <span className="font-semibold">{formatCurrency(contractTotals.draft_change_orders)}</span>,
-            invoiced_amount: <span className="font-semibold">{formatCurrency(contractTotals.invoiced_amount)}</span>,
-            payments_received: <span className="font-semibold">{formatCurrency(contractTotals.payments_received)}</span>,
-            remaining_balance: <span className="font-semibold">{formatCurrency(contractTotals.remaining_balance)}</span>,
-          },
         }}
         emptyState={{
           title: "No contracts found",
@@ -480,6 +509,33 @@ export default function ProjectContractsPage(): ReactElement {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Deleting..." : "Delete Contract"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {tableState.selectedIds.length} Contract{tableState.selectedIds.length === 1 ? "" : "s"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{tableState.selectedIds.length}</strong> selected contract
+              {tableState.selectedIds.length === 1 ? "" : "s"}?
+              <br />
+              <br />
+              This action cannot be undone. Contracts with associated line items or
+              change orders will not be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDeleteConfirm}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting ? "Deleting..." : `Delete ${tableState.selectedIds.length} Contract${tableState.selectedIds.length === 1 ? "" : "s"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

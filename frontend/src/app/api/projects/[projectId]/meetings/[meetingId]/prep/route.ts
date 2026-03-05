@@ -1,0 +1,121 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> };
+
+// GET: Fetch existing meeting prep
+export async function GET(_request: Request, { params }: RouteParams) {
+  try {
+    const { meetingId } = await params;
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data, error } = await supabase
+      .from("meeting_preps")
+      .select("*")
+      .eq("meeting_id", meetingId)
+      .maybeSingle();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { error: "No meeting prep found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT: Save/update meeting prep content (auto-save from editor)
+export async function PUT(request: Request, { params }: RouteParams) {
+  try {
+    const { projectId, meetingId } = await params;
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const numericProjectId = parseInt(projectId, 10);
+    if (isNaN(numericProjectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json();
+    const { content } = body;
+
+    if (typeof content !== "string") {
+      return NextResponse.json(
+        { error: "Content is required" },
+        { status: 400 }
+      );
+    }
+
+    // Upsert: update if exists, insert if not
+    const { data: existing } = await supabase
+      .from("meeting_preps")
+      .select("id")
+      .eq("meeting_id", meetingId)
+      .maybeSingle();
+
+    let data;
+    let error;
+
+    if (existing) {
+      const result = await supabase
+        .from("meeting_preps")
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq("meeting_id", meetingId)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from("meeting_preps")
+        .insert({
+          meeting_id: meetingId,
+          project_id: numericProjectId,
+          content,
+          generated_by: "manual",
+        })
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

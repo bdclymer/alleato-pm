@@ -1,18 +1,11 @@
 "use client";
 
-import { Separator } from "@/components/ui/separator";
-import {
-  DribbbleIcon,
-  GithubIcon,
-  TwitchIcon,
-  TwitterIcon,
-} from "lucide-react";
 import Link from "next/link";
 
 const footerLinks = [
   {
     title: "Docs",
-    href: "docs-ai-nine.vercel.app",
+    href: "https://docs-ai-nine.vercel.app",
   },
   {
     title: "Tables",
@@ -39,11 +32,18 @@ const footerLinks = [
 const Footer = () => {
   return (
     <footer className="border-t">
-        <div className="max-w-(--breakpoint-xl) mx-auto">
-          <div className="py-12 px-6 xl:px-6 w-full flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
-            <ul className="flex text-sm items-center gap-6 flex-wrap md:mt-0">
+      <div className="mx-auto max-w-(--breakpoint-xl)">
+        <div className="flex w-full flex-col items-center gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-8">
+          <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm sm:justify-start sm:gap-6">
               {footerLinks.map(({ title, href }) => (
-                <li key={title}>
+                <li
+                  key={title}
+                  className={
+                    title === "Playwright Crawl" || title === "Careers"
+                      ? "hidden sm:list-item"
+                      : ""
+                  }
+                >
                   <Link
                     href={href}
                     className="text-muted-foreground hover:text-foreground"
@@ -53,13 +53,12 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-            <span className="text-sm text-muted-foreground text-center md:text-right">
-              &copy; {new Date().getFullYear()} Alleato Group. All rights
-              reserved.
-            </span>
-          </div>
+          <span className="text-center text-xs text-muted-foreground sm:text-right sm:text-sm">
+            &copy; {new Date().getFullYear()} Alleato Group. All rights reserved.
+          </span>
         </div>
-      </footer>
+      </div>
+    </footer>
   );
 };
 
