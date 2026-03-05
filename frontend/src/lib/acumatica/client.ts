@@ -521,9 +521,10 @@ class AcumaticaClient {
    * Compute AP Aging — groups outstanding bills by days past due.
    */
   async getAPAging(): Promise<AgingSummary> {
+    // Note: "Balance gt 0" filter causes Acumatica 500 error (Type conversion not supported).
+    // We filter in-memory instead.
     const bills = await this.getBills({
       $top: 500,
-      $filter: "Balance gt 0",
       $select: "ReferenceNbr,DueDate,Balance,Vendor,Status",
     });
 
@@ -569,9 +570,10 @@ class AcumaticaClient {
    * Compute AR Aging — groups outstanding invoices by days past due.
    */
   async getARAging(): Promise<AgingSummary> {
+    // Note: "Balance gt 0" filter causes Acumatica 500 error (Type conversion not supported).
+    // We filter in-memory instead.
     const invoices = await this.getInvoices({
       $top: 500,
-      $filter: "Balance gt 0",
       $select: "ReferenceNbr,DueDate,Balance,Customer,CustomerName,Status",
     });
 
@@ -622,24 +624,32 @@ class AcumaticaClient {
     since.setDate(since.getDate() - windowDays);
     const sinceISO = since.toISOString().split("T")[0];
 
+    // Note: OData date filters can cause Acumatica 500 errors on some versions.
+    // Fetch all and filter in-memory for reliability.
     const [payments, checks] = await Promise.all([
       this.getPayments({
         $top: 500,
-        $filter: `Date gt datetimeoffset'${sinceISO}T00:00:00Z'`,
         $select: "ReferenceNbr,Date,PaymentAmount,Status",
       }),
       this.getChecks({
         $top: 500,
-        $filter: `Date gt datetimeoffset'${sinceISO}T00:00:00Z'`,
         $select: "ReferenceNbr,Date,PaymentAmount,Status",
       }),
     ]);
 
-    const totalInflows = payments.reduce(
+    const sinceDate = since.getTime();
+    const recentPayments = payments.filter(
+      (p) => p.Date && new Date(p.Date).getTime() >= sinceDate,
+    );
+    const recentChecks = checks.filter(
+      (c) => c.Date && new Date(c.Date).getTime() >= sinceDate,
+    );
+
+    const totalInflows = recentPayments.reduce(
       (s, p) => s + (p.PaymentAmount ?? 0),
       0,
     );
-    const totalOutflows = checks.reduce(
+    const totalOutflows = recentChecks.reduce(
       (s, c) => s + (c.PaymentAmount ?? 0),
       0,
     );

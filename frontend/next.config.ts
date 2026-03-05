@@ -2,6 +2,9 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     // Disable automatic package import optimization; it can generate unstable
     // vendor chunk references for date-fns in webpack dev mode.

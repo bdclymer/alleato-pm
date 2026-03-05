@@ -615,7 +615,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
                       aria-label={`Select ${task.name}`}
                     >
                       {task.percent_complete === 100 && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-[hsl(var(--status-success))]" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
                       )}
                     </button>
                     {/* Task name */}

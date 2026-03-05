@@ -59,7 +59,7 @@ export function SelectField({
         <SelectTrigger
           id={triggerId}
           aria-label={label}
-          className={cn(error && "border-red-300", className)}
+          className={cn("w-full", error && "border-red-300", className)}
           aria-invalid={!!error}
           data-testid={dataTestId}
         >
