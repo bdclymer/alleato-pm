@@ -119,7 +119,7 @@ export default function BillingPeriodsPage() {
       cell: ({ row }) => (
         <button
           type="button"
-          className="font-medium text-[hsl(var(--procore-orange))] hover:underline"
+          className="font-medium text-primary hover:underline"
         >
           {row.getValue("number")}
         </button>

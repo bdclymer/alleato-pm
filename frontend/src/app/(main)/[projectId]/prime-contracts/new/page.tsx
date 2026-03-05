@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
@@ -155,14 +155,11 @@ export default function NewContractPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
+      <ProjectFormPageLayout
         title="New Prime Contract"
         description="Create a new owner agreement"
-      />
-
-      <PageContainer className="bg-muted/30">
-        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-card rounded-lg border border-border p-8">
+        maxWidth="xl"
+      >
           <ContractForm
             initialData={initialData}
             onSubmit={handleSubmit}
@@ -171,8 +168,6 @@ export default function NewContractPage() {
             mode="create"
             projectId={projectId}
           />
-        </FormContainer>
-      </PageContainer>
-    </>
+    </ProjectFormPageLayout>
   );
 }

@@ -161,7 +161,7 @@ export function PageHeader({
   // Default variant (includes budget variant behavior)
   return (
     <div className={cn(className)}>
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div>
         {/* Title and Actions */}
         <div className="flex items-start justify-between gap-3 py-3 min-w-0 sm:items-center">
           <div className="min-w-0 flex-1 overflow-hidden">

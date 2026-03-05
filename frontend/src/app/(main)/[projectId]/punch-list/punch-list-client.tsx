@@ -85,7 +85,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
       accessorKey: "number",
       header: "#",
       cell: ({ row }) => (
-        <span className="font-medium text-[hsl(var(--procore-orange))]">
+        <span className="font-medium text-primary">
           {row.getValue("number")}
         </span>
       ),
