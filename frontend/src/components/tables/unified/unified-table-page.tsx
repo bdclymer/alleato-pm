@@ -253,10 +253,9 @@ export function UnifiedTablePage<T>({
 
   return (
     <>
-      <PageHeader title={header.title} description={header.description} actions={header.actions} />
-
-      <PageContainer className="pt-2 sm:pt-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <PageContainer>
+        <PageHeader title={header.title} description={header.description} actions={header.actions} />
+        <div className="pt-2 sm:pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           <TableToolbar
             className="w-full lg:w-auto"

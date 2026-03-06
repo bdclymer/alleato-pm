@@ -5,7 +5,8 @@ import { Project } from "@/types/portfolio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Check, X, MapPin, Calendar, Building2 } from "lucide-react";
+import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
+import { Plus, Check, X, MapPin, Calendar, Building2, Pencil } from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -164,9 +165,11 @@ function EditableCell({
 function ProjectCard({
   project,
   onClick,
+  onEdit,
 }: {
   project: Project;
   onClick: () => void;
+  onEdit: () => void;
 }) {
   return (
     <div
@@ -180,9 +183,23 @@ function ProjectCard({
             #{project.jobNumber}
           </p>
         </div>
-        <Badge variant={project.status === "Active" ? "default" : "secondary"} className="shrink-0">
-          {project.status}
-        </Badge>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Badge variant={project.status === "Active" ? "default" : "secondary"} className="shrink-0">
+            {project.status}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            aria-label={`Edit ${project.name}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit();
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
       <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
@@ -263,6 +280,8 @@ export default function PortfolioPage() {
   const searchParams = useSearchParams();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [editingProject, setEditingProject] = React.useState<Project | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   const parseProjectsResponse = React.useCallback(
     async (response: Response) => {
@@ -283,97 +302,96 @@ export default function PortfolioPage() {
     [],
   );
 
-  // Fetch projects from Supabase
-  React.useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const baseParams = new URLSearchParams();
-        baseParams.append("archived", "false");
+  const mapProjectRow = React.useCallback((p: Record<string, unknown>): Project => {
+    const toStringValue = (value: unknown, fallback = ""): string => {
+      if (typeof value === "string") return value;
+      if (typeof value === "number") return String(value);
+      return fallback;
+    };
+    const toNullableString = (value: unknown): string | null =>
+      typeof value === "string" ? value : null;
+    const toNullableNumber = (value: unknown): number | null =>
+      typeof value === "number" ? value : null;
 
-        const allProjectRows: Record<string, unknown>[] = [];
-        let page = 1;
-        let totalPages = 1;
+    const address = toStringValue(p.address);
+    const phase = toStringValue(p.phase);
+    const category = toStringValue(p.category);
 
-        while (page <= totalPages) {
-          const pagedParams = new URLSearchParams(baseParams);
-          pagedParams.set("page", String(page));
-          pagedParams.set("limit", "100");
+    return {
+      id: toStringValue(p.id, "0"),
+      name: toStringValue(p.name, "Untitled Project"),
+      jobNumber: toStringValue(p["job number"], toStringValue(p.id, "0")),
+      client: toStringValue(p.client),
+      startDate: toNullableString(p["start date"]),
+      state: toStringValue(p.state),
+      phase,
+      estRevenue: toNullableNumber(p["est revenue"]),
+      estProfit: toNullableNumber(p["est profit"]),
+      category,
+      // Legacy fields for backward compatibility
+      projectNumber: toStringValue(
+        p["job number"],
+        toStringValue(p.id, "0"),
+      ),
+      address,
+      city: address ? address.split(",")[0] || "" : "",
+      zip: "",
+      phone: "",
+      status: p.archived ? "Inactive" : "Active",
+      stage: phase || "Unknown",
+      type: category || "General",
+      notes: toStringValue(p.summary),
+      isFlagged: false,
+    };
+  }, []);
 
-          const response = await fetch(`/api/projects?${pagedParams.toString()}`);
-          const result = await parseProjectsResponse(response);
+  const fetchProjects = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const baseParams = new URLSearchParams();
+      baseParams.append("archived", "false");
 
-          if (!result || !response.ok) {
-            setProjects([]);
-            return;
-          }
+      const allProjectRows: Record<string, unknown>[] = [];
+      let page = 1;
+      let totalPages = 1;
 
-          const pageRows = Array.isArray(result.data) ? result.data : [];
-          allProjectRows.push(...pageRows);
-          const apiTotalPages =
-            typeof result.meta?.totalPages === "number"
-              ? result.meta.totalPages
-              : 1;
-          totalPages = Math.max(apiTotalPages, 1);
-          page += 1;
+      while (page <= totalPages) {
+        const pagedParams = new URLSearchParams(baseParams);
+        pagedParams.set("page", String(page));
+        pagedParams.set("limit", "100");
+
+        const response = await fetch(`/api/projects?${pagedParams.toString()}`);
+        const result = await parseProjectsResponse(response);
+
+        if (!result || !response.ok) {
+          setProjects([]);
+          return;
         }
 
-        const toStringValue = (value: unknown, fallback = ""): string => {
-          if (typeof value === "string") return value;
-          if (typeof value === "number") return String(value);
-          return fallback;
-        };
-        const toNullableString = (value: unknown): string | null =>
-          typeof value === "string" ? value : null;
-        const toNullableNumber = (value: unknown): number | null =>
-          typeof value === "number" ? value : null;
-
-        const mappedProjects: Project[] = allProjectRows.map(
-          (p: Record<string, unknown>) => {
-            const address = toStringValue(p.address);
-            const phase = toStringValue(p.phase);
-            const category = toStringValue(p.category);
-
-            return {
-              id: toStringValue(p.id, "0"),
-              name: toStringValue(p.name, "Untitled Project"),
-              jobNumber: toStringValue(p["job number"], toStringValue(p.id, "0")),
-              client: toStringValue(p.client),
-              startDate: toNullableString(p["start date"]),
-              state: toStringValue(p.state),
-              phase,
-              estRevenue: toNullableNumber(p["est revenue"]),
-              estProfit: toNullableNumber(p["est profit"]),
-              category,
-              // Legacy fields for backward compatibility
-              projectNumber: toStringValue(
-                p["job number"],
-                toStringValue(p.id, "0"),
-              ),
-              address,
-              city: address ? address.split(",")[0] || "" : "",
-              zip: "",
-              phone: "",
-              status: p.archived ? "Inactive" : "Active",
-              stage: phase || "Unknown",
-              type: category || "General",
-              notes: toStringValue(p.summary),
-              isFlagged: false,
-            };
-          },
-        );
-
-        setProjects(mappedProjects);
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-        // Intentionally swallowed: UI shows empty state on error
-      } finally {
-        setLoading(false);
+        const pageRows = Array.isArray(result.data) ? result.data : [];
+        allProjectRows.push(...pageRows);
+        const apiTotalPages =
+          typeof result.meta?.totalPages === "number"
+            ? result.meta.totalPages
+            : 1;
+        totalPages = Math.max(apiTotalPages, 1);
+        page += 1;
       }
-    };
 
-    fetchProjects();
-  }, [parseProjectsResponse]);
+      const mappedProjects: Project[] = allProjectRows.map(mapProjectRow);
+      setProjects(mappedProjects);
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+      // Intentionally swallowed: UI shows empty state on error
+    } finally {
+      setLoading(false);
+    }
+  }, [mapProjectRow, parseProjectsResponse]);
+
+  // Fetch projects from Supabase
+  React.useEffect(() => {
+    void fetchProjects();
+  }, [fetchProjects]);
 
   // ── Inline edit save handler ────────────────────────────────────────
   const handleInlineSave = React.useCallback(
@@ -461,6 +479,7 @@ export default function PortfolioPage() {
     router,
     defaults: {
       view: "table",
+      allowedViews: ["table", "card"],
       page: 1,
       perPage: 25,
       search: "",
@@ -657,7 +676,8 @@ export default function PortfolioPage() {
   );
 
   return (
-    <UnifiedTablePage
+    <>
+      <UnifiedTablePage
       header={{
         title: "Portfolio",
         description: "All projects across your organization",
@@ -676,6 +696,7 @@ export default function PortfolioPage() {
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search projects...",
         currentView: tableState.currentView,
+        enabledViews: ["table", "card"],
         onViewChange: (view) => {
           tableState.setCurrentView(view);
           tableState.setSearchParams({ view });
@@ -707,6 +728,10 @@ export default function PortfolioPage() {
             key={item.id}
             project={item}
             onClick={() => navigateToProject(item)}
+            onEdit={() => {
+              setEditingProject(item);
+              setIsEditDialogOpen(true);
+            }}
           />
         ),
         list: (item) => (
@@ -737,6 +762,23 @@ export default function PortfolioPage() {
         filteredDescription: "No projects match your current search or filters.",
         isFiltered,
       }}
-    />
+      />
+
+      {editingProject && (
+        <EditProjectDialog
+          project={editingProject}
+          open={isEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setEditingProject(null);
+            }
+          }}
+          onSuccess={() => {
+            void fetchProjects();
+          }}
+        />
+      )}
+    </>
   );
 }

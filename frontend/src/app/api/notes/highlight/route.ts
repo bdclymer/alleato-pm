@@ -87,12 +87,36 @@ export async function POST(request: Request) {
         title: title || defaultTitle,
         body: bodyParts.join("\n\n"),
         created_by: user.email || user.id,
+        note_type: "highlight",
+        source_type: "meeting_transcript",
+        source_metadata_id: meeting.id,
+        source_context: {
+          meeting_id: meeting.id,
+          meeting_title: meeting.title,
+          meeting_date: meeting.date,
+        },
       })
       .select("id, title")
       .single();
 
     if (insertError) {
       return apiErrorResponse(insertError);
+    }
+
+    const { error: highlightError } = await supabase
+      .from("note_highlights")
+      .insert({
+        note_id: insertedNote.id,
+        project_id: meeting.project_id,
+        source_type: "meeting_transcript",
+        source_metadata_id: meeting.id,
+        exact_text: selectedText,
+        created_by: user.email || user.id,
+      });
+
+    if (highlightError) {
+      await supabase.from("notes").delete().eq("id", insertedNote.id);
+      return apiErrorResponse(highlightError);
     }
 
     return NextResponse.json(
