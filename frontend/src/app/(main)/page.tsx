@@ -49,7 +49,19 @@ const FIELD_TO_DB_COLUMN: Record<string, string> = {
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "-";
-  const date = new Date(dateStr);
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  let date: Date;
+
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const monthIndex = Number(dateOnlyMatch[2]) - 1;
+    const day = Number(dateOnlyMatch[3]);
+    date = new Date(year, monthIndex, day);
+  } else {
+    date = new Date(dateStr);
+  }
+
   if (isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString("en-US", {
     month: "short",

@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Plus,
-  ArrowRight,
+  RefreshCw,
   Unlock,
   Lock,
   Download,
@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/layout/page-header-unified";
 
 interface BudgetPageHeaderProps {
@@ -134,6 +135,11 @@ export function BudgetPageHeader({
               Budget Line Item
             </DropdownMenuItem>
             <DropdownMenuItem>Snapshot</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onImport}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>
                 Budget Modification
@@ -152,8 +158,8 @@ export function BudgetPageHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem onClick={onResendToERP}>
-              <ArrowRight className="w-4 h-4 mr-2" />
-              Resend to ERP
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Sync to ERP
             </DropdownMenuItem>
             {isLocked ? (
               <DropdownMenuItem onClick={onUnlockBudget}>
@@ -166,10 +172,6 @@ export function BudgetPageHeader({
                 Lock Budget
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={onImport}>
-              <Upload className="w-4 h-4 mr-2" />
-              Import
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onExport?.("pdf")}>
               <Download className="w-4 h-4 mr-2" />
@@ -231,6 +233,11 @@ export function BudgetPageHeader({
               Budget Line Item
             </DropdownMenuItem>
             <DropdownMenuItem>Snapshot</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onImport}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>
                 Budget Modification
@@ -238,13 +245,6 @@ export function BudgetPageHeader({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {/* Resend to ERP Button */}
-        <Button variant="outline" size="sm" onClick={onResendToERP}>
-          <ArrowRight className="w-4 h-4 mr-2" />
-          <span className="hidden lg:inline">Resend to ERP</span>
-          <span className="lg:hidden">ERP</span>
-        </Button>
 
         {/* Lock/Unlock Budget Button */}
         {isLocked ? (
@@ -269,19 +269,31 @@ export function BudgetPageHeader({
           </Button>
         )}
 
-        {/* Import Button */}
-        <Button variant="outline" size="sm" onClick={onImport}>
-          <Upload className="w-4 h-4 mr-2" />
-          Import
-        </Button>
+        {/* Sync + Export */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onResendToERP}
+              aria-label="Sync to ERP"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Sync to ERP</TooltipContent>
+        </Tooltip>
 
         {/* Export Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-              <ChevronDown className="w-4 h-4 ml-2" />
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Export"
+              title="Export"
+            >
+              <Download className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

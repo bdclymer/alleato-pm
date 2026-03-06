@@ -23,7 +23,20 @@ import {
   Suggestions,
   Suggestion,
 } from "@/components/ai-elements/suggestion";
-import { Loader } from "@/components/ai-elements/loader";
+import { Shimmer } from "@/components/ai-elements/shimmer";
+import {
+  Tool as ToolDisplay,
+  ToolHeader,
+  ToolContent,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+} from "@/components/ai-elements/chain-of-thought";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -31,21 +44,12 @@ import {
   PromptInputAction,
 } from "@/components/chat/prompt-input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   CopyIcon,
   SendIcon,
   SquareIcon,
   ThumbsUpIcon,
   ThumbsDownIcon,
-  WrenchIcon,
-  CheckCircleIcon,
-  ChevronDownIcon,
   DatabaseIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -108,70 +112,29 @@ function formatToolName(name: string): string {
 // ─── Tool call display ─────────────────────────────────────────────
 
 function ToolCallItem({ part }: { part: ToolPart }) {
-  const isCompleted = part.state === "output-available";
-  const isError = part.state === "output-error";
-  const isRunning = part.state === "input-available";
-  const toolName = getToolNameFromType(part.type);
-
   return (
-    <Collapsible className="group/tool not-prose mb-1.5 w-full">
-      <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-muted/50">
-        <WrenchIcon className="size-3.5 shrink-0" />
-        <span className="text-xs">
-          {formatToolName(toolName)}
-        </span>
-        {isCompleted ? (
-          <CheckCircleIcon className="size-3.5 shrink-0 text-green-600" />
-        ) : isError ? (
-          <Badge
-            variant="destructive"
-            className="h-5 rounded-full px-1.5 text-[10px]"
-          >
-            Error
-          </Badge>
-        ) : isRunning ? (
-          <Loader size={12} />
-        ) : (
-          <Loader size={12} />
+    <ToolDisplay className="mb-1.5">
+      <ToolHeader
+        type={part.type as "tool-invocation"}
+        state={part.state as "input-available"}
+        title={formatToolName(getToolNameFromType(part.type))}
+      />
+      <ToolContent>
+        {part.input != null && <ToolInput input={part.input} />}
+        {(part.state === "output-available" || part.state === "output-error") && (
+          <ToolOutput output={part.output} errorText={part.errorText} />
         )}
-        <ChevronDownIcon className="ml-auto size-3.5 shrink-0 transition-transform group-data-[state=open]/tool:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2 px-2 pb-2 pt-1">
-        {part.input != null ? (
-          <div className="space-y-1">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Parameters
-            </p>
-            <pre className="max-h-28 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-              {JSON.stringify(part.input, null, 2)}
-            </pre>
-          </div>
-        ) : null}
-        {isCompleted && part.output != null ? (
-          <div className="space-y-1">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-              Result
-            </p>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-              {typeof part.output === "string"
-                ? part.output
-                : JSON.stringify(part.output, null, 2)}
-            </pre>
-          </div>
-        ) : null}
-        {isError && part.errorText ? (
-          <div className="space-y-1">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-destructive">
-              Error
-            </p>
-            <pre className="max-h-28 overflow-auto whitespace-pre-wrap break-words rounded-md bg-destructive/10 p-2 text-xs text-destructive">
-              {part.errorText}
-            </pre>
-          </div>
-        ) : null}
-      </CollapsibleContent>
-    </Collapsible>
+      </ToolContent>
+    </ToolDisplay>
   );
+}
+
+// ─── Tool step status helper ──────────────────────────────────────
+
+function getToolStepStatus(state: string): "complete" | "active" | "pending" {
+  if (state === "output-available" || state === "output-error") return "complete";
+  if (state === "input-available" || state === "input-streaming") return "active";
+  return "pending";
 }
 
 // ─── Streaming indicator ────────────────────────────────────────────
@@ -184,17 +147,14 @@ function StreamingIndicator({ hasToolCalls }: { hasToolCalls: boolean }) {
           {hasToolCalls ? (
             <>
               <DatabaseIcon className="h-4 w-4 animate-pulse text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
+              <Shimmer as="span" duration={1.5} className="text-sm">
                 Analyzing your project data...
-              </span>
+              </Shimmer>
             </>
           ) : (
-            <>
-              <Loader size={14} />
-              <span className="text-sm text-muted-foreground">
-                Thinking...
-              </span>
-            </>
+            <Shimmer as="span" duration={1.5} className="text-sm">
+              Thinking...
+            </Shimmer>
           )}
         </div>
       </MessageContent>
@@ -427,12 +387,22 @@ export function ChatArea({
                     return (
                       <Message key={msg.id} from="assistant">
                         <MessageContent>
-                          {toolParts.map((part) => (
-                            <ToolCallItem
-                              key={part.toolCallId}
-                              part={part}
-                            />
-                          ))}
+                          {toolParts.length > 1 ? (
+                            <ChainOfThought defaultOpen>
+                              <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
+                              <ChainOfThoughtContent>
+                                {toolParts.map((part) => (
+                                  <ChainOfThoughtStep
+                                    key={part.toolCallId}
+                                    label={formatToolName(getToolNameFromType(part.type))}
+                                    status={getToolStepStatus(part.state)}
+                                  />
+                                ))}
+                              </ChainOfThoughtContent>
+                            </ChainOfThought>
+                          ) : (
+                            <ToolCallItem part={toolParts[0]} />
+                          )}
                         </MessageContent>
                       </Message>
                     );
@@ -464,16 +434,26 @@ export function ChatArea({
                       )}
 
                       {/* Live tool call display (during streaming) */}
-                      {isAssistant && toolParts.length > 0 && (
+                      {isAssistant && toolParts.length > 1 ? (
                         <div className="mb-3">
-                          {toolParts.map((part) => (
-                            <ToolCallItem
-                              key={part.toolCallId}
-                              part={part}
-                            />
-                          ))}
+                          <ChainOfThought defaultOpen={isStreaming && isLastMessage}>
+                            <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
+                            <ChainOfThoughtContent>
+                              {toolParts.map((part) => (
+                                <ChainOfThoughtStep
+                                  key={part.toolCallId}
+                                  label={formatToolName(getToolNameFromType(part.type))}
+                                  status={getToolStepStatus(part.state)}
+                                />
+                              ))}
+                            </ChainOfThoughtContent>
+                          </ChainOfThought>
                         </div>
-                      )}
+                      ) : isAssistant && toolParts.length === 1 ? (
+                        <div className="mb-3">
+                          <ToolCallItem part={toolParts[0]} />
+                        </div>
+                      ) : null}
 
                       {/* Main text response */}
                       <MessageResponse>{text}</MessageResponse>
@@ -491,9 +471,9 @@ export function ChatArea({
                       )}
                     </MessageContent>
 
-                    {/* Message actions: copy, thumbs up/down */}
+                    {/* Message actions: copy, thumbs up/down (hover-only) */}
                     {isAssistant && text && (
-                      <MessageActions>
+                      <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
                         <MessageAction
                           tooltip="Copy"
                           onClick={() => handleCopy(text)}

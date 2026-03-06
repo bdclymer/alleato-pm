@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Plus, Maximize2, Minimize2, Filter } from "lucide-react";
+import { ChevronDown, Maximize2, Minimize2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { BudgetView, BudgetSnapshot, BudgetGroup } from "@/types/budget";
+import { BudgetSnapshot, BudgetGroup } from "@/types/budget";
 
 export type QuickFilterType =
   | "over-budget"
@@ -19,16 +19,12 @@ export type QuickFilterType =
   | "all";
 
 interface BudgetFiltersProps {
-  views: BudgetView[];
   snapshots: BudgetSnapshot[];
   groups: BudgetGroup[];
-  selectedView: string;
   selectedSnapshot: string;
   selectedGroup: string;
-  onViewChange: (viewId: string) => void;
   onSnapshotChange: (snapshotId: string) => void;
   onGroupChange: (groupId: string) => void;
-  onAddFilter?: () => void;
   onAnalyzeVariance?: () => void;
   onToggleFullscreen?: () => void;
   onQuickFilterChange?: (filter: QuickFilterType) => void;
@@ -37,24 +33,18 @@ interface BudgetFiltersProps {
 }
 
 export function BudgetFilters({
-  views,
   snapshots,
   groups,
-  selectedView,
   selectedSnapshot,
   selectedGroup,
-  onViewChange,
   onSnapshotChange,
   onGroupChange,
-  onAddFilter,
   onAnalyzeVariance,
   onToggleFullscreen,
   onQuickFilterChange,
   activeQuickFilter = "all",
   isFullscreen = false,
 }: BudgetFiltersProps) {
-  const selectedViewName =
-    views.find((v) => v.id === selectedView)?.name || "Select View";
   const selectedSnapshotName =
     snapshots.find((s) => s.id === selectedSnapshot)?.name || "Select Snapshot";
   const selectedGroupName =
@@ -72,34 +62,6 @@ export function BudgetFilters({
       {/* Left side - Filter controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 overflow-x-auto">
         <div className="flex flex-wrap sm:flex-nowrap gap-4">
-          {/* View Selector */}
-          <div className="flex flex-col gap-1 min-w-[140px]">
-            <span className="text-xs text-muted-foreground">View</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-8 w-full sm:min-w-[160px] justify-between text-sm"
-                  aria-label="View"
-                >
-                  <span className="truncate">{selectedViewName}</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-2 text-muted-foreground flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                {views.map((view) => (
-                  <DropdownMenuItem
-                    key={view.id}
-                    onClick={() => onViewChange(view.id)}
-                    className={selectedView === view.id ? "bg-accent" : ""}
-                  >
-                    {view.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
           {/* Snapshot Selector */}
           <div className="flex flex-col gap-1 min-w-[100px]">
             <span className="text-xs text-muted-foreground">Snapshot</span>
@@ -159,11 +121,10 @@ export function BudgetFilters({
           </div>
         </div>
 
-        {/* Quick Filters and Add Filter */}
+        {/* Quick Filters */}
         <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:border-l sm:pl-4 sm:ml-2">
           {/* Quick Filters */}
           <div className="flex flex-col gap-1 min-w-[120px]">
-            <span className="text-xs text-muted-foreground">Quick Filter</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -213,20 +174,6 @@ export function BudgetFilters({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-
-          {/* Filter Section */}
-          <div className="flex items-end gap-2">
-            <Button
-              variant="outline"
-              className="h-8 text-sm"
-              onClick={onAddFilter}
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" />
-              <span className="hidden sm:inline">Add Filter</span>
-              <span className="sm:hidden">Filter</span>
-              <ChevronDown className="w-3.5 h-3.5 ml-1" />
-            </Button>
           </div>
         </div>
       </div>

@@ -108,6 +108,11 @@ export const financialManagementTools: NavigationTool[] = [
 
 export const adminTools: NavigationTool[] = [
   {
+    name: "Settings",
+    path: "/settings",
+    requiresProject: false,
+  },
+  {
     name: "AI Assistant",
     path: "/ai-assistant",
     requiresProject: false,

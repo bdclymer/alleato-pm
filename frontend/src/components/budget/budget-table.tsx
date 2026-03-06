@@ -10,11 +10,12 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, Plus, X, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check } from "lucide-react";
 import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -31,7 +32,6 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ColumnTooltip = {
   title: string;
@@ -227,8 +227,6 @@ interface BudgetTableProps {
   projectId?: string;
   showInlineCreate?: boolean;
   onShowInlineCreateChange?: (show: boolean) => void;
-  /** Callback when the "Add Line Item" button is clicked in empty state */
-  onAddLineItemClick?: () => void;
 }
 
 function formatCurrency(value: number): string {
@@ -311,21 +309,21 @@ function EditableCurrencyCell({
 const columnWidthClasses: Record<string, string> = {
   select: "w-6 min-w-[24px]",
   expander: "w-6 min-w-[24px]",
-  description: "w-[280px] min-w-[240px]",
-  originalBudgetAmount: "w-[130px] min-w-[120px]",
-  budgetModifications: "w-[130px] min-w-[120px]",
-  approvedCOs: "w-[120px] min-w-[110px]",
-  revisedBudget: "w-[130px] min-w-[120px]",
-  jobToDateCostDetail: "w-[140px] min-w-[130px]",
-  directCosts: "w-[120px] min-w-[110px]",
-  pendingChanges: "w-[120px] min-w-[110px]",
-  projectedBudget: "w-[130px] min-w-[120px]",
-  committedCosts: "w-[130px] min-w-[120px]",
-  pendingCostChanges: "w-[130px] min-w-[120px]",
-  projectedCosts: "w-[130px] min-w-[120px]",
-  forecastToComplete: "w-[130px] min-w-[120px]",
-  estimatedCostAtCompletion: "w-[150px] min-w-[130px]",
-  projectedOverUnder: "w-[130px] min-w-[120px]",
+  description: "w-[120px] min-w-[120px]",
+  originalBudgetAmount: "w-[120px] min-w-[120px]",
+  budgetModifications: "w-[120px] min-w-[120px]",
+  approvedCOs: "w-[120px] min-w-[120px]",
+  revisedBudget: "w-[120px] min-w-[120px]",
+  jobToDateCostDetail: "w-[120px] min-w-[120px]",
+  directCosts: "w-[120px] min-w-[120px]",
+  pendingChanges: "w-[120px] min-w-[120px]",
+  projectedBudget: "w-[120px] min-w-[120px]",
+  committedCosts: "w-[120px] min-w-[120px]",
+  pendingCostChanges: "w-[120px] min-w-[120px]",
+  projectedCosts: "w-[120px] min-w-[120px]",
+  forecastToComplete: "w-[120px] min-w-[120px]",
+  estimatedCostAtCompletion: "w-[120px] min-w-[120px]",
+  projectedOverUnder: "w-[120px] min-w-[120px]",
 };
 
 const depthPaddingClasses = ["pl-0", "pl-4", "pl-8", "pl-12", "pl-16", "pl-20"];
@@ -357,7 +355,6 @@ export function BudgetTable({
   projectId,
   showInlineCreate: showInlineCreateProp = false,
   onShowInlineCreateChange,
-  onAddLineItemClick,
 }: BudgetTableProps) {
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -517,16 +514,18 @@ export function BudgetTable({
         return (
           <div
             className={cn(
+              "flex items-center gap-1 min-w-0",
               isGroupRow ? "text-foreground font-medium" : "text-foreground font-normal",
               getDepthPadding(row.depth),
             )}
+            title={String(row.getValue("description"))}
           >
             {isGroupRow && (
-              <span className="text-muted-foreground font-mono text-xs mr-2">
+              <span className="text-muted-foreground font-mono text-xs shrink-0">
                 {row.original.costCode}
               </span>
             )}
-            {row.getValue("description")}
+            <span className="truncate">{String(row.getValue("description"))}</span>
           </div>
         );
       },
@@ -910,58 +909,16 @@ export function BudgetTable({
       !row.original.children || row.original.children.length === 0,
   });
 
-  // Check if table is empty (no rows and not showing inline create)
-  const isEmpty = !table.getRowModel().rows?.length && !showInlineCreate;
+  const rows = table.getRowModel().rows;
+  const hasRows = rows.length > 0;
+  const emptyRowCount = hasRows ? 0 : 8;
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
-      {/* Empty state - centered on page, outside of scrollable table */}
-      {isEmpty && (
-        <div className="flex-1 flex items-center justify-center py-16">
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="text-muted-foreground mb-2">
-              <svg
-                className="mx-auto h-12 w-12 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1}
-                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-sm font-medium text-foreground">No budget line items</h3>
-            <p className="text-sm text-muted-foreground">Get started by adding your first budget line item.</p>
-            <Button
-              onClick={() => {
-                if (onAddLineItemClick) {
-                  onAddLineItemClick();
-                } else {
-                  setShowInlineCreate(true);
-                }
-              }}
-              disabled={isLocked}
-              className="mt-2 bg-brand hover:bg-brand/90"
-              size="lg"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Line Item
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Table - only render when there's data or inline create is showing */}
-      {!isEmpty && (
-        <>
-          {/* Hide scrollbar while maintaining scroll functionality */}
-          <div className="flex-1 overflow-auto scrollbar-hide">
-            <Table className="min-w-[1200px] bg-background">
+      {/* Hide scrollbar while maintaining scroll functionality */}
+      <div className="flex-1 overflow-auto scrollbar-hide">
+        <Table className="min-w-[1848px] table-fixed bg-background">
               <TableHeader className="sticky top-0 bg-background z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
@@ -972,7 +929,7 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "bg-background py-2 text-xs font-medium text-muted-foreground",
+                          "bg-background py-2 text-xs font-semibold text-foreground/80",
                           header.column.id === "select"
                             ? "pl-4 pr-0.5"
                             : header.column.id === "expander"
@@ -993,10 +950,9 @@ export function BudgetTable({
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows.map((row, index) => {
+                {rows.map((row) => {
                   const hasChildren =
                     row.original.children && row.original.children.length > 0;
-                  const isGroupRow = hasChildren;
 
                   return (
                     <TableRow
@@ -1030,6 +986,20 @@ export function BudgetTable({
                     </TableRow>
                   );
                 })}
+                {!hasRows &&
+                  Array.from({ length: emptyRowCount }).map((_, index) => (
+                    <TableRow key={`empty-row-${index}`} className="border-b border-border">
+                      <TableCell
+                        colSpan={visibleColumnCount}
+                        className={cn(
+                          "h-11 px-4",
+                          index === 0 && "text-sm text-muted-foreground",
+                        )}
+                      >
+                        {index === 0 ? "No budget line items yet." : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
 
             {/* Inline Create Row */}
             {!isLocked && showInlineCreate && (
@@ -1131,20 +1101,19 @@ export function BudgetTable({
             )}
 
               </TableBody>
-            </Table>
-          </div>
+        </Table>
+      </div>
 
-          {/* Grand Totals Row - Fixed at bottom - Only show if there are rows */}
-          {table.getRowModel().rows?.length > 0 && (
-        <div className="sticky bottom-0 border-t-2 border-border bg-background">
-          <table className="w-full caption-bottom text-sm table-fixed">
-            <tbody>
-              <tr className="border-b bg-background font-semibold transition-colors">
+      {/* Grand Totals Row - Fixed at bottom */}
+      <div className="sticky bottom-0 border-t border-border bg-background">
+          <table className="min-w-[1848px] w-full caption-bottom text-sm table-fixed">
+            <TableFooter className="bg-muted/50 border-t">
+              <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
                 <td className={cn("py-4 pl-4 pr-0.5", getWidthClass("select"))} />
                 <td className={cn("py-4 px-0.5", getWidthClass("expander"))} />
                 <td
                   className={cn(
-                    "py-4 px-2 text-sm font-bold text-foreground",
+                    "py-4 px-2 text-sm font-semibold text-foreground",
                     getWidthClass("description"),
                   )}
                 >
@@ -1293,12 +1262,9 @@ export function BudgetTable({
                   </div>
                 </td>
               </tr>
-            </tbody>
+            </TableFooter>
           </table>
         </div>
-          )}
-        </>
-      )}
     </div>
   );
 }

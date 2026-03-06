@@ -16,7 +16,6 @@ import {
   VerticalMarkupSettings,
   CostCodesTab,
   OriginalBudgetEditModal,
-  BudgetViewsManager,
   ForecastingTab,
   SnapshotsTab,
   ChangeHistoryTab,
@@ -48,12 +47,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  budgetViews,
-  budgetSnapshots,
-  budgetGroups,
-  budgetGrandTotals,
-} from "@/config/budget";
+import { budgetSnapshots, budgetGroups, budgetGrandTotals } from "@/config/budget";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   applyQuickFilter,
@@ -108,7 +102,6 @@ function BudgetPageContent() {
 
   // Get active tab from URL query parameter, default to 'budget'
   const activeTab = searchParams.get("tab") || "budget";
-  const [selectedView, setSelectedView] = React.useState("procore-standard");
   const [selectedSnapshot, setSelectedSnapshot] = React.useState("current");
   const [selectedGroup, setSelectedGroup] = React.useState("cost-code-tier-1");
   const [budgetData, setBudgetData] = React.useState<BudgetLineItem[]>([]);
@@ -116,7 +109,6 @@ function BudgetPageContent() {
     BudgetDetailLineItem[]
   >([]);
   const [quickFilter, setQuickFilter] = React.useState<QuickFilterType>("all");
-  const [currentViewId, setCurrentViewId] = React.useState<string>("");
   const [grandTotals, setGrandTotals] = React.useState(budgetGrandTotals);
   const [loading, setLoading] = React.useState(true);
   const [detailsLoading, setDetailsLoading] = React.useState(false);
@@ -468,11 +460,6 @@ function BudgetPageContent() {
     fetchBudgetDetails,
   ]);
 
-  const handleAddFilter = () => {
-    // TODO: Implement advanced filtering
-    toast.info("Advanced filtering coming soon");
-  };
-
   const handleAnalyzeVariance = () => {
     // TODO: Implement variance analysis
     toast.info("Variance analysis coming soon");
@@ -513,7 +500,7 @@ function BudgetPageContent() {
 
   const handleConfigureBudgetViews = React.useCallback(() => {
     router.push(`/${projectId}/budget`);
-    toast.info("Use the view selector beside filters to configure budget views.");
+    toast.info("Budget view configuration is available in the actions menu.");
   }, [router, projectId]);
 
   const handleLineItemSuccess = React.useCallback(() => {
@@ -841,26 +828,28 @@ function BudgetPageContent() {
 
   return (
     <>
-      <BudgetPageHeader
-        title="Budget"
-        isLocked={isLocked}
-        lockedAt={lockedAt}
-        lockedBy={lockedBy}
-        onCreateClick={handleCreateClick}
-        onModificationClick={handleModificationClick}
-        onResendToERP={handleResendToERP}
-        onLockBudget={handleLockBudget}
-        onUnlockBudget={handleUnlockBudget}
-        onImport={handleImport}
-        onExport={handleExport}
-        onOpenBudgetModificationsReport={handleOpenBudgetModificationsReport}
-        onOpenBuyoutSummaryReport={handleOpenBuyoutSummaryReport}
-        onOpenLegacyBudgetDetailReport={handleOpenLegacyBudgetDetailReport}
-        onOpenMonitoredResourcesReport={handleOpenMonitoredResourcesReport}
-        onOpenCustomReports={handleOpenCustomReports}
-        onOpenErpIntegrations={handleOpenErpIntegrations}
-        onConfigureBudgetViews={handleConfigureBudgetViews}
-      />
+      <div className="pl-4 sm:pl-6 lg:pl-8">
+        <BudgetPageHeader
+          title="Budget"
+          isLocked={isLocked}
+          lockedAt={lockedAt}
+          lockedBy={lockedBy}
+          onCreateClick={handleCreateClick}
+          onModificationClick={handleModificationClick}
+          onResendToERP={handleResendToERP}
+          onLockBudget={handleLockBudget}
+          onUnlockBudget={handleUnlockBudget}
+          onImport={handleImport}
+          onExport={handleExport}
+          onOpenBudgetModificationsReport={handleOpenBudgetModificationsReport}
+          onOpenBuyoutSummaryReport={handleOpenBuyoutSummaryReport}
+          onOpenLegacyBudgetDetailReport={handleOpenLegacyBudgetDetailReport}
+          onOpenMonitoredResourcesReport={handleOpenMonitoredResourcesReport}
+          onOpenCustomReports={handleOpenCustomReports}
+          onOpenErpIntegrations={handleOpenErpIntegrations}
+          onConfigureBudgetViews={handleConfigureBudgetViews}
+        />
+      </div>
 
       <BudgetTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -897,16 +886,12 @@ function BudgetPageContent() {
           <>
             <div className="flex items-center justify-between gap-4">
               <BudgetFilters
-                views={budgetViews}
                 snapshots={budgetSnapshots}
                 groups={budgetGroups}
-                selectedView={selectedView}
                 selectedSnapshot={selectedSnapshot}
                 selectedGroup={selectedGroup}
-                onViewChange={setSelectedView}
                 onSnapshotChange={setSelectedSnapshot}
                 onGroupChange={setSelectedGroup}
-                onAddFilter={handleAddFilter}
                 onAnalyzeVariance={handleAnalyzeVariance}
                 onToggleFullscreen={handleToggleFullscreen}
                 onQuickFilterChange={handleQuickFilterChange}
@@ -922,28 +907,19 @@ function BudgetPageContent() {
           </>
         ) : (
           <div className="flex-1 overflow-x-auto">
-            <div className="min-w-[1200px] pr-4 sm:pr-6 lg:pr-8">
+            <div className="min-w-full pr-4 sm:pr-6 lg:pr-8">
               <div className="flex items-center justify-between gap-4 mb-2">
                 <BudgetFilters
-                  views={budgetViews}
                   snapshots={budgetSnapshots}
                   groups={budgetGroups}
-                  selectedView={selectedView}
                   selectedSnapshot={selectedSnapshot}
                   selectedGroup={selectedGroup}
-                  onViewChange={setSelectedView}
                   onSnapshotChange={setSelectedSnapshot}
                   onGroupChange={setSelectedGroup}
-                  onAddFilter={handleAddFilter}
                   onAnalyzeVariance={handleAnalyzeVariance}
                   onToggleFullscreen={handleToggleFullscreen}
                   onQuickFilterChange={handleQuickFilterChange}
                   activeQuickFilter={quickFilter}
-                />
-                <BudgetViewsManager
-                  projectId={projectId}
-                  currentViewId={currentViewId}
-                  onViewChange={setCurrentViewId}
                 />
               </div>
 
@@ -981,7 +957,6 @@ function BudgetPageContent() {
                       onEditLineItem={handleEditLineItem}
                       onSelectionChange={handleSelectionChange}
                       projectId={projectId}
-                      onAddLineItemClick={handleCreateClick}
                       onBudgetModificationsClick={handleBudgetModificationsClick}
                       onApprovedCOsClick={handleApprovedCOsClick}
                       onJobToDateCostDetailClick={handleJobToDateCostDetailClick}

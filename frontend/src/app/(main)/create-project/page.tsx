@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type HTMLAttributes } from "react";
+import { useState, useRef, useEffect, useMemo, type HTMLAttributes } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,10 +11,19 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Info, Upload, ImageIcon, X } from "lucide-react";
+import {
+  Loader2,
+  ArrowLeft,
+  Info,
+  Upload,
+  ImageIcon,
+  X,
+  Settings2,
+} from "lucide-react";
 import { AppShell } from "@/components/layouts";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
   Card,
   CardContent,
@@ -32,6 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -273,6 +283,72 @@ interface FormSection {
   description?: string;
   fields: FieldDefinition[];
 }
+
+type FormLayoutMode = "cards" | "sections" | "single-column";
+
+interface DevFieldOverride {
+  hidden?: boolean;
+  control?: FieldControl;
+  colSpan?: "full";
+}
+
+interface DevSectionOverride {
+  hidden?: boolean;
+}
+
+interface DevTemplateFormConfig {
+  layout: FormLayoutMode;
+  sections: Record<string, DevSectionOverride>;
+  fields: Partial<Record<FieldName, DevFieldOverride>>;
+}
+
+type DevFormConfigs = Record<string, DevTemplateFormConfig>;
+
+const FORM_DEV_CONFIG_STORAGE_KEY = "create-project-form-dev-config-v1";
+
+const DEFAULT_LAYOUT_BY_TEMPLATE: Record<string, FormLayoutMode> = {
+  standard: "cards",
+  shell: "sections",
+  interiors: "single-column",
+};
+
+const FIELD_CONTROL_OPTIONS: Record<FieldControl, FieldControl[]> = {
+  text: ["text", "textarea"],
+  textarea: ["textarea", "text"],
+  select: ["select"],
+  number: ["number", "formatted-number", "currency"],
+  date: ["date"],
+  checkbox: ["checkbox"],
+  file: ["file"],
+  "formatted-number": ["formatted-number", "number", "currency"],
+  currency: ["currency", "formatted-number", "number"],
+};
+
+const getFieldControlOptions = (field: FieldDefinition): FieldControl[] => {
+  return FIELD_CONTROL_OPTIONS[field.control] ?? [field.control];
+};
+
+const isControlAllowedForField = (
+  field: FieldDefinition,
+  control: FieldControl,
+): boolean => {
+  return getFieldControlOptions(field).includes(control);
+};
+
+const createDefaultTemplateConfig = (
+  template: string,
+): DevTemplateFormConfig => ({
+  layout: DEFAULT_LAYOUT_BY_TEMPLATE[template] ?? "cards",
+  sections: {},
+  fields: {},
+});
+
+const getTemplateConfig = (
+  configs: DevFormConfigs,
+  template: string,
+): DevTemplateFormConfig => {
+  return configs[template] ?? createDefaultTemplateConfig(template);
+};
 
 const formSections: FormSection[] = [
   {
@@ -739,6 +815,7 @@ export default function CreateProjectPage() {
 
 function CreateProjectForm() {
   const router = useRouter();
+  const { profile } = useCurrentUserProfile();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileResetKey, setFileResetKey] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -746,6 +823,8 @@ function CreateProjectForm() {
     id: string;
     name: string;
   } | null>(null);
+  const [showDevConfigurator, setShowDevConfigurator] = useState(false);
+  const [devConfigs, setDevConfigs] = useState<DevFormConfigs>({});
 
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema) as any,
@@ -753,6 +832,94 @@ function CreateProjectForm() {
   });
 
   const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as any);
+  const isDevAdmin =
+    process.env.NODE_ENV === "development" && profile?.isAdmin === true;
+  const selectedTemplate = form.watch("project_template") ?? "standard";
+  const activeTemplateConfig = getTemplateConfig(devConfigs, selectedTemplate);
+
+  useEffect(() => {
+    if (!isDevAdmin || typeof window === "undefined") return;
+    try {
+      const storedConfig = window.localStorage.getItem(
+        FORM_DEV_CONFIG_STORAGE_KEY,
+      );
+      if (!storedConfig) return;
+      const parsed = JSON.parse(storedConfig) as DevFormConfigs;
+      if (parsed && typeof parsed === "object") {
+        setDevConfigs(parsed);
+      }
+    } catch {
+      // Ignore malformed localStorage state in development.
+    }
+  }, [isDevAdmin]);
+
+  useEffect(() => {
+    if (!isDevAdmin || typeof window === "undefined") return;
+    window.localStorage.setItem(
+      FORM_DEV_CONFIG_STORAGE_KEY,
+      JSON.stringify(devConfigs),
+    );
+  }, [devConfigs, isDevAdmin]);
+
+  const updateActiveTemplateConfig = (
+    updater: (config: DevTemplateFormConfig) => DevTemplateFormConfig,
+  ) => {
+    setDevConfigs((prev) => {
+      const current = getTemplateConfig(prev, selectedTemplate);
+      return {
+        ...prev,
+        [selectedTemplate]: updater(current),
+      };
+    });
+  };
+
+  const resetActiveTemplateConfig = () => {
+    setDevConfigs((prev) => ({
+      ...prev,
+      [selectedTemplate]: createDefaultTemplateConfig(selectedTemplate),
+    }));
+  };
+
+  const clearAllDevFormConfigs = () => {
+    setDevConfigs({});
+  };
+
+  const effectiveFormSections = useMemo(() => {
+    if (!isDevAdmin) return formSections;
+
+    return formSections
+      .map((section) => {
+        const sectionOverride = activeTemplateConfig.sections[section.id];
+        if (sectionOverride?.hidden) return null;
+
+        const fields = section.fields
+          .filter((field) => !activeTemplateConfig.fields[field.name]?.hidden)
+          .map((field) => {
+            const fieldOverride = activeTemplateConfig.fields[field.name];
+            if (!fieldOverride) return field;
+
+            const control =
+              fieldOverride.control &&
+              isControlAllowedForField(field, fieldOverride.control)
+                ? fieldOverride.control
+                : field.control;
+
+            return {
+              ...field,
+              control,
+              colSpan: fieldOverride.colSpan ?? field.colSpan,
+            };
+          });
+
+        if (fields.length === 0) return null;
+
+        return {
+          ...section,
+          fields,
+        };
+      })
+      .filter((section): section is FormSection => section !== null);
+  }, [activeTemplateConfig, isDevAdmin]);
 
   const handleSubmit = async (values: CreateProjectFormValues) => {
     setIsSubmitting(true);
@@ -762,8 +929,7 @@ function CreateProjectForm() {
         "job number": values.project_number || null,
         current_phase: values.stage || null,
         phase: values.phase || null,
-        category: values.project_type || null,
-        type: values.project_type || null, // Also set 'type' column
+        type: values.project_type || null,
         summary: values.description || null,
         address: values.street_address,
         state: values.state || null,
@@ -1111,6 +1277,50 @@ function CreateProjectForm() {
     />
   );
 
+  const activeLayout: FormLayoutMode = isDevAdmin
+    ? activeTemplateConfig.layout
+    : "cards";
+
+  const renderSection = (section: FormSection) => {
+    if (activeLayout === "sections") {
+      return (
+        <section key={section.id} className="space-y-4 border-b border-border pb-8">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
+            {section.description && (
+              <p className="text-sm text-muted-foreground">{section.description}</p>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {section.fields.map(renderField)}
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <Card key={section.id}>
+        <CardHeader>
+          <CardTitle>{section.title}</CardTitle>
+          {section.description && (
+            <CardDescription>{section.description}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div
+            className={
+              activeLayout === "single-column"
+                ? "grid grid-cols-1 gap-4"
+                : "grid grid-cols-1 gap-4 md:grid-cols-2"
+            }
+          >
+            {section.fields.map(renderField)}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <>
       <ProjectCreatedModal
@@ -1127,58 +1337,276 @@ function CreateProjectForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {formSections.map((section) => (
-          <Card key={section.id}>
-            <CardHeader>
-              <CardTitle>{section.title}</CardTitle>
-              {section.description && (
-                <CardDescription>{section.description}</CardDescription>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {section.fields.map(renderField)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+          {isDevAdmin && (
+            <Card className="border-dashed">
+              <CardHeader className="space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings2 className="h-4 w-4" />
+                      Developer Form Config
+                    </CardTitle>
+                    <CardDescription>
+                      Development-only admin controls for template-specific form layout and fields.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowDevConfigurator((prev) => !prev)}
+                  >
+                    {showDevConfigurator ? "Hide Config" : "Configure Form"}
+                  </Button>
+                </div>
+              </CardHeader>
+              {showDevConfigurator && (
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div>
+                      <Label htmlFor="dev-template">Template Preset</Label>
+                      <Select
+                        value={selectedTemplate}
+                        onValueChange={(value) =>
+                          form.setValue("project_template", value, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                          })
+                        }
+                      >
+                        <SelectTrigger id="dev-template">
+                          <SelectValue placeholder="Select template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PROJECT_TEMPLATE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-        <div className="flex flex-col gap-4 rounded-lg border border-dashed border-muted bg-background p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              Need to start over?
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Reset clears unsaved values but keeps Procore defaults.
-            </p>
-          </div>
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            <DevAutoFillButton />
-            <div className="flex flex-wrap gap-4">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  form.reset(defaultValues);
-                  setFileResetKey((key) => key + 1);
-                }}
-              >
-                Reset Form
-              </Button>
-              <Button type="button" variant="outline" asChild>
-                <Link href="/">Cancel</Link>
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                {isSubmitting ? "Creating Project…" : "Create Project"}
-              </Button>
+                    <div>
+                      <Label htmlFor="dev-layout">Page Layout</Label>
+                      <Select
+                        value={activeTemplateConfig.layout}
+                        onValueChange={(value) =>
+                          updateActiveTemplateConfig((config) => ({
+                            ...config,
+                            layout: value as FormLayoutMode,
+                          }))
+                        }
+                      >
+                        <SelectTrigger id="dev-layout">
+                          <SelectValue placeholder="Select layout" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cards">Cards</SelectItem>
+                          <SelectItem value="sections">Section Blocks</SelectItem>
+                          <SelectItem value="single-column">Single Column</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex items-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={resetActiveTemplateConfig}
+                      >
+                        Reset Template
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={clearAllDevFormConfigs}
+                      >
+                        Reset All
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {formSections.map((section) => {
+                      const sectionOverride =
+                        activeTemplateConfig.sections[section.id] ?? {};
+                      return (
+                        <div key={`dev-section-${section.id}`} className="rounded-md border p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold text-foreground">
+                              {section.title}
+                            </h4>
+                            <label className="inline-flex items-center gap-2 text-sm">
+                              <Checkbox
+                                checked={!sectionOverride.hidden}
+                                onCheckedChange={(checked) =>
+                                  updateActiveTemplateConfig((config) => ({
+                                    ...config,
+                                    sections: {
+                                      ...config.sections,
+                                      [section.id]: {
+                                        ...config.sections[section.id],
+                                        hidden: !Boolean(checked),
+                                      },
+                                    },
+                                  }))
+                                }
+                              />
+                              Show section
+                            </label>
+                          </div>
+
+                          <div className="mt-4 space-y-3">
+                            {section.fields.map((field) => {
+                              const fieldOverride =
+                                activeTemplateConfig.fields[field.name] ?? {};
+                              const allowedControls = getFieldControlOptions(field);
+                              const selectedControl =
+                                fieldOverride.control &&
+                                isControlAllowedForField(field, fieldOverride.control)
+                                  ? fieldOverride.control
+                                  : field.control;
+
+                              return (
+                                <div
+                                  key={`dev-field-${section.id}-${field.name}`}
+                                  className="rounded-md bg-muted/40 p-3"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <p className="text-sm font-medium text-foreground">
+                                      {field.label}
+                                    </p>
+                                    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                                      <Checkbox
+                                        checked={!fieldOverride.hidden}
+                                        onCheckedChange={(checked) =>
+                                          updateActiveTemplateConfig((config) => ({
+                                            ...config,
+                                            fields: {
+                                              ...config.fields,
+                                              [field.name]: {
+                                                ...config.fields[field.name],
+                                                hidden: !Boolean(checked),
+                                              },
+                                            },
+                                          }))
+                                        }
+                                      />
+                                      Show field
+                                    </label>
+                                  </div>
+
+                                  <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                    <div>
+                                      <Label className="text-xs">Field Type</Label>
+                                      <Select
+                                        value={selectedControl}
+                                        onValueChange={(value) =>
+                                          updateActiveTemplateConfig((config) => ({
+                                            ...config,
+                                            fields: {
+                                              ...config.fields,
+                                              [field.name]: {
+                                                ...config.fields[field.name],
+                                                control: value as FieldControl,
+                                              },
+                                            },
+                                          }))
+                                        }
+                                      >
+                                        <SelectTrigger className="h-8">
+                                          <SelectValue placeholder="Choose field type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {allowedControls.map((control) => (
+                                            <SelectItem key={control} value={control}>
+                                              {control}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground pt-6">
+                                      <Checkbox
+                                        checked={fieldOverride.colSpan === "full"}
+                                        onCheckedChange={(checked) =>
+                                          updateActiveTemplateConfig((config) => ({
+                                            ...config,
+                                            fields: {
+                                              ...config.fields,
+                                              [field.name]: {
+                                                ...config.fields[field.name],
+                                                colSpan: Boolean(checked)
+                                                  ? "full"
+                                                  : undefined,
+                                              },
+                                            },
+                                          }))
+                                        }
+                                      />
+                                      Full width field
+                                    </label>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          )}
+
+          {effectiveFormSections.length > 0 ? (
+            effectiveFormSections.map(renderSection)
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                No fields are currently visible for the selected template.
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="flex flex-col gap-4 rounded-lg border border-dashed border-muted bg-background p-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Need to start over?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Reset clears unsaved values but keeps Procore defaults.
+              </p>
+            </div>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <DevAutoFillButton />
+              <div className="flex flex-wrap gap-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    form.reset(defaultValues);
+                    setFileResetKey((key) => key + 1);
+                  }}
+                >
+                  Reset Form
+                </Button>
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/">Cancel</Link>
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {isSubmitting ? "Creating Project…" : "Create Project"}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
     </>
   );
 }

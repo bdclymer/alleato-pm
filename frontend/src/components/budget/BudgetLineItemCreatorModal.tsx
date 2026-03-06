@@ -37,7 +37,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 interface BudgetCode {
@@ -568,30 +567,14 @@ export function BudgetLineItemCreatorModal({
             {/* Modal */}
             <motion.div
               ref={modalRef}
-              initial={{
-                opacity: 0,
-                scale: 0.95,
-                y: 20,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                y: 0,
-              }}
-              exit={{
-                opacity: 0,
-                scale: 0.95,
-                y: 10,
-              }}
-              transition={{
-                type: "spring",
-                stiffness: 300,
-                damping: 25,
-              }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
               className="relative z-50 w-full max-w-5xl mx-4 bg-background rounded-xl shadow-2xl border border-border overflow-hidden"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
+              {/* Header — padding only, no divider */}
+              <div className="flex items-center justify-between px-6 pt-5 pb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
                     Add Budget Line Items
@@ -611,194 +594,194 @@ export function BudgetLineItemCreatorModal({
               </div>
 
               {/* Body */}
-              <div className="p-6 max-h-[75vh] overflow-y-auto">
+              <div className="px-6 pb-4 max-h-[70vh] overflow-y-auto">
                 {/* Smart Copy UOM Toggle */}
                 <div className="flex gap-4 text-xs mb-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-gray-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-muted-foreground">
                     <input
                       type="checkbox"
                       checked={smartCopyUOM}
                       onChange={(e) => setSmartCopyUOM(e.target.checked)}
-                      className="rounded border-gray-300"
+                      className="rounded border-border"
                     />
                     <span>Copy UOM to new rows</span>
                   </label>
                 </div>
 
-                <div className="space-y-4">
-                  {rows.map((row, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="bg-muted/30 rounded-lg p-4 border border-border"
-                    >
-                      <div className="grid grid-cols-12 gap-4">
-                        {/* Budget Code Selector - Full width on mobile, 4 cols on desktop */}
-                        <div className="col-span-12 sm:col-span-4">
-                          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            Budget Code <span className="text-red-500">*</span>
-                          </Label>
-                          <Popover
-                            open={openPopoverId === index}
-                            onOpenChange={(open) => setOpenPopoverId(open ? index : null)}
+                {/* Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground w-8">#</th>
+                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground">
+                          Budget Code <span className="text-destructive">*</span>
+                        </th>
+                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-24">Qty</th>
+                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-24">UOM</th>
+                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-28">Unit Cost</th>
+                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-28">
+                          Amount <span className="text-destructive">*</span>
+                        </th>
+                        <th className="pb-2 w-8" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <AnimatePresence initial={false}>
+                        {rows.map((row, index) => (
+                          <motion.tr
+                            key={index}
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.15 }}
+                            className="border-b border-border last:border-b-0 group"
                           >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between text-left font-normal h-10 bg-background"
+                            <td className="py-2 pr-4 text-sm text-muted-foreground align-middle">
+                              {index + 1}
+                            </td>
+
+                            <td className="py-2 pr-3 align-middle">
+                              <Popover
+                                open={openPopoverId === index}
+                                onOpenChange={(open) => setOpenPopoverId(open ? index : null)}
                               >
-                                <span className="truncate text-sm">
-                                  {row.budgetCodeLabel || "Select budget code..."}
-                                </span>
-                                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[400px] p-0" align="start">
-                              <Command>
-                                <CommandInput
-                                  placeholder="Search budget codes..."
-                                  value={searchQuery}
-                                  onValueChange={setSearchQuery}
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    {loadingCodes ? "Loading..." : "No budget codes found."}
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredCodes.map((code) => (
-                                      <CommandItem
-                                        key={code.id}
-                                        value={code.fullLabel}
-                                        onSelect={() => handleBudgetCodeSelect(index, code)}
-                                      >
-                                        {code.fullLabel}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                  <CommandSeparator />
-                                  <CommandGroup>
-                                    <CommandItem
-                                      onSelect={() => {
-                                        setOpenPopoverId(null);
-                                        setPendingRowIndex(index);
-                                        setShowCreateCodeModal(true);
-                                      }}
-                                      className=""
-                                    >
-                                      <Plus className="mr-2 h-4 w-4" />
-                                      Create New Budget Code
-                                    </CommandItem>
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                        </div>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className="w-full justify-between text-left font-normal h-8 text-sm bg-muted/30 border-border/60"
+                                  >
+                                    <span className="truncate">
+                                      {row.budgetCodeLabel || "Select budget code..."}
+                                    </span>
+                                    <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[400px] p-0" align="start">
+                                  <Command>
+                                    <CommandInput
+                                      placeholder="Search budget codes..."
+                                      value={searchQuery}
+                                      onValueChange={setSearchQuery}
+                                    />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        {loadingCodes ? "Loading..." : "No budget codes found."}
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {filteredCodes.map((code) => (
+                                          <CommandItem
+                                            key={code.id}
+                                            value={code.fullLabel}
+                                            onSelect={() => handleBudgetCodeSelect(index, code)}
+                                          >
+                                            {code.fullLabel}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                      <CommandSeparator />
+                                      <CommandGroup>
+                                        <CommandItem
+                                          onSelect={() => {
+                                            setOpenPopoverId(null);
+                                            setPendingRowIndex(index);
+                                            setShowCreateCodeModal(true);
+                                          }}
+                                        >
+                                          <Plus className="mr-2 h-4 w-4" />
+                                          Create New Budget Code
+                                        </CommandItem>
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                            </td>
 
-                        {/* Quantity */}
-                        <div className="col-span-3 sm:col-span-2">
-                          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            Qty
-                          </Label>
-                          <NumberInput
-                            step="0.001"
-                            value={row.qty}
-                            onChange={(e) => handleRowChange(index, "qty", e.target.value)}
-                            placeholder="Quantity"
-                            className="h-10 bg-background text-center"
-                            disabled={isCreating}
-                            clearZeroOnFocus={true}
-                          />
-                        </div>
-
-                        {/* UOM */}
-                        <div className="col-span-3 sm:col-span-2">
-                          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            UOM
-                          </Label>
-                          <Select
-                            value={row.uom}
-                            onValueChange={(value) => handleRowChange(index, "uom", value)}
-                          >
-                            <SelectTrigger className="h-10 bg-background">
-                              <SelectValue placeholder="Select" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="EA">EA</SelectItem>
-                              <SelectItem value="HR">HR</SelectItem>
-                              <SelectItem value="SF">SF</SelectItem>
-                              <SelectItem value="LF">LF</SelectItem>
-                              <SelectItem value="LS">LS</SelectItem>
-                              <SelectItem value="CY">CY</SelectItem>
-                              <SelectItem value="TON">TON</SelectItem>
-                              <SelectItem value="DAY">DAY</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {/* Unit Cost */}
-                        <div className="col-span-3 sm:col-span-2">
-                          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            Unit Cost
-                          </Label>
-                          <NumberInput
-                            step="0.01"
-                            value={row.unitCost}
-                            onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
-                            placeholder="Unit cost"
-                            className="h-10 bg-background"
-                            disabled={isCreating}
-                            clearZeroOnFocus={true}
-                            currency={true}
-                          />
-                        </div>
-
-                        {/* Amount */}
-                        <div className="col-span-3 sm:col-span-2">
-                          <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            Amount <span className="text-red-500">*</span>
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <NumberInput
-                              step="0.01"
-                              value={row.amount}
-                              onChange={(e) => handleRowChange(index, "amount", e.target.value)}
-                              placeholder="$0.00"
-                              className="h-10 font-medium bg-background flex-1"
-                              disabled={isCreating}
-                              clearZeroOnFocus={true}
-                              autoSelectOnFocus={true}
-                              currency={true}
-                            />
-                            {rows.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 shrink-0 hover:bg-red-50 hover:text-red-600"
-                                onClick={() => removeRow(index)}
+                            <td className="py-2 pr-3 align-middle">
+                              <NumberInput
+                                step="0.001"
+                                value={row.qty}
+                                onChange={(e) => handleRowChange(index, "qty", e.target.value)}
+                                placeholder="0"
+                                className="h-8 bg-muted/30 border-border/60 text-center"
                                 disabled={isCreating}
+                                clearZeroOnFocus={true}
+                              />
+                            </td>
+
+                            <td className="py-2 pr-3 align-middle">
+                              <Select
+                                value={row.uom}
+                                onValueChange={(value) => handleRowChange(index, "uom", value)}
                               >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                          {negativeAmountRows.has(index) && (
-                            <Alert className="mt-2 bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-200">
-                              <AlertTriangle className="h-4 w-4" />
-                              <AlertDescription className="text-xs">
-                                Negative amounts are unusual. Please verify this is intentional before saving.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                                <SelectTrigger className="h-8 bg-muted/30 border-border/60">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="EA">EA</SelectItem>
+                                  <SelectItem value="HR">HR</SelectItem>
+                                  <SelectItem value="SF">SF</SelectItem>
+                                  <SelectItem value="LF">LF</SelectItem>
+                                  <SelectItem value="LS">LS</SelectItem>
+                                  <SelectItem value="CY">CY</SelectItem>
+                                  <SelectItem value="TON">TON</SelectItem>
+                                  <SelectItem value="DAY">DAY</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </td>
+
+                            <td className="py-2 pr-3 align-middle">
+                              <NumberInput
+                                step="0.01"
+                                value={row.unitCost}
+                                onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
+                                placeholder="Unit cost"
+                                className="h-8 bg-muted/30 border-border/60"
+                                disabled={isCreating}
+                                clearZeroOnFocus={true}
+                                currency={true}
+                              />
+                            </td>
+
+                            <td className="py-2 pr-2 align-top pt-3">
+                              <NumberInput
+                                step="0.01"
+                                value={row.amount}
+                                onChange={(e) => handleRowChange(index, "amount", e.target.value)}
+                                placeholder="$0.00"
+                                className="h-8 font-medium bg-muted/30 border-border/60"
+                                disabled={isCreating}
+                                clearZeroOnFocus={true}
+                                autoSelectOnFocus={true}
+                                currency={true}
+                              />
+                              {negativeAmountRows.has(index) && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                                  <AlertTriangle className="h-3 w-3 shrink-0" />
+                                  Negative — verify intentional
+                                </p>
+                              )}
+                            </td>
+
+                            <td className="py-2 align-middle">
+                              {rows.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeRow(index)}
+                                  disabled={isCreating}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all rounded"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </AnimatePresence>
+                    </tbody>
+                  </table>
                 </div>
 
                 {/* Add Row Button */}
@@ -815,8 +798,8 @@ export function BudgetLineItemCreatorModal({
                 </Button>
               </div>
 
-              {/* Footer with Running Total */}
-              <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
+              {/* Footer — padding only, no divider */}
+              <div className="flex items-center justify-between px-6 pt-3 pb-5 bg-muted/20">
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium text-foreground">
                     {rows.length} line item{rows.length !== 1 ? "s" : ""}
@@ -824,9 +807,9 @@ export function BudgetLineItemCreatorModal({
                   <span className="text-muted-foreground">•</span>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">Total Amount</span>
-                              <span className="text-2xl font-bold text-foreground">
-                                ${formatCurrency(calculateTotal().toString())}
-                              </span>
+                    <span className="text-2xl font-bold text-foreground">
+                      ${formatCurrency(calculateTotal().toString())}
+                    </span>
                   </div>
                 </div>
                 <div className="flex gap-4">

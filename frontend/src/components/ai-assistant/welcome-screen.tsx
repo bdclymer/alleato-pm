@@ -7,6 +7,7 @@ import {
   UsersIcon,
   AlertTriangleIcon,
 } from "lucide-react";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 
 const SUGGESTIONS = [
   {
@@ -46,9 +47,9 @@ export function WelcomeScreen({
 }: WelcomeScreenProps) {
   return (
     <div className="flex size-full flex-col items-center justify-center px-4">
-      <p className="text-lg font-normal text-foreground">
+      <Shimmer as="p" className="text-lg font-normal" duration={3} spread={1}>
         Where should we begin?
-      </p>
+      </Shimmer>
 
       {/* Input slot — rendered between title and suggestions */}
       {children && (
@@ -62,9 +63,9 @@ export function WelcomeScreen({
             key={s.prompt}
             type="button"
             onClick={() => onSelectPrompt(s.prompt)}
-            className="flex flex-col gap-2 rounded-xl bg-muted/40 p-4 text-left transition-colors hover:bg-muted/70"
+            className="flex flex-col gap-2 rounded-xl bg-muted/40 p-4 text-left transition-all hover:bg-muted/70 hover:shadow-xs"
           >
-            <s.icon className="h-5 w-5 text-muted-foreground/70" />
+            <s.icon className="h-5 w-5 text-primary/60" />
             <span className="text-sm font-medium text-foreground">
               {s.title}
             </span>

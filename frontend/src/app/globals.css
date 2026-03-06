@@ -4,6 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Streamdown markdown rendering styles (required for proper headers, code blocks, tables, lists) */
+@source "../node_modules/streamdown/dist/*.js";
+
 /* ============================================================================
    DESIGN SYSTEM - GLOBAL STYLES
    ============================================================================

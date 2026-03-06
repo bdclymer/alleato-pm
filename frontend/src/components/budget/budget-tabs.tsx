@@ -33,8 +33,8 @@ export function BudgetTabs({
 }: BudgetTabsProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Budget tabs">
-        <div className="flex min-w-max space-x-6 md:space-x-8">
+      <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Tabs">
+        <div className="flex min-w-max space-x-4 md:space-x-6">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (

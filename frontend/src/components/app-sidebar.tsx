@@ -206,7 +206,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenu>
                   {visibleAdminTools.map((tool) => {
                     const href = tool.path
-                    const isActive = pathname === tool.path
+                    const isActive = pathname === tool.path || pathname.startsWith(tool.path + "/")
 
                     return (
                       <SidebarMenuItem key={tool.name}>
