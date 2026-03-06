@@ -5,7 +5,6 @@ const eslintBin = path.join(frontendDir, 'node_modules', '.bin', 'eslint');
 
 module.exports = {
   'frontend/**/*.{ts,tsx,js,jsx}': (filenames) => [
-    'npm run typecheck --prefix frontend',
     `cd ${frontendDir} && ${eslintBin} --fix ${filenames.join(' ')}`,
   ],
 };

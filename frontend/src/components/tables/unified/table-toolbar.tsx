@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Search,
   LayoutGrid,
+  Table2,
   List,
   Filter,
   Columns3,
@@ -175,7 +176,8 @@ function ViewSwitcher({
   enabledViews?: ViewMode[];
 }): ReactElement {
   const views: { mode: ViewMode; icon: ReactNode; label: string }[] = [
-    { mode: "table", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
+    { mode: "table", icon: <Table2 className="h-3.5 w-3.5" />, label: "Table" },
+    { mode: "card", icon: <LayoutGrid className="h-3.5 w-3.5" />, label: "Grid" },
     { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
   ];
 

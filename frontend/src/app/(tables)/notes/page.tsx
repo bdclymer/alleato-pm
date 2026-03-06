@@ -15,13 +15,22 @@ const config: GenericTableConfig = {
   title: "Notes",
   hideHeader: true,
   description: "Project notes and annotations",
-  searchFields: ["body", "created_by"],
+  searchFields: ["title", "body", "created_by", "note_type", "source_type"],
   exportFilename: "notes-export.csv",
   editConfig: {
     tableName: "notes",
-    editableFields: ["body", "created_by"],
+    editableFields: ["title", "body", "created_by", "note_type", "source_type"],
   },
   columns: [
+    {
+      id: "title",
+      label: "Title",
+      defaultVisible: true,
+      renderConfig: {
+        type: "truncate",
+        maxLength: 80,
+      },
+    },
     {
       id: "body",
       label: "Note",
@@ -29,6 +38,22 @@ const config: GenericTableConfig = {
       renderConfig: {
         type: "truncate",
         maxLength: 150,
+      },
+    },
+    {
+      id: "note_type",
+      label: "Type",
+      defaultVisible: true,
+      renderConfig: {
+        type: "badge",
+      },
+    },
+    {
+      id: "source_type",
+      label: "Source",
+      defaultVisible: true,
+      renderConfig: {
+        type: "badge",
       },
     },
     {
@@ -71,6 +96,26 @@ const config: GenericTableConfig = {
       options: [
         { value: "false", label: "Active" },
         { value: "true", label: "Archived" },
+      ],
+    },
+    {
+      id: "note_type",
+      label: "Type",
+      field: "note_type",
+      options: [
+        { value: "manual", label: "Manual" },
+        { value: "highlight", label: "Highlight" },
+      ],
+    },
+    {
+      id: "source_type",
+      label: "Source",
+      field: "source_type",
+      options: [
+        { value: "meeting_transcript", label: "Meeting Transcript" },
+        { value: "knowledge_base", label: "Knowledge Base" },
+        { value: "team_chat", label: "Team Chat" },
+        { value: "ai_conversation", label: "AI Conversation" },
       ],
     },
   ],

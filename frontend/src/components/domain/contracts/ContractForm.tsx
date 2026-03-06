@@ -949,7 +949,6 @@ export function ContractForm({
       {/* ================================================================ */}
       <FormSection
         title="Schedule of Values"
-        description="Contract line items used for billing and progress tracking."
         headerActions={
           <Select defaultValue="add_group">
             <SelectTrigger className="w-[140px]">

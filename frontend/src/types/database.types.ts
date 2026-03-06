@@ -8818,7 +8818,12 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           id: number
+          note_type: string
           project_id: number
+          source_chunk_id: string | null
+          source_context: Json
+          source_metadata_id: string | null
+          source_type: string | null
           title: string | null
           updated_at: string | null
         }
@@ -8828,7 +8833,12 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: number
+          note_type?: string
           project_id: number
+          source_chunk_id?: string | null
+          source_context?: Json
+          source_metadata_id?: string | null
+          source_type?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -8838,7 +8848,12 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           id?: number
+          note_type?: string
           project_id?: number
+          source_chunk_id?: string | null
+          source_context?: Json
+          source_metadata_id?: string | null
+          source_type?: string | null
           title?: string | null
           updated_at?: string | null
         }
@@ -8890,6 +8905,170 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "documents_ordered_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_source_metadata_id_fkey"
+            columns: ["source_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_source_metadata_id_fkey"
+            columns: ["source_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_highlights: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          end_offset: number | null
+          exact_text: string
+          id: string
+          note_id: number
+          prefix_text: string | null
+          project_id: number
+          source_chunk_id: string | null
+          source_metadata_id: string | null
+          source_type: string
+          start_offset: number | null
+          suffix_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          end_offset?: number | null
+          exact_text: string
+          id?: string
+          note_id: number
+          prefix_text?: string | null
+          project_id: number
+          source_chunk_id?: string | null
+          source_metadata_id?: string | null
+          source_type: string
+          start_offset?: number | null
+          suffix_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          end_offset?: number | null
+          exact_text?: string
+          id?: string
+          note_id?: number
+          prefix_text?: string | null
+          project_id?: number
+          source_chunk_id?: string | null
+          source_metadata_id?: string | null
+          source_type?: string
+          start_offset?: number | null
+          suffix_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_highlights_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "documents_ordered_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_source_metadata_id_fkey"
+            columns: ["source_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_highlights_source_metadata_id_fkey"
+            columns: ["source_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
         ]
