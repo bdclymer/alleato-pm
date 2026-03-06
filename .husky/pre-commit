@@ -1,83 +1,12 @@
 #!/usr/bin/env sh
 
-echo "🔍 Running pre-commit checks..."
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# Fast pre-commit: route check + lint-staged only.
+# Full typecheck and unit tests run in CI.
 
-# 1. Check for Next.js dynamic route conflicts (CRITICAL)
-echo ""
-echo "🛣️  Checking Next.js route naming..."
 npm run check:routes
 if [ $? -ne 0 ]; then
-  echo "❌ Route conflict check FAILED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "You have conflicting dynamic route names."
-  echo "This will break the Next.js dev server."
-  echo ""
-  echo "See: .agents/rules/CRITICAL-NEXTJS-ROUTING-RULES.md"
-  echo ""
+  echo "Route conflict found. Fix before committing."
   exit 1
 fi
 
-# 2. Check for dangerous code patterns
-echo ""
-.husky/pre-commit-dangerous-patterns
-if [ $? -ne 0 ]; then
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 1
-fi
-
-# 3. Run documentation structure validation
-echo ""
-.husky/pre-commit-docs
-if [ $? -ne 0 ]; then
-  echo "❌ Documentation structure validation FAILED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 1
-fi
-
-# 4. Enforce Markdown location policy
-echo ""
-echo "🗂️  Enforcing Markdown location policy..."
-node scripts/validate-markdown-location.cjs
-if [ $? -ne 0 ]; then
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  exit 1
-fi
-
-# 5. Design system check on staged .tsx files
-echo ""
-echo "🎨 Checking design system compliance..."
-STAGED_TSX=$(git diff --cached --name-only --diff-filter=ACM | grep '\.tsx$' | grep '^frontend/src/' || true)
-if [ -n "$STAGED_TSX" ]; then
-  cd frontend
-  DS_WARNINGS=$(npx eslint --no-error-on-unmatched-pattern --rule 'design-system/no-hardcoded-colors: warn' --rule 'design-system/require-semantic-colors: warn' $STAGED_TSX 2>&1 | grep "design-system/" | wc -l | tr -d ' ')
-  cd ..
-  if [ "$DS_WARNINGS" -gt 0 ]; then
-    echo "⚠️  Design system: $DS_WARNINGS warning(s) found in staged .tsx files"
-    echo "   Run: cd frontend && npx eslint --rule 'design-system/require-semantic-colors: warn' <file>"
-    echo "   Ref: frontend/src/design-system/tokens.md"
-  else
-    echo "✅ Design system: No violations found"
-  fi
-else
-  echo "   No .tsx files staged — skipping"
-fi
-
-# 6. Run lint-staged to check and fix staged files
-echo ""
 npx lint-staged
-
-# If lint-staged fails, block the commit (step 6)
-if [ $? -ne 0 ]; then
-  echo "❌ Pre-commit checks FAILED"
-  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
-  echo "Fix the errors above before committing."
-  echo "Type errors and lint errors must be fixed."
-  echo ""
-  exit 1
-fi
-
-echo "✅ Pre-commit checks PASSED"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

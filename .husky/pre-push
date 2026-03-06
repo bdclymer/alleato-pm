@@ -1,34 +1,6 @@
 #!/usr/bin/env sh
 
-echo "🚀 Running pre-push checks..."
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+# Lightweight pre-push: only route conflicts (instant check).
+# Typecheck, lint, and unit tests run in CI — no need to block pushes.
 
-# Run full typecheck on entire project
-echo "📝 Type checking entire project..."
-npm run typecheck --prefix frontend
-TYPECHECK_EXIT=$?
-
-echo ""
-echo "🛣️  Checking dynamic route conflicts..."
 npm run check:routes
-ROUTE_EXIT=$?
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Block push if checks failed
-if [ $TYPECHECK_EXIT -ne 0 ] || [ $ROUTE_EXIT -ne 0 ]; then
-  echo "❌ Pre-push checks FAILED"
-  echo ""
-  echo "PUSH BLOCKED - Fix all errors before pushing"
-  echo ""
-  echo "Run these commands to see errors:"
-  echo "  npm run typecheck --prefix frontend"
-  echo "  npm run check:routes"
-  echo ""
-  exit 1
-fi
-
-echo "✅ Pre-push checks PASSED - Push allowed"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
