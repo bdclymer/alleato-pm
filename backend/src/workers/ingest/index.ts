@@ -54,6 +54,11 @@ export default {
       return handleStatusCheck(firefliesId, env);
     }
 
+    // POST /sync/recent - Manually sync latest transcripts from Fireflies
+    if (request.method === "POST" && url.pathname === "/sync/recent") {
+      return handleManualRecentSync(request, env);
+    }
+
     // Health check
     if (request.method === "GET" && url.pathname === "/health") {
       return Response.json({ status: "ok", worker: "ingest" });
@@ -84,6 +89,7 @@ export default {
         "GET /backfill/status - Check backfill progress",
         "POST /backfill/reset-errors - Reset error jobs to embedded stage",
         "GET /status/:firefliesId - Check status",
+        "POST /sync/recent - Sync latest transcripts from Fireflies",
         "GET /health - Health check",
       ],
     });
@@ -95,7 +101,9 @@ export default {
 
     try {
       // Fetch recent transcripts from Fireflies
-      const recentTranscripts = await fetchRecentFirefliesTranscripts(env);
+      const recentTranscripts = await fetchRecentFirefliesTranscripts(env, {
+        limit: 100,
+      });
 
       if (!recentTranscripts || recentTranscripts.length === 0) {
         console.log("[Ingest Cron] No transcripts found in Fireflies");
@@ -142,20 +150,72 @@ export default {
 // Helper for scheduled handler - fetch recent transcript summaries
 interface FirefliesTranscriptSummary {
   id: string;
-  title: string;
-  date: string;
+  title?: string;
+  date?: string | number;
 }
 
-async function fetchRecentFirefliesTranscripts(env: Env): Promise<FirefliesTranscriptSummary[]> {
+async function fetchRecentFirefliesTranscripts(
+  env: Env,
+  options?: {
+    limit?: number;
+    fromDate?: string;
+    toDate?: string;
+  }
+): Promise<FirefliesTranscriptSummary[]> {
+  const pageSize = 50; // Fireflies max for transcripts query
+  const totalLimit = Math.max(1, Math.min(options?.limit || 50, 500));
+  const results: FirefliesTranscriptSummary[] = [];
+  let skip = 0;
+
+  while (results.length < totalLimit) {
+    const pageLimit = Math.min(pageSize, totalLimit - results.length);
+    const page = await fetchFirefliesTranscriptPage(env, {
+      limit: pageLimit,
+      skip,
+      fromDate: options?.fromDate,
+      toDate: options?.toDate,
+    });
+
+    if (!page.length) {
+      break;
+    }
+
+    results.push(...page);
+    if (page.length < pageLimit) {
+      break;
+    }
+    skip += page.length;
+  }
+
+  return results;
+}
+
+async function fetchFirefliesTranscriptPage(
+  env: Env,
+  options: {
+    limit: number;
+    skip?: number;
+    fromDate?: string;
+    toDate?: string;
+  }
+): Promise<FirefliesTranscriptSummary[]> {
   const query = `
-    query RecentTranscripts {
-      transcripts(limit: 20) {
+    query RecentTranscripts($limit: Int, $skip: Int, $fromDate: DateTime, $toDate: DateTime) {
+      transcripts(limit: $limit, skip: $skip, fromDate: $fromDate, toDate: $toDate) {
         id
         title
         date
+        dateString
       }
     }
   `;
+
+  const variables = {
+    limit: options.limit,
+    skip: options.skip || 0,
+    fromDate: options.fromDate || null,
+    toDate: options.toDate || null,
+  };
 
   try {
     const response = await fetch("https://api.fireflies.ai/graphql", {
@@ -164,7 +224,7 @@ async function fetchRecentFirefliesTranscripts(env: Env): Promise<FirefliesTrans
         "Content-Type": "application/json",
         "Authorization": `Bearer ${env.FIREFLIES_API_KEY}`,
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, variables }),
     });
 
     if (!response.ok) {
@@ -172,11 +232,187 @@ async function fetchRecentFirefliesTranscripts(env: Env): Promise<FirefliesTrans
       return [];
     }
 
-    const result = (await response.json()) as { data?: { transcripts?: FirefliesTranscriptSummary[] } };
+    const result = (await response.json()) as {
+      data?: { transcripts?: FirefliesTranscriptSummary[] };
+      errors?: Array<{ message: string }>;
+    };
+
+    if (result.errors?.length) {
+      console.error("[Fireflies API] List GraphQL errors:", result.errors);
+      return [];
+    }
+
     return result.data?.transcripts || [];
   } catch (err) {
     console.error("[Fireflies API] List error:", err);
     return [];
+  }
+}
+
+function toIsoDateTime(
+  value: string | number | null | undefined
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  // Fireflies date can be epoch milliseconds
+  if (typeof value === "number") {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const n = Number(trimmed);
+  if (Number.isFinite(n) && n > 1_000_000_000) {
+    const d = new Date(n);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toISOString();
+    }
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+
+  return null;
+}
+
+function fmtDurationMinutes(duration: number | undefined): string | null {
+  if (typeof duration !== "number" || Number.isNaN(duration)) {
+    return null;
+  }
+  // Fireflies docs say minutes; handle legacy seconds fallback
+  const minutes = duration > 600 ? Math.round(duration / 60) : Math.round(duration);
+  return `${minutes} minutes`;
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => String(v)).map((v) => v.trim()).filter(Boolean);
+}
+
+function appendJsonSection(lines: string[], title: string, value: unknown): void {
+  if (!value) return;
+  lines.push(`## ${title}`);
+  lines.push("```json");
+  lines.push(JSON.stringify(value, null, 2));
+  lines.push("```");
+  lines.push("");
+}
+
+function appendTextSection(lines: string[], title: string, value?: string | null): void {
+  const text = value?.trim();
+  if (!text) return;
+  lines.push(`## ${title}`);
+  lines.push(text);
+  lines.push("");
+}
+
+function appendListSection(lines: string[], title: string, value?: string[] | null): void {
+  const list = (value || []).map((v) => v.trim()).filter(Boolean);
+  if (!list.length) return;
+  lines.push(`## ${title}`);
+  for (const item of list) {
+    lines.push(`- ${item}`);
+  }
+  lines.push("");
+}
+
+async function handleManualRecentSync(
+  request: Request,
+  env: Env
+): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as {
+      limit?: number;
+      fromDate?: string;
+      toDate?: string;
+      includeExisting?: boolean;
+    };
+
+    const limit = Math.max(1, Math.min(body.limit || 5, 200));
+    const includeExisting = Boolean(body.includeExisting);
+    const transcripts = await fetchRecentFirefliesTranscripts(env, {
+      limit,
+      fromDate: body.fromDate,
+      toDate: body.toDate,
+    });
+
+    if (!transcripts.length) {
+      return Response.json({
+        success: true,
+        message: "No transcripts found for requested range",
+        synced: 0,
+      });
+    }
+
+    const results: Array<{
+      transcriptId: string;
+      success: boolean;
+      skipped?: boolean;
+      reason?: string;
+      metadataId?: string;
+    }> = [];
+
+    for (const item of transcripts) {
+      try {
+        if (!includeExisting && (await isAlreadyProcessed(env, item.id))) {
+          results.push({
+            transcriptId: item.id,
+            success: true,
+            skipped: true,
+            reason: "Already processed",
+          });
+          continue;
+        }
+
+        const transcript = await fetchFirefliesTranscript(env, item.id);
+        if (!transcript) {
+          results.push({
+            transcriptId: item.id,
+            success: false,
+            reason: "Could not fetch transcript",
+          });
+          continue;
+        }
+
+        const markdown = formatFirefliesAsMarkdown(transcript);
+        const ingested = await ingestMarkdown(env, markdown, `${item.id}.md`);
+        results.push({
+          transcriptId: item.id,
+          success: true,
+          metadataId: ingested.metadataId,
+        });
+      } catch (err) {
+        results.push({
+          transcriptId: item.id,
+          success: false,
+          reason: String(err),
+        });
+      }
+    }
+
+    return Response.json({
+      success: true,
+      requested: limit,
+      found: transcripts.length,
+      synced: results.filter((r) => r.success && !r.skipped).length,
+      skipped: results.filter((r) => r.skipped).length,
+      failed: results.filter((r) => !r.success).length,
+      results,
+    });
+  } catch (err) {
+    console.error("[Sync Recent] Error:", err);
+    return Response.json({ error: String(err) }, { status: 500 });
   }
 }
 
@@ -418,7 +654,7 @@ async function ingestMarkdown(
   storageUrl: string;
 }> {
   // Parse the markdown with better error handling
-  let parsed: ParsedMeeting;
+  let parsed: ReturnType<typeof parseFirefliesMarkdown>;
   let firefliesId: string;
   
   try {
@@ -493,7 +729,8 @@ async function ingestMarkdown(
     // Use the extracted firefliesId (not parsed.firefliesId which might be wrong)
     const storagePath = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${firefliesId}.md`;
 
-    storageUrl = await uploadStorageFile(env, "meetings", storagePath, markdown);
+    const uploadedUrl = await uploadStorageFile(env, "meetings", storagePath, markdown);
+    storageUrl = uploadedUrl || undefined;
 
     if (!storageUrl) {
       console.warn("[Ingest] Failed to upload to storage, continuing without");
@@ -518,7 +755,7 @@ async function ingestMarkdown(
     content: markdown,
     content_hash: contentHash,
     summary: parsed.firefliesSummary,
-    action_items: parsed.firefliesActions.map((a) => a.text).join("\n"),
+    action_items: parsed.firefliesActions.map((a: { text: string }) => a.text).join("\n"),
     fireflies_link: parsed.firefliesLink,
     duration_minutes: parsed.durationMinutes,
     audio: parsed.audioUrl,
@@ -556,16 +793,109 @@ async function fetchFirefliesTranscript(
         id
         title
         date
+        dateString
         duration
+        host_email
         organizer_email
+        user {
+          user_id
+          email
+          name
+        }
+        speakers {
+          id
+          name
+        }
         participants
+        meeting_attendees {
+          displayName
+          email
+          phoneNumber
+          name
+          location
+        }
+        meeting_attendance {
+          name
+          join_time
+          leave_time
+        }
+        fireflies_users
+        workspace_users
         transcript_url
         audio_url
         video_url
+        calendar_id
+        cal_id
+        calendar_type
+        meeting_link
+        is_live
         summary {
           overview
           action_items
           keywords
+          outline
+          shorthand_bullet
+          notes
+          gist
+          bullet_gist
+          short_summary
+          short_overview
+          meeting_type
+          topics_discussed
+          transcript_chapters
+          extended_sections {
+            title
+            content
+          }
+        }
+        meeting_info {
+          silent_meeting
+          summary_status
+          fred_joined
+        }
+        analytics {
+          sentiments {
+            negative_pct
+            neutral_pct
+            positive_pct
+          }
+          categories {
+            questions
+            date_times
+            metrics
+            tasks
+          }
+          speakers {
+            speaker_id
+            name
+            duration
+            word_count
+            longest_monologue
+            monologues_count
+            filler_words
+            questions
+            duration_pct
+            words_per_minute
+          }
+        }
+        channels {
+          id
+          title
+          is_private
+          created_at
+          updated_at
+          created_by
+          members {
+            user_id
+            email
+            name
+          }
+        }
+        shared_with {
+          email
+          name
+          photo_url
+          expires_at
         }
         sentences {
           speaker_name
@@ -605,10 +935,77 @@ async function fetchFirefliesTranscript(
       return null;
     }
 
-    return result.data?.transcript || null;
+    const transcript = result.data?.transcript || null;
+    if (!transcript) {
+      return null;
+    }
+
+    const appsOutputs = await fetchFirefliesAppsPreview(env, meetingId);
+    if (appsOutputs && appsOutputs.length > 0) {
+      transcript.apps = {
+        outputs: appsOutputs,
+      };
+    }
+
+    return transcript;
   } catch (err) {
     console.error("[Fireflies API] Fetch error:", err);
     return null;
+  }
+}
+
+async function fetchFirefliesAppsPreview(
+  env: Env,
+  transcriptId: string
+): Promise<unknown[] | undefined> {
+  const query = `
+    query Apps($transcriptId: String!, $limit: Float) {
+      apps(transcript_id: $transcriptId, limit: $limit) {
+        outputs {
+          transcript_id
+          user_id
+          app_id
+          created_at
+          title
+          prompt
+          response
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch("https://api.fireflies.ai/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.FIREFLIES_API_KEY}`,
+      },
+      body: JSON.stringify({
+        query,
+        variables: {
+          transcriptId,
+          limit: 5,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      return undefined;
+    }
+
+    const result = (await response.json()) as {
+      data?: { apps?: { outputs?: unknown[] } };
+      errors?: Array<{ message: string }>;
+    };
+
+    if (result.errors?.length) {
+      return undefined;
+    }
+
+    return result.data?.apps?.outputs || [];
+  } catch {
+    return undefined;
   }
 }
 
@@ -617,17 +1014,30 @@ function formatFirefliesAsMarkdown(transcript: FirefliesTranscript): string {
 
   lines.push(`# ${transcript.title || "Untitled Meeting"}`);
   lines.push("");
-
-  if (transcript.date) {
-    const date = new Date(transcript.date);
-    lines.push(`**Date:** ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`);
+  const dateIso =
+    toIsoDateTime(transcript.dateString) || toIsoDateTime(transcript.date);
+  if (dateIso) {
+    const date = new Date(dateIso);
+    lines.push(`**Date:** ${date.toISOString()}`);
   }
-  if (transcript.duration) {
-    const durationMinutes = Math.round(transcript.duration / 60);
-    lines.push(`**Duration:** ${durationMinutes} minutes`);
+  const duration = fmtDurationMinutes(transcript.duration);
+  if (duration) {
+    lines.push(`**Duration:** ${duration}`);
+  }
+  if (transcript.organizer_email) {
+    lines.push(`**Organizer Email:** ${transcript.organizer_email}`);
+  }
+  if (transcript.host_email) {
+    lines.push(`**Host Email:** ${transcript.host_email}`);
   }
   if (transcript.participants && transcript.participants.length > 0) {
     lines.push(`**Participants:** ${transcript.participants.join(", ")}`);
+  }
+  if (transcript.fireflies_users?.length) {
+    lines.push(`**Fireflies Users:** ${transcript.fireflies_users.join(", ")}`);
+  }
+  if (transcript.workspace_users?.length) {
+    lines.push(`**Workspace Users:** ${transcript.workspace_users.join(", ")}`);
   }
   if (transcript.transcript_url) {
     lines.push(`**Fireflies Link:** ${transcript.transcript_url}`);
@@ -638,34 +1048,67 @@ function formatFirefliesAsMarkdown(transcript: FirefliesTranscript): string {
   if (transcript.video_url) {
     lines.push(`**Video:** ${transcript.video_url}`);
   }
+  if (transcript.meeting_link) {
+    lines.push(`**Meeting Link:** ${transcript.meeting_link}`);
+  }
+  if (transcript.calendar_type) {
+    lines.push(`**Calendar Type:** ${transcript.calendar_type}`);
+  }
+  if (transcript.calendar_id) {
+    lines.push(`**Calendar ID:** ${transcript.calendar_id}`);
+  }
+  if (transcript.cal_id) {
+    lines.push(`**Cal ID:** ${transcript.cal_id}`);
+  }
+  if (typeof transcript.is_live === "boolean") {
+    lines.push(`**Is Live:** ${transcript.is_live ? "true" : "false"}`);
+  }
   lines.push(`**Fireflies ID:** ${transcript.id}`);
   lines.push("");
 
-  if (transcript.summary?.overview) {
-    lines.push("## Summary");
-    lines.push(transcript.summary.overview);
-    lines.push("");
-  }
+  // Fireflies summary schema sections
+  appendTextSection(lines, "Summary", transcript.summary?.overview);
+  appendTextSection(lines, "Short Summary", transcript.summary?.short_summary);
+  appendTextSection(lines, "Short Overview", transcript.summary?.short_overview);
+  appendTextSection(lines, "Gist", transcript.summary?.gist);
+  appendTextSection(lines, "Bullet Gist", transcript.summary?.bullet_gist);
+  appendTextSection(lines, "Shorthand Bullet", transcript.summary?.shorthand_bullet);
+  appendTextSection(lines, "Outline", transcript.summary?.outline);
+  appendTextSection(lines, "Notes", transcript.summary?.notes);
+  appendTextSection(lines, "Meeting Type", transcript.summary?.meeting_type);
+  appendListSection(lines, "Keywords", transcript.summary?.keywords);
+  appendListSection(lines, "Topics Discussed", transcript.summary?.topics_discussed);
+  appendListSection(lines, "Transcript Chapters", transcript.summary?.transcript_chapters);
+  appendListSection(lines, "Action Items", transcript.summary?.action_items);
+  appendJsonSection(lines, "Extended Sections", transcript.summary?.extended_sections);
 
-  if (transcript.summary?.action_items && transcript.summary.action_items.length > 0) {
-    lines.push("## Action Items");
-    for (const item of transcript.summary.action_items) {
-      lines.push(`- ${item}`);
-    }
-    lines.push("");
-  }
+  // Extra transcript metadata
+  appendJsonSection(lines, "User", transcript.user);
+  appendJsonSection(lines, "Speakers", transcript.speakers);
+  appendJsonSection(lines, "Meeting Attendees", transcript.meeting_attendees);
+  appendJsonSection(lines, "Meeting Attendance", transcript.meeting_attendance);
+  appendJsonSection(lines, "Meeting Info", transcript.meeting_info);
+  appendJsonSection(lines, "Analytics", transcript.analytics);
+  appendJsonSection(lines, "Channels", transcript.channels);
+  appendJsonSection(lines, "Shared With", transcript.shared_with);
+  appendJsonSection(lines, "Apps Preview", transcript.apps?.outputs || transcript.apps);
 
   if (transcript.sentences && transcript.sentences.length > 0) {
     lines.push("## Transcript");
     lines.push("");
-
-    let lastSpeaker = "";
     for (const sentence of transcript.sentences) {
-      if (sentence.speaker_name !== lastSpeaker) {
-        lines.push(`**${sentence.speaker_name}:**`);
-        lastSpeaker = sentence.speaker_name;
+      const sec =
+        typeof sentence.start_time === "number" && Number.isFinite(sentence.start_time)
+          ? Math.max(0, Math.floor(sentence.start_time))
+          : 0;
+      const mins = Math.floor(sec / 60);
+      const secs = sec % 60;
+      const stamp = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      const speaker = sentence.speaker_name?.trim() || "Unknown";
+      const text = sentence.text?.trim() || "";
+      if (text) {
+        lines.push(`[${stamp}] **${speaker}**: ${text}`);
       }
-      lines.push(sentence.text);
     }
   }
 

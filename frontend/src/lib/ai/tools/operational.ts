@@ -1484,5 +1484,93 @@ export function createOperationalTools(
         },
       ),
     }),
+
+    // -----------------------------------------------------------------
+    // 11. Conversation Memory Recall
+    // -----------------------------------------------------------------
+
+    recallPastConversations: tool({
+      description:
+        "Search past conversation memories to recall prior discussions " +
+        "with this user. Use when the user references previous conversations " +
+        '("like we talked about", "remember when", "last time"), or when ' +
+        "context from prior sessions would improve the response (recurring " +
+        "topics, established preferences, prior decisions).",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What to search for in past conversations — e.g. 'cash flow discussion' or 'Cedar Park budget concerns'",
+          ),
+        matchCount: z
+          .number()
+          .optional()
+          .default(5)
+          .describe("Number of past conversations to return"),
+      }),
+      execute: withTrace(
+        "recallPastConversations",
+        options,
+        async ({ query, matchCount }) => {
+          try {
+            const openaiClient = getOpenAI();
+            const embeddingResponse = await openaiClient.embeddings.create({
+              model: "text-embedding-3-small",
+              input: query,
+            });
+
+            const queryEmbedding = embeddingResponse.data[0].embedding;
+
+            const { data, error } = await supabase.rpc(
+              "search_conversation_memories",
+              {
+                query_embedding: JSON.stringify(queryEmbedding),
+                match_count: matchCount ?? 5,
+                filter_user_id: _userId,
+              },
+            );
+
+            if (error) return { error: error.message };
+            const results = (data ?? []) as Array<{
+              id: number;
+              content: string;
+              metadata: Record<string, unknown>;
+              similarity: number;
+            }>;
+
+            if (results.length === 0) {
+              return {
+                results: [],
+                message:
+                  "No past conversation memories found. This may be a new user or their conversations haven't been indexed yet.",
+              };
+            }
+
+            return {
+              query,
+              resultCount: results.length,
+              results: results.map((r) => ({
+                summary: r.content,
+                similarity:
+                  Math.round((r.similarity as number) * 100) / 100,
+                sessionId: (r.metadata as Record<string, unknown>)
+                  ?.session_id,
+                date:
+                  (r.metadata as Record<string, unknown>)?.created_at ??
+                  (r.metadata as Record<string, unknown>)?.updated_at,
+              })),
+            };
+          } catch (err) {
+            const msg =
+              err instanceof Error ? err.message : "Unknown error";
+            return {
+              error: `Conversation memory recall failed: ${msg}`,
+              fallback:
+                "Unable to search past conversations. Proceed without historical context.",
+            };
+          }
+        },
+      ),
+    }),
   };
 }

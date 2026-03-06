@@ -26,6 +26,63 @@ import {
 } from "../shared/supabase";
 import { batchEmbed, extractStructuredData } from "../shared/openai";
 
+function parseFirefliesActionItems(actionItemsText: string | null | undefined): string[] {
+  if (!actionItemsText) return [];
+
+  const tasks: string[] = [];
+  for (const rawLine of actionItemsText.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    // Skip markdown headings and emphasis-only labels
+    if (line.startsWith("##")) continue;
+    if (/^\*\*.+\*\*$/.test(line)) continue;
+
+    // Normalize common markdown bullets / numbering
+    const cleaned = line
+      .replace(/^[-*•]\s*/, "")
+      .replace(/^\d+\.\s*/, "")
+      .trim();
+
+    if (cleaned) {
+      tasks.push(cleaned);
+    }
+  }
+
+  return tasks;
+}
+
+function dedupeTasks(
+  tasks: Array<{
+    description: string;
+    assignee?: string;
+    dueDate?: string;
+    priority?: string;
+  }>
+): Array<{
+  description: string;
+  assignee?: string;
+  dueDate?: string;
+  priority?: string;
+}> {
+  const seen = new Set<string>();
+  const output: Array<{
+    description: string;
+    assignee?: string;
+    dueDate?: string;
+    priority?: string;
+  }> = [];
+
+  for (const task of tasks) {
+    const normalized = task.description.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    output.push(task);
+  }
+
+  return output;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -227,6 +284,18 @@ async function extractFromMeeting(
     rawRisks,
     rawTasks
   );
+
+  // Always preserve Fireflies native action items as first-class tasks.
+  const nativeActionTasks = parseFirefliesActionItems(actionItems).map((text) => ({
+    description: text,
+    assignee: undefined,
+    dueDate: undefined,
+    priority: undefined,
+  }));
+  structured.tasks = dedupeTasks([
+    ...nativeActionTasks,
+    ...structured.tasks,
+  ]);
 
   console.log(
     `[Extract] Structured: ${structured.decisions.length} decisions, ${structured.risks.length} risks, ${structured.tasks.length} tasks, ${structured.opportunities.length} opportunities`

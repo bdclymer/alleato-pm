@@ -202,12 +202,12 @@ export async function updateJobStage(
 export async function getMetadataByFirefliesId(
   env: Env,
   firefliesId: string
-): Promise<{ id: string } | null> {
+): Promise<{ id: string; url?: string } | null> {
   const result = (await supabaseRequest(
     env,
-    `document_metadata?fireflies_id=eq.${encodeURIComponent(firefliesId)}&select=id`,
+    `document_metadata?fireflies_id=eq.${encodeURIComponent(firefliesId)}&select=id,url`,
     "GET"
-  )) as Array<{ id: string }>;
+  )) as Array<{ id: string; url?: string }>;
 
   return result && result.length > 0 ? result[0] : null;
 }
