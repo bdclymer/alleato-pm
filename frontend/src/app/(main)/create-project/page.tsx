@@ -379,7 +379,7 @@ const formSections: FormSection[] = [
         name: "square_footage",
         label: "Square Footage",
         control: "formatted-number",
-        placeholder: "25,000",
+        placeholder: "Enter square footage",
       },
       {
         name: "total_value",
@@ -768,8 +768,10 @@ function CreateProjectForm() {
         address: values.street_address,
         state: values.state || null,
         archived: !values.active,
-        "start date": values.start_date,
-        "est completion": values.completion_date,
+        "start date": values.start_date?.trim() ? values.start_date : null,
+        "est completion": values.completion_date?.trim()
+          ? values.completion_date
+          : null,
         "est revenue": values.total_value ?? null,
         // Add new columns directly to payload
         work_scope: values.work_scope || null,

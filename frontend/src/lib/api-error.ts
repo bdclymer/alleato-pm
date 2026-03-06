@@ -28,7 +28,21 @@ export function classifyError(error: unknown): { message: string; status: number
 
   // Check constraint violations
   if (msg.includes("violates check constraint")) {
+    if (msg.includes("projects_delivery_method_check")) {
+      return { message: "Delivery method is invalid. Choose a listed delivery method.", status: 400 };
+    }
+    if (msg.includes("projects_project_sector_check")) {
+      return { message: "Project sector is invalid. Choose a listed project sector.", status: 400 };
+    }
+    if (msg.includes("projects_work_scope_check")) {
+      return { message: "Work scope is invalid. Choose a listed work scope.", status: 400 };
+    }
     return { message: "Invalid field value.", status: 400 };
+  }
+
+  // Bad date/time input
+  if (msg.includes("invalid input syntax for type date") || msg.includes("date/time field value out of range")) {
+    return { message: "Invalid date value. Provide a valid date or leave it empty.", status: 400 };
   }
 
   // Permission denied

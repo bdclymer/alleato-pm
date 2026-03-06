@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,7 +32,6 @@ export function ProfileImageUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const supabase = createClient();
 
   const initials =
     userName
@@ -72,46 +70,26 @@ export function ProfileImageUpload({
 
     setUploading(true);
     try {
-      // Get current user
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("Not authenticated");
-      }
+      const formData = new FormData();
+      formData.append("file", selectedFile);
 
-      // Create unique file name
-      const fileExt = selectedFile.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("profile-images")
-        .upload(filePath, selectedFile, {
-          cacheControl: "3600",
-          upsert: true,
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("profile-images").getPublicUrl(filePath);
-
-      // Update user metadata with avatar URL
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          avatar_url: publicUrl,
-        },
+      const response = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
       });
 
-      if (updateError) {
-        throw updateError;
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        avatarUrl?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to upload image");
+      }
+
+      const publicUrl = payload.avatarUrl;
+      if (!publicUrl) {
+        throw new Error("Upload succeeded but no image URL was returned");
       }
 
       toast.success("Profile image updated successfully");
@@ -123,7 +101,11 @@ export function ProfileImageUpload({
       // Refresh the page to show new avatar
       window.location.reload();
     } catch (error) {
-      toast.error("Failed to upload image. Please try again.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload image. Please try again.";
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -131,23 +113,16 @@ export function ProfileImageUpload({
 
   const handleRemove = async () => {
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error("Not authenticated");
-      }
-
-      // Remove avatar URL from user metadata
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          avatar_url: null,
-        },
+      const response = await fetch("/api/profile/avatar", {
+        method: "DELETE",
       });
 
-      if (updateError) {
-        throw updateError;
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to remove image");
       }
 
       toast.success("Profile image removed");
@@ -155,7 +130,9 @@ export function ProfileImageUpload({
       setOpen(false);
       window.location.reload();
     } catch (error) {
-      toast.error("Failed to remove image");
+      const message =
+        error instanceof Error ? error.message : "Failed to remove image";
+      toast.error(message);
     }
   };
 
