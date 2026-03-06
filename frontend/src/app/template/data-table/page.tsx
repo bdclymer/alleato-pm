@@ -283,3 +283,19 @@ function DataTablePageSkeleton() {
  * Export the skeleton separately for use in other contexts
  */
 export { DataTablePageSkeleton };
+
+/**
+ * Default export required by Next.js App Router for page files.
+ * This page serves as a reference template — not intended for direct navigation.
+ */
+export default function DataTableTemplatePage() {
+  return (
+    <DataTablePage
+      title="Template: Data Table"
+      description="This is a reference template for building data table pages"
+      columns={[]}
+      data={[]}
+      emptyMessage="This is a template page — copy the DataTablePage component to build your own."
+    />
+  );
+}
