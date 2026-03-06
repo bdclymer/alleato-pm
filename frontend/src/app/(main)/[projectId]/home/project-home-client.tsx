@@ -6,17 +6,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  Calendar,
   ChevronRight,
-  FileText,
   Pencil,
   X,
   Zap,
-  Activity,
   Send,
   Sparkles,
   TrendingUp,
-  MessageSquare,
+  ArrowRight,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -110,47 +108,59 @@ function getInitials(name: string): string {
    Sub-components
    ============================================================================= */
 
-/**
- * Single metric in the financial flow strip.
- * Connected horizontally via shared dividers — tells the budget story as a flow.
- */
-function FlowMetric({
+/** KPI cell in the financial strip */
+function KpiCell({
   label,
   value,
+  change,
   sub,
   href,
   signal,
 }: {
   label: string;
   value: string;
+  change?: { text: string; direction: "up" | "down" | "neutral" };
   sub?: string;
   href?: string;
   signal?: "good" | "warn" | "bad";
 }) {
   const inner = (
-    <div className="bg-card px-5 py-5 h-full flex flex-col justify-between min-h-[96px]">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="bg-card px-6 py-5 h-full flex flex-col gap-2 min-h-[100px]">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
-      <div className="mt-2">
-        <p
+      <p
+        className={cn(
+          "text-2xl font-bold tracking-tight tabular-nums leading-none",
+          signal === "warn"
+            ? "text-amber-600"
+            : signal === "bad"
+            ? "text-red-600"
+            : signal === "good"
+            ? "text-green-600"
+            : "text-foreground"
+        )}
+      >
+        {value}
+      </p>
+      {change && (
+        <span
           className={cn(
-            "text-2xl font-semibold tracking-tight tabular-nums leading-none",
-            signal === "warn"
-              ? "text-amber-600"
-              : signal === "bad"
-              ? "text-red-600"
-              : signal === "good"
-              ? "text-green-600"
-              : "text-foreground"
+            "inline-flex items-center self-start text-[11px] font-semibold px-1.5 py-0.5 rounded",
+            change.direction === "up"
+              ? "text-green-700 bg-green-50"
+              : change.direction === "down"
+              ? "text-red-700 bg-red-50"
+              : "text-muted-foreground bg-muted"
           )}
         >
-          {value}
-        </p>
-        {sub && (
-          <p className="text-[11px] text-muted-foreground/60 mt-1.5 leading-relaxed">{sub}</p>
-        )}
-      </div>
+          {change.direction === "up" ? "↑" : change.direction === "down" ? "↓" : ""}
+          {" "}{change.text}
+        </span>
+      )}
+      {sub && (
+        <p className="text-[11px] text-muted-foreground/60 leading-relaxed">{sub}</p>
+      )}
     </div>
   );
 
@@ -164,65 +174,8 @@ function FlowMetric({
   return inner;
 }
 
-/**
- * A navigation row inside one of the three content columns.
- * Label on left, metric + arrow on right. Entire row is a link.
- */
-function ToolRow({
-  href,
-  label,
-  metric,
-  sub,
-  signal,
-}: {
-  href: string;
-  label: string;
-  metric?: string | number;
-  sub?: string;
-  signal?: "warn" | "good";
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-muted/40 transition-colors border-b border-border last:border-b-0"
-    >
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{label}</p>
-        {sub && <p className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</p>}
-      </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {metric !== undefined && (
-          <span
-            className={cn(
-              "text-sm font-semibold tabular-nums",
-              signal === "warn"
-                ? "text-amber-600"
-                : signal === "good"
-                ? "text-green-600"
-                : "text-foreground"
-            )}
-          >
-            {metric}
-          </span>
-        )}
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground/70 transition-colors" />
-      </div>
-    </Link>
-  );
-}
 
-/** Eyebrow label inside a content column */
-function ColumnLabel({ label }: { label: string }) {
-  return (
-    <div className="px-5 py-3.5 border-b border-border bg-muted/30">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-/** AI-derived signal chip — clickable, severity-colored */
+/** Signal chip */
 function SignalChip({
   label,
   severity,
@@ -233,12 +186,12 @@ function SignalChip({
   href?: string;
 }) {
   const classes = cn(
-    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-opacity hover:opacity-80 cursor-pointer",
+    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-opacity hover:opacity-80 cursor-pointer",
     severity === "critical"
-      ? "bg-red-50 text-red-700 border-red-200"
+      ? "bg-red-50 text-red-700"
       : severity === "warning"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-blue-50 text-blue-700 border-blue-200"
+      ? "bg-amber-50 text-amber-700"
+      : "bg-blue-50 text-blue-700"
   );
 
   const icon =
@@ -264,6 +217,40 @@ function SignalChip({
   );
 }
 
+/** Activity dot + text */
+function ActivityItem({
+  text,
+  href,
+  color = "blue",
+}: {
+  text: React.ReactNode;
+  href?: string;
+  color?: "blue" | "green" | "amber" | "red";
+}) {
+  const dotColor = {
+    blue: "bg-primary",
+    green: "bg-green-500",
+    amber: "bg-amber-500",
+    red: "bg-red-500",
+  }[color];
+
+  const inner = (
+    <div className="flex items-start gap-3 py-2.5">
+      <div className={cn("h-1.5 w-1.5 rounded-full mt-1.5 flex-shrink-0", dotColor)} />
+      <p className="text-sm text-foreground leading-relaxed">{text}</p>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="block hover:bg-muted/30 transition-colors -mx-1 px-1 rounded">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
+}
+
 /* =============================================================================
    Floating AI Assistant Widget
    ============================================================================= */
@@ -274,7 +261,6 @@ function AiWidget({ projectId }: { projectId: number }) {
 
   return (
     <>
-      {/* Floating trigger */}
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-foreground text-background rounded-full pl-4 pr-5 py-3 shadow-sm hover:opacity-90 transition-opacity text-sm font-medium"
@@ -287,17 +273,10 @@ function AiWidget({ projectId }: { projectId: number }) {
         Ask AI
       </button>
 
-      {/* Side panel */}
       {open && (
         <div className="fixed inset-y-0 right-0 z-50 flex">
-          {/* Backdrop */}
-          <div
-            className="flex-1 cursor-default"
-            onClick={() => setOpen(false)}
-          />
-          {/* Panel */}
+          <div className="flex-1 cursor-default" onClick={() => setOpen(false)} />
           <div className="w-[380px] bg-background border-l border-border flex flex-col shadow-sm">
-            {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
@@ -315,22 +294,16 @@ function AiWidget({ projectId }: { projectId: number }) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Messages area */}
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-              {/* Assistant intro */}
               <div className="flex gap-3">
                 <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-primary">A</span>
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">
                   I have access to this project&apos;s budget, commitments, change orders, RFIs,
-                  meetings, and schedule. Ask me anything about the project&apos;s financial health,
-                  upcoming deadlines, or risks.
+                  meetings, and schedule. Ask me anything.
                 </p>
               </div>
-
-              {/* Example prompts */}
               <div className="space-y-2 pl-9">
                 {[
                   "Summarize the financial health of this project",
@@ -347,8 +320,6 @@ function AiWidget({ projectId }: { projectId: number }) {
                 ))}
               </div>
             </div>
-
-            {/* Input area */}
             <div className="border-t border-border px-4 py-4">
               <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2.5 bg-background focus-within:ring-1 focus-within:ring-ring">
                 <input
@@ -365,7 +336,7 @@ function AiWidget({ projectId }: { projectId: number }) {
                 </button>
               </div>
               <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
-                Full AI chat available at{" "}
+                Full AI chat at{" "}
                 <Link
                   href={`/${projectId}/assistant`}
                   className="underline hover:text-muted-foreground"
@@ -382,7 +353,7 @@ function AiWidget({ projectId }: { projectId: number }) {
 }
 
 /* =============================================================================
-   Main component
+   Main component — Inverted Pyramid Layout
    ============================================================================= */
 
 export function ProjectHomeClient({
@@ -403,7 +374,7 @@ export function ProjectHomeClient({
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [signalsDismissed, setSignalsDismissed] = React.useState(false);
 
-  // PortfolioProject mapping (unchanged — required for EditProjectDialog)
+  // PortfolioProject mapping (for EditProjectDialog)
   const projectSummaryMetadata =
     typeof project.summary_metadata === "object" && project.summary_metadata !== null
       ? (project.summary_metadata as Record<string, unknown>)
@@ -522,7 +493,7 @@ export function ProjectHomeClient({
   const budgetUtilization = totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
   const hasBudgetData = totalBudget > 0;
 
-  // Derived content lists
+  // Derived content
   const openRfis = rfis.filter((r) => r.status?.toLowerCase() !== "closed");
   const openChangeEvents = changeEvents.filter((e) => e.status === "open");
   const pendingChangeOrders = changeOrders.filter(
@@ -534,7 +505,7 @@ export function ProjectHomeClient({
   const scheduleCount = schedule.length || tasks.length;
   const lastDailyLog = dailyLogs.length > 0 ? dailyLogs[0] : null;
 
-  // AI-derived project signals — generated from real data, not hardcoded
+  // AI signals
   const signals = React.useMemo(() => {
     const list: Array<{
       id: string;
@@ -560,26 +531,13 @@ export function ProjectHomeClient({
     }
 
     if (openRfis.length > 8) {
-      list.push({
-        id: "rfis-high",
-        severity: "warning",
-        label: `${openRfis.length} open RFIs`,
-        href: `/${project.id}/rfis`,
-      });
+      list.push({ id: "rfis-high", severity: "warning", label: `${openRfis.length} open RFIs`, href: `/${project.id}/rfis` });
     } else if (openRfis.length > 3) {
-      list.push({
-        id: "rfis-info",
-        severity: "info",
-        label: `${openRfis.length} open RFIs`,
-        href: `/${project.id}/rfis`,
-      });
+      list.push({ id: "rfis-info", severity: "info", label: `${openRfis.length} open RFIs`, href: `/${project.id}/rfis` });
     }
 
     if (pendingChangeOrders.length > 0) {
-      const pendingValue = pendingChangeOrders.reduce(
-        (sum, co) => sum + (co.amount || 0),
-        0
-      );
+      const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.amount || 0), 0);
       list.push({
         id: "cos-pending",
         severity: pendingChangeOrders.length > 5 ? "warning" : "info",
@@ -611,356 +569,509 @@ export function ProjectHomeClient({
           });
         }
       } catch {
-        // ignore invalid date
+        // ignore
       }
     }
 
     return list.slice(0, 5);
-  }, [
-    hasBudgetData,
-    budgetUtilization,
-    openRfis.length,
-    pendingChangeOrders,
-    openChangeEvents.length,
-    project,
-  ]);
+  }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, project]);
 
-  // Project meta string (type · sector · phase)
-  const projectMeta = [
-    project.type,
-    project.project_sector,
-    project.current_phase,
-  ]
+  // Meta strings
+  const projectMeta = [project.type, project.project_sector, project.current_phase]
     .filter(Boolean)
     .join(" · ");
 
-  // Date range string
-  const startDate = project["start date"]
-    ? format(new Date(project["start date"]), "MMM yyyy")
-    : null;
-  const endDate = project["est completion"]
-    ? format(new Date(project["est completion"]), "MMM yyyy")
-    : null;
-  const dateRange = [startDate, endDate].filter(Boolean).join(" – ");
+  // Activity items from real data
+  const activityItems = React.useMemo(() => {
+    const items: Array<{ text: React.ReactNode; href?: string; color: "blue" | "green" | "amber" | "red" }> = [];
+
+    if (pendingChangeOrders.length > 0) {
+      const latest = pendingChangeOrders[0];
+      items.push({
+        text: <><strong>{latest.title || `CO #${latest.co_number}`}</strong> pending approval{latest.amount ? ` · ${formatCompactCurrency(latest.amount)}` : ""}</>,
+        href: `/${project.id}/change-orders`,
+        color: "amber",
+      });
+    }
+
+    if (openRfis.length > 0) {
+      items.push({
+        text: <><strong>{openRfis.length} RFI{openRfis.length !== 1 ? "s" : ""}</strong> awaiting response</>,
+        href: `/${project.id}/rfis`,
+        color: "blue",
+      });
+    }
+
+    if (lastDailyLog) {
+      items.push({
+        text: <><strong>Daily log</strong> filed {format(new Date(lastDailyLog.created_at || Date.now()), "MMM d")}</>,
+        href: `/${project.id}/daily-log`,
+        color: "green",
+      });
+    }
+
+    if (commitments.length > 0) {
+      const executed = commitments.filter((c) => c.executed).length;
+      items.push({
+        text: <><strong>{executed}/{commitments.length}</strong> commitments executed</>,
+        href: `/${project.id}/commitments`,
+        color: executed === commitments.length ? "green" : "blue",
+      });
+    }
+
+    if (openChangeEvents.length > 0) {
+      items.push({
+        text: <><strong>{openChangeEvents.length} change event{openChangeEvents.length !== 1 ? "s" : ""}</strong> open</>,
+        href: `/${project.id}/change-events`,
+        color: "amber",
+      });
+    }
+
+    return items.slice(0, 5);
+  }, [pendingChangeOrders, openRfis, lastDailyLog, commitments, openChangeEvents, project.id]);
+
+  // Budget bar data for the mid-section chart
+  const budgetBreakdown = React.useMemo(() => {
+    if (!hasBudgetData) return [];
+    const items = [
+      { label: "Committed", value: committed, pct: (committed / totalBudget) * 100 },
+      { label: "Remaining", value: remaining, pct: (remaining / totalBudget) * 100 },
+    ];
+    const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.amount || 0), 0);
+    if (pendingValue > 0) {
+      items.push({ label: "Pending COs", value: pendingValue, pct: (pendingValue / totalBudget) * 100 });
+    }
+    return items;
+  }, [hasBudgetData, committed, remaining, totalBudget, pendingChangeOrders]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/40">
       <div className="px-4 sm:px-6 lg:px-10 pt-4 pb-24">
 
-        {/* ── Breadcrumb ── */}
-        <nav className="mb-5 flex items-center gap-1 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors">
-            Projects
-          </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-          <span className="text-foreground truncate">
-            {project.name || project["job number"] || "Project"}
-          </span>
-        </nav>
+        {/* ═══════════════════════════════════════════
+            INVERTED PYRAMID CONTAINER
+            Single card, layered sections alternating white/surface-2
+            ═══════════════════════════════════════════ */}
+        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs">
 
-        {/* ── Project Header ──
-            Job number as eyebrow, project name as headline, meta row, action buttons.
-            Deliberate whitespace below before the financial strip. */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-          <div className="space-y-1">
-            {project["job number"] && (
-              <p className="text-xs font-medium text-muted-foreground tabular-nums uppercase tracking-wide">
-                {project["job number"]}
-              </p>
-            )}
-            <h1 className="text-[22px] font-semibold text-foreground tracking-tight leading-snug">
-              {project.name || project["job number"] || "Untitled Project"}
-            </h1>
-            {(projectMeta || dateRange) && (
-              <p className="text-sm text-muted-foreground">
-                {[projectMeta, dateRange].filter(Boolean).join("  ·  ")}
-              </p>
-            )}
-            {project.address && (
-              <p className="text-xs text-muted-foreground/60">
-                {[project.address, project.state].filter(Boolean).join(", ")}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setIsEditDialogOpen(true)}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit
-            </Button>
-            <ProjectChecklistSidebar
-              projectId={String(project.id)}
-              projectName={project.name || project["job number"] || "Project"}
-              buttonVariant="default"
-            />
-          </div>
-        </div>
-
-        {/* ── Financial Flow Strip ──
-            Four connected metrics tell the budget story as a continuous narrative.
-            Shared border with gap-px dividers — hairline separators, no individual borders.
-            Each cell links directly to its detail page. */}
-        <div className="overflow-hidden rounded-lg border border-border bg-border grid grid-cols-2 lg:grid-cols-4 gap-px mb-5">
-          <FlowMetric
-            label="Total Budget"
-            value={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
-            sub={hasBudgetData ? "Original contract value" : "No budget set"}
-            href={`/${project.id}/budget`}
-          />
-          <FlowMetric
-            label="Committed"
-            value={committed > 0 ? formatCompactCurrency(committed) : "—"}
-            sub={
-              hasBudgetData && committed > 0
-                ? `${budgetUtilization.toFixed(0)}% of total budget`
-                : "No contracts yet"
-            }
-            href={`/${project.id}/commitments`}
-            signal={budgetUtilization > 90 ? "bad" : budgetUtilization > 75 ? "warn" : undefined}
-          />
-          <FlowMetric
-            label="Remaining"
-            value={hasBudgetData ? formatCompactCurrency(remaining) : "—"}
-            sub={
-              hasBudgetData
-                ? `${(100 - budgetUtilization).toFixed(0)}% unallocated`
-                : undefined
-            }
-            href={`/${project.id}/budget`}
-            signal={
-              hasBudgetData
-                ? budgetUtilization > 90
-                  ? "bad"
-                  : budgetUtilization < 75
-                  ? "good"
-                  : undefined
-                : undefined
-            }
-          />
-          <FlowMetric
-            label="Open Items"
-            value={openRfis.length + openChangeEvents.length > 0
-              ? String(openRfis.length + openChangeEvents.length)
-              : "0"}
-            sub={
-              openRfis.length > 0 || openChangeEvents.length > 0
-                ? `${openRfis.length} RFI${openRfis.length !== 1 ? "s" : ""} · ${openChangeEvents.length} change event${openChangeEvents.length !== 1 ? "s" : ""}`
-                : "Nothing pending"
-            }
-            href={`/${project.id}/rfis`}
-            signal={openRfis.length + openChangeEvents.length > 8 ? "warn" : undefined}
-          />
-        </div>
-
-        {/* ── Project Signals (AI-derived) ──
-            Horizontal scrollable strip of chips, each derived from live data.
-            Dismissible. Critical = red, warning = amber, info = blue.
-            These replace a static activity feed with actionable signals. */}
-        {signals.length > 0 && !signalsDismissed && (
-          <div className="flex items-center gap-3 mb-8 bg-muted/30 rounded-lg border border-border px-4 py-3">
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <Sparkles className="h-3.5 w-3.5 text-muted-foreground/60" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                Signals
-              </span>
+          {/* ── LAYER 1: Header ──
+              Single compact row: job number · name · meta | icon actions */}
+          <div className="px-6 py-4 sm:px-8 border-b border-border flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 min-w-0">
+              {project["job number"] && (
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums flex-shrink-0">
+                  {project["job number"]}
+                </span>
+              )}
+              <h1 className="text-sm font-semibold text-foreground truncate">
+                {project.name || "Untitled Project"}
+              </h1>
+              {projectMeta && (
+                <span className="hidden sm:inline text-xs text-muted-foreground/60 flex-shrink-0">
+                  ·  {projectMeta}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-2 flex-1 overflow-x-auto scrollbar-none">
-              {signals.map((signal) => (
-                <SignalChip
-                  key={signal.id}
-                  label={signal.label}
-                  severity={signal.severity}
-                  href={signal.href}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => setSignalsDismissed(true)}
-              className="flex-shrink-0 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors ml-1"
-              aria-label="Dismiss signals"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* ── Three-column content grid ──
-            Financial / Operations / Documentation.
-            Each column is a stack of tool rows — label, metric, arrow.
-            Columns separated by vertical dividers within a shared border container.
-            This lets the owner navigate any tool in 2 clicks from the dashboard. */}
-        <div className="border border-border rounded-lg overflow-hidden grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border mb-10">
-
-          {/* Financial column */}
-          <div>
-            <ColumnLabel label="Financial" />
-            <ToolRow
-              href={`/${project.id}/budget`}
-              label="Budget"
-              metric={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
-              sub="Original contract value"
-            />
-            <ToolRow
-              href={`/${project.id}/prime-contracts`}
-              label="Prime Contract"
-              metric={contracts.length > 0 ? contracts.length : undefined}
-              sub={contracts.length > 0 ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}` : "None on file"}
-            />
-            <ToolRow
-              href={`/${project.id}/commitments`}
-              label="Commitments"
-              metric={committed > 0 ? formatCompactCurrency(committed) : commitments.length > 0 ? commitments.length : undefined}
-              sub={commitments.length > 0 ? `${commitments.length} subcontract${commitments.length !== 1 ? "s" : ""}` : "None yet"}
-              signal={budgetUtilization > 90 ? "warn" : undefined}
-            />
-            <ToolRow
-              href={`/${project.id}/change-orders`}
-              label="Change Orders"
-              metric={changeOrders.length > 0 ? changeOrders.length : undefined}
-              sub={
-                pendingChangeOrders.length > 0
-                  ? `${pendingChangeOrders.length} pending approval`
-                  : changeOrders.length > 0
-                  ? "All resolved"
-                  : "None yet"
-              }
-              signal={pendingChangeOrders.length > 3 ? "warn" : undefined}
-            />
-            <ToolRow
-              href={`/${project.id}/change-events`}
-              label="Change Events"
-              metric={changeEvents.length > 0 ? changeEvents.length : undefined}
-              sub={openChangeEvents.length > 0 ? `${openChangeEvents.length} open` : changeEvents.length > 0 ? "All closed" : "None yet"}
-              signal={openChangeEvents.length > 3 ? "warn" : undefined}
-            />
-            <ToolRow
-              href={`/${project.id}/direct-costs`}
-              label="Direct Costs"
-            />
-            <ToolRow
-              href={`/${project.id}/invoices`}
-              label="Invoices"
-            />
-          </div>
-
-          {/* Operations column */}
-          <div>
-            <ColumnLabel label="Operations" />
-            <ToolRow
-              href={`/${project.id}/schedule`}
-              label="Schedule"
-              metric={scheduleCount > 0 ? scheduleCount : undefined}
-              sub={tasks.length > 0 ? `${tasks.length} task${tasks.length !== 1 ? "s" : ""}` : "No tasks yet"}
-            />
-            <ToolRow
-              href={`/${project.id}/rfis`}
-              label="RFIs"
-              metric={rfis.length > 0 ? rfis.length : undefined}
-              sub={openRfis.length > 0 ? `${openRfis.length} open` : rfis.length > 0 ? "All closed" : "None yet"}
-              signal={openRfis.length > 5 ? "warn" : undefined}
-            />
-            <ToolRow
-              href={`/${project.id}/submittals`}
-              label="Submittals"
-            />
-            <ToolRow
-              href={`/${project.id}/meetings`}
-              label="Meetings"
-              metric={meetings.length > 0 ? meetings.length : undefined}
-              sub={meetings.length > 0 ? `${meetings.length} recorded` : "None yet"}
-            />
-            <ToolRow
-              href={`/${project.id}/punch-list`}
-              label="Punch List"
-            />
-            <ToolRow
-              href={`/${project.id}/daily-log`}
-              label="Daily Log"
-              sub={
-                lastDailyLog
-                  ? `Last entry ${format(new Date(lastDailyLog.created_at || Date.now()), "MMM d")}`
-                  : "No entries yet"
-              }
-            />
-          </div>
-
-          {/* Documentation column */}
-          <div>
-            <ColumnLabel label="Documentation" />
-            <ToolRow
-              href={`/${project.id}/drawings`}
-              label="Drawings"
-            />
-            <ToolRow
-              href={`/${project.id}/documents`}
-              label="Documents"
-            />
-            <ToolRow
-              href={`/${project.id}/specifications`}
-              label="Specifications"
-            />
-            {/* Placeholder rows to visually balance the column */}
-            <ToolRow
-              href={`/${project.id}/sov`}
-              label="Schedule of Values"
-            />
-          </div>
-        </div>
-
-        {/* ── Meetings ──
-            Secondary content section — rich detail for the meeting-heavy construction workflow.
-            Placed below the navigation grid: accessible but not competing with financial data. */}
-        {meetings.length > 0 && (
-          <div className="mb-10">
-            <MeetingsSection meetings={meetings} projectId={project.id} maxItems={5} />
-          </div>
-        )}
-
-        {/* ── Project Team ──
-            Compact list at the bottom — contextual, not primary. */}
-        {teamMembers.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Project Team
-              </span>
-              <Link
-                href={`/${project.id}/directory/users`}
-                className="text-[11px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => setIsEditDialogOpen(true)}
+                title="Edit project"
               >
-                View directory
-              </Link>
+                <Settings className="h-4 w-4" />
+              </Button>
+              <ProjectChecklistSidebar
+                projectId={String(project.id)}
+                projectName={project.name || project["job number"] || "Project"}
+                buttonVariant="ghost"
+                buttonSize="icon"
+                iconOnly
+                className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
+              />
             </div>
-            <div className="flex flex-wrap gap-3">
-              {teamMembers.slice(0, 8).map((member, i) => (
-                <div key={`tm-${i}`} className="flex items-center gap-2.5">
-                  <Avatar className="h-7 w-7 flex-shrink-0">
-                    <AvatarFallback className="bg-muted text-muted-foreground text-[10px]">
-                      {getInitials(member.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm text-foreground leading-none">{member.name}</p>
-                    {member.role && (
-                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">{member.role}</p>
-                    )}
+          </div>
+
+          {/* ── LAYER 2: KPI Strip ──
+              4 metrics with gap-px dividers. White cells on border bg. */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border border-b border-border">
+            <KpiCell
+              label="Total Budget"
+              value={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
+              sub={hasBudgetData ? "Original contract value" : "No budget set"}
+              href={`/${project.id}/budget`}
+            />
+            <KpiCell
+              label="Committed"
+              value={committed > 0 ? formatCompactCurrency(committed) : "—"}
+              change={
+                hasBudgetData && committed > 0
+                  ? { text: `${budgetUtilization.toFixed(0)}% of budget`, direction: budgetUtilization > 90 ? "down" : "up" }
+                  : undefined
+              }
+              sub={committed === 0 ? "No contracts yet" : undefined}
+              href={`/${project.id}/commitments`}
+              signal={budgetUtilization > 90 ? "bad" : budgetUtilization > 75 ? "warn" : undefined}
+            />
+            <KpiCell
+              label="Remaining"
+              value={hasBudgetData ? formatCompactCurrency(remaining) : "—"}
+              sub={hasBudgetData ? `${(100 - budgetUtilization).toFixed(0)}% unallocated` : undefined}
+              href={`/${project.id}/budget`}
+              signal={hasBudgetData ? (budgetUtilization > 90 ? "bad" : budgetUtilization < 75 ? "good" : undefined) : undefined}
+            />
+            <KpiCell
+              label="Open Items"
+              value={String(openRfis.length + openChangeEvents.length)}
+              sub={`${openRfis.length} RFI${openRfis.length !== 1 ? "s" : ""} · ${openChangeEvents.length} event${openChangeEvents.length !== 1 ? "s" : ""}`}
+              href={`/${project.id}/rfis`}
+              signal={openRfis.length + openChangeEvents.length > 8 ? "warn" : undefined}
+            />
+          </div>
+
+          {/* ── LAYER 3: Mid Section ──
+              Two columns: Budget breakdown (white) + Activity/Signals (surface-2)
+              This is the core "inverted pyramid" alternating depth. */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 border-b border-border">
+
+            {/* Left: Budget breakdown chart */}
+            <div className="lg:col-span-3 bg-card px-6 py-6 sm:px-8 border-b lg:border-b-0 lg:border-r border-border">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-5">
+                Budget Allocation
+              </p>
+              {budgetBreakdown.length > 0 ? (
+                <div className="space-y-4">
+                  {budgetBreakdown.map((item) => (
+                    <div key={item.label} className="flex items-center gap-4">
+                      <span className="text-sm text-muted-foreground w-24 flex-shrink-0 text-right">
+                        {item.label}
+                      </span>
+                      <div className="flex-1 h-6 bg-muted/50 rounded-sm overflow-hidden">
+                        <div
+                          className="h-full bg-primary/70 rounded-sm transition-all"
+                          style={{ width: `${Math.min(item.pct, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold tabular-nums text-foreground w-20 text-right">
+                        {formatCompactCurrency(item.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground/60">
+                  No budget data yet. Add budget lines to see allocation.
+                </p>
+              )}
+            </div>
+
+            {/* Right: Signals + Activity (surface-2 tint) */}
+            <div className="lg:col-span-2 bg-muted/30 px-6 py-6 sm:px-8">
+              {/* Signals */}
+              {signals.length > 0 && !signalsDismissed && (
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="h-3 w-3 text-muted-foreground/60" />
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                        Signals
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setSignalsDismissed(true)}
+                      className="text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+                      aria-label="Dismiss signals"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {signals.map((signal) => (
+                      <SignalChip
+                        key={signal.id}
+                        label={signal.label}
+                        severity={signal.severity}
+                        href={signal.href}
+                      />
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Recent Activity */}
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-3">
+                  Recent Activity
+                </p>
+                {activityItems.length > 0 ? (
+                  <div className="divide-y divide-border/50">
+                    {activityItems.map((item, i) => (
+                      <ActivityItem key={i} text={item.text} href={item.href} color={item.color} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground/60">No recent activity</p>
+                )}
+              </div>
             </div>
           </div>
-        )}
+
+          {/* ── LAYER 4: Data Tables ──
+              Left 3/5: Budget by cost code. Right 2/5: Schedule snapshot.
+              Real data, not navigation links. */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 border-b border-border">
+
+            {/* Budget table (white) */}
+            <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border">
+              <div className="flex items-center justify-between px-6 py-3 sm:px-8 border-b border-border">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Budget by Cost Code
+                </p>
+                <Link
+                  href={`/${project.id}/budget`}
+                  className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  View all →
+                </Link>
+              </div>
+              {budget.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-6 sm:px-8 py-2.5">
+                          Cost Code
+                        </th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-4 py-2.5 hidden sm:table-cell">
+                          Original
+                        </th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-4 py-2.5">
+                          Budget
+                        </th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-6 sm:px-8 py-2.5">
+                          %
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {budget
+                        .sort((a, b) => (b.original_amount || 0) - (a.original_amount || 0))
+                        .slice(0, 8)
+                        .map((line) => {
+                          const pct = totalBudget > 0 ? ((line.original_amount || 0) / totalBudget) * 100 : 0;
+                          return (
+                            <tr key={line.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/30 transition-colors">
+                              <td className="px-6 sm:px-8 py-2.5">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-xs font-mono text-muted-foreground tabular-nums flex-shrink-0">
+                                    {line.cost_code_id.length > 8 ? line.cost_code_id.slice(0, 8) : line.cost_code_id}
+                                  </span>
+                                  <span className="text-sm text-foreground truncate">
+                                    {line.description || "—"}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="text-right px-4 py-2.5 tabular-nums text-muted-foreground hidden sm:table-cell">
+                                {formatCompactCurrency(line.original_amount || 0)}
+                              </td>
+                              <td className="text-right px-4 py-2.5 tabular-nums font-medium text-foreground">
+                                {formatCompactCurrency(line.original_amount || 0)}
+                              </td>
+                              <td className="text-right px-6 sm:px-8 py-2.5">
+                                <div className="flex items-center justify-end gap-2">
+                                  <div className="w-12 h-1.5 bg-border rounded-full overflow-hidden hidden sm:block">
+                                    <div
+                                      className="h-full bg-primary/60 rounded-full"
+                                      style={{ width: `${Math.min(pct, 100)}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
+                                    {pct.toFixed(0)}%
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                  {budget.length > 8 && (
+                    <Link
+                      href={`/${project.id}/budget`}
+                      className="block text-center py-2.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors border-t border-border/50"
+                    >
+                      +{budget.length - 8} more cost codes
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="px-6 py-10 sm:px-8 text-center">
+                  <p className="text-sm text-muted-foreground">No budget lines yet</p>
+                  <Link
+                    href={`/${project.id}/budget`}
+                    className="text-xs text-primary hover:underline mt-1 inline-block"
+                  >
+                    Set up budget →
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Schedule snapshot (surface-2 tint) */}
+            <div className="lg:col-span-2 bg-muted/30">
+              <div className="flex items-center justify-between px-6 py-3 sm:px-8 border-b border-border">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Schedule
+                </p>
+                <Link
+                  href={`/${project.id}/schedule`}
+                  className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  View all →
+                </Link>
+              </div>
+              {schedule.length > 0 ? (
+                <div className="divide-y divide-border/50">
+                  {schedule
+                    .filter((t: any) => t.status !== "completed" && !t.parent_task_id)
+                    .sort((a: any, b: any) => {
+                      const aDate = a.start_date || a.finish_date || "";
+                      const bDate = b.start_date || b.finish_date || "";
+                      return aDate.localeCompare(bDate);
+                    })
+                    .slice(0, 8)
+                    .map((task: any) => {
+                      const pct = task.percent_complete ?? 0;
+                      const startDate = task.start_date ? new Date(task.start_date) : null;
+                      const finishDate = task.finish_date ? new Date(task.finish_date) : null;
+                      const isOverdue = finishDate && finishDate < new Date() && pct < 100;
+                      return (
+                        <div key={task.id} className="px-6 py-3 sm:px-8 hover:bg-muted/40 transition-colors">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className={cn(
+                                "text-sm truncate",
+                                isOverdue ? "text-red-600 font-medium" : "text-foreground"
+                              )}>
+                                {task.is_milestone && <span className="text-primary mr-1">◆</span>}
+                                {task.name}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {startDate && (
+                                  <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+                                    {format(startDate, "MMM d")}
+                                    {finishDate && ` – ${format(finishDate, "MMM d")}`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className={cn(
+                              "text-xs font-semibold tabular-nums flex-shrink-0 mt-0.5",
+                              pct >= 100
+                                ? "text-green-600"
+                                : isOverdue
+                                ? "text-red-600"
+                                : pct > 0
+                                ? "text-foreground"
+                                : "text-muted-foreground/60"
+                            )}>
+                              {pct}%
+                            </span>
+                          </div>
+                          {/* Mini progress bar */}
+                          <div className="w-full h-1 bg-border/60 rounded-full mt-2 overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                pct >= 100
+                                  ? "bg-green-500"
+                                  : isOverdue
+                                  ? "bg-red-500"
+                                  : "bg-primary/60"
+                              )}
+                              style={{ width: `${Math.min(pct, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="px-6 py-10 sm:px-8 text-center">
+                  <p className="text-sm text-muted-foreground">No schedule tasks yet</p>
+                  <Link
+                    href={`/${project.id}/schedule`}
+                    className="text-xs text-primary hover:underline mt-1 inline-block"
+                  >
+                    Import schedule →
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── LAYER 5: Bottom — Meetings + Team ──
+              Table-like bottom section. Surface-2 tint for team area. */}
+          {(meetings.length > 0 || teamMembers.length > 0) && (
+            <div className="grid grid-cols-1 lg:grid-cols-5">
+              {/* Meetings (white) */}
+              <div className={cn(
+                "px-6 py-6 sm:px-8",
+                meetings.length > 0 ? "lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border" : "lg:col-span-5"
+              )}>
+                {meetings.length > 0 ? (
+                  <MeetingsSection meetings={meetings} projectId={project.id} maxItems={4} />
+                ) : null}
+              </div>
+
+              {/* Team (surface-2 tint) */}
+              {teamMembers.length > 0 && (
+                <div className={cn(
+                  "bg-muted/30 px-6 py-6 sm:px-8",
+                  meetings.length > 0 ? "lg:col-span-2" : "lg:col-span-5"
+                )}>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      Project Team
+                    </span>
+                    <Link
+                      href={`/${project.id}/directory/users`}
+                      className="text-xs text-primary hover:text-primary/80 font-medium transition-colors flex items-center gap-1"
+                    >
+                      View all <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                  <div className="space-y-3">
+                    {teamMembers.slice(0, 6).map((member, i) => (
+                      <div key={`tm-${i}`} className="flex items-center gap-2.5">
+                        <Avatar className="h-7 w-7 flex-shrink-0">
+                          <AvatarFallback className="bg-card text-muted-foreground text-[10px] border border-border">
+                            {getInitials(member.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="text-sm text-foreground leading-none truncate">{member.name}</p>
+                          {member.role && (
+                            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">{member.role}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Empty state */}
         {meetings.length === 0 &&
           openRfis.length === 0 &&
           changeOrders.length === 0 &&
           tasks.length === 0 &&
-          teamMembers.length === 0 && (
+          teamMembers.length === 0 &&
+          !hasBudgetData && (
             <div className="py-16 text-center">
               <TrendingUp className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">No project activity yet.</p>
@@ -971,9 +1082,6 @@ export function ProjectHomeClient({
           )}
       </div>
 
-      {/* ── Floating AI Widget ──
-          Persistent across all project pages. Pulsing green indicator = always available.
-          Opens an inline side panel — no page navigation required. */}
       <AiWidget projectId={project.id} />
 
       <EditProjectDialog

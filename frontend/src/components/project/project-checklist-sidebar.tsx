@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CheckCircle2, Circle, ChevronRight, ExternalLink } from "lucide-react"
+import { CheckCircle2, Circle, ChevronRight, ExternalLink, ListChecks } from "lucide-react"
 import Link from "next/link"
 import {
   Slideover,
@@ -31,6 +31,7 @@ interface ProjectChecklistSidebarProps {
   className?: string
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
   buttonSize?: React.ComponentProps<typeof Button>["size"]
+  iconOnly?: boolean
 }
 
 const getChecklistItems = (projectId: string): ChecklistItem[] => [
@@ -98,6 +99,7 @@ export function ProjectChecklistSidebar({
   className,
   buttonVariant = "outline",
   buttonSize = "default",
+  iconOnly = false,
 }: ProjectChecklistSidebarProps) {
   const [open, setOpen] = React.useState(false)
   const { data: checklistStatus, isLoading } = useProjectChecklist(projectId)
@@ -132,10 +134,17 @@ export function ProjectChecklistSidebar({
         <Button
           variant={buttonVariant}
           size={buttonSize}
-          className={cn("shadow-sm", className)}
+          className={cn(iconOnly ? "" : "shadow-sm", className)}
+          title="Setup Checklist"
         >
-          <span>Setup Checklist</span>
-          <ChevronRight className="h-4 w-4" />
+          {iconOnly ? (
+            <ListChecks className="h-4 w-4" />
+          ) : (
+            <>
+              <span>Setup Checklist</span>
+              <ChevronRight className="h-4 w-4" />
+            </>
+          )}
         </Button>
       </SlideoverTrigger>
       <SlideoverContent side="right" size="md">

@@ -32,7 +32,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 // =============================================================================
 // LAYOUT COMPONENTS - Always use these
@@ -156,25 +156,16 @@ export default function StandardFormPage() {
           CONTENT - PageContainer wraps everything
           ===================================================================== */}
       <PageContainer maxWidth="lg">
-
-        {/* =====================================================================
-          HEADER - Standard PageHeader with back button
-          ===================================================================== */}
-      <PageHeader
-        title="Create New Item"
-        description="Fill out the form below to create a new item"
-        actions={
-          <Button variant="outline" size="sm" onClick={handleCancel}>
-            <ArrowLeft className="h-4 w-4" />
-            Back to List
-          </Button>
-        }
-      />
-
         {/* ===================================================================
             FORM - FormContainer centers and constrains width
             =================================================================== */}
         <FormContainer maxWidth="lg" withCard={false}>
+          <div className="mb-6">
+            <PageHeader
+              title="Create New Item"
+              description="Fill out the form below to create a new item"
+            />
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               {/* =============================================================
@@ -366,7 +357,7 @@ export default function StandardFormPage() {
               {/* =============================================================
                   FORM ACTIONS - Always at bottom with border-t
                   ============================================================= */}
-              <div className="flex items-center justify-end gap-4 pt-6 border-t">
+              <div className="flex items-center justify-end gap-4 pt-3">
                 <Button
                   type="button"
                   variant="outline"

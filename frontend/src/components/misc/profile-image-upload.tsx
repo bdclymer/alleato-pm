@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,13 @@ interface ProfileImageUploadProps {
   onUploadComplete?: (url: string) => void;
 }
 
+type AvatarApiError = {
+  error?: string;
+  code?: string;
+  hint?: string;
+  details?: string;
+};
+
 export function ProfileImageUpload({
   currentImage,
   userEmail,
@@ -32,6 +40,7 @@ export function ProfileImageUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [apiError, setApiError] = useState<AvatarApiError | null>(null);
 
   const initials =
     userName
@@ -58,6 +67,7 @@ export function ProfileImageUpload({
     }
 
     setSelectedFile(file);
+    setApiError(null);
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreviewUrl(reader.result as string);
@@ -81,9 +91,13 @@ export function ProfileImageUpload({
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
         avatarUrl?: string;
+        code?: string;
+        hint?: string;
+        details?: string;
       };
 
       if (!response.ok) {
+        setApiError(payload);
         throw new Error(payload.error || "Failed to upload image");
       }
 
@@ -93,6 +107,7 @@ export function ProfileImageUpload({
       }
 
       toast.success("Profile image updated successfully");
+      setApiError(null);
       onUploadComplete?.(publicUrl);
       setOpen(false);
       setPreviewUrl(null);
@@ -119,13 +134,18 @@ export function ProfileImageUpload({
 
       const payload = (await response.json().catch(() => ({}))) as {
         error?: string;
+        code?: string;
+        hint?: string;
+        details?: string;
       };
 
       if (!response.ok) {
+        setApiError(payload);
         throw new Error(payload.error || "Failed to remove image");
       }
 
       toast.success("Profile image removed");
+      setApiError(null);
       onUploadComplete?.("");
       setOpen(false);
       window.location.reload();
@@ -199,6 +219,17 @@ export function ProfileImageUpload({
             )}
           </div>
 
+          {apiError?.error ? (
+            <Alert variant="destructive">
+              <AlertTitle>{apiError.error}</AlertTitle>
+              <AlertDescription className="space-y-1">
+                {apiError.hint ? <p>{apiError.hint}</p> : null}
+                {apiError.details ? <p className="break-words">{apiError.details}</p> : null}
+                {apiError.code ? <p className="font-mono text-xs">Code: {apiError.code}</p> : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
           <DialogFooter>
             <Button
               type="button"
@@ -207,6 +238,7 @@ export function ProfileImageUpload({
                 setOpen(false);
                 setPreviewUrl(null);
                 setSelectedFile(null);
+                setApiError(null);
               }}
               disabled={uploading}
             >

@@ -7,6 +7,7 @@ const FORM_ENHANCED_ATTR = "data-dev-autofill-enhanced";
 const BUTTON_ATTR = "data-dev-autofill-button";
 const DISABLED_ATTR = "data-dev-autofill-disabled";
 const AUTOFILL_EVENT = "dev-autofill-form";
+const DISABLED_PATHS = new Set<string>(["/template/form-standard"]);
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -295,6 +296,9 @@ export function DevAutoFillForms() {
     }
 
     const enhanceAllForms = () => {
+      if (DISABLED_PATHS.has(window.location.pathname)) {
+        return;
+      }
       const forms = Array.from(document.querySelectorAll("form"));
       for (const form of forms) {
         enhanceForm(form);

@@ -6,7 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
-import { Plus, Check, X, MapPin, Calendar, Building2, MoreVertical } from "lucide-react";
+import {
+  Plus,
+  Check,
+  X,
+  MapPin,
+  Calendar,
+  Building2,
+  MoreVertical,
+  Clock3,
+  Tag,
+} from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -68,6 +78,65 @@ function formatDate(dateStr: string | null | undefined): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "-";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: value >= 1_000_000 ? "compact" : "standard",
+    maximumFractionDigits: value >= 1_000_000 ? 1 : 0,
+  }).format(value);
+}
+
+function getScheduleContext(startDate: string | null | undefined): {
+  label: string;
+  tone: "default" | "warning" | "muted";
+} {
+  if (!startDate) {
+    return { label: "No start date", tone: "muted" };
+  }
+
+  const parsed = new Date(startDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return { label: startDate, tone: "muted" };
+  }
+
+  const today = new Date();
+  const midnightToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const midnightStart = new Date(
+    parsed.getFullYear(),
+    parsed.getMonth(),
+    parsed.getDate(),
+  );
+  const diffDays = Math.round(
+    (midnightStart.getTime() - midnightToday.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays === 0) {
+    return { label: "Starts today", tone: "warning" };
+  }
+
+  if (diffDays > 0) {
+    return {
+      label: diffDays === 1 ? "Starts in 1 day" : `Starts in ${diffDays} days`,
+      tone: diffDays <= 14 ? "warning" : "default",
+    };
+  }
+
+  const elapsed = Math.abs(diffDays);
+  return {
+    label: elapsed === 1 ? "Started 1 day ago" : `Started ${elapsed} days ago`,
+    tone: "default",
+  };
 }
 
 // ── Inline Editable Cell ────────────────────────────────────────────────
@@ -140,7 +209,7 @@ function EditableCell({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleSave}
-          className="h-7 min-w-[80px] text-sm"
+          className="h-7 min-w-20 text-sm"
           disabled={saving}
         />
         <Button
@@ -188,17 +257,29 @@ function ProjectCard({
   onClick: () => void;
   onEdit: () => void;
 }) {
+  const scheduleContext = getScheduleContext(project.startDate);
+  const scheduleToneClass =
+    scheduleContext.tone === "warning"
+      ? "text-amber-700"
+      : scheduleContext.tone === "default"
+        ? "text-foreground"
+        : "text-muted-foreground";
+  const categoryOrType = project.category || project.type || null;
+  const locationAndClient = [project.client, project.state]
+    .filter((value): value is string => Boolean(value))
+    .join(" • ");
+
   return (
     <div
-      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/20"
+      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30"
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-medium text-foreground">{project.name}</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            #{project.jobNumber}
-          </p>
+          <h3 className="line-clamp-2 font-medium text-foreground leading-tight">
+            {project.name}
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">#{project.jobNumber}</p>
         </div>
         <Button
           variant="ghost"
@@ -214,33 +295,46 @@ function ProjectCard({
         </Button>
       </div>
 
-      <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
-        {project.client && (
-          <div className="flex items-center gap-1.5">
-            <Building2 className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{project.client}</span>
-          </div>
-        )}
-        {project.state && (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.state}</span>
-          </div>
-        )}
-        {project.startDate && (
-          <div className="flex items-center gap-1.5">
+      <div className="mt-3 space-y-1.5 text-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 shrink-0" />
-            <span>{formatDate(project.startDate)}</span>
+            <span className="truncate">{formatDate(project.startDate)}</span>
+          </div>
+          {project.phase && (
+            <Badge variant="outline" className="shrink-0 text-xs">
+              {project.phase}
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Clock3 className="h-3.5 w-3.5 shrink-0" />
+          <span className={scheduleToneClass}>{scheduleContext.label}</span>
+        </div>
+
+        {locationAndClient && (
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Building2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{locationAndClient}</span>
+          </div>
+        )}
+
+        {categoryOrType && (
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Tag className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{categoryOrType}</span>
           </div>
         )}
       </div>
 
-      <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-        {project.phase && (
-          <Badge variant="outline" className="text-xs">{project.phase}</Badge>
-        )}
-        {project.category && (
-          <Badge variant="secondary" className="text-xs">{project.category}</Badge>
+      <div className="mt-3 flex items-center justify-end">
+        {(typeof project.estRevenue === "number" || typeof project.estProfit === "number") && (
+          <span className="text-xs text-muted-foreground">
+            {typeof project.estRevenue === "number"
+              ? `Rev ${formatCurrency(project.estRevenue)}`
+              : `Profit ${formatCurrency(project.estProfit)}`}
+          </span>
         )}
       </div>
     </div>
