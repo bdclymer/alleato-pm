@@ -12,6 +12,8 @@ export interface Project {
   status: "Active" | "Inactive";
   stage: string;
   type: string;
+  onedrive?: string;
+  access?: string;
   phase?: string;
   category?: string;
   startDate?: string | null;

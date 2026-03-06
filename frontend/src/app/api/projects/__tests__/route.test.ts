@@ -118,6 +118,7 @@ describe("/api/projects", () => {
           limit: 100,
           total: 1,
           totalPages: 1,
+          isAdmin: false,
         },
       });
 
@@ -171,6 +172,7 @@ describe("/api/projects", () => {
         limit: 20,
         total: 50,
         totalPages: 3,
+        isAdmin: false,
       });
     });
 
@@ -342,6 +344,40 @@ describe("/api/projects", () => {
       await POST(request);
 
       expect(insertedData).toHaveProperty("phase", "Current");
+    });
+
+    it("normalizes blank date fields to null", async () => {
+      const newProject = {
+        name: "New Project",
+        "start date": "",
+        "est completion": "",
+      };
+
+      let insertedData: Record<string, unknown> | null = null;
+      mockServiceClient = {
+        from: jest.fn(() => {
+          const mockQuery = createMockQuery({
+            data: { ...newProject, id: 5, phase: "Current" },
+            error: null,
+            count: null,
+          });
+          mockQuery.insert = jest.fn((data) => {
+            insertedData = data;
+            return mockQuery;
+          });
+          return mockQuery;
+        })
+      };
+
+      const request = new NextRequest("http://localhost:3000/api/projects", {
+        method: "POST",
+        body: JSON.stringify(newProject),
+      });
+
+      await POST(request);
+
+      expect(insertedData).toHaveProperty("start date", null);
+      expect(insertedData).toHaveProperty("est completion", null);
     });
 
     it("allows overriding the default phase", async () => {

@@ -84,3 +84,45 @@ export async function GET(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> },
+) {
+  try {
+    const { projectId } = await params;
+    const user = await getApiRouteUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabase = createServiceClient();
+    const archiveTimestamp = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from("projects")
+      .update({
+        archived: true,
+        archived_at: archiveTimestamp,
+        archived_by: user.id,
+        phase: "Archive",
+      })
+      .eq("id", Number(projectId))
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Failed to archive project" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

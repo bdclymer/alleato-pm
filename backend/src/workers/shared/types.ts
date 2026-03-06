@@ -23,17 +23,57 @@ export interface Env {
 export interface FirefliesTranscript {
   id: string;
   title: string;
-  date: string;
-  duration: number;
+  date?: string | number;
+  dateString?: string;
+  duration?: number;
+  host_email?: string;
   organizer_email?: string;
+  user?: {
+    user_id?: string;
+    email?: string;
+    name?: string;
+  };
+  fireflies_users?: string[];
+  workspace_users?: string[];
+  calendar_id?: string;
+  cal_id?: string;
+  calendar_type?: string;
+  meeting_link?: string;
+  is_live?: boolean;
   participants?: string[];
+  speakers?: Array<{
+    id?: string;
+    name?: string;
+  }>;
+  meeting_attendees?: unknown[];
+  meeting_attendance?: unknown[];
   transcript_url?: string;
   audio_url?: string;
   video_url?: string;
+  meeting_info?: Record<string, unknown>;
+  analytics?: Record<string, unknown>;
+  channels?: unknown[];
+  shared_with?: unknown[];
+  apps?: {
+    title?: string;
+    outputs?: unknown[];
+    apps_preview?: unknown[];
+  };
   summary?: {
     overview?: string;
     action_items?: string[];
     keywords?: string[];
+    outline?: string;
+    shorthand_bullet?: string;
+    notes?: string;
+    gist?: string;
+    bullet_gist?: string;
+    short_summary?: string;
+    short_overview?: string;
+    meeting_type?: string;
+    topics_discussed?: string[];
+    transcript_chapters?: string[];
+    extended_sections?: unknown[];
   };
   sentences?: Array<{
     speaker_name: string;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import sys
@@ -11,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import uuid4
+
+import requests
 
 # Reason: Add parent directory to Python path so supabase_helpers can be imported
 # when running this script directly (not as a module). This works both when
@@ -28,6 +31,7 @@ from supabase_helpers import DocumentChunk, SupabaseRagStore
 
 TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
 SECTION_PREFIX = "## "
+FIREFLIES_VIEW_URL_RE = re.compile(r"fireflies\.ai\/view\/([A-Za-z0-9_-]{8,})")
 
 
 @dataclass
@@ -93,6 +97,8 @@ class FirefliesIngestionPipeline:
     def __init__(self, store: SupabaseRagStore, embedding_model: str = "text-embedding-3-small") -> None:
         self.store = store
         self.embedder = EmbeddingGenerator(model=embedding_model)
+        self._fireflies_api_url = "https://api.fireflies.ai/graphql"
+        self._fireflies_api_key = os.getenv("FIREFLIES_API_KEY")
 
     # ------------------------------------------------------------------
     # Public API
@@ -103,6 +109,14 @@ class FirefliesIngestionPipeline:
             raise FileNotFoundError(f"Transcript file not found: {file_path}")
 
         content = file_path.read_text(encoding="utf-8")
+        return self.ingest_markdown_text(content, project_id=project_id, dry_run=dry_run)
+
+    def ingest_markdown_text(
+        self,
+        content: str,
+        project_id: Optional[int] = None,
+        dry_run: bool = False,
+    ) -> IngestionResult:
         parsed = self.parse_markdown(content)
         content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
 
@@ -120,6 +134,7 @@ class FirefliesIngestionPipeline:
             "content_hash": content_hash,
             "participants": ", ".join(parsed.attendees),
             "participants_array": parsed.attendees,
+            "content": parsed.raw_text,
             "raw_text": parsed.raw_text,
             "project_id": project_id,
         }
@@ -174,6 +189,73 @@ class FirefliesIngestionPipeline:
             dry_run=False,
         )
 
+    def sync_recent_transcripts(
+        self,
+        limit: int = 5,
+        project_id: Optional[int] = None,
+        dry_run: bool = False,
+        write_markdown_dir: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Fetch recent Fireflies transcripts, generate markdown, and ingest.
+
+        The markdown is generated from Fireflies transcript + summary schema fields,
+        then passed through the native ingestion path to ensure parser compatibility.
+        """
+        if not self._fireflies_api_key:
+            raise RuntimeError("FIREFLIES_API_KEY is required for Fireflies sync")
+
+        target_limit = max(1, min(limit, 100))
+        summaries = self._fetch_recent_transcript_summaries(target_limit)
+        results: List[Dict[str, Any]] = []
+
+        output_dir: Optional[Path] = None
+        if write_markdown_dir:
+            output_dir = Path(write_markdown_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+        for item in summaries[:target_limit]:
+            transcript_id = str(item.get("id") or "").strip()
+            if not transcript_id:
+                continue
+            try:
+                transcript = self._fetch_transcript(transcript_id)
+                apps_outputs = self._fetch_apps_outputs(transcript_id)
+                markdown = self._format_transcript_markdown(transcript, apps_outputs)
+
+                markdown_file = None
+                if output_dir is not None:
+                    markdown_file = output_dir / f"{transcript_id}.md"
+                    markdown_file.write_text(markdown, encoding="utf-8")
+
+                ingestion = self.ingest_markdown_text(
+                    markdown,
+                    project_id=project_id,
+                    dry_run=dry_run,
+                )
+                results.append(
+                    {
+                        "transcript_id": transcript_id,
+                        "title": transcript.get("title"),
+                        "markdown_chars": len(markdown),
+                        "markdown_path": str(markdown_file) if markdown_file else None,
+                        "ingestion": ingestion.__dict__,
+                    }
+                )
+            except Exception as exc:
+                results.append(
+                    {
+                        "transcript_id": transcript_id,
+                        "error": str(exc),
+                    }
+                )
+
+        return {
+            "requested": target_limit,
+            "found": len(summaries),
+            "processed": len(results),
+            "results": results,
+        }
+
     # ------------------------------------------------------------------
     # Parsing helpers
     # ------------------------------------------------------------------
@@ -181,13 +263,29 @@ class FirefliesIngestionPipeline:
         sections = self._split_sections(markdown)
         header_block = sections.get("header", "")
         title = self._extract_title(header_block) or "Untitled"
-        fireflies_id = self._extract_metadata_value(header_block, "ID")
+        fireflies_id = (
+            self._extract_metadata_value(header_block, "Fireflies ID")
+            or self._extract_metadata_value(header_block, "ID")
+            or self._extract_fireflies_id_from_content(markdown)
+        )
         captured_at = self._parse_datetime(self._extract_metadata_value(header_block, "Date"))
-        attendees = self._parse_bullets(sections.get("Attendees", ""))
-        action_items = self._parse_bullets(sections.get("Action Items", ""))
-        overview = sections.get("Overview", "").strip()
-        summary = sections.get("Summary Bullets", overview).strip()
-        transcript_text = sections.get("Full Transcript", "")
+        attendees = self._parse_attendees(header_block, sections)
+        action_items = self._parse_action_items(sections)
+        overview = (
+            sections.get("Summary", "")
+            or sections.get("Overview", "")
+            or sections.get("Short Summary", "")
+        ).strip()
+        summary = (
+            sections.get("Summary Bullets", "")
+            or sections.get("Bullet Gist", "")
+            or sections.get("Short Summary", "")
+            or overview
+        ).strip()
+        transcript_text = (
+            sections.get("Transcript", "")
+            or sections.get("Full Transcript", "")
+        )
         transcript_segments = self._parse_transcript_segments(transcript_text)
 
         return ParsedTranscript(
@@ -201,6 +299,237 @@ class FirefliesIngestionPipeline:
             transcript_segments=transcript_segments,
             raw_text=markdown,
         )
+
+    # ------------------------------------------------------------------
+    # Fireflies API + markdown generation
+    # ------------------------------------------------------------------
+    def _fireflies_query(self, query: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        if not self._fireflies_api_key:
+            raise RuntimeError("FIREFLIES_API_KEY is not configured")
+        response = requests.post(
+            self._fireflies_api_url,
+            headers={
+                "Authorization": f"Bearer {self._fireflies_api_key}",
+                "Content-Type": "application/json",
+            },
+            json={"query": query, "variables": variables or {}},
+            timeout=60,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        errors = payload.get("errors")
+        if errors:
+            raise RuntimeError(f"Fireflies GraphQL error: {errors}")
+        return payload.get("data") or {}
+
+    def _fetch_recent_transcript_summaries(self, limit: int) -> List[Dict[str, Any]]:
+        query = """
+        query RecentTranscripts($limit: Int, $skip: Int) {
+          transcripts(limit: $limit, skip: $skip) {
+            id
+            title
+            date
+            dateString
+          }
+        }
+        """
+        data = self._fireflies_query(query, {"limit": limit, "skip": 0})
+        return data.get("transcripts") or []
+
+    def _fetch_transcript(self, transcript_id: str) -> Dict[str, Any]:
+        query = """
+        query Transcript($transcriptId: String!) {
+          transcript(id: $transcriptId) {
+            id
+            title
+            date
+            dateString
+            duration
+            host_email
+            organizer_email
+            user { user_id email name }
+            speakers { id name }
+            transcript_url
+            participants
+            meeting_attendees { displayName email phoneNumber name location }
+            meeting_attendance { name join_time leave_time }
+            fireflies_users
+            workspace_users
+            audio_url
+            video_url
+            calendar_id
+            cal_id
+            calendar_type
+            meeting_link
+            is_live
+            summary {
+              action_items
+              keywords
+              outline
+              overview
+              shorthand_bullet
+              notes
+              gist
+              bullet_gist
+              short_summary
+              short_overview
+              meeting_type
+              topics_discussed
+              transcript_chapters
+              extended_sections { title content }
+            }
+            meeting_info { silent_meeting summary_status fred_joined }
+            analytics {
+              sentiments { negative_pct neutral_pct positive_pct }
+              categories { questions date_times metrics tasks }
+              speakers {
+                speaker_id
+                name
+                duration
+                word_count
+                longest_monologue
+                monologues_count
+                filler_words
+                questions
+                duration_pct
+                words_per_minute
+              }
+            }
+            channels {
+              id
+              title
+              is_private
+              created_at
+              updated_at
+              created_by
+              members { user_id email name }
+            }
+            shared_with { email name photo_url expires_at }
+            sentences { speaker_name text start_time end_time }
+          }
+        }
+        """
+        data = self._fireflies_query(query, {"transcriptId": transcript_id})
+        transcript = data.get("transcript")
+        if not transcript:
+            raise RuntimeError(f"Transcript not found in Fireflies: {transcript_id}")
+        return transcript
+
+    def _fetch_apps_outputs(self, transcript_id: str) -> List[Dict[str, Any]]:
+        query = """
+        query Apps($transcriptId: String!, $limit: Float) {
+          apps(transcript_id: $transcriptId, limit: $limit) {
+            outputs {
+              transcript_id
+              user_id
+              app_id
+              created_at
+              title
+              prompt
+              response
+            }
+          }
+        }
+        """
+        try:
+            data = self._fireflies_query(query, {"transcriptId": transcript_id, "limit": 5})
+            return (data.get("apps") or {}).get("outputs") or []
+        except Exception:
+            return []
+
+    def _format_transcript_markdown(
+        self,
+        transcript: Dict[str, Any],
+        apps_outputs: List[Dict[str, Any]],
+    ) -> str:
+        lines: List[str] = [f"# {transcript.get('title') or 'Untitled Meeting'}", ""]
+
+        iso_date = self._normalize_datetime_to_iso(
+            transcript.get("dateString") or transcript.get("date")
+        )
+        if iso_date:
+            lines.append(f"**Date:** {iso_date}")
+
+        duration = transcript.get("duration")
+        if isinstance(duration, (int, float)):
+            lines.append(f"**Duration:** {round(float(duration))} minutes")
+        if transcript.get("organizer_email"):
+            lines.append(f"**Organizer Email:** {transcript['organizer_email']}")
+        if transcript.get("host_email"):
+            lines.append(f"**Host Email:** {transcript['host_email']}")
+
+        participants = transcript.get("participants") or []
+        if participants:
+            lines.append(f"**Participants:** {', '.join(str(p) for p in participants)}")
+        fireflies_users = transcript.get("fireflies_users") or []
+        if fireflies_users:
+            lines.append(f"**Fireflies Users:** {', '.join(str(p) for p in fireflies_users)}")
+        workspace_users = transcript.get("workspace_users") or []
+        if workspace_users:
+            lines.append(f"**Workspace Users:** {', '.join(str(p) for p in workspace_users)}")
+
+        if transcript.get("transcript_url"):
+            lines.append(f"**Fireflies Link:** {transcript['transcript_url']}")
+        if transcript.get("audio_url"):
+            lines.append(f"**Audio:** {transcript['audio_url']}")
+        if transcript.get("video_url"):
+            lines.append(f"**Video:** {transcript['video_url']}")
+        if transcript.get("meeting_link"):
+            lines.append(f"**Meeting Link:** {transcript['meeting_link']}")
+        if transcript.get("calendar_type"):
+            lines.append(f"**Calendar Type:** {transcript['calendar_type']}")
+        if transcript.get("calendar_id"):
+            lines.append(f"**Calendar ID:** {transcript['calendar_id']}")
+        if transcript.get("cal_id"):
+            lines.append(f"**Cal ID:** {transcript['cal_id']}")
+        if transcript.get("is_live") is not None:
+            lines.append(f"**Is Live:** {str(bool(transcript['is_live'])).lower()}")
+        lines.append(f"**Fireflies ID:** {transcript.get('id')}")
+        lines.append("")
+
+        summary = transcript.get("summary") or {}
+        self._append_text_section(lines, "Summary", summary.get("overview"))
+        self._append_text_section(lines, "Short Summary", summary.get("short_summary"))
+        self._append_text_section(lines, "Short Overview", summary.get("short_overview"))
+        self._append_text_section(lines, "Gist", summary.get("gist"))
+        self._append_text_section(lines, "Bullet Gist", summary.get("bullet_gist"))
+        self._append_text_section(lines, "Shorthand Bullet", summary.get("shorthand_bullet"))
+        self._append_text_section(lines, "Outline", summary.get("outline"))
+        self._append_text_section(lines, "Notes", summary.get("notes"))
+        self._append_text_section(lines, "Meeting Type", summary.get("meeting_type"))
+        self._append_list_section(lines, "Keywords", summary.get("keywords"))
+        self._append_list_section(lines, "Topics Discussed", summary.get("topics_discussed"))
+        self._append_list_section(lines, "Transcript Chapters", summary.get("transcript_chapters"))
+        self._append_list_section(
+            lines,
+            "Action Items",
+            self._normalize_action_items(summary.get("action_items")),
+        )
+        self._append_json_section(lines, "Extended Sections", summary.get("extended_sections"))
+
+        self._append_json_section(lines, "User", transcript.get("user"))
+        self._append_json_section(lines, "Speakers", transcript.get("speakers"))
+        self._append_json_section(lines, "Meeting Attendees", transcript.get("meeting_attendees"))
+        self._append_json_section(lines, "Meeting Attendance", transcript.get("meeting_attendance"))
+        self._append_json_section(lines, "Meeting Info", transcript.get("meeting_info"))
+        self._append_json_section(lines, "Analytics", transcript.get("analytics"))
+        self._append_json_section(lines, "Channels", transcript.get("channels"))
+        self._append_json_section(lines, "Shared With", transcript.get("shared_with"))
+        self._append_json_section(lines, "Apps Preview", apps_outputs)
+
+        sentences = transcript.get("sentences") or []
+        if sentences:
+            lines.append("## Transcript")
+            lines.append("")
+            for sentence in sentences:
+                speaker = (sentence or {}).get("speaker_name") or "Unknown"
+                text = ((sentence or {}).get("text") or "").strip()
+                if not text:
+                    continue
+                stamp = self._seconds_to_mmss((sentence or {}).get("start_time"))
+                lines.append(f"[{stamp}] **{speaker}**: {text}")
+
+        return "\n".join(lines).strip() + "\n"
 
     @staticmethod
     def _split_sections(markdown: str) -> Dict[str, str]:
@@ -231,9 +560,31 @@ class FirefliesIngestionPipeline:
         return match.group(1).strip() if match else None
 
     @staticmethod
+    def _extract_fireflies_id_from_content(content: str) -> Optional[str]:
+        id_match = re.search(r"\*\*Fireflies ID:\*\*\s*([A-Za-z0-9_-]{8,})", content, flags=re.IGNORECASE)
+        if id_match:
+            return id_match.group(1).strip()
+        url_match = FIREFLIES_VIEW_URL_RE.search(content)
+        if url_match:
+            return url_match.group(1).strip()
+        return None
+
+    @staticmethod
     def _parse_datetime(raw: Optional[str]) -> Optional[datetime]:
         if not raw:
             return None
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+        if raw.strip().isdigit():
+            try:
+                epoch = int(raw.strip())
+                if epoch > 10_000_000_000:
+                    epoch = epoch / 1000  # epoch ms
+                return datetime.utcfromtimestamp(epoch)
+            except Exception:
+                pass
         for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d%H:%M", "%Y-%m-%d"):
             try:
                 return datetime.strptime(raw.strip(), fmt)
@@ -241,13 +592,34 @@ class FirefliesIngestionPipeline:
                 continue
         return None
 
+    def _parse_attendees(self, header_block: str, sections: Dict[str, str]) -> List[str]:
+        attendees = self._parse_bullets(sections.get("Attendees", "")) or self._parse_bullets(
+            sections.get("Participants", "")
+        )
+        if attendees:
+            return attendees
+        participants_raw = self._extract_metadata_value(header_block, "Participants")
+        if not participants_raw:
+            return []
+        values = [v.strip() for v in participants_raw.split(",")]
+        return [v for v in values if v]
+
+    def _parse_action_items(self, sections: Dict[str, str]) -> List[str]:
+        block = sections.get("Action Items", "")
+        items = self._parse_bullets(block)
+        if items:
+            return items
+        return self._normalize_action_items(block)
+
     @staticmethod
     def _parse_bullets(block: str) -> List[str]:
         items: List[str] = []
         for line in block.splitlines():
             stripped = line.strip()
-            if stripped.startswith("-"):
-                items.append(stripped.lstrip("- ").strip())
+            if re.match(r"^[-*•]\s+", stripped):
+                items.append(re.sub(r"^[-*•]\s+", "", stripped).strip())
+            elif re.match(r"^\d+\.\s+", stripped):
+                items.append(re.sub(r"^\d+\.\s+", "", stripped).strip())
         return items
 
     @staticmethod
@@ -338,6 +710,92 @@ class FirefliesIngestionPipeline:
                 }
             )
         return payload
+
+    @staticmethod
+    def _seconds_to_mmss(value: Any) -> str:
+        if isinstance(value, (int, float)):
+            total = max(0, int(value))
+            return f"{total // 60:02d}:{total % 60:02d}"
+        return "00:00"
+
+    @staticmethod
+    def _normalize_datetime_to_iso(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            epoch = float(value)
+            if epoch > 10_000_000_000:
+                epoch = epoch / 1000
+            try:
+                return datetime.utcfromtimestamp(epoch).isoformat() + "Z"
+            except Exception:
+                return None
+        text = str(value).strip()
+        if not text:
+            return None
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00")).isoformat()
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _normalize_action_items(value: Any) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            items = [str(v).strip() for v in value if str(v).strip()]
+            return items
+        text = str(value)
+        items: List[str] = []
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("**") and line.endswith("**"):
+                continue
+            line = re.sub(r"^[-*•]\s+", "", line)
+            line = re.sub(r"^\d+\.\s+", "", line)
+            line = line.strip()
+            if line:
+                items.append(line)
+        return items
+
+    @staticmethod
+    def _append_text_section(lines: List[str], title: str, value: Any) -> None:
+        text = str(value).strip() if value is not None else ""
+        if not text:
+            return
+        lines.append(f"## {title}")
+        lines.append(text)
+        lines.append("")
+
+    @staticmethod
+    def _append_list_section(lines: List[str], title: str, value: Any) -> None:
+        items: List[str]
+        if isinstance(value, list):
+            items = [str(v).strip() for v in value if str(v).strip()]
+        elif isinstance(value, str):
+            items = [s.strip() for s in re.split(r"[,\n]", value) if s.strip()]
+        else:
+            return
+        if not items:
+            return
+        lines.append(f"## {title}")
+        for item in items:
+            lines.append(f"- {item}")
+        lines.append("")
+
+    @staticmethod
+    def _append_json_section(lines: List[str], title: str, value: Any) -> None:
+        if value is None:
+            return
+        if isinstance(value, (list, dict)) and not value:
+            return
+        lines.append(f"## {title}")
+        lines.append("```json")
+        lines.append(json.dumps(value, indent=2))
+        lines.append("```")
+        lines.append("")
 
 
 if __name__ == "__main__":

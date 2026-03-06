@@ -12,6 +12,10 @@
       "args": [
         "agentation-mcp"
       ]
+    },
+    "fireflies-docs": {
+      "type": "http",
+      "url": "https://docs.fireflies.ai/mcp"
     }
   }
 }

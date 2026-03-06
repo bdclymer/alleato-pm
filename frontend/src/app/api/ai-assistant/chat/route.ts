@@ -15,6 +15,7 @@ import {
   getStrategistSystemPrompt,
   STRATEGIST_MODEL,
 } from "@/lib/ai/orchestrator";
+import { generateConversationMemory } from "@/lib/ai/services/conversation-memory";
 
 export const maxDuration = 120;
 
@@ -148,16 +149,25 @@ export async function POST(request: Request) {
     onError: () => "An error occurred while generating a response. Please try again.",
   });
 
-  // Flush Langfuse span processor AFTER the response is sent.
-  // Without this, streamText spans are dropped because the batch processor
-  // hasn't shipped them before the serverless function shuts down.
+  // Post-response tasks — run AFTER the streaming response is sent.
+  // Zero impact on user-facing latency.
   after(async () => {
+    // 1. Flush Langfuse span processor so streamText spans aren't dropped
+    //    when the serverless function shuts down.
     const processor = (globalThis as Record<string, unknown>)
       .__langfuseSpanProcessor as
       | { forceFlush: () => Promise<void> }
       | undefined;
     if (processor) {
       await processor.forceFlush();
+    }
+
+    // 2. Generate conversation memory — summarize + embed this conversation
+    //    so the AI can recall it in future sessions.
+    try {
+      await generateConversationMemory(sessionId, user.id);
+    } catch (e) {
+      console.error("[conversation-memory] failed:", e);
     }
   });
 

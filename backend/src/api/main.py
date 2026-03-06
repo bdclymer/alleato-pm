@@ -212,6 +212,13 @@ class IngestRequest(BaseModel):
     dry_run: bool = True
 
 
+class FirefliesRecentSyncRequest(BaseModel):
+    limit: int = 5
+    project_id: Optional[int] = None
+    dry_run: bool = False
+    write_markdown_dir: Optional[str] = None
+
+
 def _get_agent_by_name(name: str):
     """Return the agent object by name."""
     agents = {
@@ -1019,6 +1026,23 @@ def ingest_fireflies_endpoint(
     """
     result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
     return {"result": result.__dict__}
+
+
+@app.post("/api/ingest/fireflies/recent", tags=["Ingestion"], summary="Sync recent Fireflies transcripts")
+def ingest_recent_fireflies_endpoint(
+    payload: FirefliesRecentSyncRequest,
+    pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
+) -> Dict[str, Any]:
+    """Fetch recent meetings from Fireflies, generate markdown, and ingest.
+
+    This path is fully native to the backend (no Cloudflare worker dependency).
+    """
+    return pipeline.sync_recent_transcripts(
+        limit=payload.limit,
+        project_id=payload.project_id,
+        dry_run=payload.dry_run,
+        write_markdown_dir=payload.write_markdown_dir,
+    )
 
 
 class PipelineProcessRequest(BaseModel):

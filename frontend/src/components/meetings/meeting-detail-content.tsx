@@ -41,6 +41,23 @@ interface ParsedSections {
   summary: string | null;
   gist: string | null;
   keywords: string | null;
+  shortSummary: string | null;
+  shortOverview: string | null;
+  bulletGist: string | null;
+  shorthandBullet: string | null;
+  outline: string | null;
+  notes: string | null;
+  meetingType: string | null;
+  topicsDiscussed: string | null;
+  transcriptChapters: string | null;
+  actionItems: string | null;
+  meetingAttendees: string | null;
+  meetingAttendance: string | null;
+  analytics: string | null;
+  meetingInfo: string | null;
+  channels: string | null;
+  appsPreview: string | null;
+  sharedWith: string | null;
   transcript: string | null;
 }
 
@@ -151,6 +168,26 @@ export function MeetingDetailContent({
   summarySlot,
 }: MeetingDetailContentProps) {
   const overviewContent = meeting.summary || undefined;
+  const firefliesSections: Array<{ label: string; content: string | null }> = [
+    { label: "Short Summary", content: parsedSections?.shortSummary || null },
+    { label: "Short Overview", content: parsedSections?.shortOverview || null },
+    { label: "Gist", content: parsedSections?.gist || null },
+    { label: "Bullet Gist", content: parsedSections?.bulletGist || null },
+    { label: "Shorthand Bullet", content: parsedSections?.shorthandBullet || null },
+    { label: "Outline", content: parsedSections?.outline || null },
+    { label: "Notes", content: parsedSections?.notes || null },
+    { label: "Meeting Type", content: parsedSections?.meetingType || null },
+    { label: "Topics Discussed", content: parsedSections?.topicsDiscussed || null },
+    { label: "Transcript Chapters", content: parsedSections?.transcriptChapters || null },
+    { label: "Action Items", content: parsedSections?.actionItems || null },
+    { label: "Meeting Attendees", content: parsedSections?.meetingAttendees || null },
+    { label: "Meeting Attendance", content: parsedSections?.meetingAttendance || null },
+    { label: "Meeting Info", content: parsedSections?.meetingInfo || null },
+    { label: "Analytics", content: parsedSections?.analytics || null },
+    { label: "Channels", content: parsedSections?.channels || null },
+    { label: "Apps Preview", content: parsedSections?.appsPreview || null },
+    { label: "Shared With", content: parsedSections?.sharedWith || null },
+  ].filter((section) => Boolean(section.content?.trim()));
 
   const hasActionItems =
     allTasks.length > 0 ||
@@ -234,6 +271,26 @@ export function MeetingDetailContent({
           {digestSlot ? (
             <section className="border-t border-border pt-6">
               {digestSlot}
+            </section>
+          ) : null}
+
+          {/* Fireflies Full AI Summary Fields */}
+          {firefliesSections.length > 0 ? (
+            <section className="border-t border-border pt-6">
+              <AccordionSection label="Fireflies AI Fields" defaultOpen={false}>
+                <div className="space-y-5">
+                  {firefliesSections.map((section) => (
+                    <div key={section.label} className="space-y-1.5">
+                      <h3 className="text-sm font-medium text-foreground">
+                        {section.label}
+                      </h3>
+                      <pre className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap font-mono rounded-md bg-muted/40 p-3">
+                        {section.content}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </AccordionSection>
             </section>
           ) : null}
 

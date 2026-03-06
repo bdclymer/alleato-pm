@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
-import { Plus, Check, X, MapPin, Calendar, Building2, Pencil } from "lucide-react";
+import { Plus, Check, X, MapPin, Calendar, Building2, MoreVertical } from "lucide-react";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -29,7 +29,9 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "state", label: "State", defaultVisible: true },
   { id: "phase", label: "Phase", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: true },
+  { id: "onedrive", label: "OneDrive", defaultVisible: true },
+  { id: "access", label: "Access", defaultVisible: true },
 ];
 
 // Map frontend field keys to database column names
@@ -40,6 +42,9 @@ const FIELD_TO_DB_COLUMN: Record<string, string> = {
   state: "state",
   phase: "phase",
   category: "category",
+  type: "type",
+  onedrive: "onedrive",
+  access: "access",
 };
 
 function formatDate(dateStr: string | null | undefined): string {
@@ -183,23 +188,18 @@ function ProjectCard({
             #{project.jobNumber}
           </p>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Badge variant={project.status === "Active" ? "default" : "secondary"} className="shrink-0">
-            {project.status}
-          </Badge>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            aria-label={`Edit ${project.name}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit();
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label={`Project actions for ${project.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit();
+          }}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
@@ -279,6 +279,7 @@ export default function PortfolioPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [projects, setProjects] = React.useState<Project[]>([]);
+  const [isAdmin, setIsAdmin] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [editingProject, setEditingProject] = React.useState<Project | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
@@ -316,6 +317,9 @@ export default function PortfolioPage() {
     const address = toStringValue(p.address);
     const phase = toStringValue(p.phase);
     const category = toStringValue(p.category);
+    const type = toStringValue(p.type, category || "General");
+    const onedrive = toStringValue(p.onedrive);
+    const access = toStringValue(p.access);
 
     return {
       id: toStringValue(p.id, "0"),
@@ -328,6 +332,9 @@ export default function PortfolioPage() {
       estRevenue: toNullableNumber(p["est revenue"]),
       estProfit: toNullableNumber(p["est profit"]),
       category,
+      type,
+      onedrive,
+      access,
       // Legacy fields for backward compatibility
       projectNumber: toStringValue(
         p["job number"],
@@ -339,7 +346,6 @@ export default function PortfolioPage() {
       phone: "",
       status: p.archived ? "Inactive" : "Active",
       stage: phase || "Unknown",
-      type: category || "General",
       notes: toStringValue(p.summary),
       isFlagged: false,
     };
@@ -370,6 +376,7 @@ export default function PortfolioPage() {
 
         const pageRows = Array.isArray(result.data) ? result.data : [];
         allProjectRows.push(...pageRows);
+        setIsAdmin(result.meta?.isAdmin === true);
         const apiTotalPages =
           typeof result.meta?.totalPages === "number"
             ? result.meta.totalPages
@@ -468,8 +475,17 @@ export default function PortfolioPage() {
   );
 
   const defaultVisibleColumns = React.useMemo(
-    () => PROJECT_COLUMNS.filter((column) => column.defaultVisible !== false).map((column) => column.id),
-    [],
+    () =>
+      PROJECT_COLUMNS
+        .filter((column) => column.id !== "access" || isAdmin)
+        .filter((column) => column.defaultVisible !== false)
+        .map((column) => column.id),
+    [isAdmin],
+  );
+
+  const tableColumns = React.useMemo(
+    () => PROJECT_COLUMNS.filter((column) => column.id !== "access" || isAdmin),
+    [isAdmin],
   );
 
   const tableState = useUnifiedTableState({
@@ -497,8 +513,24 @@ export default function PortfolioPage() {
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(defaultVisibleColumns);
+      return;
     }
-  }, [defaultVisibleColumns, tableState]);
+
+    // Keep "access" out of non-admin views even if persisted in local state.
+    if (!isAdmin && tableState.visibleColumns.includes("access")) {
+      tableState.setVisibleColumns(
+        tableState.visibleColumns.filter((column) => column !== "access"),
+      );
+      return;
+    }
+
+    if (isAdmin && !tableState.visibleColumns.includes("access")) {
+      tableState.setVisibleColumns([
+        ...tableState.visibleColumns,
+        "access",
+      ]);
+    }
+  }, [defaultVisibleColumns, isAdmin, tableState]);
 
   const activeFilters = tableState.activeFilters;
 
@@ -529,6 +561,9 @@ export default function PortfolioPage() {
         project.client,
         project.phase,
         project.category,
+        project.type,
+        project.onedrive,
+        project.access,
         project.state,
       ]
         .map((value) => (value ?? "").toLowerCase())
@@ -637,11 +672,38 @@ export default function PortfolioPage() {
     {
       ...PROJECT_COLUMNS[7],
       render: (item) => (
-        <Badge variant={item.status === "Active" ? "default" : "secondary"}>
-          {item.status}
-        </Badge>
+        <EditableCell
+          value={item.type || ""}
+          projectId={item.id}
+          field="type"
+          onSave={handleInlineSave}
+        />
       ),
-      sortValue: (item) => item.status,
+      sortValue: (item) => item.type ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[8],
+      render: (item) => (
+        <EditableCell
+          value={item.onedrive || ""}
+          projectId={item.id}
+          field="onedrive"
+          onSave={handleInlineSave}
+        />
+      ),
+      sortValue: (item) => item.onedrive ?? "",
+    },
+    {
+      ...PROJECT_COLUMNS[9],
+      render: (item) => (
+        <EditableCell
+          value={item.access || ""}
+          projectId={item.id}
+          field="access"
+          onSave={handleInlineSave}
+        />
+      ),
+      sortValue: (item) => item.access ?? "",
     },
   ];
 
@@ -710,7 +772,7 @@ export default function PortfolioPage() {
             phase: "Current",
             category: undefined,
           }),
-        columns: PROJECT_COLUMNS,
+        columns: tableColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
       }}

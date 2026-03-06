@@ -4,6 +4,19 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 
+function normalizeOptionalDate(value: unknown): string | null | undefined {
+  if (typeof value === "undefined") {
+    return undefined;
+  }
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === "string") {
+    return value.trim() === "" ? null : value;
+  }
+  return String(value);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getApiRouteUser();
@@ -110,6 +123,7 @@ export async function GET(request: NextRequest) {
         limit,
         total: count,
         totalPages: count ? Math.ceil(count / limit) : 0,
+        isAdmin,
       },
     });
   } catch (error) {
@@ -124,13 +138,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const supabase = createServiceClient();
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
     // Set default phase to "Current" if not provided
-    const projectData = {
+    const projectData: Record<string, unknown> = {
       phase: "Current",
       ...body,
     };
+    const normalizedStartDate = normalizeOptionalDate(body["start date"]);
+    if (typeof normalizedStartDate !== "undefined") {
+      projectData["start date"] = normalizedStartDate;
+    }
+    const normalizedEstCompletion = normalizeOptionalDate(body["est completion"]);
+    if (typeof normalizedEstCompletion !== "undefined") {
+      projectData["est completion"] = normalizedEstCompletion;
+    }
 
     const { data, error } = await supabase
       .from("projects")
