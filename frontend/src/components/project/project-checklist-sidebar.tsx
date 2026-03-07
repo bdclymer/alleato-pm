@@ -8,7 +8,6 @@ import {
   SlideoverContent,
   SlideoverHeader,
   SlideoverTitle,
-  SlideoverDescription,
   SlideoverBody,
   SlideoverTrigger,
 } from "@/components/ui/unified-slideover"
@@ -20,8 +19,6 @@ import { useProjectChecklist } from "@/hooks/use-project-checklist"
 interface ChecklistItem {
   id: string
   title: string
-  description?: string
-  category: string
   href: string
 }
 
@@ -36,52 +33,46 @@ interface ProjectChecklistSidebarProps {
 
 const getChecklistItems = (projectId: string): ChecklistItem[] => [
   {
-    id: "setup-team",
-    title: "Set up project team",
-    category: "Setup",
-    href: `/${projectId}/directory`,
-  },
-  {
     id: "configure-budget",
     title: "Configure budget",
-    category: "Setup",
+
     href: `/${projectId}/budget`,
   },
   {
-    id: "add-contracts",
-    title: "Add contracts",
-    category: "Setup",
-    href: `/${projectId}/commitments`,
+    id: "create-prime-contract",
+    title: "Create prime contract",
+
+    href: `/${projectId}/prime-contracts`,
   },
   {
     id: "create-schedule",
     title: "Create project schedule",
-    category: "Planning",
+
     href: `/${projectId}/schedule`,
   },
   {
     id: "upload-drawings",
     title: "Upload drawings",
-    category: "Documentation",
+
     href: `/${projectId}/drawings`,
   },
   {
-    id: "setup-rfis",
-    title: "Set up RFIs",
-    category: "Documentation",
-    href: `/${projectId}/rfis`,
+    id: "upload-specifications",
+    title: "Upload specifications",
+
+    href: `/${projectId}/specifications`,
   },
   {
-    id: "setup-change-orders",
-    title: "Set up change orders",
-    category: "Financial",
-    href: `/${projectId}/change-orders`,
+    id: "update-project-team",
+    title: "Update project team",
+
+    href: `/${projectId}/directory`,
   },
   {
-    id: "setup-submittals",
-    title: "Set up submittals",
-    category: "Documentation",
-    href: `/${projectId}/submittals`,
+    id: "add-commitments",
+    title: "Add commitments",
+
+    href: `/${projectId}/commitments`,
   },
 ]
 
@@ -109,16 +100,6 @@ export function ProjectChecklistSidebar({
   const totalCount = checklistItems.length
   const progressPercentage = (completedCount / totalCount) * 100
 
-  // Group items by category
-  const groupedItems = React.useMemo(() => {
-    return checklistItems.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = []
-      }
-      acc[item.category].push(item)
-      return acc
-    }, {} as Record<string, ChecklistItem[]>)
-  }, [checklistItems])
 
   return (
     <Slideover open={open} onOpenChange={setOpen}>
@@ -142,9 +123,6 @@ export function ProjectChecklistSidebar({
       <SlideoverContent side="right" size="md">
         <SlideoverHeader>
           <SlideoverTitle>{projectName} Setup Checklist</SlideoverTitle>
-          <SlideoverDescription>
-            Track your project setup progress
-          </SlideoverDescription>
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Overall Progress</span>
@@ -163,48 +141,39 @@ export function ProjectChecklistSidebar({
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedItems).map(([category, items]) => (
-                <div key={category} className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">
-                    {category}
-                  </h3>
-                  <div className="space-y-1">
-                    {items.map((item) => {
-                      const isCompleted = checklistStatus?.[item.id as keyof typeof checklistStatus] ?? false
-                      return (
-                        <Link
-                          key={item.id}
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={cn(
-                            "group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
-                            "hover:bg-accent/50",
-                            isCompleted && "opacity-60"
-                          )}
-                        >
-                          {isCompleted ? (
-                            <CheckCircle2 className="h-4.5 w-4.5 flex-shrink-0 text-green-600 dark:text-green-400" />
-                          ) : (
-                            <Circle className="h-4.5 w-4.5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
-                          )}
-                          <div className="flex-1">
-                            <div
-                              className={cn(
-                                "text-sm font-medium leading-none flex items-center gap-2",
-                                isCompleted && "line-through"
-                              )}
-                            >
-                              <span>{item.title}</span>
-                              <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-1">
+              {checklistItems.map((item) => {
+                const isCompleted = checklistStatus?.[item.id as keyof typeof checklistStatus] ?? false
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
+                      "hover:bg-accent/50",
+                      isCompleted && "opacity-60"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle2 className="h-4.5 w-4.5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <Circle className="h-4.5 w-4.5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
+                    )}
+                    <div className="flex-1">
+                      <div
+                        className={cn(
+                          "text-sm font-medium leading-none flex items-center gap-2",
+                          isCompleted && "line-through"
+                        )}
+                      >
+                        <span>{item.title}</span>
+                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </SlideoverBody>

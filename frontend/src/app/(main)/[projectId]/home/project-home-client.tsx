@@ -12,7 +12,6 @@ import {
   Sparkles,
   TrendingUp,
   ArrowRight,
-  Settings,
   Loader2,
   Phone,
   Mail,
@@ -21,7 +20,12 @@ import {
   Clock,
   AlertCircle,
   Plus,
+  ChevronDown,
+  Check,
+  Building2,
+  ChevronsUpDown,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -37,12 +41,22 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
+import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
+import { createCompany } from "@/app/(other)/actions/table-actions";
+import type { CompanyFormData } from "@/lib/schemas/financial-schemas";
 import { MeetingsSection } from "./meetings-section";
-import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import { useBudgetData } from "@/hooks/use-budget-data";
+import { useProjectRoles } from "@/hooks/use-project-roles";
+import type { ProjectRole } from "@/hooks/use-project-roles";
 import type { BudgetLineItem } from "@/types/budget";
-import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +65,7 @@ import { cn } from "@/lib/utils";
    ============================================================================= */
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
-type Task = Database["public"]["Tables"]["project_tasks"]["Row"];
+type Task = Database["public"]["Tables"]["tasks"]["Row"];
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
@@ -148,28 +162,37 @@ function getInitials(name: string): string {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
-/** Directory sub-section with searchable "add contact" popover */
+/** Directory sub-section with inline "add" row matching Project Team pattern */
 function DirectorySubSection({
   title,
+  addLabel,
   members,
   allMembers,
   projectId,
   sectionKey,
   personTypeFilter,
+  userType,
 }: {
   title: string;
+  addLabel: string;
   members: TeamMember[];
   allMembers: TeamMember[];
   projectId: number;
   sectionKey: string;
   personTypeFilter?: string;
+  /** user_type value for project_directory_memberships insert */
+  userType: string;
 }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
+  const [adding, setAdding] = React.useState(false);
   const [availablePeople, setAvailablePeople] = React.useState<
     { id: string; first_name: string; last_name: string; email: string | null; job_title: string | null }[]
   >([]);
   const [peopleLoading, setPeopleLoading] = React.useState(false);
+  const [addedPeople, setAddedPeople] = React.useState<
+    { id: string; name: string; role: string }[]
+  >([]);
 
   // Fetch real contacts when the popover opens
   React.useEffect(() => {
@@ -206,12 +229,21 @@ function DirectorySubSection({
     return () => { cancelled = true; };
   }, [addOpen, personTypeFilter]);
 
-  // Filter out people already displayed as members, and filter by search
+  // Filter out people already displayed as members, deduplicate by name, and filter by search
   const filteredPeople = React.useMemo(() => {
     const existingNames = new Set(allMembers.map((m) => m.name.toLowerCase()));
+    const addedIds = new Set(addedPeople.map((p) => p.id));
     let result = availablePeople.filter((p) => {
       const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
-      return !existingNames.has(fullName);
+      return !existingNames.has(fullName) && !addedIds.has(p.id);
+    });
+    // Deduplicate by full name (keep the first occurrence)
+    const seen = new Set<string>();
+    result = result.filter((p) => {
+      const key = `${p.first_name} ${p.last_name}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
     if (searchValue.trim()) {
       const q = searchValue.toLowerCase();
@@ -225,35 +257,132 @@ function DirectorySubSection({
       });
     }
     return result;
-  }, [availablePeople, allMembers, searchValue]);
+  }, [availablePeople, allMembers, addedPeople, searchValue]);
+
+  // Add person to project directory membership
+  const handleAddPerson = React.useCallback(
+    async (person: { id: string; first_name: string; last_name: string; job_title: string | null }) => {
+      setAdding(true);
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { error } = await supabase
+          .from("project_directory_memberships")
+          .insert({
+            project_id: projectId,
+            person_id: person.id,
+            user_type: userType,
+          });
+        if (error) throw error;
+        // Optimistically add to local list
+        setAddedPeople((prev) => [
+          ...prev,
+          {
+            id: person.id,
+            name: `${person.first_name} ${person.last_name}`,
+            role: person.job_title || "",
+          },
+        ]);
+        toast.success(`Added ${person.first_name} ${person.last_name}`);
+      } catch {
+        toast.error("Failed to add person");
+      } finally {
+        setAdding(false);
+        setAddOpen(false);
+        setSearchValue("");
+      }
+    },
+    [projectId, userType],
+  );
+
+  // Combine server-loaded members with optimistically-added ones
+  const allDisplayed = React.useMemo(() => {
+    const combined = [
+      ...members.map((m) => ({ name: m.name, role: m.role, company: m.company, email: m.email, phone: m.phone })),
+      ...addedPeople.map((p) => ({ name: p.name, role: p.role, company: undefined, email: undefined, phone: undefined })),
+    ];
+    return combined;
+  }, [members, addedPeople]);
 
   return (
     <div>
-      {/* Section header with + button */}
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
-            {title}
-          </span>
-          {members.length > 0 && (
-            <span className="text-[10px] text-muted-foreground/40 ml-0.5">
-              {members.length}
-            </span>
-          )}
-        </div>
+      {/* Section header */}
+      <div className="mb-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+          {title}
+        </span>
+      </div>
+
+      {/* Members list + add row */}
+      <div className="space-y-0.5">
+        {allDisplayed.map((member, i) => (
+          <div
+            key={`${sectionKey}-${i}`}
+            className="group flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors"
+          >
+            <Avatar className="h-6 w-6 flex-shrink-0">
+              <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
+                {getInitials(member.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] text-foreground leading-none truncate">
+                {member.name}
+              </p>
+              <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
+                {[member.role, member.company].filter(Boolean).join(" · ") || "—"}
+              </p>
+            </div>
+            {/* Quick contact icons — visible on hover */}
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              {member.phone && (
+                <a
+                  href={`tel:${member.phone}`}
+                  className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  title={`Call ${member.phone}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Phone className="h-3 w-3" />
+                </a>
+              )}
+              {member.email && (
+                <a
+                  href={`mailto:${member.email}`}
+                  className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  title={`Email ${member.email}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Mail className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Add row — dashed circle + label, matching Project Team empty slot */}
         <Popover open={addOpen} onOpenChange={setAddOpen}>
           <PopoverTrigger asChild>
             <button
-              className="h-5 w-5 flex items-center justify-center rounded text-foreground/40 hover:text-primary hover:bg-primary/5 transition-colors"
-              title={`Add to ${title}`}
+              className="w-full group flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left"
+              disabled={adding}
             >
-              <Plus className="h-3 w-3" />
+              <div className="h-6 w-6 rounded-full border border-dashed border-muted-foreground/30 flex items-center justify-center flex-shrink-0 group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors">
+                <Plus className="h-3 w-3 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] text-muted-foreground/60 leading-none truncate group-hover:text-foreground/80 transition-colors">
+                  {addLabel}
+                </p>
+                <p className="text-[11px] text-muted-foreground/40 mt-0.5">
+                  Click to add
+                </p>
+              </div>
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
             <Command shouldFilter={false}>
               <CommandInput
-                placeholder={`Search ${title.toLowerCase()}...`}
+                placeholder={`Search people...`}
                 value={searchValue}
                 onValueChange={setSearchValue}
                 className="h-9"
@@ -286,12 +415,7 @@ function DirectorySubSection({
                         <CommandItem
                           key={person.id}
                           value={fullName}
-                          onSelect={() => {
-                            setAddOpen(false);
-                            setSearchValue("");
-                            // Navigate to directory to manage membership
-                            window.location.href = `/${projectId}/directory/users`;
-                          }}
+                          onSelect={() => handleAddPerson(person)}
                           className="flex items-center gap-2 cursor-pointer"
                         >
                           <Avatar className="h-6 w-6 flex-shrink-0">
@@ -302,94 +426,307 @@ function DirectorySubSection({
                           <div className="min-w-0 flex-1">
                             <p className="text-sm truncate">{fullName}</p>
                             <p className="text-[11px] text-muted-foreground truncate">
-                              {person.job_title || person.email || "Employee"}
+                              {person.job_title || person.email || "—"}
                             </p>
                           </div>
                         </CommandItem>
                       );
                     })}
-                    {/* Link to full directory */}
-                    <CommandItem
-                      onSelect={() => {
-                        setAddOpen(false);
-                        window.location.href = `/${projectId}/directory/users`;
-                      }}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Plus className="h-3 w-3 text-primary" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm text-primary">View full directory</p>
-                      </div>
-                    </CommandItem>
                   </CommandGroup>
                 )}
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
+
+        {allDisplayed.length > 3 && (
+          <Link
+            href={`/${projectId}/directory/users`}
+            className="block px-2 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          >
+            View all →
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Role-based project team section with inline role assignment */
+function RoleBasedTeamSection({ projectId }: { projectId: number }) {
+  const { roles, isLoading, updateRoleMembers } = useProjectRoles(String(projectId));
+  const [activeRoleId, setActiveRoleId] = React.useState<string | null>(null);
+  const [searchValue, setSearchValue] = React.useState("");
+  const [availablePeople, setAvailablePeople] = React.useState<
+    { id: string; first_name: string; last_name: string; email: string | null; job_title: string | null; company_name?: string | null }[]
+  >([]);
+  const [peopleLoading, setPeopleLoading] = React.useState(false);
+  const [assigning, setAssigning] = React.useState(false);
+
+  // Fetch people when a role popover opens
+  React.useEffect(() => {
+    if (!activeRoleId) return;
+    let cancelled = false;
+
+    async function fetchPeople() {
+      setPeopleLoading(true);
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("people")
+          .select("id, first_name, last_name, email, job_title, company:companies(name)")
+          .eq("person_type", "employee")
+          .order("last_name", { ascending: true })
+          .limit(100);
+
+        if (!cancelled) {
+          setAvailablePeople(
+            (data || []).map((p) => ({
+              id: p.id,
+              first_name: p.first_name || "",
+              last_name: p.last_name || "",
+              email: p.email,
+              job_title: p.job_title,
+              company_name: (p.company as { name?: string } | null)?.name || null,
+            })),
+          );
+        }
+      } catch {
+        // silently fail
+      } finally {
+        if (!cancelled) setPeopleLoading(false);
+      }
+    }
+
+    fetchPeople();
+    return () => { cancelled = true; };
+  }, [activeRoleId]);
+
+  // Filter people by search value and exclude already-assigned people across all roles
+  const filteredPeople = React.useMemo(() => {
+    const assignedPersonIds = new Set(
+      roles.flatMap((r) => r.members.map((m) => m.person_id)),
+    );
+
+    let result = availablePeople.filter((p) => !assignedPersonIds.has(p.id));
+
+    // Deduplicate by full name
+    const seen = new Set<string>();
+    result = result.filter((p) => {
+      const key = `${p.first_name} ${p.last_name}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (searchValue.trim()) {
+      const q = searchValue.toLowerCase();
+      result = result.filter((p) => {
+        const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
+        return (
+          fullName.includes(q) ||
+          (p.email && p.email.toLowerCase().includes(q)) ||
+          (p.job_title && p.job_title.toLowerCase().includes(q)) ||
+          (p.company_name && p.company_name.toLowerCase().includes(q))
+        );
+      });
+    }
+
+    return result;
+  }, [availablePeople, roles, searchValue]);
+
+  const handleAssign = React.useCallback(
+    async (roleId: string, personId: string) => {
+      setAssigning(true);
+      try {
+        await updateRoleMembers(roleId, [personId]);
+        toast.success("Role assigned");
+      } catch {
+        toast.error("Failed to assign role");
+      } finally {
+        setAssigning(false);
+        setActiveRoleId(null);
+        setSearchValue("");
+      }
+    },
+    [updateRoleMembers],
+  );
+
+  const handleUnassign = React.useCallback(
+    async (roleId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      setAssigning(true);
+      try {
+        await updateRoleMembers(roleId, []);
+        toast.success("Role unassigned");
+      } catch {
+        toast.error("Failed to unassign role");
+      } finally {
+        setAssigning(false);
+      }
+    },
+    [updateRoleMembers],
+  );
+
+  return (
+    <div>
+      {/* Section header */}
+      <div className="mb-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+          Project Team
+        </span>
       </div>
 
-      {/* Members list */}
-      {members.length > 0 ? (
+      {/* Loading skeleton */}
+      {isLoading ? (
         <div className="space-y-0.5">
-          {members.slice(0, 3).map((member, i) => (
+          {[0, 1, 2].map((i) => (
             <div
-              key={`${sectionKey}-${i}`}
-              className="group flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors"
+              key={i}
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2"
             >
-              <Avatar className="h-6 w-6 flex-shrink-0">
-                <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
-                  {getInitials(member.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] text-foreground leading-none truncate">
-                  {member.name}
-                </p>
-                <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
-                  {[member.role, member.company].filter(Boolean).join(" · ") || "—"}
-                </p>
-              </div>
-              {/* Quick contact icons — visible on hover */}
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                {member.phone && (
-                  <a
-                    href={`tel:${member.phone}`}
-                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    title={`Call ${member.phone}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Phone className="h-3 w-3" />
-                  </a>
-                )}
-                {member.email && (
-                  <a
-                    href={`mailto:${member.email}`}
-                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                    title={`Email ${member.email}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Mail className="h-3 w-3" />
-                  </a>
-                )}
+              <div className="h-6 w-6 rounded-full bg-muted animate-pulse" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 bg-muted rounded animate-pulse w-24" />
+                <div className="h-2 bg-muted rounded animate-pulse w-16" />
               </div>
             </div>
           ))}
-          {members.length > 3 && (
-            <Link
-              href={`/${projectId}/directory/users`}
-              className="block px-2 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              +{members.length - 3} more
-            </Link>
-          )}
         </div>
-      ) : (
+      ) : roles.length === 0 ? (
         <p className="text-[11px] text-muted-foreground/40 px-2 py-1">
-          None added yet
+          No roles configured
         </p>
+      ) : (
+        <div className="space-y-0.5">
+          {roles.map((role) => {
+            const member = role.members[0]?.person;
+            const isActive = activeRoleId === role.id;
+
+            return (
+              <Popover
+                key={role.id}
+                open={isActive}
+                onOpenChange={(open) => {
+                  setActiveRoleId(open ? role.id : null);
+                  if (!open) setSearchValue("");
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    className="w-full group flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left"
+                    disabled={assigning}
+                  >
+                    {member ? (
+                      <>
+                        <Avatar className="h-6 w-6 flex-shrink-0">
+                          <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
+                            {getInitials(`${member.first_name} ${member.last_name}`)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] text-foreground leading-none truncate">
+                            {member.full_name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
+                            {role.role_name}
+                            {member.company_name ? ` · ${member.company_name}` : ""}
+                          </p>
+                        </div>
+                        {/* Remove button on hover */}
+                        <button
+                          className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                          title={`Remove ${member.full_name} from ${role.role_name}`}
+                          onClick={(e) => handleUnassign(role.id, e)}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-6 w-6 rounded-full border border-dashed border-muted-foreground/30 flex items-center justify-center flex-shrink-0 group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors">
+                          <Plus className="h-3 w-3 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] text-muted-foreground/60 leading-none truncate group-hover:text-foreground/80 transition-colors">
+                            {role.role_name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground/40 mt-0.5">
+                            Click to assign
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder={`Assign ${role.role_name.toLowerCase()}...`}
+                      value={searchValue}
+                      onValueChange={setSearchValue}
+                      className="h-9"
+                    />
+                    <CommandList>
+                      {peopleLoading ? (
+                        <div className="py-6 text-center">
+                          <p className="text-xs text-muted-foreground">Loading...</p>
+                        </div>
+                      ) : filteredPeople.length === 0 ? (
+                        <CommandEmpty>
+                          <div className="py-3 text-center">
+                            <p className="text-xs text-muted-foreground">
+                              {searchValue ? "No matching people found" : "No people available"}
+                            </p>
+                            <Link
+                              href={`/${projectId}/directory/users`}
+                              className="text-xs text-primary hover:text-primary/80 mt-1 inline-block"
+                              onClick={() => setActiveRoleId(null)}
+                            >
+                              Go to full directory →
+                            </Link>
+                          </div>
+                        </CommandEmpty>
+                      ) : (
+                        <CommandGroup heading={`Select ${role.role_name}`}>
+                          {filteredPeople.slice(0, 20).map((person) => {
+                            const fullName = `${person.first_name} ${person.last_name}`;
+                            return (
+                              <CommandItem
+                                key={person.id}
+                                value={fullName}
+                                onSelect={() => handleAssign(role.id, person.id)}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Avatar className="h-6 w-6 flex-shrink-0">
+                                  <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
+                                    {getInitials(fullName)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm truncate">{fullName}</p>
+                                  <p className="text-[11px] text-muted-foreground truncate">
+                                    {person.job_title || person.company_name || person.email || "Employee"}
+                                  </p>
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                          {filteredPeople.length > 20 && (
+                            <div className="px-2 py-1.5 text-[11px] text-muted-foreground">
+                              +{filteredPeople.length - 20} more — type to narrow
+                            </div>
+                          )}
+                        </CommandGroup>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -407,6 +744,7 @@ function KpiCell({
   sub,
   href,
   signal,
+  emptyAction,
 }: {
   label: string;
   value: string;
@@ -414,43 +752,61 @@ function KpiCell({
   sub?: string;
   href?: string;
   signal?: "good" | "warn" | "bad";
+  /** CTA shown when value is "—" (empty). E.g. "Set up budget →" */
+  emptyAction?: string;
 }) {
+  const isEmpty = value === "—";
+
   const inner = (
     <div className="bg-card px-6 py-5 h-full flex flex-col gap-2 min-h-[100px]">
       <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
-      <p
-        className={cn(
-          "text-2xl font-bold tracking-tight tabular-nums leading-none",
-          signal === "warn"
-            ? "text-amber-600"
-            : signal === "bad"
-            ? "text-red-600"
-            : signal === "good"
-            ? "text-green-600"
-            : "text-foreground"
-        )}
-      >
-        {value}
-      </p>
-      {change && (
-        <span
-          className={cn(
-            "inline-flex items-center self-start text-[11px] font-semibold px-1.5 py-0.5 rounded",
-            change.direction === "up"
-              ? "text-green-700 bg-green-50"
-              : change.direction === "down"
-              ? "text-red-700 bg-red-50"
-              : "text-muted-foreground bg-muted"
+      {isEmpty && emptyAction ? (
+        /* Empty state — actionable CTA instead of a useless dash */
+        <div className="flex-1 flex flex-col justify-center">
+          <p className="text-sm font-medium text-primary">
+            {emptyAction}
+          </p>
+          {sub && (
+            <p className="text-[11px] text-muted-foreground/50 mt-1 leading-relaxed">{sub}</p>
           )}
-        >
-          {change.direction === "up" ? "↑" : change.direction === "down" ? "↓" : ""}
-          {" "}{change.text}
-        </span>
-      )}
-      {sub && (
-        <p className="text-[11px] text-muted-foreground/60 leading-relaxed">{sub}</p>
+        </div>
+      ) : (
+        <>
+          <p
+            className={cn(
+              "text-2xl font-bold tracking-tight tabular-nums leading-none",
+              signal === "warn"
+                ? "text-amber-600"
+                : signal === "bad"
+                ? "text-red-600"
+                : signal === "good"
+                ? "text-green-600"
+                : "text-foreground"
+            )}
+          >
+            {value}
+          </p>
+          {change && (
+            <span
+              className={cn(
+                "inline-flex items-center self-start text-[11px] font-semibold px-1.5 py-0.5 rounded",
+                change.direction === "up"
+                  ? "text-green-700 bg-green-50"
+                  : change.direction === "down"
+                  ? "text-red-700 bg-red-50"
+                  : "text-muted-foreground bg-muted"
+              )}
+            >
+              {change.direction === "up" ? "↑" : change.direction === "down" ? "↓" : ""}
+              {" "}{change.text}
+            </span>
+          )}
+          {sub && (
+            <p className="text-[11px] text-muted-foreground/60 leading-relaxed">{sub}</p>
+          )}
+        </>
       )}
     </div>
   );
@@ -644,6 +1000,377 @@ function AiWidget({ projectId }: { projectId: number }) {
 }
 
 /* =============================================================================
+   Inline Editing — Project Details Panel
+   ============================================================================= */
+
+const CELL_INPUT_CLS =
+  "w-full bg-transparent text-sm leading-snug text-foreground outline-none border-0 ring-0 " +
+  "px-2 py-1 rounded-sm " +
+  "hover:bg-muted/30 focus:bg-primary/5 " +
+  "transition-colors duration-100 " +
+  "placeholder:text-muted-foreground/30";
+
+function InlineTextCell({
+  value,
+  placeholder = "—",
+  onSave,
+  type = "text",
+}: {
+  value: string;
+  placeholder?: string;
+  onSave: (v: string) => void;
+  type?: "text" | "date";
+}) {
+  const [draft, setDraft] = React.useState(value);
+  const pristine = React.useRef(value);
+  React.useEffect(() => {
+    setDraft(value);
+    pristine.current = value;
+  }, [value]);
+  return (
+    <input
+      type={type}
+      value={draft}
+      placeholder={placeholder}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft !== pristine.current) {
+          pristine.current = draft;
+          onSave(draft);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        if (e.key === "Escape") {
+          setDraft(pristine.current);
+          (e.target as HTMLInputElement).blur();
+        }
+      }}
+      className={CELL_INPUT_CLS}
+    />
+  );
+}
+
+function InlineSelectCell({
+  value,
+  options,
+  placeholder = "Select…",
+  onSave,
+}: {
+  value: string;
+  options: string[];
+  placeholder?: string;
+  onSave: (v: string) => void;
+}) {
+  return (
+    <Select value={value || undefined} onValueChange={onSave}>
+      <SelectTrigger
+        variant="inline"
+        className={cn(
+          "w-full h-auto bg-transparent text-sm leading-snug text-foreground",
+          "px-2 py-1 rounded-sm border-0 shadow-none",
+          "hover:bg-muted/30 focus:bg-primary/5",
+          "transition-colors duration-100",
+          !value && "text-muted-foreground/30"
+        )}
+      >
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((opt) => (
+          <SelectItem key={opt} value={opt}>
+            {opt}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/* ── Inline Company Combobox ──
+   Searchable combobox that queries the global companies directory.
+   Includes a "Create new company" option that opens CompanyFormDialog. */
+function InlineCompanyCombobox({
+  value,
+  placeholder = "Select client…",
+  onSave,
+}: {
+  value: string;
+  placeholder?: string;
+  onSave: (v: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [companies, setCompanies] = React.useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [showCreateDialog, setShowCreateDialog] = React.useState(false);
+
+  // Fetch companies when popover opens or search changes
+  React.useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    setLoading(true);
+    const params = new URLSearchParams({ per_page: "50" });
+    if (search) params.set("search", search);
+    fetch(`/api/directory/companies?${params}`, { signal: controller.signal })
+      .then((r) => r.json())
+      .then((res) => {
+        setCompanies(
+          (res.data || []).map((c: { id: string; name: string }) => ({
+            id: c.id,
+            name: c.name,
+          }))
+        );
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+    return () => controller.abort();
+  }, [open, search]);
+
+  const handleCreateCompany = async (data: CompanyFormData) => {
+    const result = await createCompany(data);
+    if (result.error) return result;
+    // Select the newly created company
+    onSave(data.name);
+    setShowCreateDialog(false);
+    setOpen(false);
+  };
+
+  return (
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full flex items-center justify-between text-left",
+              "text-sm leading-snug",
+              "px-2 py-1 rounded-sm border-0 bg-transparent",
+              "hover:bg-muted/30 focus:bg-primary/5",
+              "transition-colors duration-100 outline-none",
+              value ? "text-foreground" : "text-muted-foreground/30"
+            )}
+          >
+            <span className="truncate">{value || placeholder}</span>
+            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-30" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[280px] p-0" align="start">
+          <Command shouldFilter={false}>
+            <CommandInput
+              placeholder="Search companies…"
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {loading ? (
+                  <span className="text-muted-foreground text-xs">Searching…</span>
+                ) : (
+                  <span className="text-muted-foreground text-xs">No companies found</span>
+                )}
+              </CommandEmpty>
+              <CommandGroup>
+                {companies.map((company) => (
+                  <CommandItem
+                    key={company.id}
+                    value={company.name}
+                    onSelect={() => {
+                      onSave(company.name);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <Building2 className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="truncate">{company.name}</span>
+                    {value === company.name && (
+                      <Check className="ml-auto h-3.5 w-3.5 text-primary" />
+                    )}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandGroup>
+                <CommandItem
+                  onSelect={() => {
+                    setShowCreateDialog(true);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className="text-primary"
+                >
+                  <Plus className="mr-2 h-3.5 w-3.5" />
+                  Create new company
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      <CompanyFormDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onCreate={handleCreateCompany}
+      />
+    </>
+  );
+}
+
+function InlineTextareaCell({
+  value,
+  placeholder = "—",
+  onSave,
+}: {
+  value: string;
+  placeholder?: string;
+  onSave: (v: string) => void;
+}) {
+  const [draft, setDraft] = React.useState(value);
+  const pristine = React.useRef(value);
+  React.useEffect(() => {
+    setDraft(value);
+    pristine.current = value;
+  }, [value]);
+  return (
+    <textarea
+      value={draft}
+      placeholder={placeholder}
+      rows={2}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft !== pristine.current) {
+          pristine.current = draft;
+          onSave(draft);
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          setDraft(pristine.current);
+          (e.target as HTMLTextAreaElement).blur();
+        }
+      }}
+      className={cn(CELL_INPUT_CLS, "resize-none")}
+    />
+  );
+}
+
+function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 px-6 sm:px-8 py-[5px] border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors duration-75">
+      <span className="w-32 shrink-0 text-[11px] text-muted-foreground/60 uppercase tracking-wide select-none">
+        {label}
+      </span>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+const DETAIL_STAGE_OPTS = ["Bidding", "Course of Construction", "Post-Construction", "Pre-Construction", "Speculative", "Warranty"];
+const DETAIL_PHASE_OPTS = ["Planning", "Estimating", "Current", "Complete", "Loss", "Archive"];
+const DETAIL_TYPE_OPTS = ["New Build", "Addition", "Fit-Out", "Maintenance", "Restoration"];
+const DETAIL_SECTOR_OPTS = ["Commercial", "Industrial", "Infrastructure", "Healthcare", "Institutional", "Residential"];
+const DETAIL_SCOPE_OPTS = ["Ground-Up Construction", "Renovation", "Tenant Improvement", "Interior Build-Out", "Maintenance"];
+const DETAIL_DELIVERY_OPTS = ["Design-Bid-Build", "Design-Build", "Construction Management at Risk", "Integrated Project Delivery"];
+
+function ProjectDetailsPanel({
+  project: p,
+  onSave,
+}: {
+  project: Project;
+  onSave: (payload: Record<string, unknown>) => Promise<void>;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <div className="border-b border-border bg-card">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-6 sm:px-8 py-2 text-left hover:bg-muted/20 transition-colors duration-75"
+        aria-expanded={open}
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Project Details
+        </span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+
+      {open && (
+        <div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-border/30">
+            {/* Left column */}
+            <div>
+              <FieldRow label="Name">
+                <InlineTextCell value={p.name || ""} placeholder="Project name" onSave={(v) => onSave({ name: v })} />
+              </FieldRow>
+              <FieldRow label="Job Number">
+                <InlineTextCell value={p["job number"] || ""} placeholder="e.g. PRJ-001" onSave={(v) => onSave({ "job number": v })} />
+              </FieldRow>
+              <FieldRow label="Client">
+                <InlineCompanyCombobox value={p.client || ""} placeholder="Select client…" onSave={(v) => onSave({ client: v })} />
+              </FieldRow>
+              <FieldRow label="Stage">
+                <InlineSelectCell value={p.current_phase || ""} options={DETAIL_STAGE_OPTS} placeholder="Select stage" onSave={(v) => onSave({ current_phase: v })} />
+              </FieldRow>
+              <FieldRow label="Phase">
+                <InlineSelectCell value={p.phase || ""} options={DETAIL_PHASE_OPTS} placeholder="Select phase" onSave={(v) => onSave({ phase: v })} />
+              </FieldRow>
+              <FieldRow label="Start Date">
+                <InlineTextCell value={p["start date"] || ""} type="date" onSave={(v) => onSave({ "start date": v })} />
+              </FieldRow>
+            </div>
+
+            {/* Right column */}
+            <div>
+              <FieldRow label="Type">
+                <InlineSelectCell value={p.type || ""} options={DETAIL_TYPE_OPTS} placeholder="Select type" onSave={(v) => onSave({ type: v, category: v })} />
+              </FieldRow>
+              <FieldRow label="Sector">
+                <InlineSelectCell value={p.project_sector || ""} options={DETAIL_SECTOR_OPTS} placeholder="Select sector" onSave={(v) => onSave({ project_sector: v })} />
+              </FieldRow>
+              <FieldRow label="Work Scope">
+                <InlineSelectCell value={p.work_scope || ""} options={DETAIL_SCOPE_OPTS} placeholder="Select scope" onSave={(v) => onSave({ work_scope: v })} />
+              </FieldRow>
+              <FieldRow label="Delivery Method">
+                <InlineSelectCell value={p.delivery_method || ""} options={DETAIL_DELIVERY_OPTS} placeholder="Select method" onSave={(v) => onSave({ delivery_method: v })} />
+              </FieldRow>
+              <FieldRow label="Est. Completion">
+                <InlineTextCell value={p["est completion"] || ""} type="date" onSave={(v) => onSave({ "est completion": v })} />
+              </FieldRow>
+              <FieldRow label="Address">
+                <InlineTextCell value={p.address || ""} placeholder="Street address" onSave={(v) => onSave({ address: v })} />
+              </FieldRow>
+            </div>
+          </div>
+
+          {/* Description — full width */}
+          <div className="border-t border-border/30">
+            <div className="flex items-start gap-3 px-6 sm:px-8 py-[5px] hover:bg-muted/20 transition-colors duration-75">
+              <span className="w-32 shrink-0 text-[11px] text-muted-foreground/60 uppercase tracking-wide select-none pt-2">
+                Description
+              </span>
+              <div className="flex-1 min-w-0 py-0.5">
+                <InlineTextareaCell
+                  value={p.summary || ""}
+                  placeholder="Add project description…"
+                  onSave={(v) => onSave({ summary: v })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =============================================================================
    Main component — Inverted Pyramid Layout
    ============================================================================= */
 
@@ -662,8 +1389,25 @@ export function ProjectHomeClient({
   sov: _sov = [],
 }: ProjectHomeClientProps) {
   const router = useRouter();
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [signalsDismissed, setSignalsDismissed] = React.useState(false);
+  const [localProject, setLocalProject] = React.useState(project);
+
+  const saveProjectField = React.useCallback(
+    async (payload: Record<string, unknown>) => {
+      try {
+        const res = await fetch(`/api/projects/${project.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("Failed to save");
+        setLocalProject((prev) => ({ ...prev, ...(payload as Partial<Project>) }));
+      } catch {
+        toast.error("Failed to save");
+      }
+    },
+    [project.id]
+  );
 
   // Fetch full budget data from API (all computed columns)
   const {
@@ -684,97 +1428,6 @@ export function ProjectHomeClient({
     : 0;
   const totalPending = grandTotals.pendingChanges + grandTotals.pendingCostChanges;
   const forecastGap = grandTotals.estimatedCostAtCompletion - grandTotals.revisedBudget;
-
-  // PortfolioProject mapping (for EditProjectDialog)
-  const projectSummaryMetadata =
-    typeof project.summary_metadata === "object" && project.summary_metadata !== null
-      ? (project.summary_metadata as Record<string, unknown>)
-      : null;
-
-  const portfolioProject: PortfolioProject = {
-    id: String(project.id),
-    name: project.name || "",
-    projectNumber: project["job number"] || "",
-    jobNumber: project["job number"] || "",
-    projectTemplate:
-      projectSummaryMetadata && "project_template" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.project_template || "")
-        : "",
-    client: project.client || "",
-    address: project.address || "",
-    city:
-      projectSummaryMetadata && "city" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.city || "")
-        : "",
-    state: project.state || "",
-    zip:
-      projectSummaryMetadata && "postal_code" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.postal_code || "")
-        : "",
-    phone:
-      projectSummaryMetadata && "phone" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.phone || "")
-        : "",
-    status: project.archived ? "Inactive" : "Active",
-    currentPhase: project.current_phase || "",
-    stage: project.current_phase || "",
-    workScope: project.work_scope || "",
-    projectSector: project.project_sector || "",
-    deliveryMethod: project.delivery_method || "",
-    squareFootage:
-      projectSummaryMetadata && "square_footage" in projectSummaryMetadata
-        ? Number(projectSummaryMetadata.square_footage ?? 0) || null
-        : null,
-    totalValue: project["est revenue"] || null,
-    projectCode:
-      projectSummaryMetadata && "project_code" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.project_code || "")
-        : "",
-    type: project.type || "",
-    projectType: project.type || "",
-    phase: project.phase || "",
-    category: project.category || "",
-    country:
-      projectSummaryMetadata && "country" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.country || "")
-        : "United States",
-    timezone:
-      projectSummaryMetadata && "timezone" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.timezone || "")
-        : "America/New_York",
-    region:
-      projectSummaryMetadata && "region" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.region || "")
-        : "",
-    office:
-      projectSummaryMetadata && "office" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.office || "")
-        : "",
-    completionDate: project["est completion"] || null,
-    erpSync:
-      projectSummaryMetadata && "erp_sync" in projectSummaryMetadata
-        ? Boolean(projectSummaryMetadata.erp_sync)
-        : true,
-    testProject:
-      projectSummaryMetadata && "test_project" in projectSummaryMetadata
-        ? Boolean(projectSummaryMetadata.test_project)
-        : false,
-    projectLogo:
-      projectSummaryMetadata && "project_logo" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.project_logo || "")
-        : "",
-    projectPhoto:
-      projectSummaryMetadata && "project_photo" in projectSummaryMetadata
-        ? String(projectSummaryMetadata.project_photo || "")
-        : "",
-    active: !project.archived,
-    description: project.summary || "",
-    summaryMetadata: projectSummaryMetadata,
-    startDate: project["start date"] || null,
-    estRevenue: project["est revenue"] || null,
-    estProfit: project["est profit"] || null,
-    notes: project.summary || "",
-  };
 
   // Team members — categorized into project team, key contacts, subcontractors
   const teamMembers = React.useMemo((): TeamMember[] => {
@@ -881,7 +1534,7 @@ export function ProjectHomeClient({
       const overdueTasks = schedule.filter((t: any) => {
         if (!t.end_date) return false;
         const endDate = new Date(t.end_date);
-        return endDate < new Date() && t.status !== "completed" && t.status !== "complete";
+        return endDate < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done";
       });
       const overdueRatio = overdueTasks.length / schedule.length;
       if (overdueRatio <= 0.05) score += 100;
@@ -901,7 +1554,7 @@ export function ProjectHomeClient({
     if (allTasks.length === 0) return null;
 
     const completedTasks = allTasks.filter(
-      (t: any) => t.status === "completed" || t.status === "complete"
+      (t: any) => t.status === "completed" || t.status === "complete" || t.status === "done"
     ).length;
     const totalTasks = allTasks.length;
     const pctComplete = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -909,7 +1562,7 @@ export function ProjectHomeClient({
     const overdueTasks = allTasks.filter((t: any) => {
       const endDate = t.end_date || t.due_date;
       if (!endDate) return false;
-      return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete";
+      return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done";
     });
 
     return {
@@ -922,9 +1575,9 @@ export function ProjectHomeClient({
 
   // Completion countdown
   const completionInfo = React.useMemo(() => {
-    if (!project["est completion"]) return null;
+    if (!localProject["est completion"]) return null;
     try {
-      const completion = new Date(project["est completion"]);
+      const completion = new Date(localProject["est completion"]!);
       const now = new Date();
       const daysRemaining = Math.floor(
         (completion.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
@@ -944,7 +1597,7 @@ export function ProjectHomeClient({
     } catch {
       return null;
     }
-  }, [project]);
+  }, [localProject]);
 
   // AI signals
   const signals = React.useMemo(() => {
@@ -1012,7 +1665,7 @@ export function ProjectHomeClient({
       const overdueTasks = schedule.filter((t) => {
         const endDate = t.end_date;
         if (!endDate) return false;
-        return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete";
+        return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done";
       });
       if (overdueTasks.length > 0) {
         list.push({
@@ -1062,7 +1715,7 @@ export function ProjectHomeClient({
   }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, project, schedule, dailyLogs]);
 
   // Meta strings
-  const projectMeta = [project.type, project.project_sector, project.current_phase]
+  const projectMeta = [localProject.type, localProject.project_sector, localProject.current_phase]
     .filter(Boolean)
     .join(" · ");
 
@@ -1143,7 +1796,15 @@ export function ProjectHomeClient({
               Health dot · job number · name · meta · completion | icon actions */}
           <div className="px-6 py-4 sm:px-8 border-b border-border flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 min-w-0">
-              {/* Health indicator dot */}
+              {localProject["job number"] && (
+                <span className="text-sm font-semibold text-muted-foreground tabular-nums flex-shrink-0">
+                  {localProject["job number"]}
+                </span>
+              )}
+              <h1 className="text-sm font-semibold text-foreground truncate">
+                {localProject.name || "Untitled Project"}
+              </h1>
+              {/* Health indicator dot — right of name */}
               <span
                 className={cn(
                   "h-2 w-2 rounded-full flex-shrink-0",
@@ -1157,18 +1818,10 @@ export function ProjectHomeClient({
                     : "At risk"
                 }
               />
-              {project["job number"] && (
-                <span className="text-sm font-semibold text-muted-foreground tabular-nums flex-shrink-0">
-                  {project["job number"]}
-                </span>
-              )}
-              <h1 className="text-sm font-semibold text-foreground truncate">
-                {project.name || "Untitled Project"}
-              </h1>
               {/* Meta: type · sector · phase · client */}
-              {(projectMeta || project.client) && (
+              {(projectMeta || localProject.client) && (
                 <span className="hidden sm:inline text-xs text-muted-foreground/60 flex-shrink-0">
-                  · {[projectMeta, project.client].filter(Boolean).join(" · ")}
+                  · {[projectMeta, localProject.client].filter(Boolean).join(" · ")}
                 </span>
               )}
             </div>
@@ -1193,27 +1846,19 @@ export function ProjectHomeClient({
                   </span>
                 </span>
               )}
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setIsEditDialogOpen(true)}
-                  title="Edit project"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-                <ProjectChecklistSidebar
-                  projectId={String(project.id)}
-                  projectName={project.name || project["job number"] || "Project"}
-                  buttonVariant="ghost"
-                  buttonSize="icon"
-                  iconOnly
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
-                />
-              </div>
+              <ProjectChecklistSidebar
+                projectId={String(project.id)}
+                projectName={project.name || project["job number"] || "Project"}
+                buttonVariant="ghost"
+                buttonSize="icon"
+                iconOnly
+                className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
+              />
             </div>
           </div>
+
+          {/* ── LAYER 1.5: Project Details ── */}
+          <ProjectDetailsPanel project={localProject} onSave={saveProjectField} />
 
           {/* ── LAYER 2: KPI Strip ──
               4 metrics with gap-px dividers. White cells on border bg. */}
@@ -1223,6 +1868,7 @@ export function ProjectHomeClient({
               value={hasBudgetData ? formatCompactCurrency(totalBudget) : "—"}
               sub={hasBudgetData ? "Original contract value" : "No budget set"}
               href={`/${project.id}/budget`}
+              emptyAction="Set up budget →"
             />
             <KpiCell
               label="Committed"
@@ -1235,6 +1881,7 @@ export function ProjectHomeClient({
               sub={committed === 0 ? "No contracts yet" : undefined}
               href={`/${project.id}/commitments`}
               signal={budgetUtilization > 90 ? "bad" : budgetUtilization > 75 ? "warn" : undefined}
+              emptyAction="Add contracts →"
             />
             <KpiCell
               label="Projected Over/Under"
@@ -1243,11 +1890,12 @@ export function ProjectHomeClient({
                 : "—"}
               sub={hasBudgetData && fullBudgetData.length > 0
                 ? projectedOverUnder >= 0 ? "Under budget" : "Over budget"
-                : undefined}
+                : "Needs budget data"}
               href={`/${project.id}/budget`}
               signal={hasBudgetData && fullBudgetData.length > 0
                 ? (projectedOverUnder >= 0 ? "good" : projectedOverUnder < -50000 ? "bad" : "warn")
                 : undefined}
+              emptyAction="View projections →"
             />
             <KpiCell
               label="Schedule"
@@ -1265,6 +1913,7 @@ export function ProjectHomeClient({
                   : scheduleMetrics.overdueTasks > 0 ? "warn"
                   : "good"
                 : undefined}
+              emptyAction="Create schedule →"
             />
           </div>
 
@@ -1298,9 +1947,17 @@ export function ProjectHomeClient({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground/60">
-                  No budget data yet. Add budget lines to see allocation.
-                </p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-sm text-muted-foreground/60 mb-2">
+                    No budget data yet
+                  </p>
+                  <Link
+                    href={`/${project.id}/budget`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Set up budget →
+                  </Link>
+                </div>
               )}
             </div>
 
@@ -1492,99 +2149,167 @@ export function ProjectHomeClient({
               )}
             </div>
 
-            {/* Right: Financial Exposure */}
+            {/* Right: Tasks */}
             <div className="lg:col-span-2 bg-[hsl(var(--surface-alt))] px-6 py-6 sm:px-8">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-5">
-                Financial Exposure
-              </p>
+              <div className="flex items-center justify-between mb-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Tasks
+                </p>
+                {tasks.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60 tabular-nums">
+                    {tasks.filter((t) => t.status === "done" || t.status === "completed").length}/{tasks.length} done
+                  </span>
+                )}
+              </div>
 
-              {budgetLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : fullBudgetData.length > 0 ? (
-                <div className="space-y-6">
-
-                  {/* Committed % */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-foreground">Committed</span>
-                      <span className="text-sm font-semibold tabular-nums text-foreground">
-                        {commitmentPct.toFixed(0)}%
-                      </span>
-                    </div>
-                    <div className="h-2.5 bg-card rounded-full overflow-hidden border border-border/50">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          commitmentPct > 95
-                            ? "bg-red-400"
-                            : commitmentPct > 80
-                            ? "bg-amber-400"
-                            : "bg-primary/70"
-                        )}
-                        style={{ width: `${Math.min(commitmentPct, 100)}%` }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-1">
-                      {formatCompactCurrency(grandTotals.committedCosts)} of {formatCompactCurrency(grandTotals.revisedBudget)} locked in contracts
+              {tasks.length > 0 ? (
+                <div className="space-y-1">
+                  {tasks
+                    .filter((t) => t.status !== "done" && t.status !== "completed" && t.status !== "cancelled")
+                    .slice(0, 8)
+                    .map((task) => {
+                      const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+                      return (
+                        <div
+                          key={task.id}
+                          className="flex items-start gap-2.5 py-1.5 group"
+                        >
+                          <div
+                            className={cn(
+                              "h-4 w-4 rounded-full border-2 flex-shrink-0 mt-0.5",
+                              task.priority === "urgent" || task.priority === "critical"
+                                ? "border-red-400"
+                                : task.priority === "high"
+                                ? "border-amber-400"
+                                : "border-border"
+                            )}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-foreground leading-snug line-clamp-2">
+                              {task.description}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {task.assignee_name && (
+                                <span className="text-[10px] text-muted-foreground/60 truncate">
+                                  {task.assignee_name}
+                                </span>
+                              )}
+                              {task.due_date && (
+                                <span className={cn(
+                                  "text-[10px] tabular-nums",
+                                  isOverdue ? "text-red-500" : "text-muted-foreground/60"
+                                )}>
+                                  {format(new Date(task.due_date), "MMM d")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {tasks.filter((t) => t.status !== "done" && t.status !== "completed" && t.status !== "cancelled").length > 8 && (
+                    <p className="text-[10px] text-muted-foreground/40 pt-1">
+                      +{tasks.filter((t) => t.status !== "done" && t.status !== "completed" && t.status !== "cancelled").length - 8} more
                     </p>
-                  </div>
-
-                  {/* Pending Decisions */}
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">Pending Decisions</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          totalPending > 0 ? "text-amber-600" : "text-muted-foreground"
-                        )}
-                      >
-                        {formatCompactCurrency(totalPending)}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-1">
-                      {grandTotals.pendingChanges > 0 && (
-                        <>{formatCompactCurrency(grandTotals.pendingChanges)} budget pending</>
-                      )}
-                      {grandTotals.pendingChanges > 0 && grandTotals.pendingCostChanges > 0 && " · "}
-                      {grandTotals.pendingCostChanges > 0 && (
-                        <>{formatCompactCurrency(grandTotals.pendingCostChanges)} cost pending</>
-                      )}
-                      {totalPending === 0 && "No unresolved items"}
-                    </p>
-                  </div>
-
-                  {/* Forecast Gap */}
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-foreground">Forecast Gap</span>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold tabular-nums",
-                          forecastGap > 0 ? "text-red-600" : forecastGap < 0 ? "text-green-600" : "text-muted-foreground"
-                        )}
-                      >
-                        {forecastGap >= 0 ? "+" : ""}{formatCompactCurrency(forecastGap)}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-1">
-                      {forecastGap > 0
-                        ? "Estimated cost exceeds revised budget"
-                        : forecastGap < 0
-                        ? "Estimated cost under revised budget"
-                        : "Estimated cost matches budget"}
-                    </p>
-                  </div>
-
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground/60">
-                  Budget data needed to calculate exposure.
+                  No tasks yet. Tasks are captured from meetings and AI assistant.
                 </p>
               )}
             </div>
+          </div>
+
+          {/* ── LAYER 4.5: Schedule ── */}
+          <div className="border-b border-border px-6 py-6 sm:px-8 bg-card">
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Schedule
+              </p>
+              <Link
+                href={`/${project.id}/schedule`}
+                className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+              >
+                View schedule →
+              </Link>
+            </div>
+
+            {schedule.length > 0 ? (
+              <div className="space-y-1">
+                {schedule
+                  .filter((t: any) => t.status !== "completed" && t.status !== "complete" && (t.percent_complete ?? 0) < 100)
+                  .slice(0, 6)
+                  .map((task: any) => {
+                    const isOverdue = task.finish_date && new Date(task.finish_date) < new Date();
+                    const pct = task.percent_complete || 0;
+                    return (
+                      <div
+                        key={task.id}
+                        className="flex items-center gap-3 py-1.5"
+                      >
+                        {/* Progress ring */}
+                        <div className="relative h-5 w-5 flex-shrink-0">
+                          <svg className="h-5 w-5 -rotate-90" viewBox="0 0 20 20">
+                            <circle
+                              cx="10" cy="10" r="8"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="text-border"
+                            />
+                            <circle
+                              cx="10" cy="10" r="8"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeDasharray={`${pct * 0.5027} 50.27`}
+                              className={cn(
+                                isOverdue ? "text-red-400" : "text-primary/60"
+                              )}
+                            />
+                          </svg>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground leading-snug truncate">
+                            {task.name}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          {task.finish_date && (
+                            <span className={cn(
+                              "text-[10px] tabular-nums",
+                              isOverdue ? "text-red-500" : "text-muted-foreground/60"
+                            )}>
+                              {format(new Date(task.finish_date), "MMM d")}
+                            </span>
+                          )}
+                          <span className="text-[10px] tabular-nums text-muted-foreground/40 w-8 text-right">
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {schedule.filter((t: any) => t.status !== "completed" && t.status !== "complete" && (t.percent_complete ?? 0) < 100).length > 6 && (
+                  <Link
+                    href={`/${project.id}/schedule`}
+                    className="block text-[10px] text-muted-foreground/40 pt-1 hover:text-foreground transition-colors"
+                  >
+                    +{schedule.filter((t: any) => t.status !== "completed" && t.status !== "complete" && (t.percent_complete ?? 0) < 100).length - 6} more tasks
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <p className="text-sm text-muted-foreground/60 mb-2">No schedule set up yet</p>
+                <Link href={`/${project.id}/schedule`} className="text-sm font-medium text-primary hover:underline">
+                  Create schedule →
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* ── LAYER 5: Bottom — Meetings + Project Directory ──
@@ -1597,9 +2322,9 @@ export function ProjectHomeClient({
                 </div>
               )}
 
-              {/* Project Directory (surface-2 tint) — grouped contacts with add */}
+              {/* Project Directory (white bg) — grouped contacts with add */}
               <div className={cn(
-                "bg-[hsl(var(--surface-alt))] px-6 py-6 sm:px-8",
+                "bg-card px-6 py-6 sm:px-8",
                 meetings.length > 0 ? "lg:col-span-2" : "lg:col-span-5"
               )}>
                 <div className="flex items-center justify-between mb-4">
@@ -1615,32 +2340,29 @@ export function ProjectHomeClient({
                 </div>
 
                 <div className="space-y-6">
-                  {/* Project Team */}
-                  <DirectorySubSection
-                    title="Project Team"
-                    members={directoryGroups.team}
-                    allMembers={teamMembers}
-                    projectId={project.id}
-                    sectionKey="team"
-                    personTypeFilter="employee"
-                  />
+                  {/* Project Team — role-based assignments */}
+                  <RoleBasedTeamSection projectId={project.id} />
 
-                  {/* Key Contacts */}
+                  {/* Project Members */}
                   <DirectorySubSection
-                    title="Key Contacts"
+                    title="Project Members"
+                    addLabel="Add project member"
                     members={directoryGroups.contact}
                     allMembers={teamMembers}
                     projectId={project.id}
                     sectionKey="contact"
+                    userType="member"
                   />
 
                   {/* Subcontractors */}
                   <DirectorySubSection
                     title="Subcontractors"
+                    addLabel="Add subcontractor"
                     members={directoryGroups.subcontractor}
                     allMembers={teamMembers}
                     projectId={project.id}
                     sectionKey="subcontractor"
+                    userType="subcontractor"
                   />
                 </div>
               </div>
@@ -1665,13 +2387,6 @@ export function ProjectHomeClient({
       </div>
 
       <AiWidget projectId={project.id} />
-
-      <EditProjectDialog
-        project={portfolioProject}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSuccess={() => router.refresh()}
-      />
     </div>
   );
 }
