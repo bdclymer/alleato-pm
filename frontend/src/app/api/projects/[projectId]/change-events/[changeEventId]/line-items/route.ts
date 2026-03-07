@@ -38,7 +38,7 @@ export async function GET(
       );
     }
 
-    // Get line items with budget_line details (includes cost_code)
+    // Get line items with budget_line details
     const { data: lineItems, error } = await supabase
       .from('change_event_line_items')
       .select(`
@@ -51,10 +51,6 @@ export async function GET(
             title,
             division_id,
             division_title
-          ),
-          cost_type:cost_types!cost_type_id(
-            id,
-            name
           )
         ),
         vendor:companies!vendor_id(

@@ -79,12 +79,32 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       lineItemsCount: lineItems.length,
     };
 
-    // Get creator info
-    const { data: creator } = await supabase
-      .from("people")
-      .select("id, email, first_name, last_name")
-      .eq("id", changeEvent.created_by)
-      .single();
+    // Get creator info via users_auth bridge table
+    let creator = null;
+    if (changeEvent.created_by) {
+      const { data: userAuth } = await supabase
+        .from("users_auth")
+        .select("person_id")
+        .eq("auth_user_id", changeEvent.created_by)
+        .single();
+
+      if (userAuth?.person_id) {
+        const { data: person } = await supabase
+          .from("people")
+          .select("id, email, first_name, last_name")
+          .eq("id", userAuth.person_id)
+          .single();
+        creator = person;
+      }
+
+      // Fallback: try auth user email if people lookup fails
+      if (!creator) {
+        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(changeEvent.created_by);
+        if (authUser) {
+          creator = { id: authUser.id, email: authUser.email, first_name: null, last_name: null };
+        }
+      }
+    }
 
     // Format response
     const response = {

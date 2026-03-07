@@ -57,14 +57,14 @@ interface Attachment {
 
 interface HistoryEntry {
   id: string;
-  changeEventId: string;
+  changeEventId?: string;
   action: string;
   fieldName: string;
   oldValue: string | null;
   newValue: string | null;
-  changedBy: { id: string; email: string } | null;
+  changedBy: string | { id: string; email: string } | null;
   changedAt: string;
-  description: string;
+  description?: string;
 }
 
 /**
@@ -119,24 +119,40 @@ export default function ChangeEventDetailPage() {
       }
 
       const eventData = await response.json();
-      setChangeEvent(eventData.data || eventData);
+      const event = eventData.data || eventData;
+      setChangeEvent(event);
 
-      // Fetch line items
-      const lineItemsResponse = await fetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/line-items`,
-      );
-      if (lineItemsResponse.ok) {
-        const lineItemsData = await lineItemsResponse.json();
-        setLineItems(lineItemsData.data || lineItemsData || []);
+      // Use line items from main response (already included by the GET endpoint)
+      if (event.lineItems && Array.isArray(event.lineItems)) {
+        setLineItems(event.lineItems);
+      } else {
+        // Fallback: try separate endpoint
+        try {
+          const lineItemsResponse = await fetch(
+            `/api/projects/${projectId}/change-events/${changeEventId}/line-items`,
+          );
+          if (lineItemsResponse.ok) {
+            const lineItemsData = await lineItemsResponse.json();
+            setLineItems(lineItemsData.data || lineItemsData || []);
+          }
+        } catch {
+          // Line items fetch failed, leave empty
+        }
       }
 
-      // Fetch attachments
-      const attachmentsResponse = await fetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
-      );
-      if (attachmentsResponse.ok) {
-        const attachmentsData = await attachmentsResponse.json();
-        setAttachments(attachmentsData.data || attachmentsData || []);
+      // Use history from main response
+      if (event.history && Array.isArray(event.history)) {
+        const mapped = event.history.map((h: any) => ({
+          id: h.id,
+          fieldName: h.fieldName || h.field_name || '',
+          oldValue: h.oldValue || h.old_value || null,
+          newValue: h.newValue || h.new_value || null,
+          action: (h.changeType || h.change_type || 'UPDATE').toUpperCase(),
+          changedBy: h.changedBy || h.changed_by || null,
+          changedAt: h.changedAt || h.changed_at || '',
+          description: h.description || `${(h.changeType || h.change_type || 'update').toUpperCase()} ${h.fieldName || h.field_name || 'record'}`,
+        }));
+        setHistoryEntries(mapped);
       }
     } catch (err) {
       setError(
@@ -147,36 +163,9 @@ export default function ChangeEventDetailPage() {
     }
   }, [projectId, changeEventId]);
 
-  // Fetch change event history
-  const fetchHistory = useCallback(async () => {
-    if (!projectId || !changeEventId) return;
-
-    setIsHistoryLoading(true);
-    try {
-      const response = await fetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/history`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setHistoryEntries(data.data || []);
-      }
-    } catch {
-      // History is non-critical, fail silently
-    } finally {
-      setIsHistoryLoading(false);
-    }
-  }, [projectId, changeEventId]);
-
   useEffect(() => {
     fetchChangeEventDetails();
   }, [fetchChangeEventDetails]);
-
-  // Fetch history when switching to history tab
-  useEffect(() => {
-    if (activeTab === "history" && historyEntries.length === 0) {
-      fetchHistory();
-    }
-  }, [activeTab, fetchHistory, historyEntries.length]);
 
   // Action handlers
   const handleBack = useCallback(() => {
@@ -667,7 +656,11 @@ export default function ChangeEventDetailPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="text-sm font-medium truncate">
-                            {entry.changedBy?.email || "System"}
+                            {typeof entry.changedBy === 'object' && entry.changedBy?.email
+                              ? entry.changedBy.email
+                              : typeof entry.changedBy === 'string'
+                                ? 'User'
+                                : 'System'}
                           </span>
                           <Badge
                             variant={getActionBadgeVariant(entry.action)}

@@ -27,16 +27,16 @@ export default function NewChangeEventPage() {
         void: "Void",
       };
       const ORIGIN_MAP: Record<string, string> = {
-        emails: "Internal",
-        meetings: "Field",
-        rfis: "RFI",
+        emails: "Emails",
+        meetings: "Meetings",
+        rfis: "RFI's",
       };
       const TYPE_MAP: Record<string, string> = {
         allowance: "Allowance",
-        contingency: "Scope Gap",
+        contingency: "Contingency",
         owner_change: "Owner Change",
-        tbd: "Owner Requested",
-        transfer: "Value Engineering",
+        tbd: "TBD",
+        transfer: "Transfer",
       };
       const REASON_MAP: Record<string, string> = {
         allowance: "Allowance",

@@ -98,6 +98,25 @@ Launch **three sub-agents simultaneously** using the Task tool. All three run in
 
 **Wait for all three sub-agents to complete before proceeding.**
 
+## Authentication
+
+Test credentials are stored in the project's `.env` file. **Never hardcode credentials or ask the user to log in manually.**
+
+Load credentials automatically:
+```bash
+# Read from .env
+TEST_USER=$(grep TEST_USER_1 .env | cut -d '=' -f2)
+TEST_PASSWORD=$(grep TEST_PASSWORD_1 .env | cut -d '=' -f2)
+```
+
+Use these when filling login forms:
+```
+agent-browser fill @emailInput "$TEST_USER"
+agent-browser fill @passwordInput "$TEST_PASSWORD"
+```
+
+If the app uses Supabase auth, after login the session cookie will persist for the rest of the browser session — no need to re-authenticate between journeys.
+
 ## Phase 2: Start the Application
 
 Using Sub-agent 1's startup instructions:
