@@ -142,6 +142,7 @@ function BudgetPageContent() {
     React.useState(false);
   const [showForecastToCompleteModal, setShowForecastToCompleteModal] =
     React.useState(false);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
 
   // Budget lock state
   const [isLocked, setIsLocked] = React.useState(false);
@@ -465,10 +466,34 @@ function BudgetPageContent() {
     toast.info("Variance analysis coming soon");
   };
 
-  const handleToggleFullscreen = () => {
-    // TODO: Implement fullscreen mode
-    toast.info("Fullscreen mode coming soon");
-  };
+  const handleToggleFullscreen = React.useCallback(async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+        return;
+      }
+
+      await document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } catch {
+      toast.error("Unable to toggle full page view");
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+    };
+  }, []);
+
+  const showViewControls =
+    activeTab === "budget" || activeTab === "budget-details";
 
   const handleOpenBudgetModificationsReport = React.useCallback(() => {
     router.push(`/${projectId}/budget?tab=budget-modifications`);
@@ -851,7 +876,27 @@ function BudgetPageContent() {
         />
       </div>
 
-      <BudgetTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <BudgetTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        controls={
+          showViewControls ? (
+            <BudgetFilters
+              snapshots={budgetSnapshots}
+              groups={budgetGroups}
+              selectedSnapshot={selectedSnapshot}
+              selectedGroup={selectedGroup}
+              onSnapshotChange={setSelectedSnapshot}
+              onGroupChange={setSelectedGroup}
+              onAnalyzeVariance={handleAnalyzeVariance}
+              onToggleFullscreen={handleToggleFullscreen}
+              onQuickFilterChange={handleQuickFilterChange}
+              activeQuickFilter={quickFilter}
+              isFullscreen={isFullscreen}
+            />
+          ) : null
+        }
+      />
 
       <div className="flex flex-1 flex-col gap-4 bg-background pl-4 pt-2 pb-6 sm:pl-6 lg:pl-8">
         {activeTab === "settings" ? (
@@ -884,20 +929,6 @@ function BudgetPageContent() {
           </div>
         ) : activeTab === "budget-details" ? (
           <>
-            <div className="flex items-center justify-between gap-4">
-              <BudgetFilters
-                snapshots={budgetSnapshots}
-                groups={budgetGroups}
-                selectedSnapshot={selectedSnapshot}
-                selectedGroup={selectedGroup}
-                onSnapshotChange={setSelectedSnapshot}
-                onGroupChange={setSelectedGroup}
-                onAnalyzeVariance={handleAnalyzeVariance}
-                onToggleFullscreen={handleToggleFullscreen}
-                onQuickFilterChange={handleQuickFilterChange}
-                activeQuickFilter={quickFilter}
-              />
-            </div>
             <div className="flex-1">
               <BudgetDetailsTable
                 data={budgetDetailsData}
@@ -907,22 +938,7 @@ function BudgetPageContent() {
           </>
         ) : (
           <div className="flex-1 overflow-x-auto">
-            <div className="min-w-full pr-4 sm:pr-6 lg:pr-8">
-              <div className="flex items-center justify-between gap-4 mb-2">
-                <BudgetFilters
-                  snapshots={budgetSnapshots}
-                  groups={budgetGroups}
-                  selectedSnapshot={selectedSnapshot}
-                  selectedGroup={selectedGroup}
-                  onSnapshotChange={setSelectedSnapshot}
-                  onGroupChange={setSelectedGroup}
-                  onAnalyzeVariance={handleAnalyzeVariance}
-                  onToggleFullscreen={handleToggleFullscreen}
-                  onQuickFilterChange={handleQuickFilterChange}
-                  activeQuickFilter={quickFilter}
-                />
-              </div>
-
+            <div className="min-w-full">
               {/* Selection action bar */}
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-brand/5 border border-brand/20 rounded-lg">

@@ -17,6 +17,8 @@ import {
 import { format } from "date-fns";
 import Link from "next/link";
 import * as React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Collapsible,
   CollapsibleContent,
@@ -38,6 +40,10 @@ type DocumentMetadata =
   };
 
 interface ParsedSections {
+  firefliesId: string | null;
+  firefliesLink: string | null;
+  organizerEmail: string | null;
+  hostEmail: string | null;
   summary: string | null;
   gist: string | null;
   keywords: string | null;
@@ -58,6 +64,9 @@ interface ParsedSections {
   channels: string | null;
   appsPreview: string | null;
   sharedWith: string | null;
+  extendedSections: string | null;
+  user: string | null;
+  speakers: string | null;
   transcript: string | null;
 }
 
@@ -147,6 +156,55 @@ function SidebarList({
   );
 }
 
+function FirefliesSectionContent({ value }: { value: string }) {
+  const trimmed = value.trim();
+  const looksJson =
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"));
+
+  if (looksJson) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return (
+        <pre className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap font-mono rounded-md bg-muted/40 p-3">
+          {JSON.stringify(parsed, null, 2)}
+        </pre>
+      );
+    } catch {
+      // Fall through to markdown renderer
+    }
+  }
+
+  return (
+    <div className="rounded-md bg-muted/30 p-3">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          p: ({ children }) => (
+            <p className="text-xs text-muted-foreground leading-relaxed mb-2 last:mb-0">
+              {children}
+            </p>
+          ),
+          ul: ({ children }) => <ul className="space-y-1.5">{children}</ul>,
+          ol: ({ children }) => (
+            <ol className="list-decimal ml-4 space-y-1.5">{children}</ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-xs text-muted-foreground leading-relaxed list-disc ml-4">
+              {children}
+            </li>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-semibold text-foreground">{children}</strong>
+          ),
+        }}
+      >
+        {trimmed}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function MeetingDetailContent({
@@ -169,6 +227,10 @@ export function MeetingDetailContent({
 }: MeetingDetailContentProps) {
   const overviewContent = meeting.summary || undefined;
   const firefliesSections: Array<{ label: string; content: string | null }> = [
+    { label: "Organizer Email", content: parsedSections?.organizerEmail || null },
+    { label: "Host Email", content: parsedSections?.hostEmail || null },
+    { label: "Fireflies ID", content: parsedSections?.firefliesId || null },
+    { label: "Fireflies Link", content: parsedSections?.firefliesLink || null },
     { label: "Short Summary", content: parsedSections?.shortSummary || null },
     { label: "Short Overview", content: parsedSections?.shortOverview || null },
     { label: "Gist", content: parsedSections?.gist || null },
@@ -182,11 +244,14 @@ export function MeetingDetailContent({
     { label: "Action Items", content: parsedSections?.actionItems || null },
     { label: "Meeting Attendees", content: parsedSections?.meetingAttendees || null },
     { label: "Meeting Attendance", content: parsedSections?.meetingAttendance || null },
+    { label: "User", content: parsedSections?.user || null },
+    { label: "Speakers", content: parsedSections?.speakers || null },
     { label: "Meeting Info", content: parsedSections?.meetingInfo || null },
     { label: "Analytics", content: parsedSections?.analytics || null },
     { label: "Channels", content: parsedSections?.channels || null },
     { label: "Apps Preview", content: parsedSections?.appsPreview || null },
     { label: "Shared With", content: parsedSections?.sharedWith || null },
+    { label: "Extended Sections", content: parsedSections?.extendedSections || null },
   ].filter((section) => Boolean(section.content?.trim()));
 
   const hasActionItems =
@@ -284,9 +349,7 @@ export function MeetingDetailContent({
                       <h3 className="text-sm font-medium text-foreground">
                         {section.label}
                       </h3>
-                      <pre className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap font-mono rounded-md bg-muted/40 p-3">
-                        {section.content}
-                      </pre>
+                      <FirefliesSectionContent value={section.content || ""} />
                     </div>
                   ))}
                 </div>

@@ -7,11 +7,12 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import requests
 
@@ -116,12 +117,25 @@ class FirefliesIngestionPipeline:
         content: str,
         project_id: Optional[int] = None,
         dry_run: bool = False,
+        storage_url: Optional[str] = None,
     ) -> IngestionResult:
         parsed = self.parse_markdown(content)
         content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
 
         existing = self.store.find_document_by_hash(content_hash)
-        document_id = (existing or {}).get("id", parsed.fireflies_id or str(uuid4()))
+        existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
+        effective_project_id = (
+            project_id
+            if project_id is not None
+            else (existing or {}).get("project_id")
+            or (existing_by_fireflies or {}).get("project_id")
+        )
+        document_id = (
+            (existing or {}).get("id")
+            or (existing_by_fireflies or {}).get("id")
+            or parsed.fireflies_id
+            or str(uuid4())
+        )
         skipped = existing is not None and not dry_run
 
         # Prepare metadata payload
@@ -136,11 +150,12 @@ class FirefliesIngestionPipeline:
             "participants_array": parsed.attendees,
             "content": parsed.raw_text,
             "raw_text": parsed.raw_text,
-            "project_id": project_id,
+            "project_id": effective_project_id,
+            "url": storage_url,
         }
 
         segments = parsed.transcript_segments
-        chunks = list(self._chunk_segments(document_id, segments, project_id))
+        chunks = list(self._chunk_segments(document_id, segments, effective_project_id))
 
         if dry_run:
             return IngestionResult(
@@ -152,7 +167,12 @@ class FirefliesIngestionPipeline:
                 dry_run=True,
             )
 
-        job_id = self.store.start_ingestion_job(parsed.fireflies_id, content_hash)
+        job_id: Optional[str] = None
+        try:
+            job_id = self.store.start_ingestion_job(parsed.fireflies_id, content_hash)
+        except Exception:
+            # Existing jobs can be present for re-sync/re-ingest runs.
+            job_id = None
 
         try:
             self.store.upsert_document_metadata(metadata)
@@ -161,13 +181,18 @@ class FirefliesIngestionPipeline:
                 chunk.embedding = embedding
             self.store.upsert_chunks(chunks)
 
-            tasks_payload = self._build_task_payload(parsed.action_items, document_id, project_id)
+            tasks_payload = self._build_task_payload(parsed.action_items, document_id, effective_project_id)
             if tasks_payload:
                 self.store.upsert_tasks(tasks_payload)
+            project_tasks_payload = self._build_project_task_payload(
+                parsed.action_items, document_id, effective_project_id
+            )
+            if project_tasks_payload:
+                self.store.upsert_project_tasks(project_tasks_payload)
 
-            if project_id and parsed.summary:
+            if effective_project_id and parsed.summary:
                 insight = {
-                    "project_id": project_id,
+                    "project_id": effective_project_id,
                     "summary": parsed.summary[:512],
                     "detail": {"source_document_id": document_id},
                     "severity": "info",
@@ -221,6 +246,16 @@ class FirefliesIngestionPipeline:
                 transcript = self._fetch_transcript(transcript_id)
                 apps_outputs = self._fetch_apps_outputs(transcript_id)
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
+                captured_at = self._parse_datetime(
+                    transcript.get("dateString") or transcript.get("date")
+                )
+                storage_path = self._build_storage_path(
+                    transcript.get("title") or transcript_id,
+                    captured_at,
+                )
+                storage_url = None
+                if not dry_run:
+                    storage_url = self.store.upload_public_text("meetings", storage_path, markdown)
 
                 markdown_file = None
                 if output_dir is not None:
@@ -231,6 +266,7 @@ class FirefliesIngestionPipeline:
                     markdown,
                     project_id=project_id,
                     dry_run=dry_run,
+                    storage_url=storage_url,
                 )
                 results.append(
                     {
@@ -238,6 +274,8 @@ class FirefliesIngestionPipeline:
                         "title": transcript.get("title"),
                         "markdown_chars": len(markdown),
                         "markdown_path": str(markdown_file) if markdown_file else None,
+                        "storage_path": storage_path,
+                        "storage_url": storage_url,
                         "ingestion": ingestion.__dict__,
                     }
                 )
@@ -253,8 +291,23 @@ class FirefliesIngestionPipeline:
             "requested": target_limit,
             "found": len(summaries),
             "processed": len(results),
+            "error_count": sum(1 for r in results if "error" in r),
             "results": results,
         }
+
+    @staticmethod
+    def _sanitize_storage_name(value: str) -> str:
+        text = unicodedata.normalize("NFKD", str(value or "Untitled Meeting"))
+        text = text.encode("ascii", "ignore").decode("ascii")
+        text = re.sub(r"\s+", " ", text).strip()
+        text = re.sub(r"[\\/:*?\"<>|]+", "", text)
+        text = re.sub(r"[\x00-\x1f\x7f]+", "", text)
+        return text[:180] or "Untitled Meeting"
+
+    def _build_storage_path(self, title: str, captured_at: Optional[datetime]) -> str:
+        date_part = (captured_at or datetime.utcnow()).date().isoformat()
+        safe_title = self._sanitize_storage_name(title)
+        return f"{date_part} - {safe_title}.md"
 
     # ------------------------------------------------------------------
     # Parsing helpers
@@ -707,6 +760,33 @@ class FirefliesIngestionPipeline:
                     "project_id": project_id,
                     "source_document_id": document_id,
                     "created_by": "ai",
+                }
+            )
+        return payload
+
+    @staticmethod
+    def _build_project_task_payload(
+        action_items: List[str],
+        document_id: str,
+        project_id: Optional[int],
+    ) -> List[Dict[str, Any]]:
+        if not project_id:
+            return []
+
+        payload: List[Dict[str, Any]] = []
+        for item in action_items:
+            normalized = item.strip()
+            if not normalized:
+                continue
+            task_id = str(uuid5(NAMESPACE_URL, f"fireflies:{document_id}:{normalized.lower()}"))
+            payload.append(
+                {
+                    "id": task_id,
+                    "project_id": project_id,
+                    "task_description": normalized,
+                    "status": "pending",
+                    "priority": "medium",
+                    "assigned_to": None,
                 }
             )
         return payload

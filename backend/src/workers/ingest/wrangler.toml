@@ -30,6 +30,7 @@ head_sampling_rate = 1
 
 [vars]
 WORKER_NAME = "ingest"
+LEGACY_FIREFLIES_SYNC_ENABLED = "false"
 
 [env.dev]
 name = "fireflies-ingest-dev"

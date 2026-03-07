@@ -38,56 +38,48 @@ const getChecklistItems = (projectId: string): ChecklistItem[] => [
   {
     id: "setup-team",
     title: "Set up project team",
-    description: "Add team members and assign roles",
     category: "Setup",
     href: `/${projectId}/directory`,
   },
   {
     id: "configure-budget",
     title: "Configure budget",
-    description: "Set up budget line items and allocations",
     category: "Setup",
     href: `/${projectId}/budget`,
   },
   {
     id: "add-contracts",
     title: "Add contracts",
-    description: "Upload and manage project contracts",
     category: "Setup",
     href: `/${projectId}/commitments`,
   },
   {
     id: "create-schedule",
     title: "Create project schedule",
-    description: "Set up timeline and milestones",
     category: "Planning",
     href: `/${projectId}/schedule`,
   },
   {
     id: "upload-drawings",
     title: "Upload drawings",
-    description: "Add architectural and engineering drawings",
     category: "Documentation",
     href: `/${projectId}/drawings`,
   },
   {
     id: "setup-rfis",
     title: "Set up RFIs",
-    description: "Configure RFI workflow and templates",
     category: "Documentation",
     href: `/${projectId}/rfis`,
   },
   {
     id: "setup-change-orders",
     title: "Set up change orders",
-    description: "Configure change order tracking",
     category: "Financial",
     href: `/${projectId}/change-orders`,
   },
   {
     id: "setup-submittals",
     title: "Set up submittals",
-    description: "Configure submittal workflow",
     category: "Documentation",
     href: `/${projectId}/submittals`,
   },
@@ -186,17 +178,17 @@ export function ProjectChecklistSidebar({
                           href={item.href}
                           onClick={() => setOpen(false)}
                           className={cn(
-                            "group flex w-full items-start gap-4 rounded-lg p-4 text-left transition-colors",
+                            "group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
                             "hover:bg-accent/50",
                             isCompleted && "opacity-60"
                           )}
                         >
                           {isCompleted ? (
-                            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400" />
+                            <CheckCircle2 className="h-4.5 w-4.5 flex-shrink-0 text-green-600 dark:text-green-400" />
                           ) : (
-                            <Circle className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
+                            <Circle className="h-4.5 w-4.5 flex-shrink-0 text-muted-foreground group-hover:text-primary" />
                           )}
-                          <div className="flex-1 space-y-1">
+                          <div className="flex-1">
                             <div
                               className={cn(
                                 "text-sm font-medium leading-none flex items-center gap-2",
@@ -206,11 +198,6 @@ export function ProjectChecklistSidebar({
                               <span>{item.title}</span>
                               <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            {item.description && (
-                              <div className="text-xs text-muted-foreground">
-                                {item.description}
-                              </div>
-                            )}
                           </div>
                         </Link>
                       )

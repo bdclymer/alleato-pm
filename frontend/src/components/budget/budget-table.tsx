@@ -149,14 +149,11 @@ interface ColumnHeaderProps {
 }
 
 function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
+  const labelText = lines.join(" ");
+
   const label = (
-    <div className="text-right leading-tight">
-      {lines.map((line, index) => (
-        <React.Fragment key={`${line}-${index}`}>
-          {line}
-          {index < lines.length - 1 && <br />}
-        </React.Fragment>
-      ))}
+    <div className="whitespace-nowrap text-center text-[11px] leading-tight">
+      {labelText}
     </div>
   );
 
@@ -172,13 +169,8 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-right leading-tight cursor-help text-muted-foreground hover:text-foreground transition-colors">
-          {lines.map((line, index) => (
-            <React.Fragment key={`${line}-${index}`}>
-              {line}
-              {index < lines.length - 1 && <br />}
-            </React.Fragment>
-          ))}
+        <div className="cursor-help whitespace-nowrap text-center text-[11px] leading-tight text-foreground transition-colors hover:text-foreground">
+          {labelText}
         </div>
       </TooltipTrigger>
       <TooltipContent
@@ -309,21 +301,21 @@ function EditableCurrencyCell({
 const columnWidthClasses: Record<string, string> = {
   select: "w-6 min-w-[24px]",
   expander: "w-6 min-w-[24px]",
-  description: "w-[120px] min-w-[120px]",
-  originalBudgetAmount: "w-[120px] min-w-[120px]",
-  budgetModifications: "w-[120px] min-w-[120px]",
-  approvedCOs: "w-[120px] min-w-[120px]",
-  revisedBudget: "w-[120px] min-w-[120px]",
-  jobToDateCostDetail: "w-[120px] min-w-[120px]",
-  directCosts: "w-[120px] min-w-[120px]",
-  pendingChanges: "w-[120px] min-w-[120px]",
-  projectedBudget: "w-[120px] min-w-[120px]",
-  committedCosts: "w-[120px] min-w-[120px]",
-  pendingCostChanges: "w-[120px] min-w-[120px]",
-  projectedCosts: "w-[120px] min-w-[120px]",
-  forecastToComplete: "w-[120px] min-w-[120px]",
-  estimatedCostAtCompletion: "w-[120px] min-w-[120px]",
-  projectedOverUnder: "w-[120px] min-w-[120px]",
+  description: "w-[140px] min-w-[140px]",
+  originalBudgetAmount: "w-[140px] min-w-[140px]",
+  budgetModifications: "w-[140px] min-w-[140px]",
+  approvedCOs: "w-[140px] min-w-[140px]",
+  revisedBudget: "w-[140px] min-w-[140px]",
+  jobToDateCostDetail: "w-[160px] min-w-[160px]",
+  directCosts: "w-[140px] min-w-[140px]",
+  pendingChanges: "w-[150px] min-w-[150px]",
+  projectedBudget: "w-[140px] min-w-[140px]",
+  committedCosts: "w-[140px] min-w-[140px]",
+  pendingCostChanges: "w-[160px] min-w-[160px]",
+  projectedCosts: "w-[140px] min-w-[140px]",
+  forecastToComplete: "w-[160px] min-w-[160px]",
+  estimatedCostAtCompletion: "w-[170px] min-w-[170px]",
+  projectedOverUnder: "w-[160px] min-w-[160px]",
 };
 
 const depthPaddingClasses = ["pl-0", "pl-4", "pl-8", "pl-12", "pl-16", "pl-20"];
@@ -918,7 +910,7 @@ export function BudgetTable({
     <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
       {/* Hide scrollbar while maintaining scroll functionality */}
       <div className="flex-1 overflow-auto scrollbar-hide">
-        <Table className="min-w-[1848px] table-fixed bg-background">
+        <Table className="min-w-[2240px] table-fixed bg-background">
               <TableHeader className="sticky top-0 bg-background z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
@@ -929,9 +921,9 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "bg-background py-2 text-xs font-semibold text-foreground/80",
+                          "bg-background py-2 text-center text-[11px] font-semibold text-foreground",
                           header.column.id === "select"
-                            ? "pl-4 pr-0.5"
+                            ? "pl-1 pr-0.5"
                             : header.column.id === "expander"
                               ? "px-0.5"
                               : "px-1.5",
@@ -966,10 +958,10 @@ export function BudgetTable({
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
-                          className={cn(
-                            "py-2 text-sm",
-                            cell.column.id === "select"
-                              ? "pl-4 pr-0.5"
+                        className={cn(
+                          "py-2 text-sm",
+                          cell.column.id === "select"
+                              ? "pl-1 pr-0.5"
                               : cell.column.id === "expander"
                                 ? "px-0.5"
                                 : "px-1.5",
@@ -1004,7 +996,7 @@ export function BudgetTable({
             {/* Inline Create Row */}
             {!isLocked && showInlineCreate && (
               <TableRow className="bg-brand/5 border-b border-border">
-                <TableCell className="py-2 pl-4 pr-0.5">
+                <TableCell className="py-2 pl-1 pr-0.5">
                   {/* Empty checkbox cell */}
                 </TableCell>
                 <TableCell className="py-2 px-0.5">
@@ -1106,10 +1098,10 @@ export function BudgetTable({
 
       {/* Grand Totals Row - Fixed at bottom */}
       <div className="sticky bottom-0 border-t border-border bg-background">
-          <table className="min-w-[1848px] w-full caption-bottom text-sm table-fixed">
+          <table className="min-w-[2240px] w-full caption-bottom text-sm table-fixed">
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td className={cn("py-4 pl-4 pr-0.5", getWidthClass("select"))} />
+                <td className={cn("py-4 pl-1 pr-0.5", getWidthClass("select"))} />
                 <td className={cn("py-4 px-0.5", getWidthClass("expander"))} />
                 <td
                   className={cn(

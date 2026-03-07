@@ -1,0 +1,391 @@
+route,kind,dynamic,refCount,file,refSample
+/,page,false,53,frontend/src/app/(main)/page.tsx,frontend/src/app/(auth)/auth.ts; frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx; frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx; frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx; frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx
+/[projectId]/admin,page,true,0,frontend/src/app/(main)/[projectId]/admin/page.tsx,
+/[projectId]/budget,page,true,0,frontend/src/app/(main)/[projectId]/budget/page.tsx,
+/[projectId]/budget/line-item/new,page,true,0,frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx,
+/[projectId]/budget/setup,page,true,0,frontend/src/app/(main)/[projectId]/budget/setup/page.tsx,
+/[projectId]/change-events,page,true,0,frontend/src/app/(main)/[projectId]/change-events/page.tsx,
+/[projectId]/change-events/[changeEventId],page,true,0,frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx,
+/[projectId]/change-events/[changeEventId]/edit,page,true,0,frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx,
+/[projectId]/change-events/new,page,true,0,frontend/src/app/(main)/[projectId]/change-events/new/page.tsx,
+/[projectId]/change-orders,page,true,0,frontend/src/app/(main)/[projectId]/change-orders/page.tsx,
+/[projectId]/change-orders/[changeOrderId],page,true,0,frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/page.tsx,
+/[projectId]/change-orders/[changeOrderId]/edit,page,true,0,frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx,
+/[projectId]/change-orders/new,page,true,0,frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx,
+/[projectId]/client-dashboard,page,true,0,frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx,
+/[projectId]/commitments,page,true,0,frontend/src/app/(main)/[projectId]/commitments/page.tsx,
+/[projectId]/commitments/[commitmentId],page,true,0,frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx,
+/[projectId]/commitments/[commitmentId]/edit,page,true,0,frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx,
+/[projectId]/commitments/configure,page,true,0,frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx,
+/[projectId]/commitments/new,page,true,0,frontend/src/app/(main)/[projectId]/commitments/new/page.tsx,
+/[projectId]/commitments/recycle-bin,page,true,0,frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx,
+/[projectId]/commitments/settings,page,true,0,frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx,
+/[projectId]/daily-log,page,true,0,frontend/src/app/(main)/[projectId]/daily-log/page.tsx,
+/[projectId]/design-system,page,true,0,frontend/src/app/(main)/[projectId]/design-system/page.tsx,
+/[projectId]/direct-costs,page,true,0,frontend/src/app/(main)/[projectId]/direct-costs/page.tsx,
+/[projectId]/direct-costs/[costId],page,true,0,frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx,
+/[projectId]/direct-costs/new,page,true,0,frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx,
+/[projectId]/directory,page,true,0,frontend/src/app/(main)/[projectId]/directory/page.tsx,
+/[projectId]/directory/all,page,true,0,frontend/src/app/(main)/[projectId]/directory/all/page.tsx,
+/[projectId]/directory/companies,page,true,0,frontend/src/app/(main)/[projectId]/directory/companies/page.tsx,
+/[projectId]/directory/contacts,page,true,0,frontend/src/app/(main)/[projectId]/directory/contacts/page.tsx,
+/[projectId]/directory/employees,page,true,0,frontend/src/app/(main)/[projectId]/directory/employees/page.tsx,
+/[projectId]/directory/groups,page,true,0,frontend/src/app/(main)/[projectId]/directory/groups/page.tsx,
+/[projectId]/directory/settings,page,true,0,frontend/src/app/(main)/[projectId]/directory/settings/page.tsx,
+/[projectId]/directory/users,page,true,0,frontend/src/app/(main)/[projectId]/directory/users/page.tsx,
+/[projectId]/documents,page,true,0,frontend/src/app/(main)/[projectId]/documents/page.tsx,
+/[projectId]/drawings,page,true,0,frontend/src/app/(main)/[projectId]/drawings/page.tsx,
+/[projectId]/drawings/areas,page,true,0,frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx,
+/[projectId]/drawings/board,page,true,0,frontend/src/app/(main)/[projectId]/drawings/board/page.tsx,
+/[projectId]/drawings/revisions,page,true,0,frontend/src/app/(main)/[projectId]/drawings/revisions/page.tsx,
+/[projectId]/drawings/viewer/[drawingId],page,true,0,frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx,
+/[projectId]/emails,page,true,0,frontend/src/app/(main)/[projectId]/emails/page.tsx,
+/[projectId]/home,page,true,0,frontend/src/app/(main)/[projectId]/home/page.tsx,
+/[projectId]/invoices,page,true,0,frontend/src/app/(main)/[projectId]/invoices/page.tsx,
+/[projectId]/invoices/new,page,true,0,frontend/src/app/(main)/[projectId]/invoices/new/page.tsx,
+/[projectId]/invoicing,page,true,0,frontend/src/app/(main)/[projectId]/invoicing/page.tsx,
+/[projectId]/invoicing/[invoiceId],page,true,0,frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx,
+/[projectId]/invoicing/new,page,true,0,frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx,
+/[projectId]/meetings,page,true,0,frontend/src/app/(main)/[projectId]/meetings/page.tsx,
+/[projectId]/meetings/[meetingId],page,true,0,frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx,
+/[projectId]/meetings/[meetingId]/prep,page,true,0,frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx,
+/[projectId]/meetings/schedule,page,true,0,frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx,
+/[projectId]/photos,page,true,0,frontend/src/app/(main)/[projectId]/photos/page.tsx,
+/[projectId]/prime-contracts,page,true,0,frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx,
+/[projectId]/prime-contracts/[contractId],page,true,0,frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx,
+/[projectId]/prime-contracts/[contractId]/edit,page,true,0,frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx,
+/[projectId]/prime-contracts/configure,page,true,0,frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx,
+/[projectId]/prime-contracts/new,page,true,0,frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx,
+/[projectId]/punch-list,page,true,0,frontend/src/app/(main)/[projectId]/punch-list/page.tsx,
+/[projectId]/reporting,page,true,0,frontend/src/app/(main)/[projectId]/reporting/page.tsx,
+/[projectId]/rfis,page,true,0,frontend/src/app/(main)/[projectId]/rfis/page.tsx,
+/[projectId]/rfis/[rfiId],page,true,0,frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx,
+/[projectId]/rfis/new,page,true,0,frontend/src/app/(main)/[projectId]/rfis/new/page.tsx,
+/[projectId]/schedule,page,true,0,frontend/src/app/(main)/[projectId]/schedule/page.tsx,
+/[projectId]/setup,page,true,0,frontend/src/app/(main)/[projectId]/setup/page.tsx,
+/[projectId]/sov,page,true,0,frontend/src/app/(main)/[projectId]/sov/page.tsx,
+/[projectId]/specifications,page,true,0,frontend/src/app/(main)/[projectId]/specifications/page.tsx,
+/[projectId]/specifications/[sectionId],page,true,0,frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx,
+/[projectId]/submittals,page,true,0,frontend/src/app/(main)/[projectId]/submittals/page.tsx,
+/[projectId]/submittals/[submittalId],page,true,0,frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx,
+/[projectId]/transmittals,page,true,0,frontend/src/app/(main)/[projectId]/transmittals/page.tsx,
+/access-denied,page,false,3,frontend/src/app/access-denied/page.tsx,frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx; frontend/src/app/(main)/[projectId]/layout.tsx; frontend/src/components/guards/permission-guard.tsx
+/admin-check,page,false,1,frontend/src/app/(main)/admin-check/page.tsx,frontend/src/app/api/auth/admin-check/route.ts
+/admin/ai-observability,page,false,0,frontend/src/app/(main)/admin/ai-observability/page.tsx,
+/admin/company-knowledge,page,false,3,frontend/src/app/(main)/admin/company-knowledge/page.tsx,frontend/src/app/api/admin/company-knowledge/route.ts; frontend/src/hooks/use-company-knowledge.ts; frontend/src/lib/navigation-config.ts
+/ai-assistant,page,false,11,frontend/src/app/(chat)/ai-assistant/page.tsx,frontend/src/app/(main)/admin/ai-observability/page.tsx; frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts; frontend/src/app/api/ai-assistant/conversations/route.ts; frontend/src/app/api/ai-assistant/feedback/route.ts; frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts
+/api-docs,page,false,1,frontend/src/app/api-docs/page.tsx,frontend/src/app/redoc/page.tsx
+/api/_archived/contracts,api,false,0,frontend/src/app/api/_archived/contracts/route.ts,
+/api/_archived/contracts/[id],api,true,0,frontend/src/app/api/_archived/contracts/[id]/route.ts,
+/api/admin/company-context,api,false,1,frontend/src/app/api/admin/company-context/route.ts,frontend/src/hooks/use-company-knowledge.ts
+/api/admin/company-knowledge,api,false,1,frontend/src/app/api/admin/company-knowledge/route.ts,frontend/src/hooks/use-company-knowledge.ts
+/api/admin/set-admin-status,api,false,0,frontend/src/app/api/admin/set-admin-status/route.ts,
+/api/ai-assistant/chat,api,false,2,frontend/src/app/api/ai-assistant/chat/route.ts,frontend/src/components/ai-assistant/rag-chat-page.tsx; frontend/src/components/chat/simple-rag-chat.tsx
+/api/ai-assistant/conversations,api,false,3,frontend/src/app/api/ai-assistant/conversations/route.ts,frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts; frontend/src/components/chat/simple-rag-chat.tsx; frontend/src/hooks/use-rag-conversations.ts
+/api/ai-assistant/conversations/[sessionId],api,true,0,frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts,
+/api/ai-assistant/feedback,api,false,1,frontend/src/app/api/ai-assistant/feedback/route.ts,frontend/src/components/ai-assistant/chat-area.tsx
+/api/ai-assistant/messages/[sessionId],api,true,0,frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts,
+/api/ai-assistant/usage-stats,api,false,1,frontend/src/app/api/ai-assistant/usage-stats/route.ts,frontend/src/app/(main)/admin/ai-observability/page.tsx
+/api/auth/admin-check,api,false,1,frontend/src/app/api/auth/admin-check/route.ts,frontend/src/app/(main)/admin-check/page.tsx
+/api/auth/post-login-redirect,api,false,2,frontend/src/app/api/auth/post-login-redirect/route.ts,frontend/src/components/misc/login-form.tsx; frontend/src/components/misc/login-page-v2.tsx
+/api/auth/signup,api,false,1,frontend/src/app/api/auth/signup/route.ts,frontend/src/components/misc/sign-up-form.tsx
+/api/avatar/[personId],api,true,0,frontend/src/app/api/avatar/[personId]/route.ts,
+/api/clients,api,false,0,frontend/src/app/api/clients/route.ts,
+/api/commitments,api,false,26,frontend/src/app/api/commitments/route.ts,frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx; frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx; frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx; frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx; frontend/src/app/api/commitments/[id]/advanced-settings/route.ts
+/api/commitments/[id],api,true,0,frontend/src/app/api/commitments/[id]/route.ts,
+/api/commitments/[id]/advanced-settings,api,true,0,frontend/src/app/api/commitments/[id]/advanced-settings/route.ts,
+/api/commitments/[id]/attachments,api,true,0,frontend/src/app/api/commitments/[id]/attachments/route.ts,
+/api/commitments/[id]/attachments/[attachmentId],api,true,0,frontend/src/app/api/commitments/[id]/attachments/[attachmentId]/route.ts,
+/api/commitments/[id]/change-orders,api,true,0,frontend/src/app/api/commitments/[id]/change-orders/route.ts,
+/api/commitments/[id]/change-orders/[changeOrderId],api,true,0,frontend/src/app/api/commitments/[id]/change-orders/[changeOrderId]/route.ts,
+/api/commitments/[id]/change-orders/[changeOrderId]/approve,api,true,0,frontend/src/app/api/commitments/[id]/change-orders/[changeOrderId]/approve/route.ts,
+/api/commitments/[id]/email,api,true,0,frontend/src/app/api/commitments/[id]/email/route.ts,
+/api/commitments/[id]/export,api,true,0,frontend/src/app/api/commitments/[id]/export/route.ts,
+/api/commitments/[id]/invoices,api,true,0,frontend/src/app/api/commitments/[id]/invoices/route.ts,
+/api/commitments/[id]/permanent-delete,api,true,0,frontend/src/app/api/commitments/[id]/permanent-delete/route.ts,
+/api/commitments/[id]/restore,api,true,0,frontend/src/app/api/commitments/[id]/restore/route.ts,
+/api/companies,api,false,0,frontend/src/app/api/companies/route.ts,
+/api/contacts,api,false,1,frontend/src/app/api/contacts/route.ts,frontend/src/components/project-home/inline-team-member-form.tsx
+/api/dev-tools/check-routes,api,false,1,frontend/src/app/api/dev-tools/check-routes/route.ts,frontend/src/components/dev-tools/enhanced-dev-panel.tsx
+/api/dev-tools/clear-cache,api,false,1,frontend/src/app/api/dev-tools/clear-cache/route.ts,frontend/src/components/dev-tools/enhanced-dev-panel.tsx
+/api/dev-tools/regenerate-types,api,false,1,frontend/src/app/api/dev-tools/regenerate-types/route.ts,frontend/src/components/dev-tools/enhanced-dev-panel.tsx
+/api/dev/make-admin,api,false,0,frontend/src/app/api/dev/make-admin/route.ts,
+/api/dev/schema,api,false,1,frontend/src/app/api/dev/schema/route.ts,frontend/src/app/(other)/dev/table-generator/page.nonprod.tsx
+/api/directory/companies,api,false,4,frontend/src/app/api/directory/companies/route.ts,frontend/src/app/(main)/directory/companies/[companyId]/page.tsx; frontend/src/app/api/directory/companies/[companyId]/route.ts; frontend/src/components/header/use-header-nav.ts; frontend/src/hooks/use-all-companies.ts
+/api/directory/companies/[companyId],api,true,0,frontend/src/app/api/directory/companies/[companyId]/route.ts,
+/api/directory/companies/[companyId]/add-to-project,api,true,0,frontend/src/app/api/directory/companies/[companyId]/add-to-project/route.ts,
+/api/directory/companies/[companyId]/details,api,true,0,frontend/src/app/api/directory/companies/[companyId]/details/route.ts,
+/api/docs-search,api,false,0,frontend/src/app/api/docs-search/route.ts,
+/api/docs/check,api,false,0,frontend/src/app/api/docs/check/route.ts,
+/api/documents/status,api,false,1,frontend/src/app/api/documents/status/route.ts,frontend/src/app/(main)/pipeline/page.tsx
+/api/documents/trigger-pipeline,api,false,1,frontend/src/app/api/documents/trigger-pipeline/route.ts,frontend/src/app/(main)/pipeline/page.tsx
+/api/documents/upload,api,false,1,frontend/src/app/api/documents/upload/route.ts,frontend/src/app/(main)/admin/company-knowledge/page.tsx
+/api/files/read,api,false,1,frontend/src/app/api/files/read/route.ts,frontend/src/app/(other)/monitoring/page.tsx
+/api/financial-insights/alerts,api,false,1,frontend/src/app/api/financial-insights/alerts/route.ts,frontend/src/hooks/use-financial-insights.ts
+/api/financial-insights/cross-reference,api,false,1,frontend/src/app/api/financial-insights/cross-reference/route.ts,frontend/src/hooks/use-financial-insights.ts
+/api/financial-insights/scan,api,false,1,frontend/src/app/api/financial-insights/scan/route.ts,frontend/src/hooks/use-financial-insights.ts
+/api/health,api,false,2,frontend/src/app/api/health/route.ts,frontend/src/app/(other)/dev/page.nonprod.tsx; frontend/src/components/misc/backend-status-indicator.tsx
+/api/invoices,api,false,2,frontend/src/app/api/invoices/route.ts,frontend/src/app/(main)/[projectId]/invoices/new/page.tsx; frontend/src/app/(main)/[projectId]/invoices/page.tsx
+/api/meetings/[meetingId],api,true,0,frontend/src/app/api/meetings/[meetingId]/route.ts,
+/api/monitoring/dashboard,api,false,0,frontend/src/app/api/monitoring/dashboard/route.ts,
+/api/monitoring/notify,api,false,0,frontend/src/app/api/monitoring/notify/route.ts,
+/api/monitoring/todo-integration,api,false,0,frontend/src/app/api/monitoring/todo-integration/route.ts,
+/api/monitoring/websocket,api,false,0,frontend/src/app/api/monitoring/websocket/route.ts,
+/api/notes/highlight,api,false,1,frontend/src/app/api/notes/highlight/route.ts,frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx
+/api/og/fetch,api,false,0,frontend/src/app/api/og/fetch/route.ts,
+/api/og/proxy,api,false,0,frontend/src/app/api/og/proxy/route.ts,
+/api/people,api,false,0,frontend/src/app/api/people/route.ts,
+/api/permissions/templates,api,false,1,frontend/src/app/api/permissions/templates/route.ts,frontend/src/hooks/use-permissions.ts
+/api/primitives/tool-calling,api,false,1,frontend/src/app/api/primitives/tool-calling/route.ts,frontend/src/components/primitives/tool-calling.tsx
+/api/procore-docs/ask,api,false,1,frontend/src/app/api/procore-docs/ask/route.ts,frontend/src/components/procore-docs/docs-chat.tsx
+/api/profile/avatar,api,false,1,frontend/src/app/api/profile/avatar/route.ts,frontend/src/components/misc/profile-image-upload.tsx
+/api/projects,api,false,220,frontend/src/app/api/projects/route.ts,frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx; frontend/src/app/(main)/[projectId]/budget/page.tsx; frontend/src/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal.tsx; frontend/src/app/(main)/[projectId]/budget/setup/page.tsx; frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx
+/api/projects/[projectId],api,true,0,frontend/src/app/api/projects/[projectId]/route.ts,
+/api/projects/[projectId]/budget,api,true,0,frontend/src/app/api/projects/[projectId]/budget/route.ts,
+/api/projects/[projectId]/budget-codes,api,true,0,frontend/src/app/api/projects/[projectId]/budget-codes/route.ts,
+/api/projects/[projectId]/budget/details,api,true,0,frontend/src/app/api/projects/[projectId]/budget/details/route.ts,
+/api/projects/[projectId]/budget/direct-costs,api,true,0,frontend/src/app/api/projects/[projectId]/budget/direct-costs/route.ts,
+/api/projects/[projectId]/budget/export,api,true,0,frontend/src/app/api/projects/[projectId]/budget/export/route.ts,
+/api/projects/[projectId]/budget/forecast,api,true,0,frontend/src/app/api/projects/[projectId]/budget/forecast/route.ts,
+/api/projects/[projectId]/budget/history,api,true,0,frontend/src/app/api/projects/[projectId]/budget/history/route.ts,
+/api/projects/[projectId]/budget/import,api,true,0,frontend/src/app/api/projects/[projectId]/budget/import/route.ts,
+/api/projects/[projectId]/budget/lines/[lineId],api,true,0,frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/route.ts,
+/api/projects/[projectId]/budget/lines/[lineId]/history,api,true,0,frontend/src/app/api/projects/[projectId]/budget/lines/[lineId]/history/route.ts,
+/api/projects/[projectId]/budget/lock,api,true,0,frontend/src/app/api/projects/[projectId]/budget/lock/route.ts,
+/api/projects/[projectId]/budget/modifications,api,true,0,frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts,
+/api/projects/[projectId]/budget/snapshots,api,true,0,frontend/src/app/api/projects/[projectId]/budget/snapshots/route.ts,
+/api/projects/[projectId]/budget/views,api,true,0,frontend/src/app/api/projects/[projectId]/budget/views/route.ts,
+/api/projects/[projectId]/budget/views/[viewId],api,true,0,frontend/src/app/api/projects/[projectId]/budget/views/[viewId]/route.ts,
+/api/projects/[projectId]/budget/views/[viewId]/clone,api,true,0,frontend/src/app/api/projects/[projectId]/budget/views/[viewId]/clone/route.ts,
+/api/projects/[projectId]/change-events,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId],api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/approvals,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/approvals/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/attachments,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId],api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]/download/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/history,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/history/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/line-items,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/route.ts,
+/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId],api,true,0,frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]/route.ts,
+/api/projects/[projectId]/change-events/rfqs,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/rfqs/route.ts,
+/api/projects/[projectId]/change-events/rfqs/[rfqId],api,true,0,frontend/src/app/api/projects/[projectId]/change-events/rfqs/[rfqId]/route.ts,
+/api/projects/[projectId]/change-events/rfqs/[rfqId]/responses,api,true,0,frontend/src/app/api/projects/[projectId]/change-events/rfqs/[rfqId]/responses/route.ts,
+/api/projects/[projectId]/change-orders,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId],api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/approve,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/approve/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/attachments,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/attachments/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/attachments/[attachmentId],api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/attachments/[attachmentId]/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/attachments/[attachmentId]/download,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/attachments/[attachmentId]/download/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/line-items,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/line-items/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/line-items/[lineItemId],api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/line-items/[lineItemId]/route.ts,
+/api/projects/[projectId]/change-orders/[changeOrderId]/reject,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/[changeOrderId]/reject/route.ts,
+/api/projects/[projectId]/change-orders/export/csv,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/export/csv/route.ts,
+/api/projects/[projectId]/change-orders/reviewer-settings,api,true,0,frontend/src/app/api/projects/[projectId]/change-orders/reviewer-settings/route.ts,
+/api/projects/[projectId]/checklist,api,true,0,frontend/src/app/api/projects/[projectId]/checklist/route.ts,
+/api/projects/[projectId]/commitments/[commitmentId]/line-items,api,true,0,frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/line-items/route.ts,
+/api/projects/[projectId]/commitments/[commitmentId]/line-items/import,api,true,0,frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/line-items/import/route.ts,
+/api/projects/[projectId]/commitments/export,api,true,0,frontend/src/app/api/projects/[projectId]/commitments/export/route.ts,
+/api/projects/[projectId]/contracts,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/route.ts,
+/api/projects/[projectId]/contracts/[contractId],api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/attachments,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/attachments/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/change-orders,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId],api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/reject,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/reject/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/line-items,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/line-items/[lineItemId],api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/[lineItemId]/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/line-items/import,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/line-items/import/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/payment-applications,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/payment-applications/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId],api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/payments,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/payments/route.ts,
+/api/projects/[projectId]/contracts/[contractId]/payments/[paymentId],api,true,0,frontend/src/app/api/projects/[projectId]/contracts/[contractId]/payments/[paymentId]/route.ts,
+/api/projects/[projectId]/contracts/settings,api,true,0,frontend/src/app/api/projects/[projectId]/contracts/settings/route.ts,
+/api/projects/[projectId]/direct-costs,api,true,0,frontend/src/app/api/projects/[projectId]/direct-costs/route.ts,
+/api/projects/[projectId]/direct-costs/[costId],api,true,0,frontend/src/app/api/projects/[projectId]/direct-costs/[costId]/route.ts,
+/api/projects/[projectId]/direct-costs/bulk,api,true,0,frontend/src/app/api/projects/[projectId]/direct-costs/bulk/route.ts,
+/api/projects/[projectId]/direct-costs/export,api,true,0,frontend/src/app/api/projects/[projectId]/direct-costs/export/route.ts,
+/api/projects/[projectId]/directory/activity,api,true,0,frontend/src/app/api/projects/[projectId]/directory/activity/route.ts,
+/api/projects/[projectId]/directory/companies,api,true,0,frontend/src/app/api/projects/[projectId]/directory/companies/route.ts,
+/api/projects/[projectId]/directory/companies/[companyId],api,true,0,frontend/src/app/api/projects/[projectId]/directory/companies/[companyId]/route.ts,
+/api/projects/[projectId]/directory/export,api,true,0,frontend/src/app/api/projects/[projectId]/directory/export/route.ts,
+/api/projects/[projectId]/directory/filters,api,true,0,frontend/src/app/api/projects/[projectId]/directory/filters/route.ts,
+/api/projects/[projectId]/directory/groups,api,true,0,frontend/src/app/api/projects/[projectId]/directory/groups/route.ts,
+/api/projects/[projectId]/directory/groups/[groupId],api,true,0,frontend/src/app/api/projects/[projectId]/directory/groups/[groupId]/route.ts,
+/api/projects/[projectId]/directory/groups/[groupId]/members,api,true,0,frontend/src/app/api/projects/[projectId]/directory/groups/[groupId]/members/route.ts,
+/api/projects/[projectId]/directory/import,api,true,0,frontend/src/app/api/projects/[projectId]/directory/import/route.ts,
+/api/projects/[projectId]/directory/people,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/route.ts,
+/api/projects/[projectId]/directory/people/[personId],api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/deactivate,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/deactivate/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/email-notifications,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/email-notifications/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/invite,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/invite/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/permissions,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/permissions/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/profile-photo,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/profile-photo/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/reactivate,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/reactivate/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/reinvite,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/reinvite/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/resend-invite,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/resend-invite/route.ts,
+/api/projects/[projectId]/directory/people/[personId]/schedule-notifications,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/[personId]/schedule-notifications/route.ts,
+/api/projects/[projectId]/directory/people/bulk-invite,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/bulk-invite/route.ts,
+/api/projects/[projectId]/directory/people/bulk-update,api,true,0,frontend/src/app/api/projects/[projectId]/directory/people/bulk-update/route.ts,
+/api/projects/[projectId]/directory/permissions,api,true,0,frontend/src/app/api/projects/[projectId]/directory/permissions/route.ts,
+/api/projects/[projectId]/directory/preferences,api,true,0,frontend/src/app/api/projects/[projectId]/directory/preferences/route.ts,
+/api/projects/[projectId]/directory/roles,api,true,0,frontend/src/app/api/projects/[projectId]/directory/roles/route.ts,
+/api/projects/[projectId]/directory/templates/[templateType],api,true,0,frontend/src/app/api/projects/[projectId]/directory/templates/[templateType]/route.ts,
+/api/projects/[projectId]/directory/users/bulk-add,api,true,0,frontend/src/app/api/projects/[projectId]/directory/users/bulk-add/route.ts,
+/api/projects/[projectId]/drawings,api,true,0,frontend/src/app/api/projects/[projectId]/drawings/route.ts,
+/api/projects/[projectId]/drawings/[drawingId],api,true,0,frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/route.ts,
+/api/projects/[projectId]/drawings/[drawingId]/revisions,api,true,0,frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/revisions/route.ts,
+/api/projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download,api,true,0,frontend/src/app/api/projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download/route.ts,
+/api/projects/[projectId]/drawings/areas,api,true,0,frontend/src/app/api/projects/[projectId]/drawings/areas/route.ts,
+/api/projects/[projectId]/drawings/areas/[areaId],api,true,0,frontend/src/app/api/projects/[projectId]/drawings/areas/[areaId]/route.ts,
+/api/projects/[projectId]/drawings/sets,api,true,0,frontend/src/app/api/projects/[projectId]/drawings/sets/route.ts,
+/api/projects/[projectId]/drawings/sets/[setId],api,true,0,frontend/src/app/api/projects/[projectId]/drawings/sets/[setId]/route.ts,
+/api/projects/[projectId]/employees,api,true,0,frontend/src/app/api/projects/[projectId]/employees/route.ts,
+/api/projects/[projectId]/invoicing/owner,api,true,0,frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts,
+/api/projects/[projectId]/invoicing/owner/[invoiceId],api,true,0,frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/route.ts,
+/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve,api,true,0,frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve/route.ts,
+/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit,api,true,0,frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit/route.ts,
+/api/projects/[projectId]/meetings,api,true,0,frontend/src/app/api/projects/[projectId]/meetings/route.ts,
+/api/projects/[projectId]/meetings/[meetingId],api,true,0,frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/route.ts,
+/api/projects/[projectId]/meetings/[meetingId]/digest,api,true,0,frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/digest/route.ts,
+/api/projects/[projectId]/meetings/[meetingId]/prep,api,true,0,frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/route.ts,
+/api/projects/[projectId]/meetings/[meetingId]/prep/generate,api,true,0,frontend/src/app/api/projects/[projectId]/meetings/[meetingId]/prep/generate/route.ts,
+/api/projects/[projectId]/permissions,api,true,0,frontend/src/app/api/projects/[projectId]/permissions/route.ts,
+/api/projects/[projectId]/permissions/assign,api,true,0,frontend/src/app/api/projects/[projectId]/permissions/assign/route.ts,
+/api/projects/[projectId]/permissions/override,api,true,0,frontend/src/app/api/projects/[projectId]/permissions/override/route.ts,
+/api/projects/[projectId]/punch-items,api,true,0,frontend/src/app/api/projects/[projectId]/punch-items/route.ts,
+/api/projects/[projectId]/punch-items/[punchItemId],api,true,0,frontend/src/app/api/projects/[projectId]/punch-items/[punchItemId]/route.ts,
+/api/projects/[projectId]/purchase-orders,api,true,0,frontend/src/app/api/projects/[projectId]/purchase-orders/route.ts,
+/api/projects/[projectId]/rfis,api,true,0,frontend/src/app/api/projects/[projectId]/rfis/route.ts,
+/api/projects/[projectId]/rfis/[rfiId],api,true,0,frontend/src/app/api/projects/[projectId]/rfis/[rfiId]/route.ts,
+/api/projects/[projectId]/scheduling/tasks,api,true,0,frontend/src/app/api/projects/[projectId]/scheduling/tasks/route.ts,
+/api/projects/[projectId]/scheduling/tasks/[taskId],api,true,0,frontend/src/app/api/projects/[projectId]/scheduling/tasks/[taskId]/route.ts,
+/api/projects/[projectId]/scheduling/tasks/bulk,api,true,0,frontend/src/app/api/projects/[projectId]/scheduling/tasks/bulk/route.ts,
+/api/projects/[projectId]/scheduling/tasks/import,api,true,0,frontend/src/app/api/projects/[projectId]/scheduling/tasks/import/route.ts,
+/api/projects/[projectId]/specifications,api,true,0,frontend/src/app/api/projects/[projectId]/specifications/route.ts,
+/api/projects/[projectId]/specifications/[sectionId],api,true,0,frontend/src/app/api/projects/[projectId]/specifications/[sectionId]/route.ts,
+/api/projects/[projectId]/specifications/[sectionId]/revisions,api,true,0,frontend/src/app/api/projects/[projectId]/specifications/[sectionId]/revisions/route.ts,
+/api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId],api,true,0,frontend/src/app/api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]/route.ts,
+/api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]/download,api,true,0,frontend/src/app/api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]/download/route.ts,
+/api/projects/[projectId]/specifications/areas,api,true,0,frontend/src/app/api/projects/[projectId]/specifications/areas/route.ts,
+/api/projects/[projectId]/specifications/areas/[areaId],api,true,0,frontend/src/app/api/projects/[projectId]/specifications/areas/[areaId]/route.ts,
+/api/projects/[projectId]/subcontracts,api,true,0,frontend/src/app/api/projects/[projectId]/subcontracts/route.ts,
+/api/projects/[projectId]/submittals,api,true,0,frontend/src/app/api/projects/[projectId]/submittals/route.ts,
+/api/projects/[projectId]/submittals/[submittalId],api,true,0,frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts,
+/api/projects/[projectId]/vendors,api,true,0,frontend/src/app/api/projects/[projectId]/vendors/route.ts,
+/api/projects/[projectId]/vertical-markup,api,true,0,frontend/src/app/api/projects/[projectId]/vertical-markup/route.ts,
+/api/projects/[projectId]/vertical-markup/calculate,api,true,0,frontend/src/app/api/projects/[projectId]/vertical-markup/calculate/route.ts,
+/api/projects/bootstrap,api,false,1,frontend/src/app/api/projects/bootstrap/route.ts,frontend/src/app/(tables)/projects/page.tsx
+/api/rag-chat,api,false,7,frontend/src/app/api/rag-chat/route.ts,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx; frontend/src/app/(chat)/simple-chat/page.nonprod.tsx; frontend/src/app/api/rag-chatkit/route.ts; frontend/src/components/chat/rag-chatkit-panel.tsx
+/api/rag-chatkit,api,false,5,frontend/src/app/api/rag-chatkit/route.ts,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx; frontend/src/components/chat/rag-chatkit-panel.tsx; frontend/src/lib/chatkit-config.ts; frontend/src/lib/supabase/proxy.ts
+/api/rag-chatkit/bootstrap,api,false,2,frontend/src/app/api/rag-chatkit/bootstrap/route.ts,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx
+/api/rag-chatkit/state,api,false,2,frontend/src/app/api/rag-chatkit/state/route.ts,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx
+/api/supabase-proxy/[...path],api,true,0,frontend/src/app/api/supabase-proxy/[...path]/route.ts,
+/api/table-delete,api,false,1,frontend/src/app/api/table-delete/route.ts,frontend/src/components/tables/GenericTableWithDelete.tsx
+/api/table-insert,api,false,1,frontend/src/app/api/table-insert/route.ts,frontend/src/components/daily-log/CreateDialogs.tsx
+/api/table-metadata,api,false,1,frontend/src/app/api/table-metadata/route.ts,frontend/src/app/(other)/tables-directory/page.tsx
+/api/table-update,api,false,1,frontend/src/app/api/table-update/route.ts,frontend/src/components/tables/generic-table-factory.tsx
+/api/tool-calling,api,false,1,frontend/src/app/api/tool-calling/route.ts,frontend/src/app/(chat)/chat-tool/page.nonprod.tsx
+/auth/callback,api,false,2,frontend/src/app/auth/callback/route.ts,frontend/src/app/api/auth/signup/route.ts; frontend/src/components/supabase-manager/auth.tsx
+/auth/confirm,api,false,0,frontend/src/app/auth/confirm/route.ts,
+/auth/error,page,false,2,frontend/src/app/auth/error/page.tsx,frontend/src/app/auth/confirm/route.ts; frontend/src/app/robots.ts
+/auth/forgot-password,page,false,3,frontend/src/app/auth/forgot-password/page.tsx,frontend/src/components/misc/login-form.tsx; frontend/src/components/misc/login-page-v2.tsx; frontend/src/lib/sitemap-utils.ts
+/auth/login,page,false,16,frontend/src/app/auth/login/page.tsx,frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx; frontend/src/app/(main)/[projectId]/layout.tsx; frontend/src/app/auth/callback/route.ts; frontend/src/app/auth/logout/route.ts; frontend/src/app/auth/sign-up-success/page.tsx
+/auth/login-v2,page,false,0,frontend/src/app/auth/login-v2/page.tsx,
+/auth/logout,api,false,2,frontend/src/app/auth/logout/route.ts,frontend/src/lib/acumatica/client.ts; frontend/src/lib/supabase/logout.ts
+/auth/sign-up,page,false,5,frontend/src/app/auth/sign-up/page.tsx,frontend/src/components/misc/auth-button.tsx; frontend/src/components/misc/login-form.tsx; frontend/src/components/misc/login-page-v2.tsx; frontend/src/components/misc/sign-up-form.tsx; frontend/src/lib/sitemap-utils.ts
+/auth/sign-up-success,page,false,1,frontend/src/app/auth/sign-up-success/page.tsx,frontend/src/components/misc/sign-up-form.tsx
+/auth/update-password,page,false,2,frontend/src/app/auth/update-password/page.tsx,frontend/src/app/robots.ts; frontend/src/components/misc/forgot-password-form.tsx
+/billing-periods,page,false,0,frontend/src/app/(main)/billing-periods/page.tsx,
+/chat-admin-view,page.nonprod,false,0,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx,
+/chat-demo,page.nonprod,false,0,frontend/src/app/(chat)/chat-demo/page.nonprod.tsx,
+/chat-rag,page.nonprod,false,1,frontend/src/app/(chat)/chat-rag/page.nonprod.tsx,frontend/src/components/misc/app-sidebar.tsx
+/chat-tool,page.nonprod,false,0,frontend/src/app/(chat)/chat-tool/page.nonprod.tsx,
+/components,page,false,721,frontend/src/app/(other)/components/page.tsx,frontend/src/app/(chat)/ai-assistant/page.tsx; frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-demo/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx; frontend/src/app/(chat)/chat-tool/page.nonprod.tsx
+/crawled-pages,page,false,2,frontend/src/app/(other)/crawled-pages/page.tsx,frontend/src/components/layout/Footer.tsx; frontend/src/components/misc/app-sidebar.tsx
+/create-project,page,false,2,frontend/src/app/(main)/create-project/page.tsx,frontend/src/app/(main)/page.tsx; frontend/src/lib/sitemap-utils.ts
+/daily-logs,page,false,3,frontend/src/app/(tables)/daily-logs/page.tsx,frontend/src/app/(other)/design-system/_sections/layout-examples.tsx; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/misc/dropdown-tools.tsx
+/daily-logs/[id],page,true,0,frontend/src/app/(tables)/daily-logs/[id]/page.tsx,
+/daily-reports,page,false,1,frontend/src/app/(tables)/daily-reports/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx
+/dashboard4,page.nonprod,false,0,frontend/src/app/dashboard4/page.nonprod.tsx,
+/decisions,page,false,1,frontend/src/app/(tables)/decisions/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx
+/design-system,page,false,3,frontend/src/app/(other)/design-system/page.tsx,frontend/src/app/(main)/[projectId]/design-system/page.tsx; frontend/src/components/layouts/AppLayout.tsx; frontend/src/design-system/spacing.ts
+/design-system-update,page,false,0,frontend/src/app/(other)/design-system-update/page.tsx,
+/dev,page.nonprod,false,12,frontend/src/app/(other)/dev/page.nonprod.tsx,frontend/src/app/(other)/dev/table-generator/page.nonprod.tsx; frontend/src/app/api/dev/make-admin/route.ts; frontend/src/app/layout.tsx; frontend/src/components/dev-tools/enhanced-dev-panel.tsx; frontend/src/components/domain/contracts/ContractForm.tsx
+/dev/table-generator,page.nonprod,false,1,frontend/src/app/(other)/dev/table-generator/page.nonprod.tsx,frontend/src/app/(other)/dev/page.nonprod.tsx
+/directory,page,false,88,frontend/src/app/(main)/directory/page.tsx,frontend/src/app/(main)/[projectId]/directory/all/page.tsx; frontend/src/app/(main)/[projectId]/directory/companies/page.tsx; frontend/src/app/(main)/[projectId]/directory/contacts/page.tsx; frontend/src/app/(main)/[projectId]/directory/employees/page.tsx; frontend/src/app/(main)/[projectId]/directory/groups/page.tsx
+/directory/access,page,false,1,frontend/src/app/(main)/directory/access/page.tsx,frontend/src/config/directory-tabs.ts
+/directory/clients,page,false,3,frontend/src/app/(main)/directory/clients/page.tsx,frontend/src/app/(other)/actions/table-actions.ts; frontend/src/components/misc/dropdown-tools.tsx; frontend/src/config/directory-tabs.ts
+/directory/companies,page,false,13,frontend/src/app/(main)/directory/companies/page.tsx,frontend/src/app/(main)/[projectId]/directory/all/page.tsx; frontend/src/app/(main)/directory/companies/[companyId]/page.tsx; frontend/src/app/(main)/directory/page.tsx; frontend/src/app/(other)/actions/table-actions.ts; frontend/src/app/(other)/tables-directory/page.tsx
+/directory/companies/[companyId],page,true,0,frontend/src/app/(main)/directory/companies/[companyId]/page.tsx,
+/directory/contacts,page,false,6,frontend/src/app/(main)/directory/contacts/page.tsx,frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx; frontend/src/app/(other)/actions/table-actions.ts; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/project-home/directory-summary.tsx; frontend/src/components/project-home/inline-team-member-form.tsx
+/directory/contacts/[contactId],page,true,0,frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx,
+/directory/employees,page,false,0,frontend/src/app/(main)/directory/employees/page.tsx,
+/directory/groups,page,false,6,frontend/src/app/(main)/directory/groups/page.tsx,frontend/src/app/(main)/[projectId]/directory/all/page.tsx; frontend/src/app/api/projects/[projectId]/directory/groups/__tests__/route.test.ts; frontend/src/components/directory/DistributionGroupDialog.tsx; frontend/src/config/directory-tabs.ts; frontend/src/hooks/use-distribution-groups.ts
+/directory/users,page,false,7,frontend/src/app/(main)/directory/users/page.tsx,frontend/src/app/(main)/[projectId]/directory/settings/page.tsx; frontend/src/app/(main)/[projectId]/home/project-home-client.tsx; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/directory/settings/PermissionsTableTab.tsx; frontend/src/components/project-home/directory-summary.tsx
+/docs/[[...slug]],page,true,0,frontend/src/app/(main)/docs/[[...slug]]/page.tsx,
+/documents,page,false,9,frontend/src/app/(tables)/documents/page.tsx,frontend/src/app/(main)/admin/company-knowledge/page.tsx; frontend/src/app/(main)/pipeline/page.tsx; frontend/src/app/api/documents/upload/route.ts; frontend/src/components/auth/client-redirect.tsx; frontend/src/components/misc/app-sidebar.tsx
+/drawings,page,false,23,frontend/src/app/(tables)/drawings/page.tsx,frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx; frontend/src/app/(main)/[projectId]/drawings/board/page.tsx; frontend/src/app/(main)/[projectId]/drawings/page.tsx; frontend/src/app/(main)/[projectId]/drawings/revisions/page.tsx; frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx
+/emails,page,false,1,frontend/src/app/(tables)/emails/page.tsx,frontend/src/components/misc/simplified-header.tsx
+/executive,page,false,2,frontend/src/app/(other)/executive/page.tsx,frontend/src/app/(other)/executive/EXAMPLE_DASHBOARD.tsx; frontend/src/components/misc/app-sidebar.tsx
+/financial-insights,page,false,5,frontend/src/app/(other)/financial-insights/page.tsx,frontend/src/app/api/financial-insights/alerts/route.ts; frontend/src/app/api/financial-insights/cross-reference/route.ts; frontend/src/app/api/financial-insights/scan/route.ts; frontend/src/components/misc/app-sidebar.tsx; frontend/src/hooks/use-financial-insights.ts
+/fm_global_tables,page,false,1,frontend/src/app/(tables)/fm_global_tables/page.tsx,frontend/src/app/(other)/fm-global/page.tsx
+/fm-global,page,false,8,frontend/src/app/(other)/fm-global/page.tsx,frontend/src/app/(other)/fm-global/form/actions.ts; frontend/src/app/(other)/fm-global/form/fm-global-client.tsx; frontend/src/app/(other)/fm-global/form/fm-global-results.tsx; frontend/src/app/(other)/fm-global/form/fm-global-submissions.tsx; frontend/src/app/(other)/fm-global/form/page.tsx
+/fm-global/form,page,false,2,frontend/src/app/(other)/fm-global/form/page.tsx,frontend/src/app/(other)/fm-global/form/actions.ts; frontend/src/app/(other)/fm-global/page.tsx
+/infinite-projects,page,false,0,frontend/src/app/(tables)/infinite-projects/page.tsx,
+/insights,page,false,2,frontend/src/app/(tables)/insights/page.tsx,frontend/src/app/(main)/[projectId]/home/project-accordions.tsx; frontend/src/app/(other)/tables-directory/page.tsx
+/issues,page,false,2,frontend/src/app/(tables)/issues/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/app/(tables)/issues/issues-client.tsx
+/meeting-segments,page,false,1,frontend/src/app/(tables)/meeting-segments/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx
+/meetings,page,false,30,frontend/src/app/(tables)/meetings/page.tsx,frontend/src/app/(main)/[projectId]/home/meetings-section.tsx; frontend/src/app/(main)/[projectId]/home/project-home-client.tsx; frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx; frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx; frontend/src/app/(main)/[projectId]/meetings/meetings-actions.tsx
+/meetings/[meetingId],page,true,0,frontend/src/app/(tables)/meetings/[meetingId]/page.tsx,
+/modal-demo,page,false,0,frontend/src/app/(other)/modal-demo/page.tsx,
+/monitoring,page,false,1,frontend/src/app/(other)/monitoring/page.tsx,frontend/src/app/api/monitoring/todo-integration/route.ts
+/notes,page,false,3,frontend/src/app/(tables)/notes/page.tsx,frontend/src/app/(main)/[projectId]/meetings/formatted-transcript.tsx; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/tutorial/fetch-data-steps.tsx
+/opportunities,page,false,1,frontend/src/app/(tables)/opportunities/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx
+/photos,page,false,5,frontend/src/app/(tables)/photos/page.tsx,frontend/src/app/(main)/[projectId]/photos/page.tsx; frontend/src/components/auth/client-redirect.tsx; frontend/src/components/misc/simplified-header.tsx; frontend/src/components/project-home/recent-photos.tsx; frontend/src/config/project-home.ts
+/pipeline,page,false,2,frontend/src/app/(main)/pipeline/page.tsx,frontend/src/components/misc/app-sidebar.tsx; frontend/src/lib/navigation-config.ts
+/procore-tools,page,false,0,frontend/src/app/(tables)/procore-tools/page.tsx,
+/procore-tracker,page,false,1,frontend/src/app/(tables)/procore-tracker/page.tsx,frontend/src/app/(tables)/procore-tracker/[featureId]/page.tsx
+/procore-tracker/[featureId],page,true,0,frontend/src/app/(tables)/procore-tracker/[featureId]/page.tsx,
+/profile,page,false,5,frontend/src/app/(other)/profile/page.tsx,frontend/src/components/auth/client-redirect.tsx; frontend/src/components/directory/PersonEditDialog.tsx; frontend/src/components/header/header-user-menu.tsx; frontend/src/components/layout/AppHeader.tsx; frontend/src/components/misc/profile-image-upload.tsx
+/projects,page,false,232,frontend/src/app/(tables)/projects/page.tsx,frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx; frontend/src/app/(main)/[projectId]/budget/page.tsx; frontend/src/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal.tsx; frontend/src/app/(main)/[projectId]/budget/setup/page.tsx; frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx
+/projects-table-demo,page,false,1,frontend/src/app/projects-table-demo/page.tsx,frontend/src/components/portfolio/index.ts
+/punch-list,page,false,5,frontend/src/app/(tables)/punch-list/page.tsx,frontend/src/app/(main)/[projectId]/punch-list/page.tsx; frontend/src/app/(main)/[projectId]/punch-list/punch-list-page-wrapper.tsx; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/misc/simplified-header.tsx; frontend/src/config/project-home.ts
+/qa-audit,page,false,0,frontend/src/app/(other)/qa-audit/page.tsx,
+/rag,page,false,12,frontend/src/app/(chat)/rag/page.tsx,frontend/src/app/(chat)/ai-assistant/page.tsx; frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx; frontend/src/app/(chat)/simple-chat/page.nonprod.tsx; frontend/src/app/api/rag-chat/route.ts
+/redoc,page,false,0,frontend/src/app/redoc/page.tsx,
+/rfis,page,false,14,frontend/src/app/(tables)/rfis/page.tsx,frontend/src/app/(main)/[projectId]/home/project-home-client.tsx; frontend/src/app/(main)/[projectId]/rfis/[rfiId]/rfi-detail.tsx; frontend/src/app/(main)/[projectId]/rfis/new/page.tsx; frontend/src/app/(main)/[projectId]/rfis/page.tsx; frontend/src/app/(main)/[projectId]/rfis/rfis-client.tsx
+/risks,page,false,3,frontend/src/app/(tables)/risks/page.tsx,frontend/src/app/(other)/dev/table-generator/page.nonprod.tsx; frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/components/tables/generic-table-factory.tsx
+/robots.txt,metadata,false,0,frontend/src/app/robots.ts,
+/settings,page,false,13,frontend/src/app/(main)/settings/page.tsx,frontend/src/app/(main)/[projectId]/directory/settings/page.tsx; frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx; frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx; frontend/src/app/(main)/settings/layout.tsx; frontend/src/app/(other)/design-system/page.tsx
+/settings/account,page,false,2,frontend/src/app/(main)/settings/account/page.tsx,frontend/src/app/(main)/settings/layout.tsx; frontend/src/app/(main)/settings/page.tsx
+/settings/audit,page,false,1,frontend/src/app/(main)/settings/audit/page.tsx,frontend/src/app/(main)/settings/layout.tsx
+/settings/integrations,page,false,1,frontend/src/app/(main)/settings/integrations/page.tsx,frontend/src/app/(main)/settings/layout.tsx
+/settings/members,page,false,1,frontend/src/app/(main)/settings/members/page.tsx,frontend/src/app/(main)/settings/layout.tsx
+/settings/plugins,page,false,0,frontend/src/app/(other)/settings/plugins/page.tsx,
+/settings/preferences,page,false,1,frontend/src/app/(main)/settings/preferences/page.tsx,frontend/src/app/(main)/settings/layout.tsx
+/settings/security,page,false,1,frontend/src/app/(main)/settings/security/page.tsx,frontend/src/app/(main)/settings/layout.tsx
+/simple-chat,page.nonprod,false,0,frontend/src/app/(chat)/simple-chat/page.nonprod.tsx,
+/sitemap-view,page,false,1,frontend/src/app/(other)/sitemap-view/page.tsx,frontend/src/lib/sitemap-utils.ts
+/sitemap.xml,metadata,false,2,frontend/src/app/sitemap.ts,frontend/src/app/(other)/sitemap-view/page.tsx; frontend/src/app/robots.ts
+/stats,page,false,0,frontend/src/app/(other)/stats/page.tsx,
+/style-guide,page,false,0,frontend/src/app/(other)/style-guide/page.tsx,
+/subcontractors,page,false,0,frontend/src/app/(tables)/subcontractors/page.tsx,
+/submittals,page,false,12,frontend/src/app/(tables)/submittals/page.tsx,frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx; frontend/src/app/(main)/[projectId]/submittals/page.tsx; frontend/src/app/(tables)/submittals/submittals-client.tsx; frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts; frontend/src/app/api/projects/[projectId]/submittals/route.ts
+/submittals/settings/custom-fields,page,false,0,frontend/src/app/(tables)/submittals/settings/custom-fields/page.tsx,
+/submittals/settings/general,page,false,0,frontend/src/app/(tables)/submittals/settings/general/page.tsx,
+/submittals/settings/workflow-templates,page,false,0,frontend/src/app/(tables)/submittals/settings/workflow-templates/page.tsx,
+/table-v2,page,false,0,frontend/src/app/(other)/table-v2/page.tsx,
+/tables,page,false,90,frontend/src/app/(tables)/tables/page.tsx,frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx; frontend/src/app/(main)/[projectId]/change-events/page.tsx; frontend/src/app/(main)/[projectId]/change-orders/change-orders-client.tsx; frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx; frontend/src/app/(main)/[projectId]/commitments/page.tsx
+/tables-directory,page,false,2,frontend/src/app/(other)/tables-directory/page.tsx,frontend/src/components/layout/Footer.tsx; frontend/src/lib/menu-list.ts
+/tables/[table],page,true,0,frontend/src/app/(tables)/tables/[table]/page.tsx,
+/tables/[table]/[recordId],page,true,0,frontend/src/app/(tables)/tables/[table]/[recordId]/page.tsx,
+/tables/[table]/new,page,true,0,frontend/src/app/(tables)/tables/[table]/new/page.tsx,
+/team-chat,page,false,1,frontend/src/app/(other)/team-chat/page.tsx,frontend/src/app/(other)/layout.tsx
+/template/data-table,page,false,0,frontend/src/app/template/data-table/page.tsx,
+/template/form-standard,page,false,1,frontend/src/app/template/form-standard/page.tsx,frontend/src/components/dev/DevAutoFillForms.tsx
+/templates/form-standard,page,false,0,frontend/src/app/templates/form-standard/page.tsx,
+/test-approval-workflow,page.nonprod,false,0,frontend/src/app/(other)/test-approval-workflow/page.nonprod.tsx,
+/test-change-order-reviewer,page.nonprod,false,0,frontend/src/app/(main)/test-change-order-reviewer/page.nonprod.tsx,
+/test-form,page.nonprod,false,0,frontend/src/app/(other)/test-form/page.nonprod.tsx,
+/test-line-items,page.nonprod,false,0,frontend/src/app/(main)/test-line-items/page.nonprod.tsx,
+/test-modals,page.nonprod,false,0,frontend/src/app/(main)/test-modals/page.nonprod.tsx,

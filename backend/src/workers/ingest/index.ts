@@ -29,17 +29,36 @@ import {
 } from "../shared/supabase";
 import { parseFirefliesMarkdown, hashContent } from "../shared/parser";
 
+function isLegacySyncEnabled(env: Env): boolean {
+  const value = String(env.LEGACY_FIREFLIES_SYNC_ENABLED || "").toLowerCase().trim();
+  return value === "1" || value === "true" || value === "yes" || value === "on";
+}
+
+function legacySyncDisabledResponse(): Response {
+  return Response.json(
+    {
+      error: "Legacy Fireflies ingest worker is disabled",
+      message:
+        "Use native backend endpoint POST /api/ingest/fireflies/recent for Fireflies sync.",
+    },
+    { status: 410 }
+  );
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const legacyEnabled = isLegacySyncEnabled(env);
 
     // POST /webhook/fireflies - Receive Fireflies webhook
     if (request.method === "POST" && url.pathname === "/webhook/fireflies") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleFirefliesWebhook(request, env);
     }
 
     // POST /webhook/storage - Receive Supabase storage webhook
     if (request.method === "POST" && url.pathname === "/webhook/storage") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleStorageWebhook(request, env);
     }
 
@@ -56,26 +75,34 @@ export default {
 
     // POST /sync/recent - Manually sync latest transcripts from Fireflies
     if (request.method === "POST" && url.pathname === "/sync/recent") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleManualRecentSync(request, env);
     }
 
     // Health check
     if (request.method === "GET" && url.pathname === "/health") {
-      return Response.json({ status: "ok", worker: "ingest" });
+      return Response.json({
+        status: "ok",
+        worker: "ingest",
+        legacy_sync_enabled: legacyEnabled,
+      });
     }
 
     // POST /backfill - Ingest all files from storage bucket
     if (request.method === "POST" && url.pathname === "/backfill") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleBackfill(request, env);
     }
 
     // GET /backfill/status - Check backfill progress
     if (request.method === "GET" && url.pathname === "/backfill/status") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleBackfillStatus(env);
     }
 
     // POST /backfill/reset-errors - Reset error jobs to retry
     if (request.method === "POST" && url.pathname === "/backfill/reset-errors") {
+      if (!legacyEnabled) return legacySyncDisabledResponse();
       return handleResetErrors(env);
     }
 
@@ -97,6 +124,10 @@ export default {
 
   // Cron trigger handler - polls Fireflies for new transcripts every 15 minutes
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    if (!isLegacySyncEnabled(env)) {
+      console.log("[Ingest Cron] Skipped: legacy sync disabled by LEGACY_FIREFLIES_SYNC_ENABLED");
+      return;
+    }
     console.log("[Ingest Cron] Running scheduled transcript check at", new Date().toISOString());
 
     try {

@@ -1,14 +1,15 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Tailwind CSS Configuration
+ * Tailwind CSS Configuration — Superhuman-inspired v2
  *
- * This configuration extends the default Tailwind theme with:
- * - Custom brand colors and semantic color scales
- * - Extended spacing and typography values
- * - Custom animation utilities
- *
- * All colors use CSS variables defined in globals.css for easy theming.
+ * Design system tokens mapped from CSS variables in globals.css.
+ * Key changes from v1:
+ * - Primary color: indigo-purple (#5856D6) replaces Procore orange
+ * - Background: warm off-white (#F6F6F8) with true-white cards
+ * - Shadows: minimal (only shadow-sm on floating elements)
+ * - Typography: Inter with OpenType, tighter headings
+ * - Animations: spring physics, Superhuman timing
  */
 
 export default {
@@ -19,14 +20,14 @@ export default {
   theme: {
     extend: {
       /* =================================================================
-         COLOR SYSTEM
+         COLOR SYSTEM — Superhuman-inspired tokens
          ================================================================= */
       colors: {
         /* Core UI Colors */
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
 
-        /* Brand Colors */
+        /* Brand Colors (Procore heritage — demoted from primary) */
         brand: {
           DEFAULT: "hsl(var(--brand))",
           hover: "hsl(var(--brand-hover))",
@@ -37,7 +38,7 @@ export default {
         "surface-inverse": "hsl(var(--surface-inverse))",
         "surface-elevated": "hsl(var(--surface-elevated))",
 
-        /* Procore Brand Colors */
+        /* Procore Brand Colors (integration badges only) */
         procore: {
           orange: "hsl(var(--procore-orange))",
           "orange-hover": "hsl(var(--procore-orange-hover))",
@@ -88,7 +89,7 @@ export default {
           foreground: "hsl(var(--destructive-foreground))",
         },
 
-        /* Semantic Status Colors (use instead of raw color classes) */
+        /* Semantic Status Colors (shorthand — use instead of raw color classes) */
         success: {
           DEFAULT: "hsl(var(--status-success))",
           foreground: "hsl(0 0% 100%)",
@@ -143,11 +144,11 @@ export default {
       },
 
       /* =================================================================
-         TYPOGRAPHY
+         TYPOGRAPHY — Inter + OpenType, Superhuman-style type scale
          ================================================================= */
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["ui-monospace", "SFMono-Regular", "Consolas", "Monaco", "Liberation Mono", "monospace"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Consolas", "Monaco", "Liberation Mono", "monospace"],
       },
       fontSize: {
         "2xs": ["0.625rem", { lineHeight: "0.75rem" }], // 10px
@@ -155,9 +156,11 @@ export default {
       letterSpacing: {
         "widest-plus": "0.2em",
         "wide-plus": "0.15em",
+        "heading": "-0.01em",  // Superhuman-style tight headings
       },
       lineHeight: {
         "tighter": "1.05",
+        "compact": "1.29",     // table rows (18px / 14px)
       },
 
       /* =================================================================
@@ -172,18 +175,47 @@ export default {
       },
 
       /* =================================================================
-         ANIMATIONS
+         ANIMATIONS — Superhuman timing system
          ================================================================= */
       transitionDuration: {
+        "0": "0ms",           // --transition-instant
+        "100": "100ms",       // --transition-fast
+        "150": "150ms",       // --transition-normal
+        "200": "200ms",       // --transition-spring
         "250": "250ms",
         "350": "350ms",
       },
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.16, 1, 0.3, 1)",       // smooth decel
+        "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",     // slight overshoot
+      },
+      keyframes: {
+        "spring-in": {
+          from: { opacity: "0", transform: "translateY(-8px) scale(0.96)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        "slide-out-right": {
+          from: { opacity: "1", transform: "translateX(0)" },
+          to: { opacity: "0", transform: "translateX(100px)" },
+        },
+        "row-fill": {
+          from: { opacity: "0.8", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "spring-in": "spring-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "slide-out-right": "slide-out-right 150ms ease-out forwards",
+        "row-fill": "row-fill 150ms ease-out",
+      },
 
       /* =================================================================
-         SHADOWS
+         SHADOWS — Superhuman minimal shadow policy
+         Only shadow-sm for floating, shadow-md for modals.
+         No shadow-lg, shadow-xl, shadow-2xl.
          ================================================================= */
       boxShadow: {
-        "card-hover": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
+        "card-hover": "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
       },
     },
   },

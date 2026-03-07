@@ -3,7 +3,15 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Building2, ChevronDown, FileSpreadsheet, Plus, Upload } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  ChevronDown,
+  FileSpreadsheet,
+  Globe,
+  Plus,
+  Upload,
+} from "lucide-react";
 
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import { useAllCompanies } from "@/hooks/use-all-companies";
@@ -136,6 +144,83 @@ function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
   ];
 }
 
+function CompanyPreviewPane({
+  company,
+  onOpenCompanyPage,
+}: {
+  company: CompanyRow | null;
+  onOpenCompanyPage: (company: CompanyRow) => void;
+}): ReactElement {
+  if (!company) {
+    return (
+      <div className="p-6 space-y-3 text-sm text-muted-foreground">
+        <p>Select a company to preview details.</p>
+        <p className="text-xs">Arrow Up/Down to move, Enter to open.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold leading-tight">{company.name || "Untitled company"}</p>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Open company detail page"
+          title="Open company detail page"
+          onClick={() => onOpenCompanyPage(company)}
+        >
+          <ArrowUpRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <dl className="space-y-3 text-xs">
+        {company.company_type ? (
+          <div>
+            <dt className="text-muted-foreground">Type</dt>
+            <dd className="text-foreground mt-1">{company.company_type}</dd>
+          </div>
+        ) : null}
+        {company.status ? (
+          <div>
+            <dt className="text-muted-foreground">Status</dt>
+            <dd className="text-foreground mt-1">{company.status}</dd>
+          </div>
+        ) : null}
+        {company.city || company.state ? (
+          <div>
+            <dt className="text-muted-foreground">Location</dt>
+            <dd className="text-foreground mt-1">{[company.city, company.state].filter(Boolean).join(", ")}</dd>
+          </div>
+        ) : null}
+        {company.address ? (
+          <div>
+            <dt className="text-muted-foreground">Address</dt>
+            <dd className="text-foreground mt-1">{company.address}</dd>
+          </div>
+        ) : null}
+        {company.notes ? (
+          <div>
+            <dt className="text-muted-foreground">Notes</dt>
+            <dd className="text-foreground mt-1 line-clamp-6">{company.notes}</dd>
+          </div>
+        ) : null}
+      </dl>
+
+      {company.website ? (
+        <div className="pt-2 flex items-center gap-2">
+          <Button asChild variant="ghost" size="icon" aria-label="Open website" title="Open website">
+            <a href={company.website} target="_blank" rel="noopener noreferrer">
+              <Globe className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function GlobalCompanyDirectoryPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
@@ -231,6 +316,19 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   );
 
   const tableColumns = React.useMemo(() => buildCompanyTableColumns(), []);
+  const selectedCompanyId = searchParams.get("detail");
+  const selectedCompany =
+    (selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) : null) ||
+    companies[0] ||
+    null;
+  const activeCompanyId = selectedCompany?.id ?? null;
+
+  const openCompanyPage = React.useCallback(
+    (company: CompanyRow) => {
+      router.push(`/directory/companies/${company.id}`);
+    },
+    [router],
+  );
 
   const handleFilterChange = (nextFilters: CompanyFilterState) => {
     tableState.setActiveFilters(nextFilters);
@@ -256,6 +354,44 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       return;
     }
     tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+  };
+
+  const handleTableKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    visibleItems: CompanyRow[],
+  ) => {
+    const target = event.target as HTMLElement | null;
+    if (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName)) {
+      return;
+    }
+
+    if (visibleItems.length === 0) return;
+
+    const currentIndex = visibleItems.findIndex((company) => company.id === activeCompanyId);
+    const hasSelection = currentIndex >= 0;
+    const fallbackIndex = hasSelection ? currentIndex : 0;
+
+    if (event.key === "ArrowDown" || event.key === "j") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.min(visibleItems.length - 1, fallbackIndex + 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+      return;
+    }
+
+    if (event.key === "ArrowUp" || event.key === "k") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.max(0, fallbackIndex - 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const company = visibleItems[fallbackIndex];
+      if (company) {
+        openCompanyPage(company);
+      }
+    }
   };
 
   const tabs = getDirectoryTabs(pathname);
@@ -327,7 +463,12 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
-        onRowClick: (item) => router.push(`/directory/companies/${item.id}`),
+        activeRowId: activeCompanyId,
+        onTableKeyDown: handleTableKeyDown,
+        onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
+      }}
+      sidePanel={{
+        content: <CompanyPreviewPane company={selectedCompany} onOpenCompanyPage={openCompanyPage} />,
       }}
       sorting={{
         sortBy: tableState.sortBy,

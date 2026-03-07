@@ -62,6 +62,26 @@ class SupabaseRagStore:
         response = self._client.table("document_metadata").upsert(metadata).execute()
         return response.data[0] if response.data else metadata
 
+    def upload_public_text(
+        self,
+        bucket: str,
+        path: str,
+        content: str,
+        content_type: str = "text/markdown; charset=utf-8",
+        upsert: bool = True,
+    ) -> str:
+        data = content.encode("utf-8")
+        storage = self._client.storage.from_(bucket)
+        if upsert:
+            try:
+                storage.update(path, data, {"content-type": content_type})
+            except Exception:
+                storage.upload(path, data, {"content-type": content_type})
+        else:
+            storage.upload(path, data, {"content-type": content_type})
+
+        return storage.get_public_url(path)
+
     def fetch_document_metadata(self, document_id: str) -> Optional[Dict[str, Any]]:
         response = (
             self._client.table("document_metadata")
@@ -77,6 +97,19 @@ class SupabaseRagStore:
             self._client.table("document_metadata")
             .select("id", "project_id", "fireflies_id")
             .eq("content_hash", content_hash)
+            .limit(1)
+            .execute()
+        )
+        data = response.data or []
+        return data[0] if data else None
+
+    def find_document_by_fireflies_id(self, fireflies_id: Optional[str]) -> Optional[Dict[str, Any]]:
+        if not fireflies_id:
+            return None
+        response = (
+            self._client.table("document_metadata")
+            .select("id", "project_id", "fireflies_id")
+            .eq("fireflies_id", fireflies_id)
             .limit(1)
             .execute()
         )
@@ -118,6 +151,10 @@ class SupabaseRagStore:
     def upsert_tasks(self, tasks: List[Dict[str, Any]]) -> None:
         if tasks:
             self._client.table("ai_tasks").upsert(tasks).execute()
+
+    def upsert_project_tasks(self, tasks: List[Dict[str, Any]]) -> None:
+        if tasks:
+            self._client.table("project_tasks").upsert(tasks).execute()
 
     def list_insights(self, project_id: Optional[int] = None, limit: int = 20) -> List[Dict[str, Any]]:
         query = self._client.table("project_insights").select("*").order("captured_at", desc=True).limit(limit)

@@ -23,15 +23,15 @@ export function SimplePagination({
     <nav
       role="navigation"
       aria-label="Pagination"
-      className="text-foreground font-medium"
+      className="text-foreground"
     >
-      <ul className="flex items-center justify-center flex-wrap gap-2 dark:text-muted-foreground">
+      <ul className="flex items-center justify-center flex-wrap gap-1 text-muted-foreground">
         <li>
           <button
             disabled={currentPage === 1}
             aria-label="Previous page"
             onClick={() => onPageChange(currentPage - 1)}
-            className="px-4.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
+            className="h-8 rounded-md px-2.5 text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none"
           >
             Previous
           </button>
@@ -96,7 +96,7 @@ export function SimplePagination({
             disabled={currentPage === totalPages}
             aria-label="Next page"
             onClick={() => onPageChange(currentPage + 1)}
-            className="px-4.5 py-2 rounded-lg shadow-xs border border-input hover:bg-accent dark:bg-input/30 dark:hover:bg-input/50 dark:border-input disabled:opacity-50 disabled:pointer-events-none"
+            className="h-8 rounded-md px-2.5 text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none"
           >
             Next
           </button>
@@ -120,10 +120,10 @@ function SimplePaginationButton({
       aria-label={`Go to page ${page}`}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "size-10 rounded-lg shrink-0",
+        "h-8 min-w-8 rounded-md px-2 shrink-0 text-xs font-medium",
         isActive
-          ? "bg-primary text-primary-foreground"
-          : "hover:bg-accent dark:hover:bg-accent/50",
+          ? "bg-foreground text-background"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
       onClick={() => onPageChange(page)}
     >
@@ -134,7 +134,7 @@ function SimplePaginationButton({
 
 function SimplePaginationEllipsis() {
   return (
-    <button className="size-10 rounded-lg shrink-0 hover:bg-accent dark:hover:bg-accent/50 cursor-default">
+    <button className="h-8 min-w-8 rounded-md px-2 shrink-0 text-xs text-muted-foreground cursor-default">
       ...
     </button>
   );

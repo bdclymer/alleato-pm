@@ -31,6 +31,14 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
   category: undefined,
 };
 
+const EDITABLE_FIELD_ORDER: EditableField[] = [
+  "title",
+  "date",
+  "project",
+  "type",
+  "category",
+];
+
 type FilterState = Record<string, FilterValue>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -45,6 +53,29 @@ function getMeetingYear(dateValue: string | null | undefined): string | null {
 function uniqueSorted(values: string[]): string[] {
   const unique = Array.from(new Set(values.filter((value) => value.trim() !== "")));
   return unique.sort((a, b) => a.localeCompare(b));
+}
+
+function sanitizeMeetingPayload(data: Partial<Meeting>): Partial<Meeting> {
+  const allowedKeys: Array<keyof Meeting> = [
+    "title",
+    "date",
+    "project",
+    "type",
+    "category",
+    "description",
+    "participants",
+    "source",
+    "url",
+    "summary",
+    "fireflies_link",
+  ];
+
+  return allowedKeys.reduce<Partial<Meeting>>((acc, key) => {
+    if (data[key] !== undefined) {
+      acc[key] = data[key];
+    }
+    return acc;
+  }, {});
 }
 
 function sortMeetings(
@@ -85,7 +116,10 @@ export interface UseMeetingsTableResult {
   activeFilters: FilterState;
   detailFields: DetailFieldConfig[];
   selectedMeeting: Meeting | null;
+  editingMeeting: Meeting | null;
+  detailPanelOpen: boolean;
   tableColumns: TableColumn<Meeting>[];
+  activeMeetingId: string | null;
   isFiltered: boolean;
   deleteDialogOpen: boolean;
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -93,7 +127,12 @@ export interface UseMeetingsTableResult {
   setMeetingToDelete: React.Dispatch<React.SetStateAction<Meeting | null>>;
   handleFilterChange: (nextFilters: FilterState) => void;
   handleRowClick: (meeting: Meeting) => void;
+  handleOpenMeetingPage: (meeting: Meeting) => void;
   handleEdit: (meeting: Meeting) => void;
+  handleTableKeyDown: (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    visibleItems: Meeting[],
+  ) => void;
   handlePanelOpenChange: (open: boolean) => void;
   handleSave: (data: Partial<Meeting>) => Promise<void>;
   handleDeleteConfirm: () => Promise<void>;
@@ -114,6 +153,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const [meetings, setMeetings] = React.useState<Meeting[]>(initialMeetings);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [meetingToDelete, setMeetingToDelete] = React.useState<Meeting | null>(null);
+  const [editingMeetingId, setEditingMeetingId] = React.useState<string | null>(null);
 
   // ── Inline editing state ────────────────────────────────────────────────────
   const [editingCell, setEditingCell] = React.useState<{
@@ -175,12 +215,25 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     });
   }, [searchParams, tableState.setActiveFilters]);
 
-  // Initialise visible columns from defaults if not yet stored
+  // One-time migration: hide Type/Category by default and remove deprecated Source.
   React.useEffect(() => {
-    if (tableState.visibleColumns.length === 0) {
-      tableState.setVisibleColumns(meetingDefaultVisibleColumns);
-    }
-  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "meetings:visibleColumns:migrate-2026-03-06";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) => {
+      const sanitized = prev.filter(
+        (columnId) => columnId !== "source" && columnId !== "type" && columnId !== "category",
+      );
+      if (sanitized.length > 0) {
+        return sanitized;
+      }
+      return meetingDefaultVisibleColumns;
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.visibleColumns, tableState.setVisibleColumns]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const activeFilters = tableState.activeFilters as FilterState;
@@ -215,7 +268,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   }));
 
   // ── Inline edit handlers ─────────────────────────────────────────────────────
-  const handleCellClick = (meeting: Meeting, field: EditableField) => {
+  const getInitialFieldValue = React.useCallback((meeting: Meeting, field: EditableField): string => {
     let initialValue = "";
     if (field === "date" && meeting.date) {
       // Format as YYYY-MM-DD for <input type="date">
@@ -226,16 +279,24 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     } else {
       initialValue = (meeting[field as keyof Meeting] as string | null) ?? "";
     }
+    return initialValue;
+  }, []);
+
+  const handleCellClick = (meeting: Meeting, field: EditableField) => {
+    const initialValue = getInitialFieldValue(meeting, field);
     setEditingCell({ meetingId: meeting.id, field });
     setEditingValue(initialValue);
   };
 
-  const handleInlineSave = async (valueOverride?: string) => {
+  const handleInlineSave = async (options?: {
+    valueOverride?: string;
+    move?: "next" | "prev";
+  }) => {
     if (!editingCell) return;
     const { meetingId, field } = editingCell;
 
     let saveValue: string | null =
-      valueOverride !== undefined ? valueOverride : editingValue;
+      options?.valueOverride !== undefined ? options.valueOverride : editingValue;
     if (!saveValue) saveValue = null;
 
     // Convert YYYY-MM-DD to full ISO string for date fields
@@ -247,21 +308,42 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     setEditingCell(null);
     setEditingValue("");
 
+    if (options?.move) {
+      const currentIndex = EDITABLE_FIELD_ORDER.indexOf(field);
+      const nextIndex = options.move === "next" ? currentIndex + 1 : currentIndex - 1;
+      const nextField = EDITABLE_FIELD_ORDER[nextIndex];
+      if (nextField) {
+        const nextMeeting = meetings.find((meeting) => meeting.id === meetingId);
+        if (nextMeeting) {
+          const nextValue = getInitialFieldValue(nextMeeting, nextField);
+          window.requestAnimationFrame(() => {
+            setEditingCell({ meetingId, field: nextField });
+            setEditingValue(nextValue);
+          });
+        }
+      }
+    }
+
     try {
       const supabase = createClient();
-      const { error } = await supabase
+      const { data: updatedMeeting, error } = await supabase
         .from("document_metadata")
         .update({ [field]: saveValue })
-        .eq("id", meetingId);
+        .eq("id", meetingId)
+        .select("*")
+        .single();
 
       if (error) throw new Error(error.message);
 
       setMeetings((prev) =>
-        prev.map((m) => (m.id === meetingId ? { ...m, [field]: saveValue } : m)),
+        prev.map((m) =>
+          m.id === meetingId ? { ...m, ...(updatedMeeting as Partial<Meeting>) } : m,
+        ),
       );
       toast.success("Updated");
-    } catch {
-      toast.error("Failed to update");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update";
+      toast.error(message);
     }
   };
 
@@ -330,6 +412,11 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const selectedMeeting = detailParam
     ? meetings.find((meeting) => meeting.id === detailParam) || null
     : null;
+  const editingMeeting = editingMeetingId
+    ? meetings.find((meeting) => meeting.id === editingMeetingId) || null
+    : null;
+  const detailPanelOpen = Boolean(editingMeetingId);
+  const activeMeetingId = selectedMeeting?.id ?? pagedMeetings[0]?.id ?? null;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleFilterChange = (nextFilters: FilterState) => {
@@ -344,6 +431,10 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   };
 
   const handleRowClick = (meeting: Meeting) => {
+    tableState.setSearchParams({ detail: meeting.id });
+  };
+
+  const handleOpenMeetingPage = (meeting: Meeting) => {
     if (projectId) {
       router.push(`/${projectId}/meetings/${meeting.id}`);
     } else {
@@ -352,41 +443,86 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   };
 
   const handleEdit = (meeting: Meeting) => {
-    tableState.setSearchParams({ detail: meeting.id });
+    setEditingMeetingId(meeting.id);
+  };
+
+  const handleTableKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    visibleItems: Meeting[],
+  ) => {
+    if (editingCell) return;
+
+    const target = event.target as HTMLElement | null;
+    if (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName)) {
+      return;
+    }
+
+    if (visibleItems.length === 0) return;
+
+    const currentIndex = visibleItems.findIndex((meeting) => meeting.id === activeMeetingId);
+    const hasSelection = currentIndex >= 0;
+    const fallbackIndex = hasSelection ? currentIndex : 0;
+
+    if (event.key === "ArrowDown" || event.key === "j") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.min(visibleItems.length - 1, fallbackIndex + 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+      return;
+    }
+
+    if (event.key === "ArrowUp" || event.key === "k") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.max(0, fallbackIndex - 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const current = visibleItems[fallbackIndex];
+      if (current) {
+        handleOpenMeetingPage(current);
+      }
+    }
   };
 
   const handlePanelOpenChange = (open: boolean) => {
     if (!open) {
-      tableState.setSearchParams({ detail: null });
+      setEditingMeetingId(null);
     }
   };
 
   const handleSave = async (data: Partial<Meeting>) => {
-    if (!selectedMeeting) return;
+    if (!editingMeeting) return;
 
-    const payload: Partial<Meeting> = { ...data };
+    const payload = sanitizeMeetingPayload(data);
     if (typeof payload.date === "string" && payload.date.length === 10) {
       payload.date = new Date(`${payload.date}T12:00:00`).toISOString();
     }
 
     try {
       const supabase = createClient();
-      const { error } = await supabase
+      const { data: updatedMeeting, error } = await supabase
         .from("document_metadata")
         .update(payload)
-        .eq("id", selectedMeeting.id);
+        .eq("id", editingMeeting.id)
+        .select("*")
+        .single();
 
       if (error) throw new Error(error.message);
 
       setMeetings((prev) =>
         prev.map((meeting) =>
-          meeting.id === selectedMeeting.id ? { ...meeting, ...payload } : meeting,
+          meeting.id === editingMeeting.id
+            ? { ...meeting, ...(updatedMeeting as Partial<Meeting>) }
+            : meeting,
         ),
       );
       toast.success("Meeting updated successfully");
-      tableState.setSearchParams({ detail: null });
-    } catch {
-      toast.error("Failed to update meeting");
+      setEditingMeetingId(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update meeting";
+      toast.error(message);
     }
   };
 
@@ -489,7 +625,10 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     activeFilters,
     detailFields,
     selectedMeeting,
+    editingMeeting,
+    detailPanelOpen,
     tableColumns,
+    activeMeetingId,
     isFiltered,
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -497,7 +636,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     setMeetingToDelete,
     handleFilterChange,
     handleRowClick,
+    handleOpenMeetingPage,
     handleEdit,
+    handleTableKeyDown,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface Tab {
@@ -10,6 +11,7 @@ interface Tab {
 interface BudgetTabsProps {
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
+  controls?: ReactNode;
 }
 
 const tabs: Tab[] = [
@@ -30,31 +32,37 @@ const tabs: Tab[] = [
 export function BudgetTabs({
   activeTab = "budget",
   onTabChange,
+  controls,
 }: BudgetTabsProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Tabs">
-        <div className="flex min-w-max space-x-4 md:space-x-6">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange?.(tab.id)}
-                className={cn(
-                  "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
-                  isActive
-                    ? "border-brand text-brand"
-                    : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+      <nav className="-mb-px flex items-end justify-between gap-4 border-b border-border" aria-label="Tabs">
+        <div className="flex min-w-0 flex-1 overflow-x-auto">
+          <div className="flex min-w-max space-x-4 md:space-x-6">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => onTabChange?.(tab.id)}
+                  className={cn(
+                    "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
+                    isActive
+                      ? "border-brand text-brand"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
+        {controls ? (
+          <div className="flex items-center gap-1 pb-2">{controls}</div>
+        ) : null}
       </nav>
     </div>
   );

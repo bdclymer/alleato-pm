@@ -230,10 +230,10 @@ function FilterFields({
               }
             >
               <SelectTrigger className="h-8 text-sm">
-                <SelectValue placeholder={`All ${filter.label}`} />
+                <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All {filter.label}</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {filter.options?.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -298,11 +298,13 @@ function FilterMenu({
         <Tooltip>
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2">
+              <Button variant="ghost" size="icon" className="relative h-8 w-8 shrink-0">
                 <Filter className="h-4 w-4" />
-                <span className="hidden text-sm sm:inline">Filter</span>
                 {activeCount > 0 && (
-                  <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[11px]">
+                  <Badge
+                    variant="secondary"
+                    className="absolute -right-1 -top-1 h-4 min-w-4 px-1 text-[10px]"
+                  >
                     {activeCount}
                   </Badge>
                 )}
@@ -358,9 +360,8 @@ function ColumnToggle({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                 <Columns3 className="h-4 w-4" />
-                <span className="hidden text-sm sm:inline">Columns</span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
@@ -634,16 +635,6 @@ export function TableToolbar({
   return (
     <div className={cn("py-2", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {enableSearch && (
-          <div className="shrink-0">
-            <ExpandableSearch
-              value={searchValue}
-              onChange={onSearchChange}
-              placeholder={searchPlaceholder}
-            />
-          </div>
-        )}
-
         {enableViews && (
           <div className="shrink-0">
             <ViewSwitcher
@@ -654,72 +645,78 @@ export function TableToolbar({
           </div>
         )}
 
-        {enableFilters && filters.length > 0 && (
-          <div className="shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
+          {enableSearch && (
+            <ExpandableSearch
+              value={searchValue}
+              onChange={onSearchChange}
+              placeholder={searchPlaceholder}
+            />
+          )}
+
+          {enableFilters && filters.length > 0 && (
             <FilterMenu
               filters={filters}
               activeFilters={activeFilters}
               onFilterChange={onFilterChange}
               onClearFilters={onClearFilters}
             />
-          </div>
-        )}
+          )}
 
-        {enableColumnToggle && columns.length > 0 && (
-          <div className="shrink-0">
+          {enableColumnToggle && columns.length > 0 && (
             <ColumnToggle
               columns={columns}
               visibleColumns={visibleColumns}
               onColumnVisibilityChange={onColumnVisibilityChange}
             />
-          </div>
-        )}
+          )}
 
-        {enableExport && onExport && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={onExport}
-                >
-                  <Download className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Export</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+          {enableExport && onExport && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={onExport}
+                  >
+                    <Download className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Export</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
-        {enableBulkDelete && onBulkDelete && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  disabled={selectedCount === 0}
-                  onClick={onBulkDelete}
-                >
-                  <Trash2
-                    className={cn(
-                      "h-4 w-4",
-                      selectedCount > 0 && "text-destructive",
-                    )}
-                  />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {selectedCount > 0
-                  ? `Delete ${selectedCount} selected`
-                  : "Delete selected"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+          {enableBulkDelete && onBulkDelete && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    disabled={selectedCount === 0}
+                    onClick={onBulkDelete}
+                  >
+                    <Trash2
+                      className={cn(
+                        "h-4 w-4",
+                        selectedCount > 0 && "text-destructive",
+                      )}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {selectedCount > 0
+                    ? `Delete ${selectedCount} selected`
+                    : "Delete selected"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
 
         {hasRightActions && <div className="mx-1 h-4 w-px shrink-0 bg-border" />}
 

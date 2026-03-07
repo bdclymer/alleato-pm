@@ -5,6 +5,7 @@ import { Plus, X, Search, ChevronDown, ChevronRight, AlertTriangle } from "lucid
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -89,7 +90,7 @@ export function BudgetLineItemCreatorModal({
       budgetCodeLabel: "",
       costCodeId: "",
       costTypeId: null,
-      qty: "",
+      qty: "1",
       uom: "",
       unitCost: "",
       amount: "0.00",
@@ -133,7 +134,7 @@ export function BudgetLineItemCreatorModal({
           budgetCodeLabel: "",
           costCodeId: "",
           costTypeId: null,
-          qty: "",
+          qty: "1",
           uom: "",
           unitCost: "",
           amount: "0.00",
@@ -346,7 +347,7 @@ export function BudgetLineItemCreatorModal({
       budgetCodeLabel: "",
       costCodeId: "",
       costTypeId: null,
-      qty: "",
+      qty: "1",
       uom: smartCopyUOM && previousRow.uom ? previousRow.uom : "",
       unitCost: "",
       amount: "0.00",
@@ -446,7 +447,7 @@ export function BudgetLineItemCreatorModal({
             budgetCodeLabel: createdCode.fullLabel,
             costCodeId: createdCode.code,
             costTypeId: createdCode.costTypeId,
-            qty: "",
+            qty: "1",
             uom: "",
             unitCost: "",
             amount: "0.00",
@@ -471,12 +472,13 @@ export function BudgetLineItemCreatorModal({
       (row) =>
         !row.costCodeId ||
         !row.costTypeId ||
+        (parseFloat(row.qty) || 0) < 1 ||
         parseFloat(row.amount) === 0
     );
 
     if (invalidRows.length > 0) {
       toast.error(
-        "All rows must have a budget code, an associated cost type, and a non-zero amount",
+        "All rows must have a budget code, an associated cost type, quantity of at least 1, and a non-zero amount",
       );
       return;
     }
@@ -491,7 +493,7 @@ export function BudgetLineItemCreatorModal({
           budgetCodeLabel: "",
           costCodeId: "",
           costTypeId: null,
-          qty: "",
+          qty: "1",
           uom: "",
           unitCost: "",
           amount: "0.00",
@@ -579,9 +581,6 @@ export function BudgetLineItemCreatorModal({
                   <h2 className="text-lg font-semibold text-foreground">
                     Add Budget Line Items
                   </h2>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    Add one or more budget line items to this project
-                  </p>
                 </div>
                 <Button
                   variant="ghost"
@@ -704,7 +703,7 @@ export function BudgetLineItemCreatorModal({
                                 step="0.001"
                                 value={row.qty}
                                 onChange={(e) => handleRowChange(index, "qty", e.target.value)}
-                                placeholder="0"
+                                placeholder="1"
                                 className="h-8 bg-muted/30 border-border/60 text-center"
                                 disabled={isCreating}
                                 clearZeroOnFocus={true}
@@ -781,37 +780,44 @@ export function BudgetLineItemCreatorModal({
                         ))}
                       </AnimatePresence>
                     </tbody>
+                    <tfoot>
+                      <tr className="border-t border-border bg-muted/20">
+                        <td colSpan={5} className="py-2 pr-3 text-right text-sm font-semibold text-foreground">
+                          Total
+                        </td>
+                        <td className="py-2 pr-2 text-right text-sm font-semibold text-foreground">
+                          ${formatCurrency(calculateTotal().toString())}
+                        </td>
+                        <td />
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
 
                 {/* Add Row Button */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addRow}
-                  disabled={isCreating}
-                  className="mt-4 gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Another Line Item
-                </Button>
+                <div className="mt-4">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={addRow}
+                        disabled={isCreating}
+                        aria-label="Add line item"
+                        title="Add line item"
+                        className="h-8 w-8"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Add line item</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
 
               {/* Footer — padding only, no divider */}
-              <div className="flex items-center justify-between px-6 pt-3 pb-5 bg-muted/20">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium text-foreground">
-                    {rows.length} line item{rows.length !== 1 ? "s" : ""}
-                  </span>
-                  <span className="text-muted-foreground">•</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">Total Amount</span>
-                    <span className="text-2xl font-bold text-foreground">
-                      ${formatCurrency(calculateTotal().toString())}
-                    </span>
-                  </div>
-                </div>
+              <div className="flex items-center justify-end px-6 pt-3 pb-5 bg-muted/20">
                 <div className="flex gap-4">
                   <Button
                     variant="outline"

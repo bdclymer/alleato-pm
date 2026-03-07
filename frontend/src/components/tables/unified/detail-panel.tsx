@@ -281,11 +281,11 @@ export function DetailPanel<T extends Record<string, unknown>>({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="p-0 flex flex-col"
-        style={{ width: `${width}px`, maxWidth: "100vw" }}
+        className="p-0 flex flex-col bg-[#FAFCFF]"
+        style={{ width: `${width}px`, maxWidth: "100vw", backgroundColor: "#FAFCFF" }}
       >
         {/* Header */}
-        <SheetHeader className="px-4 py-4 border-b flex-shrink-0">
+        <SheetHeader className="px-4 py-4 border-b flex-shrink-0 bg-[#FAFCFF]">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-base font-semibold truncate pr-2">
               {title}
@@ -326,8 +326,8 @@ export function DetailPanel<T extends Record<string, unknown>>({
         </SheetHeader>
 
         {/* Form content */}
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-4">
+        <ScrollArea className="flex-1 bg-[#FAFCFF]">
+          <div className="p-4 space-y-4 bg-[#FAFCFF]">
             {fields.map((field) => (
               <div
                 key={field.id}
@@ -374,7 +374,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-4 py-4 border-t flex items-center justify-between flex-shrink-0 bg-background">
+        <div className="px-4 py-4 border-t flex items-center justify-between flex-shrink-0 bg-[#FAFCFF]">
           {onDelete ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>

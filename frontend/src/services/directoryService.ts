@@ -87,6 +87,92 @@ export interface PersonUpdateDTO extends Partial<PersonCreateDTO> {
 export class DirectoryService {
   constructor(private supabase: ReturnType<typeof createClient<Database>>) {}
 
+  async getGlobalPeople(filters: {
+    search?: string;
+    type?: "user" | "contact" | "all";
+    status?: "active" | "inactive" | "all";
+    perPage?: number;
+    page?: number;
+  }): Promise<{
+    data: Array<
+      Pick<
+        Person,
+        | "id"
+        | "first_name"
+        | "last_name"
+        | "email"
+        | "job_title"
+        | "phone_mobile"
+        | "phone_business"
+        | "person_type"
+        | "status"
+      > & { company: Pick<Company, "id" | "name"> | null }
+    >;
+    meta: {
+      total: number;
+      page: number;
+      perPage: number;
+      totalPages: number;
+    };
+  }> {
+    const {
+      search,
+      type = "all",
+      status = "active",
+      perPage = 200,
+      page = 1,
+    } = filters;
+
+    let query = this.supabase
+      .from("people")
+      .select(
+        `
+          id,
+          first_name,
+          last_name,
+          email,
+          job_title,
+          phone_mobile,
+          phone_business,
+          person_type,
+          status,
+          company:companies(id, name)
+        `,
+        { count: "exact" },
+      )
+      .order("last_name", { ascending: true })
+      .order("first_name", { ascending: true });
+
+    if (type !== "all") {
+      query = query.eq("person_type", type);
+    }
+
+    if (status !== "all") {
+      query = query.eq("status", status);
+    }
+
+    if (search) {
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+      );
+    }
+
+    const offset = (page - 1) * perPage;
+    const { data, error, count } = await query.range(offset, offset + perPage - 1);
+
+    if (error) throw error;
+
+    return {
+      data: data || [],
+      meta: {
+        total: count || 0,
+        page,
+        perPage,
+        totalPages: Math.ceil((count || 0) / perPage),
+      },
+    };
+  }
+
   async getPeople(
     projectId: string,
     filters: DirectoryFilters,
@@ -238,7 +324,27 @@ export class DirectoryService {
     projectId: string,
     data: PersonCreateDTO,
   ): Promise<PersonWithDetails> {
-    // Start a transaction
+    const normalizedEmail = data.email?.trim().toLowerCase();
+    if (normalizedEmail) {
+      const { data: existingByEmail, error: existingError } = await this.supabase
+        .from("people")
+        .select("id")
+        .ilike("email", normalizedEmail)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingError) throw existingError;
+
+      if (existingByEmail?.id) {
+        await this.addPersonToProject(projectId, {
+          person_id: existingByEmail.id,
+          permission_template_id: data.permission_template_id,
+          person_type: data.person_type,
+        });
+        return this.getPerson(projectId, existingByEmail.id);
+      }
+    }
+
     const { data: person, error: personError } = await this.supabase
       .from("people")
       .insert({
@@ -256,19 +362,11 @@ export class DirectoryService {
 
     if (personError) throw personError;
 
-    // Create membership
-    const { data: membership, error: membershipError } = await this.supabase
-      .from("project_directory_memberships")
-      .insert({
-        project_id: parseInt(projectId),
-        person_id: person.id,
-        permission_template_id: data.permission_template_id,
-        invite_status: data.person_type === "user" ? "not_invited" : "accepted",
-      })
-      .select("*, permission_template:permission_templates(*)")
-      .single();
-
-    if (membershipError) throw membershipError;
+    const membership = await this.addPersonToProject(projectId, {
+      person_id: person.id,
+      permission_template_id: data.permission_template_id,
+      person_type: data.person_type,
+    });
 
     // Fetch company if exists
     let company = undefined;
@@ -287,6 +385,79 @@ export class DirectoryService {
       membership,
       permission_template: membership.permission_template ?? undefined,
     };
+  }
+
+  async addPersonToProject(
+    projectId: string,
+    data: {
+      person_id: string;
+      permission_template_id?: string;
+      person_type?: "user" | "contact";
+    },
+  ): Promise<
+    ProjectDirectoryMembership & {
+      permission_template?: PermissionTemplate | null;
+    }
+  > {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    const { data: existing, error: existingError } = await this.supabase
+      .from("project_directory_memberships")
+      .select("*, permission_template:permission_templates(*)")
+      .eq("project_id", projectIdNum)
+      .eq("person_id", data.person_id)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existing) {
+      if (
+        data.permission_template_id &&
+        existing.permission_template_id !== data.permission_template_id
+      ) {
+        const { data: updated, error: updateError } = await this.supabase
+          .from("project_directory_memberships")
+          .update({
+            permission_template_id: data.permission_template_id,
+            status: "active",
+          })
+          .eq("id", existing.id)
+          .select("*, permission_template:permission_templates(*)")
+          .single();
+
+        if (updateError) throw updateError;
+        return updated;
+      }
+
+      if (existing.status !== "active") {
+        const { data: reactivated, error: reactivateError } = await this.supabase
+          .from("project_directory_memberships")
+          .update({ status: "active" })
+          .eq("id", existing.id)
+          .select("*, permission_template:permission_templates(*)")
+          .single();
+
+        if (reactivateError) throw reactivateError;
+        return reactivated;
+      }
+
+      return existing;
+    }
+
+    const { data: membership, error: membershipError } = await this.supabase
+      .from("project_directory_memberships")
+      .insert({
+        project_id: projectIdNum,
+        person_id: data.person_id,
+        permission_template_id: data.permission_template_id,
+        invite_status:
+          data.person_type === "user" ? "not_invited" : "accepted",
+      })
+      .select("*, permission_template:permission_templates(*)")
+      .single();
+
+    if (membershipError) throw membershipError;
+    return membership;
   }
 
   async updatePerson(

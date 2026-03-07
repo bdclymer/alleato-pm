@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { Download } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -23,6 +25,7 @@ import {
   renderMeetingRowActions,
 } from "@/features/meetings/meetings-table-config";
 import { useMeetingsTable, EMPTY_FILTERS } from "@/features/meetings/use-meetings-table";
+import { MeetingPreviewPane } from "@/features/meetings/meeting-preview-pane";
 
 interface MeetingsTablePageProps {
   initialMeetings: Meeting[];
@@ -30,6 +33,7 @@ interface MeetingsTablePageProps {
 }
 
 export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTablePageProps): ReactElement {
+  const router = useRouter();
   const {
     tableState,
     pagedMeetings,
@@ -40,7 +44,10 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     activeFilters,
     detailFields,
     selectedMeeting,
+    editingMeeting,
+    detailPanelOpen,
     tableColumns,
+    activeMeetingId,
     isFiltered,
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -48,7 +55,9 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     setMeetingToDelete,
     handleFilterChange,
     handleRowClick,
+    handleOpenMeetingPage,
     handleEdit,
+    handleTableKeyDown,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,
@@ -59,6 +68,15 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handleExport,
   } = useMeetingsTable(initialMeetings, projectId);
 
+  const handleScheduleMeeting = () => {
+    if (projectId) {
+      router.push(`/${projectId}/meetings/schedule`);
+      return;
+    }
+
+    toast.info("Scheduling page coming soon");
+  };
+
   return (
     <>
       <UnifiedTablePage
@@ -66,9 +84,13 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           title: "Meetings",
           description: "View and manage all your meetings",
           actions: (
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            <Button
+              size="sm"
+              onClick={handleScheduleMeeting}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <CalendarPlus className="h-4 w-4 mr-2" />
+              Schedule meeting
             </Button>
           ),
         }}
@@ -100,10 +122,13 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
+          activeRowId: activeMeetingId,
+          onTableKeyDown: handleTableKeyDown,
           onRowClick: handleRowClick,
           rowActions: (item) =>
             renderMeetingRowActions(
               item,
+              handleOpenMeetingPage,
               handleEdit,
               (meeting) => {
                 setMeetingToDelete(meeting);
@@ -112,6 +137,14 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               handleOpenSource,
               handleOpenRecording,
             ),
+        }}
+        sidePanel={{
+          content: (
+            <MeetingPreviewPane
+              meeting={selectedMeeting ?? pagedMeetings[0] ?? null}
+              onOpenMeetingPage={handleOpenMeetingPage}
+            />
+          ),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -161,10 +194,10 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
       />
 
       <DetailPanel
-        open={Boolean(tableState.detailParam)}
+        open={detailPanelOpen}
         onOpenChange={handlePanelOpenChange}
-        item={selectedMeeting}
-        title={selectedMeeting?.title ?? "Meeting"}
+        item={editingMeeting}
+        title={editingMeeting?.title ?? "Meeting"}
         fields={detailFields}
         onSave={handleSave}
       />

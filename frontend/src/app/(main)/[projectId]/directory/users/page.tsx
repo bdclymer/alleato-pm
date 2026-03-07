@@ -100,7 +100,7 @@ export default function ProjectDirectoryUsersPage() {
           actions={
             <Button onClick={handleAddUser} variant="default">
               <UserPlus className="mr-2 h-4 w-4" />
-              Add User
+              Add Contact
             </Button>
           }
         />
@@ -124,7 +124,7 @@ export default function ProjectDirectoryUsersPage() {
         actions={
           <Button onClick={handleAddUser} variant="default">
             <UserPlus className="mr-2 h-4 w-4" />
-            Add User
+            Add Contact
           </Button>
         }
       />
@@ -156,12 +156,13 @@ export default function ProjectDirectoryUsersPage() {
                     No Authenticated Users
                   </h3>
                   <p className="text-muted-foreground mb-4 max-w-sm">
-                    No users have been added to this project yet.
-                    Add users to manage your project team.
+                    No users have been added to this project yet. Search and
+                    add existing contacts from the global directory, or create
+                    a new contact if needed.
                   </p>
                   <Button onClick={handleAddUser} variant="default">
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Add User
+                    Add Contact
                   </Button>
                 </CardContent>
               </Card>

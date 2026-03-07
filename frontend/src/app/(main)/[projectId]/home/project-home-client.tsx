@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  ChevronRight,
-  Pencil,
   X,
   Zap,
   Send,
@@ -15,12 +13,35 @@ import {
   TrendingUp,
   ArrowRight,
   Settings,
+  Loader2,
+  Phone,
+  Mail,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { MeetingsSection } from "./meetings-section";
 import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
+import { useBudgetData } from "@/hooks/use-budget-data";
+import type { BudgetLineItem } from "@/types/budget";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
@@ -42,6 +63,10 @@ type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
 interface TeamMember {
   name: string;
   role: string;
+  company?: string;
+  email?: string;
+  phone?: string;
+  category?: "team" | "contact" | "subcontractor";
 }
 
 interface Commitment {
@@ -97,11 +122,277 @@ function formatCompactCurrency(amount: number): string {
   }).format(amount);
 }
 
+/** Extract budget variances — cost codes with biggest gap between budget and projected costs */
+function getBudgetVariances(items: BudgetLineItem[], limit = 5) {
+  return items
+    .map((item) => ({
+      id: item.id,
+      costCode: item.costCode,
+      description: item.description,
+      revisedBudget: item.revisedBudget,
+      projectedCosts: item.projectedCosts,
+      variance: item.projectedBudget - item.projectedCosts, // positive = under budget, negative = over
+      consumption: item.revisedBudget > 0
+        ? (item.projectedCosts / item.revisedBudget) * 100
+        : 0,
+    }))
+    .filter((v) => v.revisedBudget > 0) // only lines with a budget
+    .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance)) // largest variance first
+    .slice(0, limit);
+}
+
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "TM";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+/** Directory sub-section with searchable "add contact" popover */
+function DirectorySubSection({
+  title,
+  members,
+  allMembers,
+  projectId,
+  sectionKey,
+  personTypeFilter,
+}: {
+  title: string;
+  members: TeamMember[];
+  allMembers: TeamMember[];
+  projectId: number;
+  sectionKey: string;
+  personTypeFilter?: string;
+}) {
+  const [addOpen, setAddOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
+  const [availablePeople, setAvailablePeople] = React.useState<
+    { id: string; first_name: string; last_name: string; email: string | null; job_title: string | null }[]
+  >([]);
+  const [peopleLoading, setPeopleLoading] = React.useState(false);
+
+  // Fetch real contacts when the popover opens
+  React.useEffect(() => {
+    if (!addOpen) return;
+    let cancelled = false;
+
+    async function fetchPeople() {
+      setPeopleLoading(true);
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        let query = supabase
+          .from("people")
+          .select("id, first_name, last_name, email, job_title")
+          .order("last_name", { ascending: true })
+          .limit(50);
+
+        if (personTypeFilter) {
+          query = query.ilike("person_type", personTypeFilter);
+        }
+
+        const { data } = await query;
+        if (!cancelled) {
+          setAvailablePeople(data || []);
+        }
+      } catch {
+        // silently fail — user still has fallback link
+      } finally {
+        if (!cancelled) setPeopleLoading(false);
+      }
+    }
+
+    fetchPeople();
+    return () => { cancelled = true; };
+  }, [addOpen, personTypeFilter]);
+
+  // Filter out people already displayed as members, and filter by search
+  const filteredPeople = React.useMemo(() => {
+    const existingNames = new Set(allMembers.map((m) => m.name.toLowerCase()));
+    let result = availablePeople.filter((p) => {
+      const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
+      return !existingNames.has(fullName);
+    });
+    if (searchValue.trim()) {
+      const q = searchValue.toLowerCase();
+      result = result.filter((p) => {
+        const fullName = `${p.first_name} ${p.last_name}`.toLowerCase();
+        return (
+          fullName.includes(q) ||
+          (p.email && p.email.toLowerCase().includes(q)) ||
+          (p.job_title && p.job_title.toLowerCase().includes(q))
+        );
+      });
+    }
+    return result;
+  }, [availablePeople, allMembers, searchValue]);
+
+  return (
+    <div>
+      {/* Section header with + button */}
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/70">
+            {title}
+          </span>
+          {members.length > 0 && (
+            <span className="text-[10px] text-muted-foreground/40 ml-0.5">
+              {members.length}
+            </span>
+          )}
+        </div>
+        <Popover open={addOpen} onOpenChange={setAddOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className="h-5 w-5 flex items-center justify-center rounded text-foreground/40 hover:text-primary hover:bg-primary/5 transition-colors"
+              title={`Add to ${title}`}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder={`Search ${title.toLowerCase()}...`}
+                value={searchValue}
+                onValueChange={setSearchValue}
+                className="h-9"
+              />
+              <CommandList>
+                {peopleLoading ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xs text-muted-foreground">Loading...</p>
+                  </div>
+                ) : filteredPeople.length === 0 ? (
+                  <CommandEmpty>
+                    <div className="py-3 text-center">
+                      <p className="text-xs text-muted-foreground">
+                        {searchValue ? "No matching people found" : "No people available"}
+                      </p>
+                      <Link
+                        href={`/${projectId}/directory/users`}
+                        className="text-xs text-primary hover:text-primary/80 mt-1 inline-block"
+                        onClick={() => setAddOpen(false)}
+                      >
+                        Go to full directory →
+                      </Link>
+                    </div>
+                  </CommandEmpty>
+                ) : (
+                  <CommandGroup heading={title}>
+                    {filteredPeople.map((person) => {
+                      const fullName = `${person.first_name} ${person.last_name}`;
+                      return (
+                        <CommandItem
+                          key={person.id}
+                          value={fullName}
+                          onSelect={() => {
+                            setAddOpen(false);
+                            setSearchValue("");
+                            // Navigate to directory to manage membership
+                            window.location.href = `/${projectId}/directory/users`;
+                          }}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Avatar className="h-6 w-6 flex-shrink-0">
+                            <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
+                              {getInitials(fullName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm truncate">{fullName}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {person.job_title || person.email || "Employee"}
+                            </p>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                    {/* Link to full directory */}
+                    <CommandItem
+                      onSelect={() => {
+                        setAddOpen(false);
+                        window.location.href = `/${projectId}/directory/users`;
+                      }}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Plus className="h-3 w-3 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-primary">View full directory</p>
+                      </div>
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Members list */}
+      {members.length > 0 ? (
+        <div className="space-y-0.5">
+          {members.slice(0, 3).map((member, i) => (
+            <div
+              key={`${sectionKey}-${i}`}
+              className="group flex items-center gap-2 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors"
+            >
+              <Avatar className="h-6 w-6 flex-shrink-0">
+                <AvatarFallback className="bg-card text-muted-foreground text-[9px] border border-border">
+                  {getInitials(member.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] text-foreground leading-none truncate">
+                  {member.name}
+                </p>
+                <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">
+                  {[member.role, member.company].filter(Boolean).join(" · ") || "—"}
+                </p>
+              </div>
+              {/* Quick contact icons — visible on hover */}
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                {member.phone && (
+                  <a
+                    href={`tel:${member.phone}`}
+                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    title={`Call ${member.phone}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Phone className="h-3 w-3" />
+                  </a>
+                )}
+                {member.email && (
+                  <a
+                    href={`mailto:${member.email}`}
+                    className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    title={`Email ${member.email}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Mail className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+          {members.length > 3 && (
+            <Link
+              href={`/${projectId}/directory/users`}
+              className="block px-2 py-1 text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            >
+              +{members.length - 3} more
+            </Link>
+          )}
+        </div>
+      ) : (
+        <p className="text-[11px] text-muted-foreground/40 px-2 py-1">
+          None added yet
+        </p>
+      )}
+    </div>
+  );
 }
 
 /* =============================================================================
@@ -166,7 +457,7 @@ function KpiCell({
 
   if (href) {
     return (
-      <Link href={href} className="block hover:bg-muted/30 transition-colors">
+      <Link href={href} className="block hover:bg-[hsl(var(--surface-alt))] transition-colors">
         {inner}
       </Link>
     );
@@ -243,7 +534,7 @@ function ActivityItem({
 
   if (href) {
     return (
-      <Link href={href} className="block hover:bg-muted/30 transition-colors -mx-1 px-1 rounded">
+      <Link href={href} className="block hover:bg-[hsl(var(--surface-alt))] transition-colors -mx-1 px-1 rounded">
         {inner}
       </Link>
     );
@@ -374,6 +665,26 @@ export function ProjectHomeClient({
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [signalsDismissed, setSignalsDismissed] = React.useState(false);
 
+  // Fetch full budget data from API (all computed columns)
+  const {
+    budgetData: fullBudgetData,
+    grandTotals,
+    loading: budgetLoading,
+  } = useBudgetData(String(project.id));
+
+  // Budget insight derivations
+  const budgetVariances = React.useMemo(
+    () => getBudgetVariances(fullBudgetData, 6),
+    [fullBudgetData]
+  );
+
+  const projectedOverUnder = grandTotals.projectedOverUnder;
+  const commitmentPct = grandTotals.revisedBudget > 0
+    ? (grandTotals.committedCosts / grandTotals.revisedBudget) * 100
+    : 0;
+  const totalPending = grandTotals.pendingChanges + grandTotals.pendingCostChanges;
+  const forecastGap = grandTotals.estimatedCostAtCompletion - grandTotals.revisedBudget;
+
   // PortfolioProject mapping (for EditProjectDialog)
   const projectSummaryMetadata =
     typeof project.summary_metadata === "object" && project.summary_metadata !== null
@@ -465,7 +776,7 @@ export function ProjectHomeClient({
     notes: project.summary || "",
   };
 
-  // Team members
+  // Team members — categorized into project team, key contacts, subcontractors
   const teamMembers = React.useMemo((): TeamMember[] => {
     if (!project.team_members || !Array.isArray(project.team_members)) return [];
     return project.team_members.map((member) => {
@@ -479,21 +790,52 @@ export function ProjectHomeClient({
               }
             })()
           : member;
+
+      // Auto-categorize based on role/type
+      const role = String(parsed?.role || "").toLowerCase();
+      const type = String(parsed?.type || parsed?.person_type || "").toLowerCase();
+      let category: "team" | "contact" | "subcontractor" = "team";
+      if (type === "subcontractor" || role.includes("subcontractor") || role.includes("sub ")) {
+        category = "subcontractor";
+      } else if (type === "contact" || role.includes("client") || role.includes("owner") || role.includes("architect") || role.includes("engineer") || role.includes("inspector")) {
+        category = "contact";
+      }
+      // Explicit category from data takes precedence
+      if (parsed?.category === "contact" || parsed?.category === "subcontractor" || parsed?.category === "team") {
+        category = parsed.category;
+      }
+
       return {
         name: String(parsed?.name || "Team Member"),
         role: String(parsed?.role || ""),
+        company: parsed?.company ? String(parsed.company) : undefined,
+        email: parsed?.email ? String(parsed.email) : undefined,
+        phone: parsed?.phone || parsed?.mobile || parsed?.office
+          ? String(parsed.phone || parsed.mobile || parsed.office)
+          : undefined,
+        category,
       };
     });
   }, [project.team_members]);
 
-  // Financial calculations
+  // Group team members by category
+  const directoryGroups = React.useMemo(() => {
+    const groups = {
+      team: teamMembers.filter((m) => m.category === "team"),
+      contact: teamMembers.filter((m) => m.category === "contact"),
+      subcontractor: teamMembers.filter((m) => m.category === "subcontractor"),
+    };
+    return groups;
+  }, [teamMembers]);
+
+  // Financial calculations (must be declared before useMemos that reference them)
   const totalBudget = budget.reduce((sum, item) => sum + (item.original_amount || 0), 0);
   const committed = commitments.reduce((sum, c) => sum + (c.contract_amount || 0), 0);
   const remaining = Math.max(totalBudget - committed, 0);
   const budgetUtilization = totalBudget > 0 ? (committed / totalBudget) * 100 : 0;
   const hasBudgetData = totalBudget > 0;
 
-  // Derived content
+  // Derived content (must be declared before useMemos that reference them)
   const openRfis = rfis.filter((r) => r.status?.toLowerCase() !== "closed");
   const openChangeEvents = changeEvents.filter((e) => e.status === "open");
   const pendingChangeOrders = changeOrders.filter(
@@ -504,6 +846,105 @@ export function ProjectHomeClient({
   );
   const scheduleCount = schedule.length || tasks.length;
   const lastDailyLog = dailyLogs.length > 0 ? dailyLogs[0] : null;
+
+  // Project health score — computed from budget + schedule + open items
+  const projectHealth = React.useMemo(() => {
+    let score = 0;
+    let factors = 0;
+
+    // Budget health (0-100)
+    if (hasBudgetData) {
+      factors++;
+      if (budgetUtilization <= 75) score += 100;
+      else if (budgetUtilization <= 90) score += 60;
+      else score += 20;
+    }
+
+    // Open items health
+    const totalOpenItems = openRfis.length + openChangeEvents.length;
+    factors++;
+    if (totalOpenItems <= 3) score += 100;
+    else if (totalOpenItems <= 8) score += 60;
+    else score += 20;
+
+    // Forecast health
+    if (hasBudgetData && fullBudgetData.length > 0) {
+      factors++;
+      if (projectedOverUnder >= 0) score += 100;
+      else if (projectedOverUnder > -50000) score += 60;
+      else score += 20;
+    }
+
+    // Schedule health
+    if (schedule.length > 0) {
+      factors++;
+      const overdueTasks = schedule.filter((t: any) => {
+        if (!t.end_date) return false;
+        const endDate = new Date(t.end_date);
+        return endDate < new Date() && t.status !== "completed" && t.status !== "complete";
+      });
+      const overdueRatio = overdueTasks.length / schedule.length;
+      if (overdueRatio <= 0.05) score += 100;
+      else if (overdueRatio <= 0.15) score += 60;
+      else score += 20;
+    }
+
+    const avg = factors > 0 ? score / factors : 50;
+    if (avg >= 75) return "good" as const;
+    if (avg >= 45) return "warn" as const;
+    return "bad" as const;
+  }, [hasBudgetData, budgetUtilization, openRfis.length, openChangeEvents.length, projectedOverUnder, fullBudgetData, schedule]);
+
+  // Schedule metrics
+  const scheduleMetrics = React.useMemo(() => {
+    const allTasks = schedule.length > 0 ? schedule : tasks;
+    if (allTasks.length === 0) return null;
+
+    const completedTasks = allTasks.filter(
+      (t: any) => t.status === "completed" || t.status === "complete"
+    ).length;
+    const totalTasks = allTasks.length;
+    const pctComplete = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+    const overdueTasks = allTasks.filter((t: any) => {
+      const endDate = t.end_date || t.due_date;
+      if (!endDate) return false;
+      return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete";
+    });
+
+    return {
+      completedTasks,
+      totalTasks,
+      pctComplete,
+      overdueTasks: overdueTasks.length,
+    };
+  }, [schedule, tasks]);
+
+  // Completion countdown
+  const completionInfo = React.useMemo(() => {
+    if (!project["est completion"]) return null;
+    try {
+      const completion = new Date(project["est completion"]);
+      const now = new Date();
+      const daysRemaining = Math.floor(
+        (completion.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const monthsRemaining = Math.round(daysRemaining / 30);
+      return {
+        date: format(completion, "MMM yyyy"),
+        daysRemaining,
+        monthsRemaining,
+        label: daysRemaining > 60
+          ? `${monthsRemaining} mo`
+          : daysRemaining > 0
+          ? `${daysRemaining}d`
+          : "Overdue",
+        isPast: daysRemaining <= 0,
+      };
+    } catch {
+      return null;
+    }
+  }, [project]);
 
   // AI signals
   const signals = React.useMemo(() => {
@@ -555,6 +996,50 @@ export function ProjectHomeClient({
       });
     }
 
+    // Open items signal (moved from KPI strip for better context)
+    const totalOpenItems = openRfis.length + openChangeEvents.length;
+    if (totalOpenItems > 0) {
+      list.push({
+        id: "open-items",
+        severity: totalOpenItems > 8 ? "warning" : "info",
+        label: `${totalOpenItems} open item${totalOpenItems !== 1 ? "s" : ""} need action`,
+        href: `/${project.id}/rfis`,
+      });
+    }
+
+    // Schedule signals
+    if (schedule.length > 0) {
+      const overdueTasks = schedule.filter((t) => {
+        const endDate = t.end_date;
+        if (!endDate) return false;
+        return new Date(endDate) < new Date() && t.status !== "completed" && t.status !== "complete";
+      });
+      if (overdueTasks.length > 0) {
+        list.push({
+          id: "schedule-overdue",
+          severity: overdueTasks.length > 5 ? "critical" : "warning",
+          label: `${overdueTasks.length} schedule task${overdueTasks.length !== 1 ? "s" : ""} overdue`,
+          href: `/${project.id}/schedule`,
+        });
+      }
+    }
+
+    // Daily log freshness signal
+    if (dailyLogs.length > 0) {
+      const lastLog = dailyLogs[0];
+      const daysSinceLog = Math.floor(
+        (Date.now() - new Date(lastLog.created_at || Date.now()).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysSinceLog >= 3) {
+        list.push({
+          id: "daily-log-stale",
+          severity: daysSinceLog >= 7 ? "warning" : "info",
+          label: `No daily log in ${daysSinceLog} days`,
+          href: `/${project.id}/daily-log`,
+        });
+      }
+    }
+
     if (project["est completion"]) {
       try {
         const completion = new Date(project["est completion"]);
@@ -573,8 +1058,8 @@ export function ProjectHomeClient({
       }
     }
 
-    return list.slice(0, 5);
-  }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, project]);
+    return list.slice(0, 6);
+  }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, project, schedule, dailyLogs]);
 
   // Meta strings
   const projectMeta = [project.type, project.project_sector, project.current_phase]
@@ -645,7 +1130,7 @@ export function ProjectHomeClient({
   }, [hasBudgetData, committed, remaining, totalBudget, pendingChangeOrders]);
 
   return (
-    <div className="min-h-screen bg-muted/40">
+    <div className="min-h-screen bg-background">
       <div className="px-4 sm:px-6 lg:px-10 pt-4 pb-24">
 
         {/* ═══════════════════════════════════════════
@@ -655,9 +1140,23 @@ export function ProjectHomeClient({
         <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs">
 
           {/* ── LAYER 1: Header ──
-              Single compact row: job number · name · meta | icon actions */}
+              Health dot · job number · name · meta · completion | icon actions */}
           <div className="px-6 py-4 sm:px-8 border-b border-border flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 min-w-0">
+              {/* Health indicator dot */}
+              <span
+                className={cn(
+                  "h-2 w-2 rounded-full flex-shrink-0",
+                  projectHealth === "good" && "bg-green-500",
+                  projectHealth === "warn" && "bg-amber-500",
+                  projectHealth === "bad" && "bg-red-500"
+                )}
+                title={
+                  projectHealth === "good" ? "Project on track"
+                    : projectHealth === "warn" ? "Needs attention"
+                    : "At risk"
+                }
+              />
               {project["job number"] && (
                 <span className="text-sm font-semibold text-muted-foreground tabular-nums flex-shrink-0">
                   {project["job number"]}
@@ -666,30 +1165,53 @@ export function ProjectHomeClient({
               <h1 className="text-sm font-semibold text-foreground truncate">
                 {project.name || "Untitled Project"}
               </h1>
-              {projectMeta && (
+              {/* Meta: type · sector · phase · client */}
+              {(projectMeta || project.client) && (
                 <span className="hidden sm:inline text-xs text-muted-foreground/60 flex-shrink-0">
-                  ·  {projectMeta}
+                  · {[projectMeta, project.client].filter(Boolean).join(" · ")}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsEditDialogOpen(true)}
-                title="Edit project"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <ProjectChecklistSidebar
-                projectId={String(project.id)}
-                projectName={project.name || project["job number"] || "Project"}
-                buttonVariant="ghost"
-                buttonSize="icon"
-                iconOnly
-                className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
-              />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {/* Completion countdown */}
+              {completionInfo && (
+                <span
+                  className={cn(
+                    "hidden sm:flex items-center gap-1 text-xs tabular-nums",
+                    completionInfo.isPast ? "text-red-600" : "text-muted-foreground"
+                  )}
+                  title={`Est. completion: ${completionInfo.date}`}
+                >
+                  <Calendar className="h-3 w-3" />
+                  <span>{completionInfo.date}</span>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className={cn(
+                    "font-medium",
+                    completionInfo.isPast ? "text-red-600" : completionInfo.daysRemaining < 60 ? "text-amber-600" : "text-muted-foreground"
+                  )}>
+                    {completionInfo.label}
+                  </span>
+                </span>
+              )}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsEditDialogOpen(true)}
+                  title="Edit project"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <ProjectChecklistSidebar
+                  projectId={String(project.id)}
+                  projectName={project.name || project["job number"] || "Project"}
+                  buttonVariant="ghost"
+                  buttonSize="icon"
+                  iconOnly
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
+                />
+              </div>
             </div>
           </div>
 
@@ -715,18 +1237,34 @@ export function ProjectHomeClient({
               signal={budgetUtilization > 90 ? "bad" : budgetUtilization > 75 ? "warn" : undefined}
             />
             <KpiCell
-              label="Remaining"
-              value={hasBudgetData ? formatCompactCurrency(remaining) : "—"}
-              sub={hasBudgetData ? `${(100 - budgetUtilization).toFixed(0)}% unallocated` : undefined}
+              label="Projected Over/Under"
+              value={hasBudgetData && fullBudgetData.length > 0
+                ? `${projectedOverUnder >= 0 ? "+" : ""}${formatCompactCurrency(projectedOverUnder)}`
+                : "—"}
+              sub={hasBudgetData && fullBudgetData.length > 0
+                ? projectedOverUnder >= 0 ? "Under budget" : "Over budget"
+                : undefined}
               href={`/${project.id}/budget`}
-              signal={hasBudgetData ? (budgetUtilization > 90 ? "bad" : budgetUtilization < 75 ? "good" : undefined) : undefined}
+              signal={hasBudgetData && fullBudgetData.length > 0
+                ? (projectedOverUnder >= 0 ? "good" : projectedOverUnder < -50000 ? "bad" : "warn")
+                : undefined}
             />
             <KpiCell
-              label="Open Items"
-              value={String(openRfis.length + openChangeEvents.length)}
-              sub={`${openRfis.length} RFI${openRfis.length !== 1 ? "s" : ""} · ${openChangeEvents.length} event${openChangeEvents.length !== 1 ? "s" : ""}`}
-              href={`/${project.id}/rfis`}
-              signal={openRfis.length + openChangeEvents.length > 8 ? "warn" : undefined}
+              label="Schedule"
+              value={scheduleMetrics
+                ? `${scheduleMetrics.pctComplete.toFixed(0)}%`
+                : "—"}
+              sub={scheduleMetrics
+                ? scheduleMetrics.overdueTasks > 0
+                  ? `${scheduleMetrics.overdueTasks} task${scheduleMetrics.overdueTasks !== 1 ? "s" : ""} overdue`
+                  : `${scheduleMetrics.completedTasks}/${scheduleMetrics.totalTasks} tasks done`
+                : "No schedule set"}
+              href={`/${project.id}/schedule`}
+              signal={scheduleMetrics
+                ? scheduleMetrics.overdueTasks > 3 ? "bad"
+                  : scheduleMetrics.overdueTasks > 0 ? "warn"
+                  : "good"
+                : undefined}
             />
           </div>
 
@@ -767,7 +1305,7 @@ export function ProjectHomeClient({
             </div>
 
             {/* Right: Signals + Activity (surface-2 tint) */}
-            <div className="lg:col-span-2 bg-muted/30 px-6 py-6 sm:px-8">
+            <div className="lg:col-span-2 bg-[hsl(var(--surface-alt))] px-6 py-6 sm:px-8">
               {/* Signals */}
               {signals.length > 0 && !signalsDismissed && (
                 <div className="mb-5">
@@ -817,252 +1355,296 @@ export function ProjectHomeClient({
             </div>
           </div>
 
-          {/* ── LAYER 4: Data Tables ──
-              Left 3/5: Budget by cost code. Right 2/5: Schedule snapshot.
-              Real data, not navigation links. */}
+          {/* ── LAYER 3.5: Schedule Snapshot ──
+              Only renders if schedule data exists. Shows % complete, overdue count, upcoming milestones. */}
+          {scheduleMetrics && scheduleMetrics.totalTasks > 0 && (
+            <div className="border-b border-border px-6 py-5 sm:px-8 bg-card">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Schedule Progress
+                </span>
+                <Link
+                  href={`/${project.id}/schedule`}
+                  className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
+                >
+                  View schedule →
+                </Link>
+              </div>
+              <div className="flex items-center gap-6">
+                {/* Progress bar */}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-foreground">
+                      {scheduleMetrics.completedTasks} of {scheduleMetrics.totalTasks} tasks complete
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums text-foreground">
+                      {scheduleMetrics.pctComplete.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        scheduleMetrics.overdueTasks > 3
+                          ? "bg-red-400"
+                          : scheduleMetrics.overdueTasks > 0
+                          ? "bg-amber-400"
+                          : "bg-primary/70"
+                      )}
+                      style={{ width: `${Math.min(scheduleMetrics.pctComplete, 100)}%` }}
+                    />
+                  </div>
+                </div>
+                {/* Overdue indicator */}
+                {scheduleMetrics.overdueTasks > 0 && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-500/10">
+                    <Clock className="h-3 w-3 text-red-600" />
+                    <span className="text-xs font-medium text-red-600 tabular-nums">
+                      {scheduleMetrics.overdueTasks} overdue
+                    </span>
+                  </div>
+                )}
+                {scheduleMetrics.overdueTasks === 0 && scheduleMetrics.pctComplete > 0 && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-500/10">
+                    <CheckCircle2 className="h-3 w-3 text-green-600" />
+                    <span className="text-xs font-medium text-green-600">On track</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── LAYER 4: Budget Insights ──
+              Left 3/5: Budget Variances — cost codes with biggest divergence
+              Right 2/5: Financial Exposure — committed %, pending, forecast gap */}
           <div className="grid grid-cols-1 lg:grid-cols-5 border-b border-border">
 
-            {/* Budget table (white) */}
-            <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border">
-              <div className="flex items-center justify-between px-6 py-3 sm:px-8 border-b border-border">
+            {/* Left: Budget Variances */}
+            <div className="lg:col-span-3 bg-card px-6 py-6 sm:px-8 border-b lg:border-b-0 lg:border-r border-border">
+              <div className="flex items-center justify-between mb-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Budget by Cost Code
+                  Budget Variances
                 </p>
                 <Link
                   href={`/${project.id}/budget`}
                   className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
                 >
-                  View all →
+                  View budget →
                 </Link>
               </div>
-              {budget.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-6 sm:px-8 py-2.5">
-                          Cost Code
-                        </th>
-                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-4 py-2.5 hidden sm:table-cell">
-                          Original
-                        </th>
-                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-4 py-2.5">
-                          Budget
-                        </th>
-                        <th className="text-right text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground px-6 sm:px-8 py-2.5">
-                          %
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {budget
-                        .sort((a, b) => (b.original_amount || 0) - (a.original_amount || 0))
-                        .slice(0, 8)
-                        .map((line) => {
-                          const pct = totalBudget > 0 ? ((line.original_amount || 0) / totalBudget) * 100 : 0;
-                          return (
-                            <tr key={line.id} className="border-b border-border/50 last:border-b-0 hover:bg-muted/30 transition-colors">
-                              <td className="px-6 sm:px-8 py-2.5">
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <span className="text-xs font-mono text-muted-foreground tabular-nums flex-shrink-0">
-                                    {line.cost_code_id.length > 8 ? line.cost_code_id.slice(0, 8) : line.cost_code_id}
-                                  </span>
-                                  <span className="text-sm text-foreground truncate">
-                                    {line.description || "—"}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="text-right px-4 py-2.5 tabular-nums text-muted-foreground hidden sm:table-cell">
-                                {formatCompactCurrency(line.original_amount || 0)}
-                              </td>
-                              <td className="text-right px-4 py-2.5 tabular-nums font-medium text-foreground">
-                                {formatCompactCurrency(line.original_amount || 0)}
-                              </td>
-                              <td className="text-right px-6 sm:px-8 py-2.5">
-                                <div className="flex items-center justify-end gap-2">
-                                  <div className="w-12 h-1.5 bg-border rounded-full overflow-hidden hidden sm:block">
-                                    <div
-                                      className="h-full bg-primary/60 rounded-full"
-                                      style={{ width: `${Math.min(pct, 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
-                                    {pct.toFixed(0)}%
-                                  </span>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                    </tbody>
-                  </table>
-                  {budget.length > 8 && (
-                    <Link
-                      href={`/${project.id}/budget`}
-                      className="block text-center py-2.5 text-xs text-muted-foreground/60 hover:text-foreground transition-colors border-t border-border/50"
-                    >
-                      +{budget.length - 8} more cost codes
-                    </Link>
-                  )}
-                </div>
-              ) : (
-                <div className="px-6 py-10 sm:px-8 text-center">
-                  <p className="text-sm text-muted-foreground">No budget lines yet</p>
-                  <Link
-                    href={`/${project.id}/budget`}
-                    className="text-xs text-primary hover:underline mt-1 inline-block"
-                  >
-                    Set up budget →
-                  </Link>
-                </div>
-              )}
-            </div>
 
-            {/* Schedule snapshot (surface-2 tint) */}
-            <div className="lg:col-span-2 bg-muted/30">
-              <div className="flex items-center justify-between px-6 py-3 sm:px-8 border-b border-border">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Schedule
-                </p>
-                <Link
-                  href={`/${project.id}/schedule`}
-                  className="text-[11px] text-muted-foreground/60 hover:text-foreground transition-colors"
-                >
-                  View all →
-                </Link>
-              </div>
-              {schedule.length > 0 ? (
-                <div className="divide-y divide-border/50">
-                  {schedule
-                    .filter((t: any) => t.status !== "completed" && !t.parent_task_id)
-                    .sort((a: any, b: any) => {
-                      const aDate = a.start_date || a.finish_date || "";
-                      const bDate = b.start_date || b.finish_date || "";
-                      return aDate.localeCompare(bDate);
-                    })
-                    .slice(0, 8)
-                    .map((task: any) => {
-                      const pct = task.percent_complete ?? 0;
-                      const startDate = task.start_date ? new Date(task.start_date) : null;
-                      const finishDate = task.finish_date ? new Date(task.finish_date) : null;
-                      const isOverdue = finishDate && finishDate < new Date() && pct < 100;
-                      return (
-                        <div key={task.id} className="px-6 py-3 sm:px-8 hover:bg-muted/40 transition-colors">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className={cn(
-                                "text-sm truncate",
-                                isOverdue ? "text-red-600 font-medium" : "text-foreground"
-                              )}>
-                                {task.is_milestone && <span className="text-primary mr-1">◆</span>}
-                                {task.name}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {startDate && (
-                                  <span className="text-[11px] text-muted-foreground/60 tabular-nums">
-                                    {format(startDate, "MMM d")}
-                                    {finishDate && ` – ${format(finishDate, "MMM d")}`}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <span className={cn(
-                              "text-xs font-semibold tabular-nums flex-shrink-0 mt-0.5",
-                              pct >= 100
-                                ? "text-green-600"
-                                : isOverdue
-                                ? "text-red-600"
-                                : pct > 0
-                                ? "text-foreground"
-                                : "text-muted-foreground/60"
-                            )}>
-                              {pct}%
+              {budgetLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : budgetVariances.length > 0 ? (
+                <div className="space-y-3">
+                  {budgetVariances.map((v) => {
+                    const isOver = v.variance < 0;
+                    const barPct = Math.min(v.consumption, 150); // cap at 150% for visual
+                    return (
+                      <div key={v.id} className="group">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-mono text-[11px] text-muted-foreground tabular-nums flex-shrink-0">
+                              {v.costCode}
                             </span>
+                            <span className="text-sm text-foreground truncate">{v.description}</span>
                           </div>
-                          {/* Mini progress bar */}
-                          <div className="w-full h-1 bg-border/60 rounded-full mt-2 overflow-hidden">
+                          <span
+                            className={cn(
+                              "text-sm font-semibold tabular-nums flex-shrink-0 ml-3",
+                              isOver ? "text-red-600" : "text-green-600"
+                            )}
+                          >
+                            {isOver ? "-" : "+"}{formatCompactCurrency(Math.abs(v.variance))}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-1.5 bg-muted/50 rounded-full overflow-hidden">
                             <div
                               className={cn(
                                 "h-full rounded-full transition-all",
-                                pct >= 100
-                                  ? "bg-green-500"
-                                  : isOverdue
-                                  ? "bg-red-500"
+                                v.consumption > 100
+                                  ? "bg-red-400"
+                                  : v.consumption > 85
+                                  ? "bg-amber-400"
                                   : "bg-primary/60"
                               )}
-                              style={{ width: `${Math.min(pct, 100)}%` }}
+                              style={{ width: `${Math.min(barPct, 100)}%` }}
                             />
                           </div>
+                          <span className="text-[10px] text-muted-foreground/60 tabular-nums w-10 text-right">
+                            {v.consumption.toFixed(0)}%
+                          </span>
                         </div>
-                      );
-                    })}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="px-6 py-10 sm:px-8 text-center">
-                  <p className="text-sm text-muted-foreground">No schedule tasks yet</p>
-                  <Link
-                    href={`/${project.id}/schedule`}
-                    className="text-xs text-primary hover:underline mt-1 inline-block"
-                  >
-                    Import schedule →
+                <p className="text-sm text-muted-foreground/60">
+                  No budget lines yet.{" "}
+                  <Link href={`/${project.id}/budget`} className="text-primary hover:underline">
+                    Set up budget →
                   </Link>
+                </p>
+              )}
+            </div>
+
+            {/* Right: Financial Exposure */}
+            <div className="lg:col-span-2 bg-[hsl(var(--surface-alt))] px-6 py-6 sm:px-8">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-5">
+                Financial Exposure
+              </p>
+
+              {budgetLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
+              ) : fullBudgetData.length > 0 ? (
+                <div className="space-y-6">
+
+                  {/* Committed % */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-foreground">Committed</span>
+                      <span className="text-sm font-semibold tabular-nums text-foreground">
+                        {commitmentPct.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-card rounded-full overflow-hidden border border-border/50">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          commitmentPct > 95
+                            ? "bg-red-400"
+                            : commitmentPct > 80
+                            ? "bg-amber-400"
+                            : "bg-primary/70"
+                        )}
+                        style={{ width: `${Math.min(commitmentPct, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">
+                      {formatCompactCurrency(grandTotals.committedCosts)} of {formatCompactCurrency(grandTotals.revisedBudget)} locked in contracts
+                    </p>
+                  </div>
+
+                  {/* Pending Decisions */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-foreground">Pending Decisions</span>
+                      <span
+                        className={cn(
+                          "text-sm font-semibold tabular-nums",
+                          totalPending > 0 ? "text-amber-600" : "text-muted-foreground"
+                        )}
+                      >
+                        {formatCompactCurrency(totalPending)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">
+                      {grandTotals.pendingChanges > 0 && (
+                        <>{formatCompactCurrency(grandTotals.pendingChanges)} budget pending</>
+                      )}
+                      {grandTotals.pendingChanges > 0 && grandTotals.pendingCostChanges > 0 && " · "}
+                      {grandTotals.pendingCostChanges > 0 && (
+                        <>{formatCompactCurrency(grandTotals.pendingCostChanges)} cost pending</>
+                      )}
+                      {totalPending === 0 && "No unresolved items"}
+                    </p>
+                  </div>
+
+                  {/* Forecast Gap */}
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-foreground">Forecast Gap</span>
+                      <span
+                        className={cn(
+                          "text-sm font-semibold tabular-nums",
+                          forecastGap > 0 ? "text-red-600" : forecastGap < 0 ? "text-green-600" : "text-muted-foreground"
+                        )}
+                      >
+                        {forecastGap >= 0 ? "+" : ""}{formatCompactCurrency(forecastGap)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1">
+                      {forecastGap > 0
+                        ? "Estimated cost exceeds revised budget"
+                        : forecastGap < 0
+                        ? "Estimated cost under revised budget"
+                        : "Estimated cost matches budget"}
+                    </p>
+                  </div>
+
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground/60">
+                  Budget data needed to calculate exposure.
+                </p>
               )}
             </div>
           </div>
 
-          {/* ── LAYER 5: Bottom — Meetings + Team ──
-              Table-like bottom section. Surface-2 tint for team area. */}
-          {(meetings.length > 0 || teamMembers.length > 0) && (
-            <div className="grid grid-cols-1 lg:grid-cols-5">
+          {/* ── LAYER 5: Bottom — Meetings + Project Directory ──
+              Table-like bottom section. Surface-2 tint for directory area. */}
+          <div className="grid grid-cols-1 lg:grid-cols-5">
               {/* Meetings (white) */}
-              <div className={cn(
-                "px-6 py-6 sm:px-8",
-                meetings.length > 0 ? "lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border" : "lg:col-span-5"
-              )}>
-                {meetings.length > 0 ? (
+              {meetings.length > 0 && (
+                <div className="px-6 py-6 sm:px-8 lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border">
                   <MeetingsSection meetings={meetings} projectId={project.id} maxItems={4} />
-                ) : null}
-              </div>
-
-              {/* Team (surface-2 tint) */}
-              {teamMembers.length > 0 && (
-                <div className={cn(
-                  "bg-muted/30 px-6 py-6 sm:px-8",
-                  meetings.length > 0 ? "lg:col-span-2" : "lg:col-span-5"
-                )}>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      Project Team
-                    </span>
-                    <Link
-                      href={`/${project.id}/directory/users`}
-                      className="text-xs text-primary hover:text-primary/80 font-medium transition-colors flex items-center gap-1"
-                    >
-                      View all <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
-                  <div className="space-y-3">
-                    {teamMembers.slice(0, 6).map((member, i) => (
-                      <div key={`tm-${i}`} className="flex items-center gap-2.5">
-                        <Avatar className="h-7 w-7 flex-shrink-0">
-                          <AvatarFallback className="bg-card text-muted-foreground text-[10px] border border-border">
-                            {getInitials(member.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-sm text-foreground leading-none truncate">{member.name}</p>
-                          {member.role && (
-                            <p className="text-[11px] text-muted-foreground/60 mt-0.5 truncate">{member.role}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
+
+              {/* Project Directory (surface-2 tint) — grouped contacts with add */}
+              <div className={cn(
+                "bg-[hsl(var(--surface-alt))] px-6 py-6 sm:px-8",
+                meetings.length > 0 ? "lg:col-span-2" : "lg:col-span-5"
+              )}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    Project Directory
+                  </span>
+                  <Link
+                    href={`/${project.id}/directory/users`}
+                    className="text-xs text-primary hover:text-primary/80 font-medium transition-colors flex items-center gap-1"
+                  >
+                    View all <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Project Team */}
+                  <DirectorySubSection
+                    title="Project Team"
+                    members={directoryGroups.team}
+                    allMembers={teamMembers}
+                    projectId={project.id}
+                    sectionKey="team"
+                    personTypeFilter="employee"
+                  />
+
+                  {/* Key Contacts */}
+                  <DirectorySubSection
+                    title="Key Contacts"
+                    members={directoryGroups.contact}
+                    allMembers={teamMembers}
+                    projectId={project.id}
+                    sectionKey="contact"
+                  />
+
+                  {/* Subcontractors */}
+                  <DirectorySubSection
+                    title="Subcontractors"
+                    members={directoryGroups.subcontractor}
+                    allMembers={teamMembers}
+                    projectId={project.id}
+                    sectionKey="subcontractor"
+                  />
+                </div>
+              </div>
             </div>
-          )}
         </div>
 
         {/* Empty state */}

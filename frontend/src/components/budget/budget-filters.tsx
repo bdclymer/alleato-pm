@@ -1,15 +1,19 @@
 "use client";
 
-import * as React from "react";
-import { ChevronDown, Maximize2, Minimize2, Filter } from "lucide-react";
+import { Maximize2, Minimize2, SlidersHorizontal, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BudgetSnapshot, BudgetGroup } from "@/types/budget";
 
 export type QuickFilterType =
@@ -57,56 +61,55 @@ export function BudgetFilters({
     "no-activity": "No Activity",
   };
 
+  const filterSummary = `${selectedSnapshotName} · ${selectedGroupName} · ${quickFilterLabels[activeQuickFilter]}`;
+
   return (
-    <div className="flex flex-col lg:flex-row items-stretch lg:items-end justify-between py-4 gap-4">
-      {/* Left side - Filter controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 overflow-x-auto">
-        <div className="flex flex-wrap sm:flex-nowrap gap-4">
-          {/* Snapshot Selector */}
-          <div className="flex flex-col gap-1 min-w-[100px]">
-            <span className="text-xs text-muted-foreground">Snapshot</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-8 w-full sm:min-w-[110px] justify-between text-sm"
-                  aria-label="Snapshot"
-                >
-                  <span className="truncate">{selectedSnapshotName}</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-2 text-muted-foreground flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
+    <div className="flex items-center gap-1">
+      <Tooltip>
+        <DropdownMenu>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="View options"
+                title="View options"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel>View options</DropdownMenuLabel>
+            <DropdownMenuItem className="pointer-events-none text-xs text-muted-foreground">
+              {filterSummary}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                Snapshot
+                <span className="ml-auto truncate text-muted-foreground">{selectedSnapshotName}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-64">
                 {snapshots.map((snapshot) => (
                   <DropdownMenuItem
                     key={snapshot.id}
                     onClick={() => onSnapshotChange(snapshot.id)}
-                    className={
-                      selectedSnapshot === snapshot.id ? "bg-accent" : ""
-                    }
+                    className={selectedSnapshot === snapshot.id ? "bg-accent" : ""}
                   >
                     {snapshot.name}
                   </DropdownMenuItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
 
-          {/* Group Selector */}
-          <div className="flex flex-col gap-1 min-w-[120px]">
-            <span className="text-xs text-muted-foreground">Group</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-8 w-full sm:min-w-[130px] justify-between text-sm"
-                  aria-label="Group"
-                >
-                  <span className="truncate">{selectedGroupName}</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-2 text-muted-foreground flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[180px]">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                Grouping
+                <span className="ml-auto truncate text-muted-foreground">{selectedGroupName}</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-56">
                 {groups.map((group) => (
                   <DropdownMenuItem
                     key={group.id}
@@ -116,28 +119,17 @@ export function BudgetFilters({
                     {group.name}
                   </DropdownMenuItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
 
-        {/* Quick Filters */}
-        <div className="flex flex-wrap sm:flex-nowrap gap-4 sm:border-l sm:pl-4 sm:ml-2">
-          {/* Quick Filters */}
-          <div className="flex flex-col gap-1 min-w-[120px]">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant={activeQuickFilter !== "all" ? "default" : "outline"}
-                  className="h-8 w-full sm:min-w-[130px] justify-between text-sm"
-                  aria-label="Quick Filter"
-                >
-                  <Filter className="w-3.5 h-3.5 mr-2 flex-shrink-0" />
-                  <span className="truncate">{quickFilterLabels[activeQuickFilter]}</span>
-                  <ChevronDown className="w-3.5 h-3.5 ml-2 flex-shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[180px]">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                Filters
+                <span className="ml-auto truncate text-muted-foreground">
+                  {quickFilterLabels[activeQuickFilter]}
+                </span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-56">
                 <DropdownMenuItem
                   onClick={() => onQuickFilterChange?.("all")}
                   className={activeQuickFilter === "all" ? "bg-accent" : ""}
@@ -147,60 +139,77 @@ export function BudgetFilters({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => onQuickFilterChange?.("over-budget")}
-                  className={
-                    activeQuickFilter === "over-budget" ? "bg-accent" : ""
-                  }
+                  className={activeQuickFilter === "over-budget" ? "bg-accent" : ""}
                 >
-                  <span className="text-destructive mr-2">●</span>
+                  <span className="mr-2 text-destructive">●</span>
                   Over Budget
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onQuickFilterChange?.("under-budget")}
-                  className={
-                    activeQuickFilter === "under-budget" ? "bg-accent" : ""
-                  }
+                  className={activeQuickFilter === "under-budget" ? "bg-accent" : ""}
                 >
-                  <span className="text-success mr-2">●</span>
+                  <span className="mr-2 text-success">●</span>
                   Under Budget
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onQuickFilterChange?.("no-activity")}
-                  className={
-                    activeQuickFilter === "no-activity" ? "bg-accent" : ""
-                  }
+                  className={activeQuickFilter === "no-activity" ? "bg-accent" : ""}
                 >
-                  <span className="text-muted-foreground mr-2">●</span>
+                  <span className="mr-2 text-muted-foreground">●</span>
                   No Activity
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
 
-      {/* Right side - Actions */}
-      <div className="flex items-end gap-2 justify-end">
-        <Button
-          variant="outline"
-          className="h-8 text-sm hidden sm:flex"
-          onClick={onAnalyzeVariance}
-        >
-          Analyze Variance
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={onToggleFullscreen}
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-3.5 h-3.5" />
-          ) : (
-            <Maximize2 className="w-3.5 h-3.5" />
-          )}
-        </Button>
-      </div>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                Sort
+                <span className="ml-auto text-muted-foreground">Coming soon</span>
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="w-56">
+                <DropdownMenuItem disabled>Budget code (A-Z)</DropdownMenuItem>
+                <DropdownMenuItem disabled>Budget code (Z-A)</DropdownMenuItem>
+                <DropdownMenuItem disabled>Largest variance first</DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <TooltipContent>View options</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onAnalyzeVariance}
+            aria-label="Analyze variance"
+            title="Analyze variance"
+          >
+            <Sigma className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Analyze variance</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleFullscreen}
+            aria-label={isFullscreen ? "Exit full page view" : "Enter full page view"}
+            title={isFullscreen ? "Exit full page view" : "Enter full page view"}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{isFullscreen ? "Exit full page view" : "Enter full page view"}</TooltipContent>
+      </Tooltip>
     </div>
   );
 }

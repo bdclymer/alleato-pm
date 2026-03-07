@@ -1,7 +1,8 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { FileText, Flame, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpRight, FileText, Flame, MoreHorizontal, Trash2 } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
   ColumnConfig,
   FilterConfig,
@@ -20,7 +27,7 @@ import type { Meeting } from "@/lib/validation/meetings";
 
 // ─── Inline editing types ───────────────────────────────────────────────────
 
-export type EditableField = "date" | "project" | "type" | "category";
+export type EditableField = "title" | "date" | "project" | "type" | "category";
 
 export interface EditContext {
   editingCell: { meetingId: string; field: EditableField } | null;
@@ -28,7 +35,10 @@ export interface EditContext {
   projectOptions: Array<{ value: string; label: string }>;
   handleCellClick: (meeting: Meeting, field: EditableField) => void;
   setEditingValue: (value: string) => void;
-  handleInlineSave: (valueOverride?: string) => Promise<void>;
+  handleInlineSave: (options?: {
+    valueOverride?: string;
+    move?: "next" | "prev";
+  }) => Promise<void>;
   handleInlineCancel: () => void;
 }
 
@@ -38,9 +48,10 @@ export const meetingColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
-  { id: "type", label: "Type", defaultVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
-  { id: "source", label: "Source", defaultVisible: true },
+  { id: "description", label: "Description", defaultVisible: true },
+  { id: "participants", label: "Participants", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: false },
+  { id: "category", label: "Category", defaultVisible: false },
   { id: "links", label: "Links", defaultVisible: true },
 ];
 
@@ -95,6 +106,7 @@ export function buildMeetingDetailFields(options: {
       options: options.projectOptions,
       placeholder: "Select project",
     },
+    { id: "description", label: "Description", type: "textarea", fullWidth: true },
     { id: "participants", label: "Participants", type: "text" },
     { id: "source", label: "Source", type: "text" },
     { id: "url", label: "URL", type: "text" },
@@ -105,13 +117,23 @@ export function buildMeetingDetailFields(options: {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
+  if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
+  });
+}
+
+function formatTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -123,12 +145,99 @@ function badgeVariant(value: string | null | undefined): "default" | "secondary"
   return "outline";
 }
 
+function getStatusMeta(status: string | null | undefined): { label: string; dotClassName: string } {
+  const normalized = status?.trim().toLowerCase() ?? "";
+  if (!normalized) {
+    return { label: "Unknown", dotClassName: "bg-muted-foreground/40" };
+  }
+
+  if (normalized.includes("complete") || normalized.includes("done") || normalized.includes("embedded")) {
+    return { label: status ?? "Complete", dotClassName: "bg-[hsl(var(--status-success))]" };
+  }
+
+  if (normalized.includes("processing") || normalized.includes("pending") || normalized.includes("running")) {
+    return { label: status ?? "In progress", dotClassName: "bg-[hsl(var(--status-warning))]" };
+  }
+
+  if (normalized.includes("error") || normalized.includes("failed")) {
+    return { label: status ?? "Failed", dotClassName: "bg-[hsl(var(--status-error))]" };
+  }
+
+  return { label: status ?? "Unknown", dotClassName: "bg-[hsl(var(--status-info))]" };
+}
+
+function parseParticipants(item: Meeting): string[] {
+  const normalizeEntry = (value: unknown): string | null => {
+    if (typeof value === "string") {
+      const trimmed = value.trim().replace(/^["'{\[]+/, "").replace(/["'}\]]+$/, "");
+      return trimmed || null;
+    }
+    if (value && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      const preferred = record.name ?? record.display_name ?? record.displayName ?? record.email;
+      if (typeof preferred === "string" && preferred.trim()) {
+        return preferred.trim();
+      }
+    }
+    return null;
+  };
+
+  const dedupe = (values: unknown[]): string[] =>
+    Array.from(
+      new Set(
+        values
+          .map(normalizeEntry)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+  const participantsArray = item.participants_array;
+  if (Array.isArray(participantsArray) && participantsArray.length > 0) {
+    return dedupe(participantsArray);
+  }
+
+  const rawParticipants = item.participants?.trim();
+  if (!rawParticipants) return [];
+
+  if (rawParticipants.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(rawParticipants) as unknown;
+      if (Array.isArray(parsed)) {
+        return dedupe(parsed);
+      }
+    } catch {
+      // Fall through to delimiter parsing.
+    }
+  }
+
+  return dedupe(rawParticipants.split(/[\n,;]+/));
+}
+
+function getParticipantInitials(value: string): string {
+  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
+  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
+  if (tokenized.length >= 2) {
+    return `${tokenized[0][0]}${tokenized[tokenized.length - 1][0]}`.toUpperCase();
+  }
+  const first = tokenized[0] ?? cleaned;
+  return first.slice(0, 2).toUpperCase();
+}
+
+function getParticipantDisplayName(value: string): string {
+  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
+  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
+  if (tokenized.length === 0) return value;
+  return tokenized
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(" ");
+}
+
 // ─── Inline edit primitives ───────────────────────────────────────────────────
 
 /**
  * Wraps a cell value in a hover-to-edit container.
  * When `isEditing`, renders `children` (the input).
- * When not editing, renders the display value with a pencil hint on hover.
+ * When not editing, renders the display value with a subtle hover affordance.
  */
 function EditableCellWrapper({
   isEditing,
@@ -146,11 +255,10 @@ function EditableCellWrapper({
   }
   return (
     <div
-      className="group inline-flex items-center gap-1 cursor-pointer rounded px-1 -mx-1 min-h-[28px] hover:bg-muted/50 transition-colors"
+      className="inline-flex items-center cursor-pointer rounded px-1 -mx-1 min-h-[28px] hover:bg-accent/20 transition-colors"
       onClick={onClickToEdit}
     >
       {displayContent}
-      <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-60 flex-shrink-0 transition-opacity" />
     </div>
   );
 }
@@ -164,7 +272,7 @@ function InlineTextInput({
 }: {
   value: string;
   onChange: (v: string) => void;
-  onSave: () => void;
+  onSave: (move?: "next" | "prev") => void;
   onCancel: () => void;
   placeholder?: string;
 }) {
@@ -173,21 +281,27 @@ function InlineTextInput({
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onBlur={onSave}
+      onBlur={() => onSave()}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           onSave();
+          return;
         }
         if (e.key === "Escape") {
           e.preventDefault();
           onCancel();
+          return;
+        }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          onSave(e.shiftKey ? "prev" : "next");
         }
       }}
       onClick={(e) => e.stopPropagation()}
       autoFocus
       placeholder={placeholder}
-      className="h-7 w-full min-w-[120px] rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+      className="h-7 w-full min-w-[120px] rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
     />
   );
 }
@@ -200,7 +314,7 @@ function InlineDateInput({
 }: {
   value: string;
   onChange: (v: string) => void;
-  onSave: () => void;
+  onSave: (move?: "next" | "prev") => void;
   onCancel: () => void;
 }) {
   return (
@@ -208,22 +322,28 @@ function InlineDateInput({
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      onBlur={onSave}
+      onBlur={() => onSave()}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           onSave();
+          return;
         }
         if (e.key === "Escape") {
           e.preventDefault();
           onCancel();
+          return;
+        }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          onSave(e.shiftKey ? "prev" : "next");
         }
       }}
       onClick={(e) => e.stopPropagation()}
       autoFocus
       aria-label="Edit date"
       title="Edit date"
-      className="h-7 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+      className="h-7 rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
     />
   );
 }
@@ -236,7 +356,7 @@ function InlineProjectSelect({
 }: {
   value: string;
   projectOptions: Array<{ value: string; label: string }>;
-  onSave: (v: string) => void;
+  onSave: (v: string, move?: "next" | "prev") => void;
   onCancel: () => void;
 }) {
   return (
@@ -247,6 +367,11 @@ function InlineProjectSelect({
       }}
       onBlur={onCancel}
       onKeyDown={(e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          onSave(value, e.shiftKey ? "prev" : "next");
+          return;
+        }
         if (e.key === "Escape") {
           e.preventDefault();
           onCancel();
@@ -256,7 +381,7 @@ function InlineProjectSelect({
       autoFocus
       aria-label="Select project"
       title="Select project"
-      className="h-7 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+      className="h-7 rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
     >
       <option value="">No project</option>
       {projectOptions.map((opt) => (
@@ -275,9 +400,48 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     // ── Title: link to project detail page ──────────────────────────────────
     {
       ...meetingColumns[0],
-      render: (item) => (
-        <span className="font-medium">{item.title ?? "Untitled"}</span>
-      ),
+      render: (item) => {
+        const isEditing =
+          editContext?.editingCell?.meetingId === item.id &&
+          editContext?.editingCell?.field === "title";
+        const statusMeta = getStatusMeta(item.status);
+        const titleText = item.title ?? "Untitled";
+
+        return (
+          <EditableCellWrapper
+            isEditing={Boolean(isEditing)}
+            displayContent={
+              <div className="inline-flex items-center gap-2 min-w-0">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full flex-shrink-0 ${statusMeta.dotClassName}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">
+                      {statusMeta.label}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <span className="font-medium truncate">{titleText}</span>
+              </div>
+            }
+            onClickToEdit={(e) => {
+              e.stopPropagation();
+              editContext?.handleCellClick(item, "title");
+            }}
+          >
+            <InlineTextInput
+              value={editContext?.editingValue ?? ""}
+              onChange={(v) => editContext?.setEditingValue(v)}
+              onSave={(move) => editContext?.handleInlineSave({ move })}
+              onCancel={() => editContext?.handleInlineCancel()}
+              placeholder="Meeting title"
+            />
+          </EditableCellWrapper>
+        );
+      },
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
     },
@@ -295,9 +459,12 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             isEditing={Boolean(isEditing)}
             displayContent={
               item.date ? (
-                <span className="text-sm">{formatDate(item.date)}</span>
+                <div className="leading-tight">
+                  <p className="text-xs text-foreground">{formatDate(item.date)}</p>
+                  <p className="text-[11px] text-muted-foreground">{formatTime(item.date)}</p>
+                </div>
               ) : (
-                <span className="text-muted-foreground text-sm">—</span>
+                <span className="sr-only">No date</span>
               )
             }
             onClickToEdit={(e) => {
@@ -308,7 +475,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             <InlineDateInput
               value={editContext?.editingValue ?? ""}
               onChange={(v) => editContext?.setEditingValue(v)}
-              onSave={() => editContext?.handleInlineSave()}
+              onSave={(move) => editContext?.handleInlineSave({ move })}
               onCancel={() => editContext?.handleInlineCancel()}
             />
           </EditableCellWrapper>
@@ -335,7 +502,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                   {item.project}
                 </Badge>
               ) : (
-                <span className="text-muted-foreground text-sm">—</span>
+                <span className="sr-only">No project</span>
               )
             }
             onClickToEdit={(e) => {
@@ -346,7 +513,9 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             <InlineProjectSelect
               value={editContext?.editingValue ?? ""}
               projectOptions={editContext?.projectOptions ?? []}
-              onSave={(v) => editContext?.handleInlineSave(v)}
+              onSave={(v, move) =>
+                editContext?.handleInlineSave({ valueOverride: v, move })
+              }
               onCancel={() => editContext?.handleInlineCancel()}
             />
           </EditableCellWrapper>
@@ -356,9 +525,98 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       sortValue: (item) => item.project ?? "",
     },
 
-    // ── Type: inline text ────────────────────────────────────────────────────
+    // ── Description: compact text preview ───────────────────────────────────
     {
       ...meetingColumns[3],
+      render: (item) => {
+        const description = item.description?.trim();
+        if (!description) {
+          return null;
+        }
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-xs text-muted-foreground max-w-[300px] truncate block">
+                  {description}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[420px] border bg-popover p-3 text-popover-foreground shadow-md">
+                <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+                  {description}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+      csvValue: (item) => item.description ?? "",
+      sortValue: (item) => item.description ?? "",
+    },
+
+    // ── Participants: avatar stack with full tooltip ────────────────────────
+    {
+      ...meetingColumns[4],
+      render: (item) => {
+        const participants = parseParticipants(item);
+        if (participants.length === 0) {
+          return null;
+        }
+
+        const maxVisible = 4;
+        const visibleParticipants = participants.slice(0, maxVisible);
+        const hiddenCount = Math.max(0, participants.length - visibleParticipants.length);
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="inline-flex" onClick={(e) => e.stopPropagation()}>
+                  <AvatarGroup className="justify-start">
+                    {visibleParticipants.map((participant) => (
+                      <Avatar key={participant} className="h-7 w-7">
+                        <AvatarFallback className="text-[10px] font-semibold">
+                          {getParticipantInitials(participant)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {hiddenCount > 0 ? (
+                      <AvatarGroupCount className="h-7 w-7 text-[10px] font-semibold">
+                        +{hiddenCount}
+                      </AvatarGroupCount>
+                    ) : null}
+                  </AvatarGroup>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-md">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-foreground">
+                    Participants ({participants.length})
+                  </p>
+                  <ul className="space-y-1">
+                    {participants.map((participant) => (
+                      <li
+                        key={`participant-${item.id}-${participant}`}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {getParticipantDisplayName(participant)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
+      csvValue: (item) => parseParticipants(item).join("; "),
+      sortValue: (item) => parseParticipants(item).length,
+    },
+
+    // ── Type: inline text ────────────────────────────────────────────────────
+    {
+      ...meetingColumns[5],
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -373,7 +631,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                   {item.type}
                 </Badge>
               ) : (
-                <span className="text-muted-foreground text-sm">—</span>
+                <span className="sr-only">No type</span>
               )
             }
             onClickToEdit={(e) => {
@@ -384,7 +642,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             <InlineTextInput
               value={editContext?.editingValue ?? ""}
               onChange={(v) => editContext?.setEditingValue(v)}
-              onSave={() => editContext?.handleInlineSave()}
+              onSave={(move) => editContext?.handleInlineSave({ move })}
               onCancel={() => editContext?.handleInlineCancel()}
               placeholder="Enter type…"
             />
@@ -397,7 +655,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
     // ── Category: inline text ────────────────────────────────────────────────
     {
-      ...meetingColumns[4],
+      ...meetingColumns[6],
       render: (item) => {
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
@@ -412,7 +670,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                   {item.category}
                 </Badge>
               ) : (
-                <span className="text-muted-foreground text-sm">—</span>
+                <span className="sr-only">No category</span>
               )
             }
             onClickToEdit={(e) => {
@@ -423,7 +681,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             <InlineTextInput
               value={editContext?.editingValue ?? ""}
               onChange={(v) => editContext?.setEditingValue(v)}
-              onSave={() => editContext?.handleInlineSave()}
+              onSave={(move) => editContext?.handleInlineSave({ move })}
               onCancel={() => editContext?.handleInlineCancel()}
               placeholder="Enter category…"
             />
@@ -434,24 +692,12 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       sortValue: (item) => item.category ?? "",
     },
 
-    // ── Source: display filename ─────────────────────────────────────────────
-    {
-      ...meetingColumns[5],
-      render: (item) => (
-        <span className="text-muted-foreground text-xs truncate max-w-[180px] block">
-          {item.source ? (item.source.split("/").pop() ?? item.source) : "—"}
-        </span>
-      ),
-      csvValue: (item) => item.source ?? "",
-      sortValue: (item) => item.source ?? "",
-    },
-
     // ── Links: transcript file icon + Fireflies icon ─────────────────────────
     {
-      ...meetingColumns[6],
+      ...meetingColumns[7],
       render: (item) => {
         const hasLinks = item.source || item.fireflies_link;
-        if (!hasLinks) return <span className="text-muted-foreground text-sm">—</span>;
+        if (!hasLinks) return null;
 
         return (
           <div
@@ -503,6 +749,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
 export function renderMeetingRowActions(
   item: Meeting,
+  onOpenMeetingPage: (meeting: Meeting) => void,
   onEdit: (meeting: Meeting) => void,
   onDelete: (meeting: Meeting) => void,
   onOpenSource: (meeting: Meeting) => void,
@@ -516,8 +763,12 @@ export function renderMeetingRowActions(
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => onOpenMeetingPage(item)}>
+          <ArrowUpRight className="mr-2 h-4 w-4" />
+          Open meeting page
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onEdit(item)}>
-          <Pencil className="mr-2 h-4 w-4" />
+          <FileText className="mr-2 h-4 w-4" />
           Edit details
         </DropdownMenuItem>
         {item.source && (

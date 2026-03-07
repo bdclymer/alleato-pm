@@ -21,6 +21,10 @@
  */
 
 export interface ParsedTranscriptSections {
+  firefliesId: string | null;
+  firefliesLink: string | null;
+  organizerEmail: string | null;
+  hostEmail: string | null;
   summary: string | null;
   gist: string | null;
   keywords: string | null;
@@ -41,12 +45,21 @@ export interface ParsedTranscriptSections {
   channels: string | null;
   appsPreview: string | null;
   sharedWith: string | null;
+  extendedSections: string | null;
+  user: string | null;
+  speakers: string | null;
   transcript: string | null;
 }
 
 export function parseTranscriptSections(
   content: string
 ): ParsedTranscriptSections {
+  const getMeta = (name: string): string | null => {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const match = content.match(new RegExp(`\\*\\*${escaped}:\\*\\*\\s*(.+)`, "i"));
+    return match?.[1]?.trim() || null;
+  };
+
   const getSection = (name: string): string | null => {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const match = content.match(
@@ -75,9 +88,16 @@ export function parseTranscriptSections(
   const channels = getSection("Channels");
   const appsPreview = getSection("Apps Preview");
   const sharedWith = getSection("Shared With");
+  const extendedSections = getSection("Extended Sections");
+  const user = getSection("User");
+  const speakers = getSection("Speakers");
   const transcript = getSection("Transcript");
 
   return {
+    firefliesId: getMeta("Fireflies ID"),
+    firefliesLink: getMeta("Fireflies Link"),
+    organizerEmail: getMeta("Organizer Email"),
+    hostEmail: getMeta("Host Email"),
     summary,
     gist,
     keywords,
@@ -98,6 +118,9 @@ export function parseTranscriptSections(
     channels,
     appsPreview,
     sharedWith,
+    extendedSections,
+    user,
+    speakers,
     transcript,
   };
 }
