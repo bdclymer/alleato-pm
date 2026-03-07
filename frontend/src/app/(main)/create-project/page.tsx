@@ -61,6 +61,8 @@ import {
   isControlAllowedForField,
   parseFormattedNumber,
   type CreateProjectFormValues,
+  type FieldDefinition,
+  type FieldName,
   type FormSection,
 } from "@/lib/create-project/form";
 
@@ -404,7 +406,7 @@ function CreateProjectForm() {
                 Clear selection
               </SelectItem>
             )}
-            {field.options?.map((option) => (
+            {field.options?.map((option: { label: string; value: string }) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

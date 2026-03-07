@@ -3,7 +3,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getBestAvatarUrl } from "@/lib/gravatar"
 import type { User } from "@supabase/supabase-js"
@@ -252,6 +252,7 @@ function DevToolsTrigger({ isCollapsed }: { isCollapsed: boolean }) {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const router = useRouter()
   const { state, toggleSidebar } = useSidebar()
   const isCollapsed = state === "collapsed"
 
@@ -382,7 +383,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               loadingProjects={nav.loadingProjects}
               onFetchProjects={nav.fetchProjects}
               onProjectSelect={nav.handleProjectSelect}
-              onViewAll={() => nav.handleProjectSelect(null)}
+              onViewAll={() => router.push("/")}
             />
           </div>
         )}
