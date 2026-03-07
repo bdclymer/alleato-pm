@@ -1,6 +1,10 @@
 # NOTES
 
+- unable to load pdf in specs
+- rag pipeline tasks
+- create punch list template for importing
 
+ I'm making a note for things to revisit that the AI could assist with and one of the things is through reading the transcripts, identifying issues and solutions that could prevent them in the future
 
 ## Direct Costs
 

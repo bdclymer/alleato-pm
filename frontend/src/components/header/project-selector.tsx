@@ -60,7 +60,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 max-w-[200px] border-0 bg-transparent hover:bg-transparent justify-between px-2 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-8 max-w-[200px] justify-between border border-border/40 bg-sidebar-accent/25 px-2 hover:bg-sidebar-accent/35 focus-visible:ring-0 focus-visible:ring-offset-0",
             !currentProject && "text-zinc-500"
           )}
         >
@@ -73,7 +73,7 @@ export function ProjectSelector({
               Select Project
             </span>
           )}
-          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-500" />
+          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-500" strokeWidth={1.6} />
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -108,6 +108,7 @@ export function ProjectSelector({
                       "mr-2 h-4 w-4",
                       project.id === projectId ? "opacity-100" : "opacity-0"
                     )}
+                    strokeWidth={1.6}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-medium">{project.name}</div>

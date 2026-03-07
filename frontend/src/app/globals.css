@@ -57,7 +57,7 @@
     --secondary-foreground: 240 6% 12%;
 
     /* Muted — hover states, subtle backgrounds */
-    --muted: 240 5% 95%;            /* #F1F1F4 — subtle hover/deemphasis */
+    --muted: 216 100% 99%;          /* #FAFCFF — subtle hover/deemphasis */
     --muted-subtle: 240 5% 97%;     /* matches background */
     --muted-foreground: 240 4% 46%; /* #6F7075 — secondary text (~60% opacity) */
 

@@ -7,7 +7,14 @@ import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { getBestAvatarUrl } from "@/lib/gravatar"
 import type { User } from "@supabase/supabase-js"
-import { ChevronsLeft, ChevronsRight, Code } from "lucide-react"
+import {
+  ChevronsLeft,
+  ChevronsRight,
+  DollarSign,
+  List,
+  Building2,
+  SlidersHorizontal,
+} from "lucide-react"
 
 import {
   Sidebar,
@@ -142,7 +149,13 @@ function CollapsedGroupIcon({
     }
   }, [])
 
-  const Icon = group.icon
+  const minimalIconByGroup: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+    financial: DollarSign,
+    operations: List,
+    company: Building2,
+    admin: SlidersHorizontal,
+  }
+  const Icon = minimalIconByGroup[group.id] ?? List
 
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -158,7 +171,7 @@ function CollapsedGroupIcon({
         )}
         aria-label={group.label}
       >
-        <Icon className="h-[18px] w-[18px]" />
+        <Icon className="h-4 w-4" strokeWidth={1.5} />
       </button>
       <SidebarFlyout
         group={group}
@@ -330,7 +343,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       {/* ── Header ── */}
-      <SidebarHeader className={cn("border-b border-sidebar-border/50", isCollapsed ? "px-0 py-2" : "px-3 py-3")}>
+      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-4 pb-2" : "px-3 py-3")}>
         {isCollapsed ? (
           // Collapsed: logo icon + expand toggle
           <div className="flex flex-col items-center gap-1.5">
@@ -349,22 +362,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="Expand sidebar"
             >
-              <ChevronsRight className="h-3.5 w-3.5" />
+              <ChevronsRight className="h-3.5 w-3.5" strokeWidth={1.6} />
             </button>
           </div>
         ) : (
           // Expanded: logo + project selector + toggle
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <Image
-                  src="/favicon-light.png"
-                  alt="Alleato"
-                  width={24}
+                  src="/Alleato-Group-Logo_Dark.png"
+                  alt="Alleato Group"
+                  width={132}
                   height={24}
-                  className="rounded"
+                  className="h-6 w-auto"
                 />
-                <span className="text-sm font-semibold text-sidebar-foreground">Alleato</span>
               </Link>
               <button
                 type="button"
@@ -372,7 +384,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 aria-label="Collapse sidebar"
               >
-                <ChevronsLeft className="h-4 w-4" />
+                <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
               </button>
             </div>
             {/* Project selector */}
@@ -422,7 +434,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       {/* ── Footer ── */}
-      <SidebarFooter className={cn("border-t border-sidebar-border/50", isCollapsed ? "px-0 py-1.5" : "p-2")}>
+      <SidebarFooter className={cn(isCollapsed ? "px-0 py-1.5" : "p-2")}>
         {/* Dev tools — only in development mode */}
         {process.env.NODE_ENV === "development" && (
           <DevToolsTrigger isCollapsed={isCollapsed} />

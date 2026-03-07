@@ -122,8 +122,9 @@ function checkDocumentation() {
   header('3. Design System Documentation');
 
   const docs = [
-    'DESIGN-SYSTEM-GUIDE.md',
-    'src/components/ui/README.md',
+    'docs/design/README.md',
+    '.claude/design-audit/design-system-rules.md',
+    'src/design-system/tokens.md',
   ];
 
   let allExist = true;

@@ -366,28 +366,29 @@ export default function ProjectContractsPage(): ReactElement {
           actions: (
             <div className="flex items-center gap-2">
               <Button
+                size="icon"
                 variant="outline"
-                size="sm"
-                className="hidden h-8 sm:inline-flex"
+                className="h-8 w-8 border-input bg-background text-foreground hover:bg-muted hover:text-foreground"
                 onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
                 aria-label="Configure prime contracts"
               >
-                <Settings className="mr-2 h-4 w-4" />
-                Configure
+                <Settings className="h-4 w-4" />
               </Button>
               <Button
-                size="icon"
-                variant="outline"
-                className="h-9 w-9 border-input bg-background text-foreground hover:bg-muted hover:text-foreground sm:h-8 sm:w-8"
+                size="sm"
                 onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
                 aria-label="Create new contract"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4" />
+                Create
               </Button>
             </div>
           ),
         }}
         tabs={tabs}
+        layout={{
+          fullBleedTable: false,
+        }}
         toolbar={{
           totalItems,
           filteredItems: totalItems,

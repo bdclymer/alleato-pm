@@ -83,7 +83,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
         header={{
           title: "Meetings",
           description: "View and manage all your meetings",
-          actions: (
+          actions: projectId ? (
             <Button
               size="sm"
               onClick={handleScheduleMeeting}
@@ -92,7 +92,11 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               <CalendarPlus className="h-4 w-4 mr-2" />
               Schedule meeting
             </Button>
-          ),
+          ) : undefined,
+        }}
+        layout={{
+          headerAlignment: "left",
+          toolbarInlineWithHeader: true,
         }}
         toolbar={{
           totalItems: unfilteredTotal,

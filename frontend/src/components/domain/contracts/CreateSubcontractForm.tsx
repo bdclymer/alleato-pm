@@ -25,6 +25,7 @@ import {
   ChevronRight,
   ChevronDown,
   BarChart3,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   CreateSubcontractSchema,
@@ -33,6 +34,18 @@ import {
   CommitmentStatusValues,
   AccountingMethodValues,
 } from "@/lib/schemas/create-subcontract-schema";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { DateField } from "@/components/forms/DateField";
@@ -81,23 +94,6 @@ interface BudgetCode {
   fullLabel: string;
 }
 
-interface FormSectionHeadingProps {
-  title: string;
-  description?: string;
-}
-
-function FormSectionHeading({ title, description }: FormSectionHeadingProps) {
-  return (
-    <div className="pb-2">
-      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-      {description ? (
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-      ) : null}
-    </div>
-  );
-}
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -165,6 +161,8 @@ export function CreateSubcontractForm({
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
   const [openContractCompanyPopover, setOpenContractCompanyPopover] =
     React.useState(false);
+  const [richTextMode, setRichTextMode] = React.useState<Record<string, boolean>>({});
+  const [moreDatesOpen, setMoreDatesOpen] = React.useState(false);
 
   // Use the companies hook
   const { options: companyOptions, isLoading: isLoadingCompanies } =
@@ -605,7 +603,7 @@ export function CreateSubcontractForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      <div className="space-y-4 rounded-lg bg-muted/30 shadow-sm p-6 lg:p-8">
+      <div className="p-6 lg:p-8">
         {/* Hidden CSV file input */}
         <input
           ref={csvInputRef}
@@ -643,11 +641,14 @@ export function CreateSubcontractForm({
           </Alert>
         )}
 
+        <Accordion type="multiple" defaultValue={["contract-details"]} className="space-y-3">
+
         {/* General Information Section */}
-        <section className="space-y-6">
-          <FormSectionHeading
-            title="General Information"
-          />
+        <AccordionItem value="contract-details" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            General Information
+          </AccordionTrigger>
+          <AccordionContent className="space-y-6 pb-5">
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -832,70 +833,88 @@ export function CreateSubcontractForm({
             </div>
           </div>
 
-          <Controller
-            name="description"
-            control={control}
-            render={({ field }) => (
-              <RichTextField
-                label="Description"
-                value={field.value || ""}
-                onChange={field.onChange}
-                disabled={isSubmitting}
-                placeholder="Enter detailed contract description..."
+          <div className="space-y-1.5">
+            <Label htmlFor="description">Description</Label>
+            {richTextMode.description ? (
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <RichTextField
+                    label=""
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    placeholder="Enter detailed contract description..."
+                  />
+                )}
+              />
+            ) : (
+              <Controller
+                name="description"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    id="description"
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="Enter detailed contract description..."
+                    rows={3}
+                  />
+                )}
               />
             )}
-          />
-        </section>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setRichTextMode(prev => ({ ...prev, description: !prev.description }))}
+            >
+              {richTextMode.description ? "Simple text" : "Rich text"}
+            </button>
+          </div>
+          </AccordionContent>
+        </AccordionItem>
 
         {/* Attachments Section */}
-        <section className="space-y-6 pt-8">
-          <FormSectionHeading
-            title="Attachments"
-          />
+        <AccordionItem value="attachments" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Attachments
+          </AccordionTrigger>
+          <AccordionContent className="pb-5">
+            <FileUploadField
+              label=""
+              value={attachments}
+              onChange={setAttachments}
+              multiple
+              maxFiles={20}
+              maxSize={50 * 1024 * 1024}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              hint="Attach contract documents, plans, or other relevant files"
+              disabled={isSubmitting}
+            />
+          </AccordionContent>
+        </AccordionItem>
 
-          <FileUploadField
-            label=""
-            value={attachments}
-            onChange={setAttachments}
-            multiple
-            maxFiles={20}
-            maxSize={50 * 1024 * 1024}
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-            hint="Attach contract documents, plans, or other relevant files"
-            disabled={isSubmitting}
-          />
-        </section>
-
-        {/* Schedule of Values Section */}
-        <section className="space-y-6" data-testid="sov-section">
-          <FormSectionHeading
-            title="Schedule of Values"
-            description="Organize groupings and line items that drive commitment totals."
-          />
-          {/* Accounting Method Info Banner */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-4 dark:bg-blue-950 dark:border-blue-800">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-blue-900 dark:text-blue-100">
-                This contract&apos;s default accounting method is{" "}
-                <strong>
-                  {accountingMethod === "amount_based"
-                    ? "amount-based"
-                    : "unit/quantity"}
-                </strong>
-                . To use budget codes with a unit of measure association, select
-                Change to{" "}
-                {accountingMethod === "amount_based"
-                  ? "Unit/Quantity"
-                  : "Amount-based"}
-                .
-              </p>
-            </div>
-            <Button
+        {/* Schedule of Values Section - Only shown in edit mode */}
+        {mode === "edit" && (
+        <AccordionItem value="schedule-of-values" className="rounded-lg bg-muted/30 border-none px-5 py-1" data-testid="sov-section">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Schedule of Values
+          </AccordionTrigger>
+          <AccordionContent className="space-y-6 pb-5">
+          {/* Accounting Method Info */}
+          <p className="text-xs text-muted-foreground">
+            This contract&apos;s default accounting method is{" "}
+            <strong>
+              {accountingMethod === "amount_based"
+                ? "amount-based"
+                : "unit/quantity"}
+            </strong>
+            .{" "}
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              className="shrink-0"
+              className="underline hover:text-foreground transition-colors"
               disabled={isSubmitting}
               onClick={toggleAccountingMethod}
               data-testid="sov-accounting-toggle"
@@ -904,8 +923,8 @@ export function CreateSubcontractForm({
               {accountingMethod === "amount_based"
                 ? "Unit/Quantity"
                 : "Amount-based"}
-            </Button>
-          </div>
+            </button>
+          </p>
 
           <SectionHeader
             actions={
@@ -1280,164 +1299,225 @@ export function CreateSubcontractForm({
               </SelectContent>
             </Select>
           </div>
-        </section>
+          </AccordionContent>
+        </AccordionItem>
+        )}
 
         {/* Inclusions & Exclusions Section */}
-        <section className="space-y-6">
-          <FormSectionHeading
-            title="Inclusions & Exclusions"
-            description="Clarify what scope is explicitly covered versus excluded."
-          />
-
-          <div className="space-y-4">
-            <Controller
-              name="inclusions"
-              control={control}
-              render={({ field }) => (
-                <RichTextField
-                  label="Inclusions"
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  placeholder="Enter scope inclusions..."
+        <AccordionItem value="inclusions-exclusions" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Inclusions & Exclusions
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 pb-5">
+            <div className="space-y-1.5">
+              <Label>Inclusions</Label>
+              {richTextMode.inclusions ? (
+                <Controller
+                  name="inclusions"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextField
+                      label=""
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      disabled={isSubmitting}
+                      placeholder="Enter scope inclusions..."
+                    />
+                  )}
+                />
+              ) : (
+                <Controller
+                  name="inclusions"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      disabled={isSubmitting}
+                      placeholder="Enter scope inclusions..."
+                      rows={3}
+                    />
+                  )}
                 />
               )}
-            />
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setRichTextMode(prev => ({ ...prev, inclusions: !prev.inclusions }))}
+              >
+                {richTextMode.inclusions ? "Simple text" : "Rich text"}
+              </button>
+            </div>
 
-            <Controller
-              name="exclusions"
-              control={control}
-              render={({ field }) => (
-                <RichTextField
-                  label="Exclusions"
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  placeholder="Enter scope exclusions..."
+            <div className="space-y-1.5">
+              <Label>Exclusions</Label>
+              {richTextMode.exclusions ? (
+                <Controller
+                  name="exclusions"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextField
+                      label=""
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      disabled={isSubmitting}
+                      placeholder="Enter scope exclusions..."
+                    />
+                  )}
+                />
+              ) : (
+                <Controller
+                  name="exclusions"
+                  control={control}
+                  render={({ field }) => (
+                    <Textarea
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      disabled={isSubmitting}
+                      placeholder="Enter scope exclusions..."
+                      rows={3}
+                    />
+                  )}
                 />
               )}
-            />
-          </div>
-        </section>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setRichTextMode(prev => ({ ...prev, exclusions: !prev.exclusions }))}
+              >
+                {richTextMode.exclusions ? "Simple text" : "Rich text"}
+              </button>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
         {/* Contract Dates Section */}
-        <section className="space-y-6">
-          <FormSectionHeading
-            title="Contract Dates"
-            description="Capture key execution and delivery milestones for this subcontract."
-          />
+        <AccordionItem value="contract-dates" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Contract Dates
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 pb-5">
+            {/* Primary dates — always visible */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <Controller
+                name="dates.startDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Start Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select start date"
+                    error={errors.dates?.startDate?.message}
+                  />
+                )}
+              />
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            <Controller
-              name="dates.startDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Start Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select start date"
-                  error={errors.dates?.startDate?.message}
-                />
-              )}
-            />
+              <Controller
+                name="dates.estimatedCompletionDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Estimated Completion Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select estimated completion"
+                    error={errors.dates?.estimatedCompletionDate?.message}
+                  />
+                )}
+              />
+            </div>
 
-            <Controller
-              name="dates.estimatedCompletionDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Estimated Completion Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select estimated completion"
-                  error={errors.dates?.estimatedCompletionDate?.message}
-                />
-              )}
-            />
+            {/* Secondary dates — collapsed by default */}
+            <Collapsible open={moreDatesOpen} onOpenChange={setMoreDatesOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronsUpDown className="h-3 w-3" />
+                  {moreDatesOpen ? "Fewer dates" : "More dates"}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-4">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <Controller
+                    name="dates.actualCompletionDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DateField
+                        label="Actual Completion Date"
+                        value={field.value instanceof Date ? field.value : undefined}
+                        onChange={(date) => field.onChange(date)}
+                        disabled={isSubmitting}
+                        placeholder="Select actual completion"
+                        error={errors.dates?.actualCompletionDate?.message}
+                      />
+                    )}
+                  />
 
-            <Controller
-              name="dates.actualCompletionDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Actual Completion Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select actual completion"
-                  error={errors.dates?.actualCompletionDate?.message}
-                />
-              )}
-            />
+                  <Controller
+                    name="dates.contractDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DateField
+                        label="Contract Date"
+                        value={field.value instanceof Date ? field.value : undefined}
+                        onChange={(date) => field.onChange(date)}
+                        disabled={isSubmitting}
+                        placeholder="Select contract date"
+                        error={errors.dates?.contractDate?.message}
+                      />
+                    )}
+                  />
 
-            <Controller
-              name="dates.contractDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Contract Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select contract date"
-                  error={errors.dates?.contractDate?.message}
-                />
-              )}
-            />
+                  <Controller
+                    name="dates.signedContractReceivedDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DateField
+                        label="Signed Contract Received Date"
+                        value={field.value instanceof Date ? field.value : undefined}
+                        onChange={(date) => field.onChange(date)}
+                        disabled={isSubmitting}
+                        placeholder="Select signed contract received"
+                        error={errors.dates?.signedContractReceivedDate?.message}
+                      />
+                    )}
+                  />
 
-            <Controller
-              name="dates.signedContractReceivedDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Signed Contract Received Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select signed contract received"
-                  error={errors.dates?.signedContractReceivedDate?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="dates.issuedOnDate"
-              control={control}
-              render={({ field }) => (
-                <DateField
-                  label="Issued On Date"
-                  value={field.value instanceof Date ? field.value : undefined}
-                  onChange={(date) => field.onChange(date)}
-                  disabled={isSubmitting}
-                  placeholder="Select issued on date"
-                  error={errors.dates?.issuedOnDate?.message}
-                />
-              )}
-            />
-          </div>
-        </section>
+                  <Controller
+                    name="dates.issuedOnDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DateField
+                        label="Issued On Date"
+                        value={field.value instanceof Date ? field.value : undefined}
+                        onChange={(date) => field.onChange(date)}
+                        disabled={isSubmitting}
+                        placeholder="Select issued on date"
+                        error={errors.dates?.issuedOnDate?.message}
+                      />
+                    )}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </AccordionContent>
+        </AccordionItem>
 
         {/* Contract Privacy Section */}
-        <section className="space-y-6">
-          <FormSectionHeading
-            title="Contract Privacy"
-            description="Restrict access and SOV visibility for non-admin project users."
-          />
+        <AccordionItem value="contract-privacy" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Contract Privacy
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 pb-5">
+            <p className="text-xs text-muted-foreground">
+              Privacy restricts access to project admins and selected non-admin users.
+            </p>
 
-          <div className="bg-muted/50 rounded-md p-4 text-sm text-muted-foreground">
-            <div className="flex items-start gap-2">
-              <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <p>
-                Using the privacy setting restricts access to only project
-                admins and the select non-admin users specified below.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Controller
                 name="privacy.isPrivate"
@@ -1506,47 +1586,47 @@ export function CreateSubcontractForm({
                 </div>
               </>
             )}
-          </div>
-        </section>
+          </AccordionContent>
+        </AccordionItem>
 
         {/* Invoice Contacts Section - Conditional on Company Selection */}
-        <section className="space-y-6">
-          <FormSectionHeading
-            title="Invoice Contacts"
-            description="Select external contacts who are authorized to submit invoices."
-          />
-
-          {!contractCompanyId ? (
-            <div className="bg-muted/50 rounded-md p-4">
+        <AccordionItem value="invoice-contacts" className="rounded-lg bg-muted/30 border-none px-5 py-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+            Invoice Contacts
+          </AccordionTrigger>
+          <AccordionContent className="pb-5">
+            {!contractCompanyId ? (
               <p className="text-sm text-muted-foreground">
-                Select a contract company to enable invoice contacts.
+                Select a contract company above to enable invoice contacts.
               </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Controller
-                name="invoiceContactIds"
-                control={control}
-                render={({ field }) => (
-                  <MultiSelectField
-                    label="Invoice Contacts"
-                    options={invoiceContactOptions}
-                    value={field.value || []}
-                    onChange={(values) => field.onChange(values)}
-                    disabled={isSubmitting || isLoadingContacts}
-                    placeholder={
-                      isLoadingContacts
-                        ? "Loading contacts..."
-                        : invoiceContactOptions.length === 0
-                          ? "No contacts found for this company"
-                          : "Select contacts who can submit invoices..."
-                    }
-                  />
-                )}
-              />
-            </div>
-          )}
-        </section>
+            ) : (
+              <div className="space-y-2">
+                <Controller
+                  name="invoiceContactIds"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelectField
+                      label="Invoice Contacts"
+                      options={invoiceContactOptions}
+                      value={field.value || []}
+                      onChange={(values) => field.onChange(values)}
+                      disabled={isSubmitting || isLoadingContacts}
+                      placeholder={
+                        isLoadingContacts
+                          ? "Loading contacts..."
+                          : invoiceContactOptions.length === 0
+                            ? "No contacts found for this company"
+                            : "Select contacts who can submit invoices..."
+                      }
+                    />
+                  )}
+                />
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        </Accordion>
 
         {/* Footer Actions */}
         <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">

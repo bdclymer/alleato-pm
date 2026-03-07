@@ -327,7 +327,7 @@ export function LineItemsTable({
   return (
     <div className="space-y-4" onKeyDown={handleKeyDown}>
       {/* Line Items Table */}
-      <Card>
+      <Card className="border-0 shadow-none">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -456,7 +456,7 @@ export function LineItemsTable({
       {/* Summary Card */}
       {showTotals && lineItems.length > 0 && (
         <div className="flex justify-end">
-          <Card className="p-4 min-w-64">
+          <Card className="min-w-64 border-0 p-4 shadow-none">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Subtotal:</span>

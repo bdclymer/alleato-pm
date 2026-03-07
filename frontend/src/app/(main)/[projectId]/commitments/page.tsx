@@ -315,6 +315,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
           ),
         }}
         tabs={tabs}
+        layout={{
+          fullBleedTable: false,
+        }}
         toolbar={{
           totalItems,
           filteredItems: totalItems,
@@ -375,11 +378,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
           description: "You have not added any commitments yet.",
           filteredDescription: "Try adjusting your search or filters",
           isFiltered,
-          action: (
-            <Button size="sm" onClick={handleCreateSubcontract}>
-              Create your first commitment
-            </Button>
-          ),
         }}
         footerTotals={{
           label: "Totals",

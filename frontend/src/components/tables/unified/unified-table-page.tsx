@@ -138,6 +138,11 @@ export interface UnifiedTablePageProps<T> {
     content: ReactNode;
     widthClassName?: string;
   };
+  layout?: {
+    fullBleedTable?: boolean;
+    headerAlignment?: "left" | "center";
+    toolbarInlineWithHeader?: boolean;
+  };
   features?: UnifiedTableFeatures;
 }
 
@@ -155,6 +160,7 @@ export function UnifiedTablePage<T>({
   footerTotals,
   topContent,
   sidePanel,
+  layout,
   features,
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
@@ -185,6 +191,9 @@ export function UnifiedTablePage<T>({
     resolvedFeatures.enableViews && toolbar.currentView === "list" && Boolean(views?.list);
   const shouldRenderTableView =
     toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
+  const isFullBleedTable = layout?.fullBleedTable ?? true;
+  const headerAlignment = layout?.headerAlignment ?? "center";
+  const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -549,40 +558,60 @@ export function UnifiedTablePage<T>({
     };
   }, [isResizingColumn]);
 
+  const tableToolbar = (
+    <TableToolbar
+      className={cn("w-full lg:w-auto", toolbarInlineWithHeader && "py-0")}
+      totalItems={toolbar.totalItems}
+      filteredItems={toolbar.filteredItems}
+      selectedCount={toolbar.selectedCount}
+      searchValue={toolbar.searchValue}
+      onSearchChange={toolbar.onSearchChange}
+      searchPlaceholder={toolbar.searchPlaceholder}
+      currentView={toolbar.currentView}
+      onViewChange={toolbar.onViewChange}
+      enabledViews={toolbar.enabledViews}
+      filters={toolbar.filters}
+      activeFilters={activeFilters}
+      onFilterChange={handleFilterChange}
+      onClearFilters={handleClearFilters}
+      columns={toolbarColumns}
+      visibleColumns={visibleColumns}
+      onColumnVisibilityChange={handleColumnVisibilityChange}
+      onExport={toolbar.onExport}
+      onBulkDelete={toolbar.onBulkDelete}
+      mobilePanelActions={toolbar.mobilePanelActions}
+      enableSearch={resolvedFeatures.enableSearch}
+      enableViews={resolvedFeatures.enableViews}
+      enableFilters={resolvedFeatures.enableFilters}
+      enableColumnToggle={resolvedFeatures.enableColumnToggle}
+      enableExport={resolvedFeatures.enableExport}
+      enableBulkDelete={resolvedFeatures.enableBulkDelete && hasRowSelection}
+    />
+  );
+
   const leftPaneContent = (
     <>
-      <PageHeader title={header.title} description={header.description} actions={header.actions} />
-      <div className="pt-2 sm:pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
-        <TableToolbar
-          className="w-full lg:w-auto"
-          totalItems={toolbar.totalItems}
-          filteredItems={toolbar.filteredItems}
-          selectedCount={toolbar.selectedCount}
-          searchValue={toolbar.searchValue}
-          onSearchChange={toolbar.onSearchChange}
-          searchPlaceholder={toolbar.searchPlaceholder}
-          currentView={toolbar.currentView}
-          onViewChange={toolbar.onViewChange}
-          enabledViews={toolbar.enabledViews}
-          filters={toolbar.filters}
-          activeFilters={activeFilters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-          columns={toolbarColumns}
-          visibleColumns={visibleColumns}
-          onColumnVisibilityChange={handleColumnVisibilityChange}
-          onExport={toolbar.onExport}
-          onBulkDelete={toolbar.onBulkDelete}
-          mobilePanelActions={toolbar.mobilePanelActions}
-          enableSearch={resolvedFeatures.enableSearch}
-          enableViews={resolvedFeatures.enableViews}
-          enableFilters={resolvedFeatures.enableFilters}
-          enableColumnToggle={resolvedFeatures.enableColumnToggle}
-          enableExport={resolvedFeatures.enableExport}
-          enableBulkDelete={resolvedFeatures.enableBulkDelete && hasRowSelection}
-        />
-      </div>
+      <PageHeader
+        title={header.title}
+        description={header.description}
+        className="px-0 sm:px-0 lg:px-0"
+        actions={
+          toolbarInlineWithHeader ? (
+            <div className="flex items-center gap-2">
+              {header.actions}
+              {tableToolbar}
+            </div>
+          ) : (
+            header.actions
+          )
+        }
+      />
+      {(tabs || !toolbarInlineWithHeader) && (
+        <div className="pt-2 sm:pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
+          {!toolbarInlineWithHeader ? tableToolbar : null}
+        </div>
+      )}
 
       {data.isLoading && (
         <div className="mt-4 space-y-2 py-4">
@@ -619,7 +648,11 @@ export function UnifiedTablePage<T>({
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
-              sidePanel ? "mx-0 pl-0" : "-mx-4 sm:-mx-6 lg:-mx-8 lg:pl-2",
+              sidePanel
+                ? "mx-0 pl-0"
+                : isFullBleedTable
+                  ? "-mx-4 sm:-mx-6 lg:-mx-8 lg:pl-2"
+                  : "mx-0",
             )}
             tabIndex={0}
             onKeyDown={handleTableKeyDown}
@@ -651,7 +684,8 @@ export function UnifiedTablePage<T>({
                           <TableHead
                             key={column.id}
                             className={cn(
-                              "relative text-center align-middle",
+                              "relative align-middle",
+                              headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
                               isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
                             )}
@@ -680,7 +714,12 @@ export function UnifiedTablePage<T>({
                           }}
                           title={isHideable ? "Right-click to hide column" : undefined}
                         >
-                            <div className="flex items-center justify-center gap-1.5">
+                            <div
+                              className={cn(
+                                "flex items-center gap-1.5",
+                                headerAlignment === "left" ? "justify-start" : "justify-center",
+                              )}
+                            >
                               {resolvedFeatures.enableColumnReorder && (
                                 <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
                               )}

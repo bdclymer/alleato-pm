@@ -10,14 +10,18 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 2
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "setup",
         "name": "setup",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -31,7 +35,9 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -45,7 +51,9 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "debug",
         "name": "debug",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -61,7 +69,9 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "no-auth",
         "name": "no-auth",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -109,17 +119,1094 @@
       "reuseExistingServer": true
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Timed out waiting 60000ms from config.webServer.",
-      "stack": "Error: Timed out waiting 60000ms from config.webServer."
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1608,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "Existing auth session is still valid — skipping re-authentication\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-07T18:52:49.069Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
+          "file": "auth.setup.ts",
+          "line": 55,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+      "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Full Financial Workflow",
+          "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+          "line": 33,
+          "column": 15,
+          "specs": [
+            {
+              "title": "Step 2 – creates a prime contract with SOV line items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 10568,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Project created: 791\n"
+                        },
+                        {
+                          "text": "[FullWorkflow] Prime contract: 44beadf8-6e4e-4acf-bafe-7be484662900\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:52:51.904Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-chromium/test-finished-2.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-a0474c335271c316c18e",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "Step 3 – adds a budget line item",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14844,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget line item created ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:09.852Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-b03cd-3-–-adds-a-budget-line-item-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-b03cd-3-–-adds-a-budget-line-item-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-0d510321c210c2fd4793",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 180,
+              "column": 7
+            },
+            {
+              "title": "Step 4 – locks the budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4735,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget locked ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:24.706Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-474cb-w-Step-4-–-locks-the-budget-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-474cb-w-Step-4-–-locks-the-budget-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-9134050bfe4fe58056fc",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 303,
+              "column": 7
+            },
+            {
+              "title": "Step 8 – creates a budget modification (while locked)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2400,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[FullWorkflow] 'Budget Modification' not in dropdown — budget may not be locked\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:29.451Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-fee5b--modification-while-locked--chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-fee5b--modification-while-locked--chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-251d39e604ed1495aaa0",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 369,
+              "column": 7
+            },
+            {
+              "title": "Step 5 – unlocks the budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6785,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget unlocked ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:31.861Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-44cd8-Step-5-–-unlocks-the-budget-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-44cd8-Step-5-–-unlocks-the-budget-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-f4a8d2021581c050cd60",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 430,
+              "column": 7
+            },
+            {
+              "title": "Step 6 – creates a purchase order commitment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7344,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] PO created → http://localhost:3000/791/commitments ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:38.651Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-6441e-a-purchase-order-commitment-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-6441e-a-purchase-order-commitment-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-179a6564f01728842c23",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 476,
+              "column": 7
+            },
+            {
+              "title": "Step 7 – creates a subcontract commitment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7331,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[FullWorkflow] SC still on form, error: \n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:45.999Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-93896-es-a-subcontract-commitment-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-93896-es-a-subcontract-commitment-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-3c678c9a1e6e2516e79c",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 535,
+              "column": 7
+            },
+            {
+              "title": "Step 9 – creates a direct cost",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7107,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Direct cost: still on form. Message: \n        .send-arrow-icon, .send-check-icon, .send-error-icon {\n          transition: opacity 0.15s ease, transform 0.15s ease;\n        }\n      \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:53.336Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-31ddd-p-9-–-creates-a-direct-cost-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-31ddd-p-9-–-creates-a-direct-cost-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-4ba96351a01270ce8b48",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 593,
+              "column": 7
+            },
+            {
+              "title": "Step 10 – creates a prime contract invoice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1506,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] No 'New Invoice' button found — invoice feature not yet on this page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:54:00.447Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-e4811-es-a-prime-contract-invoice-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-e4811-es-a-prime-contract-invoice-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-ba95d7f7748695102726",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 676,
+              "column": 7
+            },
+            {
+              "title": "Validation – prime contract requires Contract # and Title",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3095,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Validation ✓\n"
+                        },
+                        {
+                          "text": "[FullWorkflow] Project 791 deleted\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:54:01.958Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-chromium/video.webm"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-chromium/test-finished-2.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-8071e7d7d9e3c7e2a08c",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 756,
+              "column": 7
+            },
+            {
+              "title": "Step 2 – creates a prime contract with SOV line items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 10531,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Project created: 792\n"
+                        },
+                        {
+                          "text": "[FullWorkflow] Prime contract: 570dd7b2-e209-410c-b4c5-4fd0d669e285\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:52:51.903Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-debug/test-finished-2.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-26048-ontract-with-SOV-line-items-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-e9299e3fc4799ddc4822",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 70,
+              "column": 7
+            },
+            {
+              "title": "Step 3 – adds a budget line item",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 14483,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget line item created ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:09.841Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-b03cd-3-–-adds-a-budget-line-item-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-b03cd-3-–-adds-a-budget-line-item-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-b1c69fdf68f12e41290a",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 180,
+              "column": 7
+            },
+            {
+              "title": "Step 4 – locks the budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 4746,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget locked ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:24.329Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-474cb-w-Step-4-–-locks-the-budget-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-474cb-w-Step-4-–-locks-the-budget-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-69239b03f04491a7bae5",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 303,
+              "column": 7
+            },
+            {
+              "title": "Step 8 – creates a budget modification (while locked)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1771,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[FullWorkflow] 'Budget Modification' not in dropdown — budget may not be locked\n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:29.082Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-fee5b--modification-while-locked--debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-fee5b--modification-while-locked--debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-eec8a1a1179cb72e1a82",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 369,
+              "column": 7
+            },
+            {
+              "title": "Step 5 – unlocks the budget",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7759,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Budget unlocked ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:30.857Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-44cd8-Step-5-–-unlocks-the-budget-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-44cd8-Step-5-–-unlocks-the-budget-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-b2e1803bfc572a9a509b",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 430,
+              "column": 7
+            },
+            {
+              "title": "Step 6 – creates a purchase order commitment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7331,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] PO created → http://localhost:3000/792/commitments ✓\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:38.620Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-6441e-a-purchase-order-commitment-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-6441e-a-purchase-order-commitment-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-116ff6adfd63ece1cfaf",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 476,
+              "column": 7
+            },
+            {
+              "title": "Step 7 – creates a subcontract commitment",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 7454,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "text": "[FullWorkflow] SC still on form, error: \n"
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:45.957Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-93896-es-a-subcontract-commitment-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-93896-es-a-subcontract-commitment-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-edf3f26748c83a8e3afa",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 535,
+              "column": 7
+            },
+            {
+              "title": "Step 9 – creates a direct cost",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 6730,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Direct cost: still on form. Message: \n        .send-arrow-icon, .send-check-icon, .send-error-icon {\n          transition: opacity 0.15s ease, transform 0.15s ease;\n        }\n      \n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:53:53.415Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-31ddd-p-9-–-creates-a-direct-cost-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-31ddd-p-9-–-creates-a-direct-cost-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-f29194cb19f734073278",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 593,
+              "column": 7
+            },
+            {
+              "title": "Step 10 – creates a prime contract invoice",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1679,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] No 'New Invoice' button found — invoice feature not yet on this page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:54:00.150Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-e4811-es-a-prime-contract-invoice-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-e4811-es-a-prime-contract-invoice-debug/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-a2f51ae06b05f78e8613",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 676,
+              "column": 7
+            },
+            {
+              "title": "Validation – prime contract requires Contract # and Title",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 3125,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[FullWorkflow] Validation ✓\n"
+                        },
+                        {
+                          "text": "[FullWorkflow] Project 792 deleted\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-07T18:54:01.834Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-debug/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-debug/video.webm"
+                        },
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/e2e-financial-workflow-ful-7052f-requires-Contract-and-Title-debug/test-finished-2.png"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "c38567fb5624edb3cc44-01f733e585f08c1994c4",
+              "file": "e2e/financial-workflow/full-financial-workflow.spec.ts",
+              "line": 756,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2026-03-07T17:09:42.385Z",
-    "duration": 60359.012,
-    "expected": 0,
+    "startTime": "2026-03-07T18:52:47.256Z",
+    "duration": 78377.076,
+    "expected": 21,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

@@ -252,10 +252,13 @@ export function ChangeEventForm({
       data-dev-autofill-disabled="true"
       data-form-id="change-event-create"
     >
-      <div className="space-y-8 rounded-lg border bg-card p-6 lg:p-8">
+      <div className="space-y-12 rounded-sm p-6 lg:p-8">
         <section className="space-y-6">
-          <div className="border-b pb-4">
-            <h2 className="text-base font-semibold tracking-tight">General Information</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+              General Information
+            </h2>
+            <div className="h-px flex-1 bg-primary" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -461,8 +464,201 @@ export function ChangeEventForm({
         </section>
 
         <section className="space-y-6">
-          <div className="border-b pb-4">
-            <h2 className="text-base font-semibold tracking-tight">Attachments</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+              Line Items
+            </h2>
+            <div className="h-px flex-1 bg-primary" />
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-max w-full border-collapse">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
+                    Detail
+                  </th>
+                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
+                    Revenue
+                  </th>
+                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
+                    Cost
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm"> </th>
+                </tr>
+                <tr>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Budget code</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Description</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Vendor</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Contract</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit of measure</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Quantity</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit cost</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Revenue ROM</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Quantity</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit cost</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Cost ROM</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Non-committed cost</th>
+                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground"> </th>
+                </tr>
+              </thead>
+              <tbody>
+                {formData.lineItems.map((item, index) => (
+                  <tr key={`line-item-${index}`}>
+                    <td className="p-2">
+                      <Input
+                        value={item.budgetCode}
+                        onChange={(e) =>
+                          updateLineItem(index, "budgetCode", e.target.value)
+                        }
+                        placeholder="Budget code"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        value={item.description}
+                        onChange={(e) =>
+                          updateLineItem(index, "description", e.target.value)
+                        }
+                        placeholder="Description"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        value={item.vendor}
+                        onChange={(e) => updateLineItem(index, "vendor", e.target.value)}
+                        placeholder="Vendor"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        value={item.contract}
+                        onChange={(e) =>
+                          updateLineItem(index, "contract", e.target.value)
+                        }
+                        placeholder="Contract"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        value={item.revenueUnitOfMeasure}
+                        onChange={(e) =>
+                          updateLineItem(index, "revenueUnitOfMeasure", e.target.value)
+                        }
+                        placeholder="UOM"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.revenueQuantity}
+                        onChange={(e) =>
+                          updateLineItem(
+                            index,
+                            "revenueQuantity",
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.revenueUnitCost}
+                        onChange={(e) =>
+                          updateLineItem(
+                            index,
+                            "revenueUnitCost",
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.revenueRom}
+                        onChange={(e) =>
+                          updateLineItem(index, "revenueRom", Number(e.target.value) || 0)
+                        }
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.costQuantity}
+                        onChange={(e) =>
+                          updateLineItem(index, "costQuantity", Number(e.target.value) || 0)
+                        }
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.costUnitCost}
+                        onChange={(e) =>
+                          updateLineItem(index, "costUnitCost", Number(e.target.value) || 0)
+                        }
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.costRom}
+                        onChange={(e) =>
+                          updateLineItem(index, "costRom", Number(e.target.value) || 0)
+                        }
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-2">
+                      <Input
+                        type="number"
+                        value={item.nonCommittedCost}
+                        onChange={(e) =>
+                          updateLineItem(
+                            index,
+                            "nonCommittedCost",
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                        placeholder="0.00"
+                      />
+                    </td>
+                    <td className="p-2 text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeLineItem(index)}
+                        disabled={formData.lineItems.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Button type="button" variant="outline" onClick={addLineItem}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Line Item
+          </Button>
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+              Attachments
+            </h2>
+            <div className="h-px flex-1 bg-primary" />
           </div>
 
           <div className="rounded-lg border border-dashed p-6">
@@ -505,193 +701,6 @@ export function ChangeEventForm({
               ))}
             </div>
           )}
-        </section>
-
-        <section className="space-y-6">
-          <div className="border-b pb-4">
-            <h2 className="text-base font-semibold tracking-tight">Line Items</h2>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-max w-full border-collapse">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th colSpan={4} className="border px-3 py-2 text-left text-sm">
-                    Detail
-                  </th>
-                  <th colSpan={4} className="border px-3 py-2 text-left text-sm">
-                    Revenue
-                  </th>
-                  <th colSpan={4} className="border px-3 py-2 text-left text-sm">
-                    Cost
-                  </th>
-                  <th className="border px-3 py-2 text-left text-sm"> </th>
-                </tr>
-                <tr>
-                  <th className="border px-3 py-2 text-left text-sm">Budget code</th>
-                  <th className="border px-3 py-2 text-left text-sm">Description</th>
-                  <th className="border px-3 py-2 text-left text-sm">Vendor</th>
-                  <th className="border px-3 py-2 text-left text-sm">Contract</th>
-                  <th className="border px-3 py-2 text-left text-sm">Unit of measure</th>
-                  <th className="border px-3 py-2 text-left text-sm">Quantity</th>
-                  <th className="border px-3 py-2 text-left text-sm">Unit cost</th>
-                  <th className="border px-3 py-2 text-left text-sm">Revenue ROM</th>
-                  <th className="border px-3 py-2 text-left text-sm">Quantity</th>
-                  <th className="border px-3 py-2 text-left text-sm">Unit cost</th>
-                  <th className="border px-3 py-2 text-left text-sm">Cost ROM</th>
-                  <th className="border px-3 py-2 text-left text-sm">Non-committed cost</th>
-                  <th className="border px-3 py-2 text-left text-sm"> </th>
-                </tr>
-              </thead>
-              <tbody>
-                {formData.lineItems.map((item, index) => (
-                  <tr key={`line-item-${index}`}>
-                    <td className="border p-2">
-                      <Input
-                        value={item.budgetCode}
-                        onChange={(e) =>
-                          updateLineItem(index, "budgetCode", e.target.value)
-                        }
-                        placeholder="Budget code"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateLineItem(index, "description", e.target.value)
-                        }
-                        placeholder="Description"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        value={item.vendor}
-                        onChange={(e) => updateLineItem(index, "vendor", e.target.value)}
-                        placeholder="Vendor"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        value={item.contract}
-                        onChange={(e) =>
-                          updateLineItem(index, "contract", e.target.value)
-                        }
-                        placeholder="Contract"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        value={item.revenueUnitOfMeasure}
-                        onChange={(e) =>
-                          updateLineItem(index, "revenueUnitOfMeasure", e.target.value)
-                        }
-                        placeholder="UOM"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueQuantity}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "revenueQuantity",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueUnitCost}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "revenueUnitCost",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueRom}
-                        onChange={(e) =>
-                          updateLineItem(index, "revenueRom", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.costQuantity}
-                        onChange={(e) =>
-                          updateLineItem(index, "costQuantity", Number(e.target.value) || 0)
-                        }
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.costUnitCost}
-                        onChange={(e) =>
-                          updateLineItem(index, "costUnitCost", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.costRom}
-                        onChange={(e) =>
-                          updateLineItem(index, "costRom", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <Input
-                        type="number"
-                        value={item.nonCommittedCost}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "nonCommittedCost",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="border p-2 text-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLineItem(index)}
-                        disabled={formData.lineItems.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <Button type="button" variant="outline" onClick={addLineItem}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Line Item
-          </Button>
         </section>
 
         <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">

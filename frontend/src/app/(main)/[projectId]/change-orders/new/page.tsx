@@ -269,7 +269,6 @@ export default function NewChangeOrderPage() {
       <ProjectFormPageLayout
         title="Error"
         description="Invalid project ID"
-        onBack={handleCancel}
       >
         <div className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
           Invalid project ID provided.
@@ -282,15 +281,9 @@ export default function NewChangeOrderPage() {
     <ProjectFormPageLayout
       title="New Change Order"
       description="Create a new change order with clear contract, pricing, and review details."
-      onBack={handleCancel}
-      backLabel="Back to Change Orders"
       maxWidth="lg"
     >
-      <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm leading-6 text-muted-foreground">
-        Complete core details first, then add line items for the final total.
-      </div>
-
-      <div className="rounded-lg border bg-card p-6 lg:p-8">
+      <div className="bg-card p-6 lg:p-8">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -301,9 +294,6 @@ export default function NewChangeOrderPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   Basic Information
                 </h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Identify the change order and provide a concise summary.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -408,10 +398,6 @@ export default function NewChangeOrderPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   Contract & Financial Details
                 </h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Link this change to its contract and define the pricing
-                  target.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -623,10 +609,6 @@ export default function NewChangeOrderPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   Line Items
                 </h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Add cost code line items. If line items exist, their total
-                  becomes the final amount.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -677,10 +659,6 @@ export default function NewChangeOrderPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   Scope & Schedule Impact
                 </h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Capture whether this affects contract scope and project
-                  schedule.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -761,9 +739,6 @@ export default function NewChangeOrderPage() {
                 <h2 className="text-base font-semibold tracking-tight">
                   Workflow & Review
                 </h2>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  Assign reviewer and visibility before submitting.
-                </p>
               </div>
 
               <div className="space-y-4">
