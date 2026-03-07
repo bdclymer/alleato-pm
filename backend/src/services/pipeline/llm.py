@@ -137,16 +137,28 @@ def extract_structured_data(
     raw_decisions: List[str],
     raw_risks: List[str],
     raw_tasks: List[str],
+    notes_context: str = "",
+    speaker_email_map: Optional[Dict[str, str]] = None,
 ) -> StructuredData:
+    # Build speaker email mapping context for the prompt
+    email_map_text = ""
+    if speaker_email_map:
+        mappings = [f"  {name} → {email}" for name, email in speaker_email_map.items()]
+        email_map_text = f"\n\nSpeaker Email Mapping (use for assignee_email):\n" + "\n".join(mappings)
+
+    notes_text = ""
+    if notes_context:
+        notes_text = f"\n\nAdditional Notes & Action Items from Meeting:\n{notes_context[:6000]}"
+
     prompt = f"""Analyze and normalize these meeting extractions. Deduplicate, add context, and identify opportunities.
 
 Meeting: {title}
 Date: {date or "Unknown"}
-Participants: {", ".join(participants)}
+Participants: {", ".join(participants)}{email_map_text}
 
 Raw Decisions: {json.dumps(raw_decisions)}
 Raw Risks: {json.dumps(raw_risks)}
-Raw Tasks: {json.dumps(raw_tasks)}
+Raw Tasks: {json.dumps(raw_tasks)}{notes_text}
 
 Meeting Summary: {summary[:2000]}
 
@@ -159,7 +171,7 @@ Return JSON with normalized, deduplicated entries:
     {{"description": "Risk description", "category": "schedule|budget|resource|technical|external", "likelihood": "low|medium|high", "impact": "low|medium|high", "owner": "Person or null"}}
   ],
   "tasks": [
-    {{"description": "Task description", "assignee": "Person name or null", "dueDate": "YYYY-MM-DD or null", "priority": "low|medium|high|urgent"}}
+    {{"description": "Task description", "assignee": "Person name or null", "assigneeEmail": "email@example.com or null", "dueDate": "YYYY-MM-DD or null", "priority": "low|medium|high|urgent"}}
   ],
   "opportunities": [
     {{"description": "Opportunity description", "type": "efficiency|revenue|relationship|innovation", "owner": "Person or null"}}
@@ -167,13 +179,30 @@ Return JSON with normalized, deduplicated entries:
 }}
 
 Guidelines:
-- Deduplicate similar items
+- Deduplicate similar items across all sources (raw tasks AND the Notes/Action Items above)
+- Extract tasks from BOTH the raw tasks AND the Notes/Action Items sections — do not miss any
 - Infer owners from context when possible
 - Convert vague items to specific actionable descriptions
+- Map assignee names to emails using the Speaker Email Mapping above when available
+- Priority rules:
+  * "urgent" if health, safety, inspection, compliance, or hard deadline mentioned
+  * "high" if financial impact > $10k or blocking other work
+  * "medium" for standard follow-ups and action items
+  * "low" for nice-to-haves and optional follow-ups
+- Due date rules:
+  * Calculate relative dates from the meeting date ({date or "Unknown"})
+  * "by Friday" → next Friday from meeting date
+  * "next week" → Monday of following week
+  * "end of month" → last day of meeting month
+  * "ASAP" → meeting date + 2 business days
+  * If no date mentioned, leave as null
 - Identify implied opportunities from discussion"""
 
     raw = _call_llm(prompt, json_mode=True)
     data = json.loads(raw)
+
+    # Resolve emails from map if LLM didn't set them
+    _email_map = speaker_email_map or {}
 
     decisions = [
         DecisionItem(
@@ -195,16 +224,24 @@ Guidelines:
         for r in data.get("risks", [])
         if r.get("description")
     ]
-    tasks = [
-        TaskItem(
-            description=t.get("description", ""),
-            assignee=t.get("assignee"),
-            due_date=_parse_date(t.get("dueDate")),
-            priority=t.get("priority"),
+    tasks = []
+    for t in data.get("tasks", []):
+        if not t.get("description"):
+            continue
+        assignee = t.get("assignee")
+        assignee_email = t.get("assigneeEmail")
+        # Fallback: resolve email from map if LLM didn't provide one
+        if not assignee_email and assignee and assignee in _email_map:
+            assignee_email = _email_map[assignee]
+        tasks.append(
+            TaskItem(
+                description=t.get("description", ""),
+                assignee=assignee,
+                assignee_email=assignee_email,
+                due_date=_parse_date(t.get("dueDate")),
+                priority=t.get("priority"),
+            )
         )
-        for t in data.get("tasks", [])
-        if t.get("description")
-    ]
     opportunities = [
         OpportunityItem(
             description=o.get("description", ""),

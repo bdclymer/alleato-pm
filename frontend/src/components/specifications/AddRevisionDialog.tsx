@@ -64,15 +64,7 @@ export function AddRevisionDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type and size
-    if (file.type !== "application/pdf") {
-      form.setError("file", {
-        type: "manual",
-        message: "Only PDF files are allowed",
-      });
-      return;
-    }
-
+    // Validate file size
     if (file.size > 50 * 1024 * 1024) {
       form.setError("file", {
         type: "manual",
@@ -164,14 +156,14 @@ export function AddRevisionDialog({
               name="file"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>PDF File *</FormLabel>
+                  <FormLabel>File *</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       {!selectedFile ? (
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
                           <input
                             type="file"
-                            accept="application/pdf"
+                            accept="*/*"
                             onChange={handleFileChange}
                             className="hidden"
                             id="revision-file-upload"
@@ -188,7 +180,7 @@ export function AddRevisionDialog({
                               or drag and drop
                             </div>
                             <p className="text-xs text-gray-500">
-                              PDF files only (max 50MB)
+                              Any file type (max 50MB)
                             </p>
                           </label>
                         </div>

@@ -1,13 +1,14 @@
 "use client";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import Footer from "@/components/layout/Footer";
 
 /**
- * Main layout with sidebar for all primary app routes.
- * Routes in (main)/ get the full app experience with sidebar, header, and footer.
+ * Main layout with sidebar as primary navigation.
+ * Sidebar starts expanded with icon-collapse mode.
+ * Minimal top header provides breadcrumbs and context.
  */
 export default function MainLayout({
   children,
@@ -18,11 +19,12 @@ export default function MainLayout({
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset className="overflow-hidden">
-        <SiteHeader />
-        <main className="flex flex-1 flex-col gap-4 overflow-auto min-w-0">
-          {children}
-        </main>
-        <Footer />
+        <CreateProjectDevConfigProvider>
+          <SiteHeader />
+          <main className="flex flex-1 flex-col overflow-auto min-w-0">
+            {children}
+          </main>
+        </CreateProjectDevConfigProvider>
       </SidebarInset>
     </SidebarProvider>
   );

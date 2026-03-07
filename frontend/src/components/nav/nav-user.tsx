@@ -45,7 +45,8 @@ export function NavUser({
     avatar: string
   }
 }) {
-  const { isMobile } = useSidebar()
+  const { isMobile, state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   // Use default values if user is undefined or properties are missing
   const displayUser = {
@@ -84,8 +85,8 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
-            align="end"
+            side={isMobile ? "bottom" : isCollapsed ? "right" : "top"}
+            align={isCollapsed ? "start" : "end"}
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationRevisionService } from "@/services/SpecificationRevisionService";
 
 /**
@@ -15,17 +16,14 @@ export async function GET(
   },
 ) {
   const { revisionId } = await params;
-  const supabase = await createClient();
 
   // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new SpecificationRevisionService(supabase);
+  const service = new SpecificationRevisionService(createServiceClient());
   const result = await service.getDownloadUrl(revisionId);
 
   if (result.error) {

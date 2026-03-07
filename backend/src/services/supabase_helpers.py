@@ -139,22 +139,22 @@ class SupabaseRagStore:
 
     # tasks / insights --------------------------------------------------
     def list_tasks(self, project_id: Optional[int] = None, status: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
-        query = self._client.table("ai_tasks").select("*").limit(limit)
+        """List tasks from the unified `tasks` table."""
+        query = self._client.table("tasks").select("*").limit(limit)
         if project_id is not None:
-            query = query.eq("project_id", project_id)
+            query = query.contains("project_ids", [project_id])
         if status:
             query = query.eq("status", status)
         query = query.order("due_date", desc=False)
         response = query.execute()
         return response.data or []
 
-    def upsert_tasks(self, tasks: List[Dict[str, Any]]) -> None:
-        if tasks:
-            self._client.table("ai_tasks").upsert(tasks).execute()
-
-    def upsert_project_tasks(self, tasks: List[Dict[str, Any]]) -> None:
-        if tasks:
-            self._client.table("project_tasks").upsert(tasks).execute()
+    def upsert_task(self, task: Dict[str, Any]) -> None:
+        """Upsert a single task into the unified `tasks` table."""
+        if task:
+            self._client.table("tasks").upsert(
+                task, on_conflict="metadata_id,description"
+            ).execute()
 
     def list_insights(self, project_id: Optional[int] = None, limit: int = 20) -> List[Dict[str, Any]]:
         query = self._client.table("project_insights").select("*").order("captured_at", desc=True).limit(limit)

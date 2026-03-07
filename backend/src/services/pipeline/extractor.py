@@ -13,8 +13,12 @@ import logging
 from typing import Any, Dict, List
 
 from ..supabase_helpers import get_supabase_client
+from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
 from . import llm
+
+# Stateless parser instance for content re-parsing.
+_parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 
 logger = logging.getLogger(__name__)
 
@@ -79,9 +83,30 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             t.strip() for t in action_items_raw.split("\n") if t.strip()
         )
 
+    # 2b. Extract rich section context for enhanced task extraction
+    content = metadata.get("content") or metadata.get("raw_text") or ""
+    notes_context = ""
+    speaker_email_map: Dict[str, str] = {}
+    if content:
+        try:
+            parsed = _parser.parse_markdown(content)
+            # Build notes context from notes topics + action items section
+            notes_parts: List[str] = []
+            for topic_name, topic_content in (parsed.notes_topics or {}).items():
+                notes_parts.append(f"### {topic_name}\n{topic_content}")
+            action_items_section = (parsed.rich_sections or {}).get("Action Items", "")
+            if action_items_section:
+                notes_parts.append(f"### Action Items\n{action_items_section}")
+            notes_context = "\n\n".join(notes_parts)
+            speaker_email_map = parsed.speaker_email_map or {}
+            if speaker_email_map:
+                logger.info("[Extractor] Speaker-email map: %s", speaker_email_map)
+        except Exception as exc:
+            logger.warning("[Extractor] Failed to parse rich sections: %s", exc)
+
     logger.info(
-        "[Extractor] Raw: %d decisions, %d risks, %d tasks",
-        len(raw_decisions), len(raw_risks), len(raw_tasks),
+        "[Extractor] Raw: %d decisions, %d risks, %d tasks | Notes context: %d chars",
+        len(raw_decisions), len(raw_risks), len(raw_tasks), len(notes_context),
     )
 
     # 3. LLM normalization + opportunity discovery
@@ -94,6 +119,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         raw_decisions=raw_decisions,
         raw_risks=raw_risks,
         raw_tasks=raw_tasks,
+        notes_context=notes_context,
+        speaker_email_map=speaker_email_map,
     )
 
     logger.info(
@@ -190,17 +217,20 @@ def _upsert_risk(client, risk: RiskItem, metadata_id: str) -> None:
 
 
 def _upsert_task(client, task: TaskItem, metadata_id: str) -> None:
+    data = {
+        "metadata_id": metadata_id,
+        "description": task.description,
+        "assignee_name": task.assignee,
+        "due_date": task.due_date,
+        "priority": task.priority,
+        "embedding": task.embedding,
+        "status": "open",
+        "source_system": "fireflies",
+    }
+    if task.assignee_email:
+        data["assignee_email"] = task.assignee_email
     client.table("tasks").upsert(
-        {
-            "metadata_id": metadata_id,
-            "description": task.description,
-            "assignee_name": task.assignee,
-            "due_date": task.due_date,
-            "priority": task.priority,
-            "embedding": task.embedding,
-            "status": "open",
-            "source_system": "fireflies",
-        },
+        data,
         on_conflict="metadata_id,description",
     ).execute()
 

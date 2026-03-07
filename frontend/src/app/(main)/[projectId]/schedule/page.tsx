@@ -145,7 +145,7 @@ function ViewModeTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap pb-2 pt-2 text-sm font-medium transition-colors",
               mode === viewMode
-                ? "text-brand"
+                ? "text-[hsl(var(--schedule-view-active))]"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -708,12 +708,10 @@ export default function ProjectSchedulePage() {
     <div className="flex items-center gap-2">
       <Button
         size="sm"
-        variant="outline"
-        className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10 sm:h-8 sm:w-auto sm:rounded-md sm:border-input sm:px-3 sm:text-foreground"
         onClick={() => handleAddTask()}
       >
-        <Plus className="h-4 w-4 sm:mr-2" />
-        <span className="hidden sm:inline">Add Task</span>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Task
       </Button>
     </div>
   );
@@ -727,6 +725,7 @@ export default function ProjectSchedulePage() {
           title="Schedule"
           description=""
           actions={headerActions}
+          className="px-4 sm:px-6 lg:px-8"
         />
         <PageContainer>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -769,6 +768,7 @@ export default function ProjectSchedulePage() {
           title="Schedule"
           description=""
           actions={headerActions}
+          className="px-4 sm:px-6 lg:px-8"
         />
         <PageContainer>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -837,8 +837,10 @@ export default function ProjectSchedulePage() {
         title="Schedule"
         description=""
         actions={headerActions}
+        className="px-4 sm:px-6 lg:px-8"
       />
-      <PageContainer className="!overflow-x-visible">
+      <PageContainer padding={false}>
+        <div className="px-4 sm:px-6 lg:px-8 py-2 sm:py-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <ViewModeTabs mode={viewMode} onChange={setViewMode} />
           <TableToolbar
@@ -896,33 +898,33 @@ export default function ProjectSchedulePage() {
             </div>
           </div>
         )}
+        </div>{/* end padded wrapper */}
 
         {/* Main Content */}
         {data?.tasks && data.tasks.length > 0 && (
         <div key={viewMode} className="mt-2 flex-1 min-h-[600px] animate-reveal">
           {viewMode === "grid" && (
-            <div className="-mr-4 sm:-mr-6 lg:-mr-8 overflow-x-auto">
-              <GanttChart
-                data={data?.ganttData || []}
-                onTaskClick={(taskId) => {
-                  const fullTask = data?.tasks
-                    ? findTaskById(data.tasks, taskId)
-                    : null;
-                  if (fullTask) {
-                    handleEditTask(fullTask);
-                  }
-                }}
-              />
-            </div>
+            <GanttChart
+              data={data?.ganttData || []}
+              onTaskClick={(taskId) => {
+                const fullTask = data?.tasks
+                  ? findTaskById(data.tasks, taskId)
+                  : null;
+                if (fullTask) {
+                  handleEditTask(fullTask);
+                }
+              }}
+            />
           )}
 
-          {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
-
-          {viewMode === "calendar" && <ScheduleCalendarView {...viewProps} />}
-
-          {viewMode === "timeline" && <ScheduleTimelineView {...viewProps} />}
-
-          {viewMode === "schedule" && <ScheduleGridView {...viewProps} />}
+          {viewMode !== "grid" && (
+            <div className="px-4 sm:px-6 lg:px-8">
+              {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
+              {viewMode === "calendar" && <ScheduleCalendarView {...viewProps} />}
+              {viewMode === "timeline" && <ScheduleTimelineView {...viewProps} />}
+              {viewMode === "schedule" && <ScheduleGridView {...viewProps} />}
+            </div>
+          )}
         </div>
         )}
 

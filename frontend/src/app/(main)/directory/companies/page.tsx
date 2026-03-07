@@ -8,13 +8,12 @@ import {
   Building2,
   ChevronDown,
   FileSpreadsheet,
-  Globe,
   Plus,
   Upload,
 } from "lucide-react";
 
 import { getDirectoryTabs } from "@/config/directory-tabs";
-import { useAllCompanies } from "@/hooks/use-all-companies";
+import { useGlobalProjectCompanies } from "@/hooks/use-global-project-companies";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -32,17 +31,18 @@ import {
 
 interface CompanyRow {
   id: string;
-  name: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  website?: string;
-  title?: string;
-  notes?: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  company_type?: string;
+  project_id: number;
+  company_id: string;
+  business_phone: string | null;
+  email_address: string | null;
+  primary_contact_id: string | null;
+  erp_vendor_id: string | null;
+  company_type: string | null;
+  status: string | null;
+  logo_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  company_name: string | null;
 }
 
 type CompanyFilterState = Record<string, FilterValue>;
@@ -53,31 +53,34 @@ const EMPTY_FILTERS: CompanyFilterState = {
 };
 
 const companyColumns: ColumnConfig[] = [
-  { id: "name", label: "Company Name", alwaysVisible: true },
-  { id: "title", label: "Title/Role", defaultVisible: true },
-  { id: "website", label: "Website", defaultVisible: true },
+  { id: "id", label: "ID", alwaysVisible: true },
+  { id: "project_id", label: "Project ID", defaultVisible: true },
+  { id: "company_id", label: "Company ID", defaultVisible: true },
+  { id: "business_phone", label: "Business Phone", defaultVisible: true },
+  { id: "email_address", label: "Email Address", defaultVisible: true },
+  { id: "primary_contact_id", label: "Primary Contact ID", defaultVisible: false },
+  { id: "erp_vendor_id", label: "ERP Vendor ID", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "company_type", label: "Type", defaultVisible: true },
-  { id: "address", label: "Address", defaultVisible: false },
-  { id: "city", label: "City", defaultVisible: false },
-  { id: "state", label: "State", defaultVisible: false },
-  { id: "notes", label: "Notes", defaultVisible: false },
+  { id: "logo_url", label: "Logo URL", defaultVisible: false },
   { id: "created_at", label: "Date Added", defaultVisible: false },
   { id: "updated_at", label: "Last Updated", defaultVisible: false },
+  { id: "company_name", label: "Company Name", defaultVisible: false },
 ];
 
 const companyDefaultVisibleColumns = companyColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
 
-function formatDate(value: string | undefined): string {
+function formatDate(value: string | null | undefined): string {
   if (!value) return "-";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "-";
   return parsed.toLocaleDateString();
 }
 
-function statusVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
+function statusVariant(status: string | null | undefined): "default" | "secondary" | "outline" | "destructive" {
+  if (!status) return "outline";
   const normalized = status.toLowerCase();
   if (normalized === "active") return "default";
   if (normalized === "inactive") return "secondary";
@@ -88,58 +91,68 @@ function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
   return [
     {
       ...companyColumns[0],
-      render: (item) => <span className="font-medium">{item.name || "-"}</span>,
-      sortValue: (item) => item.name || "",
+      render: (item) => <span className="font-mono text-xs">{item.id}</span>,
+      sortValue: (item) => item.id,
     },
     {
       ...companyColumns[1],
-      render: (item) => <span>{item.title || "-"}</span>,
-      sortValue: (item) => item.title || "",
+      render: (item) => <span>{item.project_id}</span>,
+      sortValue: (item) => item.project_id,
     },
     {
       ...companyColumns[2],
-      render: (item) => <span>{item.website || "-"}</span>,
-      sortValue: (item) => item.website || "",
+      render: (item) => <span className="font-mono text-xs">{item.company_id}</span>,
+      sortValue: (item) => item.company_id,
     },
     {
       ...companyColumns[3],
+      render: (item) => <span>{item.business_phone || "-"}</span>,
+      sortValue: (item) => item.business_phone || "",
+    },
+    {
+      ...companyColumns[4],
+      render: (item) => <span>{item.email_address || "-"}</span>,
+      sortValue: (item) => item.email_address || "",
+    },
+    {
+      ...companyColumns[5],
+      render: (item) => <span className="font-mono text-xs">{item.primary_contact_id || "-"}</span>,
+      sortValue: (item) => item.primary_contact_id || "",
+    },
+    {
+      ...companyColumns[6],
+      render: (item) => <span>{item.erp_vendor_id || "-"}</span>,
+      sortValue: (item) => item.erp_vendor_id || "",
+    },
+    {
+      ...companyColumns[7],
       render: (item) => <Badge variant={statusVariant(item.status)}>{item.status || "-"}</Badge>,
       sortValue: (item) => item.status || "",
     },
     {
-      ...companyColumns[4],
+      ...companyColumns[8],
       render: (item) => <span>{item.company_type || "-"}</span>,
       sortValue: (item) => item.company_type || "",
     },
     {
-      ...companyColumns[5],
-      render: (item) => <span>{item.address || "-"}</span>,
-      sortValue: (item) => item.address || "",
-    },
-    {
-      ...companyColumns[6],
-      render: (item) => <span>{item.city || "-"}</span>,
-      sortValue: (item) => item.city || "",
-    },
-    {
-      ...companyColumns[7],
-      render: (item) => <span>{item.state || "-"}</span>,
-      sortValue: (item) => item.state || "",
-    },
-    {
-      ...companyColumns[8],
-      render: (item) => <span>{item.notes || "-"}</span>,
-      sortValue: (item) => item.notes || "",
-    },
-    {
       ...companyColumns[9],
+      render: (item) => <span>{item.logo_url || "-"}</span>,
+      sortValue: (item) => item.logo_url || "",
+    },
+    {
+      ...companyColumns[10],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
     {
-      ...companyColumns[10],
+      ...companyColumns[11],
       render: (item) => <span>{formatDate(item.updated_at)}</span>,
       sortValue: (item) => (item.updated_at ? new Date(item.updated_at).getTime() : 0),
+    },
+    {
+      ...companyColumns[12],
+      render: (item) => <span>{item.company_name || "-"}</span>,
+      sortValue: (item) => item.company_name || "",
     },
   ];
 }
@@ -163,7 +176,9 @@ function CompanyPreviewPane({
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold leading-tight">{company.name || "Untitled company"}</p>
+        <p className="text-sm font-semibold leading-tight">
+          {company.company_name || company.company_id}
+        </p>
         <Button
           size="icon"
           variant="ghost"
@@ -176,6 +191,14 @@ function CompanyPreviewPane({
       </div>
 
       <dl className="space-y-3 text-xs">
+        <div>
+          <dt className="text-muted-foreground">ID</dt>
+          <dd className="text-foreground mt-1 font-mono">{company.id}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground">Project ID</dt>
+          <dd className="text-foreground mt-1">{company.project_id}</dd>
+        </div>
         {company.company_type ? (
           <div>
             <dt className="text-muted-foreground">Type</dt>
@@ -188,35 +211,19 @@ function CompanyPreviewPane({
             <dd className="text-foreground mt-1">{company.status}</dd>
           </div>
         ) : null}
-        {company.city || company.state ? (
+        {company.business_phone ? (
           <div>
-            <dt className="text-muted-foreground">Location</dt>
-            <dd className="text-foreground mt-1">{[company.city, company.state].filter(Boolean).join(", ")}</dd>
+            <dt className="text-muted-foreground">Business Phone</dt>
+            <dd className="text-foreground mt-1">{company.business_phone}</dd>
           </div>
         ) : null}
-        {company.address ? (
+        {company.email_address ? (
           <div>
-            <dt className="text-muted-foreground">Address</dt>
-            <dd className="text-foreground mt-1">{company.address}</dd>
-          </div>
-        ) : null}
-        {company.notes ? (
-          <div>
-            <dt className="text-muted-foreground">Notes</dt>
-            <dd className="text-foreground mt-1 line-clamp-6">{company.notes}</dd>
+            <dt className="text-muted-foreground">Email</dt>
+            <dd className="text-foreground mt-1">{company.email_address}</dd>
           </div>
         ) : null}
       </dl>
-
-      {company.website ? (
-        <div className="pt-2 flex items-center gap-2">
-          <Button asChild variant="ghost" size="icon" aria-label="Open website" title="Open website">
-            <a href={company.website} target="_blank" rel="noopener noreferrer">
-              <Globe className="h-4 w-4" />
-            </a>
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -244,8 +251,8 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       page: 1,
       perPage: 50,
       search: "",
-      sortBy: "name",
-      sortDirection: "asc",
+      sortBy: "updated_at",
+      sortDirection: "desc",
       visibleColumns: companyDefaultVisibleColumns,
       filters: initialFilters,
     },
@@ -275,11 +282,11 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const companyTypeFilter =
     typeof activeFilters.company_type === "string" ? activeFilters.company_type : undefined;
 
-  const { companies, pagination, isLoading, isFetching, error } = useAllCompanies({
+  const { companies, pagination, isLoading, isFetching, error } = useGlobalProjectCompanies({
     search: tableState.debouncedSearch || undefined,
     status: statusFilter || "all",
     company_type: companyTypeFilter,
-    sort: "name",
+    sort: `${tableState.sortBy}:${tableState.sortDirection}`,
     page: tableState.page,
     per_page: tableState.perPage,
   });
@@ -325,7 +332,8 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
 
   const openCompanyPage = React.useCallback(
     (company: CompanyRow) => {
-      router.push(`/directory/companies/${company.id}`);
+      // Company detail pages are keyed by global companies.id.
+      router.push(`/directory/companies/${company.company_id}`);
     },
     [router],
   );
@@ -439,7 +447,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search companies...",
+        searchPlaceholder: "Search name, phone, email, ERP ID...",
         currentView: tableState.currentView,
         onViewChange: (view) => {
           tableState.setCurrentView(view);
@@ -455,7 +463,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         onColumnVisibilityChange: tableState.setVisibleColumns,
       }}
       data={{
-        items: companies as CompanyRow[],
+        items: companies,
         isLoading,
         isFetching,
         error: error ?? undefined,

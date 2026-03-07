@@ -1,19 +1,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Stack } from "./stack";
-import { Heading } from "./heading";
-import { Text } from "./text";
 
 /**
- * EmptyState component for consistent empty/zero state displays.
- * Replaces inline empty state divs.
+ * EmptyState — minimal, Superhuman-inspired zero-state.
+ *
+ * No borders, no cards, no boxes. Just centered text with generous
+ * whitespace. Follows the design principle: "Borders create visual
+ * noise. Every border must earn its place."
  *
  * @example
  * <EmptyState
- *   icon={<Building2 className="h-12 w-12" />}
- *   title="No companies found"
- *   description="Create your first company to get started"
- *   action={<Button>Add Company</Button>}
+ *   title="No items found"
+ *   description="Create your first item to get started."
+ *   action={<Button variant="outline" size="sm">Create item</Button>}
  * />
  */
 
@@ -28,33 +27,18 @@ export interface EmptyStateProps {
   action?: React.ReactNode;
   /** Size variant */
   size?: "sm" | "md" | "lg";
-  /** Visual variant */
+  /** Visual variant — all render borderless now */
   variant?: "default" | "executive" | "table" | "compact";
-  /** Show icon with background circle (for table variant) */
+  /** @deprecated — no longer used (kept for API compat) */
   iconWithBackground?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
 
-const sizeMap = {
-  sm: {
-    container: "p-6",
-    iconSize: "h-8 w-8",
-    titleLevel: 5,
-    descSize: "sm",
-  },
-  md: {
-    container: "p-8",
-    iconSize: "h-12 w-12",
-    titleLevel: 4,
-    descSize: "base",
-  },
-  lg: {
-    container: "p-12",
-    iconSize: "h-16 w-16",
-    titleLevel: 3,
-    descSize: "lg",
-  },
+const paddingMap = {
+  sm: "py-10",
+  md: "py-16",
+  lg: "py-24",
 } as const;
 
 export function EmptyState({
@@ -64,78 +48,35 @@ export function EmptyState({
   action,
   size = "md",
   variant = "default",
-  iconWithBackground = false,
   className,
 }: EmptyStateProps) {
-  const config = sizeMap[size];
-
-  // Adjust size for compact variant
-  const effectiveConfig = variant === "compact" ? sizeMap.sm : config;
-
-  // Apply variant styles
-  const variantStyles = {
-    default: "rounded-lg border bg-card",
-    executive: "bg-neutral-50 border border-neutral-200",
-    table: "rounded-lg border bg-card",
-    compact: "rounded-lg border bg-card",
-  };
-
-  // Icon wrapper styles
-  const iconWrapperStyles =
-    iconWithBackground || variant === "table"
-      ? "rounded-full bg-muted p-4"
-      : "";
+  const effectiveSize = variant === "compact" ? "sm" : size;
 
   return (
     <div
       className={cn(
-        "text-center",
-        variantStyles[variant],
-        effectiveConfig.container,
+        "flex flex-col items-center justify-center text-center",
+        paddingMap[effectiveSize],
         className,
       )}
     >
-      <Stack gap="md" align="center">
-        {icon && (
-          <div
-            className={cn(
-              variant === "executive"
-                ? "text-neutral-400"
-                : "text-muted-foreground",
-              effectiveConfig.iconSize,
-              iconWrapperStyles,
-            )}
-          >
-            {icon}
-          </div>
-        )}
+      {icon && (
+        <div className="mb-3 text-muted-foreground/40 [&>svg]:h-5 [&>svg]:w-5">
+          {icon}
+        </div>
+      )}
 
-        <Stack gap="sm" align="center">
-          {variant === "executive" ? (
-            <h3 className="text-lg font-medium text-neutral-900">{title}</h3>
-          ) : (
-            <Heading level={effectiveConfig.titleLevel as 3 | 4 | 5}>
-              {title}
-            </Heading>
-          )}
+      <p className="text-sm font-medium text-muted-foreground">
+        {title}
+      </p>
 
-          {description &&
-            (variant === "executive" ? (
-              <p className="text-sm text-neutral-600 max-w-sm mx-auto">
-                {description}
-              </p>
-            ) : (
-              <Text
-                size={effectiveConfig.descSize as "sm" | "base" | "lg"}
-                tone="muted"
-              >
-                {description}
-              </Text>
-            ))}
-        </Stack>
+      {description && (
+        <p className="mt-1 text-sm text-muted-foreground/60 max-w-xs">
+          {description}
+        </p>
+      )}
 
-        {action && <div className="mt-2">{action}</div>}
-      </Stack>
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

@@ -91,13 +91,20 @@ export function useCreateSpecification(projectId: string) {
       if (data.subscriber_ids)
         formData.append("subscriber_ids", JSON.stringify(data.subscriber_ids));
 
-      const response = await fetch(
-        `/api/projects/${projectId}/specifications`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      let response: Response;
+      try {
+        response = await fetch(
+          `/api/projects/${projectId}/specifications`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+      } catch {
+        throw new Error(
+          "Unable to reach the server. Restart the frontend dev server and try again.",
+        );
+      }
 
       if (!response.ok) {
         const error = await response.json();

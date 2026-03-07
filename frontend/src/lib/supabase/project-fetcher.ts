@@ -23,9 +23,9 @@ type Project = Database["public"]["Tables"]["projects"]["Row"];
  *
  *   // Now use numericProjectId for related queries
  *   const { data: tasks } = await supabase
- *     .from('project_tasks')
+ *     .from('tasks')
  *     .select('*')
- *     .eq('project_id', numericProjectId)
+ *     .contains('project_ids', [numericProjectId])
  * }
  * ```
  */

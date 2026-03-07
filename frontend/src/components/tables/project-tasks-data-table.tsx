@@ -54,18 +54,13 @@ import { Badge } from "@/components/ui/badge";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
 
-type ProjectTask = Database["public"]["Tables"]["project_tasks"]["Row"];
-type Project = Database["public"]["Tables"]["projects"]["Row"];
-
-interface ProjectTaskWithProject extends ProjectTask {
-  project?: Project | null;
-}
+type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
 
 interface ProjectTasksDataTableProps {
-  tasks: ProjectTaskWithProject[];
+  tasks: TaskRow[];
 }
 
-const columns: ColumnDef<ProjectTaskWithProject>[] = [
+const columns: ColumnDef<TaskRow>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -96,7 +91,7 @@ const columns: ColumnDef<ProjectTaskWithProject>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "task_description",
+    accessorKey: "description",
     header: "Task Description",
     cell: ({ row }) => {
       const task = row.original;
@@ -105,20 +100,20 @@ const columns: ColumnDef<ProjectTaskWithProject>[] = [
         <div className="flex items-center">
           <ListTodoIcon className="mr-2 size-4" />
           <span className="font-medium">
-            {task.task_description || "Untitled Task"}
+            {task.description || "Untitled Task"}
           </span>
         </div>
       );
     },
   },
   {
-    accessorKey: "project.name",
-    header: "Project",
+    accessorKey: "assignee_name",
+    header: "Assignee",
     cell: ({ row }) => {
-      const project = row.original.project;
+      const assignee = row.getValue("assignee_name") as string;
       return (
         <span className="text-muted-foreground">
-          {project?.name || "No Project"}
+          {assignee || "Unassigned"}
         </span>
       );
     },
@@ -129,15 +124,17 @@ const columns: ColumnDef<ProjectTaskWithProject>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       const variant =
-        status === "completed"
+        status === "done"
           ? "success"
           : status === "in_progress"
             ? "default"
-            : "secondary";
+            : status === "blocked"
+              ? "destructive"
+              : "secondary";
 
       return (
         <Badge variant={variant}>
-          {status?.replace("_", " ").toUpperCase() || "PENDING"}
+          {status?.replace("_", " ").toUpperCase() || "OPEN"}
         </Badge>
       );
     },
@@ -148,14 +145,14 @@ const columns: ColumnDef<ProjectTaskWithProject>[] = [
     cell: ({ row }) => {
       const priority = row.getValue("priority") as string;
       const variant =
-        priority === "high"
+        priority === "urgent" || priority === "high"
           ? "destructive"
           : priority === "medium"
             ? "warning"
             : "secondary";
 
       return (
-        <Badge variant={variant}>{priority?.toUpperCase() || "LOW"}</Badge>
+        <Badge variant={variant}>{priority?.toUpperCase() || "MEDIUM"}</Badge>
       );
     },
   },

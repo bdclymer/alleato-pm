@@ -53,6 +53,24 @@ class ParsedTranscript:
     summary: str
     transcript_segments: List[TranscriptSegment]
     raw_text: str
+    # Rich section fields (populated from new Fireflies markdown format)
+    rich_sections: Dict[str, str] = None  # type: ignore[assignment]
+    notes_topics: Dict[str, str] = None  # type: ignore[assignment]
+    speakers_json: List[Dict[str, Any]] = None  # type: ignore[assignment]
+    attendees_json: List[Dict[str, Any]] = None  # type: ignore[assignment]
+    speaker_email_map: Dict[str, str] = None  # type: ignore[assignment]
+
+    def __post_init__(self):
+        if self.rich_sections is None:
+            self.rich_sections = {}
+        if self.notes_topics is None:
+            self.notes_topics = {}
+        if self.speakers_json is None:
+            self.speakers_json = []
+        if self.attendees_json is None:
+            self.attendees_json = []
+        if self.speaker_email_map is None:
+            self.speaker_email_map = {}
 
 
 @dataclass
@@ -181,14 +199,11 @@ class FirefliesIngestionPipeline:
                 chunk.embedding = embedding
             self.store.upsert_chunks(chunks)
 
-            tasks_payload = self._build_task_payload(parsed.action_items, document_id, effective_project_id)
-            if tasks_payload:
-                self.store.upsert_tasks(tasks_payload)
-            project_tasks_payload = self._build_project_task_payload(
-                parsed.action_items, document_id, effective_project_id
-            )
-            if project_tasks_payload:
-                self.store.upsert_project_tasks(project_tasks_payload)
+            # NOTE: Task extraction is handled by the pipeline extractor
+            # (pipeline/extractor.py → _upsert_task) which writes LLM-enriched
+            # tasks to the unified `tasks` table with embeddings, assignee emails,
+            # and priority inference. The old duplicate writes to `ai_tasks` and
+            # `project_tasks` have been removed as part of table consolidation.
 
             if effective_project_id and parsed.summary:
                 insight = {
@@ -341,6 +356,13 @@ class FirefliesIngestionPipeline:
         )
         transcript_segments = self._parse_transcript_segments(transcript_text)
 
+        # Extract rich sections for embedding
+        rich_sections = self._collect_rich_sections(sections)
+        notes_topics = self._extract_notes_topics(sections)
+        speakers_json = self._parse_speakers_json(sections)
+        attendees_json = self._parse_attendees_json(sections)
+        speaker_email_map = self._build_speaker_email_map(speakers_json, attendees_json)
+
         return ParsedTranscript(
             title=title,
             fireflies_id=fireflies_id,
@@ -351,6 +373,11 @@ class FirefliesIngestionPipeline:
             summary=summary,
             transcript_segments=transcript_segments,
             raw_text=markdown,
+            rich_sections=rich_sections,
+            notes_topics=notes_topics,
+            speakers_json=speakers_json,
+            attendees_json=attendees_json,
+            speaker_email_map=speaker_email_map,
         )
 
     # ------------------------------------------------------------------
@@ -608,7 +635,9 @@ class FirefliesIngestionPipeline:
 
     @staticmethod
     def _extract_metadata_value(header_block: str, label: str) -> Optional[str]:
-        pattern = rf"\*\*{label}:\*\*\s*(.+)"
+        # Match **Label:** value, stopping at the next **Key:** marker or end of string.
+        # This handles single-line headers where all metadata is on one line.
+        pattern = rf"\*\*{label}:\*\*\s*(.+?)(?=\s+\*\*\w[\w\s]*?:\*\*|$)"
         match = re.search(pattern, header_block)
         return match.group(1).strip() if match else None
 
@@ -673,6 +702,15 @@ class FirefliesIngestionPipeline:
                 items.append(re.sub(r"^[-*•]\s+", "", stripped).strip())
             elif re.match(r"^\d+\.\s+", stripped):
                 items.append(re.sub(r"^\d+\.\s+", "", stripped).strip())
+
+        # Handle inline bullets: all items on one line separated by " - "
+        # e.g. "- item1 (29:49) - item2 (08:36) - item3 (30:23)"
+        if len(items) == 1 and " - " in items[0]:
+            # Split on " - " preceded by a timestamp like (MM:SS)
+            parts = re.split(r"(?<=\(\d{2}:\d{2}\))\s+-\s+", items[0])
+            if len(parts) > 1:
+                items = [p.strip() for p in parts if p.strip()]
+
         return items
 
     @staticmethod
@@ -697,6 +735,162 @@ class FirefliesIngestionPipeline:
                 else:
                     segments.append(TranscriptSegment(None, None, stripped))
         return segments
+
+    # ------------------------------------------------------------------
+    # Rich section extraction (new Fireflies markdown format)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_notes_topics(sections: Dict[str, str]) -> Dict[str, str]:
+        """Extract Notes sub-headings from parsed sections.
+
+        The ``_split_sections()`` method splits on ``## `` so Notes sub-headings
+        like ``## **Change Order and Contract Clarifications**`` become top-level
+        keys with ``**`` markers.  This groups them as notes topics.
+        """
+        topics: Dict[str, str] = {}
+        for key, value in sections.items():
+            stripped = key.strip()
+            if stripped.startswith("**") and stripped.endswith("**"):
+                topic_name = stripped.strip("*").strip()
+                if topic_name and value.strip():
+                    topics[topic_name] = value.strip()
+        return topics
+
+    @staticmethod
+    def _parse_json_section(sections: Dict[str, str], section_name: str) -> Any:
+        """Parse a JSON code-block section into a Python object."""
+        raw = sections.get(section_name, "")
+        if not raw:
+            return None
+        # Strip markdown code fences
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            # Handle case where JSON is on the same line as the fence:
+            #   ```json [{ "id": 0 }, ...]```
+            # Or multi-line:
+            #   ```json
+            #   [{ "id": 0 }]
+            #   ```
+            first_line_end = cleaned.find("\n")
+            if first_line_end == -1:
+                # Everything is on one line: ```json [...]```
+                first_line = cleaned
+            else:
+                first_line = cleaned[:first_line_end]
+
+            # Check if JSON content starts on the first line (after ```json)
+            fence_stripped = re.sub(r"^```\w*\s*", "", first_line).strip()
+            if fence_stripped and (fence_stripped.startswith("{") or fence_stripped.startswith("[")):
+                # JSON is inline with the fence — extract it
+                # Remove trailing ``` if present
+                cleaned = re.sub(r"^```\w*\s*", "", cleaned)
+                cleaned = re.sub(r"\s*```\s*$", "", cleaned).strip()
+            else:
+                # Standard multi-line code block
+                lines = cleaned.split("\n")
+                lines = [l for l in lines if not l.strip().startswith("```")]
+                cleaned = "\n".join(lines).strip()
+        if not cleaned:
+            return None
+        try:
+            return json.loads(cleaned)
+        except (json.JSONDecodeError, ValueError):
+            return None
+
+    @staticmethod
+    def _parse_speakers_json(sections: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Extract the Speakers JSON section."""
+        data = FirefliesIngestionPipeline._parse_json_section(sections, "Speakers")
+        if isinstance(data, list):
+            return data
+        return []
+
+    @staticmethod
+    def _parse_attendees_json(sections: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Extract the Meeting Attendees JSON section."""
+        data = FirefliesIngestionPipeline._parse_json_section(sections, "Meeting Attendees")
+        if isinstance(data, list):
+            return data
+        return []
+
+    @staticmethod
+    def _build_speaker_email_map(
+        speakers: List[Dict[str, Any]],
+        attendees: List[Dict[str, Any]],
+    ) -> Dict[str, str]:
+        """Heuristically match speaker names to attendee emails.
+
+        Strategy:
+        1. Exact displayName match
+        2. Email prefix (before @) matches first name (case-insensitive)
+        3. Name substring match (speaker last name appears in displayName)
+        """
+        mapping: Dict[str, str] = {}
+        if not speakers or not attendees:
+            return mapping
+
+        # Build lookup from attendees
+        attendee_emails: List[Dict[str, str]] = []
+        for att in attendees:
+            display = (att.get("displayName") or att.get("name") or "").strip()
+            email = (att.get("email") or "").strip()
+            if email:
+                attendee_emails.append({"display": display, "email": email})
+
+        for spk in speakers:
+            speaker_name = (
+                spk.get("speakerName") or spk.get("name") or ""
+            ).strip()
+            if not speaker_name:
+                continue
+
+            speaker_lower = speaker_name.lower()
+            speaker_parts = speaker_lower.split()
+
+            # 1. Exact match on displayName
+            for att in attendee_emails:
+                if att["display"].lower() == speaker_lower:
+                    mapping[speaker_name] = att["email"]
+                    break
+            if speaker_name in mapping:
+                continue
+
+            # 2. Email prefix match
+            for att in attendee_emails:
+                prefix = att["email"].split("@")[0].lower()
+                # Check if first name matches prefix start
+                if speaker_parts and prefix.startswith(speaker_parts[0]):
+                    mapping[speaker_name] = att["email"]
+                    break
+            if speaker_name in mapping:
+                continue
+
+            # 3. Last name substring match
+            if len(speaker_parts) >= 2:
+                last_name = speaker_parts[-1]
+                for att in attendee_emails:
+                    if last_name in att["display"].lower() or last_name in att["email"].lower():
+                        mapping[speaker_name] = att["email"]
+                        break
+
+        return mapping
+
+    @staticmethod
+    def _collect_rich_sections(sections: Dict[str, str]) -> Dict[str, str]:
+        """Collect non-transcript, non-JSON rich text sections for embedding."""
+        # These are high-value sections that contain structured summaries
+        section_keys = [
+            "Summary", "Short Summary", "Short Overview", "Gist",
+            "Bullet Gist", "Shorthand Bullet", "Outline", "Notes",
+            "Action Items", "Meeting Type", "Keywords", "Topics Discussed",
+        ]
+        rich: Dict[str, str] = {}
+        for key in section_keys:
+            content = sections.get(key, "").strip()
+            if content:
+                rich[key] = content
+        return rich
 
     # ------------------------------------------------------------------
     # Chunk and payload builders
@@ -746,50 +940,6 @@ class FirefliesIngestionPipeline:
             metadata=metadata,
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
         )
-
-    @staticmethod
-    def _build_task_payload(action_items: List[str], document_id: str, project_id: Optional[int]) -> List[Dict[str, Any]]:
-        payload: List[Dict[str, Any]] = []
-        for item in action_items:
-            payload.append(
-                {
-                    "id": str(uuid4()),
-                    "title": item[:120],
-                    "description": item,
-                    "status": "open",
-                    "project_id": project_id,
-                    "source_document_id": document_id,
-                    "created_by": "ai",
-                }
-            )
-        return payload
-
-    @staticmethod
-    def _build_project_task_payload(
-        action_items: List[str],
-        document_id: str,
-        project_id: Optional[int],
-    ) -> List[Dict[str, Any]]:
-        if not project_id:
-            return []
-
-        payload: List[Dict[str, Any]] = []
-        for item in action_items:
-            normalized = item.strip()
-            if not normalized:
-                continue
-            task_id = str(uuid5(NAMESPACE_URL, f"fireflies:{document_id}:{normalized.lower()}"))
-            payload.append(
-                {
-                    "id": task_id,
-                    "project_id": project_id,
-                    "task_description": normalized,
-                    "status": "pending",
-                    "priority": "medium",
-                    "assigned_to": None,
-                }
-            )
-        return payload
 
     @staticmethod
     def _seconds_to_mmss(value: Any) -> str:

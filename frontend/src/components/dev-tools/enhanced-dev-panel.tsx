@@ -36,6 +36,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
 import { useParams, usePathname } from "next/navigation"
 import { toast } from "sonner"
+import { DeveloperFormConfigPanel } from "@/components/project/developer-form-config-panel"
 
 interface HealthCheck {
   name: string
@@ -624,19 +625,20 @@ export function EnhancedDevPanel() {
                       Open Supabase Dashboard
                     </a>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    asChild
-                  >
-                    <a href="/.claude/rules" target="_blank">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View Claude Rules
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                asChild
+              >
+                <a href="/.claude/rules" target="_blank">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Claude Rules
+                </a>
+              </Button>
+            </div>
+          </div>
+          <DeveloperFormConfigPanel />
+        </TabsContent>
 
             {/* DATABASE TAB */}
             <TabsContent value="database" className="space-y-4">

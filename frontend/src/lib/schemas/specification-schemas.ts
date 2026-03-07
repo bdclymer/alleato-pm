@@ -14,19 +14,15 @@ import { z } from 'zod';
 // =============================================================================
 
 /**
- * PDF file validation schema
+ * File validation schema
  * Max size: 50MB
- * Type: application/pdf only
  *
  * CRITICAL: Uses .refine() not .max() for file size validation
  */
-const pdfFileSchema = z
+const uploadFileSchema = z
   .instanceof(File)
   .refine((file) => file.size <= 50 * 1024 * 1024, {
     message: 'File must be under 50MB',
-  })
-  .refine((file) => file.type === 'application/pdf', {
-    message: 'Only PDF files are allowed',
   });
 
 // =============================================================================
@@ -54,7 +50,7 @@ export const uploadSpecificationSchema = z.object({
 
   description: z.string().max(1000, 'Description must be 1000 characters or less').optional(),
 
-  file: pdfFileSchema,
+  file: uploadFileSchema,
 
   notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
 
@@ -98,7 +94,7 @@ export type EditSpecificationFormData = z.infer<typeof editSpecificationSchema>;
  * Used in AddRevisionDialog component
  */
 export const addRevisionSchema = z.object({
-  file: pdfFileSchema,
+  file: uploadFileSchema,
 
   notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
 
@@ -188,7 +184,7 @@ export const specificationSettingsSchema = z.object({
 
   max_file_size_mb: z.number().int().min(1).max(100).default(50),
 
-  allowed_file_types: z.array(z.string()).default(['application/pdf']),
+  allowed_file_types: z.array(z.string()).default(['*/*']),
 });
 
 export type SpecificationSettingsFormData = z.infer<typeof specificationSettingsSchema>;
@@ -241,8 +237,13 @@ export function validateFileSize(file: File, maxSizeMB: number = 50): boolean {
 /**
  * Validates file type before upload starts
  */
-export function validateFileType(file: File, allowedTypes: string[] = ['application/pdf']): boolean {
-  return allowedTypes.includes(file.type);
+export function validateFileType(file: File, allowedTypes: string[] = ['*/*']): boolean {
+  const normalizedAllowedTypes = allowedTypes.map((type) => type.toLowerCase());
+  if (normalizedAllowedTypes.includes('*/*')) {
+    return true;
+  }
+
+  return normalizedAllowedTypes.includes((file.type || '').toLowerCase());
 }
 
 /**

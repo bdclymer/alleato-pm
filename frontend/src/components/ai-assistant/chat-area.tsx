@@ -51,6 +51,7 @@ import {
   ThumbsUpIcon,
   ThumbsDownIcon,
   DatabaseIcon,
+  SparklesIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
@@ -109,6 +110,16 @@ function formatToolName(name: string): string {
     .trim();
 }
 
+// ─── Assistant Avatar ───────────────────────────────────────────────
+
+function AssistantAvatar() {
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+      <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+    </div>
+  );
+}
+
 // ─── Tool call display ─────────────────────────────────────────────
 
 function ToolCallItem({ part }: { part: ToolPart }) {
@@ -141,28 +152,88 @@ function getToolStepStatus(state: string): "complete" | "active" | "pending" {
 
 function StreamingIndicator({ hasToolCalls }: { hasToolCalls: boolean }) {
   return (
-    <Message from="assistant">
-      <MessageContent>
-        <div className="flex items-center gap-2.5 py-1">
-          {hasToolCalls ? (
-            <>
-              <DatabaseIcon className="h-4 w-4 animate-pulse text-muted-foreground" />
-              <Shimmer as="span" duration={1.5} className="text-sm">
-                Analyzing your project data...
-              </Shimmer>
-            </>
-          ) : (
-            <Shimmer as="span" duration={1.5} className="text-sm">
-              Thinking...
-            </Shimmer>
-          )}
-        </div>
-      </MessageContent>
-    </Message>
+    <div className="flex items-start gap-3">
+      <AssistantAvatar />
+      <Message from="assistant">
+        <MessageContent>
+          <div className="flex items-center gap-2.5 py-1">
+            {hasToolCalls ? (
+              <>
+                <DatabaseIcon className="h-4 w-4 animate-pulse text-muted-foreground" />
+                <Shimmer as="span" duration={1.5} className="text-sm">
+                  Analyzing your project data...
+                </Shimmer>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "0ms" }} />
+                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "150ms" }} />
+                <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-primary/60" style={{ animationDelay: "300ms" }} />
+              </div>
+            )}
+          </div>
+        </MessageContent>
+      </Message>
+    </div>
   );
 }
 
 // ─── Contextual suggestion generation ───────────────────────────────
+
+/**
+ * Detect project disambiguation patterns in assistant responses.
+ * When the AI lists numbered projects for the user to pick from,
+ * extract project names so we can render them as clickable chips.
+ */
+function extractProjectChoices(text: string): string[] {
+  // Strategy 1: Match numbered list like "1. **Project Name** — description"
+  const numberedMatches = text.match(
+    /\d+\.\s+\*{0,2}([^*\n—–-]+?)\*{0,2}\s*[—–-]/g,
+  );
+  if (numberedMatches && numberedMatches.length >= 2) {
+    return numberedMatches
+      .map((m) =>
+        m
+          .replace(/^\d+\.\s+/, "")
+          .replace(/\*+/g, "")
+          .replace(/\s*[—–-].*$/, "")
+          .trim(),
+      )
+      .filter((name) => name.length > 0 && name.length < 60)
+      .slice(0, 5);
+  }
+
+  // Strategy 2: Match inline list like "projects like X, Y, Z, and W" or
+  // "data for projects like X, Y, Z, and W" or "projects such as X, Y, and Z"
+  const inlineMatch = text.match(
+    /projects?\s+(?:like|such as|including)\s+([^.?!]+)/i,
+  );
+  if (inlineMatch) {
+    const listText = inlineMatch[1];
+    // Split on ", " and " and " to get individual project names
+    const names = listText
+      .split(/,\s*(?:and\s+)?|\s+and\s+/)
+      .map((n) => n.replace(/\*+/g, "").trim())
+      .filter((n) => n.length > 2 && n.length < 60);
+    if (names.length >= 2) return names.slice(0, 5);
+  }
+
+  // Strategy 3: Match "Westfield Collective, Vermillion Rise Warehouse, ..."
+  // when preceded by disambiguation-like phrases
+  const disambigMatch = text.match(
+    /(?:have data (?:on|for)|contracting data for|active projects?:?)\s+([A-Z][^.?!]{10,})/i,
+  );
+  if (disambigMatch) {
+    const listText = disambigMatch[1];
+    const names = listText
+      .split(/,\s*(?:and\s+)?|\s+and\s+/)
+      .map((n) => n.replace(/\*+/g, "").trim())
+      .filter((n) => n.length > 2 && n.length < 60 && /^[A-Z]/.test(n));
+    if (names.length >= 2) return names.slice(0, 5);
+  }
+
+  return [];
+}
 
 function generateSuggestions(
   messages: UIMessage[],
@@ -173,9 +244,19 @@ function generateSuggestions(
   const lastMsg = messages[messages.length - 1];
   if (lastMsg.role !== "assistant") return [];
 
-  const text = getMessageText(lastMsg).toLowerCase();
+  const text = getMessageText(lastMsg);
+  const textLower = text.toLowerCase();
   const toolParts = getToolParts(lastMsg);
   const toolNames = toolParts.map((p) => getToolNameFromType(p.type));
+
+  // ── Project disambiguation: extract project names as clickable chips ──
+  const projectChoices = extractProjectChoices(text);
+  if (projectChoices.length >= 2) {
+    // The AI asked "which project?" — show project names as quick-pick buttons
+    return projectChoices.map(
+      (name) => `Tell me about ${name}`,
+    ).slice(0, 5);
+  }
 
   const suggestions: string[] = [];
 
@@ -207,18 +288,26 @@ function generateSuggestions(
     suggestions.push("Show me related action items");
   }
 
+  // Acumatica ERP tools
+  if (
+    toolNames.some((n) => n.startsWith("getAcumatica") || n.startsWith("getAP") || n.startsWith("getAR"))
+  ) {
+    suggestions.push("Show me the ERP budget details");
+    suggestions.push("What's our cash position?");
+  }
+
   // Based on content keywords
   if (suggestions.length < 3) {
-    if (text.includes("meeting") || text.includes("oac")) {
+    if (textLower.includes("meeting") || textLower.includes("oac")) {
       suggestions.push("Help me prepare talking points");
     }
-    if (text.includes("budget") || text.includes("cost")) {
+    if (textLower.includes("budget") || textLower.includes("cost")) {
       suggestions.push("Break down the budget for me");
     }
-    if (text.includes("risk") || text.includes("concern")) {
+    if (textLower.includes("risk") || textLower.includes("concern")) {
       suggestions.push("What's the mitigation plan?");
     }
-    if (text.includes("action item") || text.includes("follow up")) {
+    if (textLower.includes("action item") || textLower.includes("follow up")) {
       suggestions.push("Who's responsible for each?");
     }
   }
@@ -331,7 +420,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
     >
-      <PromptInputTextarea placeholder="Ask anything..." />
+      <PromptInputTextarea placeholder="Ask anything about your projects..." />
       <PromptInputActions className="justify-end px-2 pb-2">
         <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
           <Button
@@ -353,13 +442,13 @@ export function ChatArea({
   );
 
   const poweredByEl = (
-    <p className="mt-2 text-center text-xs text-muted-foreground/60">
+    <p className="mt-2 text-center text-xs text-muted-foreground/50">
       Powered by live project data
     </p>
   );
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[hsl(var(--surface-alt))]">
       {!hasMessages && !isLoadingMessages ? (
         /* Welcome state — input centered with title & suggestions */
         <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)}>
@@ -385,26 +474,29 @@ export function ChatArea({
                 if (isAssistant && !text.trim() && hasToolInvocations(msg)) {
                   if (toolParts.length > 0) {
                     return (
-                      <Message key={msg.id} from="assistant">
-                        <MessageContent>
-                          {toolParts.length > 1 ? (
-                            <ChainOfThought defaultOpen>
-                              <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
-                              <ChainOfThoughtContent>
-                                {toolParts.map((part) => (
-                                  <ChainOfThoughtStep
-                                    key={part.toolCallId}
-                                    label={formatToolName(getToolNameFromType(part.type))}
-                                    status={getToolStepStatus(part.state)}
-                                  />
-                                ))}
-                              </ChainOfThoughtContent>
-                            </ChainOfThought>
-                          ) : (
-                            <ToolCallItem part={toolParts[0]} />
-                          )}
-                        </MessageContent>
-                      </Message>
+                      <div key={msg.id} className="flex items-start gap-3">
+                        <AssistantAvatar />
+                        <Message from="assistant">
+                          <MessageContent>
+                            {toolParts.length > 1 ? (
+                              <ChainOfThought defaultOpen>
+                                <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
+                                <ChainOfThoughtContent>
+                                  {toolParts.map((part) => (
+                                    <ChainOfThoughtStep
+                                      key={part.toolCallId}
+                                      label={formatToolName(getToolNameFromType(part.type))}
+                                      status={getToolStepStatus(part.state)}
+                                    />
+                                  ))}
+                                </ChainOfThoughtContent>
+                              </ChainOfThought>
+                            ) : (
+                              <ToolCallItem part={toolParts[0]} />
+                            )}
+                          </MessageContent>
+                        </Message>
+                      </div>
                     );
                   }
                   return null;
@@ -415,86 +507,102 @@ export function ChatArea({
                   return null;
                 }
 
+                // User messages — right-aligned bubble
+                if (!isAssistant) {
+                  return (
+                    <Message
+                      key={msg.id}
+                      from="user"
+                    >
+                      <MessageContent>
+                        <MessageResponse>{text}</MessageResponse>
+                      </MessageContent>
+                    </Message>
+                  );
+                }
+
+                // Assistant messages — left-aligned with avatar
                 return (
-                  <Message
-                    key={msg.id}
-                    from={msg.role as "user" | "assistant"}
-                  >
-                    <MessageContent>
-                      {/* Reasoning / Thinking display */}
-                      {isAssistant && reasoningText && (
-                        <Reasoning
-                          isStreaming={isStreaming && isLastMessage}
-                        >
-                          <ReasoningTrigger />
-                          <ReasoningContent>
-                            {reasoningText}
-                          </ReasoningContent>
-                        </Reasoning>
-                      )}
+                  <div key={msg.id} className="flex items-start gap-3">
+                    <AssistantAvatar />
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <Message from="assistant">
+                        <MessageContent>
+                          {/* Reasoning / Thinking display */}
+                          {reasoningText && (
+                            <Reasoning
+                              isStreaming={isStreaming && isLastMessage}
+                            >
+                              <ReasoningTrigger />
+                              <ReasoningContent>
+                                {reasoningText}
+                              </ReasoningContent>
+                            </Reasoning>
+                          )}
 
-                      {/* Live tool call display (during streaming) */}
-                      {isAssistant && toolParts.length > 1 ? (
-                        <div className="mb-3">
-                          <ChainOfThought defaultOpen={isStreaming && isLastMessage}>
-                            <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
-                            <ChainOfThoughtContent>
-                              {toolParts.map((part) => (
-                                <ChainOfThoughtStep
-                                  key={part.toolCallId}
-                                  label={formatToolName(getToolNameFromType(part.type))}
-                                  status={getToolStepStatus(part.state)}
-                                />
-                              ))}
-                            </ChainOfThoughtContent>
-                          </ChainOfThought>
-                        </div>
-                      ) : isAssistant && toolParts.length === 1 ? (
-                        <div className="mb-3">
-                          <ToolCallItem part={toolParts[0]} />
-                        </div>
-                      ) : null}
+                          {/* Live tool call display (during streaming) */}
+                          {toolParts.length > 1 ? (
+                            <div className="mb-3">
+                              <ChainOfThought defaultOpen={isStreaming && isLastMessage}>
+                                <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
+                                <ChainOfThoughtContent>
+                                  {toolParts.map((part) => (
+                                    <ChainOfThoughtStep
+                                      key={part.toolCallId}
+                                      label={formatToolName(getToolNameFromType(part.type))}
+                                      status={getToolStepStatus(part.state)}
+                                    />
+                                  ))}
+                                </ChainOfThoughtContent>
+                              </ChainOfThought>
+                            </div>
+                          ) : toolParts.length === 1 ? (
+                            <div className="mb-3">
+                              <ToolCallItem part={toolParts[0]} />
+                            </div>
+                          ) : null}
 
-                      {/* Main text response */}
-                      <MessageResponse>{text}</MessageResponse>
+                          {/* Main text response */}
+                          <MessageResponse>{text}</MessageResponse>
 
-                      {/* Persisted tool traces (historical messages) */}
-                      {isAssistant &&
-                        toolParts.length === 0 &&
-                        persistedTraces.length > 0 && (
-                          <TracePanel traces={persistedTraces} />
+                          {/* Persisted tool traces (historical messages) */}
+                          {toolParts.length === 0 &&
+                            persistedTraces.length > 0 && (
+                              <TracePanel traces={persistedTraces} />
+                            )}
+
+                          {/* Source citations */}
+                          {persistedSources.length > 0 && (
+                            <SourceCitations sources={persistedSources} />
+                          )}
+                        </MessageContent>
+
+                        {/* Message actions: copy, thumbs up/down (hover-only) */}
+                        {text && (
+                          <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
+                            <MessageAction
+                              tooltip="Copy"
+                              onClick={() => handleCopy(text)}
+                            >
+                              <CopyIcon className="h-3.5 w-3.5" />
+                            </MessageAction>
+                            <MessageAction
+                              tooltip="Good response"
+                              onClick={() => handleFeedback("up", text)}
+                            >
+                              <ThumbsUpIcon className="h-3.5 w-3.5" />
+                            </MessageAction>
+                            <MessageAction
+                              tooltip="Poor response"
+                              onClick={() => handleFeedback("down", text)}
+                            >
+                              <ThumbsDownIcon className="h-3.5 w-3.5" />
+                            </MessageAction>
+                          </MessageActions>
                         )}
-
-                      {/* Source citations */}
-                      {isAssistant && persistedSources.length > 0 && (
-                        <SourceCitations sources={persistedSources} />
-                      )}
-                    </MessageContent>
-
-                    {/* Message actions: copy, thumbs up/down (hover-only) */}
-                    {isAssistant && text && (
-                      <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
-                        <MessageAction
-                          tooltip="Copy"
-                          onClick={() => handleCopy(text)}
-                        >
-                          <CopyIcon className="h-3.5 w-3.5" />
-                        </MessageAction>
-                        <MessageAction
-                          tooltip="Good response"
-                          onClick={() => handleFeedback("up", text)}
-                        >
-                          <ThumbsUpIcon className="h-3.5 w-3.5" />
-                        </MessageAction>
-                        <MessageAction
-                          tooltip="Poor response"
-                          onClick={() => handleFeedback("down", text)}
-                        >
-                          <ThumbsDownIcon className="h-3.5 w-3.5" />
-                        </MessageAction>
-                      </MessageActions>
-                    )}
-                  </Message>
+                      </Message>
+                    </div>
+                  </div>
                 );
               })}
 
@@ -507,7 +615,7 @@ export function ChatArea({
 
               {/* Follow-up suggestions */}
               {!isStreaming && suggestions.length > 0 && (
-                <div className="py-2">
+                <div className="py-2 pl-10">
                   <Suggestions>
                     {suggestions.map((suggestion) => (
                       <Suggestion

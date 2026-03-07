@@ -25,6 +25,11 @@ logger = logging.getLogger(__name__)
 CHUNK_TARGET_CHARS = 3000   # ~750 tokens
 CHUNK_OVERLAP_CHARS = 500   # ~125 tokens
 
+# Segment index conventions for non-transcript chunks
+SEGMENT_IDX_MEETING_SUMMARY = -1
+SEGMENT_IDX_SECTION = -2
+SEGMENT_IDX_NOTES_TOPIC = -3
+
 # Stateless parser instance for content re-parsing.
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 
@@ -101,6 +106,108 @@ def _chunk_segment(
     return chunks
 
 
+def _split_text(text: str, max_chars: int = CHUNK_TARGET_CHARS, overlap: int = CHUNK_OVERLAP_CHARS) -> List[str]:
+    """Split text into overlapping chunks at sentence boundaries."""
+    if len(text) <= max_chars:
+        return [text]
+
+    sentences = _split_sentences(text)
+    chunks: List[str] = []
+    current: List[str] = []
+    current_len = 0
+
+    for sentence in sentences:
+        slen = len(sentence)
+        if current_len + slen > max_chars and current:
+            chunks.append(" ".join(current))
+            # Keep overlap tail
+            overlap_parts: List[str] = []
+            overlap_len = 0
+            for s in reversed(current):
+                if overlap_len + len(s) <= overlap:
+                    overlap_parts.insert(0, s)
+                    overlap_len += len(s)
+                else:
+                    break
+            current = overlap_parts
+            current_len = overlap_len
+        current.append(sentence)
+        current_len += slen
+
+    if current:
+        chunks.append(" ".join(current))
+    return chunks
+
+
+def _create_section_chunks(
+    parsed,
+    metadata_id: str,
+    meeting_title: str,
+    meeting_date: Optional[str],
+) -> List[DocumentChunk]:
+    """Create embedder-ready chunks from rich Fireflies markdown sections.
+
+    Produces chunks for Summary, Short Summary, Action Items, Shorthand Bullet,
+    Outline, and individual Notes topics.
+    """
+    chunks: List[DocumentChunk] = []
+
+    # Map of section names → doc_type for single-chunk sections
+    section_doc_types = {
+        "Summary": "section_summary",
+        "Short Summary": "section_short_summary",
+        "Action Items": "section_action_items",
+        "Shorthand Bullet": "section_shorthand",
+        "Outline": "section_outline",
+        "Bullet Gist": "section_bullet_gist",
+        "Gist": "section_gist",
+    }
+
+    chunk_idx = 0
+    rich_sections = getattr(parsed, "rich_sections", {}) or {}
+    notes_topics = getattr(parsed, "notes_topics", {}) or {}
+
+    for section_name, doc_type in section_doc_types.items():
+        content = rich_sections.get(section_name, "").strip()
+        if not content:
+            continue
+
+        # Prefix with context for better RAG retrieval
+        prefix = f"[{meeting_title}] {section_name}:\n\n"
+        text_parts = _split_text(prefix + content)
+
+        for part_idx, text in enumerate(text_parts):
+            chunks.append(DocumentChunk(
+                content=text,
+                chunk_index=chunk_idx,
+                segment_index=SEGMENT_IDX_SECTION,
+                doc_type=doc_type,
+                content_hash=_hash_content(text),
+            ))
+            chunk_idx += 1
+
+    # Notes topics — each sub-heading gets its own chunk(s)
+    for topic_name, topic_content in notes_topics.items():
+        if not topic_content.strip():
+            continue
+
+        prefix = f"[{meeting_title}] Notes — {topic_name}:\n\n"
+        text_parts = _split_text(prefix + topic_content)
+
+        for part_idx, text in enumerate(text_parts):
+            chunks.append(DocumentChunk(
+                content=text,
+                chunk_index=chunk_idx,
+                segment_index=SEGMENT_IDX_NOTES_TOPIC,
+                doc_type="notes_topic",
+                content_hash=_hash_content(text),
+            ))
+            chunk_idx += 1
+
+    logger.info("[Embedder] Created %d section chunks from rich sections", len(chunks))
+    return chunks
+
+
 def run_embedder(metadata_id: str) -> Dict[str, Any]:
     """
     Chunk and embed a document's segments.
@@ -160,6 +267,7 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
 
     # 4. Parse content to get indexed transcript lines for chunking
     transcript_lines: List[TranscriptLine] = []
+    parsed = None  # Hoisted so section chunking can reuse it
     if content:
         try:
             parsed = _parser.parse_markdown(content)
@@ -205,7 +313,17 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
                 )
             )
 
-    logger.info("[Embedder] Created %d chunks", len(all_chunks))
+    # Add section-aware chunks from rich Fireflies sections
+    if parsed is not None:
+        try:
+            section_chunks = _create_section_chunks(
+                parsed, metadata_id, title, started_at
+            )
+            all_chunks.extend(section_chunks)
+        except Exception as exc:
+            logger.warning("[Embedder] Failed to create section chunks: %s", exc)
+
+    logger.info("[Embedder] Created %d chunks (transcript + sections)", len(all_chunks))
 
     # 6. Mark job as chunked before expensive embedding calls
     client.table("fireflies_ingestion_jobs").update(

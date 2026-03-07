@@ -13,6 +13,24 @@ import { sanitizeFilename } from "../lib/schemas/specification-schemas";
 type Tables = Database["public"]["Tables"];
 type SpecificationSection = Tables["specification_sections"]["Row"];
 
+function extractProjectFilesPath(fileUrl: string): string | null {
+  if (!fileUrl) return null;
+
+  if (fileUrl.startsWith("project-files/")) {
+    return fileUrl.replace(/^project-files\//, "");
+  }
+  if (!fileUrl.startsWith("http://") && !fileUrl.startsWith("https://")) {
+    return fileUrl;
+  }
+
+  const decoded = decodeURIComponent(fileUrl);
+  const match =
+    decoded.match(/\/object\/(?:public|sign)\/project-files\/([^?]+)/) ||
+    decoded.match(/\/project-files\/([^?]+)/);
+
+  return match?.[1] ?? null;
+}
+
 /**
  * Service class for specification section revision management
  * Handles version history with file uploads and revision tracking
@@ -181,17 +199,6 @@ export class SpecificationRevisionService {
         };
       }
 
-      if (data.file.type !== "application/pdf") {
-        return {
-          data: null,
-          error: {
-            type: "INVALID_FILE_TYPE",
-            message: "Only PDF files are allowed",
-            allowed_types: ["application/pdf"],
-          },
-        };
-      }
-
       // 2. Verify section exists
       const { data: section, error: sectionError } = await this.supabase
         .from("specification_sections")
@@ -253,7 +260,7 @@ export class SpecificationRevisionService {
           p_file_url: fileUrl,
           p_file_name: data.file.name,
           p_file_size: data.file.size,
-          p_file_type: data.file.type,
+          p_file_type: data.file.type || "application/octet-stream",
           p_uploaded_by: uploadedBy,
           p_notes: data.notes,
         },
@@ -408,12 +415,11 @@ export class SpecificationRevisionService {
       }
 
       // Clean up storage file
-      const url = new URL(revision.file_url);
-      const pathMatch = url.pathname.match(/project-files\/(.+)$/);
-      if (pathMatch) {
+      const storagePath = extractProjectFilesPath(revision.file_url);
+      if (storagePath) {
         await this.supabase.storage
           .from("project-files")
-          .remove([pathMatch[1]]);
+          .remove([storagePath]);
       }
 
       return { data: null, error: null };
@@ -460,11 +466,8 @@ export class SpecificationRevisionService {
         };
       }
 
-      // Extract file path from public URL
-      const url = new URL(revision.file_url);
-      const pathMatch = url.pathname.match(/project-files\/(.+)$/);
-
-      if (!pathMatch) {
+      const storagePath = extractProjectFilesPath(revision.file_url);
+      if (!storagePath) {
         return {
           data: null,
           error: {
@@ -478,7 +481,7 @@ export class SpecificationRevisionService {
       const { data: signedUrlData, error: signedUrlError } =
         await this.supabase.storage
           .from("project-files")
-          .createSignedUrl(pathMatch[1], 3600);
+          .createSignedUrl(storagePath, 3600);
 
       if (signedUrlError) {
         return {

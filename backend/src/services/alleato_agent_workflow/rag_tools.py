@@ -93,19 +93,23 @@ def _format_chunks_for_context(chunks: List[Dict[str, Any]]) -> str:
 
 
 def _format_tasks_for_context(tasks: List[Dict[str, Any]]) -> str:
-    """Format tasks into readable context."""
+    """Format tasks into readable context.
+
+    Reads from the unified ``tasks`` table which uses ``description``,
+    ``assignee_name``, ``priority``, and ``status`` columns.
+    """
     if not tasks:
         return "No tasks found."
 
     formatted = []
     for task in tasks:
         status = task.get("status", "unknown")
-        title = task.get("title", task.get("description", "Untitled task"))
-        owner = task.get("owner", "Unassigned")
+        description = task.get("description", "Untitled task")
+        assignee = task.get("assignee_name", "Unassigned")
         due_date = task.get("due_date", "No due date")
-        priority = task.get("priority", "normal")
+        priority = task.get("priority", "medium")
 
-        formatted.append(f"- [{status.upper()}] {title} | Owner: {owner} | Due: {due_date} | Priority: {priority}")
+        formatted.append(f"- [{status.upper()}] {description} | Owner: {assignee} | Due: {due_date} | Priority: {priority}")
 
     return "\n".join(formatted)
 
@@ -347,56 +351,56 @@ def get_recent_meetings(
 
 @function_tool
 def task_writer(
-    title: str,
     description: str,
-    owner: Optional[str] = None,
+    assignee_name: Optional[str] = None,
     due_date: Optional[str] = None,
-    priority: str = "normal",
+    priority: str = "medium",
     project_id: Optional[int] = None,
     source_meeting_id: Optional[str] = None
 ) -> str:
     """
-    Create or update a task in the system.
+    Create or update a task in the unified tasks table.
 
     Use this tool to create actionable tasks from strategic recommendations,
     meeting follow-ups, or identified action items.
 
     Args:
-        title: Brief task title
-        description: Detailed description of what needs to be done
-        owner: Person responsible for the task
+        description: What needs to be done (concise but complete)
+        assignee_name: Person responsible for the task
         due_date: Due date in YYYY-MM-DD format
-        priority: Priority level (low, normal, high, critical)
+        priority: Priority level (low, medium, high, urgent)
         project_id: Project this task belongs to
-        source_meeting_id: Meeting ID where this task was identified
+        source_meeting_id: Meeting/document ID where this task was identified
 
     Returns:
         Confirmation of task creation with task details
     """
     store = SupabaseRagStore()
 
-    task = {
-        "title": title,
+    # Map priority values to tasks table CHECK constraint (low/medium/high/urgent)
+    priority_map = {"normal": "medium", "critical": "urgent"}
+    mapped_priority = priority_map.get(priority, priority)
+
+    task: Dict[str, Any] = {
         "description": description,
-        "owner": owner,
+        "assignee_name": assignee_name,
         "due_date": due_date,
-        "priority": priority,
+        "priority": mapped_priority,
         "status": "open",
-        "created_at": datetime.utcnow().isoformat(),
+        "source_system": "assistant",
+        "metadata_id": source_meeting_id,
     }
 
     if project_id is not None:
-        task["project_id"] = project_id
-    if source_meeting_id:
-        task["source_document_id"] = source_meeting_id
+        task["project_ids"] = [project_id]
 
     try:
-        store.upsert_tasks([task])
+        store.upsert_task(task)
         return f"✓ Task created successfully:\n" \
-               f"  Title: {title}\n" \
-               f"  Owner: {owner or 'Unassigned'}\n" \
+               f"  Description: {description}\n" \
+               f"  Owner: {assignee_name or 'Unassigned'}\n" \
                f"  Due: {due_date or 'Not set'}\n" \
-               f"  Priority: {priority}"
+               f"  Priority: {mapped_priority}"
     except Exception as e:
         return f"Error creating task: {str(e)}"
 

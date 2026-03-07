@@ -82,12 +82,12 @@ export function ConversationSidebar(props: ConversationSidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col overflow-hidden border-r border-border/40 bg-muted/30 md:flex">
+      <aside className="hidden w-64 shrink-0 flex-col overflow-hidden border-r border-border/30 bg-background md:flex">
         <SidebarContent {...props} />
       </aside>
 
       {/* Mobile sidebar (Sheet) */}
-      <div className="flex items-center border-b border-border/40 bg-muted/30 px-2 py-1 md:hidden">
+      <div className="flex items-center border-b border-border/30 bg-background px-2 py-1 md:hidden">
         <Sheet>
           <SheetTrigger asChild>
             <Button size="icon" variant="ghost" className="h-9 w-9">

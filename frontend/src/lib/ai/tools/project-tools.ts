@@ -252,8 +252,19 @@ export function createProjectTools(
           0,
         );
 
+        // Build a quick-reference list for disambiguation
+        const projectList = enrichedProjects.map((p, i) => {
+          const val = p.totalContractValue
+            ? `$${(p.totalContractValue / 1_000_000).toFixed(1)}M contract`
+            : "no contract data";
+          return `${i + 1}. **${p.name}** — ${val}, phase: ${p.phase ?? "N/A"}`;
+        }).join("\n");
+
         return {
           sourceRef: `[Source: Portfolio Overview - ${phase ?? "All"} Projects]`,
+          _disambiguationHint: enrichedProjects.length > 1
+            ? `IMPORTANT: If the user has NOT specified a project name, you MUST present this numbered list and ask them to pick one. Do NOT guess:\n\n${projectList}\n\nSay: "Which project would you like me to analyze?" after listing them.`
+            : null,
           portfolioSummary: {
             phase,
             totalProjects: enrichedProjects.length,

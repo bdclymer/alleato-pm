@@ -1,6 +1,4 @@
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
-
-import { PunchListPageWrapper } from "./punch-list-page-wrapper";
+import { PunchListClient } from "./punch-list-client";
 
 export default async function PunchListPage({
   params,
@@ -10,15 +8,5 @@ export default async function PunchListPage({
   const { projectId } = await params;
   const numericProjectId = parseInt(projectId, 10);
 
-  return (
-    <>
-      <ProjectPageHeader
-        title="Punch List"
-        description="Track and manage punch list items"
-      />
-      <PageContainer>
-        <PunchListPageWrapper projectId={numericProjectId} />
-      </PageContainer>
-    </>
-  );
+  return <PunchListClient projectId={numericProjectId} />;
 }

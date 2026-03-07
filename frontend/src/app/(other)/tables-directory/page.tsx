@@ -83,7 +83,7 @@ const getTableHref = (tableName: string): string => {
     daily_reports: "/daily-reports",
     meeting_segments: "/meeting-segments",
     notes: "/notes",
-    project_tasks: "/tasks",
+    tasks: "/tasks",
     rfis: "/rfis",
     punch_list: "/punch-list",
     document_metadata: "/meetings",

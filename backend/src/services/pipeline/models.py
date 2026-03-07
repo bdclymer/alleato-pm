@@ -69,6 +69,7 @@ class RiskItem(StructuredItem):
 @dataclass
 class TaskItem(StructuredItem):
     assignee: Optional[str] = None
+    assignee_email: Optional[str] = None
     due_date: Optional[str] = None
     priority: Optional[str] = None
 

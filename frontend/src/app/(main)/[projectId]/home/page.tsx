@@ -33,14 +33,14 @@ export default async function ProjectHomePage({
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
 
-    // Fetch tasks
+    // Fetch tasks from unified tasks table
     supabase
-      .from("project_tasks")
+      .from("tasks")
       .select("*")
-      .eq("project_id", numericProjectId)
-      .neq("status", "completed")
-      .order("due_date", { ascending: true })
-      .limit(4),
+      .contains("project_ids", [numericProjectId])
+      .not("status", "in", '("done","cancelled")')
+      .order("created_at", { ascending: false })
+      .limit(20),
 
     // Fetch meetings from document_metadata
     supabase

@@ -25,12 +25,6 @@ import { Project } from "@/types/portfolio";
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
 const ACCEPTED_IMAGE_TYPES = ".jpg,.jpeg,.png,.tif,.tiff,.bmp";
 
-const PROJECT_TEMPLATE_OPTIONS = [
-  { value: "standard", label: "Standard Project Template" },
-  { value: "shell", label: "Shell Template" },
-  { value: "interiors", label: "Interiors Template" },
-];
-
 const STAGE_OPTIONS = [
   "Bidding",
   "Course of Construction",
@@ -172,7 +166,6 @@ interface EditProjectDialogProps {
 }
 
 interface EditProjectFormData {
-  project_template: string;
   stage: string;
   phase: string;
   name: string;
@@ -229,8 +222,6 @@ const createInitialFormData = (project: Project): EditProjectFormData => {
   const metadata = getSummaryMetadata(project);
 
   return {
-    project_template:
-      project.projectTemplate || toStringValue(metadata.project_template) || "standard",
     stage: project.currentPhase || project.stage || "",
     phase: project.phase || "",
     name: project.name || "",
@@ -382,7 +373,6 @@ export function EditProjectDialog({
         delivery_method: formData.delivery_method || null,
         summary_metadata: {
           ...existingMetadata,
-          project_template: formData.project_template || null,
           square_footage: parseOptionalNumber(formData.square_footage),
           project_code: formData.project_code || null,
           city: formData.city || null,
@@ -423,424 +413,423 @@ export function EditProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-6xl p-0 gap-0">
+      <DialogContent className="w-full max-w-6xl sm:max-w-6xl p-0 gap-0">
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>Edit Project</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex max-h-screen flex-col">
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-          <section className="space-y-4 border-b border-border pb-8">
-            <h3 className="text-base font-semibold text-foreground">General Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SelectField
-                id="project_template"
-                label="Project Template"
-                value={formData.project_template}
-                onChange={(value) => setField("project_template", value)}
-                options={PROJECT_TEMPLATE_OPTIONS}
-                placeholder="Select project template"
-              />
 
-              <SelectField
-                id="stage"
-                label="Stage"
-                value={formData.stage}
-                onChange={(value) => setField("stage", value)}
-                options={STAGE_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select stage"
-                allowClear
-              />
+            {/* General Information */}
+            <section className="space-y-4 border-b border-border pb-8">
+              <h3 className="text-base font-semibold text-foreground">General Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="name" className="mb-2 inline-block">
+                    Project Name *
+                  </Label>
+                  <Input
+                    id="name"
+                    className="h-10 w-full"
+                    value={formData.name}
+                    onChange={(e) => setField("name", e.target.value)}
+                    required
+                  />
+                </div>
 
-              <SelectField
-                id="phase"
-                label="Phase"
-                value={formData.phase}
-                onChange={(value) => setField("phase", value)}
-                options={PHASE_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select phase"
-                allowClear
-              />
+                <div>
+                  <Label htmlFor="project_number" className="mb-2 inline-block">
+                    Job Number *
+                  </Label>
+                  <Input
+                    id="project_number"
+                    className="h-10 w-full"
+                    value={formData.project_number}
+                    onChange={(e) => setField("project_number", e.target.value)}
+                    required
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="name" className="mb-2 inline-block">
-                  Project Name *
-                </Label>
-                <Input
-                  id="name"
-                  className="h-10 w-full"
-                  value={formData.name}
-                  onChange={(e) => setField("name", e.target.value)}
-                  required
+                <SelectField
+                  id="stage"
+                  label="Stage"
+                  value={formData.stage}
+                  onChange={(value) => setField("stage", value)}
+                  options={STAGE_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select stage"
+                  allowClear
+                />
+
+                <SelectField
+                  id="phase"
+                  label="Phase"
+                  value={formData.phase}
+                  onChange={(value) => setField("phase", value)}
+                  options={PHASE_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select phase"
+                  allowClear
+                />
+
+                <div>
+                  <Label htmlFor="client" className="mb-2 inline-block">
+                    Client
+                  </Label>
+                  <Input
+                    id="client"
+                    className="h-10 w-full"
+                    value={formData.client}
+                    onChange={(e) => setField("client", e.target.value)}
+                  />
+                </div>
+
+                <SelectField
+                  id="project_type"
+                  label="Type"
+                  value={formData.project_type}
+                  onChange={(value) => setField("project_type", value)}
+                  options={PROJECT_TYPE_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select project type"
+                  allowClear
+                />
+
+                <SelectField
+                  id="work_scope"
+                  label="Work Scope"
+                  value={formData.work_scope}
+                  onChange={(value) => setField("work_scope", value)}
+                  options={WORK_SCOPE_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select work scope"
+                  allowClear
+                />
+
+                <SelectField
+                  id="project_sector"
+                  label="Project Sector"
+                  value={formData.project_sector}
+                  onChange={(value) => setField("project_sector", value)}
+                  options={PROJECT_SECTOR_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select project sector"
+                  allowClear
+                />
+
+                <SelectField
+                  id="delivery_method"
+                  label="Delivery Method"
+                  value={formData.delivery_method}
+                  onChange={(value) => setField("delivery_method", value)}
+                  options={DELIVERY_METHOD_OPTIONS.map((value) => ({ value, label: value }))}
+                  placeholder="Select delivery method"
+                  allowClear
+                />
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="description" className="mb-2 inline-block">
+                    Description
+                  </Label>
+                  <Textarea
+                    id="description"
+                    className="min-h-24"
+                    value={formData.description}
+                    onChange={(e) => setField("description", e.target.value)}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Project Metrics */}
+            <section className="space-y-4 border-b border-border pb-8">
+              <h3 className="text-base font-semibold text-foreground">Project Metrics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="square_footage" className="mb-2 inline-block">
+                    Square Footage
+                  </Label>
+                  <Input
+                    id="square_footage"
+                    className="h-10 w-full"
+                    type="number"
+                    value={formData.square_footage}
+                    onChange={(e) => setField("square_footage", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="total_value" className="mb-2 inline-block">
+                    Total Value ($)
+                  </Label>
+                  <Input
+                    id="total_value"
+                    className="h-10 w-full"
+                    type="number"
+                    step="0.01"
+                    value={formData.total_value}
+                    onChange={(e) => setField("total_value", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="est_profit" className="mb-2 inline-block">
+                    Estimated Profit ($)
+                  </Label>
+                  <Input
+                    id="est_profit"
+                    className="h-10 w-full"
+                    type="number"
+                    step="0.01"
+                    value={formData.est_profit}
+                    onChange={(e) => setField("est_profit", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="project_code" className="mb-2 inline-block">
+                    Code
+                  </Label>
+                  <Input
+                    id="project_code"
+                    className="h-10 w-full"
+                    value={formData.project_code}
+                    onChange={(e) => setField("project_code", e.target.value)}
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Project Location */}
+            <section className="space-y-4 border-b border-border pb-8">
+              <h3 className="text-base font-semibold text-foreground">Project Location</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectField
+                  id="office"
+                  label="Office"
+                  value={formData.office}
+                  onChange={(value) => setField("office", value)}
+                  options={OFFICE_OPTIONS}
+                  placeholder="Select office"
+                  allowClear
+                />
+
+                <SelectField
+                  id="country"
+                  label="Country"
+                  value={formData.country}
+                  onChange={(value) => setField("country", value)}
+                  options={COUNTRY_OPTIONS}
+                  placeholder="Select country"
+                />
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="street_address" className="mb-2 inline-block">
+                    Street Address
+                  </Label>
+                  <Input
+                    id="street_address"
+                    className="h-10 w-full"
+                    value={formData.street_address}
+                    onChange={(e) => setField("street_address", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="city" className="mb-2 inline-block">
+                    City
+                  </Label>
+                  <Input
+                    id="city"
+                    className="h-10 w-full"
+                    value={formData.city}
+                    onChange={(e) => setField("city", e.target.value)}
+                  />
+                </div>
+
+                <SelectField
+                  id="state"
+                  label="State"
+                  value={formData.state}
+                  onChange={(value) => setField("state", value)}
+                  options={US_STATE_OPTIONS}
+                  placeholder="Select state"
+                  allowClear
+                />
+
+                <div>
+                  <Label htmlFor="postal_code" className="mb-2 inline-block">
+                    Zip Code
+                  </Label>
+                  <Input
+                    id="postal_code"
+                    className="h-10 w-full"
+                    value={formData.postal_code}
+                    onChange={(e) => setField("postal_code", e.target.value)}
+                  />
+                </div>
+
+                <SelectField
+                  id="timezone"
+                  label="Timezone"
+                  value={formData.timezone}
+                  onChange={(value) => setField("timezone", value)}
+                  options={TIMEZONE_OPTIONS.map((opt) => ({
+                    value: opt.value,
+                    label: opt.label,
+                  }))}
+                  placeholder="Select timezone"
+                />
+
+                <div>
+                  <Label htmlFor="phone" className="mb-2 inline-block">
+                    Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    className="h-10 w-full"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setField("phone", e.target.value)}
+                  />
+                </div>
+
+                <SelectField
+                  id="region"
+                  label="Region"
+                  value={formData.region}
+                  onChange={(value) => setField("region", value)}
+                  options={REGION_OPTIONS}
+                  placeholder="Select region"
+                  allowClear
                 />
               </div>
+            </section>
 
-              <div>
-                <Label htmlFor="project_number" className="mb-2 inline-block">
-                  Job Number *
-                </Label>
-                <Input
-                  id="project_number"
-                  className="h-10 w-full"
-                  value={formData.project_number}
-                  onChange={(e) => setField("project_number", e.target.value)}
-                  required
-                />
+            {/* Dates */}
+            <section className="space-y-4 border-b border-border pb-8">
+              <h3 className="text-base font-semibold text-foreground">Dates</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start_date" className="mb-2 inline-block">
+                    Start Date
+                  </Label>
+                  <Input
+                    id="start_date"
+                    className="h-10 w-full"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setField("start_date", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="completion_date" className="mb-2 inline-block">
+                    Completion Date
+                  </Label>
+                  <Input
+                    id="completion_date"
+                    className="h-10 w-full"
+                    type="date"
+                    value={formData.completion_date}
+                    onChange={(e) => setField("completion_date", e.target.value)}
+                  />
+                </div>
               </div>
+            </section>
 
-              <div>
-                <Label htmlFor="client" className="mb-2 inline-block">
-                  Client
-                </Label>
-                <Input
-                  id="client"
-                  className="h-10 w-full"
-                  value={formData.client}
-                  onChange={(e) => setField("client", e.target.value)}
-                />
+            {/* Logo & Photo */}
+            <section className="space-y-4 border-b border-border pb-8">
+              <h3 className="text-base font-semibold text-foreground">Logo & Photo</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="project_logo" className="mb-2 inline-block">
+                    Project Logo
+                  </Label>
+                  <Input
+                    id="project_logo"
+                    className="h-10 w-full"
+                    type="file"
+                    accept={ACCEPTED_IMAGE_TYPES}
+                    onChange={(e) =>
+                      setField("project_logo", e.target.files?.[0]?.name || formData.project_logo)
+                    }
+                  />
+                  {formData.project_logo && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Current: {formData.project_logo}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="project_photo" className="mb-2 inline-block">
+                    Project Photo
+                  </Label>
+                  <Input
+                    id="project_photo"
+                    className="h-10 w-full"
+                    type="file"
+                    accept={ACCEPTED_IMAGE_TYPES}
+                    onChange={(e) =>
+                      setField("project_photo", e.target.files?.[0]?.name || formData.project_photo)
+                    }
+                  />
+                  {formData.project_photo && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Current: {formData.project_photo}
+                    </p>
+                  )}
+                </div>
               </div>
+            </section>
 
-              <div className="md:col-span-2">
-                <Label htmlFor="description" className="mb-2 inline-block">
-                  Description
-                </Label>
-                <Textarea
-                  id="description"
-                  className="min-h-24"
-                  value={formData.description}
-                  onChange={(e) => setField("description", e.target.value)}
-                />
+            {/* Status & Flags */}
+            <section className="space-y-4">
+              <h3 className="text-base font-semibold text-foreground">Status & Flags</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                  <Checkbox
+                    id="active"
+                    checked={formData.active}
+                    onCheckedChange={(checked) => setField("active", Boolean(checked))}
+                  />
+                  <Label htmlFor="active">Active</Label>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                  <Checkbox
+                    id="erp_sync"
+                    checked={formData.erp_sync}
+                    onCheckedChange={(checked) => setField("erp_sync", Boolean(checked))}
+                  />
+                  <Label htmlFor="erp_sync">ERP Sync</Label>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-md border px-3 py-2">
+                  <Checkbox
+                    id="test_project"
+                    checked={formData.test_project}
+                    onCheckedChange={(checked) =>
+                      setField("test_project", Boolean(checked))
+                    }
+                  />
+                  <Label htmlFor="test_project">Test Project</Label>
+                </div>
               </div>
+            </section>
 
-              <SelectField
-                id="work_scope"
-                label="Work Scope"
-                value={formData.work_scope}
-                onChange={(value) => setField("work_scope", value)}
-                options={WORK_SCOPE_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select work scope"
-                allowClear
-              />
-
-              <SelectField
-                id="project_sector"
-                label="Project Sector"
-                value={formData.project_sector}
-                onChange={(value) => setField("project_sector", value)}
-                options={PROJECT_SECTOR_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select project sector"
-                allowClear
-              />
-
-              <SelectField
-                id="delivery_method"
-                label="Delivery Method"
-                value={formData.delivery_method}
-                onChange={(value) => setField("delivery_method", value)}
-                options={DELIVERY_METHOD_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select delivery method"
-                allowClear
-              />
-            </div>
-          </section>
-
-          <section className="space-y-4 border-b border-border pb-8">
-            <h3 className="text-base font-semibold text-foreground">Project Metrics</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="square_footage" className="mb-2 inline-block">
-                  Square Footage
-                </Label>
-                <Input
-                  id="square_footage"
-                  className="h-10 w-full"
-                  type="number"
-                  value={formData.square_footage}
-                  onChange={(e) => setField("square_footage", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="total_value" className="mb-2 inline-block">
-                  Total Value ($)
-                </Label>
-                <Input
-                  id="total_value"
-                  className="h-10 w-full"
-                  type="number"
-                  step="0.01"
-                  value={formData.total_value}
-                  onChange={(e) => setField("total_value", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="est_profit" className="mb-2 inline-block">
-                  Estimated Profit ($)
-                </Label>
-                <Input
-                  id="est_profit"
-                  className="h-10 w-full"
-                  type="number"
-                  step="0.01"
-                  value={formData.est_profit}
-                  onChange={(e) => setField("est_profit", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="project_code" className="mb-2 inline-block">
-                  Code
-                </Label>
-                <Input
-                  id="project_code"
-                  className="h-10 w-full"
-                  value={formData.project_code}
-                  onChange={(e) => setField("project_code", e.target.value)}
-                />
-              </div>
-
-              <SelectField
-                id="project_type"
-                label="Type"
-                value={formData.project_type}
-                onChange={(value) => setField("project_type", value)}
-                options={PROJECT_TYPE_OPTIONS.map((value) => ({ value, label: value }))}
-                placeholder="Select project type"
-                allowClear
-              />
-            </div>
-          </section>
-
-          <section className="space-y-4 border-b border-border pb-8">
-            <h3 className="text-base font-semibold text-foreground">Project Location</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SelectField
-                id="country"
-                label="Country"
-                value={formData.country}
-                onChange={(value) => setField("country", value)}
-                options={COUNTRY_OPTIONS}
-                placeholder="Select country"
-              />
-
-              <div className="md:col-span-2">
-                <Label htmlFor="street_address" className="mb-2 inline-block">
-                  Street Address
-                </Label>
-                <Input
-                  id="street_address"
-                  className="h-10 w-full"
-                  value={formData.street_address}
-                  onChange={(e) => setField("street_address", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="city" className="mb-2 inline-block">
-                  City
-                </Label>
-                <Input
-                  id="city"
-                  className="h-10 w-full"
-                  value={formData.city}
-                  onChange={(e) => setField("city", e.target.value)}
-                />
-              </div>
-
-              <SelectField
-                id="state"
-                label="State"
-                value={formData.state}
-                onChange={(value) => setField("state", value)}
-                options={US_STATE_OPTIONS}
-                placeholder="Select state"
-                allowClear
-              />
-
-              <div>
-                <Label htmlFor="postal_code" className="mb-2 inline-block">
-                  Zip Code
-                </Label>
-                <Input
-                  id="postal_code"
-                  className="h-10 w-full"
-                  value={formData.postal_code}
-                  onChange={(e) => setField("postal_code", e.target.value)}
-                />
-              </div>
-
-              <SelectField
-                id="timezone"
-                label="Timezone"
-                value={formData.timezone}
-                onChange={(value) => setField("timezone", value)}
-                options={TIMEZONE_OPTIONS.map((opt) => ({
-                  value: opt.value,
-                  label: opt.label,
-                }))}
-                placeholder="Select timezone"
-              />
-
-              <div>
-                <Label htmlFor="phone" className="mb-2 inline-block">
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  className="h-10 w-full"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setField("phone", e.target.value)}
-                />
-              </div>
-
-              <SelectField
-                id="region"
-                label="Region"
-                value={formData.region}
-                onChange={(value) => setField("region", value)}
-                options={REGION_OPTIONS}
-                placeholder="Select region"
-                allowClear
-              />
-
-              <SelectField
-                id="office"
-                label="Office"
-                value={formData.office}
-                onChange={(value) => setField("office", value)}
-                options={OFFICE_OPTIONS}
-                placeholder="Select office"
-                allowClear
-              />
-            </div>
-          </section>
-
-          <section className="space-y-4 border-b border-border pb-8">
-            <h3 className="text-base font-semibold text-foreground">Dates</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start_date" className="mb-2 inline-block">
-                  Start Date
-                </Label>
-                <Input
-                  id="start_date"
-                  className="h-10 w-full"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setField("start_date", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="completion_date" className="mb-2 inline-block">
-                  Completion Date
-                </Label>
-                <Input
-                  id="completion_date"
-                  className="h-10 w-full"
-                  type="date"
-                  value={formData.completion_date}
-                  onChange={(e) => setField("completion_date", e.target.value)}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4 border-b border-border pb-8">
-            <h3 className="text-base font-semibold text-foreground">Logo & Photo</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="project_logo" className="mb-2 inline-block">
-                  Project Logo
-                </Label>
-                <Input
-                  id="project_logo"
-                  className="h-10 w-full"
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES}
-                  onChange={(e) =>
-                    setField("project_logo", e.target.files?.[0]?.name || formData.project_logo)
-                  }
-                />
-                {formData.project_logo && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Current: {formData.project_logo}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="project_photo" className="mb-2 inline-block">
-                  Project Photo
-                </Label>
-                <Input
-                  id="project_photo"
-                  className="h-10 w-full"
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES}
-                  onChange={(e) =>
-                    setField("project_photo", e.target.files?.[0]?.name || formData.project_photo)
-                  }
-                />
-                {formData.project_photo && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Current: {formData.project_photo}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <h3 className="text-base font-semibold text-foreground">Status & Flags</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 rounded-md border px-3 py-2">
-                <Checkbox
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => setField("active", Boolean(checked))}
-                />
-                <Label htmlFor="active">Active</Label>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-md border px-3 py-2">
-                <Checkbox
-                  id="erp_sync"
-                  checked={formData.erp_sync}
-                  onCheckedChange={(checked) => setField("erp_sync", Boolean(checked))}
-                />
-                <Label htmlFor="erp_sync">ERP-sync this project</Label>
-              </div>
-
-              <div className="flex items-center gap-3 rounded-md border px-3 py-2">
-                <Checkbox
-                  id="test_project"
-                  checked={formData.test_project}
-                  onCheckedChange={(checked) =>
-                    setField("test_project", Boolean(checked))
-                  }
-                />
-                <Label htmlFor="test_project">Test Project</Label>
-              </div>
-            </div>
-          </section>
           </div>
 
           <div className="border-t bg-background px-6 py-4">
             <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSaving}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </div>
         </form>

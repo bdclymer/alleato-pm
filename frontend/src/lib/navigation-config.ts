@@ -23,6 +23,10 @@ import {
   Home,
   Briefcase,
   Bot,
+  ClipboardList,
+  Building2,
+  Receipt,
+  BookOpen,
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
 
@@ -39,6 +43,7 @@ export type PermissionModule =
 export interface NavigationTool {
   name: string;
   path: string;
+  icon?: LucideIcon;
   requiresProject?: boolean;
   isFavorite?: boolean;
   /** Permission module required to see this tool. If omitted, always visible. */
@@ -71,69 +76,48 @@ export interface HeaderNavGroup {
 }
 
 export const coreTools: NavigationTool[] = [
-  { name: "Projects", path: "", requiresProject: false },
-  { name: "Company Directory", path: "directory/companies", requiresProject: false, module: "directory" },
-  { name: "Home", path: "home", requiresProject: true },
-  { name: "360 Reporting", path: "reporting", requiresProject: true, adminOnly: true },
-  { name: "Documents", path: "documents", requiresProject: true, module: "documents" },
-  { name: "Directory", path: "directory", requiresProject: true, module: "directory" },
-  { name: "Tables Directory", path: "tables-directory", requiresProject: false, adminOnly: true },
-  { name: "Settings", path: "settings/plugins", requiresProject: false, adminOnly: true },
-  { name: "Admin", path: "admin", requiresProject: true, adminOnly: true },
+  { name: "Projects", path: "", icon: Briefcase, requiresProject: false },
+  { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
+  { name: "Home", path: "home", icon: Home, requiresProject: true },
+  { name: "360 Reporting", path: "reporting", icon: TrendingUp, requiresProject: true, adminOnly: true },
+  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+  { name: "Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
+  { name: "Tables Directory", path: "tables-directory", icon: Table, requiresProject: false, adminOnly: true },
+  { name: "Settings", path: "settings/plugins", icon: Settings, requiresProject: false, adminOnly: true },
+  { name: "Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
 ];
 
 export const projectManagementTools: NavigationTool[] = [
-  { name: "Emails", path: "emails", requiresProject: true, module: "documents" },
-  { name: "RFIs", path: "rfis", requiresProject: true, module: "rfis" },
-  { name: "Submittals", path: "submittals", requiresProject: true, module: "submittals" },
-  { name: "Transmittals", path: "transmittals", requiresProject: true, module: "documents" },
-  { name: "Punch List", path: "punch-list", requiresProject: true },
-  { name: "Meetings", path: "meetings", requiresProject: true },
-  { name: "Schedule", path: "schedule", requiresProject: true, module: "schedule" },
-  { name: "Daily Log", path: "daily-log", requiresProject: true },
-  { name: "Photos", path: "photos", requiresProject: true, module: "documents" },
-  { name: "Drawings", path: "drawings", requiresProject: true, module: "documents" },
-  { name: "Specifications", path: "specifications", requiresProject: true, module: "documents" },
+  { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" },
+  { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
+  { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
+  { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
+  { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" },
+  { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" },
+  { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" },
+  { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" },
+  { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" },
+  { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" },
+  { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" },
+  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
 ];
 
 export const financialManagementTools: NavigationTool[] = [
-  { name: "Prime Contracts", path: "prime-contracts", requiresProject: true, module: "contracts" },
-  { name: "Budget", path: "budget", requiresProject: true, module: "budget" },
-  { name: "Commitments", path: "commitments", requiresProject: true, module: "contracts" },
-  { name: "Change Orders", path: "change-orders", requiresProject: true, module: "change_orders" },
-  { name: "Change Events", path: "change-events", requiresProject: true, module: "change_orders" },
-  { name: "Direct Costs", path: "direct-costs", requiresProject: true, module: "budget" },
-  { name: "Invoicing", path: "invoices", requiresProject: true, module: "contracts" },
+  { name: "Budget", path: "budget", icon: TrendingUp, requiresProject: true, module: "budget" },
+  { name: "Prime Contracts", path: "prime-contracts", icon: FileText, requiresProject: true, module: "contracts" },
+  { name: "Commitments", path: "commitments", icon: Hammer, requiresProject: true, module: "contracts" },
+  { name: "Change Orders", path: "change-orders", icon: ClipboardList, requiresProject: true, module: "change_orders" },
+  { name: "Change Events", path: "change-events", icon: Clock, requiresProject: true, module: "change_orders" },
+  { name: "Direct Costs", path: "direct-costs", icon: DollarSign, requiresProject: true, module: "budget" },
+  { name: "Invoicing", path: "invoices", icon: Receipt, requiresProject: true, module: "contracts" },
 ];
 
 export const adminTools: NavigationTool[] = [
-  {
-    name: "Settings",
-    path: "/settings",
-    requiresProject: false,
-  },
-  {
-    name: "AI Assistant",
-    path: "/ai-assistant",
-    requiresProject: false,
-  },
-  {
-    name: "Docs Chat",
-    path: "/docs",
-    requiresProject: false,
-  },
-  {
-    name: "Document Pipeline",
-    path: "/admin/documents/pipeline",
-    requiresProject: false,
-    adminOnly: true,
-  },
-  {
-    name: "Company Knowledge",
-    path: "/admin/company-knowledge",
-    requiresProject: false,
-    adminOnly: true,
-  },
+  { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
+  { name: "AI Assistant", path: "/ai-assistant", icon: Bot, requiresProject: false },
+  { name: "Docs Chat", path: "/docs", icon: MessageCircle, requiresProject: false },
+  { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
+  { name: "Company Knowledge", path: "/admin/company-knowledge", icon: BookOpen, requiresProject: false, adminOnly: true },
 ];
 
 // Helper function to build project-scoped URLs
@@ -194,6 +178,51 @@ export function filterToolsByPermission<T extends NavigationTool>(
     return true;
   });
 }
+
+// =============================================================================
+// SIDEBAR NAVIGATION GROUPS (for sidebar with grouped icons)
+// =============================================================================
+
+export interface SidebarNavGroup {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  tools: NavigationTool[];
+}
+
+export const sidebarNavGroups: SidebarNavGroup[] = [
+  {
+    id: "financial",
+    label: "Financial",
+    icon: DollarSign,
+    tools: financialManagementTools,
+  },
+  {
+    id: "operations",
+    label: "Operations",
+    icon: ClipboardList,
+    tools: projectManagementTools,
+  },
+  {
+    id: "company",
+    label: "Company",
+    icon: Building2,
+    tools: [
+      { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
+      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
+      { name: "360 Reporting", path: "reporting", icon: TrendingUp, requiresProject: false, adminOnly: true },
+      { name: "AI Strategist", path: "/ai-assistant", icon: Bot, requiresProject: false },
+      { name: "Docs Chat", path: "/docs", icon: MessageCircle, requiresProject: false },
+      { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+    ],
+  },
+  {
+    id: "admin",
+    label: "Admin",
+    icon: Settings,
+    tools: adminTools,
+  },
+];
 
 // =============================================================================
 // HEADER NAVIGATION GROUPS (for top navigation mega menus)

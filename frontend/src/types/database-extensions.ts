@@ -30,11 +30,9 @@ export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 export type ProjectUpdate = Database["public"]["Tables"]["projects"]["Update"];
 
-export type Task = Database["public"]["Tables"]["project_tasks"]["Row"];
-export type TaskInsert =
-  Database["public"]["Tables"]["project_tasks"]["Insert"];
-export type TaskUpdate =
-  Database["public"]["Tables"]["project_tasks"]["Update"];
+export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
+export type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"];
 
 export type Contract = Database["public"]["Tables"]["contracts"]["Row"];
 export type Subcontract = Database["public"]["Tables"]["subcontracts"]["Row"];
@@ -121,11 +119,10 @@ export type ProjectWithCounts = Project & {
 
 /**
  * Task with assignee details
+ * Note: The unified `tasks` table already has assignee_name and assignee_email
+ * columns, so this extension is no longer needed for most use cases.
  */
-export type TaskWithAssignee = Task & {
-  assignee_name?: string;
-  assignee_email?: string;
-};
+export type TaskWithAssignee = Task;
 
 /**
  * Meeting with segment summaries
@@ -142,14 +139,15 @@ export type MeetingWithSummary = DocumentMetadataExtended & {
 // =============================================================================
 
 /**
- * Type for task creation form
+ * Type for task creation form (matches `tasks` table CHECK constraints)
  */
 export type TaskFormData = {
-  task_description: string;
-  assigned_to?: string;
-  status: "pending" | "in_progress" | "completed" | "blocked";
-  priority: "low" | "medium" | "high";
+  description: string;
+  assignee_name?: string;
+  status: "open" | "in_progress" | "blocked" | "done" | "cancelled";
+  priority: "low" | "medium" | "high" | "urgent";
   due_date?: string;
+  project_ids?: number[];
 };
 
 /**
@@ -172,8 +170,8 @@ export type ProjectFormData = {
 // Status Types (enums as union types)
 // =============================================================================
 
-export type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
-export type TaskPriority = "low" | "medium" | "high";
+export type TaskStatus = "open" | "in_progress" | "blocked" | "done" | "cancelled";
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type RfiStatus = "draft" | "open" | "pending" | "closed" | "void";
 export type ChangeOrderStatus =
   | "draft"

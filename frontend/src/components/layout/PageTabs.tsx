@@ -71,7 +71,7 @@ export function PageTabs({
                 className={cn(
                   buttonClasses,
                   isActive
-                    ? "border-brand text-brand"
+                    ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                 )}
                 aria-current={isActive ? "page" : undefined}
@@ -82,7 +82,7 @@ export function PageTabs({
                     className={cn(
                       "rounded-full px-2.5 py-0.5 text-xs font-medium",
                       isActive
-                        ? "bg-brand/10 text-brand"
+                        ? "bg-primary/10 text-primary"
                         : "bg-muted text-foreground",
                     )}
                     data-testid={tab.countTestId}

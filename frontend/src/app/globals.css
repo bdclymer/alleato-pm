@@ -73,6 +73,7 @@
     --border: 240 5% 91%;           /* #E6E6EC — use sparingly */
     --input: 240 5% 91%;            /* matches border */
     --ring: 260 37% 59%;            /* matches primary for focus rings */
+    --schedule-view-active: 260 37% 59%; /* #8A71BD */
 
     /* Chart Colors — harmonized with purple palette */
     --chart-1: 260 37% 59%;         /* primary purple */
@@ -180,6 +181,7 @@
     --border: 240 5% 19%;           /* #2E2E38 — subtle structural borders */
     --input: 240 5% 19%;
     --ring: 245 58% 62%;            /* matches dark primary */
+    --schedule-view-active: 260 37% 59%; /* #8A71BD */
 
     /* Chart Colors — adjusted for dark backgrounds */
     --chart-1: 245 58% 62%;
@@ -1673,5 +1675,159 @@
 
   .metric-card-premium-change-negative {
     @apply text-red-600;
+  }
+}
+
+/* ============================================================================
+   11. AI CHAT MARKDOWN STYLES
+   ============================================================================
+   Prose-like typography for AI assistant responses rendered via Streamdown.
+   Tailwind's base reset strips list-style, margins, and padding from HTML
+   elements — these rules restore them within chat message content.
+   ============================================================================ */
+
+@layer components {
+  .chat-markdown {
+    /* ─── Headers ──────────────────────────────────── */
+    & h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+      color: hsl(var(--foreground));
+    }
+    & h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+      color: hsl(var(--foreground));
+    }
+    & h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      margin-bottom: 0.375rem;
+      line-height: 1.5;
+      color: hsl(var(--foreground));
+    }
+    & h4, & h5, & h6 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-top: 0.75rem;
+      margin-bottom: 0.25rem;
+      line-height: 1.5;
+      color: hsl(var(--foreground));
+    }
+
+    /* ─── Paragraphs ──────────────────────────────── */
+    & p {
+      margin-top: 0.375rem;
+      margin-bottom: 0.375rem;
+      line-height: 1.7;
+    }
+
+    /* ─── Lists (critical fix: numbers/bullets rendering) ── */
+    & ol {
+      list-style-type: decimal;
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    & ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    & li {
+      margin-top: 0.125rem;
+      margin-bottom: 0.125rem;
+      line-height: 1.7;
+    }
+    & li > p {
+      margin-top: 0.125rem;
+      margin-bottom: 0.125rem;
+    }
+    & li > ol, & li > ul {
+      margin-top: 0.25rem;
+      margin-bottom: 0.25rem;
+    }
+    & ol ol { list-style-type: lower-alpha; }
+    & ol ol ol { list-style-type: lower-roman; }
+
+    /* ─── Strong / Emphasis ───────────────────────── */
+    & strong { font-weight: 600; }
+
+    /* ─── Blockquotes ─────────────────────────────── */
+    & blockquote {
+      border-left: 3px solid hsl(var(--border));
+      padding-left: 1rem;
+      margin: 0.75rem 0;
+      color: hsl(var(--muted-foreground));
+      font-style: italic;
+    }
+
+    /* ─── Code ────────────────────────────────────── */
+    & code {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: hsl(var(--muted));
+      padding: 0.125rem 0.35rem;
+      border-radius: 0.25rem;
+    }
+    & pre {
+      max-width: 100%;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+      border-radius: 0.5rem;
+    }
+    & pre code {
+      background: transparent;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+
+    /* ─── Tables ──────────────────────────────────── */
+    & table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+      font-size: 0.875rem;
+    }
+    & th {
+      border: 1px solid hsl(var(--border));
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      background: hsl(var(--muted) / 0.5);
+    }
+    & td {
+      border: 1px solid hsl(var(--border));
+      padding: 0.5rem 0.75rem;
+    }
+
+    /* ─── Horizontal Rule ─────────────────────────── */
+    & hr {
+      border: none;
+      border-top: 1px solid hsl(var(--border));
+      margin: 1.5rem 0;
+    }
+
+    /* ─── Links ───────────────────────────────────── */
+    & a {
+      color: hsl(var(--primary));
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    & a:hover { opacity: 0.8; }
+
+    /* ─── First/last margin reset ─────────────────── */
+    & > *:first-child { margin-top: 0; }
+    & > *:last-child { margin-bottom: 0; }
   }
 }

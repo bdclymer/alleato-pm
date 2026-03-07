@@ -138,12 +138,6 @@ export const autoFillPresets = {
       `PRJ-${copycat.int(Math.random().toString(), { min: 1000, max: 9999 })}`,
 
     // Project Setup - Values matching form dropdown options exactly
-    project_template: () =>
-      copycat.oneOf(Math.random().toString(), [
-        "standard",
-        "shell",
-        "interiors",
-      ]),
     stage: () =>
       copycat.oneOf(Math.random().toString(), [
         "Planning",

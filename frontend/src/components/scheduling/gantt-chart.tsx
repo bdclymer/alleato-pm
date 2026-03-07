@@ -23,7 +23,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { Circle, Clock, CheckCircle2, ChevronRight, ChevronDown } from "lucide-react";
+import {
+  Circle,
+  Clock,
+  CheckCircle2,
+  ChevronRight,
+  ChevronDown,
+  PanelLeftOpen,
+  PanelLeftClose,
+  GripVertical,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   format,
@@ -65,6 +74,8 @@ const HEADER_HEIGHT = HEADER_ROW_1 + HEADER_ROW_2;
 const TASK_BAR_HEIGHT = 20;
 const MILESTONE_SIZE = 12;
 const LEFT_PANEL_WIDTH = 340;
+const LEFT_PANEL_MIN_WIDTH = 240;
+const LEFT_PANEL_MAX_WIDTH = 560;
 
 const ganttStatusConfig: Record<TaskStatus, { label: string; icon: typeof Circle; iconColor: string }> = {
   not_started: { label: "Not started", icon: Circle, iconColor: "text-muted-foreground" },
@@ -343,6 +354,9 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   const zoomLevel: ZoomLevel = "week";
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(LEFT_PANEL_WIDTH);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
 
   const { dayWidth } = ZOOM_CONFIG[zoomLevel];
@@ -414,6 +428,37 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   }, [dateRange.start, dayWidth]);
 
   const handleScroll = useCallback(() => {}, []);
+  const startResize = useCallback(() => {
+    if (isPanelCollapsed) return;
+    setIsResizing(true);
+  }, [isPanelCollapsed]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!containerRef.current) return;
+      const bounds = containerRef.current.getBoundingClientRect();
+      const nextWidth = event.clientX - bounds.left;
+      setLeftPanelWidth(
+        Math.max(LEFT_PANEL_MIN_WIDTH, Math.min(LEFT_PANEL_MAX_WIDTH, nextWidth))
+      );
+    };
+
+    const stopResize = () => setIsResizing(false);
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopResize);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopResize);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing]);
 
   // Generate timeline header (months + days for week zoom)
   const renderTimelineHeader = useMemo(() => {
@@ -437,7 +482,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
                   y={0}
                   width={monthDays * dayWidth}
                   height={HEADER_ROW_1}
-                  fill="hsl(var(--muted))"
+                  fill="#FAFCFF"
                   stroke="hsl(var(--border))"
                 />
                 <text
@@ -553,18 +598,35 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   return (
     <div className={cn("flex flex-col", className)} ref={containerRef}>
       {/* Chart Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className={cn("relative flex flex-1 overflow-hidden", isResizing && "select-none")}>
         {/* Left Panel - Task List */}
         <div
-          className="flex-shrink-0 border-r bg-background"
-          style={{ width: LEFT_PANEL_WIDTH }}
+          className={cn(
+            "flex-shrink-0 border-r bg-[#FAFCFF] transition-[width] duration-200 ease-out",
+            isPanelCollapsed && "overflow-hidden"
+          )}
+          style={{ width: isPanelCollapsed ? 0 : leftPanelWidth }}
         >
           {/* Two-row header aligned with SVG timeline (total = HEADER_HEIGHT) */}
           {/* Row 1: aligned with month row — light bg to match SVG */}
-          <div className="bg-muted/50" style={{ height: HEADER_ROW_1 }} />
+          <div className="flex items-center bg-[#FAFCFF] pl-1.5" style={{ height: HEADER_ROW_1 }}>
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              onClick={() => setIsPanelCollapsed((prev) => !prev)}
+              aria-label={isPanelCollapsed ? "Expand task panel" : "Collapse task panel"}
+              title={isPanelCollapsed ? "Expand task panel" : "Collapse task panel"}
+            >
+              {isPanelCollapsed ? (
+                <PanelLeftOpen className="h-4 w-4" />
+              ) : (
+                <PanelLeftClose className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           {/* Row 2: column headers aligned with day row */}
           <div
-            className="border-b border-border bg-muted/50 flex items-center text-[11px] font-normal text-muted-foreground"
+            className="border-b border-border bg-[#FAFCFF] flex items-center text-[11px] font-normal text-muted-foreground"
             style={{ height: HEADER_ROW_2 }}
           >
             <div className="flex-1 pl-[42px]">Title</div>
@@ -582,8 +644,9 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
               return (
                 <div
                   key={task.id}
-                  className="border-b border-border/50 flex items-center hover:bg-accent/50 transition-colors duration-100"
+                  className="border-b border-border/50 flex items-center hover:bg-accent/50 transition-colors duration-100 cursor-pointer"
                   style={{ height: ROW_HEIGHT }}
+                  onClick={() => onTaskClick?.(task.id)}
                 >
                   {/* Checkbox + chevron + name */}
                   <div
@@ -595,7 +658,7 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
                       <button
                         type="button"
                         className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
-                        onClick={() => toggleCollapse(task.id)}
+                        onClick={(e) => { e.stopPropagation(); toggleCollapse(task.id); }}
                         aria-label={isCollapsed ? "Expand" : "Collapse"}
                       >
                         {isCollapsed ? (
@@ -645,6 +708,18 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             })}
           </div>
         </div>
+
+        {!isPanelCollapsed && (
+          <button
+            type="button"
+            aria-label="Resize task panel"
+            title="Drag to resize task panel"
+            className="group relative hidden w-2 cursor-col-resize border-r border-border/70 bg-background/20 transition-colors hover:bg-muted/80 md:block"
+            onPointerDown={startResize}
+          >
+            <GripVertical className="pointer-events-none absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+          </button>
+        )}
 
         {/* Right Panel - Gantt Chart */}
         <div
@@ -699,6 +774,18 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
             {renderTodayLine}
           </svg>
         </div>
+
+        {isPanelCollapsed && (
+          <button
+            type="button"
+            className="absolute left-2 top-1.5 z-10 inline-flex h-7 w-7 items-center justify-center rounded-md bg-background text-muted-foreground shadow-sm ring-1 ring-border transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => setIsPanelCollapsed(false)}
+            aria-label="Expand task panel"
+            title="Expand task panel"
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   );

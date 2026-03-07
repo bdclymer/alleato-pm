@@ -19,6 +19,26 @@ type Tables = Database["public"]["Tables"];
 type SpecificationRevision = Tables["specification_section_revisions"]["Row"];
 type SpecificationArea = Tables["specification_areas"]["Row"];
 
+function extractProjectFilesPath(fileUrl: string): string | null {
+  if (!fileUrl) return null;
+
+  // Handle values already stored as storage path.
+  if (fileUrl.startsWith("project-files/")) {
+    return fileUrl.replace(/^project-files\//, "");
+  }
+  if (!fileUrl.startsWith("http://") && !fileUrl.startsWith("https://")) {
+    return fileUrl;
+  }
+
+  // Handle public and signed Supabase storage URLs.
+  const decoded = decodeURIComponent(fileUrl);
+  const match =
+    decoded.match(/\/object\/(?:public|sign)\/project-files\/([^?]+)/) ||
+    decoded.match(/\/project-files\/([^?]+)/);
+
+  return match?.[1] ?? null;
+}
+
 /**
  * Service class for specification document management
  * Handles CRUD operations for specification sections with revision tracking
@@ -247,17 +267,6 @@ export class SpecificationService {
         };
       }
 
-      if (data.file.type !== "application/pdf") {
-        return {
-          data: null,
-          error: {
-            type: "INVALID_FILE_TYPE",
-            message: "Only PDF files are allowed",
-            allowed_types: ["application/pdf"],
-          },
-        };
-      }
-
       // 2. Check for duplicate section number
       const { data: existing } = await this.supabase
         .from("specification_sections")
@@ -339,7 +348,7 @@ export class SpecificationService {
           p_file_url: fileUrl,
           p_file_name: data.file.name,
           p_file_size: data.file.size,
-          p_file_type: data.file.type,
+          p_file_type: data.file.type || "application/octet-stream",
           p_uploaded_by: uploadedBy,
           p_notes: data.notes,
         },
@@ -505,12 +514,7 @@ export class SpecificationService {
       // Clean up storage files
       if (revisions && revisions.length > 0) {
         const filePaths = revisions
-          .map((r) => {
-            // Extract path from URL
-            const url = new URL(r.file_url);
-            const pathMatch = url.pathname.match(/project-files\/(.+)$/);
-            return pathMatch ? pathMatch[1] : null;
-          })
+          .map((r) => extractProjectFilesPath(r.file_url))
           .filter(Boolean) as string[];
 
         if (filePaths.length > 0) {

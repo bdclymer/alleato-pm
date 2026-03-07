@@ -99,12 +99,19 @@ const buildProfile = (user: User): CurrentUserProfile => {
   };
 };
 
-export const useCurrentUserProfile = () => {
+export const useCurrentUserProfile = (options?: { enabled?: boolean }) => {
   const [profile, setProfile] = useState<CurrentUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const enabled = options?.enabled ?? true;
 
   useEffect(() => {
+    if (!enabled) {
+      setProfile(null);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     let isMounted = true;
 
     const loadProfile = async () => {
@@ -145,7 +152,7 @@ export const useCurrentUserProfile = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [enabled]);
 
   return {
     profile,

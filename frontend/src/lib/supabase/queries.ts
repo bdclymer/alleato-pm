@@ -51,12 +51,13 @@ export async function getProjectWithDetails(
   projectId: number,
 ) {
   // Note: commitments table no longer exists - use subcontracts and purchase_orders
+  // Note: tasks table uses project_ids array, so count join doesn't work directly.
+  // Fetch task count separately if needed.
   return supabase
     .from("projects")
     .select(
       `
       *,
-      project_tasks (count),
       subcontracts (count),
       purchase_orders (count),
       contracts (count)
@@ -80,9 +81,9 @@ export async function getProjectTasks(
   },
 ) {
   let query = supabase
-    .from("project_tasks")
+    .from("tasks")
     .select("*")
-    .eq("project_id", projectId);
+    .contains("project_ids", [projectId]);
 
   if (options?.status) {
     query = query.eq("status", options.status);

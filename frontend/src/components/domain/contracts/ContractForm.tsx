@@ -670,7 +670,7 @@ export function ContractForm({
                   clearValidationError("number");
                   updateFormData({ number: e.target.value });
                 }}
-                placeholder="2"
+                placeholder="Enter contract number"
                 error={validationErrors.number}
                 required
               />
