@@ -279,14 +279,21 @@ function enhanceForm(form: HTMLFormElement): void {
     return;
   }
 
-  const button = createButton(form);
-  const row = document.createElement("div");
-  row.setAttribute(FORM_ENHANCED_ATTR, "true");
-  row.className = "mb-4 flex items-center justify-end";
-  row.appendChild(button);
-
   form.setAttribute(FORM_ENHANCED_ATTR, "true");
-  form.prepend(row);
+
+  const button = createButton(form);
+
+  // Find the footer button row (Cancel/Save area) using data-slot attributes
+  const footerRow = form.querySelector(
+    '[data-slot="dialog-footer"], [data-slot="sheet-footer"], [data-slot="drawer-footer"], [data-slot="card-footer"]'
+  ) ?? form.querySelector('footer');
+
+  if (footerRow) {
+    footerRow.insertBefore(button, footerRow.firstChild);
+  } else {
+    // Fallback: append to end of form
+    form.appendChild(button);
+  }
 }
 
 export function DevAutoFillForms() {
