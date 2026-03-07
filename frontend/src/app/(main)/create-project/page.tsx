@@ -60,6 +60,8 @@ import {
   getFieldControlOptions,
   isControlAllowedForField,
   parseFormattedNumber,
+  type CreateProjectFormValues,
+  type FormSection,
 } from "@/lib/create-project/form";
 
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";

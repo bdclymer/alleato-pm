@@ -1,6 +1,0 @@
-# Work Specification
-
-The specification for this work is in: `.yokeflow/app_spec.md`
-
-**Please read .yokeflow/app_spec.md for the complete requirements.**
-**Also read CLAUDE.md for codebase conventions and patterns.**
