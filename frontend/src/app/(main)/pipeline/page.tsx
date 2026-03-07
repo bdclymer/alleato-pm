@@ -69,7 +69,7 @@ const statusConfig = {
   },
   embedded: {
     label: "Embedded",
-    color: "bg-purple-100 text-purple-800",
+    color: "bg-muted text-foreground",
     icon: Brain,
   },
   complete: {
@@ -89,24 +89,27 @@ const statusConfig = {
   },
 };
 
+const phaseIconClass: Record<string, string> = {
+  parse: "text-primary",
+  embed: "text-muted-foreground",
+  extract: "text-success",
+};
+
 const phaseConfig = {
   parse: {
     label: "Parse Documents",
     description: "Segment documents into semantic chunks",
     icon: Database,
-    color: "blue",
   },
   embed: {
     label: "Generate Embeddings",
     description: "Create vector embeddings for search",
     icon: Brain,
-    color: "purple",
   },
   extract: {
     label: "Extract Insights",
     description: "Extract decisions, risks, and opportunities",
     icon: Sparkles,
-    color: "green",
   },
 };
 
@@ -227,9 +230,9 @@ export default function DocumentPipelinePage() {
   }
 
   return (
-    <PageContainer>
+    <>
       <ProjectPageHeader
-        title="Document Pipeline Management"
+        title="Document Pipeline"
         description="Monitor and manage document processing pipeline"
         actions={
           <Button
@@ -245,7 +248,7 @@ export default function DocumentPipelinePage() {
           </Button>
         }
       />
-
+      <PageContainer>
       {/* Pipeline Phase Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Object.entries(phaseConfig).map(([phase, config]) => {
@@ -256,19 +259,19 @@ export default function DocumentPipelinePage() {
             <Card
               key={phase}
               className={
-                isProcessing ? "ring-2 ring-blue-500 ring-opacity-50" : ""
+                isProcessing ? "ring-2 ring-primary/50" : ""
               }
             >
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Icon
-                      className={`h-5 w-5 text-${config.color}-600 ${isProcessing ? "animate-pulse" : ""}`}
+                      className={`h-5 w-5 ${phaseIconClass[phase] ?? "text-muted-foreground"} ${isProcessing ? "animate-pulse" : ""}`}
                     />
                     <CardTitle className="text-lg">{config.label}</CardTitle>
                   </div>
                   {isProcessing ? (
-                    <Badge variant="default" className="bg-blue-500">
+                    <Badge variant="default" className="bg-primary">
                       <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
                       Processing
                     </Badge>
@@ -386,35 +389,7 @@ export default function DocumentPipelinePage() {
         </CardContent>
       </Card>
 
-      {/* Status Legend */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Pipeline Status Guide</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(statusConfig).map(([status, config]) => {
-              const Icon = config.icon;
-              return (
-                <div key={status} className="flex items-center gap-2">
-                  <Badge className={`${config.color} gap-1`}>
-                    <Icon className="h-3 w-3" />
-                    {config.label}
-                  </Badge>
-                  <span className="text-sm text-foreground">
-                    {status === "raw_ingested" && "→ Ready for parsing"}
-                    {status === "segmented" && "→ Ready for embedding"}
-                    {status === "embedded" && "→ Ready for extraction"}
-                    {status === "complete" && "→ Fully processed"}
-                    {status === "error" && "→ Needs attention"}
-                    {status === "pending" && "→ Waiting to start"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-    </PageContainer>
+      </PageContainer>
+    </>
   );
 }

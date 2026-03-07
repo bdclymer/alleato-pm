@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit, FileCheck2, X, ArrowRight } from "lucide-react";
+import { ArrowLeft, Edit, FileCheck2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,22 +33,38 @@ import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEven
 import { useProjectChangeEventRfqs } from "@/hooks/use-change-event-rfqs";
 
 interface LineItem {
-  id: number;
-  description: string;
-  unit_of_measure: string;
-  quantity: number;
-  unit_cost: number;
-  cost_rom: number;
-  revenue_rom?: number;
-  non_committed_cost: number;
+  id: string;
+  description: string | null;
+  unitOfMeasure: string | null;
+  quantity: number | null;
+  unitCost: number | null;
+  costRom: number | null;
+  revenueRom: number | null;
+  nonCommittedCost: number | null;
+  changeEventId: string;
+  extendedAmount: number;
+  sortOrder: number;
 }
 
 interface Attachment {
-  id: number;
-  file_name: string;
-  file_size: number;
-  uploaded_at: string;
-  uploaded_by: string;
+  id: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  uploadedBy: unknown;
+  downloadUrl: string;
+}
+
+interface HistoryEntry {
+  id: string;
+  changeEventId: string;
+  action: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: { id: string; email: string } | null;
+  changedAt: string;
+  description: string;
 }
 
 /**
@@ -69,6 +85,8 @@ export default function ChangeEventDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [showRfqForm, setShowRfqForm] = useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
@@ -129,9 +147,36 @@ export default function ChangeEventDetailPage() {
     }
   }, [projectId, changeEventId]);
 
+  // Fetch change event history
+  const fetchHistory = useCallback(async () => {
+    if (!projectId || !changeEventId) return;
+
+    setIsHistoryLoading(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}/history`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setHistoryEntries(data.data || []);
+      }
+    } catch {
+      // History is non-critical, fail silently
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }, [projectId, changeEventId]);
+
   useEffect(() => {
     fetchChangeEventDetails();
   }, [fetchChangeEventDetails]);
+
+  // Fetch history when switching to history tab
+  useEffect(() => {
+    if (activeTab === "history" && historyEntries.length === 0) {
+      fetchHistory();
+    }
+  }, [activeTab, fetchHistory, historyEntries.length]);
 
   // Action handlers
   const handleBack = useCallback(() => {
@@ -225,12 +270,28 @@ export default function ChangeEventDetailPage() {
     }
   };
 
+  const getActionBadgeVariant = (
+    action: string,
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    switch (action?.toUpperCase()) {
+      case "CREATE":
+        return "default";
+      case "UPDATE":
+        return "secondary";
+      case "DELETE":
+      case "VOID":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
   // Calculate line item totals
   const totals = lineItems.reduce(
     (acc, item) => ({
-      costRom: acc.costRom + (item.cost_rom || 0),
-      revenueRom: acc.revenueRom + (item.revenue_rom || 0),
-      nonCommittedCost: acc.nonCommittedCost + (item.non_committed_cost || 0),
+      costRom: acc.costRom + (item.costRom || 0),
+      revenueRom: acc.revenueRom + (item.revenueRom || 0),
+      nonCommittedCost: acc.nonCommittedCost + (item.nonCommittedCost || 0),
     }),
     { costRom: 0, revenueRom: 0, nonCommittedCost: 0 },
   );
@@ -316,7 +377,7 @@ export default function ChangeEventDetailPage() {
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Created {formatDate(changeEvent.created_at)}
+                Created {formatDate((changeEvent as any).createdAt || changeEvent.created_at)}
               </CardDescription>
             </div>
             <Inline gap="sm">
@@ -414,7 +475,16 @@ export default function ChangeEventDetailPage() {
                 <div>
                   <label className="text-sm font-medium">Created By</label>
                   <p className="text-sm text-muted-foreground">
-                    {changeEvent.created_by || "-"}
+                    {(() => {
+                      const creator = (changeEvent as any).createdBy;
+                      if (creator && typeof creator === "object") {
+                        const name = [creator.first_name, creator.last_name]
+                          .filter(Boolean)
+                          .join(" ");
+                        return name || creator.email || "-";
+                      }
+                      return changeEvent.created_by || "-";
+                    })()}
                   </p>
                 </div>
                 <div>
@@ -494,16 +564,16 @@ export default function ChangeEventDetailPage() {
                     >
                       <div className="font-medium">{item.description}</div>
                       <div>
-                        {item.quantity} {item.unit_of_measure}
+                        {item.quantity} {item.unitOfMeasure}
                       </div>
-                      <div>{formatCurrency(item.unit_cost)}</div>
-                      <div>{formatCurrency(item.cost_rom)}</div>
+                      <div>{formatCurrency(item.unitCost || 0)}</div>
+                      <div>{formatCurrency(item.costRom || 0)}</div>
                       <div>
-                        {item.revenue_rom
-                          ? formatCurrency(item.revenue_rom)
+                        {item.revenueRom
+                          ? formatCurrency(item.revenueRom)
                           : "-"}
                       </div>
-                      <div>{formatCurrency(item.non_committed_cost)}</div>
+                      <div>{formatCurrency(item.nonCommittedCost || 0)}</div>
                     </div>
                   ))}
                   <Separator />
@@ -549,10 +619,10 @@ export default function ChangeEventDetailPage() {
                       className="flex justify-between items-center p-2 border rounded"
                     >
                       <div>
-                        <p className="font-medium">{attachment.file_name}</p>
+                        <p className="font-medium">{attachment.fileName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {(attachment.file_size / 1024).toFixed(1)} KB •
-                          Uploaded {formatDate(attachment.uploaded_at)}
+                          {(attachment.fileSize / 1024).toFixed(1)} KB •
+                          Uploaded {formatDate(attachment.uploadedAt)}
                         </p>
                       </div>
                       <Button size="sm" variant="outline">
@@ -580,9 +650,62 @@ export default function ChangeEventDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8">
-                <Text tone="muted">History tracking coming soon</Text>
-              </div>
+              {isHistoryLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : historyEntries.length > 0 ? (
+                <div className="space-y-3">
+                  {historyEntries.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="flex items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-medium truncate">
+                            {entry.changedBy?.email || "System"}
+                          </span>
+                          <Badge
+                            variant={getActionBadgeVariant(entry.action)}
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {entry.action}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-foreground">
+                          {entry.description}
+                        </p>
+                        {entry.action === "UPDATE" &&
+                          entry.oldValue &&
+                          entry.newValue && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              <span className="font-medium">
+                                {entry.fieldName}:
+                              </span>{" "}
+                              <span className="line-through">
+                                {entry.oldValue}
+                              </span>{" "}
+                              <span className="text-foreground">&rarr;</span>{" "}
+                              <span>{entry.newValue}</span>
+                            </div>
+                          )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(entry.changedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  <Text tone="muted">No history recorded yet</Text>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

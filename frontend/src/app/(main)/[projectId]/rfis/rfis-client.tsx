@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { useDeleteRfi } from "@/hooks/use-rfis";
@@ -14,12 +14,6 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   buildRfiTableColumns,
   rfiColumns,
@@ -166,28 +160,14 @@ export function RfisClient({ rfis, projectId }: RfisClientProps): ReactElement {
         title: "RFIs",
         description: "Requests for Information",
         actions: (
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={() => router.push(`/${projectId}/rfis/new`)}
-              data-testid="rfis-create-button"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create RFI
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>CSV</DropdownMenuItem>
-                <DropdownMenuItem>PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <Button
+            size="sm"
+            onClick={() => router.push(`/${projectId}/rfis/new`)}
+            data-testid="rfis-create-button"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create RFI
+          </Button>
         ),
       }}
       toolbar={{

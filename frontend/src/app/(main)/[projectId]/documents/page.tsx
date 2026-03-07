@@ -2,11 +2,12 @@
 
 import { useParams } from "next/navigation";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ds";
+import { FileText } from "lucide-react";
 
 export default function ProjectDocumentsPage() {
   const params = useParams();
-  const projectId = params.projectId as string;
+  void params.projectId;
 
   return (
     <>
@@ -15,11 +16,11 @@ export default function ProjectDocumentsPage() {
         description="Manage project documents and files"
       />
       <PageContainer>
-        <Card className="p-6">
-          <p className="text-muted-foreground">
-            Documents for project {projectId} - Coming soon
-          </p>
-        </Card>
+        <EmptyState
+          icon={<FileText className="h-6 w-6 text-muted-foreground" />}
+          title="Documents coming soon"
+          description="Document management will be available in an upcoming release."
+        />
       </PageContainer>
     </>
   );

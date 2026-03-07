@@ -42,27 +42,27 @@ export function HeroMetrics({
       {/* Primary Metric - Budget Remaining */}
       <Link
         href={`/${projectId}/budget`}
-        className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-md md:w-1/3 md:p-6 group cursor-pointer"
+        className="w-full border border-border bg-background p-4 transition-all duration-300 hover:border-primary hover:shadow-sm md:w-1/3 md:p-6 group cursor-pointer"
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
+            <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
               Budget Remaining
             </p>
-            <div className="flex items-center gap-1 text-xs text-brand opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="font-medium">View Budget</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-4xl md:text-5xl font-light tabular-nums tracking-tight text-brand">
+            <p className="text-4xl md:text-5xl font-light tabular-nums tracking-tight text-primary">
               {formatCurrency(remainingBudget)}
             </p>
-            <div className="flex items-baseline gap-4 text-sm text-neutral-600">
+            <div className="flex items-baseline gap-4 text-sm text-muted-foreground">
               <span className="font-medium tabular-nums">
                 {budgetUtilization.toFixed(1)}% utilized
               </span>
-              <span className="text-neutral-400">•</span>
+              <span className="opacity-40">•</span>
               <span className="tabular-nums">
                 {formatCurrency(spent)} of {formatCurrency(totalBudget)}
               </span>
@@ -72,9 +72,9 @@ export function HeroMetrics({
       </Link>
 
       {/* Forecast Variance */}
-      <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
+      <div className="w-full border border-border bg-background p-4 transition-all duration-300 hover:border-primary hover:shadow-sm md:w-1/3 md:p-6">
         <div className="space-y-4">
-          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
+          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             Forecast Variance
           </p>
           <div className="space-y-2">
@@ -108,16 +108,16 @@ export function HeroMetrics({
       </div>
 
       {/* Change Orders */}
-      <div className="w-full border border-neutral-200 bg-background p-4 transition-all duration-300 hover:border-brand hover:shadow-sm md:w-1/3 md:p-6">
+      <div className="w-full border border-border bg-background p-4 transition-all duration-300 hover:border-primary hover:shadow-sm md:w-1/3 md:p-6">
         <div className="space-y-4">
-          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-neutral-500">
+          <p className="text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
             Change Orders
           </p>
           <div className="space-y-1">
-            <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-neutral-900">
+            <p className="text-3xl md:text-4xl font-light tabular-nums tracking-tight text-foreground">
               {changeOrdersTotal}
             </p>
-            <p className="text-xs text-neutral-500">Approved</p>
+            <p className="text-xs text-muted-foreground">Approved</p>
           </div>
         </div>
       </div>

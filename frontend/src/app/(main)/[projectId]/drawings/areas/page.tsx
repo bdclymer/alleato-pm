@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Folder, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { KpiRow } from "@/components/ds";
 
 import { Button } from "@/components/ui/button";
 import { useDrawingAreas, useCreateDrawingArea, useUpdateDrawingArea, useDeleteDrawingArea } from "@/hooks/use-drawing-areas";
@@ -111,28 +112,13 @@ export default function DrawingAreasPage() {
       />
 
       <PageContainer>
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-card border rounded-lg">
-            <div className="text-2xl font-bold text-foreground">
-              {areas?.length || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Total Areas</div>
-          </div>
-
-          <div className="p-4 bg-card border rounded-lg">
-            <div className="text-2xl font-bold text-foreground">
-              {areas?.reduce((sum, area) => sum + (area.drawing_count || 0), 0) || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Total Drawings</div>
-          </div>
-
-          <div className="p-4 bg-card border rounded-lg">
-            <div className="text-2xl font-bold text-foreground">
-              {areas?.filter(area => !area.parent_area_id).length || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Root Areas</div>
-          </div>
+        {/* Stats */}
+        <div className="mb-4">
+          <KpiRow metrics={[
+            { label: "Total Areas", value: String(areas?.length || 0) },
+            { label: "Total Drawings", value: String(areas?.reduce((sum, area) => sum + (area.drawing_count || 0), 0) || 0) },
+            { label: "Root Areas", value: String(areas?.filter(area => !area.parent_area_id).length || 0) },
+          ]} />
         </div>
 
         {/* Drawing Area Selector */}
@@ -171,56 +157,6 @@ export default function DrawingAreasPage() {
           )}
         </div>
 
-        {/* Selected Area Info */}
-        {selectedAreaId && areas && (
-          <div className="mt-6 bg-card border rounded-lg p-6">
-            <h3 className="text-lg font-medium text-foreground mb-4">
-              Selected Area Details
-            </h3>
-            {(() => {
-              const selectedArea = areas.find(area => area.id === selectedAreaId);
-              if (!selectedArea) return null;
-
-              return (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">Name</div>
-                    <div className="text-foreground">{selectedArea.name}</div>
-                  </div>
-
-                  {selectedArea.description && (
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Description</div>
-                      <div className="text-foreground">{selectedArea.description}</div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Drawings</div>
-                      <div className="text-foreground">{selectedArea.drawing_count || 0}</div>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Sort Order</div>
-                      <div className="text-foreground">{selectedArea.sort_order}</div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/${projectId}/drawings?area=${selectedAreaId}`)}
-                    >
-                      View Drawings in This Area
-                    </Button>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        )}
       </PageContainer>
     </>
   );

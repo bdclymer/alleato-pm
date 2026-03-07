@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -57,13 +56,13 @@ const columnConfig: Record<string, Omit<BoardColumn, "items">> = {
     id: "approved",
     title: "Approved",
     description: "Field-ready revisions that crews can rely on.",
-    accent: "bg-emerald-50 border-emerald-200",
+    accent: "bg-success/5 border-success/20",
   },
   under_review: {
     id: "under_review",
     title: "Under Review",
     description: "Pending approvals before team-wide release.",
-    accent: "bg-amber-50 border-amber-200",
+    accent: "bg-warning/5 border-warning/20",
   },
   superseded: {
     id: "superseded",
@@ -113,19 +112,6 @@ export default function DrawingsBoardPage() {
     [columns],
   );
 
-  const stats = [
-    { label: "Total drawings", value: totalDrawings, description: "Across the board" },
-    {
-      label: "Field ready",
-      value: columns.approved?.items.length || 0,
-      description: "Approved sets",
-    },
-    {
-      label: "Under review",
-      value: columns.under_review?.items.length || 0,
-      description: "Awaiting approval",
-    },
-  ];
 
   const activeItem = useMemo(() => {
     if (!activeId) return null;
@@ -212,20 +198,6 @@ export default function DrawingsBoardPage() {
 
       <PageContainer>
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {stats.map((stat) => (
-              <Card key={stat.label}>
-                <CardHeader className="pb-0">
-                  <CardTitle className="text-base">{stat.label}</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-2xl font-semibold">{stat.value}</div>
-                  <CardDescription>{stat.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           <Card className="border-dashed border-2 border-border bg-card">
             <CardHeader className="flex flex-wrap items-center gap-4 justify-between pb-2">
               <div className="flex items-center gap-2">
@@ -266,7 +238,7 @@ export default function DrawingsBoardPage() {
                                 {column.description}
                               </p>
                             </div>
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full border bg-white text-sm font-semibold text-foreground">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full border bg-background text-sm font-semibold text-foreground">
                               {column.items.length}
                             </span>
                           </div>

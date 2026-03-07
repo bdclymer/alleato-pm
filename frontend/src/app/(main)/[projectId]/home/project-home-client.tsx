@@ -1790,7 +1790,7 @@ export function ProjectHomeClient({
             INVERTED PYRAMID CONTAINER
             Single card, layered sections alternating white/surface-2
             ═══════════════════════════════════════════ */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-card rounded-xl overflow-hidden shadow-xs">
 
           {/* ── LAYER 1: Header ──
               Health dot · job number · name · meta · completion | icon actions */}

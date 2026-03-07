@@ -24,12 +24,10 @@ interface ChangeEventConvertDialogProps {
   changeEventId: string;
   projectId: number;
   lineItems: Array<{
-    id: number;
-    description: string;
-    vendor_id?: number;
-    contract_id?: number;
-    cost_rom: number;
-    revenue_rom?: number;
+    id: string;
+    description: string | null;
+    costRom: number | null;
+    revenueRom?: number | null;
   }>;
 }
 
@@ -235,7 +233,7 @@ export function ChangeEventConvertDialog({
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="truncate flex-1">{item.description}</span>
                   <span className="font-mono">
-                    ${item.cost_rom.toLocaleString()}
+                    ${(item.costRom ?? 0).toLocaleString()}
                   </span>
                 </div>
               ))}
@@ -244,7 +242,7 @@ export function ChangeEventConvertDialog({
                 <span className="font-mono">
                   $
                   {lineItems
-                    .reduce((sum, item) => sum + item.cost_rom, 0)
+                    .reduce((sum, item) => sum + (item.costRom ?? 0), 0)
                     .toLocaleString()}
                 </span>
               </div>

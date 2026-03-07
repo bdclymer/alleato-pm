@@ -1,57 +1,6 @@
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
-import { TableLayout } from "@/components/layouts";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
-
-const config: GenericTableConfig = {
-  title: "Daily Log",
-  description: "Daily construction logs and site reports",
-  searchFields: ["log_date", "created_by"],
-  exportFilename: "daily-logs-export.csv",
-  editConfig: {
-    tableName: "daily_logs",
-    editableFields: ["log_date", "weather_conditions"],
-  },
-  columns: [
-    {
-      id: "log_date",
-      label: "Date",
-      defaultVisible: true,
-      type: "date",
-    },
-    {
-      id: "weather_conditions",
-      label: "Weather",
-      defaultVisible: true,
-      type: "text",
-      renderConfig: {
-        type: "json",
-        maxLength: 100,
-      },
-    },
-    {
-      id: "created_by",
-      label: "Created By",
-      defaultVisible: true,
-      type: "text",
-    },
-    {
-      id: "created_at",
-      label: "Created",
-      defaultVisible: false,
-      type: "date",
-    },
-    {
-      id: "updated_at",
-      label: "Updated",
-      defaultVisible: false,
-      type: "date",
-    },
-  ],
-  filters: [],
-};
+import { DailyLogClient } from "./daily-log-client";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
 export default async function ProjectDailyLogPage({
   params,
@@ -69,17 +18,16 @@ export default async function ProjectDailyLogPage({
 
   if (error) {
     return (
-      <TableLayout>
-        <div className="text-center text-destructive p-6">
-          Error loading daily logs. Please try again later.
-        </div>
-      </TableLayout>
+      <>
+        <ProjectPageHeader title="Daily Log" />
+        <PageContainer>
+          <p className="text-center text-destructive py-6">
+            Error loading daily logs. Please try again later.
+          </p>
+        </PageContainer>
+      </>
     );
   }
 
-  return (
-    <TableLayout>
-      <GenericDataTable data={dailyLogs || []} config={config} />
-    </TableLayout>
-  );
+  return <DailyLogClient projectId={projectId} dailyLogs={dailyLogs || []} />;
 }

@@ -1,5 +1,4 @@
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import type { FileObject } from "@supabase/storage-js";
@@ -111,43 +110,15 @@ export default async function ProjectPhotosPage({
     <>
       <ProjectPageHeader
         title="Photos"
-        description="Project photo documentation pulled directly from Supabase Storage"
+        description={photos.length > 0 ? `${photos.length} photos · ${formatFileSize(totalSize)}` : "Project photo documentation"}
       />
       <PageContainer maxWidth="full">
         <div className="space-y-4">
-          <Card
-            className="border-muted-foreground/20 bg-gradient-to-br from-muted/60 via-background to-background"
-            data-testid="photo-summary"
-          >
-            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <div className="text-sm text-muted-foreground">Storage bucket</div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{PHOTOS_BUCKET}</Badge>
-                  <code className="rounded bg-muted px-2 py-1 text-xs">
-                    {folderPath}
-                  </code>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="rounded-lg bg-muted px-4 py-2">
-                  <div className="text-muted-foreground">Images</div>
-                  <div className="text-lg font-semibold">{photos.length}</div>
-                </div>
-                <div className="rounded-lg bg-muted px-4 py-2">
-                  <div className="text-muted-foreground">Total size</div>
-                  <div className="text-lg font-semibold">
-                    {formatFileSize(totalSize)}
-                  </div>
-                </div>
-              </div>
-              {error ? (
-                <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                  Unable to read from Supabase storage: {error}
-                </div>
-              ) : null}
+          {error ? (
+            <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
+              Unable to load photos. Please try again later.
             </div>
-          </Card>
+          ) : null}
 
           {photos.length === 0 ? (
             <Card className="p-6" data-testid="photos-empty">

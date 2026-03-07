@@ -55,7 +55,7 @@ export default function ProfilePage() {
           </Alert>
         ) : null}
 
-        <section className="space-y-4 rounded-lg border bg-card p-6">
+        <section className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4 min-w-0">
               <Avatar className="h-14 w-14 shrink-0">
@@ -93,7 +93,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-lg border bg-card p-6">
+        <section className="space-y-4">
           <h3 className="text-base font-semibold text-foreground">Active account details</h3>
           <div className="space-y-4">
             <InfoRow label="Email" value={profile?.email} />
@@ -110,7 +110,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-lg border bg-card p-6">
+        <section className="space-y-4">
           <h3 className="text-base font-semibold text-foreground">System access</h3>
           <div className="flex items-start gap-3 text-sm text-muted-foreground">
             <Shield className="mt-0.5 h-4 w-4 shrink-0" />

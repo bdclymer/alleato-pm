@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Download, Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -295,29 +295,23 @@ export default function ProjectCommitmentsPage(): ReactElement {
           title: "Commitments",
           description: "Manage purchase orders and subcontracts",
           actions: (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleCreateSubcontract}>
-                    Subcontract
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
-                    Purchase Order
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleCreateSubcontract}>
+                  Subcontract
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
+                  Purchase Order
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ),
         }}
         tabs={tabs}

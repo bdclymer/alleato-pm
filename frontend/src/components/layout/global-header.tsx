@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   Search,
-  Star,
   HelpCircle,
   MessageSquare,
   Bell,
@@ -49,7 +48,7 @@ export function GlobalHeader() {
               />
             </div>
             <span className="font-semibold text-sm hidden sm:inline">
-              PROCORE
+              ALLEATO
             </span>
           </div>
 
@@ -123,34 +122,6 @@ export function GlobalHeader() {
 
       {/* Right Section */}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 text-[hsl(var(--procore-header-text))] hover:bg-background/10"
-        >
-          <Star className="h-4 w-4 mr-1" />
-          <span className="text-sm">Favorites</span>
-        </Button>
-
-        {/* Apps Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-[hsl(var(--procore-header-text))] hover:bg-background/10"
-            >
-              <span className="text-xs text-muted-foreground">Apps</span>
-              <span className="ml-1 text-sm">Select an App</span>
-              <ChevronDown className="ml-1 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem>App Store</DropdownMenuItem>
-            <DropdownMenuItem>My Apps</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         {/* Icon Buttons */}
         <Button
           variant="ghost"

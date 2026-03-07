@@ -38,6 +38,13 @@ export default function NewChangeEventPage() {
         tbd: "Owner Requested",
         transfer: "Value Engineering",
       };
+      const REASON_MAP: Record<string, string> = {
+        allowance: "Allowance",
+        backcharge: "Backcharge",
+        client_request: "Client Request",
+        design_development: "Design Development",
+        existing_condition: "Existing Condition",
+      };
 
       const normalizedScope =
         data.scope?.trim().toLowerCase() === "in scope"
@@ -65,7 +72,7 @@ export default function NewChangeEventPage() {
           type: TYPE_MAP[data.type || ""] || "Owner Change",
           status: STATUS_MAP[data.status || "open"] || "Open",
           scope: normalizedScope,
-          reason: data.changeReason || undefined,
+          reason: REASON_MAP[data.changeReason || ""] || data.changeReason || undefined,
           origin: ORIGIN_MAP[data.origin || ""] || "Internal",
           expectingRevenue: data.expectingRevenue ?? true,
           lineItemRevenueSource:

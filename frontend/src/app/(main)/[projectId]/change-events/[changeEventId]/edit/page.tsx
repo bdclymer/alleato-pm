@@ -51,6 +51,14 @@ export default function EditChangeEventPage() {
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
     try {
+      const REASON_MAP: Record<string, string> = {
+        allowance: "Allowance",
+        backcharge: "Backcharge",
+        client_request: "Client Request",
+        design_development: "Design Development",
+        existing_condition: "Existing Condition",
+      };
+
       const response = await fetch(
         `/api/projects/${projectId}/change-events/${changeEventId}`,
         {
@@ -61,7 +69,7 @@ export default function EditChangeEventPage() {
             number: data.number,
             title: data.title,
             status: data.status,
-            reason: data.changeReason || null,
+            reason: REASON_MAP[data.changeReason || ""] || data.changeReason || null,
             scope: data.scope || null,
             description: data.description || null,
             notes: data.notes || null,

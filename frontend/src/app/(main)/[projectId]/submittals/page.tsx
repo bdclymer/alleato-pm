@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
   UnifiedTablePage,
@@ -11,12 +11,6 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { useSubmittals, type SubmittalSummary } from "@/hooks/use-submittals";
 import {
@@ -201,29 +195,14 @@ export default function SubmittalsPage(): ReactElement {
           title: "Submittals",
           description: "Manage submittal items, packages, and review workflows",
           actions: (
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                data-testid="submittals-dropdown-create"
-                onClick={() => setDialogOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Submittal
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild data-testid="submittals-dropdown-export">
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem data-testid="submittals-export-csv">CSV</DropdownMenuItem>
-                  <DropdownMenuItem data-testid="submittals-export-pdf">PDF</DropdownMenuItem>
-                  <DropdownMenuItem data-testid="submittals-export-excel">Excel</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Button
+              size="sm"
+              data-testid="submittals-dropdown-create"
+              onClick={() => setDialogOpen(true)}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Submittal
+            </Button>
           ),
         }}
         tabs={tabs}

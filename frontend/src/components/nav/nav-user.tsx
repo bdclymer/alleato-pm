@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import {
   BadgeCheck,
   Bell,
@@ -29,6 +30,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { logout } from "@/lib/supabase/logout"
 
 const defaultUser = {
   name: "User",
@@ -45,6 +47,7 @@ export function NavUser({
     avatar: string
   }
 }) {
+  const router = useRouter()
   const { isMobile, state } = useSidebar()
   const isCollapsed = state === "collapsed"
 
@@ -124,7 +127,20 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={async (event) => {
+                event.preventDefault()
+
+                try {
+                  await logout()
+                  router.push("/auth/login")
+                  router.refresh()
+                } catch (error) {
+                  console.error("Logout error:", error)
+                  window.location.href = "/auth/login"
+                }
+              }}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
