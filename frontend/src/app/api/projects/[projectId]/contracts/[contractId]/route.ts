@@ -23,7 +23,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         `
         *,
         vendor:vendors(id, name, contact_name, contact_email, contact_phone),
-        client:clients(id, name)
+        client:clients(id, name),
+        contractor:companies!prime_contracts_contractor_id_fkey(id, name),
+        architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name)
       `,
       )
       .eq("id", contractId)

@@ -938,9 +938,11 @@ export default function ProjectContractDetailPage() {
       <ProjectPageHeader
         title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
         description={
-          contract.vendor
-            ? `Contractor: ${contract.vendor.name}`
-            : "No vendor assigned"
+          contract.contractor
+            ? `Contractor: ${contract.contractor.name}`
+            : contract.vendor
+              ? `Contractor: ${contract.vendor.name}`
+              : "No contractor assigned"
         }
         breadcrumbs={[
           { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },

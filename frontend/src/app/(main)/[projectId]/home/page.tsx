@@ -20,6 +20,7 @@ export default async function ProjectHomePage({
   const [
     projectResult,
     tasksResult,
+    tasksViaDocsResult,
     meetingsResult,
     changeOrdersResult,
     rfisResult,
@@ -33,11 +34,21 @@ export default async function ProjectHomePage({
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
 
-    // Fetch tasks from unified tasks table
+    // Fetch tasks — by project_ids array
     supabase
       .from("tasks")
       .select("*")
       .contains("project_ids", [numericProjectId])
+      .not("status", "in", '("done","cancelled")')
+      .order("created_at", { ascending: false })
+      .limit(20),
+
+    // Fetch tasks — via document_metadata link (for tasks with empty project_ids)
+    supabase
+      .from("tasks")
+      .select("*, document_metadata!tasks_metadata_id_fkey!inner(project_id)")
+      .eq("document_metadata.project_id", numericProjectId)
+      .filter("project_ids", "eq", "{}")
       .not("status", "in", '("done","cancelled")')
       .order("created_at", { ascending: false })
       .limit(20),
@@ -114,7 +125,24 @@ export default async function ProjectHomePage({
   }
 
   const project = projectResult.data;
-  const tasks = tasksResult.data || [];
+
+  // Merge tasks from both queries (direct project_ids match + document_metadata link)
+  // and deduplicate by id, keeping most-recent-first ordering
+  type TaskRow = NonNullable<typeof tasksResult.data>[number];
+  const directTasks: TaskRow[] = tasksResult.data || [];
+  const linkedTasksRaw = tasksViaDocsResult.data || [];
+  // Strip the joined document_metadata field so shape matches TaskRow
+  const linkedTasks: TaskRow[] = linkedTasksRaw.map((row) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { document_metadata, ...task } = row as TaskRow & { document_metadata: unknown };
+    return task;
+  });
+  const seenIds = new Set(directTasks.map((t) => t.id));
+  const uniqueLinked = linkedTasks.filter((t) => !seenIds.has(t.id));
+  const tasks = [...directTasks, ...uniqueLinked].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+
   const meetings = meetingsResult.data || [];
   const changeOrders = changeOrdersResult.data || [];
   const rfis = rfisResult.data || [];

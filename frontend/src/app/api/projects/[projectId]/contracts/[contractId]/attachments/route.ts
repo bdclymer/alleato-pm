@@ -38,12 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { data: attachments, error } = await supabase
       .from("attachments")
-      .select(
-        `
-        *,
-        uploader:users!attachments_uploaded_by_fkey(id, email)
-      `,
-      )
+      .select("*")
       .eq("attached_to_id", contractId)
       .eq("attached_to_table", "prime_contracts")
       .order("uploaded_at", { ascending: false });
@@ -60,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       contractId: attachment.attached_to_id,
       fileName: attachment.file_name,
       url: attachment.url,
-      uploadedBy: attachment.uploader,
+      uploadedBy: null,
       uploadedAt: attachment.uploaded_at,
       _links: {
         self: `/api/projects/${projectId}/contracts/${contractId}/attachments/${attachment.id}`,

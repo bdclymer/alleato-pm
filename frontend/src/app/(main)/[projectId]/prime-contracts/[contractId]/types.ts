@@ -117,6 +117,8 @@ export interface Contract {
   project_id: number;
   vendor?: { id: string; name: string } | null;
   client?: { id: number; name: string } | null;
+  contractor?: { id: string; name: string } | null;
+  architect_engineer?: { id: string; name: string } | null;
   approved_change_orders: number;
   pending_change_orders: number;
   draft_change_orders: number;

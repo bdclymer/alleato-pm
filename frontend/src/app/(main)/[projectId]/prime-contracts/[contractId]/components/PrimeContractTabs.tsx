@@ -26,7 +26,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "overview"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "overview" ? "page" : undefined}
@@ -39,7 +39,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "change-orders"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "change-orders" ? "page" : undefined}
@@ -50,7 +50,7 @@ export function PrimeContractTabs({
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium",
                   activeTab === "change-orders"
-                    ? "bg-brand/10 text-brand"
+                    ? "bg-primary/10 text-primary"
                     : "bg-muted text-foreground",
                 )}
               >
@@ -64,7 +64,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "invoices"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "invoices" ? "page" : undefined}
@@ -75,7 +75,7 @@ export function PrimeContractTabs({
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium",
                   activeTab === "invoices"
-                    ? "bg-brand/10 text-brand"
+                    ? "bg-primary/10 text-primary"
                     : "bg-muted text-foreground",
                 )}
               >
@@ -89,7 +89,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "payments"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "payments" ? "page" : undefined}
@@ -100,7 +100,7 @@ export function PrimeContractTabs({
                 className={cn(
                   "rounded-full px-2.5 py-0.5 text-xs font-medium",
                   activeTab === "payments"
-                    ? "bg-brand/10 text-brand"
+                    ? "bg-primary/10 text-primary"
                     : "bg-muted text-foreground",
                 )}
               >
@@ -114,7 +114,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "emails"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "emails" ? "page" : undefined}
@@ -127,7 +127,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "history"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "history" ? "page" : undefined}
@@ -140,7 +140,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "financial-markup"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "financial-markup" ? "page" : undefined}
@@ -153,7 +153,7 @@ export function PrimeContractTabs({
             className={cn(
               "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
               activeTab === "advanced-settings"
-                ? "border-brand text-brand"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
             aria-current={activeTab === "advanced-settings" ? "page" : undefined}

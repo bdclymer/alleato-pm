@@ -155,12 +155,16 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         idx += 1
 
     # 5. Store structured data
+    # Resolve project_ids from document_metadata so tasks are linked to projects
+    doc_project_id = metadata.get("project_id")
+    project_ids = [doc_project_id] if doc_project_id else []
+
     for decision in structured.decisions:
         _upsert_decision(client, decision, metadata_id)
     for risk in structured.risks:
         _upsert_risk(client, risk, metadata_id)
     for task in structured.tasks:
-        _upsert_task(client, task, metadata_id)
+        _upsert_task(client, task, metadata_id, project_ids)
     for opportunity in structured.opportunities:
         _upsert_opportunity(client, opportunity, metadata_id)
 
@@ -216,7 +220,7 @@ def _upsert_risk(client, risk: RiskItem, metadata_id: str) -> None:
     ).execute()
 
 
-def _upsert_task(client, task: TaskItem, metadata_id: str) -> None:
+def _upsert_task(client, task: TaskItem, metadata_id: str, project_ids: List[int] | None = None) -> None:
     data = {
         "metadata_id": metadata_id,
         "description": task.description,
@@ -226,6 +230,7 @@ def _upsert_task(client, task: TaskItem, metadata_id: str) -> None:
         "embedding": task.embedding,
         "status": "open",
         "source_system": "fireflies",
+        "project_ids": project_ids or [],
     }
     if task.assignee_email:
         data["assignee_email"] = task.assignee_email

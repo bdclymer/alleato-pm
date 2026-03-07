@@ -3,7 +3,7 @@ import {
   ChevronRight,
   FileText,
   Maximize2,
-  Minimize2,
+  Shrink,
   MoreVertical,
   Plus,
   Trash2,
@@ -155,7 +155,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 className={cn(
                                   "mt-1 text-[15px] leading-6",
                                   contract.client?.name
-                                    ? "font-semibold text-blue-600 hover:underline cursor-pointer"
+                                    ? "font-semibold"
                                     : "font-normal italic text-muted-foreground",
                                 )}
                               >
@@ -169,20 +169,27 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               <dd
                                 className={cn(
                                   "mt-1 text-[15px] leading-6",
-                                  contract.vendor?.name
-                                    ? "font-semibold text-blue-600 hover:underline cursor-pointer"
+                                  contract.contractor?.name
+                                    ? "font-semibold"
                                     : "font-normal italic text-muted-foreground",
                                 )}
                               >
-                                {contract.vendor?.name || "Not set"}
+                                {contract.contractor?.name || "Not set"}
                               </dd>
                             </div>
                             <div>
                               <dt className="text-xs font-medium text-muted-foreground">
                                 Architect/Engineer
                               </dt>
-                              <dd className="mt-1 text-[15px] font-normal italic leading-6 text-muted-foreground">
-                                Not set
+                              <dd
+                                className={cn(
+                                  "mt-1 text-[15px] leading-6",
+                                  contract.architect_engineer?.name
+                                    ? "font-semibold"
+                                    : "font-normal italic text-muted-foreground",
+                                )}
+                              >
+                                {contract.architect_engineer?.name || "Not set"}
                               </dd>
                             </div>
                             <div>
@@ -481,7 +488,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     onClick={() => setIsSovFullscreen((prev) => !prev)}
                   >
                     {isSovFullscreen ? (
-                      <Minimize2 className="h-4 w-4 mr-2" />
+                      <Shrink className="h-4 w-4 mr-2" />
                     ) : (
                       <Maximize2 className="h-4 w-4 mr-2" />
                     )}
