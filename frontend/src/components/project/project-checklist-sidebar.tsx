@@ -29,6 +29,7 @@ interface ProjectChecklistSidebarProps {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
   buttonSize?: React.ComponentProps<typeof Button>["size"]
   iconOnly?: boolean
+  buttonLabel?: string
 }
 
 const getChecklistItems = (projectId: string): ChecklistItem[] => [
@@ -83,6 +84,7 @@ export function ProjectChecklistSidebar({
   buttonVariant = "outline",
   buttonSize = "default",
   iconOnly = false,
+  buttonLabel = "Setup Checklist",
 }: ProjectChecklistSidebarProps) {
   const [open, setOpen] = React.useState(false)
   const { data: checklistStatus, isLoading } = useProjectChecklist(projectId)
@@ -114,7 +116,7 @@ export function ProjectChecklistSidebar({
             <ListChecks className="h-4 w-4" />
           ) : (
             <>
-              <span>Setup Checklist</span>
+              <span>{buttonLabel}</span>
               <ChevronRight className="h-4 w-4" />
             </>
           )}

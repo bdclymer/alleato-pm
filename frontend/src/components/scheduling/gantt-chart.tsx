@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Circle,
   Clock,
@@ -45,6 +46,7 @@ import {
   isWeekend,
 } from "date-fns";
 import type { TaskStatus, GanttChartItem, DependencyType } from "@/types/scheduling";
+import type { ScheduleTask } from "@/types/scheduling";
 
 // =============================================================================
 // TYPES
@@ -55,6 +57,9 @@ type ZoomLevel = "day" | "week" | "month";
 interface GanttChartProps {
   data: GanttChartItem[];
   onTaskClick?: (taskId: string) => void;
+  onQuickAddTask?: (name: string) => Promise<void>;
+  onUpdateTask?: (taskId: string, updates: Partial<ScheduleTask>) => Promise<void>;
+  visibleColumns?: string[];
   className?: string;
 }
 
@@ -350,7 +355,7 @@ function TaskBar({ task, index, dayWidth, startDate, onTaskClick }: TaskBarProps
 // MAIN COMPONENT
 // =============================================================================
 
-export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
+export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, visibleColumns, className }: GanttChartProps) {
   const zoomLevel: ZoomLevel = "week";
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -358,6 +363,10 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const [quickTaskName, setQuickTaskName] = useState("");
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dropTargetTaskId, setDropTargetTaskId] = useState<string | null>(null);
 
   const { dayWidth } = ZOOM_CONFIG[zoomLevel];
   const dateRange = useMemo(() => getDateRange(data), [data]);
@@ -595,6 +604,40 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
     );
   }, [dateRange.start, dayWidth, totalHeight, timelineDays.length]);
 
+  const handleQuickAdd = useCallback(async () => {
+    if (!onQuickAddTask || isQuickAdding) return;
+    setIsQuickAdding(true);
+    try {
+      await onQuickAddTask(quickTaskName);
+      setQuickTaskName("");
+    } finally {
+      setIsQuickAdding(false);
+    }
+  }, [isQuickAdding, onQuickAddTask, quickTaskName]);
+
+  const leftColumns = useMemo(() => {
+    const all = [
+      { id: "name", label: "Title", width: 260 },
+      { id: "start_date", label: "Start", width: 96 },
+      { id: "finish_date", label: "Finish", width: 96 },
+      { id: "duration_days", label: "Duration", width: 88 },
+      { id: "percent_complete", label: "%", width: 72 },
+      { id: "status", label: "Status", width: 90 },
+      { id: "assigned_to", label: "Assigned", width: 110 },
+      { id: "wbs_code", label: "WBS", width: 90 },
+      { id: "constraint_type", label: "Constraint", width: 120 },
+    ];
+    if (!visibleColumns || visibleColumns.length === 0) return all;
+    const selected = all.filter((column) => visibleColumns.includes(column.id));
+    if (!selected.some((column) => column.id === "name")) selected.unshift(all[0]);
+    return selected;
+  }, [visibleColumns]);
+
+  const leftMinWidth = useMemo(
+    () => leftColumns.reduce((sum, column) => sum + column.width, 0),
+    [leftColumns]
+  );
+
   return (
     <div className={cn("flex flex-col", className)} ref={containerRef}>
       {/* Chart Area */}
@@ -602,14 +645,14 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
         {/* Left Panel - Task List */}
         <div
           className={cn(
-            "flex-shrink-0 border-r bg-[#FAFCFF] transition-[width] duration-200 ease-out",
+            "flex-shrink-0 border-r bg-muted/20 transition-[width] duration-200 ease-out",
             isPanelCollapsed && "overflow-hidden"
           )}
           style={{ width: isPanelCollapsed ? 0 : leftPanelWidth }}
         >
           {/* Two-row header aligned with SVG timeline (total = HEADER_HEIGHT) */}
           {/* Row 1: aligned with month row — light bg to match SVG */}
-          <div className="flex items-center bg-[#FAFCFF] pl-1.5" style={{ height: HEADER_ROW_1 }}>
+          <div className="flex items-center bg-muted/20 pl-1.5" style={{ height: HEADER_ROW_1 }}>
             <button
               type="button"
               className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -624,19 +667,27 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
               )}
             </button>
           </div>
-          {/* Row 2: column headers aligned with day row */}
-          <div
-            className="border-b border-border bg-[#FAFCFF] flex items-center text-[11px] font-normal text-muted-foreground"
-            style={{ height: HEADER_ROW_2 }}
-          >
-            <div className="flex-1 pl-[42px]">Title</div>
-            <div className="w-[72px] pl-2">Start</div>
-            <div className="w-[52px] text-center">Status</div>
-          </div>
+          <div className="overflow-x-auto overflow-y-hidden">
+            <div style={{ minWidth: leftMinWidth }}>
+              {/* Row 2: column headers aligned with day row */}
+              <div
+                className="border-b border-border bg-muted/20 flex items-center text-[11px] font-normal text-muted-foreground"
+                style={{ height: HEADER_ROW_2 }}
+              >
+                {leftColumns.map((column) => (
+                  <div
+                    key={column.id}
+                    className={cn("truncate px-2", column.id === "name" && "pl-10")}
+                    style={{ width: column.width }}
+                  >
+                    {column.label}
+                  </div>
+                ))}
+              </div>
 
-          {/* Task List */}
-          <div className="overflow-hidden">
-            {visibleData.map((task) => {
+              {/* Task List */}
+              <div className="overflow-hidden">
+                {visibleData.map((task) => {
               const isParent = parentIds.has(task.id);
               const isCollapsed = collapsedIds.has(task.id);
               const statusInfo = ganttStatusConfig[task.status];
@@ -644,68 +695,134 @@ export function GanttChart({ data, onTaskClick, className }: GanttChartProps) {
               return (
                 <div
                   key={task.id}
-                  className="border-b border-border/50 flex items-center hover:bg-accent/50 transition-colors duration-100 cursor-pointer"
+                  className={cn(
+                    "border-b border-border/50 flex items-center hover:bg-accent/50 transition-colors duration-100 cursor-pointer",
+                    dropTargetTaskId === task.id && "bg-primary/5"
+                  )}
                   style={{ height: ROW_HEIGHT }}
+                  draggable
                   onClick={() => onTaskClick?.(task.id)}
+                  onDragStart={() => setDraggedTaskId(task.id)}
+                  onDragEnd={() => {
+                    setDraggedTaskId(null);
+                    setDropTargetTaskId(null);
+                  }}
+                  onDragOver={(event) => {
+                    if (!draggedTaskId || draggedTaskId === task.id || !onUpdateTask) return;
+                    event.preventDefault();
+                    setDropTargetTaskId(task.id);
+                  }}
+                  onDragLeave={() => {
+                    if (dropTargetTaskId === task.id) {
+                      setDropTargetTaskId(null);
+                    }
+                  }}
+                  onDrop={async (event) => {
+                    event.preventDefault();
+                    if (!draggedTaskId || draggedTaskId === task.id || !onUpdateTask) return;
+                    setDropTargetTaskId(null);
+                    await onUpdateTask(draggedTaskId, { parent_task_id: task.id });
+                  }}
                 >
-                  {/* Checkbox + chevron + name */}
-                  <div
-                    className="flex-1 flex items-center gap-1 min-w-0"
-                    style={{ paddingLeft: `${2 + task.level * 16}px` }}
-                  >
-                    {/* Expand/collapse chevron for parents */}
-                    {isParent ? (
-                      <button
-                        type="button"
-                        className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
-                        onClick={(e) => { e.stopPropagation(); toggleCollapse(task.id); }}
-                        aria-label={isCollapsed ? "Expand" : "Collapse"}
-                      >
-                        {isCollapsed ? (
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                      </button>
-                    ) : (
-                      <span className="w-[18px] flex-shrink-0" />
-                    )}
-                    {/* Square checkbox */}
-                    <button
-                      type="button"
-                      className="flex-shrink-0 rounded-sm border border-border hover:border-foreground/40 transition-colors h-3.5 w-3.5 flex items-center justify-center"
-                      onClick={() => onTaskClick?.(task.id)}
-                      aria-label={`Select ${task.name}`}
-                    >
-                      {task.percent_complete === 100 && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
+                  {leftColumns.map((column) => (
+                    <div key={column.id} className="px-2" style={{ width: column.width }}>
+                      {column.id === "name" ? (
+                        <div
+                          className="flex items-center gap-1 min-w-0"
+                          style={{ paddingLeft: `${2 + task.level * 16}px` }}
+                        >
+                          {isParent ? (
+                            <button
+                              type="button"
+                              className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+                              onClick={(e) => { e.stopPropagation(); toggleCollapse(task.id); }}
+                              aria-label={isCollapsed ? "Expand" : "Collapse"}
+                            >
+                              {isCollapsed ? (
+                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                              )}
+                            </button>
+                          ) : (
+                            <span className="w-[18px] flex-shrink-0" />
+                          )}
+                          <button
+                            type="button"
+                            className="flex-shrink-0 rounded-sm border border-border hover:border-foreground/40 transition-colors h-3.5 w-3.5 flex items-center justify-center"
+                            onClick={() => onTaskClick?.(task.id)}
+                            aria-label={`Select ${task.name}`}
+                          >
+                            {task.percent_complete === 100 && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className={cn(
+                              "text-[13px] truncate text-left bg-transparent border-none p-0 ml-1.5 cursor-pointer hover:underline",
+                              isParent ? "font-semibold text-foreground" : "font-normal text-foreground"
+                            )}
+                            onClick={() => onTaskClick?.(task.id)}
+                          >
+                            {task.name}
+                          </button>
+                        </div>
+                      ) : column.id === "start_date" ? (
+                        <span className="text-[12px] text-muted-foreground">
+                          {format(new Date(task.start_date), "MMM d")}
+                        </span>
+                      ) : column.id === "finish_date" ? (
+                        <span className="text-[12px] text-muted-foreground">
+                          {format(new Date(task.finish_date), "MMM d")}
+                        </span>
+                      ) : column.id === "duration_days" ? (
+                        <span className="text-[12px] text-muted-foreground">{task.duration_days}d</span>
+                      ) : column.id === "percent_complete" ? (
+                        <span className="text-[12px] text-muted-foreground">{task.percent_complete}%</span>
+                      ) : column.id === "status" ? (
+                        <div className="flex items-center">
+                          <StatusIcon className={cn("h-4 w-4", statusInfo.iconColor)} />
+                        </div>
+                      ) : column.id === "assigned_to" ? (
+                        <span className="text-[12px] text-muted-foreground">-</span>
+                      ) : column.id === "wbs_code" ? (
+                        <span className="text-[12px] text-muted-foreground">-</span>
+                      ) : (
+                        <span className="text-[12px] text-muted-foreground">-</span>
                       )}
-                    </button>
-                    {/* Task name */}
-                    <button
-                      type="button"
-                      className={cn(
-                        "text-[13px] truncate text-left bg-transparent border-none p-0 ml-1.5 cursor-pointer hover:underline",
-                        isParent ? "font-semibold text-foreground" : "font-normal text-foreground"
-                      )}
-                      onClick={() => onTaskClick?.(task.id)}
-                    >
-                      {task.name}
-                    </button>
-                  </div>
-                  {/* Start date */}
-                  <div className="w-[72px] pl-2">
-                    <span className="text-[12px] text-muted-foreground">
-                      {format(new Date(task.start_date), "MMM d")}
-                    </span>
-                  </div>
-                  {/* Status icon */}
-                  <div className="w-[52px] flex items-center justify-center">
-                    <StatusIcon className={cn("h-4 w-4", statusInfo.iconColor)} />
-                  </div>
+                    </div>
+                  ))}
                 </div>
               );
-            })}
+                })}
+                <div className="border-b border-border/50 px-2 py-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      value={quickTaskName}
+                      onChange={(event) => setQuickTaskName(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void handleQuickAdd();
+                        }
+                      }}
+                      placeholder="Add task and press Enter"
+                      className="h-7 text-xs border-dashed"
+                      disabled={!onQuickAddTask || isQuickAdding}
+                    />
+                    <button
+                      type="button"
+                      className="inline-flex h-7 items-center justify-center rounded px-2 text-xs text-primary hover:bg-muted disabled:opacity-50"
+                      disabled={!onQuickAddTask || isQuickAdding}
+                      onClick={() => void handleQuickAdd()}
+                    >
+                      {isQuickAdding ? "..." : "Add"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

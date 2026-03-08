@@ -6,6 +6,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -14,10 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/**
- * Budget Detail Type represents the different types of line items
- * that can appear in the Budget Detail tab
- */
 export type DetailType =
   | "original_budget"
   | "budget_changes"
@@ -28,19 +25,14 @@ export type DetailType =
   | "change_events"
   | "direct_costs";
 
-/**
- * Budget Detail Line Item represents a single row in the Budget Detail tab
- */
 export interface BudgetDetailLineItem {
   id: string;
   budgetCode: string;
   budgetCodeDescription: string;
   vendor?: string;
-  item?: string; // Associated item like change event
+  item?: string;
   detailType: DetailType;
   description?: string;
-
-  // Amounts for different columns (Procore Standard Budget View)
   originalBudgetAmount?: number;
   budgetChanges?: number;
   pendingBudgetChanges?: number;
@@ -49,7 +41,7 @@ export interface BudgetDetailLineItem {
   pendingCostChanges?: number;
   directCosts?: number;
   forecastToComplete?: number;
-  variance?: number; // Calculated: Revised Budget - Direct Costs
+  variance?: number;
 }
 
 interface BudgetDetailsTableProps {
@@ -58,16 +50,57 @@ interface BudgetDetailsTableProps {
 }
 
 type SortConfig = {
-  key: string | null;
+  key: SortKey | null;
   direction: "asc" | "desc";
 };
 
+type SortKey =
+  | "budgetCode"
+  | "vendor"
+  | "item"
+  | "detailType"
+  | "originalBudgetAmount"
+  | "budgetChanges"
+  | "pendingBudgetChanges"
+  | "approvedCOs"
+  | "committedCosts"
+  | "pendingCostChanges"
+  | "directCosts"
+  | "variance"
+  | "forecastToComplete";
+
+const columnWidthClasses: Record<string, string> = {
+  budgetCode: "w-[230px] min-w-[230px]",
+  vendor: "w-[150px] min-w-[150px]",
+  item: "w-[150px] min-w-[150px]",
+  detailType: "w-[190px] min-w-[190px]",
+  originalBudgetAmount: "w-[140px] min-w-[140px]",
+  budgetChanges: "w-[140px] min-w-[140px]",
+  pendingBudgetChanges: "w-[150px] min-w-[150px]",
+  approvedCOs: "w-[140px] min-w-[140px]",
+  committedCosts: "w-[140px] min-w-[140px]",
+  pendingCostChanges: "w-[160px] min-w-[160px]",
+  directCosts: "w-[140px] min-w-[140px]",
+  variance: "w-[140px] min-w-[140px]",
+  forecastToComplete: "w-[160px] min-w-[160px]",
+};
+
+const getWidthClass = (id: string) => columnWidthClasses[id] ?? "min-w-[120px]";
+
 const formatCurrency = (value?: number): string => {
   if (value === undefined || value === null) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
+  if (value === 0) return "$0.00";
+
+  const isNegative = value < 0;
+  const formatted = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Math.abs(value));
+
+  if (isNegative) {
+    return `($${formatted})`;
+  }
+  return `$${formatted}`;
 };
 
 const getDetailTypeLabel = (type: DetailType): string => {
@@ -84,9 +117,22 @@ const getDetailTypeLabel = (type: DetailType): string => {
   return labels[type];
 };
 
-/**
- * SortableHeader component for table column headers
- */
+const CurrencyCell = ({ value }: { value?: number }) => {
+  const numericValue = value ?? 0;
+  const isEmpty = value === undefined || value === null;
+  const isNegative = numericValue < 0;
+
+  if (isEmpty) {
+    return <span className="tabular-nums text-muted-foreground">-</span>;
+  }
+
+  return (
+    <span className={cn("tabular-nums", isNegative && "text-destructive")}>
+      {formatCurrency(numericValue)}
+    </span>
+  );
+};
+
 const SortableHeader = ({
   label,
   sortKey,
@@ -95,9 +141,9 @@ const SortableHeader = ({
   className,
 }: {
   label: string;
-  sortKey: string;
+  sortKey: SortKey;
   currentSort: SortConfig;
-  onSort: (key: string) => void;
+  onSort: (key: SortKey) => void;
   className?: string;
 }) => {
   const isSorted = currentSort.key === sortKey;
@@ -105,21 +151,22 @@ const SortableHeader = ({
   return (
     <TableHead
       className={cn(
-        "cursor-pointer select-none hover:bg-muted/50 font-semibold",
+        "bg-background py-2 px-1.5 text-center text-[11px] font-semibold text-foreground cursor-pointer select-none",
+        getWidthClass(sortKey),
         className,
       )}
       onClick={() => onSort(sortKey)}
     >
-      <div className="flex items-center gap-2">
-        {label}
+      <div className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap leading-tight">
+        <span>{label}</span>
         {isSorted ? (
           currentSort.direction === "asc" ? (
-            <ArrowUp className="h-4 w-4" />
+            <ArrowUp className="h-3 w-3" />
           ) : (
-            <ArrowDown className="h-4 w-4" />
+            <ArrowDown className="h-3 w-3" />
           )
         ) : (
-          <ArrowUpDown className="h-4 w-4 opacity-30" />
+          <ArrowUpDown className="h-3 w-3 opacity-30" />
         )}
       </div>
     </TableHead>
@@ -133,7 +180,6 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
     direction: "asc",
   });
 
-  // Calculate grand totals
   const grandTotals = React.useMemo(() => {
     const totals = data.reduce(
       (acc, item) => ({
@@ -155,17 +201,15 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
         pendingCostChanges: 0,
         directCosts: 0,
         forecastToComplete: 0,
-      }
+      },
     );
 
-    // Calculate variance for totals
     const revisedBudgetTotal = totals.originalBudgetAmount + totals.budgetChanges;
     const varianceTotal = revisedBudgetTotal - totals.directCosts;
 
     return { ...totals, variance: varianceTotal };
   }, [data]);
 
-  // Filter data based on search query
   const filteredData = React.useMemo(() => {
     if (!searchQuery.trim()) return data;
 
@@ -182,26 +226,24 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
     });
   }, [data, searchQuery]);
 
-  // Sort filtered data
   const sortedAndFilteredData = React.useMemo(() => {
-    if (!sortConfig.key) return filteredData;
+    const sortKey = sortConfig.key;
+    if (!sortKey) return filteredData;
 
     return [...filteredData].sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
+      let aVal: string | number | undefined;
+      let bVal: string | number | undefined;
 
-      // Special handling for variance column (calculated field)
-      if (sortConfig.key === "variance") {
+      if (sortKey === "variance") {
         const aRevisedBudget = (a.originalBudgetAmount || 0) + (a.budgetChanges || 0);
         const bRevisedBudget = (b.originalBudgetAmount || 0) + (b.budgetChanges || 0);
         aVal = aRevisedBudget - (a.directCosts || 0);
         bVal = bRevisedBudget - (b.directCosts || 0);
       } else {
-        aVal = (a as any)[sortConfig.key!];
-        bVal = (b as any)[sortConfig.key!];
+        aVal = a[sortKey];
+        bVal = b[sortKey];
       }
 
-      // Handle different types
       if (typeof aVal === "number" && typeof bVal === "number") {
         return sortConfig.direction === "asc" ? aVal - bVal : bVal - aVal;
       }
@@ -209,13 +251,11 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
       const aStr = String(aVal || "");
       const bStr = String(bVal || "");
       const comparison = aStr.localeCompare(bStr);
-
       return sortConfig.direction === "asc" ? comparison : -comparison;
     });
   }, [filteredData, sortConfig]);
 
-  // Handle column sort
-  const handleSort = (key: string) => {
+  const handleSort = (key: SortKey) => {
     setSortConfig((prev) => ({
       key,
       direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
@@ -224,96 +264,93 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading budget details...</div>
+      <div className="flex h-full items-center justify-center rounded-md bg-background">
+        <div className="text-sm text-muted-foreground">Loading budget details...</div>
       </div>
     );
   }
 
-  if (data.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">No budget details found</div>
-      </div>
-    );
-  }
+  const hasRows = sortedAndFilteredData.length > 0;
 
   return (
-    <div className="rounded-lg border bg-background shadow-sm">
-      {/* Search Bar */}
-      <div className="p-4 border-b">
+    <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
+      <div className="border-b border-border px-4 py-2">
         <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search budget codes, descriptions, vendors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="h-8 pl-9"
             />
           </div>
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearchQuery("")}
-            >
-              Clear
-            </Button>
-          )}
-          {searchQuery && (
-            <span className="text-sm text-muted-foreground">
-              {sortedAndFilteredData.length} of {data.length} items
-            </span>
-          )}
+          {searchQuery ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="h-8"
+              >
+                Clear
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {sortedAndFilteredData.length} of {data.length} items
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto scrollbar-hide">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted">
+      <div className="flex-1 overflow-auto scrollbar-hide">
+        <Table className="min-w-[2240px] table-fixed bg-background">
+          <TableHeader className="sticky top-0 z-10 bg-background">
+            <TableRow className="border-b border-border">
               <SortableHeader
                 label="Budget Code"
                 sortKey="budgetCode"
                 currentSort={sortConfig}
                 onSort={handleSort}
+                className="text-left"
               />
               <SortableHeader
                 label="Vendor"
                 sortKey="vendor"
                 currentSort={sortConfig}
                 onSort={handleSort}
+                className="text-left"
               />
               <SortableHeader
                 label="Item"
                 sortKey="item"
                 currentSort={sortConfig}
                 onSort={handleSort}
+                className="text-left"
               />
               <SortableHeader
                 label="Detail Type"
                 sortKey="detailType"
                 currentSort={sortConfig}
                 onSort={handleSort}
+                className="text-left"
               />
               <SortableHeader
-                label="Original Budget Amount"
+                label="Original"
                 sortKey="originalBudgetAmount"
                 currentSort={sortConfig}
                 onSort={handleSort}
                 className="text-right"
               />
               <SortableHeader
-                label="Budget Changes"
+                label="Mods"
                 sortKey="budgetChanges"
                 currentSort={sortConfig}
                 onSort={handleSort}
                 className="text-right"
               />
               <SortableHeader
-                label="Pending Budget Changes"
+                label="Pending"
                 sortKey="pendingBudgetChanges"
                 currentSort={sortConfig}
                 onSort={handleSort}
@@ -327,14 +364,14 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
                 className="text-right"
               />
               <SortableHeader
-                label="Committed Costs"
+                label="Committed"
                 sortKey="committedCosts"
                 currentSort={sortConfig}
                 onSort={handleSort}
                 className="text-right"
               />
               <SortableHeader
-                label="Pending Cost Changes"
+                label="Pending Changes"
                 sortKey="pendingCostChanges"
                 currentSort={sortConfig}
                 onSort={handleSort}
@@ -348,14 +385,14 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
                 className="text-right"
               />
               <SortableHeader
-                label="Variance"
+                label="Proj. +/-"
                 sortKey="variance"
                 currentSort={sortConfig}
                 onSort={handleSort}
                 className="text-right"
               />
               <SortableHeader
-                label="Forecast to Complete"
+                label="Forecast"
                 sortKey="forecastToComplete"
                 currentSort={sortConfig}
                 onSort={handleSort}
@@ -363,141 +400,182 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
               />
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            {sortedAndFilteredData.length === 0 && searchQuery ? (
-              <TableRow>
-                <TableCell colSpan={13} className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    No budget line items match &ldquo;{searchQuery}&rdquo;
-                  </p>
-                  <Button
-                    variant="link"
-                    onClick={() => setSearchQuery("")}
-                    className="mt-2"
-                  >
-                    Clear search
-                  </Button>
+            {!hasRows ? (
+              <TableRow className="border-b border-border">
+                <TableCell colSpan={13} className="h-11 px-4 text-sm text-muted-foreground">
+                  {searchQuery
+                    ? `No budget line items match "${searchQuery}".`
+                    : "No budget details found."}
                 </TableCell>
               </TableRow>
             ) : (
               sortedAndFilteredData.map((item) => {
-                // Calculate variance: Revised Budget - Direct Costs
                 const revisedBudget = (item.originalBudgetAmount || 0) + (item.budgetChanges || 0);
-                const directCosts = item.directCosts || 0;
-                const variance = revisedBudget - directCosts;
+                const variance = revisedBudget - (item.directCosts || 0);
 
                 return (
                   <TableRow
                     key={item.id}
-                    className={cn(
-                      "hover:bg-muted",
-                      item.detailType === "original_budget" && "font-medium",
-                    )}
+                    className="border-b border-border transition-colors hover:bg-muted/20"
                   >
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{item.budgetCode}</span>
-                        {item.budgetCodeDescription && (
-                          <span className="text-sm text-muted-foreground">
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-sm", getWidthClass("budgetCode"))}
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">{item.budgetCode}</div>
+                        {item.budgetCodeDescription ? (
+                          <div className="truncate text-xs text-muted-foreground">
                             {item.budgetCodeDescription}
-                          </span>
-                        )}
+                          </div>
+                        ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{item.vendor || "-"}</TableCell>
-                    <TableCell className="text-sm">{item.item || "-"}</TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium">
-                        {getDetailTypeLabel(item.detailType)}
-                      </span>
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-sm", getWidthClass("vendor"))}
+                    >
+                      {item.vendor || "-"}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.originalBudgetAmount)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-sm", getWidthClass("item"))}
+                    >
+                      {item.item || "-"}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.budgetChanges)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-sm", getWidthClass("detailType"))}
+                    >
+                      {getDetailTypeLabel(item.detailType)}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.pendingBudgetChanges)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("originalBudgetAmount"))}
+                    >
+                      <CurrencyCell value={item.originalBudgetAmount} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.approvedCOs)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("budgetChanges"))}
+                    >
+                      <CurrencyCell value={item.budgetChanges} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.committedCosts)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("pendingBudgetChanges"))}
+                    >
+                      <CurrencyCell value={item.pendingBudgetChanges} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.pendingCostChanges)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("approvedCOs"))}
+                    >
+                      <CurrencyCell value={item.approvedCOs} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.directCosts)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("committedCosts"))}
+                    >
+                      <CurrencyCell value={item.committedCosts} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      <span
-                        className={cn(
-                          "font-medium",
-                          variance > 0 && "text-green-600 dark:text-green-400",
-                          variance < 0 && "text-red-600 dark:text-red-400",
-                          variance === 0 && "text-muted-foreground",
-                        )}
-                      >
-                        {formatCurrency(variance)}
-                      </span>
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("pendingCostChanges"))}
+                    >
+                      <CurrencyCell value={item.pendingCostChanges} />
                     </TableCell>
-                    <TableCell className="text-right font-mono text-sm">
-                      {formatCurrency(item.forecastToComplete)}
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("directCosts"))}
+                    >
+                      <CurrencyCell value={item.directCosts} />
+                    </TableCell>
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("variance"))}
+                    >
+                      <CurrencyCell value={variance} />
+                    </TableCell>
+                    <TableCell
+                      className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("forecastToComplete"))}
+                    >
+                      <CurrencyCell value={item.forecastToComplete} />
                     </TableCell>
                   </TableRow>
                 );
               })
             )}
-            {/* Grand Totals Row */}
-            {sortedAndFilteredData.length > 0 && !searchQuery && (
-              <TableRow className="font-semibold bg-muted/50 border-t-2 border-border">
-                <TableCell colSpan={4} className="text-left">
-                  Grand Totals
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.originalBudgetAmount)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.budgetChanges)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.pendingBudgetChanges)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.approvedCOs)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.committedCosts)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.pendingCostChanges)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.directCosts)}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  <span
-                    className={cn(
-                      "font-semibold",
-                      grandTotals.variance > 0 && "text-green-600 dark:text-green-400",
-                      grandTotals.variance < 0 && "text-red-600 dark:text-red-400",
-                      grandTotals.variance === 0 && "text-muted-foreground",
-                    )}
-                  >
-                    {formatCurrency(grandTotals.variance)}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm">
-                  {formatCurrency(grandTotals.forecastToComplete)}
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
+
+      {hasRows && !searchQuery ? (
+        <div className="border-t border-border">
+          <Table className="min-w-[2240px] table-fixed bg-background">
+            <TableFooter className="bg-muted/50 border-t">
+              <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
+                <td
+                  className={cn(
+                    "py-2 px-2 text-sm font-semibold text-foreground",
+                    getWidthClass("budgetCode"),
+                  )}
+                  colSpan={4}
+                >
+                  Grand Totals
+                </td>
+                <td
+                  className={cn(
+                    "py-2 px-1.5 text-right text-sm",
+                    getWidthClass("originalBudgetAmount"),
+                  )}
+                >
+                  <CurrencyCell value={grandTotals.originalBudgetAmount} />
+                </td>
+                <td
+                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("budgetChanges"))}
+                >
+                  <CurrencyCell value={grandTotals.budgetChanges} />
+                </td>
+                <td
+                  className={cn(
+                    "py-2 px-1.5 text-right text-sm",
+                    getWidthClass("pendingBudgetChanges"),
+                  )}
+                >
+                  <CurrencyCell value={grandTotals.pendingBudgetChanges} />
+                </td>
+                <td
+                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("approvedCOs"))}
+                >
+                  <CurrencyCell value={grandTotals.approvedCOs} />
+                </td>
+                <td
+                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("committedCosts"))}
+                >
+                  <CurrencyCell value={grandTotals.committedCosts} />
+                </td>
+                <td
+                  className={cn(
+                    "py-2 px-1.5 text-right text-sm",
+                    getWidthClass("pendingCostChanges"),
+                  )}
+                >
+                  <CurrencyCell value={grandTotals.pendingCostChanges} />
+                </td>
+                <td
+                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("directCosts"))}
+                >
+                  <CurrencyCell value={grandTotals.directCosts} />
+                </td>
+                <td
+                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("variance"))}
+                >
+                  <CurrencyCell value={grandTotals.variance} />
+                </td>
+                <td
+                  className={cn(
+                    "py-2 px-1.5 text-right text-sm",
+                    getWidthClass("forecastToComplete"),
+                  )}
+                >
+                  <CurrencyCell value={grandTotals.forecastToComplete} />
+                </td>
+              </tr>
+            </TableFooter>
+          </Table>
+        </div>
+      ) : null}
     </div>
   );
 }

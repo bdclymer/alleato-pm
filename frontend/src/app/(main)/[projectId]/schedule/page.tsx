@@ -74,6 +74,13 @@ import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
 // =============================================================================
 
 type ViewMode = "grid" | "board" | "schedule" | "timeline" | "calendar";
+type QuickAddTaskInput = {
+  name: string;
+  parentId?: string | null;
+  status?: TaskStatus;
+  startDate?: string | null;
+  finishDate?: string | null;
+};
 
 const SCHEDULE_FILTERS: FilterConfig[] = [
   {
@@ -345,11 +352,41 @@ export default function ProjectSchedulePage() {
   }, [data?.tasks]);
 
   // Handlers
+  const apiUrl = `/api/projects/${projectId}/scheduling/tasks`;
+
   const handleAddTask = useCallback((parentId: string | null = null) => {
     setParentTaskIdForNew(parentId);
     setEditingTask(null);
     setIsModalOpen(true);
   }, []);
+
+  const handleQuickAddTask = useCallback(
+    async ({ name, parentId = null, status = "not_started", startDate = null, finishDate = null }: QuickAddTaskInput) => {
+      const taskName = name.trim() || "New task";
+
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: Number(projectId),
+          name: taskName,
+          parent_task_id: parentId,
+          status,
+          start_date: startDate,
+          finish_date: finishDate,
+          percent_complete: status === "complete" ? 100 : status === "in_progress" ? 50 : 0,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create task");
+      }
+
+      await refetch();
+    },
+    [apiUrl, projectId, refetch]
+  );
 
   const handleEditTask = useCallback((task: ScheduleTask) => {
     setEditingTask(task);
@@ -361,8 +398,6 @@ export default function ProjectSchedulePage() {
     setEditingTask(task);
     setIsModalOpen(true);
   }, []);
-
-  const apiUrl = `/api/projects/${projectId}/scheduling/tasks`;
 
   const handleSaveTask = useCallback(
     async (taskData: ScheduleTaskCreate | ScheduleTaskUpdate) => {
@@ -823,8 +858,10 @@ export default function ProjectSchedulePage() {
     tasks: data?.tasks || [],
     selectedIds,
     onSelectionChange: setSelectedIds,
+    visibleColumns,
     onTaskClick: handleTaskClick,
     onAddTask: handleAddTask,
+    onQuickAddTask: handleQuickAddTask,
     onEditTask: handleEditTask,
     onDeleteTask: handleDeleteTask,
     onUpdateTask: handleUpdateTask,
@@ -906,6 +943,9 @@ export default function ProjectSchedulePage() {
           {viewMode === "grid" && (
             <GanttChart
               data={data?.ganttData || []}
+              visibleColumns={visibleColumns}
+              onQuickAddTask={(name) => handleQuickAddTask({ name })}
+              onUpdateTask={handleUpdateTask}
               onTaskClick={(taskId) => {
                 const fullTask = data?.tasks
                   ? findTaskById(data.tasks, taskId)

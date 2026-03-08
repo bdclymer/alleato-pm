@@ -44,6 +44,8 @@ interface BudgetPageHeaderProps {
   lockedAt?: string | null;
   lockedBy?: string | null;
   onCreateClick?: () => void;
+  onCreateSnapshot?: () => void;
+  onOpenChat?: () => void;
   onModificationClick?: () => void;
   onResendToERP?: () => void;
   onLockBudget?: () => void;
@@ -65,6 +67,8 @@ export function BudgetPageHeader({
   lockedAt,
   lockedBy,
   onCreateClick,
+  onCreateSnapshot,
+  onOpenChat,
   onModificationClick,
   onResendToERP,
   onLockBudget,
@@ -134,7 +138,7 @@ export function BudgetPageHeader({
             <DropdownMenuItem onClick={onCreateClick}>
               Budget Line Item
             </DropdownMenuItem>
-            <DropdownMenuItem>Snapshot</DropdownMenuItem>
+            <DropdownMenuItem onClick={onCreateSnapshot}>Snapshot</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
@@ -182,6 +186,11 @@ export function BudgetPageHeader({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onExport?.("csv")}>
               Export to CSV
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onOpenChat}>
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Open AI Assistant
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuSub>
@@ -232,7 +241,7 @@ export function BudgetPageHeader({
             <DropdownMenuItem onClick={onCreateClick}>
               Budget Line Item
             </DropdownMenuItem>
-            <DropdownMenuItem>Snapshot</DropdownMenuItem>
+            <DropdownMenuItem onClick={onCreateSnapshot}>Snapshot</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
@@ -357,7 +366,14 @@ export function BudgetPageHeader({
         </DropdownMenu>
 
         {/* Chat/Converse Icon */}
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground"
+          onClick={onOpenChat}
+          aria-label="Open AI Assistant"
+          title="Open AI Assistant"
+        >
           <MessageSquare className="w-5 h-5" />
         </Button>
       </div>

@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
@@ -34,10 +35,7 @@ import {
 import {
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
   Plus,
-  Pencil,
-  Trash2,
   Flag,
   Calendar,
   Circle,
@@ -49,15 +47,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  Settings2,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   DndContext,
@@ -94,8 +86,16 @@ interface BaseViewProps {
   tasks: ScheduleTaskWithHierarchy[];
   selectedIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
+  visibleColumns?: string[];
   onTaskClick: (task: ScheduleTask) => void;
   onAddTask: (parentId?: string | null) => void;
+  onQuickAddTask: (input: {
+    name: string;
+    parentId?: string | null;
+    status?: TaskStatus;
+    startDate?: string | null;
+    finishDate?: string | null;
+  }) => Promise<void>;
   onEditTask: (task: ScheduleTask) => void;
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: (taskId: string, updates: Partial<ScheduleTask>) => Promise<void>;
@@ -234,6 +234,59 @@ function GridSortableHeader({
   );
 }
 
+function InlineQuickAddRow({
+  placeholder,
+  onSubmit,
+  className,
+}: {
+  placeholder: string;
+  onSubmit: (name: string) => Promise<void>;
+  className?: string;
+}) {
+  const [name, setName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = useCallback(async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSubmit(name);
+      setName("");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [isSaving, name, onSubmit]);
+
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <Plus className="h-4 w-4 text-primary shrink-0" />
+      <Input
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            void handleSubmit();
+          }
+        }}
+        placeholder={placeholder}
+        className="h-8 border-dashed"
+        disabled={isSaving}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 px-2"
+        disabled={isSaving}
+        onClick={() => void handleSubmit()}
+      >
+        {isSaving ? "Adding..." : "Add"}
+      </Button>
+    </div>
+  );
+}
+
 // =============================================================================
 // GRID VIEW (Microsoft Planner Style Table)
 // =============================================================================
@@ -242,8 +295,10 @@ export function ScheduleGridView({
   tasks,
   selectedIds,
   onSelectionChange,
+  visibleColumns,
   onTaskClick,
   onAddTask,
+  onQuickAddTask,
   onEditTask,
   onDeleteTask,
   onUpdateTask,
@@ -251,6 +306,13 @@ export function ScheduleGridView({
 }: BaseViewProps) {
   const flatTasks = useMemo(() => flattenTasks(tasks), [tasks]);
   const [gridSort, setGridSort] = useState<GridSortConfig | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dropTargetTaskId, setDropTargetTaskId] = useState<string | null>(null);
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
+  const [startDateDrafts, setStartDateDrafts] = useState<Record<string, string>>({});
+  const [finishDateDrafts, setFinishDateDrafts] = useState<Record<string, string>>({});
+  const [percentDrafts, setPercentDrafts] = useState<Record<string, string>>({});
+  const [savingTaskIds, setSavingTaskIds] = useState<Set<string>>(new Set());
 
   const toggleGridSort = useCallback((field: GridSortField) => {
     setGridSort((prev) => {
@@ -288,10 +350,104 @@ export function ScheduleGridView({
 
   const isAllSelected = flatTasks.length > 0 && selectedIds.size === flatTasks.length;
 
+  const setSavingState = useCallback((taskId: string, saving: boolean) => {
+    setSavingTaskIds((prev) => {
+      const next = new Set(prev);
+      if (saving) {
+        next.add(taskId);
+      } else {
+        next.delete(taskId);
+      }
+      return next;
+    });
+  }, []);
+
+  const saveName = useCallback(
+    async (task: ScheduleTaskWithHierarchy) => {
+      const draft = nameDrafts[task.id];
+      if (draft === undefined) return;
+      const nextName = draft.trim() || task.name;
+      if (nextName === task.name) return;
+      setSavingState(task.id, true);
+      try {
+        await onUpdateTask(task.id, { name: nextName });
+      } finally {
+        setSavingState(task.id, false);
+      }
+    },
+    [nameDrafts, onUpdateTask, setSavingState]
+  );
+
+  const saveDate = useCallback(
+    async (task: ScheduleTaskWithHierarchy, field: "start_date" | "finish_date") => {
+      const source = field === "start_date" ? startDateDrafts : finishDateDrafts;
+      const draft = source[task.id];
+      if (draft === undefined) return;
+      const normalizedCurrent = task[field] ? task[field] : "";
+      if (draft === normalizedCurrent) return;
+      setSavingState(task.id, true);
+      try {
+        await onUpdateTask(task.id, { [field]: draft || null });
+      } finally {
+        setSavingState(task.id, false);
+      }
+    },
+    [finishDateDrafts, onUpdateTask, setSavingState, startDateDrafts]
+  );
+
+  const savePercent = useCallback(
+    async (task: ScheduleTaskWithHierarchy) => {
+      const draft = percentDrafts[task.id];
+      if (draft === undefined) return;
+      const parsed = Number(draft);
+      const clamped = Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : task.percent_complete;
+      if (clamped === task.percent_complete) return;
+      setSavingState(task.id, true);
+      try {
+        await onUpdateTask(task.id, { percent_complete: clamped });
+      } finally {
+        setSavingState(task.id, false);
+      }
+    },
+    [onUpdateTask, percentDrafts, setSavingState]
+  );
+
+  const columns = useMemo(() => {
+    const all = [
+      { id: "name", label: "Task Name", width: "minmax(220px, 2fr)" },
+      { id: "start_date", label: "Start Date", width: "140px" },
+      { id: "finish_date", label: "Finish Date", width: "140px" },
+      { id: "duration_days", label: "Duration", width: "110px" },
+      { id: "percent_complete", label: "% Complete", width: "120px" },
+      { id: "status", label: "Status", width: "170px" },
+      { id: "assigned_to", label: "Assigned To", width: "140px" },
+      { id: "wbs_code", label: "WBS Code", width: "120px" },
+      { id: "constraint_type", label: "Constraint", width: "160px" },
+    ];
+
+    if (!visibleColumns || visibleColumns.length === 0) {
+      return all;
+    }
+
+    const selected = all.filter((column) => visibleColumns.includes(column.id));
+    if (!selected.some((column) => column.id === "name")) {
+      selected.unshift(all[0]);
+    }
+    return selected;
+  }, [visibleColumns]);
+
+  const gridTemplateColumns = useMemo(
+    () => `40px ${columns.map((column) => column.width).join(" ")}`,
+    [columns]
+  );
+
   return (
     <div className="overflow-x-auto">
       {/* Header */}
-      <div className="grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-2.5 border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div
+        className="grid gap-2 px-4 py-2.5 border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        style={{ gridTemplateColumns }}
+      >
         <div className="flex items-center">
           <Checkbox
             checked={isAllSelected}
@@ -299,30 +455,25 @@ export function ScheduleGridView({
             aria-label="Select all"
           />
         </div>
-        <div className="flex items-center gap-1">
-          <GridSortableHeader label="Task Name" field="name" sort={gridSort} onToggle={toggleGridSort} />
-        </div>
-        <div className="flex items-center gap-1">
-          Assignment
-        </div>
-        <div className="flex items-center gap-1">
-          <GridSortableHeader label="Start date" field="start_date" sort={gridSort} onToggle={toggleGridSort} />
-        </div>
-        <div className="flex items-center gap-1">
-          <GridSortableHeader label="Due date" field="finish_date" sort={gridSort} onToggle={toggleGridSort} />
-        </div>
-        <div className="flex items-center gap-1">
-          Bucket
-        </div>
-        <div className="flex items-center gap-1">
-          <GridSortableHeader label="Progress" field="status" sort={gridSort} onToggle={toggleGridSort} />
-        </div>
-        <div className="flex items-center gap-1">
-          Priority
-        </div>
-        <div className="flex items-center gap-1">
-          Labels
-        </div>
+        {columns.map((column) => (
+          <div key={column.id} className="flex items-center gap-1">
+            {column.id === "name" ? (
+              <GridSortableHeader label={column.label} field="name" sort={gridSort} onToggle={toggleGridSort} />
+            ) : column.id === "start_date" ? (
+              <GridSortableHeader label={column.label} field="start_date" sort={gridSort} onToggle={toggleGridSort} />
+            ) : column.id === "finish_date" ? (
+              <GridSortableHeader label={column.label} field="finish_date" sort={gridSort} onToggle={toggleGridSort} />
+            ) : column.id === "duration_days" ? (
+              <GridSortableHeader label={column.label} field="percent_complete" sort={gridSort} onToggle={toggleGridSort} />
+            ) : column.id === "status" ? (
+              <GridSortableHeader label={column.label} field="status" sort={gridSort} onToggle={toggleGridSort} />
+            ) : column.id === "percent_complete" ? (
+              <GridSortableHeader label={column.label} field="percent_complete" sort={gridSort} onToggle={toggleGridSort} />
+            ) : (
+              <span>{column.label}</span>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Rows */}
@@ -336,11 +487,34 @@ export function ScheduleGridView({
           return (
             <div
               key={task.id}
+              draggable
               className={cn(
-                "grid grid-cols-[40px_minmax(180px,400px)_120px_100px_100px_100px_100px_100px_80px] gap-2 px-4 py-4 hover:bg-accent cursor-pointer group transition-colors duration-150",
-                selectedIds.has(task.id) && "bg-primary/10"
+                "grid gap-2 px-4 py-4 hover:bg-accent cursor-pointer group transition-colors duration-150",
+                selectedIds.has(task.id) && "bg-primary/10",
+                dropTargetTaskId === task.id && "ring-1 ring-primary/50 bg-primary/5"
               )}
-              onClick={() => onTaskClick(task)}
+              style={{ gridTemplateColumns }}
+              onDragStart={() => setDraggedTaskId(task.id)}
+              onDragEnd={() => {
+                setDraggedTaskId(null);
+                setDropTargetTaskId(null);
+              }}
+              onDragOver={(event) => {
+                if (!draggedTaskId || draggedTaskId === task.id) return;
+                event.preventDefault();
+                setDropTargetTaskId(task.id);
+              }}
+              onDragLeave={() => {
+                if (dropTargetTaskId === task.id) {
+                  setDropTargetTaskId(null);
+                }
+              }}
+              onDrop={async (event) => {
+                event.preventDefault();
+                if (!draggedTaskId || draggedTaskId === task.id) return;
+                setDropTargetTaskId(null);
+                await onUpdateTask(draggedTaskId, { parent_task_id: task.id });
+              }}
             >
               <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                 <Checkbox
@@ -350,38 +524,117 @@ export function ScheduleGridView({
                 />
               </div>
 
-              <div className="flex items-center gap-2 min-w-0">
-                {task.is_milestone && <Flag className="h-4 w-4 text-amber-500 shrink-0" />}
-                <span className="truncate text-sm">{task.name}</span>
-              </div>
+              {columns.map((column) => (
+                <div key={column.id} className="flex items-center">
+                  {column.id === "name" && (
+                    <div className="flex items-center gap-2 min-w-0 w-full">
+                      {task.is_milestone && <Flag className="h-4 w-4 text-amber-500 shrink-0" />}
+                      <Input
+                        value={nameDrafts[task.id] ?? task.name}
+                        onChange={(event) =>
+                          setNameDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
+                        }
+                        onBlur={() => void saveName(task)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            void saveName(task);
+                          }
+                          if (event.key === "Escape") {
+                            setNameDrafts((prev) => {
+                              const next = { ...prev };
+                              delete next[task.id];
+                              return next;
+                            });
+                          }
+                        }}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  )}
 
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground">-</span>
-              </div>
+                  {column.id === "start_date" && (
+                    <Input
+                      type="date"
+                      value={startDateDrafts[task.id] ?? task.start_date ?? ""}
+                      onChange={(event) =>
+                        setStartDateDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
+                      }
+                      onBlur={() => void saveDate(task, "start_date")}
+                      className="h-8 text-xs"
+                    />
+                  )}
 
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground">{formatDate(task.start_date)}</span>
-              </div>
+                  {column.id === "finish_date" && (
+                    <Input
+                      type="date"
+                      value={finishDateDrafts[task.id] ?? task.finish_date ?? ""}
+                      onChange={(event) =>
+                        setFinishDateDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
+                      }
+                      onBlur={() => void saveDate(task, "finish_date")}
+                      className="h-8 text-xs"
+                    />
+                  )}
 
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground">{formatDate(task.finish_date)}</span>
-              </div>
+                  {column.id === "status" && (
+                    <select
+                      value={task.status}
+                      onChange={(event) =>
+                        void onUpdateTask(task.id, {
+                          status: event.target.value as TaskStatus,
+                          percent_complete:
+                            event.target.value === "complete"
+                              ? 100
+                              : event.target.value === "in_progress"
+                                ? 50
+                                : 0,
+                        })
+                      }
+                      className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+                    >
+                      <option value="not_started">Not Started</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="complete">Complete</option>
+                    </select>
+                  )}
 
-              <div className="flex items-center">
-                <span className="text-sm text-muted-foreground">{task.wbs_code || "General"}</span>
-              </div>
+                  {column.id === "duration_days" && (
+                    <span className="text-sm text-muted-foreground">
+                      {task.duration_days !== null ? `${task.duration_days}d` : "-"}
+                    </span>
+                  )}
 
-              <div className="flex items-center gap-2">
-                <statusInfo.icon className={cn("h-4 w-4", statusInfo.color)} />
-                <span className="text-sm">{statusInfo.label}</span>
-              </div>
+                  {column.id === "percent_complete" && (
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={percentDrafts[task.id] ?? String(task.percent_complete)}
+                      onChange={(event) =>
+                        setPercentDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
+                      }
+                      onBlur={() => void savePercent(task)}
+                      className="h-8 text-xs"
+                    />
+                  )}
 
-              <div className="flex items-center gap-2">
+                  {column.id === "assigned_to" && (
+                    <span className="text-sm text-muted-foreground">-</span>
+                  )}
+
+                  {column.id === "wbs_code" && (
+                    <span className="text-sm text-muted-foreground">{task.wbs_code || "-"}</span>
+                  )}
+
+                  {column.id === "constraint_type" && (
+                    <span className="text-sm text-muted-foreground">{task.constraint_type || "-"}</span>
+                  )}
+                </div>
+              ))}
+
+              <div className="hidden items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 {priority === "important" && <AlertTriangle className="h-3 w-3 text-destructive" />}
-                <span className={cn("text-sm", priorityInfo.color)}>{priorityInfo.label}</span>
-              </div>
-
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 {label && (
                   <Badge
                     variant="secondary"
@@ -392,18 +645,22 @@ export function ScheduleGridView({
                   </Badge>
                 )}
               </div>
+              {savingTaskIds.has(task.id) && (
+                <div className="absolute right-3 top-3">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
       {/* Add Task Row */}
-      <div
-        className="flex items-center gap-2 px-4 py-4 hover:bg-accent cursor-pointer border-t border-dashed bg-muted/10 transition-colors duration-150"
-        onClick={() => onAddTask(null)}
-      >
-        <Plus className="h-4 w-4 text-primary" />
-        <span className="text-sm text-muted-foreground">Add new task</span>
+      <div className="px-4 py-3 border-t border-dashed bg-muted/10">
+        <InlineQuickAddRow
+          placeholder="Type task name and press Enter"
+          onSubmit={(name) => onQuickAddTask({ name })}
+        />
       </div>
     </div>
   );
@@ -414,15 +671,6 @@ export function ScheduleGridView({
 // =============================================================================
 
 type CardField = "labels" | "status" | "dates" | "progress" | "priority" | "subtask_count";
-
-const CARD_FIELD_OPTIONS: { field: CardField; label: string }[] = [
-  { field: "labels", label: "Labels" },
-  { field: "status", label: "Status" },
-  { field: "dates", label: "Dates" },
-  { field: "progress", label: "Progress" },
-  { field: "priority", label: "Priority" },
-  { field: "subtask_count", label: "Subtasks" },
-];
 
 interface DraggableTaskCardProps {
   task: ScheduleTaskWithHierarchy;
@@ -460,23 +708,17 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
     <Card
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "border border-border shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 group",
+        "border border-border shadow-sm cursor-grab active:cursor-grabbing hover:bg-accent/30 transition-colors duration-150 group",
         isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-lg ring-2 ring-primary"
       )}
       onClick={() => onTaskClick(task)}
     >
-      <CardContent className="p-2.5 space-y-2">
-        {/* Row 1: Drag handle + task name */}
+      <CardContent className="p-2 space-y-1.5">
         <div className="flex items-start gap-2">
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-muted mt-0.5 shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <GripVertical className="h-3.5 w-3.5 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity duration-150" />
-          </div>
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground opacity-30 mt-0.5 shrink-0 group-hover:opacity-70 transition-opacity duration-150" />
           <Checkbox
             checked={task.status === "complete"}
             onCheckedChange={async (checked) => {
@@ -489,52 +731,51 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
             className="mt-0.5 shrink-0"
           />
           <span className={cn(
-            "text-sm leading-snug",
+            "text-sm leading-snug line-clamp-2",
             task.status === "complete" && "line-through text-muted-foreground"
           )}>
             {task.name}
           </span>
         </div>
 
-        {/* Row 2: Configurable metadata chips */}
-        <div className="flex flex-wrap items-center gap-2 pl-[26px]">
-          {visibleFields.has("labels") && label && (
-            <Badge
-              variant="secondary"
-              className={cn("h-5 px-1.5 text-2xs text-white", labelColors[label])}
-            >
-              {label.charAt(0).toUpperCase() + label.slice(1)}
-            </Badge>
-          )}
+        <div className="pl-6 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            {visibleFields.has("status") && (
+              <div className="flex items-center gap-1">
+                <statusInfo.icon className={cn("h-3 w-3", statusInfo.color)} />
+                <span className="text-xs text-muted-foreground">{statusInfo.label}</span>
+              </div>
+            )}
+            {visibleFields.has("priority") && priority === "important" && (
+              <AlertTriangle className="h-3 w-3 text-destructive" />
+            )}
+            {visibleFields.has("labels") && label && (
+              <Badge
+                variant="secondary"
+                className={cn("h-5 px-1.5 text-2xs text-white", labelColors[label])}
+              >
+                {label.charAt(0).toUpperCase() + label.slice(1)}
+              </Badge>
+            )}
+          </div>
 
-          {visibleFields.has("status") && (
-            <div className="flex items-center gap-1">
-              <statusInfo.icon className={cn("h-3 w-3", statusInfo.color)} />
-              <span className="text-2xs text-muted-foreground">{statusInfo.label}</span>
-            </div>
-          )}
-
-          {visibleFields.has("dates") && (task.start_date || task.finish_date) && (
-            <span className="text-2xs text-muted-foreground">
-              {formatDate(task.start_date)} — {formatDate(task.finish_date)}
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {visibleFields.has("dates") && (
+              <span className="text-xs text-muted-foreground">
+                {formatDate(task.start_date)} — {formatDate(task.finish_date)}
+              </span>
+            )}
+            {visibleFields.has("subtask_count") && task.children && task.children.length > 0 && (
+              <span className="text-xs text-muted-foreground">
+                {task.children.filter(c => c.status === "complete").length}/{task.children.length} subtasks
+              </span>
+            )}
+          </div>
 
           {visibleFields.has("progress") && (
-            <div className="flex items-center gap-1 min-w-[60px]">
+            <div className="flex items-center gap-2">
               <Progress value={task.percent_complete} className="h-1.5 flex-1" />
-              <span className="text-2xs text-muted-foreground">{task.percent_complete}%</span>
-            </div>
-          )}
-
-          {visibleFields.has("priority") && priority === "important" && (
-            <AlertTriangle className="h-3 w-3 text-destructive" />
-          )}
-
-          {visibleFields.has("subtask_count") && task.children && task.children.length > 0 && (
-            <div className="flex items-center gap-0.5 text-2xs text-muted-foreground">
-              <CheckCircle2 className="h-3 w-3" />
-              {task.children.filter(c => c.status === "complete").length}/{task.children.length}
+              <span className="text-xs text-muted-foreground">{task.percent_complete}%</span>
             </div>
           )}
         </div>
@@ -586,12 +827,14 @@ interface BoardColumnProps {
   tasks: ScheduleTaskWithHierarchy[];
   onTaskClick: (task: ScheduleTask) => void;
   onAddTask: () => void;
+  onQuickAddTask: (name: string, status: TaskStatus) => Promise<void>;
   onUpdateTask: (taskId: string, updates: Partial<ScheduleTask>) => Promise<void>;
   visibleFields: Set<CardField>;
 }
 
-function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onUpdateTask, visibleFields }: BoardColumnProps) {
+function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onQuickAddTask, onUpdateTask, visibleFields }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const [isInlineAddOpen, setIsInlineAddOpen] = useState(false);
 
   return (
     <div className={cn(
@@ -610,11 +853,30 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onUpdateTas
       <Button
         variant="ghost"
         className="w-full justify-start gap-2 mb-4 text-primary hover:text-primary hover:bg-background"
-        onClick={onAddTask}
+        onClick={() => setIsInlineAddOpen((prev) => !prev)}
       >
         <Plus className="h-4 w-4" />
-        Add task
+        {isInlineAddOpen ? "Hide quick add" : "Quick add task"}
       </Button>
+
+      {isInlineAddOpen && (
+        <div className="mb-3 rounded-md border border-dashed bg-background p-2">
+          <InlineQuickAddRow
+            placeholder="Task name"
+            onSubmit={(name) => onQuickAddTask(name, status)}
+            className="gap-1"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-1 h-7 px-2 text-xs text-muted-foreground"
+            onClick={onAddTask}
+          >
+            Open full task form
+          </Button>
+        </div>
+      )}
 
       {/* Cards - Droppable Area */}
       <div ref={setNodeRef} className="flex-1">
@@ -652,35 +914,24 @@ export function ScheduleBoardView({
   onSelectionChange,
   onTaskClick,
   onAddTask,
+  onQuickAddTask,
   onEditTask,
   onDeleteTask,
   onUpdateTask,
   isLoading,
 }: BaseViewProps) {
   const [activeTask, setActiveTask] = useState<ScheduleTaskWithHierarchy | null>(null);
-  const [visibleCardFields, setVisibleCardFields] = useState<Set<CardField>>(
-    new Set(["status", "dates", "progress"])
+  const [visibleCardFields] = useState<Set<CardField>>(
+    new Set(["status", "dates", "progress", "subtask_count"])
   );
   const groupedTasks = useMemo(() => groupTasksByStatus(tasks), [tasks]);
 
   // All flat tasks for finding by ID
   const flatTasks = useMemo(() => flattenTasks(tasks), [tasks]);
 
-  const toggleCardField = useCallback((field: CardField) => {
-    setVisibleCardFields((prev) => {
-      const next = new Set(prev);
-      if (next.has(field)) {
-        next.delete(field);
-      } else {
-        next.add(field);
-      }
-      return next;
-    });
-  }, []);
-
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, { activationConstraint: { distance: 2 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -719,6 +970,7 @@ export function ScheduleBoardView({
 
     // If dropped on a column (detect by checking if overId matches a status)
     const isColumn = columns.some((c) => c.status === overId);
+    const isTaskCard = flatTasks.some((t) => t.id === overId);
 
     // Find the source column
     const sourceColumn = findTaskColumn(activeId);
@@ -733,9 +985,20 @@ export function ScheduleBoardView({
 
     if (!sourceColumn || !destColumn) return;
 
-    // If moving to a different column, update the task status
+    // Drop on task card => convert dragged task to subtask of target card.
+    if (isTaskCard && overId !== activeId) {
+      await onUpdateTask(activeId, {
+        parent_task_id: overId,
+        status: destColumn,
+        percent_complete: destColumn === "complete" ? 100 : destColumn === "in_progress" ? 50 : 0,
+      });
+      return;
+    }
+
+    // Drop on column => status move only.
     if (sourceColumn !== destColumn) {
       await onUpdateTask(activeId, {
+        parent_task_id: null,
         status: destColumn,
         percent_complete: destColumn === "complete" ? 100 : destColumn === "in_progress" ? 50 : 0,
       });
@@ -744,35 +1007,6 @@ export function ScheduleBoardView({
 
   return (
     <div>
-      {/* Card field settings */}
-      <div className="flex justify-end px-4 pt-4 pb-1">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings2 className="h-4 w-4 mr-1.5" />
-              Card fields
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-48" align="end">
-            <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Show on cards</Label>
-              {CARD_FIELD_OPTIONS.map(({ field, label }) => (
-                <div key={field} className="flex items-center gap-2">
-                  <Checkbox
-                    id={`card-field-${field}`}
-                    checked={visibleCardFields.has(field)}
-                    onCheckedChange={() => toggleCardField(field)}
-                  />
-                  <label htmlFor={`card-field-${field}`} className="text-sm cursor-pointer">
-                    {label}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -788,6 +1022,7 @@ export function ScheduleBoardView({
               tasks={groupedTasks[status]}
               onTaskClick={onTaskClick}
               onAddTask={() => onAddTask(null)}
+              onQuickAddTask={(name, status) => onQuickAddTask({ name, status })}
               onUpdateTask={onUpdateTask}
               visibleFields={visibleCardFields}
             />
@@ -811,6 +1046,7 @@ export function ScheduleCalendarView({
   onSelectionChange,
   onTaskClick,
   onAddTask,
+  onQuickAddTask,
   onEditTask,
   onDeleteTask,
   onUpdateTask,
@@ -890,6 +1126,13 @@ export function ScheduleCalendarView({
         </Button>
       </div>
 
+      <div className="mb-4 rounded-md border border-dashed bg-muted/20 p-2">
+        <InlineQuickAddRow
+          placeholder={`Add task in ${format(currentDate, "MMMM")}`}
+          onSubmit={(name) => onQuickAddTask({ name })}
+        />
+      </div>
+
       {/* Week day headers */}
       <div className="grid grid-cols-7 gap-px bg-muted mb-px">
         {weekDays.map((day) => (
@@ -966,6 +1209,7 @@ export function ScheduleTimelineView({
   onSelectionChange,
   onTaskClick,
   onAddTask,
+  onQuickAddTask,
   onEditTask,
   onDeleteTask,
   onUpdateTask,
@@ -973,6 +1217,8 @@ export function ScheduleTimelineView({
 }: BaseViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const flatTasks = useMemo(() => flattenTasks(tasks), [tasks]);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dropTargetTaskId, setDropTargetTaskId] = useState<string | null>(null);
 
   // Generate weeks for the timeline (12 weeks)
   const weeks = useMemo(() => {
@@ -1049,7 +1295,30 @@ export function ScheduleTimelineView({
               <div
                 key={task.id}
                 className="h-10 px-4 flex items-center gap-2 hover:bg-accent transition-colors duration-150 cursor-pointer"
+                draggable
                 onClick={() => onTaskClick(task)}
+                onDragStart={() => setDraggedTaskId(task.id)}
+                onDragEnd={() => {
+                  setDraggedTaskId(null);
+                  setDropTargetTaskId(null);
+                }}
+                onDragOver={(event) => {
+                  if (!draggedTaskId || draggedTaskId === task.id) return;
+                  event.preventDefault();
+                  setDropTargetTaskId(task.id);
+                }}
+                onDragLeave={() => {
+                  if (dropTargetTaskId === task.id) {
+                    setDropTargetTaskId(null);
+                  }
+                }}
+                onDrop={async (event) => {
+                  event.preventDefault();
+                  if (!draggedTaskId || draggedTaskId === task.id) return;
+                  setDropTargetTaskId(null);
+                  await onUpdateTask(draggedTaskId, { parent_task_id: task.id });
+                }}
+                style={dropTargetTaskId === task.id ? { backgroundColor: "hsl(var(--primary) / 0.08)" } : undefined}
               >
                 <span className="text-xs text-muted-foreground w-6">{index + 1}</span>
                 <Checkbox
@@ -1066,11 +1335,12 @@ export function ScheduleTimelineView({
               </div>
             ))}
             <div
-              className="h-10 px-4 flex items-center gap-2 text-primary hover:bg-accent transition-colors duration-150 cursor-pointer"
-              onClick={() => onAddTask(null)}
+              className="px-3 py-2 border-b border-border/50 bg-muted/10"
             >
-              <Plus className="h-4 w-4" />
-              <span className="text-sm">Add new task</span>
+              <InlineQuickAddRow
+                placeholder="Add task and press Enter"
+                onSubmit={(name) => onQuickAddTask({ name })}
+              />
             </div>
           </div>
         </div>

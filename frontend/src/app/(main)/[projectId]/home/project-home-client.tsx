@@ -3,7 +3,6 @@
 import * as React from "react";
 import { format } from "date-fns";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   X,
@@ -15,14 +14,10 @@ import {
   Loader2,
   Phone,
   Mail,
-  Calendar,
   CheckCircle2,
   Clock,
   AlertCircle,
   Plus,
-  Check,
-  Building2,
-  ChevronsUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,17 +35,8 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
-import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
-import { createCompany } from "@/app/(other)/actions/table-actions";
-import type { CompanyFormData } from "@/lib/schemas/financial-schemas";
+import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import { MeetingsSection } from "./meetings-section";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectRoles } from "@/hooks/use-project-roles";
@@ -58,6 +44,7 @@ import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import type { ProjectRole } from "@/hooks/use-project-roles";
 import type { Database } from "@/types/database.types";
+import type { Project as PortfolioProject } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
 
 /* =============================================================================
@@ -140,6 +127,83 @@ function getInitials(name: string): string {
   if (parts.length === 0) return "TM";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function getSummaryMetadata(project: Project): Record<string, unknown> {
+  const metadata = project.summary_metadata;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return {};
+  }
+  return metadata as Record<string, unknown>;
+}
+
+function toPortfolioProject(project: Project): PortfolioProject {
+  const metadata = getSummaryMetadata(project);
+  const city = typeof metadata.city === "string" ? metadata.city : "";
+  const zip = typeof metadata.postal_code === "string" ? metadata.postal_code : "";
+  const phone = typeof metadata.phone === "string" ? metadata.phone : "";
+  const country =
+    typeof metadata.country === "string" ? metadata.country : "United States";
+  const timezone =
+    typeof metadata.timezone === "string"
+      ? metadata.timezone
+      : "America/New_York";
+  const region = typeof metadata.region === "string" ? metadata.region : "";
+  const office = typeof metadata.office === "string" ? metadata.office : "";
+  const squareFootage =
+    typeof metadata.square_footage === "number" ? metadata.square_footage : null;
+  const projectCode =
+    typeof metadata.project_code === "string" ? metadata.project_code : "";
+  const erpSync =
+    typeof metadata.erp_sync === "boolean" ? metadata.erp_sync : true;
+  const testProject =
+    typeof metadata.test_project === "boolean" ? metadata.test_project : false;
+  const projectLogo =
+    typeof metadata.project_logo === "string" ? metadata.project_logo : "";
+  const projectPhoto =
+    typeof metadata.project_photo === "string" ? metadata.project_photo : "";
+
+  return {
+    id: String(project.id),
+    name: project.name || "",
+    projectNumber: project["job number"] || "",
+    jobNumber: project["job number"] || undefined,
+    client: project.client || "",
+    address: project.address || "",
+    city,
+    state: project.state || "",
+    zip,
+    phone,
+    status: project.archived ? "Inactive" : "Active",
+    currentPhase: project.current_phase || "",
+    stage: project.current_phase || "",
+    workScope: project.work_scope || "",
+    projectSector: project.project_sector || "",
+    deliveryMethod: project.delivery_method || "",
+    squareFootage,
+    totalValue: project["est revenue"],
+    projectCode,
+    type: project.type || "",
+    projectType: project.type || project.category || "",
+    phase: project.phase || "",
+    category: project.category || "",
+    country,
+    timezone,
+    region,
+    office,
+    completionDate: project["est completion"] || null,
+    erpSync,
+    testProject,
+    projectLogo,
+    projectPhoto,
+    active: !project.archived,
+    description: project.summary || "",
+    summaryMetadata: Object.keys(metadata).length > 0 ? metadata : null,
+    startDate: project["start date"] || null,
+    estRevenue: project["est revenue"],
+    estProfit: project["est profit"],
+    notes: project.summary || "",
+  };
 }
 
 /* =============================================================================
@@ -702,141 +766,6 @@ function AiWidget({ projectId }: { projectId: number }) {
 }
 
 /* =============================================================================
-   Inline Editing — Project Details
-   ============================================================================= */
-const CELL_INPUT_CLS =
-  "w-full bg-transparent text-sm leading-snug text-foreground outline-none border-0 ring-0 " +
-  "px-2 py-1 rounded-sm " +
-  "hover:bg-muted/30 focus:bg-primary/5 " +
-  "transition-colors duration-100 " +
-  "placeholder:text-muted-foreground/30";
-
-function InlineTextCell({ value, placeholder = "—", onSave, type = "text" }: { value: string; placeholder?: string; onSave: (v: string) => void; type?: "text" | "date" }) {
-  const [draft, setDraft] = React.useState(value);
-  const pristine = React.useRef(value);
-  React.useEffect(() => { setDraft(value); pristine.current = value; }, [value]);
-  return (
-    <input
-      type={type} value={draft} placeholder={placeholder}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => { if (draft !== pristine.current) { pristine.current = draft; onSave(draft); } }}
-      onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") { setDraft(pristine.current); (e.target as HTMLInputElement).blur(); } }}
-      className={CELL_INPUT_CLS}
-    />
-  );
-}
-
-function InlineSelectCell({ value, options, placeholder = "Select…", onSave }: { value: string; options: string[]; placeholder?: string; onSave: (v: string) => void }) {
-  return (
-    <Select value={value || undefined} onValueChange={onSave}>
-      <SelectTrigger variant="inline" className={cn("w-full h-auto bg-transparent text-sm leading-snug text-foreground px-2 py-1 rounded-sm border-0 shadow-none hover:bg-muted/30 focus:bg-primary/5 transition-colors duration-100", !value && "text-muted-foreground/30")}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((opt) => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function InlineCompanyCombobox({ value, placeholder = "Select client…", onSave }: { value: string; placeholder?: string; onSave: (v: string) => void }) {
-  const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState("");
-  const [companies, setCompanies] = React.useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [showCreateDialog, setShowCreateDialog] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!open) return;
-    const controller = new AbortController();
-    setLoading(true);
-    const params = new URLSearchParams({ per_page: "50" });
-    if (search) params.set("search", search);
-    fetch(`/api/directory/companies?${params}`, { signal: controller.signal })
-      .then((r) => r.json())
-      .then((res) => { setCompanies((res.data || []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  }, [open, search]);
-
-  const handleCreateCompany = async (data: CompanyFormData) => {
-    const result = await createCompany(data);
-    if (result.error) return result;
-    onSave(data.name);
-    setShowCreateDialog(false);
-    setOpen(false);
-  };
-
-  return (
-    <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button type="button" role="combobox" aria-expanded={open} className={cn("w-full flex items-center justify-between text-left text-sm leading-snug px-2 py-1 rounded-sm border-0 bg-transparent hover:bg-muted/30 focus:bg-primary/5 transition-colors duration-100 outline-none", value ? "text-foreground" : "text-muted-foreground/30")}>
-            <span className="truncate">{value || placeholder}</span>
-            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-30" />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[280px] p-0" align="start">
-          <Command shouldFilter={false}>
-            <CommandInput placeholder="Search companies…" value={search} onValueChange={setSearch} />
-            <CommandList>
-              <CommandEmpty>{loading ? <span className="text-muted-foreground text-xs">Searching…</span> : <span className="text-muted-foreground text-xs">No companies found</span>}</CommandEmpty>
-              <CommandGroup>
-                {companies.map((company) => (
-                  <CommandItem key={company.id} value={company.name} onSelect={() => { onSave(company.name); setOpen(false); setSearch(""); }}>
-                    <Building2 className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="truncate">{company.name}</span>
-                    {value === company.name && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandGroup>
-                <CommandItem onSelect={() => { setShowCreateDialog(true); setOpen(false); setSearch(""); }} className="text-primary">
-                  <Plus className="mr-2 h-3.5 w-3.5" />Create new company
-                </CommandItem>
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      <CompanyFormDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} onCreate={handleCreateCompany} />
-    </>
-  );
-}
-
-function InlineTextareaCell({ value, placeholder = "—", onSave }: { value: string; placeholder?: string; onSave: (v: string) => void }) {
-  const [draft, setDraft] = React.useState(value);
-  const pristine = React.useRef(value);
-  React.useEffect(() => { setDraft(value); pristine.current = value; }, [value]);
-  return (
-    <textarea
-      value={draft} placeholder={placeholder} rows={2}
-      onChange={(e) => setDraft(e.target.value)}
-      onBlur={() => { if (draft !== pristine.current) { pristine.current = draft; onSave(draft); } }}
-      onKeyDown={(e) => { if (e.key === "Escape") { setDraft(pristine.current); (e.target as HTMLTextAreaElement).blur(); } }}
-      className={cn(CELL_INPUT_CLS, "resize-none")}
-    />
-  );
-}
-
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 py-1.5 hover:bg-muted/20 transition-colors duration-75 rounded-sm">
-      <span className="w-28 shrink-0 text-xs text-muted-foreground select-none">{label}</span>
-      <div className="flex-1 min-w-0">{children}</div>
-    </div>
-  );
-}
-
-const DETAIL_STAGE_OPTS = ["Bidding", "Course of Construction", "Post-Construction", "Pre-Construction", "Speculative", "Warranty"];
-const DETAIL_PHASE_OPTS = ["Planning", "Estimating", "Current", "Complete", "Loss", "Archive"];
-const DETAIL_TYPE_OPTS = ["New Build", "Addition", "Fit-Out", "Maintenance", "Restoration"];
-const DETAIL_SECTOR_OPTS = ["Commercial", "Industrial", "Infrastructure", "Healthcare", "Institutional", "Residential"];
-const DETAIL_SCOPE_OPTS = ["Ground-Up Construction", "Renovation", "Tenant Improvement", "Interior Build-Out", "Maintenance"];
-const DETAIL_DELIVERY_OPTS = ["Design-Bid-Build", "Design-Build", "Construction Management at Risk", "Integrated Project Delivery"];
-
-/* =============================================================================
    Main component — Clean sectioned layout
    ============================================================================= */
 
@@ -854,27 +783,20 @@ export function ProjectHomeClient({
   schedule = [],
   sov: _sov = [],
 }: ProjectHomeClientProps) {
-  const router = useRouter();
   const [signalsDismissed, setSignalsDismissed] = React.useState(false);
   const [localProject, setLocalProject] = React.useState(project);
+  const [isEditProjectDialogOpen, setIsEditProjectDialogOpen] = React.useState(false);
 
-
-  const saveProjectField = React.useCallback(
-    async (payload: Record<string, unknown>) => {
-      try {
-        const res = await fetch(`/api/projects/${project.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error("Failed to save");
-        setLocalProject((prev) => ({ ...prev, ...(payload as Partial<Project>) }));
-      } catch {
-        toast.error("Failed to save");
-      }
-    },
-    [project.id]
-  );
+  const refreshProject = React.useCallback(async () => {
+    try {
+      const res = await fetch(`/api/projects/${project.id}`);
+      if (!res.ok) throw new Error("Failed to refresh project");
+      const latest = (await res.json()) as Project;
+      setLocalProject(latest);
+    } catch {
+      toast.error("Failed to refresh project details");
+    }
+  }, [project.id]);
 
   // Budget data
   const { budgetData: fullBudgetData, grandTotals } = useBudgetData(String(project.id));
@@ -955,24 +877,6 @@ export function ProjectHomeClient({
     return { completedTasks, totalTasks, pctComplete, overdueTasks: overdueTasks.length };
   }, [schedule, tasks]);
 
-  // Completion countdown
-  const completionInfo = React.useMemo(() => {
-    if (!localProject["est completion"]) return null;
-    try {
-      const completion = new Date(localProject["est completion"]!);
-      const now = new Date();
-      const daysRemaining = Math.floor((completion.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      const monthsRemaining = Math.round(daysRemaining / 30);
-      return {
-        date: format(completion, "MMM yyyy"),
-        daysRemaining,
-        monthsRemaining,
-        label: daysRemaining > 60 ? `${monthsRemaining} mo` : daysRemaining > 0 ? `${daysRemaining}d` : "Overdue",
-        isPast: daysRemaining <= 0,
-      };
-    } catch { return null; }
-  }, [localProject]);
-
   // Signals
   const signals = React.useMemo(() => {
     const list: Array<{ id: string; severity: "critical" | "warning" | "info"; label: string; href?: string }> = [];
@@ -982,9 +886,8 @@ export function ProjectHomeClient({
     if (pendingChangeOrders.length > 0) { const val = pendingChangeOrders.reduce((s, co) => s + (co.amount || 0), 0); list.push({ id: "cos", severity: pendingChangeOrders.length > 5 ? "warning" : "info", label: `${pendingChangeOrders.length} change orders · ${formatCompactCurrency(val)}`, href: `/${project.id}/change-orders` }); }
     if (openChangeEvents.length > 0) list.push({ id: "ce", severity: "info", label: `${openChangeEvents.length} open change events`, href: `/${project.id}/change-events` });
     if (schedule.length > 0) { const overdue = schedule.filter((t) => t.end_date && new Date(t.end_date) < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done"); if (overdue.length > 0) list.push({ id: "schedule-overdue", severity: overdue.length > 5 ? "critical" : "warning", label: `${overdue.length} schedule tasks overdue`, href: `/${project.id}/schedule` }); }
-    if (project["est completion"]) { try { const d = Math.floor((new Date(project["est completion"]).getTime() - Date.now()) / (1000 * 60 * 60 * 24)); if (d > 0 && d < 60) list.push({ id: "completion", severity: d < 30 ? "critical" : "warning", label: `${d} days to completion` }); } catch {} }
     return list.slice(0, 5);
-  }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, project, schedule]);
+  }, [hasBudgetData, budgetUtilization, openRfis.length, pendingChangeOrders, openChangeEvents.length, schedule, project.id]);
 
   // Activity items
   const activityItems = React.useMemo(() => {
@@ -1017,6 +920,12 @@ export function ProjectHomeClient({
 
   return (
     <div className="min-h-screen bg-background">
+      <EditProjectDialog
+        project={toPortfolioProject(localProject)}
+        open={isEditProjectDialogOpen}
+        onOpenChange={setIsEditProjectDialogOpen}
+        onSuccess={refreshProject}
+      />
       <div className="px-8 sm:px-12 pb-24 space-y-6">
 
         {/* ── HERO: Project header ── */}
@@ -1049,51 +958,24 @@ export function ProjectHomeClient({
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-              {completionInfo && (
-                <div className={cn("hidden sm:flex items-center gap-1.5 text-sm", completionInfo.isPast ? "text-red-600" : "text-muted-foreground")}>
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>{completionInfo.date}</span>
-                  <span className="text-muted-foreground/30">·</span>
-                  <span className={cn("font-medium", completionInfo.isPast ? "text-red-600" : completionInfo.daysRemaining < 60 ? "text-amber-600" : "text-muted-foreground")}>
-                    {completionInfo.label}
-                  </span>
-                </div>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsEditProjectDialogOpen(true)}
+              >
+                Edit Project
+              </Button>
               <ProjectChecklistSidebar
                 projectId={String(project.id)}
                 projectName={project.name || project["job number"] || "Project"}
                 buttonVariant="ghost"
-                buttonSize="icon"
-                iconOnly
-                className="h-8 w-8 text-muted-foreground hover:text-foreground shadow-none"
+                buttonSize="sm"
+                buttonLabel="Project Setup"
+                className="h-8 px-2 text-muted-foreground hover:text-foreground shadow-none"
               />
             </div>
           </div>
-        </div>
-
-        {/* ── PROJECT DETAILS — inline fields below heading ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-0">
-          <div>
-            <FieldRow label="Name"><InlineTextCell value={localProject.name || ""} placeholder="Project name" onSave={(v) => saveProjectField({ name: v })} /></FieldRow>
-            <FieldRow label="Job Number"><InlineTextCell value={localProject["job number"] || ""} placeholder="e.g. PRJ-001" onSave={(v) => saveProjectField({ "job number": v })} /></FieldRow>
-            <FieldRow label="Client"><InlineCompanyCombobox value={localProject.client || ""} placeholder="Select client…" onSave={(v) => saveProjectField({ client: v })} /></FieldRow>
-            <FieldRow label="Stage"><InlineSelectCell value={localProject.current_phase || ""} options={DETAIL_STAGE_OPTS} placeholder="Select stage" onSave={(v) => saveProjectField({ current_phase: v })} /></FieldRow>
-            <FieldRow label="Phase"><InlineSelectCell value={localProject.phase || ""} options={DETAIL_PHASE_OPTS} placeholder="Select phase" onSave={(v) => saveProjectField({ phase: v })} /></FieldRow>
-            <FieldRow label="Start Date"><InlineTextCell value={localProject["start date"] || ""} type="date" onSave={(v) => saveProjectField({ "start date": v })} /></FieldRow>
-          </div>
-          <div>
-            <FieldRow label="Type"><InlineSelectCell value={localProject.type || ""} options={DETAIL_TYPE_OPTS} placeholder="Select type" onSave={(v) => saveProjectField({ type: v, category: v })} /></FieldRow>
-            <FieldRow label="Sector"><InlineSelectCell value={localProject.project_sector || ""} options={DETAIL_SECTOR_OPTS} placeholder="Select sector" onSave={(v) => saveProjectField({ project_sector: v })} /></FieldRow>
-            <FieldRow label="Work Scope"><InlineSelectCell value={localProject.work_scope || ""} options={DETAIL_SCOPE_OPTS} placeholder="Select scope" onSave={(v) => saveProjectField({ work_scope: v })} /></FieldRow>
-            <FieldRow label="Delivery"><InlineSelectCell value={localProject.delivery_method || ""} options={DETAIL_DELIVERY_OPTS} placeholder="Select method" onSave={(v) => saveProjectField({ delivery_method: v })} /></FieldRow>
-            <FieldRow label="Est. Completion"><InlineTextCell value={localProject["est completion"] || ""} type="date" onSave={(v) => saveProjectField({ "est completion": v })} /></FieldRow>
-            <FieldRow label="Address"><InlineTextCell value={localProject.address || ""} placeholder="Street address" onSave={(v) => saveProjectField({ address: v })} /></FieldRow>
-          </div>
-        </div>
-        <div>
-          <FieldRow label="Description">
-            <InlineTextareaCell value={localProject.summary || ""} placeholder="Add project description…" onSave={(v) => saveProjectField({ summary: v })} />
-          </FieldRow>
         </div>
 
         {/* ── SIGNALS — alert chips ── */}

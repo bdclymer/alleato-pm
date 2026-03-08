@@ -143,6 +143,7 @@ function BudgetPageContent() {
   const [showForecastToCompleteModal, setShowForecastToCompleteModal] =
     React.useState(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [snapshotsRefreshToken, setSnapshotsRefreshToken] = React.useState(0);
 
   // Budget lock state
   const [isLocked, setIsLocked] = React.useState(false);
@@ -252,6 +253,10 @@ function BudgetPageContent() {
     toast.info("ERP integration coming soon");
   };
 
+  const handleOpenChat = React.useCallback(() => {
+    router.push("/ai-assistant");
+  }, [router]);
+
   const handleLockBudget = async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}/budget/lock`, {
@@ -313,6 +318,39 @@ function BudgetPageContent() {
     }
     setShowImportModal(true);
   };
+
+  const handleCreateSnapshot = React.useCallback(async () => {
+    let toastId: string | number | undefined;
+    try {
+      toastId = toast.loading("Creating snapshot...");
+      const response = await fetch(`/api/projects/${projectId}/budget/snapshots`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `Snapshot ${new Date().toLocaleDateString()}`,
+          description: "Manual snapshot",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.error || "Failed to create snapshot");
+      }
+
+      setSnapshotsRefreshToken((prev) => prev + 1);
+      toast.success("Snapshot created successfully", { id: toastId });
+      if (activeTab !== "snapshots") {
+        router.push(`/${projectId}/budget?tab=snapshots`);
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create snapshot",
+        { id: toastId },
+      );
+    }
+  }, [activeTab, projectId, router]);
 
   const handleExport = async (format: string) => {
     let toastId: string | number | undefined;
@@ -860,6 +898,8 @@ function BudgetPageContent() {
           lockedAt={lockedAt}
           lockedBy={lockedBy}
           onCreateClick={handleCreateClick}
+          onCreateSnapshot={handleCreateSnapshot}
+          onOpenChat={handleOpenChat}
           onModificationClick={handleModificationClick}
           onResendToERP={handleResendToERP}
           onLockBudget={handleLockBudget}
@@ -913,7 +953,7 @@ function BudgetPageContent() {
           </div>
         ) : activeTab === "snapshots" ? (
           <div className="flex-1">
-            <SnapshotsTab projectId={projectId} />
+            <SnapshotsTab key={`${projectId}-${snapshotsRefreshToken}`} projectId={projectId} />
           </div>
         ) : activeTab === "change-history" ? (
           <div className="flex-1">
