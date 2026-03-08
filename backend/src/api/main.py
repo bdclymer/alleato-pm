@@ -825,6 +825,45 @@ def _get_query_embedding(message: str) -> Optional[List[float]]:
         return None
 
 
+def _is_financial_query(message: str) -> bool:
+    text = (message or "").lower()
+    financial_terms = (
+        "budget",
+        "estimate",
+        "invoice",
+        "cost",
+        "profit",
+        "loss",
+        "balance sheet",
+        "p&l",
+        "variance",
+        "revenue",
+        "expense",
+        "change order value",
+        "schedule of values",
+        "sov",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+    )
+    return any(term in text for term in financial_terms)
+
+
+def _row_data_preview(row_data: Dict[str, Any], max_items: int = 8) -> str:
+    parts: List[str] = []
+    columns = row_data.get("columns") if isinstance(row_data, dict) else None
+    if not isinstance(columns, dict):
+        return ""
+    for key, value in columns.items():
+        if value in (None, ""):
+            continue
+        parts.append(f"{key}={value}")
+        if len(parts) >= max_items:
+            break
+    return "; ".join(parts)
+
+
 def _build_chat_reply(
     message: str,
     store: SupabaseRagStore,
@@ -834,36 +873,68 @@ def _build_chat_reply(
     keyword = _select_keyword(message)
     retrieval_mode = "keyword"
     chunks: List[Dict[str, Any]] = []
+    financial_rows: List[Dict[str, Any]] = []
 
-    query_embedding = _get_query_embedding(message)
-    if query_embedding:
-        chunks = store.vector_search_documents(
-            query_embedding=query_embedding,
-            limit=limit,
+    if _is_financial_query(message):
+        financial_rows = store.search_financial_rows(
+            query=message,
             project_id=project_id,
+            limit=limit,
         )
-        if chunks:
-            retrieval_mode = "semantic"
+        if financial_rows:
+            retrieval_mode = "financial_structured"
 
-    if not chunks:
-        chunks = store.search_chunks_by_keyword(keyword, project_id=project_id, limit=limit)
-    if not chunks:
-        chunks = store.fetch_recent_chunks(project_id=project_id, limit=limit)
-        retrieval_mode = "recent"
+    if not financial_rows:
+        query_embedding = _get_query_embedding(message)
+        if query_embedding:
+            chunks = store.vector_search_documents(
+                query_embedding=query_embedding,
+                limit=limit,
+                project_id=project_id,
+            )
+            if chunks:
+                retrieval_mode = "semantic"
+
+        if not chunks:
+            chunks = store.search_chunks_by_keyword(keyword, project_id=project_id, limit=limit)
+        if not chunks:
+            chunks = store.fetch_recent_chunks(project_id=project_id, limit=limit)
+            retrieval_mode = "recent"
 
     tasks = store.list_tasks(project_id=project_id, status="open", limit=limit)
     insights = store.list_insights(project_id=project_id, limit=limit)
     project = store.get_project(project_id) if project_id is not None else None
 
-    sources = [
-        {
-            "document_id": chunk.get("document_id"),
-            "chunk_index": chunk.get("chunk_index") or (chunk.get("metadata") or {}).get("chunk_index"),
-            "snippet": (chunk.get("text") or "")[:280],
-            "metadata": chunk.get("metadata") or {},
-        }
-        for chunk in chunks
-    ]
+    sources: List[Dict[str, Any]] = []
+    if financial_rows:
+        for row in financial_rows:
+            doc = row.get("document") or {}
+            preview = _row_data_preview(row.get("row_data") or {})
+            sources.append(
+                {
+                    "document_id": row.get("dataset_id"),
+                    "chunk_index": None,
+                    "snippet": preview[:280],
+                    "metadata": {
+                        "retrieval_mode": "financial_structured",
+                        "title": doc.get("title"),
+                        "project_id": doc.get("project_id"),
+                        "category": doc.get("category"),
+                        "match_score": row.get("match_score"),
+                    },
+                    "row_data": row.get("row_data"),
+                }
+            )
+    else:
+        sources = [
+            {
+                "document_id": chunk.get("document_id"),
+                "chunk_index": chunk.get("chunk_index") or (chunk.get("metadata") or {}).get("chunk_index"),
+                "snippet": (chunk.get("text") or "")[:280],
+                "metadata": chunk.get("metadata") or {},
+            }
+            for chunk in chunks
+        ]
 
     reply_lines: List[str] = []
     if project:
@@ -879,7 +950,16 @@ def _build_chat_reply(
             "Recent insights: " + "; ".join(insight.get("summary", "")[:80] for insight in insights[:3])
         )
     if sources:
-        if retrieval_mode == "semantic":
+        if retrieval_mode == "financial_structured":
+            reply_lines.append(
+                f"Retrieved {len(sources)} structured financial rows from normalized tables."
+            )
+            reply_lines.append("Top matching financial evidence:")
+            for source in sources[:3]:
+                title = (source.get("metadata") or {}).get("title") or "Financial document"
+                snippet = (source.get("snippet") or "").strip()
+                reply_lines.append(f"- [{title}] {snippet[:180]}")
+        elif retrieval_mode == "semantic":
             reply_lines.append(f"Retrieved {len(sources)} transcript snippets via semantic vector search.")
         elif retrieval_mode == "keyword":
             reply_lines.append(

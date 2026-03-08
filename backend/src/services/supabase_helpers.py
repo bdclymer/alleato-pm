@@ -16,6 +16,8 @@ The official ``supabase`` Python package must be installed (add it to
 from __future__ import annotations
 
 import os
+import re
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
@@ -142,7 +144,7 @@ class SupabaseRagStore:
         """List tasks from the unified `tasks` table."""
         query = self._client.table("tasks").select("*").limit(limit)
         if project_id is not None:
-            query = query.contains("project_ids", [project_id])
+            query = query.filter("project_ids", "cs", f"{{{project_id}}}")
         if status:
             query = query.eq("status", status)
         query = query.order("due_date", desc=False)
@@ -206,8 +208,8 @@ class SupabaseRagStore:
 
         # Use project_ids array if available, fallback to metadata for backward compatibility
         if project_id is not None and project_id > 0:
-            # Use PostgreSQL array contains operator: project_ids @> ARRAY[project_id]
-            query = query.contains("project_ids", [project_id])
+            # Use PostgreSQL array contains operator via PostgREST filter syntax
+            query = query.filter("project_ids", "cs", f"{{{project_id}}}")
 
         if keyword:
             query = query.ilike("content", f"%{keyword}%")
@@ -230,8 +232,8 @@ class SupabaseRagStore:
         # Only filter by project_id if it's a positive integer (not 0 or None)
         # project_id=0 means "show all meetings" including those with null project_id
         if project_id is not None and project_id > 0:
-            # Use project_ids array contains operator for multi-project support
-            query = query.contains("project_ids", [project_id])
+            # Use project_ids array contains operator via PostgREST filter syntax
+            query = query.filter("project_ids", "cs", f"{{{project_id}}}")
         response = query.execute()
 
         # Group by file_id to get unique meetings
@@ -314,6 +316,85 @@ class SupabaseRagStore:
         except Exception:
             pass
         return []
+
+    def search_financial_rows(
+        self,
+        query: str,
+        project_id: Optional[int] = None,
+        limit: int = 10,
+        scan_limit: int = 400,
+    ) -> List[Dict[str, Any]]:
+        """Search normalized financial rows from document_rows.
+
+        This is a structured-first retrieval path intended for finance/tabular
+        questions before semantic chunk retrieval.
+        """
+        tokens = [t.lower() for t in re.findall(r"[A-Za-z0-9$%./-]+", query) if len(t) >= 2]
+        if not tokens:
+            return []
+
+        # 1) Get candidate financial datasets from document_metadata.
+        meta_query = (
+            self._client.table("document_metadata")
+            .select("id,title,project_id,category,file_name,captured_at")
+            .order("captured_at", desc=True)
+            .limit(100)
+        )
+        if project_id is not None:
+            meta_query = meta_query.eq("project_id", project_id)
+        meta_rows = meta_query.execute().data or []
+
+        dataset_meta: Dict[str, Dict[str, Any]] = {}
+        candidate_ids: List[str] = []
+        for row in meta_rows:
+            category = (row.get("category") or "").lower()
+            file_name = (row.get("file_name") or "").lower()
+            if (
+                "financial" in category
+                or file_name.endswith((".csv", ".tsv", ".xls", ".xlsx"))
+                or any(k in file_name for k in ("budget", "estimate", "invoice", "p&l", "balance"))
+            ):
+                doc_id = row.get("id")
+                if doc_id:
+                    candidate_ids.append(doc_id)
+                    dataset_meta[doc_id] = row
+
+        if not candidate_ids:
+            return []
+
+        # 2) Pull normalized rows for candidate datasets.
+        row_query = (
+            self._client.table("document_rows")
+            .select("id,dataset_id,row_data")
+            .in_("dataset_id", candidate_ids)
+            .order("id", desc=True)
+            .limit(scan_limit)
+        )
+        row_rows = row_query.execute().data or []
+
+        scored: List[Dict[str, Any]] = []
+        for row in row_rows:
+            dataset_id = row.get("dataset_id")
+            row_data = row.get("row_data") or {}
+            if not isinstance(row_data, dict):
+                continue
+
+            haystack = json.dumps(row_data, default=str).lower()
+            token_hits = sum(1 for t in tokens if t in haystack)
+            if token_hits == 0:
+                continue
+
+            scored.append(
+                {
+                    "dataset_id": dataset_id,
+                    "document": dataset_meta.get(dataset_id, {}),
+                    "row_data": row_data,
+                    "match_score": token_hits,
+                }
+            )
+
+        scored.sort(key=lambda r: r.get("match_score", 0), reverse=True)
+        return scored[:limit]
 
     # ingestion jobs ----------------------------------------------------
     def start_ingestion_job(self, fireflies_id: Optional[str], content_hash: str) -> Optional[str]:

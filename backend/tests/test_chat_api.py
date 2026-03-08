@@ -75,6 +75,70 @@ class TestChatAPI:
         assert data["sources"] == []
         assert data["tasks"] == []
         assert data["insights"] == []
+
+    @pytest.mark.unit
+    def test_chat_financial_query_prefers_structured_rows(self, client, mock_supabase_store):
+        """Financial query should use structured row retrieval first."""
+        mock_supabase_store.search_financial_rows.return_value = [
+            {
+                "dataset_id": "doc-fin-1",
+                "document": {
+                    "title": "Q3 Budget",
+                    "project_id": 43,
+                    "category": "financial_document",
+                },
+                "row_data": {
+                    "sheet": "Budget",
+                    "row_index": 12,
+                    "columns": {"Cost Code": "03-3000", "Amount": "125000", "Description": "Concrete"},
+                },
+                "match_score": 3,
+            }
+        ]
+        mock_supabase_store.list_tasks.return_value = []
+        mock_supabase_store.list_insights.return_value = []
+        mock_supabase_store.get_project.return_value = None
+
+        response = client.post(
+            "/api/chat",
+            json={"message": "What is the concrete amount in Q3 budget?", "project_id": 43, "limit": 5},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "structured financial rows" in data["reply"]
+        assert len(data["sources"]) == 1
+        assert data["sources"][0]["metadata"]["retrieval_mode"] == "financial_structured"
+        assert "Amount=125000" in data["sources"][0]["snippet"]
+        mock_supabase_store.search_financial_rows.assert_called_once()
+        mock_supabase_store.search_chunks_by_keyword.assert_not_called()
+
+    @pytest.mark.unit
+    def test_chat_financial_query_falls_back_when_no_rows(self, client, mock_supabase_store):
+        """Financial query should fallback to transcript retrieval when no row matches exist."""
+        mock_supabase_store.search_financial_rows.return_value = []
+        mock_supabase_store.search_chunks_by_keyword.return_value = [
+            {
+                "document_id": "doc-1",
+                "chunk_index": 1,
+                "text": "Budget discussion mentioned a $125000 concrete line item.",
+                "metadata": {"title": "Budget Meeting"},
+            }
+        ]
+        mock_supabase_store.list_tasks.return_value = []
+        mock_supabase_store.list_insights.return_value = []
+        mock_supabase_store.get_project.return_value = None
+
+        response = client.post(
+            "/api/chat",
+            json={"message": "Show budget amount for concrete", "project_id": 43, "limit": 5},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "transcript snippets" in data["reply"]
+        mock_supabase_store.search_financial_rows.assert_called_once()
+        mock_supabase_store.search_chunks_by_keyword.assert_called_once()
     
     @pytest.mark.unit
     @pytest.mark.asyncio

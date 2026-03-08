@@ -39,7 +39,9 @@
     "cache:export": "npx tsx scripts/cache-monitor.ts export",
     "cache:reset": "npx tsx scripts/cache-monitor.ts reset",
     "rag:ingest:local": "python3 scripts/ingestion/ingest_local_documents.py",
-    "rag:ingest:local:watch": "python3 scripts/ingestion/ingest_local_documents.py --watch"
+    "rag:ingest:local:watch": "python3 scripts/ingestion/ingest_local_documents.py --watch",
+    "rag:verify:financial": "python3 scripts/verify/verify_financial_numeric_retrieval.py",
+    "rag:verify:financial:fallback": "python3 scripts/verify/verify_financial_fallback_retrieval.py"
   },
   "devDependencies": {
     "@playwright/mcp": "^0.0.63",

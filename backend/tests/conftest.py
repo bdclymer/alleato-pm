@@ -121,6 +121,10 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
     mock_memory_store_mod = MagicMock()
     mock_supabase_helpers_mod = MagicMock()
     mock_fireflies_mod = MagicMock()
+    class _FakeFirefliesIngestionPipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+    mock_fireflies_mod.FirefliesIngestionPipeline = _FakeFirefliesIngestionPipeline
 
     with patch.dict(sys.modules, {
         "src.services.env_loader": MagicMock(),
@@ -165,6 +169,7 @@ def mock_supabase_store():
     store.get_project.return_value = None
     store.list_tasks.return_value = []
     store.list_insights.return_value = []
+    store.search_financial_rows.return_value = []
     store.search_chunks_by_keyword.return_value = []
     store.fetch_recent_chunks.return_value = []
 

@@ -119,6 +119,18 @@ Watch mode (polling):
 npm run rag:ingest:local:watch -- --source-dir ~/Documents/AlleatoKnowledge --interval-seconds 3600
 ```
 
+Financial retrieval end-to-end verification:
+
+```bash
+npm run rag:verify:financial -- --project-id 43 --backend-url http://127.0.0.1:8000
+```
+
+Financial fallback end-to-end verification (structured miss -> fallback retrieval):
+
+```bash
+npm run rag:verify:financial:fallback -- --project-id 43 --backend-url http://127.0.0.1:8000
+```
+
 ## Cron (Recommended)
 
 Run twice daily at 7:00 and 19:00 local time:
