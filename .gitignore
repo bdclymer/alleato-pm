@@ -64,9 +64,6 @@ user-data/
 
 # Documentation
 # Ignore docs but keep development documentation and screenshots
-/docs/*
-!/docs/development/
-!/docs/screenshots/
 openai-cs-agents-demo/
 
 # Playwright

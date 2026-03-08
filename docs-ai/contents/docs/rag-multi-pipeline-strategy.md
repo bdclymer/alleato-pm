@@ -84,6 +84,15 @@ Capabilities:
 - Optional immediate processing through existing Python pipeline (`--process-now`)
 - Optional watch mode via polling
 
+Financial pipeline stage 1 parser was also added:
+- `backend/src/services/pipeline/financial_parser.py`
+
+Behavior:
+- Parses CSV/TSV/XLS/XLSX into normalized row JSON
+- Stores rows in `document_rows` (`dataset_id = document_metadata.id`)
+- Creates segment summaries in `meeting_segments` for existing embedding flow
+- Routes automatically from orchestrator when category/extension is financial
+
 ## Commands
 
 Manual run:

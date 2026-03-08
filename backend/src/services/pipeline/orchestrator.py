@@ -14,6 +14,7 @@ from typing import Any, Dict
 
 from .parser import run_parser
 from .document_parser import run_document_parser
+from .financial_parser import run_financial_parser
 from .embedder import run_embedder
 from .extractor import run_extractor
 from .digest import run_digest
@@ -23,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 # Categories that should use the meeting parser (Fireflies transcripts)
 _MEETING_CATEGORIES = {"meeting", "transcript", "meeting_transcript"}
+_FINANCIAL_CATEGORIES = {"financial", "financial_document", "budget", "estimate"}
+_FINANCIAL_EXTENSIONS = (".csv", ".tsv", ".xls", ".xlsx")
 
 
 def _is_generic_document(client, metadata_id: str) -> bool:
@@ -68,6 +71,28 @@ def _is_generic_document(client, metadata_id: str) -> bool:
     return False
 
 
+def _is_financial_document(client, metadata_id: str) -> bool:
+    """Detect whether a row should use financial_parser Stage 1."""
+    try:
+        resp = (
+            client.table("document_metadata")
+            .select("category, file_name, file_path")
+            .eq("id", metadata_id)
+            .single()
+            .execute()
+        )
+        row = resp.data or {}
+    except Exception:
+        return False
+
+    category = (row.get("category") or "").lower().strip()
+    file_name = (row.get("file_name") or row.get("file_path") or "").lower()
+
+    if category in _FINANCIAL_CATEGORIES:
+        return True
+    return file_name.endswith(_FINANCIAL_EXTENSIONS)
+
+
 def _is_transient_db_timeout(exc: Exception) -> bool:
     msg = str(exc).lower()
     return (
@@ -99,12 +124,16 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
     results: Dict[str, Any] = {"metadataId": metadata_id}
 
     # Detect document type to select the right Stage 1 parser
+    is_financial = _is_financial_document(client, metadata_id)
     is_document = _is_generic_document(client, metadata_id)
 
     max_retries = int(os.getenv("PIPELINE_TRANSIENT_RETRIES", "2"))
     for attempt in range(max_retries + 1):
         try:
-            if is_document:
+            if is_financial:
+                logger.info("[Pipeline] Stage 1/4: Financial Parser → %s", metadata_id)
+                results["parser"] = run_financial_parser(metadata_id)
+            elif is_document:
                 logger.info("[Pipeline] Stage 1/4: Document Parser → %s", metadata_id)
                 results["parser"] = run_document_parser(metadata_id)
             else:
