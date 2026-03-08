@@ -122,6 +122,7 @@ export function ChangeOrderDetail({
 
   const form = useForm({
     resolver: zodResolver(changeOrderSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       co_number: changeOrder.co_number || "",
       title: changeOrder.title || "",

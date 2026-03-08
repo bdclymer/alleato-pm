@@ -68,6 +68,7 @@ export function PunchItemFormDialog({
 }: PunchItemFormDialogProps) {
   const form = useForm<PunchItemFormValues>({
     resolver: zodResolver(punchItemFormSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       title: defaultValues?.title ?? "",
       description: defaultValues?.description ?? "",
@@ -160,7 +161,7 @@ export function PunchItemFormDialog({
                     <FormLabel>Status</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -189,7 +190,7 @@ export function PunchItemFormDialog({
                     <FormLabel>Priority</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>

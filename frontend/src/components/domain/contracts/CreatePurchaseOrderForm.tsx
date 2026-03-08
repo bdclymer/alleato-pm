@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,10 +101,11 @@ export function CreatePurchaseOrderForm({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     setValue,
+    control,
   } = useForm<CreatePurchaseOrderInput>({
     resolver: zodResolver(CreatePurchaseOrderSchema) as any,
+    reValidateMode: "onBlur",
     defaultValues: {
       contractNumber: initialData?.contractNumber || "PO-001",
       status: initialData?.status || "Draft",
@@ -127,8 +128,13 @@ export function CreatePurchaseOrderForm({
     },
   });
 
-  const contractCompanyId = watch("contractCompanyId");
-  const privacyIsPrivate = watch("privacy.isPrivate") ?? true;
+  const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
+  const privacyIsPrivate = useWatch({ control, name: "privacy.isPrivate" }) ?? true;
+  const statusValue = useWatch({ control, name: "status" });
+  const executedValue = useWatch({ control, name: "executed" });
+  const assignedToValue = useWatch({ control, name: "assignedTo" });
+  const descriptionValue = useWatch({ control, name: "description" });
+  const allowNonAdminViewSov = useWatch({ control, name: "privacy.allowNonAdminViewSovItems" });
 
   React.useEffect(() => {
     let isMounted = true;
@@ -313,7 +319,7 @@ export function CreatePurchaseOrderForm({
                 Contract Company <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={watch("contractCompanyId") || ""}
+                value={contractCompanyId || ""}
                 onValueChange={(value) => setValue("contractCompanyId", value)}
                 disabled={isSubmitting || isLoadingCompanies}
               >
@@ -370,7 +376,7 @@ export function CreatePurchaseOrderForm({
                 Status <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={watch("status")}
+                value={statusValue}
                 onValueChange={(value) => setValue("status", value as "Draft")}
                 disabled={isSubmitting}
               >
@@ -399,7 +405,7 @@ export function CreatePurchaseOrderForm({
               <div className="flex items-center space-x-2 pt-8">
                 <Checkbox
                   id="executed"
-                  checked={watch("executed")}
+                  checked={executedValue}
                   onCheckedChange={(checked) =>
                     setValue("executed", checked as boolean)
                   }
@@ -431,7 +437,7 @@ export function CreatePurchaseOrderForm({
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assigned To</Label>
             <Select
-              value={watch("assignedTo") || ""}
+              value={assignedToValue || ""}
               onValueChange={(value) => setValue("assignedTo", value)}
               disabled={isSubmitting}
             >
@@ -494,7 +500,7 @@ export function CreatePurchaseOrderForm({
 
           <RichTextField
             label="Description"
-            value={watch("description")}
+            value={descriptionValue}
             onChange={(val) =>
               setValue("description", val, { shouldDirty: true })
             }
@@ -979,7 +985,7 @@ export function CreatePurchaseOrderForm({
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="privacy.allowNonAdminViewSovItems"
-                checked={watch("privacy.allowNonAdminViewSovItems")}
+                checked={allowNonAdminViewSov}
                 onCheckedChange={(checked) =>
                   setValue(
                     "privacy.allowNonAdminViewSovItems",

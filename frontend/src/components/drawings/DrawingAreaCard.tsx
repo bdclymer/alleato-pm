@@ -51,6 +51,7 @@ export function DrawingAreaCard({
 
   const form = useForm<DrawingAreaFormData>({
     resolver: zodResolver(drawingAreaSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       name: area?.name || "",
       description: area?.description || "",

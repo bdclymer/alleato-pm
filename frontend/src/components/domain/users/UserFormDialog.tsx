@@ -128,6 +128,7 @@ export function UserFormDialog({
 
   const form = useForm({
     resolver: zodResolver(userFormSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       first_name: user?.first_name || "",
       last_name: user?.last_name || "",

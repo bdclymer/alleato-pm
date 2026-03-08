@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,11 +188,11 @@ export function CreateSubcontractForm({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     setValue,
     control,
   } = useForm<CreateSubcontractInput>({
     resolver: zodResolver(CreateSubcontractSchema) as never,
+    reValidateMode: "onBlur",
     defaultValues: {
       contractNumber: initialData?.contractNumber || "SC-002",
       status: initialData?.status || "Draft",
@@ -223,9 +223,11 @@ export function CreateSubcontractForm({
     },
   });
 
-  const contractCompanyId = watch("contractCompanyId");
-  const privacyIsPrivate = watch("privacy.isPrivate") ?? true;
-  const accountingMethod = watch("accountingMethod");
+  const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
+  const privacyIsPrivate = useWatch({ control, name: "privacy.isPrivate" }) ?? true;
+  const accountingMethod = useWatch({ control, name: "accountingMethod" });
+  const statusValue = useWatch({ control, name: "status" });
+  const executedValue = useWatch({ control, name: "executed" });
   const selectedContractCompany = React.useMemo(
     () => companyOptions.find((option) => option.value === contractCompanyId),
     [companyOptions, contractCompanyId],
@@ -756,7 +758,7 @@ export function CreateSubcontractForm({
                 Status <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={watch("status")}
+                value={statusValue}
                 onValueChange={(value) =>
                   setValue(
                     "status",
@@ -817,7 +819,7 @@ export function CreateSubcontractForm({
               <div className="flex items-center space-x-2 h-9">
                 <Checkbox
                   id="executed"
-                  checked={watch("executed")}
+                  checked={executedValue}
                   onCheckedChange={(checked) =>
                     setValue("executed", checked as boolean)
                   }

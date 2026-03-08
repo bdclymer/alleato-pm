@@ -59,6 +59,7 @@ export function SpecificationEditModal({
 
   const form = useForm<EditSpecificationFormData>({
     resolver: zodResolver(editSpecificationSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       section_number: specification?.section_number || "",
       title: specification?.title || "",

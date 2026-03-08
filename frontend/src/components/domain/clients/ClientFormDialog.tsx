@@ -68,6 +68,7 @@ export function ClientFormDialog({
 
   const form = useForm<ClientFormData>({
     resolver: zodResolver(clientSchema) as Resolver<ClientFormData>,
+    reValidateMode: "onBlur",
     defaultValues: {
       name: client?.name || "",
       company_id: client?.company_id || null,

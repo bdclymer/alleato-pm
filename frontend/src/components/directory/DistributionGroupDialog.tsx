@@ -75,6 +75,7 @@ export function DistributionGroupDialog({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema) as any,
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       description: "",

@@ -147,6 +147,7 @@ export function CompanyFormDialog({
 
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       name: company?.name || "",
       title: company?.title || "",

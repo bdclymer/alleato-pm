@@ -54,6 +54,7 @@ export function AddRevisionDialog({
 
   const form = useForm<AddRevisionFormData>({
     resolver: zodResolver(addRevisionSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       notes: "",
       notify_subscribers: true,

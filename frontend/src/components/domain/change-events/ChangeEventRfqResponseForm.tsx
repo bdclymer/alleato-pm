@@ -54,6 +54,7 @@ export function ChangeEventRfqResponseForm({
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const form = useForm<ChangeEventRfqResponseFormValues>({
+    reValidateMode: "onBlur",
     defaultValues: {
       lineItemId: "",
       unitPrice: 0,

@@ -55,6 +55,7 @@ export function SpecificationUploadDialog({
 
   const form = useForm<UploadSpecificationFormData>({
     resolver: zodResolver(uploadSpecificationSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       section_number: "",
       title: "",

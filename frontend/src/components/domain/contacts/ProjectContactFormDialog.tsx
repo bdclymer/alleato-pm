@@ -62,6 +62,7 @@ export function ProjectContactFormDialog({
 
   const form = useForm<ProjectContactFormData>({
     resolver: zodResolver(projectContactSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       first_name: "",
       last_name: "",

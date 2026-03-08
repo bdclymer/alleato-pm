@@ -110,6 +110,7 @@ export default function StandardFormPage() {
   // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       type: "",

@@ -223,11 +223,18 @@ export function DirectCostForm({
     }
   }, [initialData])
 
-  // Form setup
-  const form = useForm<any>({
-    resolver: zodResolver(
+  // Cache resolver to prevent re-creation on every render
+  const resolver = useMemo(
+    () => zodResolver(
       (mode === 'create' ? DirectCostCreateSchema : DirectCostUpdateSchema) as any
     ),
+    [mode]
+  )
+
+  // Form setup
+  const form = useForm<any>({
+    resolver,
+    reValidateMode: 'onBlur',
     defaultValues: (sanitizedInitialData || {
       cost_type: 'Expense',
       status: 'Draft',
@@ -242,7 +249,6 @@ export function DirectCostForm({
         },
       ],
     }) as any,
-    mode: 'onBlur',
   })
 
   // Field array for line items

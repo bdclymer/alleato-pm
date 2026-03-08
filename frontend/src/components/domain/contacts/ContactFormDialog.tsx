@@ -134,6 +134,7 @@ export function ContactFormDialog({
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       first_name: contact?.first_name || "",
       last_name: contact?.last_name || "",

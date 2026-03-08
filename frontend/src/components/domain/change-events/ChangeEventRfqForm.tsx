@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +59,7 @@ export function ChangeEventRfqForm({
 }: ChangeEventRfqFormProps) {
   const defaultChangeEventId = changeEvents[0]?.id?.toString() ?? "";
   const form = useForm<ChangeEventRfqFormValues>({
+    reValidateMode: "onBlur",
     defaultValues: {
       changeEventId: defaultChangeEventId,
       title: formatDefaultTitle(changeEvents[0]),
@@ -68,7 +69,7 @@ export function ChangeEventRfqForm({
     },
   });
 
-  const selectedChangeEventId = form.watch("changeEventId");
+  const selectedChangeEventId = useWatch({ control: form.control, name: "changeEventId" });
 
   useEffect(() => {
     const selected = changeEvents.find(

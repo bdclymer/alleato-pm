@@ -80,6 +80,7 @@ export function DrawingUploadDialog({
 
   const form = useForm<UploadDrawingFormData>({
     resolver: zodResolver(uploadDrawingFormSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       drawing_number: "",
       title: "",

@@ -68,6 +68,7 @@ export function CompanyEditDialog({
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       display_name: "",

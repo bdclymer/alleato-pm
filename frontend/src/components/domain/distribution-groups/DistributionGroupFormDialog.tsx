@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -73,6 +73,7 @@ export function DistributionGroupFormDialog({
 
   const form = useForm<DistributionGroupFormData>({
     resolver: zodResolver(distributionGroupSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "",
       description: "",
@@ -127,7 +128,7 @@ export function DistributionGroupFormDialog({
     });
   }, [users, searchQuery]);
 
-  const selectedMemberIds = form.watch("member_ids") || [];
+  const selectedMemberIds = useWatch({ control: form.control, name: "member_ids" }) || [];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
