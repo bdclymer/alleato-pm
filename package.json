@@ -37,7 +37,9 @@
     "cache:stats": "npx tsx scripts/cache-monitor.ts summary",
     "cache:recent": "npx tsx scripts/cache-monitor.ts recent",
     "cache:export": "npx tsx scripts/cache-monitor.ts export",
-    "cache:reset": "npx tsx scripts/cache-monitor.ts reset"
+    "cache:reset": "npx tsx scripts/cache-monitor.ts reset",
+    "rag:ingest:local": "python3 scripts/ingestion/ingest_local_documents.py",
+    "rag:ingest:local:watch": "python3 scripts/ingestion/ingest_local_documents.py --watch"
   },
   "devDependencies": {
     "@playwright/mcp": "^0.0.63",
