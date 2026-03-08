@@ -1,0 +1,963 @@
+openapi: 3.0.3
+info:
+  title: Directory Tool API - Phase 1B
+  description: |
+    API endpoints for the Directory Tool Phase 1B implementation.
+    Includes Company Management, User Permissions, Notification Preferences, and Distribution Groups.
+  version: 1.0.0
+  contact:
+    name: Alleato Development Team
+
+servers:
+  - url: /api
+    description: Local API server
+
+tags:
+  - name: Companies
+    description: Company management operations
+  - name: Company Users
+    description: Managing users within a company
+  - name: User Permissions
+    description: User permission management
+  - name: Email Notifications
+    description: Email notification preferences
+  - name: Schedule Notifications
+    description: Schedule notification preferences
+  - name: Distribution Groups
+    description: Distribution group management
+
+paths:
+  /projects/{projectId}/directory/companies:
+    get:
+      summary: List companies in project
+      description: |
+        Retrieve a paginated list of companies for a project with filtering and sorting options.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 25
+            maximum: 150
+          description: Items per page (max 150)
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: name
+          description: Sort field and direction (e.g., "name" or "name:desc")
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, all]
+            default: ACTIVE
+          description: Filter by company status
+        - name: company_type
+          in: query
+          schema:
+            type: string
+            enum: [YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER, CONNECTED_COMPANY]
+          description: Filter by company type
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by company name, email, or phone
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Create a new company
+      description: Create a new company in the project directory.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreateRequest'
+      responses:
+        '201':
+          description: Company created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectCompany'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/companies/{companyId}:
+    get:
+      summary: Get company details
+      description: Retrieve detailed information for a specific company.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/CompanyId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectCompany'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update company
+      description: |
+        Update company information. Supports partial updates.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/CompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdateRequest'
+      responses:
+        '200':
+          description: Company updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectCompany'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      summary: Delete company
+      description: |
+        Delete a company from the project. Companies with assigned users cannot be deleted.
+      tags:
+        - Companies
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/CompanyId'
+      responses:
+        '204':
+          description: Company deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/people/{personId}/permissions:
+    get:
+      summary: Get user permissions
+      description: |
+        Retrieve the permission settings for a user, including template permissions
+        and any custom overrides.
+      tags:
+        - User Permissions
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update user permissions
+      description: |
+        Update permission overrides for a user. The 15 core permission modules are:
+        Home, Emails, Prime Contracts, Budget, Commitments, Change Orders, Change Events,
+        Direct Costs, RFIs, Submittals, Punch List, Schedule, Photos, Documents, Directory.
+
+        Permission levels: none, read_only, standard, admin.
+      tags:
+        - User Permissions
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPermissionsUpdateRequest'
+      responses:
+        '200':
+          description: Permissions updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissionsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/people/{personId}/email-notifications:
+    get:
+      summary: Get email notification preferences
+      description: Retrieve email notification preferences for a user.
+      tags:
+        - Email Notifications
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailNotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update email notification preferences
+      description: |
+        Update email notification preferences for a user. Users can update their own
+        preferences, or admins can update anyone's.
+      tags:
+        - Email Notifications
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailNotificationUpdateRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailNotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/people/{personId}/schedule-notifications:
+    get:
+      summary: Get schedule notification preferences
+      description: Retrieve schedule notification preferences for a user.
+      tags:
+        - Schedule Notifications
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleNotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update schedule notification preferences
+      description: |
+        Update schedule notification preferences for a user. Users can update their own
+        preferences, or admins can update anyone's.
+      tags:
+        - Schedule Notifications
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/PersonId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleNotificationUpdateRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleNotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/groups:
+    get:
+      summary: List distribution groups
+      description: Retrieve all distribution groups for a project.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - name: include_members
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include group members in response
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, all]
+            default: active
+          description: Filter by group status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DistributionGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      summary: Create distribution group
+      description: Create a new distribution group in the project.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreateRequest'
+      responses:
+        '201':
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/groups/{groupId}:
+    get:
+      summary: Get distribution group
+      description: Retrieve a specific distribution group with its members.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/GroupId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      summary: Update distribution group
+      description: Update distribution group name, description, or status.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/GroupId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdateRequest'
+      responses:
+        '200':
+          description: Group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      summary: Delete distribution group
+      description: Delete a distribution group. Members are automatically removed.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/GroupId'
+      responses:
+        '200':
+          description: Group deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /projects/{projectId}/directory/groups/{groupId}/members:
+    patch:
+      summary: Update group members
+      description: Add or remove members from a distribution group.
+      tags:
+        - Distribution Groups
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - $ref: '#/components/parameters/GroupId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupMembersUpdateRequest'
+      responses:
+        '200':
+          description: Members updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The project identifier
+
+    CompanyId:
+      name: companyId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The company identifier
+
+    PersonId:
+      name: personId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The person/user identifier
+
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The distribution group identifier
+
+  schemas:
+    ProjectCompany:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: integer
+        company_id:
+          type: string
+        business_phone:
+          type: string
+          nullable: true
+        email_address:
+          type: string
+          nullable: true
+        primary_contact_id:
+          type: string
+          nullable: true
+        erp_vendor_id:
+          type: string
+          nullable: true
+        company_type:
+          type: string
+          enum: [YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER, CONNECTED_COMPANY]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        logo_url:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        company:
+          $ref: '#/components/schemas/Company'
+        primary_contact:
+          $ref: '#/components/schemas/Person'
+        user_count:
+          type: integer
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+
+    Person:
+      type: object
+      properties:
+        id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+
+    CompanyListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectCompany'
+        pagination:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+            total_pages:
+              type: integer
+
+    CompanyCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Company name (required)
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        business_phone:
+          type: string
+        email_address:
+          type: string
+        erp_vendor_id:
+          type: string
+          description: Unique ERP system identifier
+        company_type:
+          type: string
+          enum: [YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER]
+
+    CompanyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip:
+          type: string
+        business_phone:
+          type: string
+        email_address:
+          type: string
+        primary_contact_id:
+          type: string
+        erp_vendor_id:
+          type: string
+        company_type:
+          type: string
+          enum: [YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        logo_url:
+          type: string
+
+    UserPermissionsResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        template_id:
+          type: string
+        template_name:
+          type: string
+        permissions:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [none, read_only, standard, admin]
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionOverride'
+
+    PermissionOverride:
+      type: object
+      properties:
+        tool_name:
+          type: string
+        permission_type:
+          type: string
+          enum: [none, read_only, standard, admin]
+        is_granted:
+          type: boolean
+
+    UserPermissionsUpdateRequest:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionOverride'
+
+    EmailNotificationResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        preferences:
+          $ref: '#/components/schemas/EmailNotificationPreferences'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    EmailNotificationPreferences:
+      type: object
+      properties:
+        emails_default:
+          type: boolean
+        rfis_default:
+          type: boolean
+        submittals_default:
+          type: boolean
+        punchlist_items_default:
+          type: boolean
+        weather_delay_email:
+          type: boolean
+        weather_delay_phone:
+          type: boolean
+        daily_log_default:
+          type: boolean
+        delay_log_default:
+          type: boolean
+
+    EmailNotificationUpdateRequest:
+      type: object
+      properties:
+        preferences:
+          $ref: '#/components/schemas/EmailNotificationPreferences'
+
+    ScheduleNotificationResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        preferences:
+          $ref: '#/components/schemas/ScheduleNotificationPreferences'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    ScheduleNotificationPreferences:
+      type: object
+      properties:
+        all_project_tasks_weekly:
+          type: boolean
+        resource_tasks_assigned_to_id:
+          type: string
+          nullable: true
+        upon_schedule_changes:
+          type: boolean
+        upon_schedule_change_requests:
+          type: boolean
+        project_schedule_lookahead_weekly:
+          type: boolean
+
+    ScheduleNotificationUpdateRequest:
+      type: object
+      properties:
+        preferences:
+          $ref: '#/components/schemas/ScheduleNotificationPreferences'
+
+    DistributionGroup:
+      type: object
+      properties:
+        id:
+          type: string
+        project_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+        member_count:
+          type: integer
+
+    GroupCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Group name (required)
+        description:
+          type: string
+        member_ids:
+          type: array
+          items:
+            type: string
+          description: Initial member person IDs
+
+    GroupUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+
+    GroupMembersUpdateRequest:
+      type: object
+      properties:
+        add:
+          type: array
+          items:
+            type: string
+          description: Person IDs to add to the group
+        remove:
+          type: array
+          items:
+            type: string
+          description: Person IDs to remove from the group
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Unauthorized
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

@@ -1,0 +1,1241 @@
+openapi: 3.0.3
+info:
+  title: Alleato PM API
+  description: |
+    Comprehensive REST API for the Alleato Project Management platform - a construction project management solution built with Next.js 15 and Supabase.
+
+    ## Overview
+
+    The Alleato PM API provides endpoints for managing construction projects, including:
+    - Project management and settings
+    - Directory and user management
+    - Budget tracking and forecasting
+    - Change events and orders
+    - Commitments and contracts
+    - Direct costs and invoicing
+    - Scheduling and task management
+    - Document management and attachments
+
+    ## Authentication
+
+    All API endpoints require authentication via Supabase Auth. Include the bearer token in the Authorization header:
+
+    ```
+    Authorization: Bearer <supabase_access_token>
+    ```
+
+    ## Base URL
+
+    The API is available at: `https://your-domain.com/api`
+
+    ## Rate Limiting
+
+    API requests are rate-limited to ensure system stability. Standard limits are:
+    - 1000 requests per hour for authenticated users
+    - 100 requests per hour for unauthenticated requests
+
+    ## Error Handling
+
+    All errors return a consistent JSON structure:
+
+    ```json
+    {
+      "error": "Human-readable error message",
+      "code": "ERROR_CODE",
+      "details": "Additional error context (optional)"
+    }
+    ```
+
+  version: 1.0.0
+  contact:
+    name: Alleato PM API Support
+    email: support@alleato.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://alleato-pm.vercel.app/api
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+
+paths:
+  # Health & System Endpoints
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Returns the API health status and system information
+      operationId: getHealth
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  uptime:
+                    type: number
+                    description: Uptime in seconds
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Projects Endpoints
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: List projects
+      description: |
+        Retrieve a paginated list of projects accessible to the authenticated user.
+        Results are filtered based on user permissions and membership.
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: search
+          in: query
+          description: Search term for project name or job number
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Filter by project state
+          schema:
+            type: string
+            enum: [active, planning, on_hold, completed, cancelled]
+        - name: excludeState
+          in: query
+          description: Exclude projects with this state
+          schema:
+            type: string
+            enum: [active, planning, on_hold, completed, cancelled]
+        - name: archived
+          in: query
+          description: Filter by archived status
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Project'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Projects
+      summary: Create a new project
+      description: Create a new construction project
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /projects/{projectId}:
+    get:
+      tags:
+        - Projects
+      summary: Get project details
+      description: Retrieve detailed information about a specific project
+      operationId: getProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Unique identifier for the project
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Projects
+      summary: Update project
+      description: Update project information and settings
+      operationId: updateProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Unique identifier for the project
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Directory Management
+  /projects/{projectId}/directory/people:
+    get:
+      tags:
+        - Directory
+      summary: List project directory people
+      description: |
+        Retrieve a list of people in the project directory with filtering and search capabilities.
+        Results can be filtered by type (user/contact), status, company, and more.
+      operationId: listDirectoryPeople
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Unique identifier for the project
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search term for names or email addresses
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by person type
+          schema:
+            type: string
+            enum: [user, contact, all]
+            default: all
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [active, inactive, all]
+            default: all
+        - name: company_id
+          in: query
+          description: Filter by company ID
+          schema:
+            type: string
+        - name: permission_template_id
+          in: query
+          description: Filter by permission template ID
+          schema:
+            type: string
+        - name: group_by
+          in: query
+          description: Group results by company or none
+          schema:
+            type: string
+            enum: [company, none]
+            default: none
+        - name: sort
+          in: query
+          description: Comma-separated sort fields
+          schema:
+            type: string
+            example: "last_name,first_name"
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of results per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Directory people retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DirectoryPerson'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Directory
+      summary: Create a person in project directory
+      description: Add a new person to the project directory
+      operationId: createDirectoryPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: Unique identifier for the project
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDirectoryPersonRequest'
+      responses:
+        '201':
+          description: Person created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectoryPerson'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /projects/{projectId}/directory/people/{personId}:
+    get:
+      tags:
+        - Directory
+      summary: Get directory person details
+      description: Retrieve detailed information about a person in the project directory
+      operationId: getDirectoryPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Person details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectoryPerson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Directory
+      summary: Update directory person
+      description: Update information for a person in the project directory
+      operationId: updateDirectoryPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDirectoryPersonRequest'
+      responses:
+        '200':
+          description: Person updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectoryPerson'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Directory
+      summary: Remove person from directory
+      description: Remove a person from the project directory
+      operationId: deleteDirectoryPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Person removed successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Budget Management
+  /projects/{projectId}/budget/lines:
+    get:
+      tags:
+        - Budget
+      summary: List budget lines
+      description: Retrieve budget lines for the specified project with filtering and pagination
+      operationId: listBudgetLines
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: view_id
+          in: query
+          description: Budget view ID to filter lines
+          schema:
+            type: string
+        - name: cost_code
+          in: query
+          description: Filter by cost code
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Budget lines retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BudgetLine'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Budget
+      summary: Create budget line
+      description: Create a new budget line item
+      operationId: createBudgetLine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBudgetLineRequest'
+      responses:
+        '201':
+          description: Budget line created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetLine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /projects/{projectId}/budget/views:
+    get:
+      tags:
+        - Budget
+      summary: List budget views
+      description: Retrieve available budget views for the project
+      operationId: listBudgetViews
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Budget views retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BudgetView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Budget
+      summary: Create budget view
+      description: Create a new budget view with custom column configuration
+      operationId: createBudgetView
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBudgetViewRequest'
+      responses:
+        '201':
+          description: Budget view created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetView'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase access token for authentication
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Error code for programmatic handling
+        details:
+          type: string
+          description: Additional error context
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number (1-indexed)
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items available
+        totalPages:
+          type: integer
+          description: Total number of pages available
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique project identifier
+        name:
+          type: string
+          description: Project name
+        job_number:
+          type: string
+          description: Project job number
+        description:
+          type: string
+          nullable: true
+          description: Project description
+        address:
+          type: string
+          nullable: true
+          description: Project address
+        state:
+          type: string
+          enum: [active, planning, on_hold, completed, cancelled]
+          description: Current project state
+        budget:
+          type: number
+          nullable: true
+          description: Total project budget
+        budget_locked:
+          type: boolean
+          nullable: true
+          description: Whether budget is locked from changes
+        start_date:
+          type: string
+          format: date
+          nullable: true
+          description: Project start date
+        estimated_completion_date:
+          type: string
+          format: date
+          nullable: true
+          description: Estimated completion date
+        actual_completion_date:
+          type: string
+          format: date
+          nullable: true
+          description: Actual completion date
+        archived:
+          type: boolean
+          description: Whether project is archived
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When project was archived
+        created_at:
+          type: string
+          format: date-time
+          description: When project was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When project was last updated
+        aliases:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Project aliases or alternative names
+        team_members:
+          type: array
+          items:
+            type: object
+          nullable: true
+          description: Project team member information
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+        - job_number
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Project name
+        job_number:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique project job number
+        description:
+          type: string
+          maxLength: 1000
+          description: Project description
+        address:
+          type: string
+          maxLength: 500
+          description: Project address
+        state:
+          type: string
+          enum: [planning, active]
+          default: planning
+          description: Initial project state
+        budget:
+          type: number
+          minimum: 0
+          description: Total project budget
+        start_date:
+          type: string
+          format: date
+          description: Project start date
+        estimated_completion_date:
+          type: string
+          format: date
+          description: Estimated completion date
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Project name
+        job_number:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Project job number
+        description:
+          type: string
+          maxLength: 1000
+          description: Project description
+        address:
+          type: string
+          maxLength: 500
+          description: Project address
+        state:
+          type: string
+          enum: [active, planning, on_hold, completed, cancelled]
+          description: Project state
+        budget:
+          type: number
+          minimum: 0
+          description: Total project budget
+        start_date:
+          type: string
+          format: date
+          description: Project start date
+        estimated_completion_date:
+          type: string
+          format: date
+          description: Estimated completion date
+        actual_completion_date:
+          type: string
+          format: date
+          description: Actual completion date
+        team_members:
+          type: array
+          items:
+            type: object
+          description: Project team member information
+
+    DirectoryPerson:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique person identifier
+        first_name:
+          type: string
+          description: First name
+        last_name:
+          type: string
+          description: Last name
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Email address
+        phone:
+          type: string
+          nullable: true
+          description: Phone number
+        person_type:
+          type: string
+          enum: [user, contact]
+          description: Type of person (user with login or contact only)
+        title:
+          type: string
+          nullable: true
+          description: Job title
+        company_id:
+          type: string
+          nullable: true
+          description: Associated company ID
+        company_name:
+          type: string
+          nullable: true
+          description: Company name (computed field)
+        status:
+          type: string
+          enum: [active, inactive, pending]
+          description: Person status in project
+        project_id:
+          type: string
+          description: Project ID
+        created_at:
+          type: string
+          format: date-time
+          description: When person was added
+        updated_at:
+          type: string
+          format: date-time
+          description: When person was last updated
+
+    CreateDirectoryPersonRequest:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - person_type
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: First name
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Last name
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address
+        phone:
+          type: string
+          maxLength: 20
+          description: Phone number
+        person_type:
+          type: string
+          enum: [user, contact]
+          description: Type of person
+        title:
+          type: string
+          maxLength: 100
+          description: Job title
+        company_id:
+          type: string
+          description: Associated company ID
+
+    UpdateDirectoryPersonRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: First name
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Last name
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Email address
+        phone:
+          type: string
+          maxLength: 20
+          description: Phone number
+        title:
+          type: string
+          maxLength: 100
+          description: Job title
+        company_id:
+          type: string
+          description: Associated company ID
+        status:
+          type: string
+          enum: [active, inactive]
+          description: Person status
+
+    BudgetLine:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique budget line identifier
+        project_id:
+          type: string
+          description: Project ID
+        cost_code:
+          type: string
+          description: Cost code
+        cost_code_description:
+          type: string
+          nullable: true
+          description: Cost code description
+        budgeted_amount:
+          type: number
+          nullable: true
+          description: Original budgeted amount
+        revised_amount:
+          type: number
+          nullable: true
+          description: Revised budget amount
+        committed_amount:
+          type: number
+          nullable: true
+          description: Committed amount
+        actual_amount:
+          type: number
+          nullable: true
+          description: Actual spent amount
+        variance:
+          type: number
+          nullable: true
+          description: Budget variance (computed)
+        forecast_to_complete:
+          type: number
+          nullable: true
+          description: Forecasted amount to complete
+        created_at:
+          type: string
+          format: date-time
+          description: When budget line was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When budget line was last updated
+
+    CreateBudgetLineRequest:
+      type: object
+      required:
+        - cost_code
+      properties:
+        cost_code:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: Cost code
+        cost_code_description:
+          type: string
+          maxLength: 255
+          description: Cost code description
+        budgeted_amount:
+          type: number
+          minimum: 0
+          description: Budgeted amount
+        revised_amount:
+          type: number
+          minimum: 0
+          description: Revised budget amount
+
+    BudgetView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique view identifier
+        project_id:
+          type: string
+          description: Project ID
+        name:
+          type: string
+          description: View name
+        description:
+          type: string
+          nullable: true
+          description: View description
+        is_default:
+          type: boolean
+          description: Whether this is the default view
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetViewColumn'
+          description: Column configuration
+        created_at:
+          type: string
+          format: date-time
+          description: When view was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When view was last updated
+
+    BudgetViewColumn:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Column ID
+        field_name:
+          type: string
+          description: Database field name
+        display_name:
+          type: string
+          description: Display name for the column
+        width:
+          type: integer
+          nullable: true
+          description: Column width in pixels
+        visible:
+          type: boolean
+          description: Whether column is visible
+        sort_order:
+          type: integer
+          description: Display order of the column
+
+    CreateBudgetViewRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: View name
+        description:
+          type: string
+          maxLength: 500
+          description: View description
+        is_default:
+          type: boolean
+          default: false
+          description: Whether this should be the default view
+        columns:
+          type: array
+          items:
+            type: object
+            required:
+              - field_name
+              - display_name
+            properties:
+              field_name:
+                type: string
+                description: Database field name
+              display_name:
+                type: string
+                description: Display name for the column
+              width:
+                type: integer
+                minimum: 50
+                maximum: 500
+                description: Column width in pixels
+              visible:
+                type: boolean
+                default: true
+                description: Whether column is visible
+              sort_order:
+                type: integer
+                description: Display order of the column
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid input parameters"
+            code: "VALIDATION_ERROR"
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Authentication required"
+            code: "UNAUTHORIZED"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Insufficient permissions"
+            code: "FORBIDDEN"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+            code: "NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Internal server error"
+            code: "INTERNAL_ERROR"
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Projects
+    description: Project management operations
+  - name: Directory
+    description: Project directory and people management
+  - name: Budget
+    description: Budget tracking and management
+  - name: Change Events
+    description: Change event management
+  - name: Commitments
+    description: Commitment and subcontract management
+  - name: Contracts
+    description: Contract management
+  - name: Direct Costs
+    description: Direct cost tracking
+  - name: Authentication
+    description: Authentication and authorization

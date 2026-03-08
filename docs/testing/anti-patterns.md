@@ -1,0 +1,1 @@
+../../../.claude/testing/ANTI-PATTERNS.md
