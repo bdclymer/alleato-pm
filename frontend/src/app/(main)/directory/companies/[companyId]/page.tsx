@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Check, ChevronsUpDown, FileText, FolderOpen, Pencil, Plus, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, Pencil, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +11,7 @@ import { createContact, updateContact } from "@/app/(other)/actions/table-action
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Modal,
@@ -68,22 +70,6 @@ interface CompanyProjectItem {
   company_type: string | null;
 }
 
-interface CommitmentItem {
-  id: string;
-  type: "subcontract" | "purchase_order";
-  project_id: number | null;
-  project_name: string | null;
-  project_number: string | null;
-  contract_number: string | null;
-  title: string | null;
-  status: string | null;
-  contract_date: string | null;
-  total_sov_amount: number | null;
-  total_billed_to_date: number | null;
-  total_amount_remaining: number | null;
-  updated_at: string | null;
-}
-
 interface InvoiceItem {
   id: number;
   invoice_number: string | null;
@@ -100,17 +86,30 @@ interface InvoiceItem {
   updated_at: string;
 }
 
+interface MeetingItem {
+  id: string;
+  title: string | null;
+  date: string | null;
+  status: string | null;
+  category: string | null;
+  participants: string | null;
+  project_id: number | null;
+  project_name: string | null;
+  project_number: string | null;
+  created_at: string | null;
+}
+
 interface CompanyDetailsResponse {
   company: Company;
   contacts: Contact[];
   projects: CompanyProjectItem[];
-  commitments: CommitmentItem[];
   invoices: InvoiceItem[];
+  meetings: MeetingItem[];
   summary: {
     contact_count: number;
     project_count: number;
-    commitment_count: number;
     invoice_count: number;
+    meeting_count: number;
   };
 }
 
@@ -143,6 +142,13 @@ function isOpenInvoice(status: string | null | undefined): boolean {
   const normalized = (status || "").toLowerCase();
   if (!normalized) return true;
   return !["paid", "approved", "void", "rejected"].includes(normalized);
+}
+
+function getInitials(firstName?: string | null, lastName?: string | null): string {
+  const first = (firstName || "").trim().charAt(0);
+  const last = (lastName || "").trim().charAt(0);
+  const initials = `${first}${last}`.toUpperCase();
+  return initials || "--";
 }
 
 function CompactStatRow({
@@ -245,6 +251,35 @@ export default function CompanyDetailsPage() {
   const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
   const [confirmProjectAccessImpact, setConfirmProjectAccessImpact] = React.useState(false);
   const [isAddingToProject, setIsAddingToProject] = React.useState(false);
+  const associatedProjects = data?.projects ?? [];
+  const invoices = data?.invoices ?? [];
+  const meetings = data?.meetings ?? [];
+  const filteredInvoices = invoiceFilter === "open" ? invoices.filter((item) => isOpenInvoice(item.status)) : invoices;
+  const meetingsByProject = React.useMemo(() => {
+    const grouped = new Map<number, { project: CompanyProjectItem | null; items: MeetingItem[] }>();
+
+    for (const meeting of meetings) {
+      if (typeof meeting.project_id !== "number") continue;
+      const existing = grouped.get(meeting.project_id);
+      if (existing) {
+        existing.items.push(meeting);
+        continue;
+      }
+      const project = associatedProjects.find((item) => item.id === meeting.project_id) || null;
+      grouped.set(meeting.project_id, { project, items: [meeting] });
+    }
+
+    return Array.from(grouped.entries())
+      .map(([, value]) => ({
+        ...value,
+        items: value.items.sort((a, b) => {
+          const aTime = a.date ? new Date(a.date).getTime() : 0;
+          const bTime = b.date ? new Date(b.date).getTime() : 0;
+          return bTime - aTime;
+        }),
+      }))
+      .sort((a, b) => (a.project?.name || "").localeCompare(b.project?.name || ""));
+  }, [associatedProjects, meetings]);
 
   const loadDetails = React.useCallback(async () => {
     try {
@@ -535,9 +570,8 @@ export default function CompanyDetailsPage() {
     );
   }
 
-  const { company, contacts, projects: associatedProjects, commitments, invoices, summary } = data;
+  const { company, contacts, summary } = data;
   const companyLocation = [company.city, company.state].filter(Boolean).join(", ");
-  const filteredInvoices = invoiceFilter === "open" ? invoices.filter((item) => isOpenInvoice(item.status)) : invoices;
   const filteredAvailableContacts = (() => {
     const query = contactQuery.trim().toLowerCase();
     if (!query) return availableContacts;
@@ -606,9 +640,14 @@ export default function CompanyDetailsPage() {
                       <li key={contact.id}>
                         <button
                           type="button"
-                          onClick={() => openEditContact(contact)}
-                          className="grid w-full grid-cols-1 gap-1 py-4 text-left transition-colors hover:bg-muted/30 md:grid-cols-[minmax(0,1fr)_minmax(220px,1fr)_180px]"
+                          onClick={() => router.push(`/directory/contacts/${contact.id}`)}
+                          className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px]"
                         >
+                          <Avatar className="h-9 w-9 border border-border">
+                            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                              {getInitials(contact.first_name, contact.last_name)}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-foreground">
                               {contact.first_name} {contact.last_name}
@@ -670,40 +709,47 @@ export default function CompanyDetailsPage() {
                 </div>
               )}
             </section>
-
             <section className="space-y-4 border-b border-border pb-8">
               <SectionHeader
-                title="Commitments"
-                description="Contracts and purchase orders tied to this company."
+                title="Meetings"
+                description="Recent meetings grouped by associated project."
               />
-              {commitments.length === 0 ? (
-                <EmptyState message="No commitments found for this company." />
+              {meetingsByProject.length === 0 ? (
+                <EmptyState message="No meetings found for this company's projects." />
               ) : (
-                <div className="overflow-hidden rounded-md border border-border">
-                  <ul className="divide-y divide-border">
-                    {commitments.map((commitment) => (
-                      <li key={`${commitment.type}-${commitment.id}`} className="space-y-2 px-4 py-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-medium text-foreground">
-                            {commitment.contract_number || "Unnumbered"}
-                            {commitment.title ? ` • ${commitment.title}` : ""}
-                          </p>
-                          <Badge variant="outline">
-                            {commitment.type === "subcontract" ? "Subcontract" : "Purchase Order"}
-                          </Badge>
-                          <Badge variant={statusVariant(commitment.status)}>
-                            {commitment.status || "Unknown"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {commitment.project_name || "Unknown project"} ({commitment.project_number || "-"})
+                <div className="space-y-4">
+                  {meetingsByProject.map(({ project, items }) => (
+                    <div key={project?.id || items[0]?.project_id || "unknown"} className="overflow-hidden rounded-md border border-border">
+                      <div className="flex items-center justify-between border-b border-border bg-muted/20 px-4 py-2">
+                        <p className="text-sm font-medium text-foreground">
+                          {project?.name || items[0]?.project_name || "Unknown project"}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          Contract: {formatCurrency(commitment.total_sov_amount)} • Billed: {formatCurrency(commitment.total_billed_to_date)} • Remaining: {formatCurrency(commitment.total_amount_remaining)}
+                        <p className="text-xs text-muted-foreground">
+                          #{project?.project_number || items[0]?.project_number || "-"}
                         </p>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                      <ul className="divide-y divide-border">
+                        {items.slice(0, 6).map((meeting) => (
+                          <li key={meeting.id} className="space-y-1 px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/${meeting.project_id}/meetings/${meeting.id}`}
+                                className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                              >
+                                {meeting.title || "Untitled meeting"}
+                              </Link>
+                              <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
+                              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDate(meeting.date)}
+                              {meeting.participants ? ` • ${meeting.participants}` : ""}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               )}
             </section>
@@ -798,7 +844,7 @@ export default function CompanyDetailsPage() {
                 <div className="border-t border-border" />
                 <CompactStatRow title="Projects" value={summary.project_count} icon={<FolderOpen className="h-4 w-4" />} />
                 <div className="border-t border-border" />
-                <CompactStatRow title="Commitments" value={summary.commitment_count} icon={<FileText className="h-4 w-4" />} />
+                <CompactStatRow title="Meetings" value={summary.meeting_count} icon={<Calendar className="h-4 w-4" />} />
                 <div className="border-t border-border" />
                 <CompactStatRow title="Invoices" value={summary.invoice_count} icon={<Calendar className="h-4 w-4" />} />
               </div>

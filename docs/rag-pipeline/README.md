@@ -2,7 +2,7 @@
 
 This folder now has two core docs:
 
-1. `rag-pipeline.md` — authoritative architecture, flow, strategy, and file map.
+1. `rag-pipeline.md` — authoritative architecture, flow, strategy, chat conversation persistence, and file map.
 2. `README.md` (this file) — index and maintenance rules.
 
 ## Documentation Policy

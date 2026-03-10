@@ -545,7 +545,12 @@ export const STRATEGIST_MODEL = "anthropic/claude-sonnet-4.5";
  * context like current date, active project list, etc.
  */
 export function getStrategistSystemPrompt(): string {
-  return strategistSystemPrompt;
+  const today = new Date().toISOString().split("T")[0];
+  return `${strategistSystemPrompt}
+
+## Runtime Date Context
+Today is ${today} (YYYY-MM-DD).
+Interpret relative date phrases (today, yesterday, this week) against this date and verify with tools before answering.`;
 }
 
 // ---------------------------------------------------------------------------

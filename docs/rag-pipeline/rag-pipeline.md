@@ -7,6 +7,7 @@ This document is the authoritative reference for:
 - Fireflies transcript sync and markdown generation
 - RAG pipeline initiation and execution
 - Chunking, embedding, and extraction strategy
+- Chat conversation architecture and persistence
 - Retrieval strategy used by agents
 - Exact project files and tables involved
 
@@ -245,7 +246,51 @@ Behavior in `company_rag_search`:
 - Fall back to keyword `ilike` search.
 - Fall back to recent chunks if still empty.
 
-## 7) Canonical File Map
+## 7) Chat Conversations and Memory
+
+There are multiple chat paths in this codebase. They are not equivalent.
+
+### A) Persisted AI Assistant conversations (primary product chat memory)
+
+This is the path used by the in-app assistant UI and widget:
+- Frontend API stream route: `frontend/src/app/api/ai-assistant/chat/route.ts`
+- Conversation CRUD:
+  - `frontend/src/app/api/ai-assistant/conversations/route.ts`
+  - `frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts`
+  - `frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts`
+- UI entrypoints:
+  - `frontend/src/components/ai-assistant/rag-chat-page.tsx`
+  - `frontend/src/components/chat/simple-rag-chat.tsx`
+  - `frontend/src/components/chat/ai-chat-widget.tsx` (mounted in `frontend/src/app/layout.tsx`)
+
+Persistence behavior:
+- Conversation metadata stored in `conversations`.
+- Message history stored in `chat_history`.
+- After each streamed response, `generateConversationMemory()` summarizes and embeds conversation context:
+  - File: `frontend/src/lib/ai/services/conversation-memory.ts`
+  - Writes to `memories` table (`memory_type = conversation_summary`).
+- Recall tool uses semantic search RPC:
+  - `search_conversation_memories` (migration: `supabase/migrations/20260306000001_conversation_memories.sql`)
+  - Invoked from `frontend/src/lib/ai/tools/operational.ts` (`recallPastConversations`).
+
+### B) ChatKit thread state in backend memory (not durable)
+
+These ChatKit endpoints keep thread state in Python process memory:
+- `/chatkit`, `/chatkit/state`, `/chatkit/bootstrap`
+- `/rag-chatkit`, `/rag-chatkit/state`, `/rag-chatkit/bootstrap`
+- File: `backend/src/api/main.py`
+
+Storage behavior:
+- Uses in-memory stores (`backend/src/services/memory_store.py` and in-process dict/singleton state).
+- Thread/event/agent context is lost on backend restart unless separately persisted by another path.
+
+### C) Simple backend RAG proxy path
+
+- `frontend/src/app/api/rag-chat/route.ts` proxies to backend `/api/chat`.
+- Backend `/api/chat` (`backend/src/api/main.py`) does retrieval and returns JSON reply/sources.
+- This path is useful fallback/simple mode but does not itself create durable conversation history records.
+
+## 8) Canonical File Map
 
 ### Ingestion and sync
 - `backend/src/services/ingestion/fireflies_pipeline.py`
@@ -270,6 +315,19 @@ Behavior in `company_rag_search`:
 - `backend/src/services/alleato_agent_workflow/tools/retrieval.py`
 - `backend/src/services/alleato_agent_workflow/rag_debug_tracer.py`
 
+### Chat conversation stack
+- `frontend/src/app/api/ai-assistant/chat/route.ts`
+- `frontend/src/app/api/ai-assistant/conversations/route.ts`
+- `frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts`
+- `frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts`
+- `frontend/src/lib/ai/services/conversation-memory.ts`
+- `frontend/src/lib/ai/tools/operational.ts` (`recallPastConversations`)
+- `frontend/src/components/ai-assistant/rag-chat-page.tsx`
+- `frontend/src/components/chat/simple-rag-chat.tsx`
+- `frontend/src/components/chat/ai-chat-widget.tsx`
+- `backend/src/api/main.py` (`/chatkit`, `/rag-chatkit`, `/api/chat`)
+- `backend/src/services/memory_store.py`
+
 ### Triggering and UI
 - `frontend/src/app/api/documents/upload/route.ts`
 - `frontend/src/app/api/documents/status/route.ts`
@@ -280,10 +338,13 @@ Behavior in `company_rag_search`:
 - `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`
 - `supabase/migrations/20260227000002_pipeline_config_table.sql`
 - `supabase/migrations/20260301000001_meeting_digests.sql`
+- `supabase/migrations/20260306000001_conversation_memories.sql`
 
-## 8) Operational Notes
+## 9) Operational Notes
 
 - Preferred sync endpoint for Fireflies: `POST /api/ingest/fireflies/recent`.
 - Preferred pipeline executor: backend `run_full_pipeline` via `/api/pipeline/process`.
+- For persistent conversation history + memory recall, use the `/api/ai-assistant/*` stack.
+- `/chatkit` and `/rag-chatkit` expose thread state but are in-memory by default.
 - Legacy Cloudflare ingest worker sync is disabled by default.
 - If docs or runtime behavior diverge, trust code paths listed in section 7 and update this file.

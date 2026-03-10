@@ -42,9 +42,9 @@ export function NavUser({
   user,
 }: {
   user?: {
-    name: string
-    email: string
-    avatar: string
+    name?: unknown
+    email?: unknown
+    avatar?: unknown
   }
 }) {
   const router = useRouter()
@@ -52,14 +52,24 @@ export function NavUser({
   const isCollapsed = state === "collapsed"
 
   // Use default values if user is undefined or properties are missing
+  const safeName =
+    typeof user?.name === "string" && user.name.trim().length > 0
+      ? user.name
+      : defaultUser.name
+  const safeEmail =
+    typeof user?.email === "string" && user.email.trim().length > 0
+      ? user.email
+      : defaultUser.email
+  const safeAvatar = typeof user?.avatar === "string" ? user.avatar : defaultUser.avatar
+
   const displayUser = {
-    name: user?.name || defaultUser.name,
-    email: user?.email || defaultUser.email,
-    avatar: user?.avatar || defaultUser.avatar,
+    name: safeName,
+    email: safeEmail,
+    avatar: safeAvatar,
   }
 
   // Get initials for fallback
-  const initials = displayUser.name
+  const initials = String(displayUser.name || defaultUser.name)
     .split(" ")
     .map((n) => n[0])
     .join("")

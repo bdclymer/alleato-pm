@@ -205,6 +205,73 @@ function FirefliesSectionContent({ value }: { value: string }) {
   );
 }
 
+function dedupeItems(items: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const raw of items) {
+    const cleaned = raw.replace(/\s+/g, " ").trim();
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(cleaned);
+  }
+
+  return result;
+}
+
+function extractActionItems(value: string | null): string[] {
+  if (!value) return [];
+
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (Array.isArray(parsed)) {
+        const jsonItems = parsed
+          .map((entry) => {
+            if (typeof entry === "string") return entry;
+            if (entry && typeof entry === "object") {
+              const obj = entry as Record<string, unknown>;
+              return (
+                (typeof obj.description === "string" && obj.description) ||
+                (typeof obj.task === "string" && obj.task) ||
+                (typeof obj.title === "string" && obj.title) ||
+                null
+              );
+            }
+            return null;
+          })
+          .filter((item): item is string => Boolean(item));
+        return dedupeItems(jsonItems);
+      }
+    } catch {
+      // Fall through to line-based parsing
+    }
+  }
+
+  const lines = trimmed
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) =>
+      line
+        .replace(/^[-*•]\s+/, "")
+        .replace(/^\d+[.)]\s+/, "")
+        .replace(/^\[\s?\]\s+/, "")
+        .trim()
+    )
+    .filter(Boolean);
+
+  return dedupeItems(lines);
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function MeetingDetailContent({
@@ -226,22 +293,25 @@ export function MeetingDetailContent({
   summarySlot,
 }: MeetingDetailContentProps) {
   const overviewContent = meeting.summary || undefined;
-  const firefliesSections: Array<{ label: string; content: string | null }> = [
-    { label: "Organizer Email", content: parsedSections?.organizerEmail || null },
-    { label: "Host Email", content: parsedSections?.hostEmail || null },
-    { label: "Fireflies ID", content: parsedSections?.firefliesId || null },
-    { label: "Fireflies Link", content: parsedSections?.firefliesLink || null },
+  const firefliesHighlights: Array<{ label: string; content: string | null }> = [
     { label: "Short Summary", content: parsedSections?.shortSummary || null },
     { label: "Short Overview", content: parsedSections?.shortOverview || null },
     { label: "Gist", content: parsedSections?.gist || null },
     { label: "Bullet Gist", content: parsedSections?.bulletGist || null },
-    { label: "Shorthand Bullet", content: parsedSections?.shorthandBullet || null },
-    { label: "Outline", content: parsedSections?.outline || null },
+    { label: "Topics Discussed", content: parsedSections?.topicsDiscussed || null },
     { label: "Notes", content: parsedSections?.notes || null },
     { label: "Meeting Type", content: parsedSections?.meetingType || null },
-    { label: "Topics Discussed", content: parsedSections?.topicsDiscussed || null },
     { label: "Transcript Chapters", content: parsedSections?.transcriptChapters || null },
     { label: "Action Items", content: parsedSections?.actionItems || null },
+  ].filter((section) => Boolean(section.content?.trim()));
+
+  const firefliesMetadata: Array<{ label: string; content: string | null }> = [
+    { label: "Organizer Email", content: parsedSections?.organizerEmail || null },
+    { label: "Host Email", content: parsedSections?.hostEmail || null },
+    { label: "Fireflies ID", content: parsedSections?.firefliesId || null },
+    { label: "Fireflies Link", content: parsedSections?.firefliesLink || null },
+    { label: "Shorthand Bullet", content: parsedSections?.shorthandBullet || null },
+    { label: "Outline", content: parsedSections?.outline || null },
     { label: "Meeting Attendees", content: parsedSections?.meetingAttendees || null },
     { label: "Meeting Attendance", content: parsedSections?.meetingAttendance || null },
     { label: "User", content: parsedSections?.user || null },
@@ -254,8 +324,13 @@ export function MeetingDetailContent({
     { label: "Extended Sections", content: parsedSections?.extendedSections || null },
   ].filter((section) => Boolean(section.content?.trim()));
 
+  const sidebarTasks = dedupeItems([
+    ...allTasks,
+    ...extractActionItems(parsedSections?.actionItems || null),
+  ]);
+
   const hasActionItems =
-    allTasks.length > 0 ||
+    sidebarTasks.length > 0 ||
     allDecisions.length > 0 ||
     allRisks.length > 0 ||
     allOpportunities.length > 0;
@@ -339,12 +414,30 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Fireflies Full AI Summary Fields */}
-          {firefliesSections.length > 0 ? (
+          {/* Curated Fireflies Insights */}
+          {firefliesHighlights.length > 0 ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Fireflies AI Fields" defaultOpen={false}>
+              <AccordionSection label="Fireflies Key Insights" defaultOpen={false}>
                 <div className="space-y-5">
-                  {firefliesSections.map((section) => (
+                  {firefliesHighlights.map((section) => (
+                    <div key={section.label} className="space-y-1.5">
+                      <h3 className="text-sm font-medium text-foreground">
+                        {section.label}
+                      </h3>
+                      <FirefliesSectionContent value={section.content || ""} />
+                    </div>
+                  ))}
+                </div>
+              </AccordionSection>
+            </section>
+          ) : null}
+
+          {/* Full Fireflies metadata */}
+          {firefliesMetadata.length > 0 ? (
+            <section className="border-t border-border pt-6">
+              <AccordionSection label="Fireflies Metadata" defaultOpen={false}>
+                <div className="space-y-5">
+                  {firefliesMetadata.map((section) => (
                     <div key={section.label} className="space-y-1.5">
                       <h3 className="text-sm font-medium text-foreground">
                         {section.label}
@@ -434,12 +527,12 @@ export function MeetingDetailContent({
                 Action Snapshot
               </div>
 
-              {allTasks.length > 0 && (
+              {sidebarTasks.length > 0 && (
                 <div className="border-b border-border pb-4">
                   <SidebarList
                     icon={<ListTodo className="h-3.5 w-3.5 text-blue-600" />}
-                    label="Action Items"
-                    items={allTasks}
+                    label="Tasks"
+                    items={sidebarTasks}
                   />
                 </div>
               )}

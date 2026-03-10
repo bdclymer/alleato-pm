@@ -37,6 +37,8 @@ export async function register() {
       publicKey: process.env.LANGFUSE_PUBLIC_KEY,
       secretKey: process.env.LANGFUSE_SECRET_KEY,
       baseUrl: langfuseBaseUrl,
+      // Serverless runtimes can terminate quickly; immediate export reduces span loss.
+      exportMode: process.env.VERCEL ? "immediate" : "batched",
     });
 
     // Store on globalThis so API routes can call forceFlush() after streaming.

@@ -66,12 +66,17 @@ export function HeaderUserMenu({
   // Generate avatar data from user
   const userEmail = user?.email || "";
   const avatarSrc = getBestAvatarUrl(user?.user_metadata?.avatar_url, userEmail);
-  const displayName =
-    user?.user_metadata?.full_name ||
-    user?.email?.split("@")[0] ||
-    "User";
-  const fallbackInitials = user?.user_metadata?.full_name
-    ? user.user_metadata.full_name
+  const fullName =
+    typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : "";
+  const emailPrefix =
+    typeof user?.email === "string" && user.email.includes("@")
+      ? user.email.split("@")[0]
+      : "";
+  const displayName = fullName || emailPrefix || "User";
+  const fallbackInitials = fullName
+    ? fullName
         .split(" ")
         .map((n: string) => n[0])
         .join("")

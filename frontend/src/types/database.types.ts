@@ -9300,6 +9300,7 @@ export type Database = {
           id: string
           job_title: string | null
           last_name: string
+          linkedin: string | null
           metadata: Json | null
           notes: string | null
           person_type: string
@@ -9325,6 +9326,7 @@ export type Database = {
           id?: string
           job_title?: string | null
           last_name: string
+          linkedin?: string | null
           metadata?: Json | null
           notes?: string | null
           person_type: string
@@ -9350,6 +9352,7 @@ export type Database = {
           id?: string
           job_title?: string | null
           last_name?: string
+          linkedin?: string | null
           metadata?: Json | null
           notes?: string | null
           person_type?: string
@@ -9989,6 +9992,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contracts_contract_company_id_fkey"
+            columns: ["contract_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {

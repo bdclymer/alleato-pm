@@ -136,6 +136,7 @@ export function createProjectTools(
                 "id, title, date, project_id, project, summary, overview, participants, duration_minutes",
               )
               .in("project_id", projectIds)
+              .or("type.eq.meeting,category.eq.meeting")
               .order("date", { ascending: false })
               .limit(100),
             supabase
@@ -379,6 +380,7 @@ export function createProjectTools(
             .from("document_metadata")
             .select("title, date, summary, overview, participants")
             .eq("project_id", resolvedId)
+            .or("type.eq.meeting,category.eq.meeting")
             .order("date", { ascending: false })
             .limit(10),
         ]);
@@ -844,6 +846,7 @@ export function createProjectTools(
         let docQuery = supabase
           .from("document_metadata")
           .select("title, date, project, project_id, summary, overview, participants")
+          .or("type.eq.meeting,category.eq.meeting")
           .order("date", { ascending: false })
           .limit(20);
 
@@ -910,6 +913,127 @@ export function createProjectTools(
       ),
     }),
 
+    getMeetingsByDate: tool({
+      description:
+        "Get meetings for a specific date or date range. Use this for temporal " +
+        "queries like 'today meetings', 'yesterday', or 'meetings this week'. " +
+        "Returns only meeting records.",
+      inputSchema: z.object({
+        projectId: z
+          .number()
+          .optional()
+          .describe("Optional project ID to filter by"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Optional project name to resolve and filter by"),
+        date: z
+          .string()
+          .optional()
+          .describe("Exact date in YYYY-MM-DD format; defaults to today if no range is provided"),
+        startDate: z
+          .string()
+          .optional()
+          .describe("Range start in YYYY-MM-DD format"),
+        endDate: z
+          .string()
+          .optional()
+          .describe("Range end in YYYY-MM-DD format"),
+        maxResults: z
+          .number()
+          .optional()
+          .default(25)
+          .describe("Max meetings to return"),
+      }),
+      execute: withTrace(
+        "getMeetingsByDate",
+        options,
+        async ({ projectId, projectName, date, startDate, endDate, maxResults }) => {
+          let resolvedProjectId = projectId;
+          let resolvedProjectName: string | null = null;
+
+          if (!resolvedProjectId && projectName) {
+            const { data: projectRow } = await supabase
+              .from("projects")
+              .select("id, name")
+              .ilike("name", `%${projectName}%`)
+              .order("name", { ascending: true })
+              .limit(1)
+              .maybeSingle();
+
+            if (!projectRow?.id) {
+              return { error: `No project found matching "${projectName}"` };
+            }
+            resolvedProjectId = projectRow.id;
+            resolvedProjectName = projectRow.name ?? null;
+          }
+
+          const today = new Date().toISOString().split("T")[0];
+          const effectiveDate =
+            !startDate && !endDate ? (date || today) : null;
+
+          let meetingsQuery = supabase
+            .from("document_metadata")
+            .select(
+              "id, title, date, project, project_id, summary, overview, participants, action_items, bullet_points, category, type",
+            )
+            .or("type.eq.meeting,category.eq.meeting")
+            .order("date", { ascending: false })
+            .limit(maxResults ?? 25);
+
+          if (resolvedProjectId) {
+            meetingsQuery = meetingsQuery.eq("project_id", resolvedProjectId);
+          }
+
+          if (effectiveDate) {
+            meetingsQuery = meetingsQuery.eq("date", effectiveDate);
+          } else {
+            if (startDate) meetingsQuery = meetingsQuery.gte("date", startDate);
+            if (endDate) meetingsQuery = meetingsQuery.lte("date", endDate);
+          }
+
+          const { data: meetingRows, error } = await meetingsQuery;
+          if (error) return { error: error.message };
+
+          const meetings = (meetingRows ?? []) as AnyRow[];
+          const windowLabel = effectiveDate
+            ? effectiveDate
+            : `${startDate || "start"} to ${endDate || "today"}`;
+
+          return {
+            sourceRef: "[Source: Meetings By Date]",
+            window: {
+              date: effectiveDate,
+              startDate: startDate ?? null,
+              endDate: endDate ?? null,
+              today,
+            },
+            project: {
+              id: resolvedProjectId ?? null,
+              name: resolvedProjectName ?? projectName ?? null,
+            },
+            totalMeetings: meetings.length,
+            meetings: meetings.map((m) => ({
+              sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
+              id: m.id,
+              title: m.title,
+              date: m.date,
+              project: m.project,
+              projectId: m.project_id,
+              summary: (m.summary || m.overview || "").substring(0, 1200),
+              participants: m.participants,
+              actionItems: m.action_items,
+              bulletPoints: m.bullet_points,
+            })),
+            message:
+              meetings.length === 0
+                ? `No meetings found for ${windowLabel}.`
+                : undefined,
+          };
+        },
+      ),
+    }),
+
     searchDocuments: tool({
       description:
         "Search meeting transcripts, notes, and project documents by keyword. " +
@@ -939,6 +1063,7 @@ export function createProjectTools(
             .from("document_metadata")
             .select("*")
             .eq("project_id", projectId)
+            .or("type.eq.meeting,category.eq.meeting")
             .textSearch("content", query.split(" ").join(" & "))
             .order("date", { ascending: false })
             .limit(maxResults ?? 10);
@@ -1060,6 +1185,7 @@ export function createProjectTools(
                 "title, date, summary, overview, participants, category",
               )
               .eq("project_id", project.id)
+              .or("type.eq.meeting,category.eq.meeting")
               .order("date", { ascending: false })
               .limit(10),
           ]);

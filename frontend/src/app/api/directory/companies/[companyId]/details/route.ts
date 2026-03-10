@@ -12,6 +12,7 @@ type PurchaseOrderWithTotals =
   Database["public"]["Views"]["purchase_orders_with_totals"]["Row"];
 type Contract = Database["public"]["Tables"]["contracts"]["Row"];
 type OwnerInvoice = Database["public"]["Tables"]["owner_invoices"]["Row"];
+type DocumentMetadata = Database["public"]["Tables"]["document_metadata"]["Row"];
 
 interface RouteParams {
   params: Promise<{ companyId: string }>;
@@ -57,6 +58,19 @@ type InvoiceItem = {
   period_end: string | null;
   created_at: string | null;
   updated_at: string;
+};
+
+type MeetingItem = {
+  id: string;
+  title: string | null;
+  date: string | null;
+  status: string | null;
+  category: string | null;
+  participants: string | null;
+  project_id: number | null;
+  project_name: string | null;
+  project_number: string | null;
+  created_at: string | null;
 };
 
 export async function GET(_request: Request, { params }: RouteParams) {
@@ -252,6 +266,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     });
 
     let invoicesPayload: InvoiceItem[] = [];
+    let meetingsPayload: MeetingItem[] = [];
     if (projectIds.length > 0) {
       const { data: contractsData, error: contractsError } = await supabase
         .from("contracts")
@@ -310,6 +325,40 @@ export async function GET(_request: Request, { params }: RouteParams) {
           };
         });
       }
+
+      const { data: meetingsData, error: meetingsError } = await supabase
+        .from("document_metadata")
+        .select("*")
+        .in("project_id", projectIds)
+        .eq("type", "meeting")
+        .order("date", { ascending: false })
+        .limit(200)
+        .returns<DocumentMetadata[]>();
+
+      if (meetingsError) {
+        return NextResponse.json(
+          { error: "Failed to fetch meetings", details: meetingsError.message },
+          { status: 500 },
+        );
+      }
+
+      meetingsPayload = (meetingsData || []).map((meeting) => {
+        const project =
+          typeof meeting.project_id === "number" ? projectMap.get(meeting.project_id) : null;
+
+        return {
+          id: meeting.id,
+          title: meeting.title,
+          date: meeting.date,
+          status: meeting.status,
+          category: meeting.category,
+          participants: meeting.participants,
+          project_id: meeting.project_id,
+          project_name: project?.name || null,
+          project_number: project?.project_number || null,
+          created_at: meeting.created_at,
+        };
+      });
     }
 
     return NextResponse.json({
@@ -318,11 +367,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
       projects: projectsPayload,
       commitments: commitmentsPayload,
       invoices: invoicesPayload,
+      meetings: meetingsPayload,
       summary: {
         contact_count: contactsResult.data?.length || 0,
         project_count: projectsPayload.length,
         commitment_count: commitmentsPayload.length,
         invoice_count: invoicesPayload.length,
+        meeting_count: meetingsPayload.length,
       },
     });
   } catch (error) {
