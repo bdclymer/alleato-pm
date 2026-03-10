@@ -2,171 +2,151 @@
 
 ## Overview
 
-A development-only tool for rapidly generating table page configurations from Supabase tables.
+A development-only tool for rapidly generating table pages using the **UnifiedTablePage** pattern. It generates two files:
+
+1. **Feature table config** — column definitions, filters, renderers
+2. **Page component** — wired to `UnifiedTablePage` + `useUnifiedTableState`
 
 **Location:** `/dev/table-generator`
 
 **Access:** Only available in development/local environments (blocked in production)
-
-## Features
-
-- **Auto-detect** all Supabase tables
-- **Introspect** column names and infer types
-- **Configure** visible columns, search fields, filters
-- **Enable** inline editing and row navigation
-- **Generate** complete page.tsx code
-- **Copy** to clipboard or download as file
 
 ## How to Use
 
 1. **Start your dev server:**
 
    ```bash
-   npm run dev
-   ```bash
+   cd frontend && npm run dev
+   ```
+
 2. **Navigate to the tool:**
 
-   ```text
+   ```
    http://localhost:3000/dev/table-generator
-   ```text
+   ```
+
 3. **Follow the step-by-step wizard:**
 
-   - **Step 1:** Select a Supabase table from the dropdown
-   - **Step 2:** Configure table title and description
-   - **Step 3:** Choose visible columns and set primary/secondary columns
+   - **Step 1:** Select a Supabase table from the searchable dropdown
+   - **Step 2:** Set the page title and entity key (used for file names, URLs, localStorage)
+   - **Step 3:** Choose which columns to display and mark "always visible" columns
    - **Step 4:** Select searchable text fields
    - **Step 5:** (Optional) Add dropdown filters for badge/enum fields
-   - **Step 6:** Enable editing and row click navigation
 
 4. **Generate the code:**
    - Click "Generate Code"
-   - Review the generated page.tsx code
-   - Copy to clipboard or download
+   - Two tabs appear: **Table Config** and **Page Component**
+   - Copy or download each file
 
-5. **Create the table page:**
+5. **Create the files:**
 
    ```bash
-   # Create directory if it doesn't exist
-   mkdir -p frontend/src/app/(tables)/<table-name>
+   # Create the feature config directory
+   mkdir -p frontend/src/features/<entity-key>
 
-   # Paste or save the generated code
-   # Save as: frontend/src/app/(tables)/<table-name>/page.tsx
+   # Save the Table Config as:
+   frontend/src/features/<entity-key>/<entity-key>-table-config.tsx
+
+   # Create the page directory
+   mkdir -p frontend/src/app/(tables)/<entity-key>
+
+   # Save the Page Component as:
+   frontend/src/app/(tables)/<entity-key>/page.tsx
    ```
 
-6. **Test your new table page:**
+6. **Update the API endpoint:**
+   - The generated page fetches from `/api/<entity-key>` — create or update this route
+   - Alternatively, modify the `refresh()` function in the page to fetch from your existing API
 
-   ```text
-   http://localhost:3000/<table-name>
+7. **Test your new table page:**
+
+   ```
+   http://localhost:3000/<entity-key>
    ```
 
 ## Example Workflow
 
-Let's say you have a Supabase table called `vendors`:
+For a Supabase table called `vendors`:
 
 1. Go to `/dev/table-generator`
 2. Select "vendors" from the dropdown
-3. The tool auto-detects columns like: id, name, contact_email, status, created_at
+3. Columns auto-detected: id, name, contact_email, status, created_at
 4. Configure:
    - Title: "Vendors"
-   - Description: "Manage vendor directory"
-   - Visible columns: name, contact_email, status
+   - Entity Key: "vendors"
+   - Visible columns: name, contact_email, status, created_at
    - Search fields: name, contact_email
-   - Add filter for "status" field with options: active, inactive
-   - Enable editing
-   - Enable row navigation to `/vendors/{id}`
+   - Add filter for "status" with options: active, inactive
 5. Click "Generate Code"
-6. Copy the generated code
-7. Create `frontend/src/app/(tables)/vendors/page.tsx`
-8. Paste the code
-9. Visit `http://localhost:3000/vendors`
+6. Copy Table Config → save as `frontend/src/features/vendors/vendors-table-config.tsx`
+7. Copy Page Component → save as `frontend/src/app/(tables)/vendors/page.tsx`
+8. Visit `http://localhost:3000/vendors`
 
-## Generated Code Structure
+## Generated Architecture
 
-The tool generates a complete Next.js page with:
+The generator outputs code following the **UnifiedTablePage** pattern:
 
-```tsx
-import { createClient } from '@/lib/supabase/server'
-import { GenericDataTable, type GenericTableConfig } from '@/components/tables/generic-table-factory'
+### File 1: Feature Table Config
 
-const config: GenericTableConfig = {
-  title: 'Your Table Name',
-  description: 'Your description',
-  searchFields: ['field1', 'field2'],
-  exportFilename: 'export.csv',
-  editConfig: {
-    tableName: 'your_table',
-    editableFields: ['field1', 'field2']
-  },
-  columns: [
-    // Column definitions
-  ],
-  filters: [
-    // Filter definitions
-  ],
-  rowClickPath: '/your-table/{id}'
-}
-
-export default async function YourTablePage() {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('your_table')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    return <div>Error loading data</div>
-  }
-
-  return <GenericDataTable data={data || []} config={config} />
-}
+```
+frontend/src/features/<entity>/<entity>-table-config.tsx
 ```
 
-## Benefits
+Exports:
+- `EntityRow` — TypeScript type for row data
+- `entityColumns` — `ColumnConfig[]` for column picker
+- `entityFilters` — `FilterConfig[]` for filter dropdowns
+- `entityDefaultVisibleColumns` — `string[]` derived from columns
+- `buildEntityTableColumns()` — `TableColumn<EntityRow>[]` with render/sort
+- `renderEntityCard()` — Card view renderer
+- `renderEntityList()` — List view renderer
+- `renderEntityRowActions()` — Row action dropdown
 
-- **Rapid prototyping** - Generate table pages in seconds instead of minutes
-- **Consistency** - All table pages use the same pattern and component
-- **Type safety** - Auto-detects column types from sample data
-- **Customizable** - Easy to modify generated code for specific needs
+### File 2: Page Component
+
+```
+frontend/src/app/(tables)/<entity>/page.tsx
+```
+
+Uses:
+- `useUnifiedTableState()` for URL-synced state management
+- `UnifiedTablePage` component with all standard props
+- Client-side filtering, sorting, and search
+- CSV export
+- Table, card, and list views
+
+## What You Get Out of the Box
+
+- Search with debounce
+- Column visibility toggle (persisted to localStorage)
+- Filter popovers with badge count
+- Sorting (click column headers or right-click context menu)
+- Table / Card / List view switching
+- CSV export
+- Empty states (filtered vs. unfiltered)
+- Responsive design
 
 ## Security Note
 
-This tool is **automatically blocked in production** via:
-
-- `NODE_ENV` check
-- `VERCEL_ENV` check
-
-The API endpoints (`/api/dev/schema`) return 403 Forbidden in production.
-
-## Tips
-
-- For best results, have at least one row of data in your table (helps with type inference)
-- Start with default settings, generate code, then customize as needed
-- Use primary/secondary columns for card and list views
-- Add filters for fields that have a limited set of values (status, category, priority, etc.)
-- The generated code is a starting point - feel free to enhance it!
+This tool is **automatically blocked in production** via `NODE_ENV` check. The API endpoints (`/api/dev/schema`) return 403 in production.
 
 ## Troubleshooting
 
 **Table list is empty?**
-
 - Check your Supabase connection
-- Ensure tables exist in your database
-- Grant information_schema read access (or use fallback list)
+- Ensure tables exist and RLS allows read access
 
-**Column detection fails?**
+**Column detection wrong types?**
+- Ensure the table has at least one row (helps with type inference)
+- Manually adjust types in the generated config
 
-- Ensure the table has at least one row
-- Check Supabase RLS policies allow read access
-- Manually edit generated code if needed
+**Generated code has import errors?**
+- Run `npm run typecheck` to identify issues
+- Ensure `@/components/tables/unified` and `@/components/ds` are available
 
-**Generated code has errors?**
+## Related Files
 
-- Run `npm run typecheck` to identify type issues
-- Verify imported types match your database.types.ts
-- Adjust column types manually in the config
-
-## Related Documentation
-
-- [Generic Table Factory](./frontend/src/components/tables/generic-table-factory.tsx)
-- [Table Documentation](./TABLE_DOCS.md)
-- [Supabase Schema](./frontend/src/types/database.types.ts)
+- [`frontend/src/components/tables/unified/unified-table-page.tsx`](../../../frontend/src/components/tables/unified/unified-table-page.tsx) — UnifiedTablePage component
+- [`frontend/src/components/tables/unified/use-unified-table-state.ts`](../../../frontend/src/components/tables/unified/use-unified-table-state.ts) — State hook
+- [`frontend/src/features/documents/documents-table-config.tsx`](../../../frontend/src/features/documents/documents-table-config.tsx) — Reference config
+- [`frontend/src/app/(tables)/documents/page.tsx`](../../../frontend/src/app/(tables)/documents/page.tsx) — Reference page

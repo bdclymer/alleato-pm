@@ -161,6 +161,11 @@ export default function DocumentsPage() {
         : "";
 
     return documents.filter((doc) => {
+      // Exclude meeting and interview documents
+      const docType = (doc.type ?? "").toLowerCase();
+      if (docType === "meeting" || docType === "interview") {
+        return false;
+      }
       if (sourceFilter && (doc.source ?? "").toLowerCase() !== sourceFilter) {
         return false;
       }

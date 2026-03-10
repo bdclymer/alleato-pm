@@ -100,14 +100,9 @@ export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
     {
       ...documentColumns[0],
       render: (item) => (
-        <div>
-          <span className="font-medium">
-            {item.title || "Untitled Document"}
-          </span>
-          <span className="block text-xs text-muted-foreground">
-            {item.id}
-          </span>
-        </div>
+        <span className="font-medium">
+          {item.title || "Untitled Document"}
+        </span>
       ),
       sortValue: (item) => item.title ?? "Untitled",
       sortable: true,

@@ -63,33 +63,61 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Trigger the appropriate worker for each document
+    const cloudflareBaseUrl = process.env.CLOUDFLARE_WORKER_BASE_URL?.trim();
+    const workerAuthToken = process.env.WORKER_AUTH_TOKEN || "";
+    const pythonBackendUrl = (
+      process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
+    )
+      .replace(/\/+$/, "")
+      .trim();
+
+    // Trigger the appropriate worker for each document.
+    // Fallback: if worker URL isn't configured, call FastAPI full pipeline endpoint.
     const results = [];
     for (const job of jobs) {
       try {
-        // Get the worker URL from environment
-        const workerUrl =
-          process.env.CLOUDFLARE_WORKER_BASE_URL ||
-          "https://your-worker.workers.dev";
+        let response: Response;
+        let endpoint = "";
 
-        // Call the worker endpoint
-        const response = await fetch(`${workerUrl}${workerEndpoint}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.WORKER_AUTH_TOKEN || ""}`,
-          },
-          body: JSON.stringify({
-            firefliesId: job.fireflies_id,
-            metadataId: job.metadata_id,
-          }),
-        });
+        if (cloudflareBaseUrl) {
+          endpoint = `${cloudflareBaseUrl}${workerEndpoint}`;
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${workerAuthToken}`,
+            },
+            body: JSON.stringify({
+              firefliesId: job.fireflies_id,
+              metadataId: job.metadata_id,
+            }),
+          });
+        } else {
+          endpoint = `${pythonBackendUrl}/api/pipeline/process`;
+          response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              metadataId: job.metadata_id,
+            }),
+          });
+        }
 
         if (response.ok) {
+          let backendStatus: string | undefined;
+          try {
+            const payload = (await response.json()) as { status?: string };
+            backendStatus = payload.status;
+          } catch {
+            backendStatus = undefined;
+          }
           results.push({
             fireflies_id: job.fireflies_id,
             status: "triggered",
-            message: `${phase} phase triggered successfully`,
+            message: `${phase} phase triggered successfully${backendStatus ? ` (${backendStatus})` : ""}`,
+            endpoint,
           });
         } else {
           const error = await response.text();
@@ -97,6 +125,7 @@ export async function POST(request: NextRequest) {
             fireflies_id: job.fireflies_id,
             status: "error",
             message: `Failed to trigger ${phase}: ${error}`,
+            endpoint,
           });
         }
       } catch (error) {
@@ -104,6 +133,9 @@ export async function POST(request: NextRequest) {
           fireflies_id: job.fireflies_id,
           status: "error",
           message: `Error triggering ${phase}: ${error}`,
+          endpoint: cloudflareBaseUrl
+            ? `${cloudflareBaseUrl}${workerEndpoint}`
+            : `${pythonBackendUrl}/api/pipeline/process`,
         });
       }
     }

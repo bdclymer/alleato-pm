@@ -1,19 +1,288 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import type { Database } from "@/types/database.types"; /** * DEV ONLY: Get Supabase table schemas for table page generator * This endpoint should only be accessible in development/local environments */
+
+/**
+ * DEV ONLY: Get Supabase table schemas for table page generator.
+ * Only accessible in development/local environments.
+ */
+
 export async function GET() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV === "production"
+  ) {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 403 },
+    );
+  }
+
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  // Security check: only allow in development if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') { return NextResponse.json({ error: 'Not available in production' }, { status: 403 }) } try { // Extract table names from Database type type TableNames = keyof Database['public']['Tables'] const typeTableNames = {} as Record<TableNames, true> const tablesFromTypes = Object.keys(typeTableNames) as string[] // Get all table names from the Database type definition // This uses TypeScript type introspection at runtime const allPotentialTables = [ // Tables from types (if we can extract them) ...tablesFromTypes, // Additional common tables to ensure we catch everything 'companies', 'contacts', 'risks', 'opportunities', 'projects', 'users', 'tasks', 'meetings', 'documents', 'issues', 'rfis', 'submittals', 'daily_logs', 'daily_reports', 'daily_recaps', 'punch_list', 'drawings', 'photos', 'emails', 'notes', 'insights', 'decisions', 'meeting_segments', 'employees', 'clients', 'teams', 'project_teams', 'budget_line_items', 'change_orders', 'contracts', 'invoices', 'purchase_orders', 'commitments', 'meeting_transcripts', 'meeting_notes', 'meeting_participants', 'ai_insights', 'ai_analysis_jobs', 'notifications', 'activities', 'audit_logs', 'settings', 'roles', 'permissions', 'equipment', 'tools', 'materials', 'vendors', 'subcontractors', 'weather', 'safety_incidents', 'inspections', 'permits', 'specifications', 'schedules', 'milestones', 'deliverables', 'profiles', 'project_members', 'project_roles', 'custom_fields', 'attachments', 'comments', 'tags', 'categories', 'statuses', 'priorities', 'locations', 'cost_codes', 'budget_codes', 'work_orders', 'time_entries', 'expenses', 'payments', 'invoices_items', 'purchase_order_items', 'contract_items', 'change_order_items' ] // Remove duplicates const potentialTables = [...new Set(allPotentialTables)] // Test each table to see if it exists const existingTables: string[] = [] // Use Promise.allSettled to test all tables in parallel const results = await Promise.allSettled( potentialTables.map(async (tableName) => { const { error } = await supabase .from(tableName) .select('id') .limit(0) // Don't fetch any data, just test if table exists return { tableName, exists: !error } }) ) // Collect tables that exist results.forEach((result) => { if (result.status === 'fulfilled' && result.value.exists) { existingTables.push(result.value.tableName) } }) // Sort alphabetically existingTables.sort() return NextResponse.json({ tables: existingTables, count: existingTables.length, note: existingTables.length === 0 ? 'No tables found. Check Supabase connection and RLS policies.' : `Found ${existingTables.length} accessible tables.` }) } catch (error) { return NextResponse.json( { error: 'Failed to fetch schema', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 } ) }
-} /** * Get column information for a specific table */
+
+  try {
+    // Query information_schema for all public tables
+    const { data, error } = await supabase.rpc("get_public_tables");
+
+    if (!error && data && Array.isArray(data) && data.length > 0) {
+      const tables = (data as { table_name: string }[])
+        .map((r) => r.table_name)
+        .sort();
+      return NextResponse.json({
+        tables,
+        count: tables.length,
+        note: `Found ${tables.length} accessible tables.`,
+      });
+    }
+
+    // Fallback: query pg_tables directly via raw SQL
+    const { data: pgData, error: pgError } = await supabase
+      .from("pg_tables" as string)
+      .select("tablename")
+      .eq("schemaname", "public");
+
+    if (!pgError && pgData && pgData.length > 0) {
+      const tables = (pgData as { tablename: string }[])
+        .map((r) => r.tablename)
+        .filter((t) => !t.startsWith("_"))
+        .sort();
+      return NextResponse.json({
+        tables,
+        count: tables.length,
+        note: `Found ${tables.length} accessible tables.`,
+      });
+    }
+
+    // Final fallback: probe known table names
+    const knownTables = await discoverTablesByProbing(supabase);
+    return NextResponse.json({
+      tables: knownTables,
+      count: knownTables.length,
+      note:
+        knownTables.length === 0
+          ? "No tables found. Check Supabase connection and RLS policies."
+          : `Found ${knownTables.length} accessible tables (via probing).`,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Failed to fetch schema",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * Fallback: probe a list of common table names to see which exist.
+ */
+async function discoverTablesByProbing(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<string[]> {
+  const candidates = [
+    "companies",
+    "contacts",
+    "risks",
+    "opportunities",
+    "projects",
+    "tasks",
+    "meetings",
+    "documents",
+    "issues",
+    "rfis",
+    "submittals",
+    "daily_logs",
+    "daily_reports",
+    "punch_list",
+    "drawings",
+    "photos",
+    "emails",
+    "notes",
+    "insights",
+    "decisions",
+    "meeting_segments",
+    "employees",
+    "clients",
+    "teams",
+    "budget_line_items",
+    "change_orders",
+    "contracts",
+    "invoices",
+    "purchase_orders",
+    "commitments",
+    "meeting_transcripts",
+    "meeting_notes",
+    "meeting_participants",
+    "ai_insights",
+    "notifications",
+    "activities",
+    "audit_logs",
+    "settings",
+    "roles",
+    "permissions",
+    "equipment",
+    "vendors",
+    "subcontractors",
+    "inspections",
+    "permits",
+    "specifications",
+    "schedules",
+    "milestones",
+    "profiles",
+    "project_members",
+    "attachments",
+    "comments",
+    "tags",
+    "cost_codes",
+    "work_orders",
+    "time_entries",
+    "expenses",
+    "payments",
+  ];
+
+  const results = await Promise.allSettled(
+    candidates.map(async (tableName) => {
+      const { error } = await supabase
+        .from(tableName)
+        .select("*", { count: "exact", head: true });
+      return { tableName, exists: !error };
+    }),
+  );
+
+  const existing: string[] = [];
+  for (const result of results) {
+    if (result.status === "fulfilled" && result.value.exists) {
+      existing.push(result.value.tableName);
+    }
+  }
+  return existing.sort();
+}
+
+/**
+ * Get column information for a specific table.
+ */
 export async function POST(request: Request) {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.VERCEL_ENV === "production"
+  ) {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 403 },
+    );
+  }
+
   const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  // Security check: only allow in development if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') { return NextResponse.json({ error: 'Not available in production' }, { status: 403 }) } try { const { tableName } = await request.json() if (!tableName) { return NextResponse.json({ error: 'Table name required' }, { status: 400 }) } const supabase = await createClient() // Approach 1: Try to fetch a single row to infer column types const { data: sampleRow, error: sampleError } = await supabase .from(tableName) .select('*') .limit(1) .maybeSingle() if (sampleError) { return NextResponse.json( { error: 'Failed to fetch table data', details: sampleError.message }, { status: 500 } ) } // If table is empty, try to get columns using a different approach if (!sampleRow) { // Try to query with limit 0 to get column structure const { data: emptyData, error: emptyError } = await supabase .from(tableName) .select('*') .limit(0) if (emptyError) { return NextResponse.json( { error: 'Table is empty and cannot infer columns', details: 'Please add at least one row to the table first.' }, { status: 400 } ) } // For empty tables, return common columns // Most Supabase tables have these standard fields const commonColumns = [ { name: 'id', type: 'text', isSystemField: true }, { name: 'created_at', type: 'date', isSystemField: true }, { name: 'updated_at', type: 'date', isSystemField: true }, { name: 'name', type: 'text', isSystemField: false }, { name: 'title', type: 'text', isSystemField: false }, { name: 'description', type: 'text', isSystemField: false }, { name: 'status', type: 'badge', isSystemField: false }, ] return NextResponse.json({ columns: commonColumns, note: 'Table is empty. Showing common columns. Add data to the table for accurate column detection.' }) } // Extract column information from sample row const columns = Object.keys(sampleRow).map(key => { const value = sampleRow[key] let inferredType: 'text' | 'date' | 'badge' | 'number' | 'email' = 'text' // Infer type from column name patterns if (key.includes('_at') || key.includes('date') || key.includes('_date')) { inferredType = 'date' } else if (key.includes('email')) { inferredType = 'email' } else if (key === 'status' || key === 'category' || key === 'type' || key === 'priority' || key === 'impact' || key === 'likelihood' || key === 'role') { inferredType = 'badge' } else if (typeof value === 'number') { inferredType = 'number' } else if (typeof value === 'boolean') { inferredType = 'badge' } return { name: key, type: inferredType, isSystemField: key === 'id' || key === 'created_at' || key === 'updated_at' } }) return NextResponse.json({ columns }) } catch (error) { return NextResponse.json( { error: 'Failed to fetch columns', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 } ) }
+
+  try {
+    const { tableName } = await request.json();
+
+    if (!tableName) {
+      return NextResponse.json(
+        { error: "Table name required" },
+        { status: 400 },
+      );
+    }
+
+    // Fetch a sample row to infer column types
+    const { data: sampleRow, error: sampleError } = await supabase
+      .from(tableName)
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    if (sampleError) {
+      return NextResponse.json(
+        {
+          error: "Failed to fetch table data",
+          details: sampleError.message,
+        },
+        { status: 500 },
+      );
+    }
+
+    // If table is empty, return placeholder columns
+    if (!sampleRow) {
+      const commonColumns = [
+        { name: "id", type: "text", isSystemField: true },
+        { name: "created_at", type: "date", isSystemField: true },
+        { name: "updated_at", type: "date", isSystemField: true },
+        { name: "name", type: "text", isSystemField: false },
+        { name: "title", type: "text", isSystemField: false },
+        { name: "description", type: "text", isSystemField: false },
+        { name: "status", type: "badge", isSystemField: false },
+      ];
+
+      return NextResponse.json({
+        columns: commonColumns,
+        note: "Table is empty. Showing common columns. Add data for accurate detection.",
+      });
+    }
+
+    // Infer column types from sample data
+    const columns = Object.keys(sampleRow).map((key) => {
+      const value = (sampleRow as Record<string, unknown>)[key];
+      let inferredType: "text" | "date" | "badge" | "number" | "email" =
+        "text";
+
+      if (
+        key.includes("_at") ||
+        key.includes("date") ||
+        key.includes("_date")
+      ) {
+        inferredType = "date";
+      } else if (key.includes("email")) {
+        inferredType = "email";
+      } else if (
+        key === "status" ||
+        key === "category" ||
+        key === "type" ||
+        key === "priority" ||
+        key === "impact" ||
+        key === "likelihood" ||
+        key === "role" ||
+        key === "stage" ||
+        key === "pipeline_stage"
+      ) {
+        inferredType = "badge";
+      } else if (typeof value === "number") {
+        inferredType = "number";
+      } else if (typeof value === "boolean") {
+        inferredType = "badge";
+      }
+
+      return {
+        name: key,
+        type: inferredType,
+        isSystemField:
+          key === "id" || key === "created_at" || key === "updated_at",
+      };
+    });
+
+    return NextResponse.json({ columns });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Failed to fetch columns",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
+  }
 }

@@ -15,8 +15,15 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { Checkbox } from "@/components/ui/checkbox";
 import { SimplePagination } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
-import { ChevronDown, ChevronUp, GripVertical, Pin, PinOff } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Pin, PinOff } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -193,7 +200,7 @@ export function UnifiedTablePage<T>({
   const shouldRenderTableView =
     toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
   const isFullBleedTable = layout?.fullBleedTable ?? true;
-  const headerAlignment = layout?.headerAlignment ?? "center";
+  const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
@@ -709,6 +716,8 @@ export function UnifiedTablePage<T>({
                         width || pinnedStyle
                           ? ({ width, minWidth: width, ...pinnedStyle } as React.CSSProperties)
                           : undefined;
+                      const hasContextActions =
+                        isSortable || isHideable || resolvedFeatures.enableColumnPinning;
                       return (
                           <TableHead
                             key={column.id}
@@ -736,51 +745,99 @@ export function UnifiedTablePage<T>({
                               handleSortClick(column.id);
                             }
                           }}
-                          onContextMenu={(event) => {
-                            if (!isHideable) return;
-                            event.preventDefault();
-                            hideColumn(column.id);
-                          }}
-                          title={isHideable ? "Right-click to hide column" : undefined}
                         >
+                          {hasContextActions ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer",
+                                    headerAlignment === "left" ? "justify-start" : "justify-center",
+                                  )}
+                                  onContextMenu={(event) => {
+                                    event.preventDefault();
+                                    event.currentTarget.click();
+                                  }}
+                                >
+                                  <span>{column.label}</span>
+                                  {isSortable && renderSortIcon(column.id)}
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                {isSortable && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        sorting?.onSortChange(column.id, "asc");
+                                      }}
+                                    >
+                                      <ArrowUp className="mr-2 h-3.5 w-3.5" />
+                                      Sort ascending
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        sorting?.onSortChange(column.id, "desc");
+                                      }}
+                                    >
+                                      <ArrowDown className="mr-2 h-3.5 w-3.5" />
+                                      Sort descending
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {resolvedFeatures.enableColumnPinning && (
+                                  <>
+                                    {isSortable && <DropdownMenuSeparator />}
+                                    <DropdownMenuItem
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        pinColumn(column.id);
+                                      }}
+                                    >
+                                      {columnPinning.left.includes(column.id) ? (
+                                        <>
+                                          <PinOff className="mr-2 h-3.5 w-3.5" />
+                                          Unpin column
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Pin className="mr-2 h-3.5 w-3.5" />
+                                          Pin column
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {isHideable && (
+                                  <>
+                                    {(isSortable || resolvedFeatures.enableColumnPinning) && (
+                                      <DropdownMenuSeparator />
+                                    )}
+                                    <DropdownMenuItem
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        hideColumn(column.id);
+                                      }}
+                                    >
+                                      <EyeOff className="mr-2 h-3.5 w-3.5" />
+                                      Hide column
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
                             <div
                               className={cn(
                                 "flex items-center gap-1.5",
                                 headerAlignment === "left" ? "justify-start" : "justify-center",
                               )}
                             >
-                              {resolvedFeatures.enableColumnReorder && (
-                                <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                              )}
                               <span>{column.label}</span>
-                              {isSortable && renderSortIcon(column.id)}
-                              {resolvedFeatures.enableColumnPinning && (
-                                <button
-                                  type="button"
-                                  className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    pinColumn(column.id);
-                                  }}
-                                  aria-label={
-                                    columnPinning.left.includes(column.id)
-                                      ? `Unpin ${column.label}`
-                                      : `Pin ${column.label}`
-                                  }
-                                  title={
-                                    columnPinning.left.includes(column.id)
-                                      ? "Unpin column"
-                                      : "Pin column"
-                                  }
-                                >
-                                  {columnPinning.left.includes(column.id) ? (
-                                    <PinOff className="h-3.5 w-3.5" />
-                                  ) : (
-                                    <Pin className="h-3.5 w-3.5" />
-                                  )}
-                                </button>
-                              )}
                             </div>
+                          )}
                           <div
                             className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none"
                             onMouseDown={(event) => handleColumnResizeStart(event, column.id)}

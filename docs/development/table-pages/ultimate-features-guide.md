@@ -74,7 +74,8 @@ config={{
     }
   }
 }}
-```yaml
+```
+
 **UI Components:**
 - Dropdown menu for views (next to filters)
 - "Save Current View" button
@@ -135,7 +136,8 @@ config={{
     }
   ]
 }}
-```yaml
+```
+
 **UI Components:**
 
 - Checkbox in first column
@@ -195,7 +197,8 @@ config={{
     }
   ]
 }}
-```yaml
+```
+
 **Interactions:**
 - Double-click cell → Enter edit mode
 - Tab → Move to next editable cell
@@ -271,7 +274,8 @@ config={{
     }
   ]
 }}
-```yaml
+```
+
 **Interaction:**
 - Hover over column border → Cursor changes to resize cursor
 - Click and drag → Resize column
@@ -312,7 +316,8 @@ config={{
     defaultExpanded: false
   }
 }}
-```yaml
+```
+
 **UI:**
 
 - Chevron icon in first column (or add expand column)
@@ -345,7 +350,8 @@ config={{
     }
   ]
 }}
-```yaml
+```
+
 **UI:**
 - Two-row header: Group row + Column row
 - Group headers span multiple columns
@@ -423,7 +429,8 @@ config={{
     </DialogFooter>
   </DialogContent>
 </Dialog>
-```yaml
+```
+
 ---
 
 ### 9. Keyboard Navigation
@@ -461,7 +468,8 @@ config={{
     }
   }
 }}
-```yaml
+```
+
 **Keyboard Shortcuts Dialog:**
 
 ```tsx
@@ -483,7 +491,8 @@ config={{
     </div>
   </DialogContent>
 </Dialog>
-```yaml
+```
+
 ---
 
 ### 10. Mobile Responsiveness
@@ -565,7 +574,8 @@ config={{
 <div role="status" aria-live="polite" className="sr-only">
   {`${filteredData.length} items found. ${selectedIds.size} selected.`}
 </div>
-```yaml
+```
+
 **Focus Management:**
 - Visible focus rings (2px blue outline)
 - Skip to content link
@@ -593,7 +603,8 @@ config={{
     ]
   }
 }}
-```yaml
+```
+
 **Statistics Types:**
 
 - `sum` - Total of all values
@@ -618,7 +629,8 @@ config={{
     <TableCell className="text-green-600">-$64,500</TableCell>
   </TableRow>
 </TableFooter>
-```yaml
+```
+
 ---
 
 ### 13. Quick Filters (Click to Filter)
@@ -698,7 +710,8 @@ config={{
       .map(style => style.className)
   )}
 >
-```tsx
+```
+
 ---
 
 ### 15. Search History
@@ -761,29 +774,25 @@ const addToHistory = (term: string) => {
 
 ## Implementation Priority
 
-### Phase 1 (Essential - 1 week)
-
+### Phase 1
 1. ✅ Bulk selection & actions (already in base)
 2. ✅ Column statistics footer
 3. ✅ Export enhancements (JSON, selected rows)
 4. ✅ Quick filters (right-click to filter)
 
-### Phase 2 (Important - 2 weeks)
-
+### Phase 2
 1. ✅ Saved views & presets
 2. ✅ Inline cell editing
 3. ✅ Search history
 4. ✅ Row styling (conditional)
 
-### Phase 3 (Nice to Have - 3 weeks)
-
+### Phase 3 
 1. ✅ Keyboard navigation
 2. ✅ Column resizing
 3. ✅ Row expansion
 4. ✅ Advanced search operators
 
-### Phase 4 (Polish - 4 weeks)
-
+### Phase 4
 1. ✅ Column grouping
 2. ✅ Mobile optimizations
 3. ✅ Full accessibility

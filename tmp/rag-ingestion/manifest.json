@@ -1,0 +1,24 @@
+{
+  "files": {
+    "CEVA Burnville Sprinkler Phase 2 .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "934bd44d-8182-5fa2-bf40-4510814b792f",
+      "mtime": 1772952312.7553663,
+      "sha256": "64f8774bc5c1fab57dbf8f06ead6825b8a8155f9059dd18f9dc5e3ea48614f42",
+      "size": 29594,
+      "status": "ingested",
+      "updated_at": "2026-03-10T03:39:44.088542+00:00"
+    },
+    "CEVA Burnville Sprinkler Phase 2 R1.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "e52d5844-ecb7-56ec-aaf2-97e9946473fc",
+      "mtime": 1772952286.3192556,
+      "sha256": "7b013f03820d2a54ddec9ac3c29f7737da9e9e4bf2b35ad0056baff641b1e9c7",
+      "size": 28695,
+      "status": "ingested",
+      "updated_at": "2026-03-10T03:39:44.662246+00:00"
+    }
+  },
+  "updated_at": "2026-03-10T03:39:44.662265+00:00",
+  "version": 1
+}
