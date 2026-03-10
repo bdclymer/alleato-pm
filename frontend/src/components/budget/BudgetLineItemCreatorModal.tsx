@@ -5,7 +5,6 @@ import { Plus, X, Search, ChevronDown, ChevronRight, AlertTriangle } from "lucid
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -573,7 +572,7 @@ export function BudgetLineItemCreatorModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative z-50 w-full max-w-5xl mx-4 bg-background rounded-xl shadow-2xl border border-border overflow-hidden"
+              className="relative z-50 w-full max-w-6xl mx-4 bg-background rounded-xl shadow-2xl border border-border overflow-hidden"
             >
               {/* Header — padding only, no divider */}
               <div className="flex items-center justify-between px-6 pt-5 pb-4">
@@ -611,7 +610,7 @@ export function BudgetLineItemCreatorModal({
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
+                      <tr>
                         <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground w-8">#</th>
                         <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground">
                           Budget Code <span className="text-destructive">*</span>
@@ -736,7 +735,7 @@ export function BudgetLineItemCreatorModal({
                                 step="0.01"
                                 value={row.unitCost}
                                 onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
-                                placeholder="Unit cost"
+                                placeholder="$0.00"
                                 className="h-8 bg-muted/30 border-border/60"
                                 disabled={isCreating}
                                 clearZeroOnFocus={true}
@@ -748,12 +747,12 @@ export function BudgetLineItemCreatorModal({
                               <NumberInput
                                 step="0.01"
                                 value={row.amount}
-                                onChange={(e) => handleRowChange(index, "amount", e.target.value)}
                                 placeholder="$0.00"
-                                className="h-8 font-medium bg-muted/30 border-border/60"
+                                className="h-8 font-medium bg-muted/20 border-border/50 text-muted-foreground cursor-default"
                                 disabled={isCreating}
-                                clearZeroOnFocus={true}
-                                autoSelectOnFocus={true}
+                                readOnly
+                                clearZeroOnFocus={false}
+                                autoSelectOnFocus={false}
                                 currency={true}
                               />
                               {negativeAmountRows.has(index) && (
@@ -796,23 +795,18 @@ export function BudgetLineItemCreatorModal({
 
                 {/* Add Row Button */}
                 <div className="mt-4">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={addRow}
-                        disabled={isCreating}
-                        aria-label="Add line item"
-                        title="Add line item"
-                        className="h-8 w-8"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Add line item</TooltipContent>
-                  </Tooltip>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={addRow}
+                    disabled={isCreating}
+                    aria-label="Add line item"
+                    title="Add line item"
+                    className="h-8 px-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-transparent border-0 shadow-none"
+                  >
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Add Line Item
+                  </Button>
                 </div>
               </div>
 

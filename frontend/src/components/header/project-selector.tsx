@@ -60,20 +60,20 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 max-w-[200px] justify-between border border-border/40 bg-sidebar-accent/25 px-2 hover:bg-sidebar-accent/35 focus-visible:ring-0 focus-visible:ring-offset-0",
-            !currentProject && "text-zinc-500"
+            "h-8 max-w-[200px] justify-between border border-border/40 px-2 hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0",
+            !currentProject && "text-muted-foreground"
           )}
         >
           {currentProject ? (
-            <span className="truncate text-xs text-zinc-700 transition-colors hover:text-zinc-900 sm:text-sm">
+            <span className="truncate text-xs text-foreground/80 transition-colors hover:text-foreground sm:text-sm">
               {currentProject.name}
             </span>
           ) : (
-            <span className="text-zinc-500 text-xs sm:text-sm">
+            <span className="text-muted-foreground text-xs sm:text-sm">
               Select Project
             </span>
           )}
-          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-zinc-500" strokeWidth={1.6} />
+          <ChevronsUpDown className="ml-1.5 h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.6} />
         </Button>
       </PopoverTrigger>
       <PopoverContent

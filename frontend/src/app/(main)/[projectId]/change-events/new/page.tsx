@@ -198,7 +198,7 @@ export default function NewChangeEventPage() {
     <ProjectFormPageLayout
       title="Create Change Event"
       description="Document a potential change to project scope, schedule, or budget."
-      maxWidth="xl"
+      maxWidth="3xl"
       headerActions={headerActions}
     >
       <ChangeEventForm

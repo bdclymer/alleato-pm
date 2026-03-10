@@ -297,10 +297,16 @@ export default function DocumentsPage() {
   const handleEditField = React.useCallback(
     async (docId: string, field: string, value: string) => {
       try {
+        // project_id must be sent as number or null
+        const parsedValue =
+          field === "project_id"
+            ? value ? Number(value) : null
+            : value || null;
+
         const resp = await fetch(`/api/documents/${docId}/assign-project`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ [field]: value || null }),
+          body: JSON.stringify({ [field]: parsedValue }),
         });
         if (!resp.ok) {
           const result = await resp.json();
@@ -308,8 +314,15 @@ export default function DocumentsPage() {
         }
         // Optimistically update local state
         setDocuments((prev) =>
-          prev.map((d) => (d.id === docId ? { ...d, [field]: value || null } : d)),
+          prev.map((d) =>
+            d.id === docId ? { ...d, [field]: parsedValue } : d,
+          ),
         );
+        if (field === "project_id") {
+          toast.success(
+            parsedValue ? "Project assigned" : "Project removed",
+          );
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Failed to update";
@@ -323,9 +336,10 @@ export default function DocumentsPage() {
     () =>
       buildDocumentTableColumns({
         projectNames,
+        projects,
         onEditField: handleEditField,
       }),
-    [projectNames, handleEditField],
+    [projectNames, projects, handleEditField],
   );
 
   // ── Client-side filtering ──────────────────────────────────────

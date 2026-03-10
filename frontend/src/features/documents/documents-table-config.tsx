@@ -23,6 +23,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export type PipelineDoc = {
   id: string;
@@ -65,13 +78,15 @@ const CATEGORY_FILTER_OPTIONS = [
   { value: "administrative", label: "Administrative" },
 ];
 
+// Column order: View icon | Title | Project | Type | Category | Source | Stage | Created | Error
 export const documentColumns: ColumnConfig[] = [
+  { id: "view", label: "", defaultVisible: true },
   { id: "title", label: "Document", alwaysVisible: true },
+  { id: "project", label: "Project", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "source", label: "Source", defaultVisible: true },
   { id: "pipeline_stage", label: "Pipeline Stage", defaultVisible: true },
-  { id: "project", label: "Project", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
   { id: "error", label: "Error", defaultVisible: false },
 ];
@@ -141,47 +156,142 @@ export function getDocumentViewUrl(doc: PipelineDoc): string | null {
 
 export function buildDocumentTableColumns(opts?: {
   projectNames?: Map<number, string>;
+  projects?: Array<{ id: number; name: string | null }>;
   onEditField?: (docId: string, field: string, value: string) => void;
 }): TableColumn<PipelineDoc>[] {
-  const { projectNames, onEditField } = opts ?? {};
+  const { projectNames, projects, onEditField } = opts ?? {};
   const handleEdit = (field: string) =>
     onEditField
       ? (item: PipelineDoc, value: string) => onEditField(item.id, field, value)
       : undefined;
 
   return [
+    // View icon column (narrow, no header)
     {
       ...documentColumns[0],
       render: (item) => {
         const viewUrl = getDocumentViewUrl(item);
+        if (!viewUrl) return null;
         return (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">
-              {item.title || "Untitled Document"}
-            </span>
-            {viewUrl && (
-              <a
-                href={viewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                title="View file"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </div>
+          <a
+            href={viewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            title="View file"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
         );
       },
+    },
+    // Title
+    {
+      ...documentColumns[1],
+      render: (item) => (
+        <span className="font-medium">
+          {item.title || "Untitled Document"}
+        </span>
+      ),
       sortValue: (item) => item.title ?? "Untitled",
       sortable: true,
       editable: Boolean(onEditField),
       editValue: (item) => item.title ?? "",
       onEdit: handleEdit("title"),
     },
+    // Project (dropdown select editor)
     {
-      ...documentColumns[1],
+      ...documentColumns[2],
+      render: (item) => {
+        if (!item.project_id) {
+          return (
+            <span className="text-sm text-muted-foreground italic">
+              Unassigned
+            </span>
+          );
+        }
+        const name = projectNames?.get(item.project_id);
+        return (
+          <span className="text-sm text-muted-foreground">
+            {name || `Project #${item.project_id}`}
+          </span>
+        );
+      },
+      sortValue: (item) => item.project_id ?? 0,
+      sortable: true,
+      editable: Boolean(onEditField),
+      editValue: (item) => String(item.project_id ?? ""),
+      onEdit: onEditField
+        ? (item: PipelineDoc, value: string) =>
+            onEditField(item.id, "project_id", value)
+        : undefined,
+      renderEditor: ({ onCancel, item }) => (
+        <Popover
+          open
+          onOpenChange={(open) => {
+            if (!open) onCancel();
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="h-7 w-full rounded border border-border bg-background px-2 text-left text-sm -my-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {item.project_id
+                ? (projectNames?.get(item.project_id) ??
+                  `Project #${item.project_id}`)
+                : "Select project..."}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[240px] p-0"
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <Command>
+              <CommandInput placeholder="Search projects..." />
+              <CommandList className="max-h-[200px] overflow-y-auto">
+                <CommandEmpty>No projects found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="__none__"
+                    onSelect={() => {
+                      if (onEditField) {
+                        onEditField(item.id, "project_id", "");
+                      }
+                      onCancel();
+                    }}
+                  >
+                    <span className="italic text-muted-foreground">
+                      No project
+                    </span>
+                  </CommandItem>
+                  {(projects ?? []).map((p) => (
+                    <CommandItem
+                      key={p.id}
+                      value={p.name || `Project #${p.id}`}
+                      onSelect={() => {
+                        if (onEditField) {
+                          onEditField(item.id, "project_id", String(p.id));
+                        }
+                        onCancel();
+                      }}
+                    >
+                      {p.name || `Project #${p.id}`}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      ),
+    },
+    // Type
+    {
+      ...documentColumns[3],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.type || "-"}
@@ -193,8 +303,9 @@ export function buildDocumentTableColumns(opts?: {
       editValue: (item) => item.type ?? "",
       onEdit: handleEdit("type"),
     },
+    // Category
     {
-      ...documentColumns[2],
+      ...documentColumns[4],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.category || "-"}
@@ -206,8 +317,9 @@ export function buildDocumentTableColumns(opts?: {
       editValue: (item) => item.category ?? "",
       onEdit: handleEdit("category"),
     },
+    // Source
     {
-      ...documentColumns[3],
+      ...documentColumns[5],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.source || "-"}
@@ -216,8 +328,9 @@ export function buildDocumentTableColumns(opts?: {
       sortValue: (item) => item.source,
       sortable: true,
     },
+    // Pipeline Stage
     {
-      ...documentColumns[4],
+      ...documentColumns[6],
       render: (item) => (
         <StatusBadge
           status={stageLabel(item.pipeline_stage)}
@@ -233,24 +346,9 @@ export function buildDocumentTableColumns(opts?: {
       sortValue: (item) => item.pipeline_stage,
       sortable: true,
     },
+    // Created
     {
-      ...documentColumns[5],
-      render: (item) => {
-        if (!item.project_id) {
-          return <span className="text-sm text-muted-foreground">-</span>;
-        }
-        const name = projectNames?.get(item.project_id);
-        return (
-          <span className="text-sm text-muted-foreground">
-            {name || `Project #${item.project_id}`}
-          </span>
-        );
-      },
-      sortValue: (item) => item.project_id ?? 0,
-      sortable: true,
-    },
-    {
-      ...documentColumns[6],
+      ...documentColumns[7],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(item.created_at)}
@@ -259,8 +357,9 @@ export function buildDocumentTableColumns(opts?: {
       sortValue: (item) => item.created_at,
       sortable: true,
     },
+    // Error
     {
-      ...documentColumns[7],
+      ...documentColumns[8],
       render: (item) =>
         item.error_message ? (
           <span className="text-xs text-destructive line-clamp-2">

@@ -1,13 +1,43 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronsUpDown,
+  GripVertical,
+  Loader2,
+  Paperclip,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
+import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/table-config/formatters";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
 import { Form } from "@/components/forms/Form";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -15,7 +45,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { toast } from "sonner";
 
 type ChangeEventStatus = "open" | "pending" | "close" | "void";
 type ChangeEventOrigin = "emails" | "meetings" | "rfis";
@@ -80,20 +126,366 @@ interface PrimeContractOption {
   label: string;
 }
 
+interface VendorOption {
+  id: string;
+  vendor_name: string;
+  company?: string;
+}
+
+interface ContractOption {
+  id: string;
+  label: string;
+  type: "purchase_order" | "subcontract";
+}
+
+interface BudgetCodeOption {
+  id: string;
+  code: string;
+  description: string;
+  costType: string | null;
+  fullLabel: string;
+}
+
 const createEmptyLineItem = (): ChangeEventLineItem => ({
   budgetCode: "",
   description: "",
   vendor: "",
   contract: "",
   revenueUnitOfMeasure: "",
-  revenueQuantity: 0,
+  revenueQuantity: 1,
   revenueUnitCost: 0,
   revenueRom: 0,
-  costQuantity: 0,
+  costQuantity: 1,
   costUnitCost: 0,
   costRom: 0,
   nonCommittedCost: 0,
 });
+
+const UOM_OPTIONS = [
+  "LOT",
+  "EA",
+  "LF",
+  "SF",
+  "CY",
+  "SY",
+  "TON",
+  "GAL",
+  "HR",
+  "DAY",
+  "WK",
+  "MO",
+  "LS",
+];
+
+// ---------------------------------------------------------------------------
+// Vendor Combobox (inline per line item)
+// ---------------------------------------------------------------------------
+
+function VendorCombobox({
+  value,
+  onChange,
+  vendors,
+  onAddCompany,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  vendors: VendorOption[];
+  onAddCompany: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const vendorListId = React.useId();
+  const selected = vendors.find((v) => v.id === value);
+
+  const filtered = React.useMemo(() => {
+    if (!search.trim()) return vendors;
+    const q = search.toLowerCase();
+    return vendors.filter(
+      (v) =>
+        v.vendor_name.toLowerCase().includes(q) ||
+        v.company?.toLowerCase().includes(q),
+    );
+  }, [vendors, search]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={vendorListId}
+          aria-label="Select vendor"
+          className={cn(
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
+            "focus-visible:border-neutral-400 focus-visible:outline-none",
+            !selected && "text-muted-foreground",
+          )}
+        >
+          <span className="truncate text-left">
+            {selected ? selected.vendor_name : "Select vendor..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start" sideOffset={0}>
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search vendors..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList id={vendorListId} className="max-h-[200px]">
+            <CommandEmpty>No vendors found.</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((vendor) => (
+                <CommandItem
+                  key={vendor.id}
+                  value={vendor.id}
+                  onSelect={() => {
+                    onChange(vendor.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === vendor.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  {vendor.vendor_name}
+                  {vendor.company && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({vendor.company})
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup>
+              <CommandItem
+                onSelect={() => {
+                  setOpen(false);
+                  onAddCompany();
+                }}
+                className="cursor-pointer"
+              >
+                <Plus className="mr-2 h-4 w-4 text-primary" />
+                <span className="font-medium text-primary">
+                  Add Company to Directory
+                </span>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Contract Combobox (PO / Subcontract selector)
+// ---------------------------------------------------------------------------
+
+function ContractCombobox({
+  value,
+  onChange,
+  contracts,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  contracts: ContractOption[];
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const contractListId = React.useId();
+  const selected = contracts.find((c) => c.id === value);
+
+  const filtered = React.useMemo(() => {
+    if (!search.trim()) return contracts;
+    const q = search.toLowerCase();
+    return contracts.filter((c) => c.label.toLowerCase().includes(q));
+  }, [contracts, search]);
+
+  const poContracts = filtered.filter((c) => c.type === "purchase_order");
+  const subContracts = filtered.filter((c) => c.type === "subcontract");
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={contractListId}
+          aria-label="Select contract"
+          className={cn(
+            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
+            "focus-visible:border-neutral-400 focus-visible:outline-none",
+            !selected && "text-muted-foreground",
+          )}
+        >
+          <span className="truncate text-left">
+            {selected ? selected.label : "Select contract..."}
+          </span>
+          <ChevronDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[350px] p-0" align="start" sideOffset={0}>
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search POs & subcontracts..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList id={contractListId} className="max-h-[200px]">
+            <CommandEmpty>No contracts found.</CommandEmpty>
+            {poContracts.length > 0 && (
+              <CommandGroup heading="Purchase Orders">
+                {poContracts.map((c) => (
+                  <CommandItem
+                    key={c.id}
+                    value={c.id}
+                    onSelect={() => {
+                      onChange(c.id);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === c.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {c.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {subContracts.length > 0 && (
+              <CommandGroup heading="Subcontracts">
+                {subContracts.map((c) => (
+                  <CommandItem
+                    key={c.id}
+                    value={c.id}
+                    onSelect={() => {
+                      onChange(c.id);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        value === c.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {c.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add Company Modal
+// ---------------------------------------------------------------------------
+
+function AddCompanyModal({
+  open,
+  onOpenChange,
+  projectId,
+  onCompanyAdded,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: number;
+  onCompanyAdded: () => void;
+}) {
+  const [companyName, setCompanyName] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  const handleSave = async () => {
+    if (!companyName.trim()) return;
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/vendors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: companyName.trim() }),
+      });
+      if (response.ok) {
+        setCompanyName("");
+        onOpenChange(false);
+        onCompanyAdded();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
+        <h3 className="text-lg font-semibold">Add Company to Directory</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add a new company to the project directory so it can be selected as a vendor.
+        </p>
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="companyName">Company Name</Label>
+          <Input
+            id="companyName"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="Enter company name"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+          />
+        </div>
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setCompanyName("");
+              onOpenChange(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!companyName.trim() || saving}
+          >
+            {saving ? "Adding..." : "Add Company"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Form
+// ---------------------------------------------------------------------------
 
 export function ChangeEventForm({
   initialData,
@@ -128,33 +520,122 @@ export function ChangeEventForm({
   const [primeContractOptions, setPrimeContractOptions] = React.useState<
     PrimeContractOption[]
   >([]);
+  const [vendors, setVendors] = React.useState<VendorOption[]>([]);
+  const [contracts, setContracts] = React.useState<ContractOption[]>([]);
+  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCodeOption[]>([]);
+  const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
+
+  // Fetch dropdown options
+  const fetchVendors = React.useCallback(async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/vendors`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setVendors(Array.isArray(data) ? data : data.data || []);
+    } catch {
+      setVendors([]);
+    }
+  }, [projectId]);
 
   React.useEffect(() => {
-    const fetchPrimeContracts = async () => {
+    const fetchAll = async () => {
+      // Prime contracts
       try {
-        const response = await fetch(`/api/projects/${projectId}/prime-contracts`);
-        if (!response.ok) return;
-        const payload = await response.json();
-        const records = (payload.data || payload || []) as Array<{
-          id: number | string;
-          contract_number?: string;
-          number?: string;
-          title?: string;
-          description?: string;
-        }>;
-        setPrimeContractOptions(
-          records.map((record) => ({
-            value: String(record.id),
-            label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
-          })),
+        const response = await fetch(
+          `/api/projects/${projectId}/prime-contracts`,
         );
+        if (response.ok) {
+          const payload = await response.json();
+          const records = (payload.data || payload || []) as Array<{
+            id: number | string;
+            contract_number?: string;
+            number?: string;
+            title?: string;
+            description?: string;
+          }>;
+          setPrimeContractOptions(
+            records.map((record) => ({
+              value: String(record.id),
+              label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
+            })),
+          );
+        }
       } catch {
         setPrimeContractOptions([]);
       }
+
+      // Vendors
+      await fetchVendors();
+
+      // Purchase orders + subcontracts → contracts
+      try {
+        const [poRes, subRes] = await Promise.all([
+          fetch(`/api/projects/${projectId}/purchase-orders`),
+          fetch(`/api/projects/${projectId}/subcontracts`),
+        ]);
+
+        const contractList: ContractOption[] = [];
+
+        if (poRes.ok) {
+          const poPayload = await poRes.json();
+          const poData = poPayload.data || poPayload || [];
+          for (const po of poData) {
+            contractList.push({
+              id: `po-${po.id}`,
+              label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}`,
+              type: "purchase_order",
+            });
+          }
+        }
+
+        if (subRes.ok) {
+          const subPayload = await subRes.json();
+          const subData = subPayload.data || subPayload || [];
+          for (const sub of subData) {
+            contractList.push({
+              id: `sub-${sub.id}`,
+              label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}`,
+              type: "subcontract",
+            });
+          }
+        }
+
+        setContracts(contractList);
+      } catch {
+        setContracts([]);
+      }
+
+      // Budget codes
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/budget-codes`,
+        );
+        if (response.ok) {
+          const payload = await response.json();
+          const codes = (payload.budgetCodes || payload.data || []) as Array<{
+            id: string;
+            code: string;
+            description?: string;
+            costType?: string | null;
+            fullLabel?: string;
+          }>;
+          setBudgetCodes(
+            codes.map((bc) => ({
+              id: bc.id,
+              code: bc.code,
+              description: bc.description || "",
+              costType: bc.costType || null,
+              fullLabel: bc.fullLabel || `${bc.code}${bc.description ? ` - ${bc.description}` : ""}`,
+            })),
+          );
+        }
+      } catch {
+        setBudgetCodes([]);
+      }
     };
 
-    fetchPrimeContracts();
-  }, [projectId]);
+    fetchAll();
+  }, [projectId, fetchVendors]);
 
   const updateFormData = (updates: Partial<ChangeEventFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -180,11 +661,13 @@ export function ChangeEventForm({
 
       if (key === "revenueQuantity" || key === "revenueUnitCost") {
         current.revenueRom =
-          Number(current.revenueQuantity || 0) * Number(current.revenueUnitCost || 0);
+          Number(current.revenueQuantity || 0) *
+          Number(current.revenueUnitCost || 0);
       }
       if (key === "costQuantity" || key === "costUnitCost") {
         current.costRom =
-          Number(current.costQuantity || 0) * Number(current.costUnitCost || 0);
+          Number(current.costQuantity || 0) *
+          Number(current.costUnitCost || 0);
       }
 
       nextItems[index] = current;
@@ -247,147 +730,236 @@ export function ChangeEventForm({
   };
 
   return (
-    <Form
-      onSubmit={handleSubmit}
-      data-dev-autofill-disabled="true"
-      data-form-id="change-event-create"
-    >
-      <div className="space-y-12 rounded-sm p-6 lg:p-8">
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-              General Information
-            </h2>
-            <div className="h-px flex-1 bg-primary" />
-          </div>
+    <>
+      <AddCompanyModal
+        open={addCompanyOpen}
+        onOpenChange={setAddCompanyOpen}
+        projectId={projectId}
+        onCompanyAdded={fetchVendors}
+      />
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <Form
+        onSubmit={handleSubmit}
+        data-dev-autofill-disabled="true"
+        data-form-id="change-event-create"
+      >
+        <div className="space-y-12 rounded-sm p-6 lg:p-8">
+          {/* ── General Information ── */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+                General Information
+              </h2>
+              <div className="h-px flex-1 bg-primary" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="contractNumber">
+                  Contract Number <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="contractNumber"
+                  value={formData.contractNumber}
+                  onChange={(e) =>
+                    updateFormData({ contractNumber: e.target.value })
+                  }
+                  placeholder="Enter contract number"
+                />
+                {errors.contractNumber && (
+                  <p className="text-sm text-destructive">
+                    {errors.contractNumber}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => updateFormData({ title: e.target.value })}
+                  placeholder="Enter title"
+                />
+                {errors.title && (
+                  <p className="text-sm text-destructive">{errors.title}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">
+                  Status <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    updateFormData({ status: value as ChangeEventStatus })
+                  }
+                >
+                  <SelectTrigger id="status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="close">Close</SelectItem>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="void">Void</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="origin">Origin</Label>
+                <Select
+                  value={formData.origin || ""}
+                  onValueChange={(value) =>
+                    updateFormData({ origin: value as ChangeEventOrigin })
+                  }
+                >
+                  <SelectTrigger id="origin" className="w-full">
+                    <SelectValue placeholder="Select Origin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="emails">Emails</SelectItem>
+                    <SelectItem value="meetings">Meetings</SelectItem>
+                    <SelectItem value="rfis">RFI&apos;s</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="type">Type</Label>
+                <Select
+                  value={formData.type || ""}
+                  onValueChange={(value) =>
+                    updateFormData({ type: value as ChangeEventType })
+                  }
+                >
+                  <SelectTrigger id="type" className="w-full">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="allowance">Allowance</SelectItem>
+                    <SelectItem value="contingency">Contingency</SelectItem>
+                    <SelectItem value="owner_change">Owner Change</SelectItem>
+                    <SelectItem value="tbd">TBD</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="changeReason">Change Reason</Label>
+                <Select
+                  value={formData.changeReason || ""}
+                  onValueChange={(value) =>
+                    updateFormData({ changeReason: value as ChangeReason })
+                  }
+                >
+                  <SelectTrigger id="changeReason" className="w-full">
+                    <SelectValue placeholder="Select Change Reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="allowance">Allowance</SelectItem>
+                    <SelectItem value="backcharge">Backcharge</SelectItem>
+                    <SelectItem value="client_request">
+                      Client Request
+                    </SelectItem>
+                    <SelectItem value="design_development">
+                      Design Development
+                    </SelectItem>
+                    <SelectItem value="existing_condition">
+                      Existing Condition
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="scope">Scope</Label>
+                <Select
+                  value={formData.scope || ""}
+                  onValueChange={(value) => updateFormData({ scope: value })}
+                >
+                  <SelectTrigger id="scope" className="w-full">
+                    <SelectValue placeholder="Select Scope" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="In Scope">In Scope</SelectItem>
+                    <SelectItem value="Out of Scope">Out of Scope</SelectItem>
+                    <SelectItem value="To Be Determined">
+                      To Be Determined
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lineItemRevenueSource">
+                  Line Item Revenue Source
+                </Label>
+                <Select
+                  value={formData.lineItemRevenueSource || ""}
+                  onValueChange={(value) =>
+                    updateFormData({ lineItemRevenueSource: value })
+                  }
+                >
+                  <SelectTrigger id="lineItemRevenueSource" className="w-full">
+                    <SelectValue placeholder="Select Revenue Source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="match_latest_cost">
+                      Match Latest Cost
+                    </SelectItem>
+                    <SelectItem value="latest_cost">Latest Cost</SelectItem>
+                    <SelectItem value="latest_price">Latest Price</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="primeContractId">
+                  Prime Contract For Markup Estimates
+                </Label>
+                <Select
+                  value={formData.primeContractId || ""}
+                  onValueChange={(value) =>
+                    updateFormData({ primeContractId: value })
+                  }
+                >
+                  <SelectTrigger id="primeContractId" className="w-full">
+                    <SelectValue placeholder="Select Prime Contract" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {primeContractOptions.length === 0 ? (
+                      <SelectItem value="__none__" disabled>
+                        No prime contracts available
+                      </SelectItem>
+                    ) : (
+                      primeContractOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="contractNumber">
-                Contract Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="contractNumber"
-                value={formData.contractNumber}
-                onChange={(e) => updateFormData({ contractNumber: e.target.value })}
-                placeholder="Enter contract number"
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                rows={4}
+                value={formData.description || ""}
+                onChange={(e) =>
+                  updateFormData({ description: e.target.value })
+                }
+                placeholder="Describe the change event"
               />
-              {errors.contractNumber && (
-                <p className="text-sm text-destructive">{errors.contractNumber}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">
-                Title <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => updateFormData({ title: e.target.value })}
-                placeholder="Enter title"
-              />
-              {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="status">
-                Status <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) =>
-                  updateFormData({ status: value as ChangeEventStatus })
-                }
-              >
-                <SelectTrigger id="status" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="close">Close</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="void">Void</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="origin">Origin</Label>
-              <Select
-                value={formData.origin || ""}
-                onValueChange={(value) =>
-                  updateFormData({ origin: value as ChangeEventOrigin })
-                }
-              >
-                <SelectTrigger id="origin" className="w-full">
-                  <SelectValue placeholder="Select Origin" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="emails">Emails</SelectItem>
-                  <SelectItem value="meetings">Meetings</SelectItem>
-                  <SelectItem value="rfis">RFI&apos;s</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select
-                value={formData.type || ""}
-                onValueChange={(value) =>
-                  updateFormData({ type: value as ChangeEventType })
-                }
-              >
-                <SelectTrigger id="type" className="w-full">
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="allowance">Allowance</SelectItem>
-                  <SelectItem value="contingency">Contingency</SelectItem>
-                  <SelectItem value="owner_change">Owner Change</SelectItem>
-                  <SelectItem value="tbd">TBD</SelectItem>
-                  <SelectItem value="transfer">Transfer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="changeReason">Change Reason</Label>
-              <Select
-                value={formData.changeReason || ""}
-                onValueChange={(value) =>
-                  updateFormData({ changeReason: value as ChangeReason })
-                }
-              >
-                <SelectTrigger id="changeReason" className="w-full">
-                  <SelectValue placeholder="Select Change Reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="allowance">Allowance</SelectItem>
-                  <SelectItem value="backcharge">Backcharge</SelectItem>
-                  <SelectItem value="client_request">Client Request</SelectItem>
-                  <SelectItem value="design_development">Design Development</SelectItem>
-                  <SelectItem value="existing_condition">Existing Condition</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="scope">Scope</Label>
-              <Select
-                value={formData.scope || ""}
-                onValueChange={(value) => updateFormData({ scope: value })}
-              >
-                <SelectTrigger id="scope" className="w-full">
-                  <SelectValue placeholder="Select Scope" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="In Scope">In Scope</SelectItem>
-                  <SelectItem value="Out of Scope">Out of Scope</SelectItem>
-                  <SelectItem value="To Be Determined">To Be Determined</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
@@ -405,331 +977,424 @@ export function ChangeEventForm({
                 </Label>
               </div>
             </div>
+          </section>
 
-            <div className="space-y-2">
-              <Label htmlFor="lineItemRevenueSource">Line Item Revenue Source</Label>
-              <Select
-                value={formData.lineItemRevenueSource || ""}
-                onValueChange={(value) =>
-                  updateFormData({ lineItemRevenueSource: value })
-                }
+          {/* ── Line Items ── */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+                Line Items
+              </h2>
+              <div className="h-px flex-1 bg-primary" />
+            </div>
+
+            <TooltipProvider>
+            <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
+              <Table>
+                <TableHeader className="border-y-0 [&_tr]:border-b-0">
+                  {/* Group headers */}
+                  <TableRow className="border-b-0 bg-muted/70 hover:bg-muted/70">
+                    <TableHead className="w-[40px] px-1.5 py-1.5" />
+                    <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                      Detail
+                    </TableHead>
+                    <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                      Revenue
+                    </TableHead>
+                    <TableHead colSpan={3} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                      Cost
+                    </TableHead>
+                    <TableHead className="px-1 py-1" />
+                    <TableHead className="w-12 px-1 py-1" />
+                  </TableRow>
+                  {/* Column headers */}
+                  <TableRow className="border-b-0 bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="w-[36px] px-1 py-1.5" />
+                    <TableHead className="min-w-52 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</TableHead>
+                    <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</TableHead>
+                    <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Vendor</TableHead>
+                    <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Contract</TableHead>
+                    <TableHead className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">UOM</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Unit of Measure</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">QTY</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Revenue quantity for this line item</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
+                    <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</TableHead>
+                    <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">QTY</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Cost quantity for this line item</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
+                    <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</TableHead>
+                    <TableHead className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
+                    <TableHead className="w-12 px-1 py-1.5" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {formData.lineItems.map((item, index) => (
+                    <TableRow
+                      key={`line-item-${index}`}
+                      className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+                    >
+                      {/* Drag handle */}
+                      <TableCell className="w-9 px-1 py-1.5 align-top">
+                        <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      </TableCell>
+
+                      {/* Budget Code */}
+                      <TableCell className="min-w-52 px-1 py-1.5 align-top">
+                        <BudgetCodeSelector
+                          value={item.budgetCode || ""}
+                          onValueChange={(value) =>
+                            updateLineItem(index, "budgetCode", value)
+                          }
+                          budgetCodes={budgetCodes}
+                          onCreateNew={() =>
+                            toast.info("Create budget code feature coming soon")
+                          }
+                          placeholder="Select budget code..."
+                        />
+                      </TableCell>
+
+                      {/* Description */}
+                      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+                        <Input
+                          value={item.description}
+                          onChange={(e) =>
+                            updateLineItem(index, "description", e.target.value)
+                          }
+                          placeholder="Enter description"
+                        />
+                      </TableCell>
+
+                      {/* Vendor */}
+                      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+                        <VendorCombobox
+                          value={item.vendor}
+                          onChange={(value) =>
+                            updateLineItem(index, "vendor", value)
+                          }
+                          vendors={vendors}
+                          onAddCompany={() => setAddCompanyOpen(true)}
+                        />
+                      </TableCell>
+
+                      {/* Contract */}
+                      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+                        <ContractCombobox
+                          value={item.contract}
+                          onChange={(value) =>
+                            updateLineItem(index, "contract", value)
+                          }
+                          contracts={contracts}
+                        />
+                      </TableCell>
+
+                      {/* Revenue: UOM */}
+                      <TableCell className="w-28 px-1 py-1.5 align-top">
+                        <Select
+                          value={item.revenueUnitOfMeasure || ""}
+                          onValueChange={(value) =>
+                            updateLineItem(index, "revenueUnitOfMeasure", value)
+                          }
+                        >
+                          <SelectTrigger className="h-9 w-full">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {UOM_OPTIONS.map((unit) => (
+                              <SelectItem key={unit} value={unit}>
+                                {unit}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Revenue: Quantity */}
+                      <TableCell className="w-40 px-1 py-1.5 align-top">
+                        <Input
+                          type="number"
+                          className="min-w-[96px] text-right"
+                          value={item.revenueQuantity ?? 1}
+                          onChange={(e) =>
+                            updateLineItem(
+                              index,
+                              "revenueQuantity",
+                              e.target.value === "" ? 1 : Number(e.target.value) || 1,
+                            )
+                          }
+                          onFocus={(e) => e.target.select()}
+                          placeholder="1"
+                        />
+                      </TableCell>
+
+                      {/* Revenue: Unit Cost */}
+                      <TableCell className="w-56 px-1 py-1.5 align-top">
+                        <InputGroup>
+                          <InputGroupAddon>$</InputGroupAddon>
+                          <InputGroupInput
+                            type="number"
+                            step="0.01"
+                            className="h-9 min-w-[120px] text-right"
+                            value={item.revenueUnitCost ?? ""}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "revenueUnitCost",
+                                Number(e.target.value) || 0,
+                              )
+                            }
+                            onFocus={(e) => e.target.select()}
+                            placeholder="0.00"
+                          />
+                        </InputGroup>
+                      </TableCell>
+
+                      {/* Revenue ROM (computed) */}
+                      <TableCell className="w-36 px-1 py-1.5 align-top">
+                        <div
+                          className={cn(
+                            "pt-2 text-right text-sm font-semibold",
+                            item.revenueRom > 0
+                              ? "text-foreground"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {formatCurrency(item.revenueRom)}
+                        </div>
+                      </TableCell>
+
+                      {/* Cost: Quantity */}
+                      <TableCell className="w-40 px-1 py-1.5 align-top">
+                        <Input
+                          type="number"
+                          className="min-w-[96px] text-right"
+                          value={item.costQuantity ?? 1}
+                          onChange={(e) =>
+                            updateLineItem(
+                              index,
+                              "costQuantity",
+                              e.target.value === "" ? 1 : Number(e.target.value) || 1,
+                            )
+                          }
+                          onFocus={(e) => e.target.select()}
+                          placeholder="1"
+                        />
+                      </TableCell>
+
+                      {/* Cost: Unit Cost */}
+                      <TableCell className="w-56 px-1 py-1.5 align-top">
+                        <InputGroup>
+                          <InputGroupAddon>$</InputGroupAddon>
+                          <InputGroupInput
+                            type="number"
+                            step="0.01"
+                            className="h-9 min-w-[120px] text-right"
+                            value={item.costUnitCost ?? ""}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "costUnitCost",
+                                Number(e.target.value) || 0,
+                              )
+                            }
+                            onFocus={(e) => e.target.select()}
+                            placeholder="0.00"
+                          />
+                        </InputGroup>
+                      </TableCell>
+
+                      {/* Cost ROM (computed) */}
+                      <TableCell className="w-36 px-1 py-1.5 align-top">
+                        <div
+                          className={cn(
+                            "pt-2 text-right text-sm font-semibold",
+                            item.costRom > 0
+                              ? "text-foreground"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {formatCurrency(item.costRom)}
+                        </div>
+                      </TableCell>
+
+                      {/* Non-committed cost */}
+                      <TableCell className="w-44 px-1 py-1.5 align-top">
+                        <InputGroup>
+                          <InputGroupAddon>$</InputGroupAddon>
+                          <InputGroupInput
+                            type="number"
+                            step="0.01"
+                            className="h-9 min-w-[120px] text-right"
+                            value={item.nonCommittedCost ?? ""}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "nonCommittedCost",
+                                Number(e.target.value) || 0,
+                              )
+                            }
+                            onFocus={(e) => e.target.select()}
+                            placeholder="0.00"
+                          />
+                        </InputGroup>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="w-12 px-1 py-1.5 align-top">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeLineItem(index)}
+                          disabled={formData.lineItems.length === 1}
+                          className="h-7 w-7 p-0 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {/* Totals row */}
+                  <TableRow className="hover:bg-muted">
+                    <TableCell className="px-1.5 py-2" />
+                    <TableCell colSpan={4} className="px-1.5 py-3 text-xs font-semibold text-foreground">
+                      Totals
+                    </TableCell>
+                    <TableCell colSpan={3} className="px-1.5 py-2" />
+                    <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0))}
+                    </TableCell>
+                    <TableCell colSpan={2} className="px-1.5 py-3" />
+                    <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0))}
+                    </TableCell>
+                    <TableCell className="px-1.5 py-3 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.nonCommittedCost || 0), 0))}
+                    </TableCell>
+                    <TableCell className="px-1.5 py-2" />
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+            </TooltipProvider>
+
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                onClick={addLineItem}
+                className="h-10 gap-2 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
               >
-                <SelectTrigger id="lineItemRevenueSource" className="w-full">
-                  <SelectValue placeholder="Select Revenue Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="match_latest_cost">Match Latest Cost</SelectItem>
-                  <SelectItem value="latest_cost">Latest Cost</SelectItem>
-                  <SelectItem value="latest_price">Latest Price</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="primeContractId">Prime Contract For Markup Estimates</Label>
-              <Select
-                value={formData.primeContractId || ""}
-                onValueChange={(value) => updateFormData({ primeContractId: value })}
-              >
-                <SelectTrigger id="primeContractId" className="w-full">
-                  <SelectValue placeholder="Select Prime Contract" />
-                </SelectTrigger>
-                <SelectContent>
-                  {primeContractOptions.length === 0 ? (
-                    <SelectItem value="__none__" disabled>
-                      No prime contracts available
-                    </SelectItem>
-                  ) : (
-                    primeContractOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              rows={4}
-              value={formData.description || ""}
-              onChange={(e) => updateFormData({ description: e.target.value })}
-              placeholder="Describe the change event"
-            />
-          </div>
-        </section>
-
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-              Line Items
-            </h2>
-            <div className="h-px flex-1 bg-primary" />
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-max w-full border-collapse">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
-                    Detail
-                  </th>
-                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
-                    Revenue
-                  </th>
-                  <th colSpan={4} className="px-3 py-2 text-left text-sm">
-                    Cost
-                  </th>
-                  <th className="px-3 py-2 text-left text-sm"> </th>
-                </tr>
-                <tr>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Budget code</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Description</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Vendor</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Contract</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit of measure</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Quantity</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit cost</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Revenue ROM</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Quantity</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Unit cost</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Cost ROM</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground">Non-committed cost</th>
-                  <th className="px-3 py-2 text-left text-[11px] font-normal text-muted-foreground"> </th>
-                </tr>
-              </thead>
-              <tbody>
-                {formData.lineItems.map((item, index) => (
-                  <tr key={`line-item-${index}`}>
-                    <td className="p-2">
-                      <Input
-                        value={item.budgetCode}
-                        onChange={(e) =>
-                          updateLineItem(index, "budgetCode", e.target.value)
-                        }
-                        placeholder="Budget code"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateLineItem(index, "description", e.target.value)
-                        }
-                        placeholder="Description"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        value={item.vendor}
-                        onChange={(e) => updateLineItem(index, "vendor", e.target.value)}
-                        placeholder="Vendor"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        value={item.contract}
-                        onChange={(e) =>
-                          updateLineItem(index, "contract", e.target.value)
-                        }
-                        placeholder="Contract"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        value={item.revenueUnitOfMeasure}
-                        onChange={(e) =>
-                          updateLineItem(index, "revenueUnitOfMeasure", e.target.value)
-                        }
-                        placeholder="UOM"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueQuantity}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "revenueQuantity",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueUnitCost}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "revenueUnitCost",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.revenueRom}
-                        onChange={(e) =>
-                          updateLineItem(index, "revenueRom", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.costQuantity}
-                        onChange={(e) =>
-                          updateLineItem(index, "costQuantity", Number(e.target.value) || 0)
-                        }
-                        placeholder="0"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.costUnitCost}
-                        onChange={(e) =>
-                          updateLineItem(index, "costUnitCost", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.costRom}
-                        onChange={(e) =>
-                          updateLineItem(index, "costRom", Number(e.target.value) || 0)
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-2">
-                      <Input
-                        type="number"
-                        value={item.nonCommittedCost}
-                        onChange={(e) =>
-                          updateLineItem(
-                            index,
-                            "nonCommittedCost",
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="p-2 text-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeLineItem(index)}
-                        disabled={formData.lineItems.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <Button type="button" variant="outline" onClick={addLineItem}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Line Item
-          </Button>
-        </section>
-
-        <section className="space-y-6">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-              Attachments
-            </h2>
-            <div className="h-px flex-1 bg-primary" />
-          </div>
-
-          <div className="rounded-lg border border-dashed p-6">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Paperclip className="h-5 w-5 text-muted-foreground" />
-              <Label
-                htmlFor="attachments"
-                className="cursor-pointer rounded-md border bg-muted px-3 py-2 text-sm"
-              >
-                Attach Files
-              </Label>
-              <p className="text-sm text-muted-foreground">or Drag & Drop</p>
-              <Input
-                id="attachments"
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(e) => addAttachments(e.target.files)}
-              />
-            </div>
-          </div>
-
-          {formData.attachments.length > 0 && (
-            <div className="space-y-2">
-              {formData.attachments.map((file, index) => (
-                <div
-                  key={`${file.name}-${index}`}
-                  className="flex items-center justify-between rounded-md border p-3"
-                >
-                  <div className="truncate text-sm">{file.name}</div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeAttachment(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
-          <p className="text-sm text-muted-foreground">
-            <span className="text-destructive">*</span> Required fields
-          </p>
-          <div className="flex gap-3">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              data-testid="change-event-submit-button"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="mr-2">Saving...</span>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </>
-              ) : mode === "create" ? (
-                "Create Change Event"
-              ) : (
-                "Update Change Event"
+                <Plus className="h-4 w-4" />
+                Add Line Item
+              </Button>
+              {formData.lineItems.length > 1 && (
+                <span className="text-sm text-muted-foreground">
+                  {formData.lineItems.length} line items
+                </span>
               )}
-            </Button>
+            </div>
+          </section>
+
+          {/* ── Attachments ── */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
+                Attachments
+              </h2>
+              <div className="h-px flex-1 bg-primary" />
+            </div>
+
+            <div className="rounded-lg border border-dashed p-6">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <Paperclip className="h-5 w-5 text-muted-foreground" />
+                <Label
+                  htmlFor="attachments"
+                  className="cursor-pointer rounded-md border bg-muted px-3 py-2 text-sm"
+                >
+                  Attach Files
+                </Label>
+                <p className="text-sm text-muted-foreground">or Drag & Drop</p>
+                <Input
+                  id="attachments"
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => addAttachments(e.target.files)}
+                />
+              </div>
+            </div>
+
+            {formData.attachments.length > 0 && (
+              <div className="space-y-2">
+                {formData.attachments.map((file, index) => (
+                  <div
+                    key={`${file.name}-${index}`}
+                    className="flex items-center justify-between rounded-md border p-3"
+                  >
+                    <div className="truncate text-sm">{file.name}</div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Submit Bar ── */}
+          <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+            <p className="text-sm text-muted-foreground">
+              <span className="text-destructive">*</span> Required fields
+            </p>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="change-event-submit-button"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="mr-2">Saving...</span>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </>
+                ) : mode === "create" ? (
+                  "Create Change Event"
+                ) : (
+                  "Update Change Event"
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    </Form>
+      </Form>
+    </>
   );
 }
