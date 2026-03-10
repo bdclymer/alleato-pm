@@ -298,7 +298,7 @@ export function EnhancedBudgetLineItemModal({
               {rows.length} line item{rows.length > 1 ? 's' : ''}
             </span>
             <span className="font-medium">
-              Total: <span className="text-brand">${totalAmount.toFixed(2)}</span>
+              Total: <span className="text-primary">${totalAmount.toFixed(2)}</span>
             </span>
           </div>
         </DialogHeader>

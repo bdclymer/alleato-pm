@@ -127,7 +127,7 @@ export function BudgetPageHeader({
           <DropdownMenuTrigger asChild>
             <Button
               size="sm"
-              className="bg-brand hover:bg-brand/90 text-white flex-1 min-w-[100px]"
+              className="bg-primary hover:bg-primary/90 text-white flex-1 min-w-[100px]"
             >
               <Plus className="w-4 h-4 mr-1" />
               Create
@@ -230,7 +230,7 @@ export function BudgetPageHeader({
           <DropdownMenuTrigger asChild>
             <Button
               size="sm"
-              className="bg-brand hover:bg-brand/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create

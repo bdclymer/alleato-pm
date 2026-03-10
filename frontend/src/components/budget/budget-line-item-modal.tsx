@@ -565,7 +565,7 @@ export function BudgetLineItemModal({
                                           setOpenPopoverId(null);
                                           setShowCreateCodeModal(true);
                                         }}
-                                        className="text-link"
+                                        className="text-primary"
                                       >
                                         <Plus className="mr-2 h-4 w-4" />
                                         Create New Budget Code

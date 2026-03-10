@@ -498,7 +498,7 @@ export function InlineBudgetLineItemCreator({
                                 setOpenPopoverId(null);
                                 setShowCreateCodeModal(true);
                               }}
-                              className="text-blue-600"
+                              className="text-primary"
                             >
                               <Plus className="mr-2 h-4 w-4" />
                               Create New Budget Code

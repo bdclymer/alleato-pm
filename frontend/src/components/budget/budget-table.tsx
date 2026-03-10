@@ -952,7 +952,7 @@ export function BudgetTable({
                       className={cn(
                         "border-b border-border transition-colors",
                         "hover:bg-muted/20",
-                        row.getIsSelected() && "bg-brand/5",
+                        row.getIsSelected() && "bg-primary/5",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (
@@ -995,7 +995,7 @@ export function BudgetTable({
 
             {/* Inline Create Row */}
             {!isLocked && showInlineCreate && (
-              <TableRow className="bg-brand/5 border-b border-border">
+              <TableRow className="bg-primary/5 border-b border-border">
                 <TableCell className="py-2 pl-1 pr-0.5">
                   {/* Empty checkbox cell */}
                 </TableCell>

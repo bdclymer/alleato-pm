@@ -1,7 +1,6 @@
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Card } from "@/components/ui/card";
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
-import type { FileObject } from "@supabase/storage-js";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,6 +13,14 @@ interface ProjectPhoto {
   size: number;
   updatedAt: string | null;
   mimeType: string | null;
+}
+
+interface StorageImageLikeEntry {
+  id?: string | null;
+  name: string;
+  metadata?: { mimetype?: string | null; size?: number | null } | null;
+  updated_at?: string | null;
+  created_at?: string | null;
 }
 
 function formatFileSize(bytes: number) {
@@ -36,7 +43,7 @@ function formatDateString(timestamp: string | null) {
   }).format(new Date(timestamp));
 }
 
-function isImage(entry: FileObject) {
+function isImage(entry: StorageImageLikeEntry) {
   const mimeType = entry.metadata?.mimetype;
   if (mimeType?.startsWith("image/")) return true;
   return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(entry.name);
@@ -60,7 +67,7 @@ async function loadPhotoEntries(
   }
 
   const photoEntries = storageEntries.filter(
-    (entry): entry is FileObject => Boolean(entry.id) && isImage(entry),
+    (entry) => Boolean(entry.id) && isImage(entry),
   );
 
   const photos = await Promise.all(

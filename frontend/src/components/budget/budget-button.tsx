@@ -21,12 +21,12 @@ function BudgetButton({
 
   const intentStyles = {
     primary: cn(
-      "bg-brand text-white hover:bg-brand/90 focus:ring-brand/50",
-      "disabled:bg-brand/50 disabled:text-white/70"
+      "bg-primary text-white hover:bg-primary/90 focus:ring-primary/50",
+      "disabled:bg-primary/50 disabled:text-white/70"
     ),
     secondary: cn(
       "border border-border bg-background hover:bg-muted text-foreground",
-      "focus:ring-brand/30 disabled:bg-muted/50 disabled:text-muted-foreground"
+      "focus:ring-primary/30 disabled:bg-muted/50 disabled:text-muted-foreground"
     ),
     danger: cn(
       "bg-destructive text-white hover:bg-destructive/90 focus:ring-destructive/50",
@@ -34,7 +34,7 @@ function BudgetButton({
     ),
     ghost: cn(
       "bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground",
-      "focus:ring-brand/30 disabled:text-muted-foreground/50"
+      "focus:ring-primary/30 disabled:text-muted-foreground/50"
     )
   }
 

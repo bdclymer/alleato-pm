@@ -142,7 +142,7 @@ function BudgetCodeSelector({
             <CommandEmpty>
               {loading ? (
                 <div className="flex items-center gap-2 py-6 text-center">
-                  <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                  <div className="mx-auto h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                   <span>Loading budget codes...</span>
                 </div>
               ) : (
@@ -186,8 +186,8 @@ function BudgetCodeSelector({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem onSelect={handleCreateNew} className="cursor-pointer">
-                    <Plus className="mr-2 h-4 w-4 text-brand" />
-                    <span className="text-brand font-medium">Create New Budget Code</span>
+                    <Plus className="mr-2 h-4 w-4 text-primary" />
+                    <span className="text-primary font-medium">Create New Budget Code</span>
                   </CommandItem>
                 </CommandGroup>
               </>

@@ -156,7 +156,7 @@ function EnhancedInlineCreateRow({
   }
 
   return (
-    <tr className="bg-brand/5 border-2 border-brand/20 shadow-sm">
+    <tr className="bg-primary/5 border-2 border-primary/20 shadow-sm">
       <td className="py-4 pl-4 pr-2">
         {/* Empty checkbox cell */}
       </td>
@@ -199,7 +199,7 @@ function EnhancedInlineCreateRow({
               placeholder="Enter line item description *"
               className={cn(
                 "h-9 w-full rounded-md border border-input bg-background px-4 py-1 text-sm",
-                "focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none",
+                "focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 errors.description && "border-red-500 focus:border-red-500 focus:ring-red-500/20"
               )}

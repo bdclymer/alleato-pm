@@ -213,7 +213,7 @@ export function BudgetCodeSelector({
           {/* Create New Button */}
           <div className="border-t">
             <div
-              className="flex items-center cursor-pointer px-4 py-2 text-sm text-link hover:bg-accent"
+              className="flex items-center cursor-pointer px-4 py-2 text-sm text-primary hover:bg-accent"
               onClick={handleCreateNew}
             >
               <Plus className="mr-2 h-4 w-4" />

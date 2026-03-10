@@ -49,7 +49,7 @@ export function BudgetTabs({
                   className={cn(
                     "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
                     isActive
-                      ? "border-brand text-brand"
+                      ? "border-primary text-primary"
                       : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                   )}
                   aria-current={isActive ? "page" : undefined}

@@ -981,8 +981,8 @@ function BudgetPageContent() {
             <div className="min-w-full">
               {/* Selection action bar */}
               {selectedIds.length > 0 && (
-                <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-brand/5 border border-brand/20 rounded-lg">
-                  <span className="text-sm text-brand font-medium">
+                <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <span className="text-sm text-primary font-medium">
                     {selectedIds.length} item(s) selected
                   </span>
                   <Button
