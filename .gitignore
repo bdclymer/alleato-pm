@@ -74,6 +74,7 @@ openai-cs-agents-demo/
 
 # Claude Cache Monitor
 .cache-monitor/
+.claude/worktrees/
 
 # YokeFlow
 YokeFlow/

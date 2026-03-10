@@ -5,17 +5,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    // Optimize barrel imports for large icon/component libraries.
-    // date-fns is intentionally excluded — it generates unstable vendor chunk
-    // references in webpack dev mode.
-    optimizePackageImports: [
-      "lucide-react",
-      "recharts",
-      "@radix-ui/react-icons",
-      "react-icons",
-    ],
-  },
   serverExternalPackages: [
     "@mermaid-js/parser",
     "mermaid",

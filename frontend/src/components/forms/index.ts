@@ -16,3 +16,17 @@ export { CheckboxField } from "./CheckboxField";
 export { ToggleField } from "./ToggleField";
 export { RichTextField } from "./RichTextField";
 export { FileUploadField } from "./FileUploadField";
+
+// New RHF-based field wrappers
+export { RHFTextareaField } from "./fields/RHFTextareaField";
+export { RHFSelectField } from "./fields/RHFSelectField";
+export { RHFNumberField } from "./fields/RHFNumberField";
+export { RHFCheckboxField } from "./fields/RHFCheckboxField";
+export { RHFDateField } from "./fields/RHFDateField";
+export { RHFMoneyField } from "./fields/RHFMoneyField";
+export { RHFComboboxField } from "./fields/RHFComboboxField";
+export { RHFFieldArrayTable } from "./fields/RHFFieldArrayTable";
+
+// New utilities
+export { buildOptions } from "./utils/buildOptions";
+export { parseOptionalNumber, parseRequiredNumber } from "./utils/parsers";

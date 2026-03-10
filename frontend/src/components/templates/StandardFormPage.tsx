@@ -35,15 +35,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-// =============================================================================
-// LAYOUT COMPONENTS - Always use these
-// =============================================================================
 import { PageHeader, PageContainer, FormContainer } from "@/components/layout";
-
-// =============================================================================
-// UI COMPONENTS - Standard, no custom styling
-// =============================================================================
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,55 +59,118 @@ import {
 } from "@/components/ui/select";
 
 // =============================================================================
-// SCHEMA - Define your validation rules here
+// SINGLE SOURCE OF TRUTH
 // =============================================================================
-const formSchema = z.object({
-  // Required fields
-  name: z.string().min(1, "Name is required"),
-  type: z.string().min(1, "Type is required"),
-  date: z.string().min(1, "Date is required"),
 
-  // Optional fields
-  description: z.string().optional(),
-  amount: z.number().min(0, "Amount must be positive").optional(),
-  status: z.string(),
-  notes: z.string().optional(),
-});
+const TYPE_VALUES = ["type_a", "type_b", "type_c"] as const;
+const STATUS_VALUES = ["draft", "pending", "approved"] as const;
 
-type FormValues = z.infer<typeof formSchema>;
-
-// =============================================================================
-// OPTIONS - Define select options as constants
-// =============================================================================
-const TYPE_OPTIONS = [
+const TYPE_OPTIONS: Array<{ value: (typeof TYPE_VALUES)[number]; label: string }> = [
   { value: "type_a", label: "Type A" },
   { value: "type_b", label: "Type B" },
   { value: "type_c", label: "Type C" },
 ];
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: Array<{
+  value: (typeof STATUS_VALUES)[number];
+  label: string;
+}> = [
   { value: "draft", label: "Draft" },
   { value: "pending", label: "Pending" },
   { value: "approved", label: "Approved" },
 ];
 
 // =============================================================================
-// PAGE COMPONENT
+// HELPERS
 // =============================================================================
+
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="border-b pb-2">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      {description ? (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function parseOptionalNumber(value: unknown) {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+// =============================================================================
+// SCHEMA
+// =============================================================================
+
+const formSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  type: z.enum(TYPE_VALUES, {
+    errorMap: () => ({ message: "Type is required" }),
+  }),
+  date: z
+    .string()
+    .trim()
+    .min(1, "Date is required")
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "Please enter a valid date",
+    }),
+
+  description: z.string().trim().optional(),
+
+  amount: z.preprocess(
+    parseOptionalNumber,
+    z
+      .number({
+        invalid_type_error: "Amount must be a number",
+      })
+      .min(0, "Amount must be 0 or greater")
+      .optional(),
+  ),
+
+  status: z.enum(STATUS_VALUES),
+  notes: z.string().trim().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+// =============================================================================
+// API ERROR SHAPE
+// =============================================================================
+
+type SaveResponse =
+  | { success: true; id?: string }
+  | {
+      success: false;
+      message?: string;
+      fieldErrors?: Partial<Record<keyof FormValues, string>>;
+    };
+
+// =============================================================================
+// PAGE
+// =============================================================================
+
 export default function StandardFormPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.projectId as string;
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    reValidateMode: "onBlur",
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       name: "",
-      type: "",
+      type: "type_a",
       date: new Date().toISOString().split("T")[0],
       description: "",
       amount: undefined,
@@ -122,9 +179,14 @@ export default function StandardFormPage() {
     },
   });
 
-  // Form submission
+  const {
+    handleSubmit,
+    control,
+    setError,
+    formState: { isSubmitting, errors },
+  } = form;
+
   async function onSubmit(data: FormValues) {
-    setIsSubmitting(true);
     try {
       const response = await fetch(`/api/projects/${projectId}/your-endpoint`, {
         method: "POST",
@@ -132,261 +194,284 @@ export default function StandardFormPage() {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save");
+      let payload: SaveResponse | null = null;
+
+      try {
+        payload = (await response.json()) as SaveResponse;
+      } catch {
+        payload = null;
       }
 
+      if (!response.ok) {
+        if (payload && !payload.success && payload.fieldErrors) {
+          for (const [fieldName, message] of Object.entries(payload.fieldErrors)) {
+            if (!message) continue;
+            setError(fieldName as keyof FormValues, {
+              type: "server",
+              message,
+            });
+          }
+        }
+
+        const message =
+          payload && !payload.success && payload.message
+            ? payload.message
+            : "Failed to save item";
+
+        setError("root", {
+          type: "server",
+          message,
+        });
+
+        toast.error(message);
+        return;
+      }
+
+      toast.success("Item created successfully");
       router.push(`/${projectId}/your-list`);
+      router.refresh();
     } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error saving item:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while saving";
+
+      setError("root", {
+        type: "server",
+        message,
+      });
+
+      toast.error(message);
     }
   }
 
-  // Navigation
   function handleCancel() {
     router.push(`/${projectId}/your-list`);
   }
 
-  // ===========================================================================
-  // RENDER
-  // ===========================================================================
   return (
-    <>
-      {/* =====================================================================
-          CONTENT - PageContainer wraps EVERYTHING including header
-          so header and content share the same width/padding
-          ===================================================================== */}
-      <PageContainer>
-        {/* ===================================================================
-            HEADER - Inside PageContainer for consistent alignment
-            =================================================================== */}
-        <PageHeader
-          title="Create New Item"
-          description="Fill out the form below to create a new item"
-          actions={
-            <Button variant="outline" size="sm" onClick={handleCancel}>
-              <ArrowLeft className="h-4 w-4" />
-              Back to List
-            </Button>
-          }
-        />
-        {/* ===================================================================
-            FORM - FormContainer centers and constrains width
-            =================================================================== */}
-        <FormContainer maxWidth="lg" withCard={false}>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* =============================================================
-                  SECTION 1: Basic Information
-                  Use section tags with h2 headings, NOT Card components
-                  ============================================================= */}
-              <section className="space-y-6">
-                <div className="border-b pb-2">
-                  <h2 className="text-lg font-semibold">Basic Information</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Enter the core details for this item
-                  </p>
-                </div>
+    <PageContainer>
+      <PageHeader
+        title="Create New Item"
+        description="Fill out the form below to create a new item"
+      />
 
-                {/* Two-column grid for related fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name - Required */}
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+      <FormContainer maxWidth="lg" withCard={false}>
+        <Form {...form}>
+          <form
+            noValidate
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-8"
+          >
+            <section className="space-y-6" aria-labelledby="basic-information">
+              <SectionHeader
+                title="Basic Information"
+                description="Enter the core details for this item"
+              />
 
-                  {/* Type - Required Select */}
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Type *</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {TYPE_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Date - Required */}
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Amount - Optional Number */}
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              field.onChange(value ? parseFloat(value) : undefined);
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Full-width textarea for description */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
-                  control={form.control}
-                  name="description"
+                  control={control}
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Name *</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Enter a description..."
-                          rows={3}
+                        <Input
+                          placeholder="Enter name"
+                          autoComplete="off"
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type *</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TYPE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      </FormControl>
+
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Enter a description..."
+                        rows={3}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional details about this item
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+
+            <section className="space-y-6" aria-labelledby="additional-details">
+              <SectionHeader
+                title="Additional Details"
+                description="Optional information and settings"
+              />
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormDescription>
-                        Optional details about this item
+                        Controls where this item is in the workflow
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </section>
-
-              {/* =============================================================
-                  SECTION 2: Additional Details
-                  Separate sections with space-y-8 between them
-                  ============================================================= */}
-              <section className="space-y-6">
-                <div className="border-b pb-2">
-                  <h2 className="text-lg font-semibold">Additional Details</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Optional information and settings
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Status - Select with default */}
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Notes - Full width */}
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Any additional notes..."
-                          rows={4}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </section>
-
-              {/* =============================================================
-                  FORM ACTIONS - Always at bottom with border-t
-                  ============================================================= */}
-              <div className="flex items-center justify-end gap-4 pt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  Create Item
-                </Button>
               </div>
-            </form>
-          </Form>
-        </FormContainer>
-      </PageContainer>
-    </>
+
+              <FormField
+                control={control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any additional notes..."
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+
+            {errors.root?.message ? (
+              <div
+                role="alert"
+                className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+              >
+                {errors.root.message}
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-end gap-4 border-t pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Create Item"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </FormContainer>
+    </PageContainer>
   );
 }
