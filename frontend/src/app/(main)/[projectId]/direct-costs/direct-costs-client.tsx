@@ -725,6 +725,10 @@ export function DirectCostsClient({
             </DropdownMenu>
           ),
         }}
+        layout={{
+          headerAlignment: "left",
+          toolbarInlineWithHeader: true,
+        }}
         tabs={tabs}
         toolbar={{
           totalItems: directCosts.length,

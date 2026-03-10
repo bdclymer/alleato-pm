@@ -546,7 +546,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-xs text-muted-foreground max-w-[300px] truncate block">
+                <span className="text-xs text-muted-foreground max-w-[200px] truncate block">
                   {description}
                 </span>
               </TooltipTrigger>

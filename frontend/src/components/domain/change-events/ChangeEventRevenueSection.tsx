@@ -47,16 +47,17 @@ export function ChangeEventRevenueSection({
   useEffect(() => {
     const fetchPrimeContracts = async () => {
       try {
-        const response = await fetch(
-          `/api/projects/${projectId}/prime-contracts`,
-        );
+        const response = await fetch(`/api/projects/${projectId}/contracts`);
         if (response.ok) {
           const contractData = await response.json();
-          const contracts = (
-            contractData.data ||
-            contractData ||
-            []
-          ).map(
+          const records = Array.isArray(contractData)
+            ? contractData
+            : Array.isArray(contractData?.data)
+              ? contractData.data
+              : Array.isArray(contractData?.contracts)
+                ? contractData.contracts
+                : [];
+          const contracts = records.map(
             (contract: {
               id: number | string;
               contract_number?: string;

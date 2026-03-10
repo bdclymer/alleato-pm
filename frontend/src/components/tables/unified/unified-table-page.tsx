@@ -22,8 +22,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Pin, PinOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -107,6 +118,8 @@ export interface UnifiedTablePageProps<T> {
   table: {
     columns: TableColumn<T>[];
     rowActions?: (item: T) => ReactNode;
+    /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Delete. */
+    onDelete?: (item: T) => void;
     getRowId: (item: T) => string;
     onRowClick?: (item: T) => void;
     activeRowId?: string | null;
@@ -199,7 +212,24 @@ export function UnifiedTablePage<T>({
   const handleSelectAll = selection?.onSelectAll ?? (() => undefined);
   const handleSelectRow = selection?.onSelectRow ?? (() => undefined);
   const hasRowSelection = resolvedFeatures.enableRowSelection && hasSelectionApi;
-  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions);
+  const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete);
+
+  // Built-in delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [itemToDelete, setItemToDelete] = React.useState<T | null>(null);
+
+  const handleDeleteIntent = React.useCallback((item: T) => {
+    setItemToDelete(item);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = React.useCallback(() => {
+    if (itemToDelete && table.onDelete) {
+      table.onDelete(itemToDelete);
+    }
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  }, [itemToDelete, table]);
 
   const canRenderCardView =
     resolvedFeatures.enableViews && toolbar.currentView === "card" && Boolean(views?.card);
@@ -636,11 +666,18 @@ export function UnifiedTablePage<T>({
     <div className="px-0 sm:px-0 lg:px-0">
       <div className="flex items-center justify-between gap-3 py-3">
         <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">{header.title}</h1>
-        {header.actions}
+        {toolbarInlineWithHeader ? (
+          <div className="flex items-center gap-2">
+            {header.actions}
+            {tableToolbar}
+          </div>
+        ) : header.actions}
       </div>
-      <div className="flex items-center gap-2 pb-2">
-        {tableToolbar}
-      </div>
+      {!toolbarInlineWithHeader && (
+        <div className="flex items-center gap-2 pb-2">
+          {tableToolbar}
+        </div>
+      )}
     </div>
   ) : (
     <PageHeader
@@ -718,7 +755,7 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20", sidePanel && "bg-accent/40")}>
+              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20", sidePanel && "bg-accent/40 [&_tr:first-child_th]:pt-3.5 [&_tr:first-child_th:first-child]:rounded-tl-md [&_tr:first-child_th:last-child]:rounded-tr-md")}>
                 <TableRow>
                   {hasRowSelection && (
                     <TableHead className={cn("w-[40px]", sidePanel && "bg-accent/40")}>
@@ -1037,7 +1074,24 @@ export function UnifiedTablePage<T>({
                       ))}
                     {hasRowActions && (
                       <TableCell onClick={(event) => event.stopPropagation()}>
-                        {table.rowActions?.(item)}
+                        {table.rowActions ? table.rowActions(item) : table.onDelete ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDeleteIntent(item)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
                       </TableCell>
                     )}
                   </TableRow>
@@ -1129,25 +1183,49 @@ export function UnifiedTablePage<T>({
   );
 
   return (
-    <PageContainer className={cn(sidePanel && "pt-0")}>
-      {sidePanel ? (
-        <>
-          {headerContent}
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]">
-            <div className="min-w-0">{leftPaneContent}</div>
-            <aside
-              className={cn(
-                "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto bg-muted border-l border-border",
-                sidePanel.widthClassName,
-              )}
-            >
-              {sidePanel.content}
-            </aside>
-          </div>
-        </>
-      ) : (
-        leftPaneContent
+    <>
+      <PageContainer className={cn(sidePanel && "pt-0")}>
+        {sidePanel ? (
+          <>
+            {headerContent}
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]">
+              <div className="min-w-0">{leftPaneContent}</div>
+              <aside
+                className={cn(
+                  "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto bg-muted border-l border-border",
+                  sidePanel.widthClassName,
+                )}
+              >
+                {sidePanel.content}
+              </aside>
+            </div>
+          </>
+        ) : (
+          leftPaneContent
+        )}
+      </PageContainer>
+
+      {table.onDelete && (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Item</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this item? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
-    </PageContainer>
+    </>
   );
 }

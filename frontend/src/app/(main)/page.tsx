@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 import { Project } from "@/types/portfolio";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -843,6 +844,20 @@ export default function PortfolioPage() {
     [router],
   );
 
+  const handleDeleteProject = React.useCallback(
+    async (project: Project) => {
+      try {
+        const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Failed to delete project");
+        setProjects((prev) => prev.filter((p) => p.id !== project.id));
+        toast.success(`Project "${project.name}" deleted`);
+      } catch {
+        toast.error("Failed to delete project");
+      }
+    },
+    [],
+  );
+
   return (
     <>
       <UnifiedTablePage
@@ -889,6 +904,7 @@ export default function PortfolioPage() {
       table={{
         columns: PROJECT_TABLE_COLUMNS,
         getRowId: (item) => item.id,
+        onDelete: handleDeleteProject,
       }}
       views={{
         card: (item) => (

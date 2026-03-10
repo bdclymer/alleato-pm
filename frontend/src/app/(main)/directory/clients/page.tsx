@@ -4,6 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
 import { getDirectoryTabs } from "@/config/directory-tabs";
@@ -242,6 +243,20 @@ export default function DirectoryClientsPage(): ReactElement {
   const tableColumns = React.useMemo(() => buildClientTableColumns(), []);
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
+  const handleDeleteClient = React.useCallback(
+    async (client: ClientTableRow) => {
+      try {
+        const resp = await fetch(`/api/directory/clients/${client.id}`, { method: "DELETE" });
+        if (!resp.ok) throw new Error("Failed to delete client");
+        toast.success("Client deleted");
+        void fetchClients();
+      } catch {
+        toast.error("Failed to delete client");
+      }
+    },
+    [fetchClients],
+  );
+
   const handleFilterChange = (nextFilters: ClientFilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
@@ -305,6 +320,7 @@ export default function DirectoryClientsPage(): ReactElement {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        onDelete: handleDeleteClient,
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -328,7 +344,6 @@ export default function DirectoryClientsPage(): ReactElement {
         enableExport: false,
         enableBulkDelete: false,
         enableRowSelection: false,
-        enableRowActions: false,
       }}
     />
   );

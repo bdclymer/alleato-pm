@@ -172,8 +172,17 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     category: initialCategory || undefined,
   };
 
+  // When on a project-specific page, hide the "project" column by default
+  const defaultVisibleColumns = React.useMemo(
+    () =>
+      projectId
+        ? meetingDefaultVisibleColumns.filter((col) => col !== "project")
+        : meetingDefaultVisibleColumns,
+    [projectId],
+  );
+
   const tableState = useUnifiedTableState({
-    entityKey: "meetings",
+    entityKey: projectId ? `meetings-${projectId}` : "meetings",
     searchParams,
     pathname,
     router,
@@ -184,6 +193,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       search: "",
       sortBy: "date",
       sortDirection: "desc",
+      visibleColumns: defaultVisibleColumns,
       filters: initialFilters,
     },
   });

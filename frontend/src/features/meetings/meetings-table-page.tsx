@@ -1,9 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { CalendarPlus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -15,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { DetailPanel, UnifiedTablePage } from "@/components/tables/unified";
 import type { Meeting } from "@/lib/validation/meetings";
 import {
@@ -33,7 +29,6 @@ interface MeetingsTablePageProps {
 }
 
 export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTablePageProps): ReactElement {
-  const router = useRouter();
   const {
     tableState,
     pagedMeetings,
@@ -68,31 +63,12 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handleExport,
   } = useMeetingsTable(initialMeetings, projectId);
 
-  const handleScheduleMeeting = () => {
-    if (projectId) {
-      router.push(`/${projectId}/meetings/schedule`);
-      return;
-    }
-
-    toast.info("Scheduling page coming soon");
-  };
-
   return (
     <>
       <UnifiedTablePage
         header={{
           title: "Meetings",
           description: "View and manage all your meetings",
-          actions: projectId ? (
-            <Button
-              size="sm"
-              onClick={handleScheduleMeeting}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <CalendarPlus className="h-4 w-4 mr-2" />
-              Schedule meeting
-            </Button>
-          ) : undefined,
         }}
         layout={{
           headerAlignment: "left",

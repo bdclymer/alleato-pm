@@ -580,12 +580,18 @@ export function ChangeEventForm({
     const fetchAll = async () => {
       // Prime contracts
       try {
-        const response = await fetch(
-          `/api/projects/${projectId}/prime-contracts`,
-        );
+        const response = await fetch(`/api/projects/${projectId}/contracts`);
         if (response.ok) {
           const payload = await response.json();
-          const records = (payload.data || payload || []) as Array<{
+          const records = (
+            Array.isArray(payload)
+              ? payload
+              : Array.isArray(payload?.data)
+                ? payload.data
+                : Array.isArray(payload?.contracts)
+                  ? payload.contracts
+                  : []
+          ) as Array<{
             id: number | string;
             contract_number?: string;
             number?: string;
@@ -593,10 +599,12 @@ export function ChangeEventForm({
             description?: string;
           }>;
           setPrimeContractOptions(
-            records.map((record) => ({
-              value: String(record.id),
-              label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
-            })),
+            records
+              .filter((record) => record.id !== undefined && record.id !== null)
+              .map((record) => ({
+                value: String(record.id),
+                label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
+              })),
           );
         }
       } catch {
@@ -824,15 +832,14 @@ export function ChangeEventForm({
     [],
   );
 
-  const primeContractSelectOptions = React.useMemo(() => {
-    if (primeContractOptions.length === 0) {
-      return [{ value: "__none__", label: "No prime contracts available" }];
-    }
-    return primeContractOptions.map((option) => ({
+  const primeContractSelectOptions = React.useMemo(
+    () =>
+      primeContractOptions.map((option) => ({
       value: option.value,
       label: option.label,
-    }));
-  }, [primeContractOptions]);
+      })),
+    [primeContractOptions],
+  );
 
   return (
     <>
@@ -917,10 +924,7 @@ export function ChangeEventForm({
                 label="Prime Contract For Markup Estimates"
                 options={primeContractSelectOptions}
                 value={formData.primeContractId || ""}
-                onValueChange={(value) => {
-                  if (value === "__none__") return;
-                  updateFormData({ primeContractId: value });
-                }}
+                onValueChange={(value) => updateFormData({ primeContractId: value })}
                 placeholder="Select Prime Contract"
                 disabled={primeContractOptions.length === 0}
               />
@@ -948,13 +952,7 @@ export function ChangeEventForm({
           </FormSection>
 
           {/* ── Line Items ── */}
-          <section className="space-y-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-                Line Items
-              </h2>
-              <div className="h-px flex-1 bg-primary" />
-            </div>
+          <FormSection title="Line Items">
 
             <TooltipProvider>
             <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
@@ -1282,7 +1280,7 @@ export function ChangeEventForm({
                 </span>
               )}
             </div>
-          </section>
+          </FormSection>
 
           {/* ── Attachments ── */}
           <FormSection title="Attachments">

@@ -372,6 +372,27 @@ Even with the shared defaults, verify each page:
 
 ---
 
+# **Recent Implementation Update (March 10, 2026)**
+
+Completed migration and behavior updates:
+
+1. Direct Costs line item grid now uses the same visual treatment and totals-row pattern as Change Events.
+2. `Create New Budget Code` is functional in Direct Costs and Change Events via the shared budget setup modal.
+3. Newly created budget codes auto-select into the exact row where the action was triggered.
+4. Same-page edit mode is implemented for:
+   - Change Events
+   - Commitments
+   - Prime Contracts
+   - Change Orders
+5. Legacy `/edit` routes now redirect to detail pages with `?edit=1` and are no longer separate maintenance surfaces.
+6. Form spacing/alignment and shared form system components were standardized across migrated pages.
+
+Screenshot (current state):
+
+![Direct Costs form migration screenshot](../frontend/public/images/docs/form-system-direct-costs-2026-03-10.png)
+
+---
+
 # **Summary**
 
 The form system provides:

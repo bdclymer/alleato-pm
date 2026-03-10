@@ -3,7 +3,9 @@
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -88,6 +90,27 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [logs, setLogs] = React.useState(dailyLogs);
+
+  // Keep local state in sync with prop changes
+  React.useEffect(() => {
+    setLogs(dailyLogs);
+  }, [dailyLogs]);
+
+  const handleDeleteLog = React.useCallback(
+    async (log: DailyLogRow) => {
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.from("daily_logs").delete().eq("id", log.id);
+        if (error) throw error;
+        setLogs((prev) => prev.filter((l) => l.id !== log.id));
+        toast.success("Daily log deleted");
+      } catch {
+        toast.error("Failed to delete daily log");
+      }
+    },
+    [],
+  );
 
   const tableState = useUnifiedTableState({
     entityKey: "daily-log",
@@ -109,13 +132,13 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
 
   const filteredLogs = React.useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
-    if (!search) return dailyLogs;
-    return dailyLogs.filter(
+    if (!search) return logs;
+    return logs.filter(
       (log) =>
         (log.log_date ?? "").toLowerCase().includes(search) ||
         (log.created_by ?? "").toLowerCase().includes(search),
     );
-  }, [dailyLogs, tableState.debouncedSearch]);
+  }, [logs, tableState.debouncedSearch]);
 
   const sortedLogs = React.useMemo(() => {
     if (!tableState.sortBy) return filteredLogs;
@@ -151,7 +174,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         ),
       }}
       toolbar={{
-        totalItems: dailyLogs.length,
+        totalItems: logs.length,
         filteredItems: sortedLogs.length,
         selectedCount: 0,
         searchValue: tableState.searchInput,
@@ -175,6 +198,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        onDelete: handleDeleteLog,
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -195,7 +219,6 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         enableFilters: false,
         enableBulkDelete: false,
         enableRowSelection: false,
-        enableRowActions: false,
         enableExport: false,
       }}
     />

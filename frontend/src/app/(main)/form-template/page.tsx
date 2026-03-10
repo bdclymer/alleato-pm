@@ -169,6 +169,25 @@ export default function StandardFormPage() {
         }
       />
 
+      <section className="mb-8 rounded-lg border border-border bg-muted/20 p-4 sm:p-6">
+        <h2 className="text-base font-semibold text-foreground">Form System Migration Status (March 10, 2026)</h2>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>Direct Costs line item table now matches Change Events styling, including in-table totals row placement.</li>
+          <li>Create New Budget Code now uses the real budget modal in Direct Costs and Change Events.</li>
+          <li>Newly created budget code auto-selects back into the exact line item row that launched the modal.</li>
+          <li>Same-page edit mode is live for Change Events, Commitments, Prime Contracts, and Change Orders.</li>
+          <li>Legacy /edit routes now redirect to detail pages using ?edit=1 and are no longer maintenance surfaces.</li>
+          <li>Fields standardized with shared form sections/grids/actions and modernized attachments in migrated forms.</li>
+        </ul>
+        <div className="mt-4 overflow-hidden rounded-md border border-border bg-background">
+          <img
+            src="/images/docs/form-system-direct-costs-2026-03-10.png"
+            alt="Direct Costs form using updated form-system styling and line item totals row"
+            className="h-auto w-full"
+          />
+        </div>
+      </section>
+
       <FormContainer maxWidth="lg" withCard={false}>
         <Form {...form}>
           <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">

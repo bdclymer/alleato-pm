@@ -12,7 +12,7 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { useSubmittals, type SubmittalSummary } from "@/hooks/use-submittals";
+import { useSubmittals, useDeleteSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
 import {
   buildSubmittalTableColumns,
   submittalColumns,
@@ -69,6 +69,7 @@ export default function SubmittalsPage(): ReactElement {
   useProjectTitle("Submittals");
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const deleteSubmittal = useDeleteSubmittal(projectId);
 
   const initialFilters: SubmittalFilterState = {
     status: searchParams.get("status") ?? undefined,
@@ -236,6 +237,7 @@ export default function SubmittalsPage(): ReactElement {
           columns: tableColumns,
           getRowId: (item) => item.id,
           onRowClick: (item) => router.push(`/${projectId}/submittals/${item.id}`),
+          onDelete: (item) => deleteSubmittal.mutate(item.id),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -273,7 +275,6 @@ export default function SubmittalsPage(): ReactElement {
           enableExport: false,
           enableBulkDelete: false,
           enableRowSelection: false,
-          enableRowActions: false,
         }}
       />
 

@@ -110,6 +110,20 @@ export default function TasksPage() {
     tableState.setPage(1);
   };
 
+  const handleDeleteTask = React.useCallback(
+    async (item: TasksRow) => {
+      try {
+        const resp = await fetch(`/api/tasks/${item.id}`, { method: "DELETE" });
+        if (!resp.ok) throw new Error("Failed to delete task");
+        toast.success("Task deleted");
+        void refresh();
+      } catch {
+        toast.error("Failed to delete task");
+      }
+    },
+    [refresh],
+  );
+
   const handleView = (item: TasksRow) => {
     toast.info(`Viewing: ${item.id || item.id}`);
   };
@@ -175,7 +189,7 @@ export default function TasksPage() {
         columns: tableColumns,
         getRowId: (item) => item.id ?? "",
         onRowClick: handleView,
-        rowActions: (item) => renderTasksRowActions(item, handleView),
+        rowActions: (item) => renderTasksRowActions(item, handleView, handleDeleteTask),
       }}
       sorting={{
         sortBy: tableState.sortBy,

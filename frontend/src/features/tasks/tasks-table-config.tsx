@@ -1,11 +1,12 @@
 import { format } from "date-fns";
 import { StatusBadge } from "@/components/ds";
-import { Eye, MoreHorizontal } from "lucide-react";
+import { Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { TableColumn, FilterConfig, ColumnConfig } from "@/components/tables/unified";
@@ -185,6 +186,7 @@ export function renderTasksList(
 export function renderTasksRowActions(
   item: TasksRow,
   onView: (item: TasksRow) => void,
+  onDelete?: (item: TasksRow) => void,
 ) {
   return (
     <DropdownMenu>
@@ -198,6 +200,15 @@ export function renderTasksRowActions(
           <Eye className="mr-2 h-4 w-4" />
           View
         </DropdownMenuItem>
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

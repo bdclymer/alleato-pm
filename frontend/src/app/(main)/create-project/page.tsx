@@ -634,6 +634,13 @@ function CreateProjectForm() {
     : "cards";
 
   const renderSection = (section: FormSection) => {
+    const sectionGridClass =
+      section.id === "project-status"
+        ? "grid grid-cols-1 gap-4 md:grid-cols-3"
+        : activeLayout === "single-column"
+          ? "grid grid-cols-1 gap-4"
+          : "grid grid-cols-1 gap-4 md:grid-cols-2";
+
     if (activeLayout === "sections") {
       return (
         <section key={section.id} className="space-y-4 border-b border-border pb-8">
@@ -643,7 +650,7 @@ function CreateProjectForm() {
               <p className="text-sm text-muted-foreground">{section.description}</p>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className={sectionGridClass}>
             {section.fields.map(renderField)}
           </div>
         </section>
@@ -659,13 +666,7 @@ function CreateProjectForm() {
           )}
         </CardHeader>
         <CardContent>
-          <div
-            className={
-              activeLayout === "single-column"
-                ? "grid grid-cols-1 gap-4"
-                : "grid grid-cols-1 gap-4 md:grid-cols-2"
-            }
-          >
+          <div className={sectionGridClass}>
             {section.fields.map(renderField)}
           </div>
         </CardContent>

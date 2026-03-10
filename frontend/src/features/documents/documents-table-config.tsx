@@ -6,6 +6,7 @@ import {
   FolderOpen,
   Link,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -450,6 +451,7 @@ export function renderDocumentRowActions(
   item: PipelineDoc,
   onView: (item: PipelineDoc) => void,
   onAssignProject?: (item: PipelineDoc) => void,
+  onDelete?: (item: PipelineDoc) => void,
 ): ReactElement {
   const viewUrl = getDocumentViewUrl(item);
 
@@ -489,6 +491,15 @@ export function renderDocumentRowActions(
           <Link className="mr-2 h-4 w-4" />
           Copy ID
         </DropdownMenuItem>
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

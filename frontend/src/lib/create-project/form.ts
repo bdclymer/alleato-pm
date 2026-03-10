@@ -304,22 +304,6 @@ export const formSections: FormSection[] = [
     title: "General Information",
     fields: [
       {
-        name: "stage",
-        label: "Stage",
-        control: "select",
-        options: STAGE_OPTIONS.map((value) => ({ value, label: value })),
-        allowEmptyOption: true,
-        placeholder: "Select stage",
-      },
-      {
-        name: "phase",
-        label: "Phase",
-        control: "select",
-        options: PHASE_OPTIONS.map((value) => ({ value, label: value })),
-        allowEmptyOption: true,
-        placeholder: "Select phase",
-      },
-      {
         name: "name",
         label: "Project Name",
         control: "text",
@@ -330,6 +314,22 @@ export const formSections: FormSection[] = [
         label: "Job Number",
         control: "text",
         required: true,
+      },
+      {
+        name: "phase",
+        label: "Phase",
+        control: "select",
+        options: PHASE_OPTIONS.map((value) => ({ value, label: value })),
+        allowEmptyOption: true,
+        placeholder: "Select phase",
+      },
+      {
+        name: "stage",
+        label: "Stage",
+        control: "select",
+        options: STAGE_OPTIONS.map((value) => ({ value, label: value })),
+        allowEmptyOption: true,
+        placeholder: "Select stage",
       },
       {
         name: "work_scope",
@@ -420,9 +420,19 @@ export const formSections: FormSection[] = [
         name: "active",
         label: "Active",
         control: "checkbox",
-        description:
-          "Default checked — active projects appear across the company.",
-        colSpan: "full",
+        description: "Show this project across the company.",
+      },
+      {
+        name: "erp_sync",
+        label: "ERP Sync",
+        control: "checkbox",
+        description: "Enable ERP sync flag.",
+      },
+      {
+        name: "test_project",
+        label: "Test Project",
+        control: "checkbox",
+        description: "Mark project as test/sandbox.",
       },
     ],
   },
@@ -431,6 +441,12 @@ export const formSections: FormSection[] = [
     title: "Project Location",
     description: "Used for maps, reporting, and directory syncing.",
     fields: [
+      {
+        name: "office",
+        label: "Office",
+        control: "select",
+        options: OFFICE_OPTIONS,
+      },
       {
         name: "country",
         label: "Country",
@@ -478,12 +494,6 @@ export const formSections: FormSection[] = [
         options: REGION_OPTIONS,
         allowEmptyOption: true,
       },
-      {
-        name: "office",
-        label: "Office",
-        control: "select",
-        options: OFFICE_OPTIONS,
-      },
     ],
   },
   {
@@ -515,40 +525,6 @@ export const formSections: FormSection[] = [
       },
     ],
   },
-  {
-    id: "erp",
-    title: "ERP Integration",
-    description:
-      "Flag projects that will sync once ERP automation ships (not yet live).",
-    fields: [
-      {
-        name: "erp_sync",
-        label: "ERP-sync this project",
-        control: "checkbox",
-        description:
-          "Indicator only for now — ERP sync services are still in development.",
-        statusHint: "Not live",
-        colSpan: "full",
-      },
-    ],
-  },
-  {
-    id: "advanced",
-    title: "Advanced",
-    description:
-      "Use for sandbox tagging — feature is informational only until automation is wired.",
-    fields: [
-      {
-        name: "test_project",
-        label: "Test Project",
-        control: "checkbox",
-        description:
-          "Marks the record as sandbox/test (reports do not yet auto-filter on this flag).",
-        statusHint: "Not live",
-        colSpan: "full",
-      },
-    ],
-  },
 ];
 
 export const defaultValues: DefaultValues<CreateProjectFormValues> = {
@@ -575,7 +551,7 @@ export const defaultValues: DefaultValues<CreateProjectFormValues> = {
   timezone: "America/New_York",
   phone: "",
   region: undefined,
-  office: "Alleato Group",
+  office: "Alleato Group Indianapolis",
   start_date: "",
   completion_date: "",
   erp_sync: true,

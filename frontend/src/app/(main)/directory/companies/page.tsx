@@ -11,6 +11,7 @@ import {
   Plus,
   Upload,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import { useGlobalProjectCompanies } from "@/hooks/use-global-project-companies";
@@ -330,6 +331,21 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     null;
   const activeCompanyId = selectedCompany?.id ?? null;
 
+  const handleDeleteCompany = React.useCallback(
+    async (company: CompanyRow) => {
+      try {
+        const resp = await fetch(`/api/directory/companies/${company.id}`, { method: "DELETE" });
+        if (!resp.ok) throw new Error("Failed to delete company");
+        toast.success("Company deleted");
+        // Trigger re-fetch by navigating to same page
+        router.refresh();
+      } catch {
+        toast.error("Failed to delete company");
+      }
+    },
+    [router],
+  );
+
   const openCompanyPage = React.useCallback(
     (company: CompanyRow) => {
       // Company detail pages are keyed by global companies.id.
@@ -474,6 +490,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         activeRowId: activeCompanyId,
         onTableKeyDown: handleTableKeyDown,
         onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
+        onDelete: handleDeleteCompany,
       }}
       sidePanel={{
         content: <CompanyPreviewPane company={selectedCompany} onOpenCompanyPage={openCompanyPage} />,
@@ -522,7 +539,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: false,
-        enableRowActions: false,
       }}
     />
   );

@@ -404,6 +404,20 @@ export default function DocumentsPage() {
     tableState.setPage(1);
   };
 
+  const handleDeleteDocument = React.useCallback(
+    async (doc: PipelineDoc) => {
+      try {
+        const resp = await fetch(`/api/documents/${doc.id}`, { method: "DELETE" });
+        if (!resp.ok) throw new Error("Failed to delete document");
+        toast.success("Document deleted");
+        void refreshDocuments();
+      } catch {
+        toast.error("Failed to delete document");
+      }
+    },
+    [refreshDocuments],
+  );
+
   const handleView = (doc: PipelineDoc) => {
     const viewUrl = getDocumentViewUrl(doc);
     if (viewUrl) {
@@ -508,7 +522,7 @@ export default function DocumentsPage() {
           rowActions: (item) =>
             renderDocumentRowActions(item, handleView, (doc) =>
               setAssignDoc(doc),
-            ),
+            handleDeleteDocument),
         }}
         sorting={{
           sortBy: tableState.sortBy,
