@@ -13,11 +13,16 @@ import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
-// Initialize clients
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+function getServiceSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variable",
+    );
+  }
+  return createClient(supabaseUrl, serviceRoleKey);
+}
 
 function getOpenAIClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -26,8 +31,6 @@ function getOpenAIClient(): OpenAI {
   }
   return new OpenAI({ apiKey });
 }
-
-const openai = getOpenAIClient();
 
 interface SearchResult {
   id: number;
@@ -50,7 +53,10 @@ interface RAGResponse {
  * Expand query to find more relevant results
  * Generates paraphrases and related terms
  */
-async function expandQuery(originalQuery: string): Promise<string[]> {
+async function expandQuery(
+  openai: OpenAI,
+  originalQuery: string,
+): Promise<string[]> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -91,6 +97,8 @@ Return a JSON array of strings: ["query1", "query2", "query3"]`,
  * Search with multiple query variants and aggregate results
  */
 async function searchWithExpansion(
+  supabase: ReturnType<typeof getServiceSupabase>,
+  openai: OpenAI,
   queries: string[],
   topK: number,
 ): Promise<SearchResult[]> {
@@ -172,6 +180,8 @@ Remember: You're an intelligent assistant with construction expertise, not just 
  */
 export async function POST(request: NextRequest) {
   try {
+    const openai = getOpenAIClient();
+    const supabase = getServiceSupabase();
     const authSupabase = await createAuthClient();
     const { data: { user }, error: authError } = await authSupabase.auth.getUser();
     if (authError || !user) {
@@ -188,9 +198,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Expand the query to find more relevant results
-    const expandedQueries = await expandQuery(query);
+    const expandedQueries = await expandQuery(openai, query);
     // Step 2: Search with all query variants
-    const searchResults = await searchWithExpansion(expandedQueries, topK);
+    const searchResults = await searchWithExpansion(
+      supabase,
+      openai,
+      expandedQueries,
+      topK,
+    );
     // Step 3: Build context - even if results are limited
     const hasStrongMatch =
       searchResults.length > 0 && searchResults[0].similarity > 0.7;
