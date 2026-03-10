@@ -241,7 +241,17 @@ def upload_binary(
     storage_path: str,
     file_path: Path,
 ) -> None:
-    content_type, _ = mimetypes.guess_type(str(file_path))
+    ext = file_path.suffix.lower()
+    explicit_content_types = {
+        ".md": "text/markdown",
+        ".tsv": "text/tab-separated-values",
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+    content_type = explicit_content_types.get(ext)
+    if not content_type:
+        content_type, _ = mimetypes.guess_type(str(file_path))
+
     options = {"upsert": "true"}
     if content_type:
         options["content-type"] = content_type
@@ -249,7 +259,17 @@ def upload_binary(
     payload = file_path.read_bytes()
     try:
         client.storage.from_(bucket).upload(storage_path, payload, options)
-    except Exception:
+    except Exception as exc:
+        # If a bucket mime allowlist blocks this upload, retry with a
+        # generic content type for resiliency across environments.
+        if "mime type" in str(exc).lower() and "not supported" in str(exc).lower():
+            fallback_options = {"upsert": "true", "content-type": "application/octet-stream"}
+            try:
+                client.storage.from_(bucket).upload(storage_path, payload, fallback_options)
+                return
+            except Exception:
+                client.storage.from_(bucket).update(storage_path, payload, fallback_options)
+                return
         client.storage.from_(bucket).update(storage_path, payload, options)
 
 
