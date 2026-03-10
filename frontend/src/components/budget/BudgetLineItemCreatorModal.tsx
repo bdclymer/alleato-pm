@@ -686,6 +686,7 @@ export function BudgetLineItemCreatorModal({
                                             setPendingRowIndex(index);
                                             setShowCreateCodeModal(true);
                                           }}
+                                          className="text-primary"
                                         >
                                           <Plus className="mr-2 h-4 w-4" />
                                           Create New Budget Code
