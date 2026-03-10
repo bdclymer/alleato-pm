@@ -41,6 +41,7 @@ import { FormActions } from '@/components/forms/FormActions'
 import { FormGrid } from '@/components/forms/FormGrid'
 import { FormSection } from '@/components/forms/FormSection'
 import { RHFComboboxField } from '@/components/forms/fields/RHFComboboxField'
+import { RHFDateField } from '@/components/forms/fields/RHFDateField'
 import { RHFSelectField } from '@/components/forms/fields/RHFSelectField'
 import { RHFTextareaField } from '@/components/forms/fields/RHFTextareaField'
 import { LineItemsManager } from './LineItemsManager'
@@ -48,7 +49,6 @@ import { AttachmentManager } from './AttachmentManager'
 import { AutoSaveIndicator } from './AutoSaveIndicator'
 import {
   AlertCircle,
-  Calendar,
   Wand2,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -433,31 +433,11 @@ export function DirectCostForm({
                 options={CostStatuses.map((status) => ({ value: status, label: status }))}
               />
 
-              <FormField
+              <RHFDateField
                 control={form.control}
                 name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Incurred Date *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          type="date"
-                          {...field}
-                          value={
-                            field.value instanceof Date
-                              ? field.value.toISOString().split('T')[0]
-                              : field.value
-                          }
-                          onChange={(e) => field.onChange(new Date(e.target.value))}
-                          className="h-11 pl-10"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Incurred Date *"
+                valueType="date"
               />
 
               <RHFSelectField
@@ -505,72 +485,22 @@ export function DirectCostForm({
             />
 
             <FormGrid columns={2}>
-              <FormField
+              <RHFDateField
                 control={form.control}
                 name="received_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Received Date</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          type="date"
-                          {...field}
-                          value={
-                            field.value instanceof Date
-                              ? field.value.toISOString().split('T')[0]
-                              : field.value || ''
-                          }
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              field.onChange(new Date(e.target.value))
-                            } else {
-                              field.onChange(null)
-                            }
-                          }}
-                          className="h-11 pl-10"
-                        />
-                      </div>
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">Date cost was received</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Received Date"
+                description="Date cost was received"
+                valueType="date"
+                nullable
               />
 
-              <FormField
+              <RHFDateField
                 control={form.control}
                 name="paid_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Paid Date</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          type="date"
-                          {...field}
-                          value={
-                            field.value instanceof Date
-                              ? field.value.toISOString().split('T')[0]
-                              : field.value || ''
-                          }
-                          onChange={(e) => {
-                            if (e.target.value) {
-                              field.onChange(new Date(e.target.value))
-                            } else {
-                              field.onChange(null)
-                            }
-                          }}
-                          className="h-11 pl-10"
-                        />
-                      </div>
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">Date payment was made</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Paid Date"
+                description="Date payment was made"
+                valueType="date"
+                nullable
               />
             </FormGrid>
           </FormSection>

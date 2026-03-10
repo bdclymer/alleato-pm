@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  productionBrowserSourceMaps: false,
+  experimental: {
+    webpackMemoryOptimizations: true,
+    serverSourceMaps: false,
+  },
   serverExternalPackages: [
     "@mermaid-js/parser",
     "mermaid",

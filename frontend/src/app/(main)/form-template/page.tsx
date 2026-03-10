@@ -27,7 +27,6 @@ import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField"
 import { RHFFieldArrayTable } from "@/components/forms/fields/RHFFieldArrayTable"
 
 import { buildOptions } from "@/components/forms/utils/buildOptions"
-import { parseOptionalNumber } from "@/components/forms/utils/parsers"
 
 const TYPE_VALUES = ["type_a", "type_b", "type_c"] as const
 const STATUS_VALUES = ["draft", "pending", "approved"] as const
@@ -52,14 +51,8 @@ const ASSIGNEE_OPTIONS = [
 
 const lineItemSchema = z.object({
   itemName: z.string().trim().min(1, "Item name is required"),
-  quantity: z.preprocess(
-    parseOptionalNumber,
-    z.number().min(1, "Quantity must be at least 1")
-  ),
-  unitCost: z.preprocess(
-    parseOptionalNumber,
-    z.number().min(0, "Unit cost must be 0 or greater")
-  ),
+  quantity: z.number().min(1, "Quantity must be at least 1"),
+  unitCost: z.number().min(0, "Unit cost must be 0 or greater"),
 })
 
 const formSchema = z.object({
@@ -67,16 +60,10 @@ const formSchema = z.object({
   type: z.enum(TYPE_VALUES),
   date: z.string().trim().min(1, "Date is required"),
   description: z.string().trim().optional(),
-  amount: z.preprocess(
-    parseOptionalNumber,
-    z.number().min(0, "Amount must be 0 or greater").optional()
-  ),
-  budget: z.preprocess(
-    parseOptionalNumber,
-    z.number().min(0, "Budget must be 0 or greater").optional()
-  ),
+  amount: z.number().min(0, "Amount must be 0 or greater"),
+  budget: z.number().min(0, "Budget must be 0 or greater"),
   status: z.enum(STATUS_VALUES),
-  isBillable: z.boolean().default(false),
+  isBillable: z.boolean(),
   assignee: z.string().min(1, "Assignee is required"),
   notes: z.string().trim().optional(),
   lineItems: z.array(lineItemSchema).min(1, "At least one line item is required"),
@@ -106,8 +93,8 @@ export default function StandardFormPage() {
       type: "type_a",
       date: new Date().toISOString().split("T")[0],
       description: "",
-      amount: undefined,
-      budget: undefined,
+      amount: 0,
+      budget: 0,
       status: "draft",
       isBillable: false,
       assignee: "",

@@ -122,8 +122,16 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
       );
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update role members");
+        let errorMessage = "Failed to update role members";
+        try {
+          const data = await response.json();
+          if (typeof data?.error === "string" && data.error.trim().length > 0) {
+            errorMessage = data.error;
+          }
+        } catch {
+          // Keep fallback message for non-JSON error responses.
+        }
+        throw new Error(errorMessage);
       }
 
       // Refetch to get updated data

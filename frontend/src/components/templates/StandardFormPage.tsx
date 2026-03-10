@@ -101,22 +101,13 @@ function SectionHeader({
   );
 }
 
-function parseOptionalNumber(value: unknown) {
-  if (value === "" || value === null || value === undefined) return undefined;
-  const parsed =
-    typeof value === "number" ? value : Number.parseFloat(String(value));
-  return Number.isNaN(parsed) ? undefined : parsed;
-}
-
 // =============================================================================
 // SCHEMA
 // =============================================================================
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
-  type: z.enum(TYPE_VALUES, {
-    errorMap: () => ({ message: "Type is required" }),
-  }),
+  type: z.enum(TYPE_VALUES),
   date: z
     .string()
     .trim()
@@ -127,15 +118,7 @@ const formSchema = z.object({
 
   description: z.string().trim().optional(),
 
-  amount: z.preprocess(
-    parseOptionalNumber,
-    z
-      .number({
-        invalid_type_error: "Amount must be a number",
-      })
-      .min(0, "Amount must be 0 or greater")
-      .optional(),
-  ),
+  amount: z.number().min(0, "Amount must be 0 or greater"),
 
   status: z.enum(STATUS_VALUES),
   notes: z.string().trim().optional(),
@@ -173,7 +156,7 @@ export default function StandardFormPage() {
       type: "type_a",
       date: new Date().toISOString().split("T")[0],
       description: "",
-      amount: undefined,
+      amount: 0,
       status: "draft",
       notes: "",
     },

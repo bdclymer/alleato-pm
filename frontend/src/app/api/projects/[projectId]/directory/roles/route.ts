@@ -149,6 +149,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
+    const uniqueMemberPersonIds = [...new Set(member_person_ids)];
 
     // Verify the role belongs to this project
     const { data: role, error: roleError } = await supabase
@@ -165,6 +166,35 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Validate members belong to this project before changing assignments.
+    if (uniqueMemberPersonIds.length > 0) {
+      const { data: memberships, error: membershipError } = await supabase
+        .from("project_directory_memberships")
+        .select("person_id")
+        .eq("project_id", projectIdNum)
+        .eq("status", "active")
+        .in("person_id", uniqueMemberPersonIds);
+
+      if (membershipError) {
+        return NextResponse.json(
+          { error: `Failed to validate role members: ${membershipError.message}` },
+          { status: 500 },
+        );
+      }
+
+      const validPersonIds = new Set((memberships || []).map((m) => m.person_id));
+      const invalidPersonIds = uniqueMemberPersonIds.filter(
+        (personId: string) => !validPersonIds.has(personId),
+      );
+
+      if (invalidPersonIds.length > 0) {
+        return NextResponse.json(
+          { error: "Selected person must be an active member of this project" },
+          { status: 400 },
+        );
+      }
+    }
+
     // Delete all existing members for this role
     const { error: deleteError } = await supabase
       .from("project_role_members")
@@ -173,14 +203,14 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (deleteError) {
       return NextResponse.json(
-        { error: "Failed to update role members" },
+        { error: `Failed to update role members: ${deleteError.message}` },
         { status: 500 },
       );
     }
 
     // Insert new members if any
-    if (member_person_ids.length > 0) {
-      const newMembers = member_person_ids.map((person_id: string) => ({
+    if (uniqueMemberPersonIds.length > 0) {
+      const newMembers = uniqueMemberPersonIds.map((person_id: string) => ({
         project_role_id: role_id,
         person_id,
       }));
@@ -191,7 +221,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
       if (insertError) {
         return NextResponse.json(
-          { error: "Failed to add role members" },
+          { error: `Failed to add role members: ${insertError.message}` },
           { status: 500 },
         );
       }

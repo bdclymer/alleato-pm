@@ -3,6 +3,7 @@
 import * as React from "react"
 import {
   Control,
+  FieldArray,
   FieldArrayPath,
   FieldValues,
   useFieldArray,
@@ -39,7 +40,7 @@ interface Props<
   label?: string
   description?: string
   columns: Column<TFieldValues, TName>[]
-  createRow: () => Record<string, unknown>
+  createRow: () => FieldArray<TFieldValues, TName>
   addLabel?: string
   minRows?: number
 }

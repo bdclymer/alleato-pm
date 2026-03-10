@@ -41,6 +41,7 @@ import { EditProjectDialog } from "@/components/portfolio/edit-project-dialog";
 import { MeetingsSection } from "./meetings-section";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectRoles } from "@/hooks/use-project-roles";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import { useScheduleTasks } from "@/hooks/use-schedule-tasks";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import type { ProjectRole } from "@/hooks/use-project-roles";
@@ -456,49 +457,27 @@ function DirectorySubSection({
    ============================================================================= */
 function RoleBasedTeamSection({ projectId }: { projectId: number }) {
   const { roles, isLoading, updateRoleMembers } = useProjectRoles(String(projectId));
+  const { users: projectUsers, isLoading: peopleLoading } = useProjectUsers(String(projectId), {
+    type: "user",
+    status: "active",
+    perPage: 200,
+  });
   const [activeRoleId, setActiveRoleId] = React.useState<string | null>(null);
   const [searchValue, setSearchValue] = React.useState("");
-  const [availablePeople, setAvailablePeople] = React.useState<
-    { id: string; first_name: string; last_name: string; email: string | null; job_title: string | null; company_name?: string | null }[]
-  >([]);
-  const [peopleLoading, setPeopleLoading] = React.useState(false);
   const [assigning, setAssigning] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!activeRoleId) return;
-    let cancelled = false;
-    async function fetchPeople() {
-      setPeopleLoading(true);
-      try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("people")
-          .select("id, first_name, last_name, email, job_title, company:companies(name)")
-          .eq("person_type", "employee")
-          .order("last_name", { ascending: true })
-          .limit(100);
-        if (!cancelled) {
-          setAvailablePeople(
-            (data || []).map((p) => ({
-              id: p.id,
-              first_name: p.first_name || "",
-              last_name: p.last_name || "",
-              email: p.email,
-              job_title: p.job_title,
-              company_name: (p.company as { name?: string } | null)?.name || null,
-            })),
-          );
-        }
-      } catch {
-        // silently fail
-      } finally {
-        if (!cancelled) setPeopleLoading(false);
-      }
-    }
-    fetchPeople();
-    return () => { cancelled = true; };
-  }, [activeRoleId]);
+  const availablePeople = React.useMemo(
+    () =>
+      (projectUsers || []).map((user) => ({
+        id: user.id,
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
+        email: user.email,
+        job_title: user.job_title,
+        company_name: user.company?.name || null,
+      })),
+    [projectUsers],
+  );
 
   const filteredPeople = React.useMemo(() => {
     const assignedPersonIds = new Set(roles.flatMap((r) => r.members.map((m) => m.person_id)));
@@ -526,8 +505,8 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
       try {
         await updateRoleMembers(roleId, [personId]);
         toast.success("Role assigned");
-      } catch {
-        toast.error("Failed to assign role");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to assign role");
       } finally {
         setAssigning(false);
         setActiveRoleId(null);
