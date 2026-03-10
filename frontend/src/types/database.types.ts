@@ -11525,6 +11525,7 @@ export type Database = {
           category: string | null
           client: string | null
           client_id: number | null
+          company_id: string | null
           completion_percentage: number | null
           created_at: string
           current_phase: string | null
@@ -11574,6 +11575,7 @@ export type Database = {
           category?: string | null
           client?: string | null
           client_id?: number | null
+          company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
           current_phase?: string | null
@@ -11623,6 +11625,7 @@ export type Database = {
           category?: string | null
           client?: string | null
           client_id?: number | null
+          company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
           current_phase?: string | null
@@ -11662,6 +11665,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -16129,6 +16139,8 @@ export type Database = {
       }
       vendors: {
         Row: {
+          acumatica_sync_at: string | null
+          acumatica_vendor_id: string | null
           address: string | null
           city: string | null
           company_id: string
@@ -16147,6 +16159,8 @@ export type Database = {
           zip_code: string | null
         }
         Insert: {
+          acumatica_sync_at?: string | null
+          acumatica_vendor_id?: string | null
           address?: string | null
           city?: string | null
           company_id: string
@@ -16165,6 +16179,8 @@ export type Database = {
           zip_code?: string | null
         }
         Update: {
+          acumatica_sync_at?: string | null
+          acumatica_vendor_id?: string | null
           address?: string | null
           city?: string | null
           company_id?: string

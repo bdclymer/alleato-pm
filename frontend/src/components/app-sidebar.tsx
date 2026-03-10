@@ -266,8 +266,9 @@ function DevToolsTrigger({ isCollapsed }: { isCollapsed: boolean }) {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
-  const { state, toggleSidebar } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const { state, toggleSidebar, isMobile } = useSidebar()
+  // On mobile, the sidebar renders inside a Sheet — always show expanded navigation
+  const isCollapsed = isMobile ? false : state === "collapsed"
 
   const [user, setUser] = React.useState<User | null>(null)
   const supabase = createClient()

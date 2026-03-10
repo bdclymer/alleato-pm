@@ -22,6 +22,7 @@ import {
 type Column<TFieldValues extends FieldValues, TName extends FieldArrayPath<TFieldValues>> = {
   key: string
   header: React.ReactNode
+  mobileLabel?: React.ReactNode
   className?: string
   cell: (args: {
     index: number
@@ -80,7 +81,44 @@ export function RHFFieldArrayTable<
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="space-y-3 md:hidden">
+        {fields.map((field, index) => {
+          const rowName = `${name}.${index}` as `${TName}.${number}`
+
+          return (
+            <div key={field.id} className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">
+                  {label ? `${label} ${index + 1}` : `Row ${index + 1}`}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => remove(index)}
+                  disabled={fields.length <= minRows}
+                  aria-label={`Remove row ${index + 1}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {columns.map(column => (
+                <div key={column.key} className="space-y-2">
+                  {column.mobileLabel ? (
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      {column.mobileLabel}
+                    </p>
+                  ) : null}
+                  {column.cell({ index, rowName })}
+                </div>
+              ))}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-lg border md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -89,7 +127,7 @@ export function RHFFieldArrayTable<
                   {column.header}
                 </TableHead>
               ))}
-              <TableHead className="w-[60px]" />
+              <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
 
@@ -128,6 +166,7 @@ export function RHFFieldArrayTable<
         type="button"
         variant="outline"
         onClick={() => append(createRow())}
+        className="w-full sm:w-auto"
       >
         <Plus className="h-4 w-4" />
         {addLabel}

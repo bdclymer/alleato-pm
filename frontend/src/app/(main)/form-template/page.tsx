@@ -169,7 +169,13 @@ export default function StandardFormPage() {
         title="Create New Item"
         description="Example template showing every standard form field pattern"
         actions={
-          <Button type="button" variant="outline" size="sm" onClick={handleCancel}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCancel}
+            className="w-full sm:w-auto"
+          >
             <ArrowLeft className="h-4 w-4" />
             Back to List
           </Button>
@@ -294,6 +300,7 @@ export default function StandardFormPage() {
                   {
                     key: "itemName",
                     header: "Item Name",
+                    mobileLabel: "Item Name",
                     className: "min-w-[220px]",
                     cell: ({ rowName }) => (
                       <RHFTextField
@@ -307,6 +314,7 @@ export default function StandardFormPage() {
                   {
                     key: "quantity",
                     header: "Quantity",
+                    mobileLabel: "Quantity",
                     className: "w-[160px]",
                     cell: ({ rowName }) => (
                       <RHFNumberField
@@ -322,6 +330,7 @@ export default function StandardFormPage() {
                   {
                     key: "unitCost",
                     header: "Unit Cost",
+                    mobileLabel: "Unit Cost",
                     className: "w-[200px]",
                     cell: ({ rowName }) => (
                       <RHFMoneyField
@@ -355,6 +364,7 @@ export default function StandardFormPage() {
               onCancel={handleCancel}
               isSubmitting={isSubmitting}
               submitLabel="Create Item"
+              stickyOnMobile
             />
           </form>
         </Form>

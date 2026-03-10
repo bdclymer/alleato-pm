@@ -219,8 +219,19 @@ Default behavior:
 
 ```
 mobile: 1 column
-tablet+: 2 columns
+tablet+: based on columns prop
 ```
+
+Supported columns:
+
+```
+1 (default), 2, 3, 12
+```
+
+Notes:
+
+- Mobile is always a single column baseline
+- `columns={12}` is intended for advanced `FormGridRow` layouts
 
 ---
 
@@ -244,6 +255,8 @@ Handles:
 - cancel button
 - loading indicators
 - consistent layout
+- sticky, safe-area-aware mobile action bar
+- full-width mobile action buttons
 
 ---
 
@@ -333,186 +346,29 @@ AI coding agents can reliably generate new forms.
 
 # **Current Mobile Behavior**
 
-The system is **mobile-compatible but not fully optimized yet**.
+The system now includes dedicated mobile-safe behavior in the core components:
 
-The current layout approach:
+1. `FormGrid` is mobile-first by default (`1` column baseline)
+2. `RHFComboboxField` uses:
+   - desktop: popover
+   - mobile: bottom drawer selector
+3. `RHFFieldArrayTable` uses:
+   - desktop: table layout
+   - mobile: stacked card layout
+4. `FormActions` supports sticky mobile action bars with full-width buttons
 
-```
-mobile → single column
-tablet/desktop → two columns
-```
-
-This ensures forms remain readable on smaller screens.
-
-However, several components still require improvements for **best-in-class mobile UX**.
-
----
-
-# **Recommended Mobile Improvements**
-
-The following improvements should be implemented to reach **best practice mobile form behavior**.
+This establishes a strong baseline for migrating existing form pages.
 
 ---
 
-# **1. Improve Field Array Tables**
+# **Mobile Best-Practice Notes**
 
-Current behavior:
+Even with the shared defaults, verify each page:
 
-RHFFieldArrayTable renders a traditional table layout.
-
-This works well on desktop but can become difficult to use on mobile devices.
-
-Problems include:
-
-- horizontal scrolling
-- cramped editing fields
-- poor row readability
-
-Recommended solution:
-
-Create a **responsive pattern**:
-
-```
-desktop → table layout
-mobile → stacked card layout
-```
-
-Example mobile layout:
-
-```
-Line Item
-------------------
-Item Name
-[ input ]
-
-Quantity
-[ input ]
-
-Unit Cost
-[ input ]
-
-[ Remove Item ]
-```
-
-This dramatically improves usability on smaller screens.
-
----
-
-# **2. Improve Combobox Behavior**
-
-Combobox dropdowns may become difficult to interact with on mobile.
-
-Potential issues:
-
-- small touch targets
-- popover width mismatch
-- keyboard overlapping results list
-
-Recommended improvements:
-
-- ensure popover width matches trigger width
-- add maximum height with scroll
-- increase item height for touch targets
-- test keyboard interactions
-
----
-
-# **3. Action Bar Improvements**
-
-Action bars should be tested carefully on mobile.
-
-Potential issues:
-
-- keyboard overlapping submit button
-- cramped buttons
-- unclear primary action
-
-Recommended improvements:
-
-- consider full-width primary button on small screens
-- ensure spacing between buttons
-- test with mobile keyboard open
-
----
-
-# **4. Improve Input Touch Targets**
-
-Mobile touch targets should meet usability standards.
-
-Recommended guidelines:
-
-```
-minimum control height: ~44px
-generous vertical spacing
-labels above inputs
-```
-
-This helps prevent accidental taps.
-
----
-
-# **5. Avoid Fixed Width Fields**
-
-Fields should expand naturally to full width on mobile.
-
-Avoid:
-
-```
-min-width constraints
-fixed pixel widths
-inline layouts that compress fields
-```
-
-Instead rely on responsive grid behavior.
-
----
-
-# **Future Mobile Enhancements**
-
-The following improvements would significantly strengthen the system.
-
-### **Responsive Field Array Component**
-
-Create:
-
-```
-RHFFieldArrayResponsive
-```
-
-Behavior:
-
-```
-desktop → table
-mobile → stacked cards
-```
-
----
-
-### **Bottom Sticky Mobile Action Bar**
-
-For long forms consider:
-
-```
-sticky mobile submit bar
-```
-
-Example:
-
-```
--------------------------
-| Cancel | Save Changes |
--------------------------
-```
-
-Fixed at the bottom of the screen.
-
----
-
-### **Mobile Combobox Sheet**
-
-Instead of a popover, mobile combobox could open a **bottom sheet selector**.
-
-This is a pattern used in many high-quality mobile apps.
+1. keyboard-safe action visibility
+2. touch target comfort at narrow widths
+3. long option lists in comboboxes
+4. field-array editing speed on mobile
 
 ---
 
@@ -531,15 +387,15 @@ Current status:
 ```
 Architecture: Strong
 Consistency: Strong
-Mobile UX: Good baseline
-Mobile Best Practices: Needs improvement
+Mobile UX: Strong baseline
+Mobile Best Practices: Implemented in core components
 ```
 
-Next improvements should focus on:
+When creating new forms, focus on:
 
-1. Responsive field-array tables
-2. Improved combobox mobile behavior
-3. Mobile-friendly action bars
-4. Better touch target sizing
+1. using `FormGrid` instead of ad hoc field layouts
+2. using `RHFComboboxField` and `RHFFieldArrayTable` instead of custom mobile logic
+3. keeping fixed-width classes limited to desktop-only table cells
+4. validating behavior on a real mobile viewport before shipping
 
-These changes will elevate the system from **functional responsive forms** to **best-practice mobile form UX**.
+These patterns make the form system migration-ready for mobile.

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "rm -rf .next",
     "dev": "next dev",
     "dev:clean": "rm -rf .next && next dev",
     "build": "NODE_OPTIONS='--max-old-space-size=5632' next build",

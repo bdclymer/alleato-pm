@@ -4,6 +4,7 @@ import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Control, FieldPath, FieldValues } from "react-hook-form"
 
+import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import {
   FormControl,
@@ -27,6 +28,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
 
 export interface ComboboxOption {
   value: string
@@ -58,6 +66,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
   disabled,
 }: Props<TFieldValues>) {
   const [open, setOpen] = React.useState(false)
+  const isMobile = useIsMobile()
 
   return (
     <FormField
@@ -65,67 +74,83 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => {
         const selected = options.find(option => option.value === field.value)
+        const trigger = (
+          <FormControl>
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              disabled={disabled}
+              className={cn(
+                "h-11 w-full justify-between",
+                !field.value && "text-muted-foreground"
+              )}
+            >
+              <span className="truncate">
+                {selected ? selected.label : placeholder}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </FormControl>
+        )
+        const optionsList = (
+          <Command>
+            <CommandInput placeholder={searchPlaceholder} />
+            <CommandList className="max-h-72">
+              <CommandEmpty>{emptyMessage}</CommandEmpty>
+              <CommandGroup>
+                {options.map(option => (
+                  <CommandItem
+                    key={option.value}
+                    value={[
+                      option.label,
+                      option.value,
+                      ...(option.keywords ?? []),
+                    ].join(" ")}
+                    className="min-h-11"
+                    onSelect={() => {
+                      field.onChange(option.value)
+                      setOpen(false)
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        option.value === field.value
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        )
 
         return (
           <FormItem className="flex flex-col">
             <FormLabel>{label}</FormLabel>
 
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    role="combobox"
-                    disabled={disabled}
-                    className={cn(
-                      "w-full justify-between",
-                      !field.value && "text-muted-foreground"
-                    )}
-                  >
-                    <span className="truncate">
-                      {selected ? selected.label : placeholder}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                <Command>
-                  <CommandInput placeholder={searchPlaceholder} />
-                  <CommandList>
-                    <CommandEmpty>{emptyMessage}</CommandEmpty>
-                    <CommandGroup>
-                      {options.map(option => (
-                        <CommandItem
-                          key={option.value}
-                          value={[
-                            option.label,
-                            option.value,
-                            ...(option.keywords ?? []),
-                          ].join(" ")}
-                          onSelect={() => {
-                            field.onChange(option.value)
-                            setOpen(false)
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              option.value === field.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {option.label}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            {isMobile ? (
+              <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+                <DrawerContent>
+                  <DrawerHeader className="text-left">
+                    <DrawerTitle>{label}</DrawerTitle>
+                  </DrawerHeader>
+                  <div className="px-4 pb-4">{optionsList}</div>
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                  {optionsList}
+                </PopoverContent>
+              </Popover>
+            )}
 
             {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />

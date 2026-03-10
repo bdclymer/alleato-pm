@@ -21,7 +21,6 @@ import {
 } from "@/lib/navigation-config";
 
 import { useHeaderNav } from "./use-header-nav";
-import { HeaderMobileMenu } from "./header-mobile-menu";
 import { ProjectSelector } from "./project-selector";
 
 /**
@@ -50,23 +49,6 @@ export function SiteHeader() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-
-          {/* Mobile menu (sheet-based) */}
-          <div className="md:hidden">
-            <HeaderMobileMenu
-              projectId={nav.projectId}
-              currentProject={nav.currentProject}
-              activeToolName={nav.activeToolName}
-              permissions={permissions}
-              isAppAdmin={isAppAdmin}
-              userType={userType}
-              projects={nav.projects}
-              loadingProjects={nav.loadingProjects}
-              onFetchProjects={nav.fetchProjects}
-              onProjectSelect={nav.handleProjectSelect}
-              onViewAll={() => router.push("/")}
-            />
-          </div>
 
           {/* Breadcrumbs — Desktop */}
           {nav.activeToolName !== "Projects" && (

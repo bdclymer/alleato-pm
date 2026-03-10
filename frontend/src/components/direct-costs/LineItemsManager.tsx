@@ -9,8 +9,8 @@
 
 'use client'
 
-import { useCallback, useMemo } from 'react'
-import { UseFormReturn, useFormState } from 'react-hook-form'
+import { useMemo } from 'react'
+import { UseFormReturn, useFormState, useWatch } from 'react-hook-form'
 import {
   DndContext,
   closestCenter,
@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { BudgetCodeSelector } from '@/components/budget/budget-code-selector'
+import { FormTotalRow } from '@/components/forms/FormTotalRow'
 import {
   Table,
   TableBody,
@@ -52,7 +53,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import {
   FormField,
   FormItem,
@@ -325,7 +325,7 @@ function SortableLineItemRow({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <AlertCircle className="h-3 w-3 text-amber-500 mt-1" />
+                <AlertCircle className="mt-1 h-3 w-3 text-status-warning" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>High value line item</p>
@@ -409,11 +409,14 @@ export function LineItemsManager({
   // Scoped to 'line_items' so this component only re-renders when line_items errors change,
   // not on every top-level field state change (vendor, date, description, etc.)
   const { errors: formErrors } = useFormState({ control: form.control, name: 'line_items' })
+  const watchedLineItems = useWatch({
+    control: form.control,
+    name: 'line_items',
+  }) as DirectCostLineItem[] | undefined
 
   // Stable sortable IDs — prevents DndContext from seeing new array ref every render
   const sortableIds = useMemo(
     () => items.map((_, index) => `line-item-${index}`),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [items.length]
   )
 
@@ -422,14 +425,13 @@ export function LineItemsManager({
     useSensor(KeyboardSensor, KEYBOARD_SENSOR_OPTIONS)
   )
 
-  // Calculate totals
-  const calculateGrandTotal = useCallback(() => {
-    return items.reduce((total, item) => {
-      return total + (item.quantity || 0) * (item.unit_cost || 0)
-    }, 0)
-  }, [items])
-
-  const grandTotal = calculateGrandTotal()
+  const grandTotal = useMemo(
+    () =>
+      (watchedLineItems ?? []).reduce((total, item) => {
+        return total + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0)
+      }, 0),
+    [watchedLineItems]
+  )
 
   // Handle drag end
   const handleDragEnd = (event: DragEndEvent) => {
@@ -495,7 +497,7 @@ export function LineItemsManager({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/70 hover:bg-muted/70">
-                  <TableHead className="w-[40px] py-4"></TableHead>
+                  <TableHead className="w-10 py-4"></TableHead>
                   <TableHead className="min-w-72 py-4 text-xs font-semibold tracking-wide text-muted-foreground">
                     Budget Code *
                   </TableHead>
@@ -565,7 +567,11 @@ export function LineItemsManager({
         </SortableContext>
       </DndContext>
 
-      {/* Actions and Total */}
+      <FormTotalRow
+        label="Line Items Total"
+        value={formatCurrency(grandTotal)}
+      />
+
       <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -584,20 +590,7 @@ export function LineItemsManager({
             </div>
           )}
         </div>
-
-        <div className="rounded-lg border border-border/70 bg-background px-4 py-4 text-right">
-          <div className="text-xs font-medium tracking-wide text-muted-foreground">Grand Total</div>
-          <div className="text-2xl font-semibold">
-            {formatCurrency(grandTotal)}
-          </div>
-          {grandTotal > 10000 && (
-            <Badge variant="secondary" className="text-xs mt-1">
-              High Value
-            </Badge>
-          )}
-        </div>
       </div>
-
     </div>
   )
 }
