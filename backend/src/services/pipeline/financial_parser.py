@@ -14,6 +14,7 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
 from typing import Any, Dict, List, Tuple
 
 import pandas as pd
@@ -26,6 +27,117 @@ logger = logging.getLogger(__name__)
 MAX_ROWS_PER_SHEET = int(os.getenv("FINANCIAL_PARSER_MAX_ROWS", "5000"))
 MAX_CONTENT_CHARS = int(os.getenv("FINANCIAL_PARSER_MAX_CONTENT_CHARS", "300000"))
 ROW_INSERT_BATCH_SIZE = int(os.getenv("FINANCIAL_PARSER_ROW_BATCH", "500"))
+HEADER_SCAN_ROWS = int(os.getenv("FINANCIAL_PARSER_HEADER_SCAN_ROWS", "12"))
+
+_HEADER_KEYWORDS = {
+    "amount",
+    "total",
+    "cost",
+    "price",
+    "rate",
+    "qty",
+    "quantity",
+    "description",
+    "code",
+    "labor",
+    "material",
+    "equipment",
+    "unit",
+}
+
+
+def _normalize_col_name(value: Any, idx: int) -> str:
+    raw = (str(value).strip() if value is not None else "")
+    if not raw:
+        return f"col_{idx + 1}"
+    if raw.lower() in {"nan", "none", "nat", "null"}:
+        return f"col_{idx + 1}"
+    if re.match(r"^unnamed:\s*\d+$", raw, re.IGNORECASE):
+        return f"col_{idx + 1}"
+    return raw
+
+
+def _dedupe_columns(columns: List[str]) -> List[str]:
+    seen: Dict[str, int] = {}
+    deduped: List[str] = []
+    for name in columns:
+        base = name or "col"
+        count = seen.get(base, 0) + 1
+        seen[base] = count
+        deduped.append(base if count == 1 else f"{base}_{count}")
+    return deduped
+
+
+def _pick_header_row(df: pd.DataFrame) -> int:
+    """Pick the most likely header row from the top of a sheet."""
+    if df.empty:
+        return 0
+
+    scan_limit = min(len(df.index), HEADER_SCAN_ROWS)
+    best_idx = 0
+    best_score = float("-inf")
+
+    for idx in range(scan_limit):
+        row = df.iloc[idx].tolist()
+        values = [str(v).strip() for v in row if _safe_value(v) is not None]
+        if not values:
+            continue
+
+        non_empty = len(values)
+        unnamed_hits = sum(
+            1 for v in values if re.match(r"^unnamed:\s*\d+$", v, re.IGNORECASE)
+        )
+        numeric_like = sum(
+            1 for v in values if re.fullmatch(r"[$]?\d[\d,.\-]*", v)
+        )
+        keyword_hits = sum(
+            1 for v in values for k in _HEADER_KEYWORDS if k in v.lower()
+        )
+        mostly_alpha = sum(1 for v in values if re.search(r"[A-Za-z]", v)) / max(non_empty, 1)
+        score = (
+            non_empty
+            + (keyword_hits * 3)
+            + (mostly_alpha * 2)
+            - (unnamed_hits * 3)
+            - (numeric_like * 2)
+        )
+        if keyword_hits == 0:
+            score -= 2
+
+        if score > best_score:
+            best_score = score
+            best_idx = idx
+
+    return best_idx
+
+
+def _prepare_sheet_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize headers and trim empty rows/columns for reliable row extraction."""
+    if df.empty:
+        return df
+
+    # Keep raw sheet structure, then infer a better header row.
+    working = df.copy()
+    working = working.dropna(axis=0, how="all").dropna(axis=1, how="all")
+    if working.empty:
+        return working
+
+    header_idx = _pick_header_row(working)
+    header_values = working.iloc[header_idx].tolist()
+    normalized = _dedupe_columns(
+        [_normalize_col_name(value, idx) for idx, value in enumerate(header_values)]
+    )
+
+    # Keep rows below the selected header row as data.
+    data = working.iloc[header_idx + 1 :].copy()
+    data.columns = normalized
+    data = data.dropna(axis=0, how="all").dropna(axis=1, how="all")
+
+    # If everything was dropped, keep at least an empty frame with headers.
+    if data.empty:
+        data = pd.DataFrame(columns=normalized)
+
+    return data
 
 
 def _safe_value(value: Any) -> Any:
@@ -42,6 +154,8 @@ def _safe_value(value: Any) -> Any:
         return value
 
     text = str(value).strip()
+    if text.lower() in {"nan", "none", "nat", "null"}:
+        return None
     return text if text else None
 
 
@@ -53,7 +167,11 @@ def _dataframe_to_rows(df: pd.DataFrame, sheet: str) -> List[Dict[str, Any]]:
     for idx, (_, row) in enumerate(trimmed.iterrows()):
         row_values: Dict[str, Any] = {}
         for col_name, raw in zip(columns, row.tolist()):
-            row_values[col_name] = _safe_value(raw)
+            safe = _safe_value(raw)
+            if safe is not None:
+                row_values[col_name] = safe
+        if not row_values:
+            continue
         rows.append(
             {
                 "sheet": sheet,
@@ -112,15 +230,17 @@ def _extract_tables(file_bytes: bytes, file_name: str) -> List[Tuple[str, pd.Dat
 
     if ext in {"csv", "tsv"}:
         sep = "\t" if ext == "tsv" else ","
-        df = pd.read_csv(io.BytesIO(file_bytes), sep=sep, dtype=str)
-        return [("Sheet1", df)]
+        df = pd.read_csv(io.BytesIO(file_bytes), sep=sep, dtype=str, header=None)
+        prepared = _prepare_sheet_dataframe(df)
+        return [("Sheet1", prepared)]
 
     if ext in {"xls", "xlsx"}:
         workbook = pd.ExcelFile(io.BytesIO(file_bytes))
         tables: List[Tuple[str, pd.DataFrame]] = []
         for sheet in workbook.sheet_names:
-            df = workbook.parse(sheet_name=sheet, dtype=str)
-            tables.append((sheet, df))
+            df = workbook.parse(sheet_name=sheet, dtype=str, header=None)
+            prepared = _prepare_sheet_dataframe(df)
+            tables.append((sheet, prepared))
         return tables
 
     raise ValueError(f"Unsupported financial document extension: .{ext}")

@@ -25,6 +25,43 @@ from typing import Any, Dict, List, Optional
 
 from supabase import Client, create_client
 
+_QUERY_STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "for",
+    "to",
+    "of",
+    "in",
+    "on",
+    "at",
+    "with",
+    "by",
+    "from",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "what",
+    "which",
+    "who",
+    "when",
+    "where",
+    "why",
+    "how",
+    "need",
+    "show",
+    "tell",
+    "details",
+    "detail",
+    "about",
+}
+
 
 def _require_env(name: str) -> str:
     value = os.getenv(name)
@@ -329,7 +366,26 @@ class SupabaseRagStore:
         This is a structured-first retrieval path intended for finance/tabular
         questions before semantic chunk retrieval.
         """
-        tokens = [t.lower() for t in re.findall(r"[A-Za-z0-9$%./-]+", query) if len(t) >= 2]
+        raw_tokens = [t.lower() for t in re.findall(r"[A-Za-z0-9$%./-]+", query)]
+        tokens: List[str] = []
+        seen: set[str] = set()
+        for token in raw_tokens:
+            cleaned = token.strip()
+            if not cleaned:
+                continue
+            if cleaned.startswith("$"):
+                cleaned = cleaned[1:]
+            if not cleaned:
+                continue
+            if cleaned in _QUERY_STOPWORDS:
+                continue
+            # Keep 2-char quarter markers like q1..q4; otherwise require >=3 chars.
+            if len(cleaned) < 3 and not re.match(r"^q[1-4]$", cleaned):
+                continue
+            if cleaned not in seen:
+                seen.add(cleaned)
+                tokens.append(cleaned)
+
         if not tokens:
             return []
 
@@ -373,6 +429,7 @@ class SupabaseRagStore:
         row_rows = row_query.execute().data or []
 
         scored: List[Dict[str, Any]] = []
+        query_lc = query.lower().strip()
         for row in row_rows:
             dataset_id = row.get("dataset_id")
             row_data = row.get("row_data") or {}
@@ -384,12 +441,14 @@ class SupabaseRagStore:
             if token_hits == 0:
                 continue
 
+            phrase_bonus = 4 if query_lc and query_lc in haystack else 0
+
             scored.append(
                 {
                     "dataset_id": dataset_id,
                     "document": dataset_meta.get(dataset_id, {}),
                     "row_data": row_data,
-                    "match_score": token_hits,
+                    "match_score": token_hits + phrase_bonus,
                 }
             )
 
