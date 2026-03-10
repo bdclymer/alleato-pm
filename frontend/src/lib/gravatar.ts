@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { md5 } from "js-md5";
 
 /**
@@ -14,7 +13,7 @@ export function getGravatarUrl(
   defaultImage: string = "mp", // Mystery Person default
 ): string {
   const trimmedEmail = email.trim().toLowerCase();
-  const hash = crypto.createHash("md5").update(trimmedEmail).digest("hex");
+  const hash = md5(trimmedEmail);
   return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=${defaultImage}`;
 }
 

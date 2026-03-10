@@ -20,6 +20,10 @@
         {
             "filePath": ".claude/commands/feature-crawl.md",
             "group": "Default"
+        },
+        {
+            "filePath": "_bmad-output/planning-artifacts/commitments/implementation",
+            "group": "Default"
         }
     ],
     "files.exclude": {

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
   X,
@@ -46,6 +47,7 @@ import type { ProjectRole } from "@/hooks/use-project-roles";
 import type { Database } from "@/types/database.types";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
+import { buildToolUrl, isActivePath, sidebarNavGroups } from "@/lib/navigation-config";
 
 /* =============================================================================
    Types
@@ -765,6 +767,63 @@ function AiWidget({ projectId }: { projectId: number }) {
   );
 }
 
+function ProjectToolsSidebar({ projectId }: { projectId: number }) {
+  const pathname = usePathname();
+
+  const groupedTools = React.useMemo(
+    () =>
+      sidebarNavGroups.filter((group) =>
+        ["financial", "operations", "company"].includes(group.id),
+      ),
+    [],
+  );
+
+  return (
+    <aside className="xl:sticky xl:top-6 xl:self-start">
+      <div className="space-y-4 border-l border-border/70 pl-4">
+        <div>
+          <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            Tools
+          </h2>
+          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
+            Jump to project modules
+          </p>
+        </div>
+
+        {groupedTools.map((group) => (
+          <section key={group.id} className="space-y-1.5">
+            <h3 className="text-[11px] font-semibold text-foreground">{group.label}</h3>
+            <div className="space-y-0.5">
+              {group.tools.map((tool) => {
+                const href = tool.path.startsWith("/")
+                  ? tool.path
+                  : buildToolUrl(tool.path, projectId, tool.requiresProject);
+                const active = tool.path.startsWith("/")
+                  ? pathname === tool.path || pathname.startsWith(`${tool.path}/`)
+                  : isActivePath(pathname, tool.path);
+                return (
+                  <Link
+                    key={`${group.id}-${tool.name}`}
+                    href={href}
+                    className={cn(
+                      "block rounded px-1.5 py-1 text-xs leading-tight transition-colors",
+                      active
+                        ? "bg-accent text-accent-foreground font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {tool.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
 /* =============================================================================
    Main component — Clean sectioned layout
    ============================================================================= */
@@ -926,7 +985,9 @@ export function ProjectHomeClient({
         onOpenChange={setIsEditProjectDialogOpen}
         onSuccess={refreshProject}
       />
-      <div className="px-8 sm:px-12 pb-24 space-y-6">
+      <div className="px-8 sm:px-12 pb-24">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_18rem] gap-8">
+          <div className="space-y-6">
 
         {/* ── HERO: Project header ── */}
         <div className="pt-6 pb-2">
@@ -1215,6 +1276,9 @@ export function ProjectHomeClient({
             <p className="text-xs text-muted-foreground/50 mt-1">Add budget, meetings, RFIs, and tasks to populate this dashboard.</p>
           </div>
         )}
+          </div>
+          <ProjectToolsSidebar projectId={project.id} />
+        </div>
       </div>
 
       <AiWidget projectId={project.id} />

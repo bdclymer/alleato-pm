@@ -200,6 +200,7 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - Max 2 visual container levels: page shell + section content
 - No heavy shadows (`shadow-lg`, `shadow-xl`, glow effects)
 - No mixed accent palette (pick one accent and stay consistent)
+- No emojis in production UI copy, states, labels, or empty-state visuals unless explicitly requested by the user
 
 **Default page structure:**
 

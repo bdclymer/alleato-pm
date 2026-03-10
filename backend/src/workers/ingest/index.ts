@@ -990,8 +990,8 @@ async function fetchFirefliesAppsPreview(
   transcriptId: string
 ): Promise<unknown[] | undefined> {
   const query = `
-    query Apps($transcriptId: String!, $limit: Float) {
-      apps(transcript_id: $transcriptId, limit: $limit) {
+    query Apps($transcriptId: String!, $limit: Float, $skip: Float) {
+      apps(transcript_id: $transcriptId, limit: $limit, skip: $skip) {
         outputs {
           transcript_id
           user_id
@@ -1006,35 +1006,52 @@ async function fetchFirefliesAppsPreview(
   `;
 
   try {
-    const response = await fetch("https://api.fireflies.ai/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.FIREFLIES_API_KEY}`,
-      },
-      body: JSON.stringify({
-        query,
-        variables: {
-          transcriptId,
-          limit: 5,
+    const pageSize = 10; // Fireflies max for apps query
+    let skip = 0;
+    const allOutputs: unknown[] = [];
+
+    while (true) {
+      const response = await fetch("https://api.fireflies.ai/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${env.FIREFLIES_API_KEY}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          query,
+          variables: {
+            transcriptId,
+            limit: pageSize,
+            skip,
+          },
+        }),
+      });
 
-    if (!response.ok) {
-      return undefined;
+      if (!response.ok) {
+        return undefined;
+      }
+
+      const result = (await response.json()) as {
+        data?: { apps?: { outputs?: unknown[] } };
+        errors?: Array<{ message: string }>;
+      };
+
+      if (result.errors?.length) {
+        return undefined;
+      }
+
+      const batch = result.data?.apps?.outputs || [];
+      if (!batch.length) {
+        break;
+      }
+      allOutputs.push(...batch);
+      if (batch.length < pageSize) {
+        break;
+      }
+      skip += pageSize;
     }
 
-    const result = (await response.json()) as {
-      data?: { apps?: { outputs?: unknown[] } };
-      errors?: Array<{ message: string }>;
-    };
-
-    if (result.errors?.length) {
-      return undefined;
-    }
-
-    return result.data?.apps?.outputs || [];
+    return allOutputs;
   } catch {
     return undefined;
   }

@@ -497,8 +497,8 @@ class FirefliesIngestionPipeline:
 
     def _fetch_apps_outputs(self, transcript_id: str) -> List[Dict[str, Any]]:
         query = """
-        query Apps($transcriptId: String!, $limit: Float) {
-          apps(transcript_id: $transcriptId, limit: $limit) {
+        query Apps($transcriptId: String!, $limit: Float, $skip: Float) {
+          apps(transcript_id: $transcriptId, limit: $limit, skip: $skip) {
             outputs {
               transcript_id
               user_id
@@ -511,9 +511,27 @@ class FirefliesIngestionPipeline:
           }
         }
         """
+        page_size = 10  # Fireflies docs: max 10 app outputs per request.
+        skip = 0
+        all_outputs: List[Dict[str, Any]] = []
         try:
-            data = self._fireflies_query(query, {"transcriptId": transcript_id, "limit": 5})
-            return (data.get("apps") or {}).get("outputs") or []
+            while True:
+                data = self._fireflies_query(
+                    query,
+                    {
+                        "transcriptId": transcript_id,
+                        "limit": page_size,
+                        "skip": skip,
+                    },
+                )
+                batch = (data.get("apps") or {}).get("outputs") or []
+                if not batch:
+                    break
+                all_outputs.extend(batch)
+                if len(batch) < page_size:
+                    break
+                skip += page_size
+            return all_outputs
         except Exception:
             return []
 

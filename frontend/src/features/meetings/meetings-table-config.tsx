@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ArrowUpRight, FileText, Flame, MoreHorizontal, Trash2 } from "lucide-react";
+import { ArrowUpRight, FileText, Flame, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -166,7 +166,7 @@ function getStatusMeta(status: string | null | undefined): { label: string; dotC
   return { label: status ?? "Unknown", dotClassName: "bg-[hsl(var(--status-info))]" };
 }
 
-function parseParticipants(item: Meeting): string[] {
+export function parseParticipants(item: Meeting): string[] {
   const normalizeEntry = (value: unknown): string | null => {
     if (typeof value === "string") {
       const trimmed = value.trim().replace(/^["'{\[]+/, "").replace(/["'}\]]+$/, "");
@@ -223,7 +223,7 @@ function getParticipantInitials(value: string): string {
   return first.slice(0, 2).toUpperCase();
 }
 
-function getParticipantDisplayName(value: string): string {
+export function getParticipantDisplayName(value: string): string {
   const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
   const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
   if (tokenized.length === 0) return value;
@@ -407,31 +407,8 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
         const statusMeta = getStatusMeta(item.status);
         const titleText = item.title ?? "Untitled";
 
-        return (
-          <EditableCellWrapper
-            isEditing={Boolean(isEditing)}
-            displayContent={
-              <div className="inline-flex items-center gap-2 min-w-0">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span
-                        className={`inline-block h-2 w-2 rounded-full flex-shrink-0 ${statusMeta.dotClassName}`}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">
-                      {statusMeta.label}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <span className="font-medium truncate">{titleText}</span>
-              </div>
-            }
-            onClickToEdit={(e) => {
-              e.stopPropagation();
-              editContext?.handleCellClick(item, "title");
-            }}
-          >
+        if (isEditing) {
+          return (
             <InlineTextInput
               value={editContext?.editingValue ?? ""}
               onChange={(v) => editContext?.setEditingValue(v)}
@@ -439,7 +416,38 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
               onCancel={() => editContext?.handleInlineCancel()}
               placeholder="Meeting title"
             />
-          </EditableCellWrapper>
+          );
+        }
+
+        return (
+          <div className="group/title inline-flex items-center gap-2 min-w-0 w-full">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={`inline-block h-2 w-2 rounded-full flex-shrink-0 ${statusMeta.dotClassName}`}
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">
+                  {statusMeta.label}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span className="font-medium truncate">{titleText}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 ml-auto shrink-0 opacity-0 group-hover/title:opacity-100 focus-visible:opacity-100"
+              onClick={(event) => {
+                event.stopPropagation();
+                editContext?.handleCellClick(item, "title");
+              }}
+              aria-label="Edit meeting title"
+              title="Edit title"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         );
       },
       csvValue: (item) => item.title ?? "",

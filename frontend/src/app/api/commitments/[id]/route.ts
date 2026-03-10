@@ -2,6 +2,17 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { commitmentSchema } from "@/lib/schemas/financial-schemas";
 import type { ZodError } from "@/app/api/types";
+import { z } from "zod";
+
+const commitmentInlinePatchSchema = z
+  .object({
+    number: z.string().trim().min(1).optional(),
+    title: z.string().trim().min(1).optional(),
+  })
+  .refine(
+    (data) => Object.keys(data).length > 0,
+    "At least one editable field is required",
+  );
 
 /**
  * GET /api/commitments/[id]
@@ -411,6 +422,97 @@ export async function DELETE(
         id,
         deletedAt,
         canRestore: true,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: "Internal server error", message: error.message },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * PATCH /api/commitments/[id]
+ *
+ * Lightweight partial update endpoint used by inline editing in list views.
+ * Only supports safe, text-based fields that can be edited from a table cell.
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { id } = await params;
+    const supabase = await createClient();
+    const body = await request.json();
+    const parsed = commitmentInlinePatchSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: parsed.error.issues[0]?.message ?? "Validation error",
+          issues: parsed.error.issues,
+        },
+        { status: 400 },
+      );
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: unifiedData, error: unifiedError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
+      .eq("id", id)
+      .single();
+
+    if (unifiedError || !unifiedData) {
+      return NextResponse.json({ error: "Commitment not found" }, { status: 404 });
+    }
+
+    const tableName =
+      unifiedData.commitment_type === "subcontract"
+        ? "subcontracts"
+        : "purchase_orders";
+
+    const updatePayload: Record<string, string> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (parsed.data.number !== undefined) {
+      updatePayload.contract_number = parsed.data.number;
+    }
+    if (parsed.data.title !== undefined) {
+      updatePayload.title = parsed.data.title;
+    }
+
+    const { data, error } = await supabase
+      .from(tableName)
+      .update(updatePayload)
+      .eq("id", id)
+      .select("id, contract_number, title, updated_at")
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      data: {
+        id: data.id,
+        number: data.contract_number,
+        title: data.title,
+        updated_at: data.updated_at,
       },
     });
   } catch (error) {

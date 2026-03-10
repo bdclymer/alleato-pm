@@ -4,9 +4,7 @@ import {
   FileText,
   Maximize2,
   Shrink,
-  MoreVertical,
   Plus,
-  Trash2,
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -16,12 +14,6 @@ import {
   Collapsible,
   CollapsibleContent,
 } from "@/components/ui/collapsible";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -62,7 +54,6 @@ interface PrimeContractOverviewTabProps {
   setIsSovOpen: Dispatch<SetStateAction<boolean>>;
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
-  setLineItemToDelete: Dispatch<SetStateAction<ContractLineItem | null>>;
   sovTotal: number;
   sovBilledToDateTotal: number;
   sovRemainingTotal: number;
@@ -93,12 +84,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     setIsSovOpen,
     lineItemsLoading,
     lineItems,
-    setLineItemToDelete,
     sovTotal,
     sovBilledToDateTotal,
     sovRemainingTotal,
     setShowAddLineItemDialog,
   } = props;
+  const ownerName = contract.contract_company?.name || contract.client?.name;
 
   return (
     <>
@@ -154,12 +145,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               <dd
                                 className={cn(
                                   "mt-1 text-[15px] leading-6",
-                                  contract.client?.name
+                                  ownerName
                                     ? "font-semibold"
                                     : "font-normal italic text-muted-foreground",
                                 )}
                               >
-                                {contract.client?.name || "Not set"}
+                                {ownerName || "Not set"}
                               </dd>
                             </div>
                             <div>
@@ -273,14 +264,20 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             <ul className="space-y-2">
                               {attachments.map((att) => (
                                 <li key={att.id} className="flex items-center justify-between text-sm">
-                                  <a
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline truncate max-w-[60%]"
-                                  >
-                                    {att.fileName}
-                                  </a>
+                                  {att.downloadUrl || att.url ? (
+                                    <a
+                                      href={att.downloadUrl || att.url || "#"}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline truncate max-w-[60%]"
+                                    >
+                                      {att.fileName}
+                                    </a>
+                                  ) : (
+                                    <span className="truncate max-w-[60%] text-muted-foreground">
+                                      {att.fileName}
+                                    </span>
+                                  )}
                                   <span className="text-xs text-muted-foreground">
                                     {formatDate(att.uploadedAt)}
                                   </span>
@@ -530,36 +527,24 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     <div className="rounded-xl border border-border bg-background overflow-hidden">
                       <Table>
                         <TableHeader>
-                          {isSovFullscreen ? (
-                            <TableRow>
-                              <TableHead className="w-16">#</TableHead>
-                              <TableHead>Budget Code</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
-                              <TableHead className="text-right">Billed to Date</TableHead>
-                              <TableHead className="text-right">Amount Remaining</TableHead>
-                              <TableHead className="w-14" />
-                            </TableRow>
-                          ) : (
-                            <TableRow>
-                              <TableHead>Budget Code</TableHead>
-                              <TableHead>Description</TableHead>
-                              <TableHead className="text-right">Amount</TableHead>
-                              <TableHead className="w-14" />
-                            </TableRow>
-                          )}
+                          <TableRow>
+                            <TableHead>Budget Code</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="text-right">Billed to Date</TableHead>
+                            <TableHead className="text-right">Amount Remaining</TableHead>
+                          </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {lineItems.map((item, index) => {
+                          {lineItems.map((item) => {
                             const code = item.cost_code?.code || "--";
                             const name = item.cost_code?.name || "";
                             const amount = item.total_cost ?? 0;
                             const billedToDate = amount;
                             const amountRemaining = 0;
 
-                            return isSovFullscreen ? (
+                            return (
                               <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell>{item.line_number || index + 1}</TableCell>
                                 <TableCell>
                                   <div className="font-medium">{code}</div>
                                   <div className="text-muted-foreground text-sm">{name}</div>
@@ -574,94 +559,28 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 <TableCell className="text-right tabular-nums">
                                   {formatCurrency(amountRemaining)}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setLineItemToDelete(item);
-                                        }}
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell>
-                                  <div className="font-medium">{code}</div>
-                                  <div className="text-muted-foreground text-sm">{name}</div>
-                                </TableCell>
-                                <TableCell>{item.description || "--"}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amount)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setLineItemToDelete(item);
-                                        }}
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
                               </TableRow>
                             );
                           })}
                         </TableBody>
                         <tfoot>
-                          {isSovFullscreen ? (
-                            <TableRow className="bg-muted/60 font-medium">
-                              <TableCell colSpan={3} className="text-right">
-                                Total:
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovTotal)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovBilledToDateTotal)}
-                              </TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovRemainingTotal)}
-                              </TableCell>
-                              <TableCell />
-                            </TableRow>
-                          ) : (
-                            <TableRow className="bg-muted/60 font-medium">
-                              <TableCell>
-                                <Button size="sm" onClick={() => setShowAddLineItemDialog(true)}>
-                                  Add Line
-                                </Button>
-                              </TableCell>
-                              <TableCell className="text-right">Total:</TableCell>
-                              <TableCell className="text-right tabular-nums">
-                                {formatCurrency(sovTotal)}
-                              </TableCell>
-                              <TableCell />
-                            </TableRow>
-                          )}
+                          <TableRow className="bg-muted/60 font-medium">
+                            <TableCell>
+                              <Button size="sm" onClick={() => setShowAddLineItemDialog(true)}>
+                                Add Line
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-right">Total:</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(sovTotal)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(sovBilledToDateTotal)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(sovRemainingTotal)}
+                            </TableCell>
+                          </TableRow>
                         </tfoot>
                       </Table>
                     </div>

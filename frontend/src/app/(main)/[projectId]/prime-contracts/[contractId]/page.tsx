@@ -668,7 +668,8 @@ export default function ProjectContractDetailPage() {
         {
           id: newAttachment.id,
           fileName: newAttachment.fileName,
-          url: newAttachment.url,
+          url: newAttachment.url ?? null,
+          downloadUrl: newAttachment.downloadUrl,
           uploadedBy: newAttachment.uploadedBy,
           uploadedAt: newAttachment.uploadedAt,
         },
@@ -1065,7 +1066,6 @@ export default function ProjectContractDetailPage() {
           setIsSovOpen={setIsSovOpen}
           lineItemsLoading={lineItemsLoading}
           lineItems={lineItems}
-          setLineItemToDelete={setLineItemToDelete}
           sovTotal={sovTotal}
           sovBilledToDateTotal={sovBilledToDateTotal}
           sovRemainingTotal={sovRemainingTotal}

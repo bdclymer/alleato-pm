@@ -62,15 +62,23 @@ interface WithTotalsRow {
   is_private?: boolean | null;
 }
 
-function applyFilters(
+interface UnifiedCommitmentRow {
+  id: string | null;
+  commitment_type: string | null;
+  created_at: string | null;
+}
+
+function applyUnifiedFilters(
   query: any,
   filters: {
     projectId?: string | null;
     status?: string | null;
     companyId?: string | null;
     search?: string | null;
+    type?: string | null;
   },
 ) {
+  query = query.is("deleted_at", null);
   if (filters.projectId) {
     query = query.eq("project_id", parseInt(filters.projectId, 10));
   }
@@ -84,6 +92,9 @@ function applyFilters(
     query = query.or(
       `contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`,
     );
+  }
+  if (filters.type) {
+    query = query.eq("commitment_type", filters.type);
   }
   return query;
 }
@@ -220,105 +231,64 @@ export async function GET(request: Request) {
       }
     }
 
-    const filters = { projectId, status, companyId, search };
+    const filters = { projectId, status, companyId, search, type };
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
 
-    // Build queries for both types in parallel for better performance
-    const fetchSubcontracts = async (): Promise<{
-      data: Commitment[];
-      count: number;
-    }> => {
-      if (type && type !== "subcontract") return { data: [], count: 0 };
+    let baseQuery = (supabase as any)
+      .from("commitments_unified")
+      .select("id, commitment_type, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    baseQuery = applyUnifiedFilters(baseQuery, filters);
 
-      // The view doesn't expose deleted_at, so we fetch active IDs from the base table first
-      let baseQuery = (supabase as any)
-        .from("subcontracts")
-        .select("id")
-        .is("deleted_at", null);
-      if (filters.projectId) {
-        baseQuery = baseQuery.eq("project_id", parseInt(filters.projectId, 10));
-      }
-      const { data: activeRows } = await baseQuery;
-      const activeIds = (activeRows || []).map((r: { id: string }) => r.id);
+    const {
+      data: baseRows,
+      error: baseError,
+      count: totalCount,
+    } = await baseQuery;
+    if (baseError) throw baseError;
 
-      if (activeIds.length === 0) return { data: [], count: 0 };
+    const orderedBaseRows = (baseRows || []) as UnifiedCommitmentRow[];
+    const subcontractIds = orderedBaseRows
+      .filter((row) => row.id && row.commitment_type === "subcontract")
+      .map((row) => row.id as string);
+    const purchaseOrderIds = orderedBaseRows
+      .filter((row) => row.id && row.commitment_type === "purchase_order")
+      .map((row) => row.id as string);
 
-      let query = (supabase as any)
-        .from("subcontracts_with_totals")
-        .select(SC_LIST_COLUMNS, { count: "exact" })
-        .in("id", activeIds)
-        .order("created_at", { ascending: false });
-
-      query = applyFilters(query, filters);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-
-      return {
-        data: (data || []).map((row: WithTotalsRow) =>
-          mapRowToCommitment(row, "subcontract"),
-        ),
-        count: count || 0,
-      };
-    };
-
-    const fetchPurchaseOrders = async (): Promise<{
-      data: Commitment[];
-      count: number;
-    }> => {
-      if (type && type !== "purchase_order") return { data: [], count: 0 };
-
-      // The view doesn't expose deleted_at, so fetch active IDs from base table first
-      let poBaseQuery = (supabase as any)
-        .from("purchase_orders")
-        .select("id")
-        .is("deleted_at", null);
-      if (filters.projectId) {
-        poBaseQuery = poBaseQuery.eq("project_id", parseInt(filters.projectId, 10));
-      }
-      const { data: poActiveRows } = await poBaseQuery;
-      const poActiveIds = (poActiveRows || []).map((r: { id: string }) => r.id);
-
-      if (poActiveIds.length === 0) return { data: [], count: 0 };
-
-      let query = (supabase as any)
-        .from("purchase_orders_with_totals")
-        .select(PO_LIST_COLUMNS, { count: "exact" })
-        .in("id", poActiveIds)
-        .order("created_at", { ascending: false });
-
-      query = applyFilters(query, filters);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-
-      return {
-        data: (data || []).map((row: WithTotalsRow) =>
-          mapRowToCommitment(row, "purchase_order"),
-        ),
-        count: count || 0,
-      };
-    };
-
-    // Run both queries in parallel
-    const [scResult, poResult] = await Promise.all([
-      fetchSubcontracts(),
-      fetchPurchaseOrders(),
+    const [subcontractRows, purchaseOrderRows] = await Promise.all([
+      subcontractIds.length > 0
+        ? (supabase as any)
+            .from("subcontracts_with_totals")
+            .select(SC_LIST_COLUMNS)
+            .in("id", subcontractIds)
+        : Promise.resolve({ data: [], error: null }),
+      purchaseOrderIds.length > 0
+        ? (supabase as any)
+            .from("purchase_orders_with_totals")
+            .select(PO_LIST_COLUMNS)
+            .in("id", purchaseOrderIds)
+        : Promise.resolve({ data: [], error: null }),
     ]);
 
-    // Combine results
-    const allCommitments = [...scResult.data, ...poResult.data];
+    if (subcontractRows.error) throw subcontractRows.error;
+    if (purchaseOrderRows.error) throw purchaseOrderRows.error;
 
-    // Sort combined results by created_at descending
-    allCommitments.sort((a, b) => {
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
-    });
+    const commitmentsById = new Map<string, Commitment>();
+    for (const row of (subcontractRows.data || []) as WithTotalsRow[]) {
+      if (!row.id) continue;
+      commitmentsById.set(row.id, mapRowToCommitment(row, "subcontract"));
+    }
+    for (const row of (purchaseOrderRows.data || []) as WithTotalsRow[]) {
+      if (!row.id) continue;
+      commitmentsById.set(row.id, mapRowToCommitment(row, "purchase_order"));
+    }
 
-    // Apply pagination
-    const total = allCommitments.length;
-    const from = (page - 1) * limit;
-    const paginatedData = allCommitments.slice(from, from + limit);
+    const paginatedData = orderedBaseRows
+      .map((row) => (row.id ? commitmentsById.get(row.id) : undefined))
+      .filter((item): item is Commitment => Boolean(item));
+    const total = totalCount || 0;
 
     const response: PaginatedResponse<Commitment> = {
       data: paginatedData,

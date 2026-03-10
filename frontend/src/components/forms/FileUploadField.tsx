@@ -28,6 +28,7 @@ interface FileUploadFieldProps {
   fullWidth?: boolean;
   className?: string;
   disabled?: boolean;
+  variant?: "default" | "minimal";
   dropzoneTestId?: string;
   inputTestId?: string;
   fileListTestId?: string;
@@ -48,6 +49,7 @@ export function FileUploadField({
   fullWidth = false,
   className,
   disabled = false,
+  variant = "default",
   dropzoneTestId,
   inputTestId,
   fileListTestId,
@@ -120,6 +122,8 @@ export function FileUploadField({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  const isMinimal = variant === "minimal";
+
   return (
     <FormField
       label={label}
@@ -128,14 +132,16 @@ export function FileUploadField({
       required={required}
       fullWidth={fullWidth}
     >
-      <div className="space-y-4">
+      <div className={cn(isMinimal ? "space-y-2.5" : "space-y-4")}>
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           className={cn(
-            "relative rounded-lg border-2 border-dashed p-6 text-center",
+            isMinimal
+              ? "relative rounded-md border border-dashed px-4 py-3 text-left"
+              : "relative rounded-lg border-2 border-dashed p-6 text-center",
             dragActive && "border-primary bg-primary/5",
             error && "border-red-300",
             disabled && "opacity-50 cursor-not-allowed",
@@ -153,34 +159,65 @@ export function FileUploadField({
             className="sr-only"
             data-testid={inputTestId}
           />
-          <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-2 text-sm text-foreground">
-            Drag and drop files here, or{" "}
-            <Button
-              type="button"
-              variant="link"
-              className="p-0 h-auto font-semibold"
-              onClick={() => inputRef.current?.click()}
-              disabled={disabled}
-            >
-              browse
-            </Button>
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          {isMinimal ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-foreground">Drop files here or choose from your computer.</p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => inputRef.current?.click()}
+                disabled={disabled}
+              >
+                Choose Files
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+              <p className="mt-2 text-sm text-foreground">
+                Drag and drop files here, or{" "}
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 font-semibold"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={disabled}
+                >
+                  browse
+                </Button>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {accept && `Accepted formats: ${accept}`}
+                {maxSize && ` • Max size: ${formatFileSize(maxSize)}`}
+              </p>
+            </>
+          )}
+        </div>
+
+        {isMinimal ? (
+          <p className="text-xs text-muted-foreground">
             {accept && `Accepted formats: ${accept}`}
             {maxSize && ` • Max size: ${formatFileSize(maxSize)}`}
           </p>
-        </div>
+        ) : null}
 
         {value.length > 0 && (
-          <ul className="space-y-2" data-testid={fileListTestId}>
+          <ul className={cn(isMinimal ? "space-y-1.5" : "space-y-2")} data-testid={fileListTestId}>
             {value.map((file, index) => (
               <li
                 key={index}
-                className="flex items-center justify-between rounded-lg border p-4"
+                className={cn(
+                  "flex items-center justify-between rounded-md border",
+                  isMinimal ? "px-3 py-2" : "p-4",
+                )}
               >
-                <div className="flex items-center gap-4">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
+                <div className={cn("flex items-center", isMinimal ? "gap-2" : "gap-4")}>
+                  <FileText className={cn("text-muted-foreground", isMinimal ? "h-4 w-4" : "h-8 w-8")} />
                   <div>
                     <p className="text-sm font-medium">{file.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -192,6 +229,7 @@ export function FileUploadField({
                   type="button"
                   variant="ghost"
                   size="sm"
+                  className="h-7 w-7 p-0"
                   onClick={() => removeFile(index)}
                   disabled={disabled}
                 >

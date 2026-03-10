@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Info, Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown } from "lucide-react";
-import { FormSection, FormGrid, FormGridRow } from "@/components/forms";
+import { FormGrid, FormGridRow } from "@/components/forms";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +54,9 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ImportFromBudgetModal } from "@/components/domain/contracts/ImportFromBudgetModal";
 
 // ============================================================================
 // Types
@@ -70,6 +72,8 @@ interface BudgetCode {
 
 export interface SOVLineItem {
   id: string;
+  isGroup?: boolean;
+  changeEventLineItemId?: string;
   budgetCodeId?: string;
   budgetCodeLabel?: string;
   description: string;
@@ -141,6 +145,14 @@ interface ContractFormProps {
   projectId: string;
 }
 
+interface SplitFormSectionProps {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+  rightHeaderActions?: React.ReactNode;
+}
+
 // ============================================================================
 // Constants
 // ============================================================================
@@ -153,6 +165,35 @@ const CONTRACT_STATUSES = [
   { value: "complete", label: "Complete" },
   { value: "terminated", label: "Terminated" },
 ];
+
+function SplitFormSection({
+  title,
+  description,
+  children,
+  className,
+  rightHeaderActions,
+}: SplitFormSectionProps) {
+  return (
+    <section className={cn("border-b border-border pb-10 pt-8 first:pt-0 last:border-b-0 last:pb-0", className)}>
+      <div className="grid gap-10 lg:gap-20 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="space-y-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">
+            {title}
+          </h3>
+          {description ? (
+            <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+        <div className="space-y-6">
+          {rightHeaderActions ? (
+            <div className="flex justify-start sm:justify-end">{rightHeaderActions}</div>
+          ) : null}
+          <div>{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 // ============================================================================
 // Main Component
@@ -207,6 +248,8 @@ export function ContractForm({
       division_title: string | null;
     }>>
   >({});
+  const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
+  const [sovActionMenuKey, setSovActionMenuKey] = React.useState(0);
 
   // Data hooks
   const {
@@ -351,33 +394,14 @@ export function ContractForm({
 
     setIsCreating(true);
     try {
-      // Create the company
       const newCompany = await createCompany({
         name: newCompanyName.trim(),
       });
 
       if (newCompany) {
-        // Add the company to the project directory
-        const supabaseClient = createClient();
-
-        const { error: projectCompanyError } = await supabaseClient
-          .from("project_companies")
-          .insert({
-            company_id: newCompany.id,
-            project_id: parseInt(projectId),
-            company_type: "owner",
-            status: "active",
-          });
-
-        if (projectCompanyError) {
-          console.error("Failed to add company to project directory:", projectCompanyError);
-          toast.error("Company created but failed to add to project directory");
-        } else {
-          toast.success("Company created and added to project directory");
-        }
-
         // Set as owner/client in the form
         updateFormData({ ownerCompanyId: newCompany.id });
+        toast.success("Company created");
         setNewCompanyName("");
         setShowAddCompany(false);
       }
@@ -524,6 +548,18 @@ export function ContractForm({
     updateFormData({ sovItems: [...(formData.sovItems || []), newLine] });
   };
 
+  const addSOVGroup = () => {
+    const newGroup: SOVLineItem = {
+      id: `sov-group-${Date.now()}`,
+      isGroup: true,
+      description: "New Group",
+      amount: 0,
+      billedToDate: 0,
+      amountRemaining: 0,
+    };
+    updateFormData({ sovItems: [...(formData.sovItems || []), newGroup] });
+  };
+
   const updateSOVLine = (id: string, updates: Partial<SOVLineItem>) => {
     const items = formData.sovItems || [];
     const isUnitQuantity = formData.accountingMethod === "unit_quantity";
@@ -549,45 +585,38 @@ export function ContractForm({
     updateFormData({ sovItems: items.filter((item) => item.id !== id) });
   };
 
-  const toggleAccountingMethod = () => {
-    const nextMethod =
-      formData.accountingMethod === "unit_quantity" ? "amount" : "unit_quantity";
-    const updatedItems = (formData.sovItems || []).map((item) => {
-      if (nextMethod === "unit_quantity") {
-        // Switching TO unit/quantity mode from amount mode
-        // Use existing quantity if available, otherwise default to 1
-        const quantity = item.quantity ?? 1;
+  const handleImportFromBudgetSuccess = (items: unknown[]) => {
+    const importedItems = Array.isArray(items) ? items : [];
+    if (importedItems.length === 0) {
+      return;
+    }
 
-        // Calculate unitCost:
-        // - If unitCost already exists (from previous toggle), use it
-        // - Otherwise, derive from amount / quantity
-        let unitCost = item.unitCost;
-        if (unitCost === undefined || unitCost === null) {
-          unitCost = (item.amount || 0) / quantity;
-        }
+    const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
+      const item = raw as {
+        id?: string;
+        cost_code_id?: string;
+        description?: string;
+        original_amount?: number;
+        cost_code?: { title?: string };
+      };
 
-        return {
-          ...item,
-          quantity,
-          unitCost,
-          unitOfMeasure: item.unitOfMeasure || "",
-          amount: quantity * unitCost,
-        };
-      } else {
-        // Switching FROM unit/quantity mode to amount mode
-        // Calculate amount from quantity * unitCost
-        const amount = (item.quantity ?? 1) * (item.unitCost ?? 0);
-        return {
-          ...item,
-          amount: amount || item.amount || 0,
-          // Keep quantity and unitCost for when we switch back
-          quantity: item.quantity,
-          unitCost: item.unitCost,
-          unitOfMeasure: item.unitOfMeasure,
-        };
-      }
+      const budgetCodeLabel = item.cost_code?.title
+        ? `${item.cost_code_id || "Budget"} - ${item.cost_code.title}`
+        : item.cost_code_id || "";
+
+      return {
+        id: `sov-import-${Date.now()}-${index}`,
+        budgetCodeId: item.id || item.cost_code_id || "",
+        budgetCodeLabel,
+        description: item.description || item.cost_code?.title || "",
+        amount: item.original_amount || 0,
+        billedToDate: 0,
+        amountRemaining: item.original_amount || 0,
+      };
     });
-    updateFormData({ accountingMethod: nextMethod, sovItems: updatedItems });
+
+    updateFormData({ sovItems: [...(formData.sovItems || []), ...mapped] });
+    toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
   };
 
   const handleFilesSelected = (files: File[]) => {
@@ -612,6 +641,12 @@ export function ContractForm({
     // Update our FileInfo array
     setAttachmentFileInfos(fileInfos);
 
+    // FileUploadField calls onFilesSelected and onChange during add flow.
+    // Ignore add-flow onChange to avoid racing and clearing attachmentFiles.
+    if (fileInfos.length >= attachmentFileInfos.length) {
+      return;
+    }
+
     // Also update the actual File array to match
     const filtered = attachmentFiles.filter((file) =>
       fileInfos.some(
@@ -635,7 +670,7 @@ export function ContractForm({
 
   // Calculate SOV totals
   const sovTotals = React.useMemo(() => {
-    const items = formData.sovItems || [];
+    const items = (formData.sovItems || []).filter((item) => !item.isGroup);
     return {
       amount: items.reduce((sum, item) => sum + (item.amount || 0), 0),
       billedToDate: items.reduce(
@@ -651,6 +686,7 @@ export function ContractForm({
 
   return (
     <Form
+      className="space-y-0"
       onSubmit={handleSubmit}
       data-testid="prime-contract-form"
       data-dev-autofill-disabled
@@ -658,8 +694,11 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* GENERAL INFORMATION */}
       {/* ================================================================ */}
-      <FormSection title="General Information">
-        <FormGrid columns={12}>
+      <SplitFormSection
+        title="General Information"
+        description="Set the core contract details and assign primary companies."
+      >
+        <FormGrid columns={12} className="gap-y-8">
           {/* Row 1: Contract #, Owner/Client, Title */}
           <FormGridRow>
             <div className="col-span-12 md:col-span-4">
@@ -773,7 +812,7 @@ export function ContractForm({
                 </div>
                 {validationErrors.executed && (
                   <p
-                    className="text-sm text-red-600"
+                    className="text-sm text-destructive"
                     data-testid="executed-error"
                   >
                     {validationErrors.executed}
@@ -783,13 +822,16 @@ export function ContractForm({
             </div>
           </FormGridRow>
         </FormGrid>
-      </FormSection>
+      </SplitFormSection>
 
       {/* ================================================================ */}
       {/* CONTRACT DATES */}
       {/* ================================================================ */}
-      <FormSection title="Contract Dates">
-        <FormGrid columns={12}>
+      <SplitFormSection
+        title="Contract Dates"
+        description="Track key schedule and execution milestones for this contract."
+      >
+        <FormGrid columns={12} className="gap-y-8">
           <FormGridRow>
             <div className="col-span-12 md:col-span-4">
               <DateField
@@ -870,10 +912,13 @@ export function ContractForm({
             </div>
           </FormGridRow>
         </FormGrid>
-      </FormSection>
+      </SplitFormSection>
 
-      <FormSection title="Description & Attachments">
-        <FormGrid columns={12}>
+      <SplitFormSection
+        title="Description & Attachments"
+        description="Capture narrative context and supporting files for the agreement."
+      >
+        <FormGrid columns={12} className="gap-y-8">
           <div className="col-span-12">
             <RichTextField
               label="Description"
@@ -892,11 +937,12 @@ export function ContractForm({
                 value={attachmentFileInfos}
                 onChange={handleFilesChanged}
                 onFilesSelected={handleFilesSelected}
+                variant="minimal"
                 multiple
                 maxFiles={20}
                 maxSize={10 * 1024 * 1024}
                 accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
-                hint="Attach contract documents, plans, or other relevant files"
+                hint="Attach contract documents and supporting files."
                 dropzoneTestId="prime-contract-attachments-dropzone"
                 inputTestId="prime-contract-attachments-input"
                 fileListTestId="prime-contract-attachments-list"
@@ -904,7 +950,7 @@ export function ContractForm({
             </div>
           </div>
         </FormGrid>
-      </FormSection>
+      </SplitFormSection>
 
       {/* Add New Company Dialog */}
       <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
@@ -947,54 +993,42 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* SCHEDULE OF VALUES */}
       {/* ================================================================ */}
-      <FormSection
+      <SplitFormSection
         title="Schedule of Values"
-        headerActions={
-          <Select defaultValue="add_group">
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Add Group" />
+        description="Build line items that define contract value and billing progress."
+        rightHeaderActions={
+          <Select
+            key={sovActionMenuKey}
+            onValueChange={(value) => {
+              if (value === "add_group") {
+                addSOVGroup();
+              }
+              if (value === "import_budget") {
+                setShowImportFromBudget(true);
+              }
+              setSovActionMenuKey((prev) => prev + 1);
+            }}
+          >
+            <SelectTrigger className="h-8 w-36 border-border bg-muted">
+              <SelectValue placeholder="Actions" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="add_group">Add Group</SelectItem>
+              <SelectItem value="import_budget">Import from Budget</SelectItem>
             </SelectContent>
           </Select>
         }
       >
-        {/* Accounting Method Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-4">
-          <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm text-blue-900">
-              This contract&apos;s default accounting method is amount-based. To
-              use budget codes with a unit of measure association, select Change
-              to Unit/Quantity.
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={toggleAccountingMethod}
-            type="button"
-            data-testid="sov-accounting-toggle"
-          >
-            Change to Unit/Quantity
-          </Button>
-        </div>
-
         {/* SOV Table */}
         <div
-          className="border rounded-lg overflow-hidden"
+          className="overflow-x-auto"
           data-testid="sov-table"
           data-accounting-method={formData.accountingMethod}
         >
-          <table className="w-full">
-            <thead className="bg-muted border-b">
-              <tr>
-                <th className="px-4 py-4 text-left text-sm font-medium text-foreground w-12">
-                  #
-                </th>
-                <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-[300px]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-muted">
+                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground min-w-[340px]">
                   <div className="flex items-center gap-1">
                     Budget Code
                     <TooltipProvider>
@@ -1009,292 +1043,257 @@ export function ContractForm({
                     </TooltipProvider>
                   </div>
                 </th>
-                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
+                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground min-w-[240px]">
                   Description
                 </th>
-                {formData.accountingMethod === "unit_quantity" && (
-                  <>
-                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                      Qty
-                    </th>
-                    <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
-                      UOM
-                    </th>
-                    <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                      Unit Cost
-                    </th>
-                  </>
-                )}
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
                   Amount
                 </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
                   Billed to Date
                 </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
                   Amount Remaining
                 </th>
-                <th className="px-4 py-4 w-12"></th>
               </tr>
             </thead>
             <tbody>
               {(formData.sovItems || []).length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                        <span className="text-4xl">🤔</span>
-                      </div>
-                    <p className="text-lg font-medium text-foreground">
-                      You Have No Line Items Yet
-                    </p>
-                    <Button
-                      onClick={addSOVLine}
-                      type="button"
-                      variant="default"
-                      data-testid="sov-add-line-empty"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Line
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-                formData.sovItems?.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className="border-b"
-                    data-testid={`sov-line-${index}`}
+                  <td
+                    colSpan={5}
+                    className="px-4 py-4"
                   >
-                    <td className="px-4 py-4 text-sm">{index + 1}</td>
-                    <td className="px-4 py-4">
-                      <Popover
-                        open={openBudgetCodePopover === item.id}
-                        onOpenChange={(open) =>
-                          setOpenBudgetCodePopover(open ? item.id : null)
-                        }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between text-left font-normal h-8"
-                            data-testid="sov-line-budget-code"
-                          >
-                            <span className="truncate">
-                              {item.budgetCodeLabel || "Select budget code..."}
-                            </span>
-                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-[400px] p-0"
-                          align="start"
-                        >
-                          <Command>
-                            <CommandInput
-                              placeholder="Search budget codes..."
-                              value={budgetCodeSearchQuery}
-                              onValueChange={setBudgetCodeSearchQuery}
-                            />
-                            <CommandList>
-                              <CommandEmpty>
-                                {loadingBudgetCodes
-                                  ? "Loading..."
-                                  : "No budget codes found."}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {filteredBudgetCodes.map((code) => (
-                                  <CommandItem
-                                    key={code.id}
-                                    value={code.fullLabel}
-                                    onSelect={() =>
-                                      handleBudgetCodeSelect(item.id, code)
-                                    }
-                                  >
-                                    {code.fullLabel}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                              <CommandSeparator />
-                              <CommandGroup>
-                                <CommandItem
-                                  onSelect={() => {
-                                    setOpenBudgetCodePopover(null);
-                                    setShowCreateBudgetCodeModal(true);
-                                  }}
-                                  className="text-blue-600"
-                                >
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Create New Budget Code
-                                </CommandItem>
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </td>
-                    <td className="px-4 py-4">
-                      <Input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateSOVLine(item.id, {
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Description"
-                        className="h-8"
-                        data-testid="sov-line-description"
-                      />
-                    </td>
-                    {formData.accountingMethod === "unit_quantity" && (
-                      <>
-                        <td className="px-4 py-4">
-                          <Input
-                            type="number"
-                            value={item.quantity ?? ""}
-                            onChange={(e) =>
-                              updateSOVLine(item.id, {
-                                quantity: parseFloat(e.target.value) || 0,
-                              })
-                            }
-                            className="h-8 text-right"
-                            data-testid="sov-line-quantity"
-                          />
-                        </td>
-                        <td className="px-4 py-4">
-                          <Input
-                            value={item.unitOfMeasure || ""}
-                            onChange={(e) =>
-                              updateSOVLine(item.id, {
-                                unitOfMeasure: e.target.value,
-                              })
-                            }
-                            className="h-8"
-                            data-testid="sov-line-unit-of-measure"
-                          />
-                        </td>
-                        <td className="px-4 py-4">
-                          <Input
-                            type="number"
-                            value={item.unitCost ?? ""}
-                            onChange={(e) =>
-                              updateSOVLine(item.id, {
-                                unitCost: parseFloat(e.target.value) || 0,
-                              })
-                            }
-                            className="h-8 text-right"
-                            data-testid="sov-line-unit-cost"
-                          />
-                        </td>
-                      </>
-                    )}
-                    <td className="px-4 py-4">
-                      <Input
-                        type="number"
-                        value={item.amount || ""}
-                        onChange={(e) =>
-                          updateSOVLine(item.id, {
-                            amount: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        className="h-8 text-right"
-                        data-testid="sov-line-amount"
-                        readOnly={
-                          formData.accountingMethod === "unit_quantity"
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-4 text-right text-sm">
-                      ${item.billedToDate.toFixed(2)}
-                    </td>
-                    <td
-                      className="px-4 py-4 text-right text-sm"
-                      data-testid="sov-line-amount-remaining"
-                    >
-                      ${(item.amount - item.billedToDate).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-4">
+                    <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-md border border-dashed border-border bg-muted px-5 py-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        No line items yet.
+                      </p>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        onClick={addSOVLine}
                         type="button"
-                        onClick={() => removeSOVLine(item.id)}
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                        variant="outline"
+                        size="sm"
+                        data-testid="sov-add-line-empty"
                       >
-                        ×
+                        <Plus className="mr-2 h-3.5 w-3.5" />
+                        Add Line
                       </Button>
-                    </td>
-                  </tr>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                formData.sovItems?.map((item, index) => (
+                  item.isGroup ? (
+                    <tr
+                      key={item.id}
+                      className="border-b border-border bg-muted"
+                      data-testid={`sov-group-${index}`}
+                    >
+                      <td
+                        colSpan={5}
+                        className="py-2 pr-3"
+                      >
+                        <Input
+                          value={item.description}
+                          onChange={(e) =>
+                            updateSOVLine(item.id, {
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Group name"
+                          className="h-8 border-border bg-background font-medium"
+                          data-testid="sov-group-name"
+                        />
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr
+                      key={item.id}
+                      className="border-b border-border last:border-b-0"
+                      data-testid={`sov-line-${index}`}
+                    >
+                      <td className="py-2 pr-3 align-middle">
+                        <Popover
+                          open={openBudgetCodePopover === item.id}
+                          onOpenChange={(open) =>
+                            setOpenBudgetCodePopover(open ? item.id : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              role="combobox"
+                              className="h-8 w-full justify-between border-border bg-muted text-left text-sm font-normal"
+                              data-testid="sov-line-budget-code"
+                            >
+                              <span className="truncate">
+                                {item.budgetCodeLabel || "Select budget code..."}
+                              </span>
+                              <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-[400px] p-0"
+                            align="start"
+                          >
+                            <Command>
+                              <CommandInput
+                                placeholder="Search budget codes..."
+                                value={budgetCodeSearchQuery}
+                                onValueChange={setBudgetCodeSearchQuery}
+                              />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {loadingBudgetCodes
+                                    ? "Loading..."
+                                    : "No budget codes found."}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {filteredBudgetCodes.map((code) => (
+                                    <CommandItem
+                                      key={code.id}
+                                      value={code.fullLabel}
+                                      onSelect={() =>
+                                        handleBudgetCodeSelect(item.id, code)
+                                      }
+                                    >
+                                      {code.fullLabel}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                                <CommandSeparator />
+                                <CommandGroup>
+                                  <CommandItem
+                                    onSelect={() => {
+                                      setOpenBudgetCodePopover(null);
+                                      setShowCreateBudgetCodeModal(true);
+                                    }}
+                                    className="text-primary"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create New Budget Code
+                                  </CommandItem>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                      <td className="py-2 pr-3 align-middle">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={item.description}
+                            onChange={(e) =>
+                              updateSOVLine(item.id, {
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Description"
+                            className="h-8 border-border bg-muted"
+                            data-testid="sov-line-description"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            onClick={() => removeSOVLine(item.id)}
+                            className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                            aria-label="Remove line item"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </td>
+                      <td className="py-2 pr-3 align-middle">
+                        <Input
+                          type="number"
+                          value={item.amount || ""}
+                          onChange={(e) =>
+                            updateSOVLine(item.id, {
+                              amount: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="h-8 border-border bg-muted text-right font-medium"
+                          data-testid="sov-line-amount"
+                          readOnly={
+                            formData.accountingMethod === "unit_quantity"
+                          }
+                        />
+                      </td>
+                      <td className="py-2 pr-3 text-right text-sm font-medium">
+                        ${(item.billedToDate || 0).toFixed(2)}
+                      </td>
+                      <td
+                        className="py-2 pr-3 text-right text-sm font-medium"
+                        data-testid="sov-line-amount-remaining"
+                      >
+                        ${((item.amount || 0) - (item.billedToDate || 0)).toFixed(2)}
+                      </td>
+                    </tr>
+                  )
                 ))
               )}
             </tbody>
-            <tfoot className="bg-muted border-t">
-              <tr>
-                <td colSpan={2} className="px-4 py-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={addSOVLine}
-                    data-testid="sov-add-line-footer"
+            {(formData.sovItems || []).length > 0 ? (
+              <tfoot className="bg-muted">
+                <tr>
+                  <td
+                    colSpan={2}
+                    className="px-3 py-3"
                   >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Line
-                  </Button>
-                </td>
-                <td className="px-4 py-4 text-right font-medium">Total:</td>
-                {formData.accountingMethod === "unit_quantity" && (
-                  <>
-                    <td className="px-4 py-4" />
-                    <td className="px-4 py-4" />
-                    <td className="px-4 py-4" />
-                  </>
-                )}
-                <td
-                  className="px-4 py-4 text-right font-medium"
-                  data-testid="sov-total-amount"
-                >
-                  ${sovTotals.amount.toFixed(2)}
-                </td>
-                <td
-                  className="px-4 py-4 text-right font-medium"
-                  data-testid="sov-total-billed"
-                >
-                  ${sovTotals.billedToDate.toFixed(2)}
-                </td>
-                <td
-                  className="px-4 py-4 text-right font-medium"
-                  data-testid="sov-total-remaining"
-                >
-                  ${sovTotals.amountRemaining.toFixed(2)}
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      onClick={addSOVLine}
+                      data-testid="sov-add-line-footer"
+                      className="h-10 w-10 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </td>
+                  <td className="py-3 pr-3 text-right font-semibold text-foreground">Total:</td>
+                  <td
+                    className="py-3 pr-3 text-right font-semibold text-foreground"
+                    data-testid="sov-total-amount"
+                  >
+                    ${sovTotals.amount.toFixed(2)}
+                  </td>
+                  <td
+                    className="py-3 pr-3 text-right font-semibold text-foreground"
+                    data-testid="sov-total-billed"
+                  >
+                    ${sovTotals.billedToDate.toFixed(2)}
+                  </td>
+                  <td
+                    className="py-3 pr-3 text-right font-semibold text-foreground"
+                    data-testid="sov-total-remaining"
+                  >
+                    ${sovTotals.amountRemaining.toFixed(2)}
+                  </td>
+                </tr>
+              </tfoot>
+            ) : null}
           </table>
         </div>
 
-        {/* Import dropdown */}
-        <div className="mt-4">
-          <Select>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Import" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="csv">CSV</SelectItem>
-              <SelectItem value="excel">Excel</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </FormSection>
+      </SplitFormSection>
+
+      <ImportFromBudgetModal
+        open={showImportFromBudget}
+        onOpenChange={setShowImportFromBudget}
+        projectId={projectId}
+        onImportSuccess={(items) => handleImportFromBudgetSuccess(items as unknown[])}
+      />
 
       {/* ================================================================ */}
       {/* INCLUSIONS & EXCLUSIONS */}
       {/* ================================================================ */}
-      <FormSection title="Inclusions & Exclusions">
+      <SplitFormSection
+        title="Inclusions & Exclusions"
+        description="Clarify scope boundaries that are included and excluded."
+      >
         <FormGrid columns={12}>
           <div className="col-span-12">
             <RichTextField
@@ -1315,14 +1314,15 @@ export function ContractForm({
             />
           </div>
         </FormGrid>
-      </FormSection>
+      </SplitFormSection>
 
       {/* ================================================================ */}
       {/* CONTRACT PRIVACY */}
       {/* ================================================================ */}
-      <FormSection
+      <SplitFormSection
         title="Contract Privacy"
         description="Using the privacy setting allows only project admins and select non-admin users access."
+        className="border-b-0 pb-0"
       >
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
@@ -1371,41 +1371,46 @@ export function ContractForm({
             </div>
           )}
         </div>
-      </FormSection>
+      </SplitFormSection>
 
       {/* ================================================================ */}
       {/* FORM ACTIONS */}
       {/* ================================================================ */}
-      <div className="flex justify-between items-center pt-4">
-        {/* Auto-fill button (development only) */}
-        {isDevelopment && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAutoFill}
-            className="gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Auto-fill
-          </Button>
-        )}
+      <div className="grid gap-8 border-t pt-8 lg:gap-14 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+        <div />
+        <div className="flex items-center justify-between gap-4">
+          {/* Auto-fill button (development only) */}
+          {isDevelopment ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAutoFill}
+              className="gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              Auto-fill
+            </Button>
+          ) : (
+            <div />
+          )}
 
-        {/* Main actions */}
-        <div className="flex gap-4 ml-auto">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            variant="default"
-          >
-            {isSubmitting
-              ? "Creating..."
-              : mode === "create"
-                ? "Create"
-                : "Update"}
-          </Button>
+          {/* Main actions */}
+          <div className="flex gap-4">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              variant="default"
+            >
+              {isSubmitting
+                ? "Creating..."
+                : mode === "create"
+                  ? "Create"
+                  : "Update"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1448,7 +1453,7 @@ export function ContractForm({
                         </button>
 
                         {expandedDivisions.has(division) && (
-                          <div className="bg-muted/50">
+                          <div className="bg-muted">
                             {groupedCostCodes[division].map((costCode) => (
                               <button
                                 key={costCode.id}
@@ -1461,7 +1466,7 @@ export function ContractForm({
                                 }
                                 className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
                                   newBudgetCodeData.costCodeId === costCode.id
-                                    ? "bg-blue-50 text-blue-700 font-medium"
+                                    ? "bg-primary/10 text-primary font-medium"
                                     : "text-foreground"
                                 }`}
                               >

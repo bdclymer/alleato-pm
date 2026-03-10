@@ -463,14 +463,14 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     const hasSelection = currentIndex >= 0;
     const fallbackIndex = hasSelection ? currentIndex : 0;
 
-    if (event.key === "ArrowDown" || event.key === "j") {
+    if (event.key === "j") {
       event.preventDefault();
       const nextIndex = hasSelection ? Math.min(visibleItems.length - 1, fallbackIndex + 1) : 0;
       tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
       return;
     }
 
-    if (event.key === "ArrowUp" || event.key === "k") {
+    if (event.key === "k") {
       event.preventDefault();
       const nextIndex = hasSelection ? Math.max(0, fallbackIndex - 1) : 0;
       tableState.setSearchParams({ detail: visibleItems[nextIndex].id });

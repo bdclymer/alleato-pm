@@ -514,7 +514,6 @@ export const autoFillPresets = {
       return date;
     },
     originalAmount: () => fakeData.amount(500000, 10000000),
-    revisedAmount: () => fakeData.amount(500000, 10000000),
     inclusions: () =>
       `• ${copycat.sentence(Math.random().toString())}\n• ${copycat.sentence(Math.random().toString())}\n• ${copycat.sentence(Math.random().toString())}`,
     exclusions: () =>

@@ -1,285 +1,289 @@
-# RAG Pipeline Documentation
+# RAG Pipeline: Source of Truth
 
-The RAG (Retrieval-Augmented Generation) pipeline processes Fireflies meeting transcripts into
-searchable vector embeddings and structured data. It runs entirely inside the Python FastAPI
-backend — no Cloudflare Workers required.
+Last updated: 2026-03-10
+Owner: Backend/AI Platform
 
----
+This document is the authoritative reference for:
+- Fireflies transcript sync and markdown generation
+- RAG pipeline initiation and execution
+- Chunking, embedding, and extraction strategy
+- Retrieval strategy used by agents
+- Exact project files and tables involved
 
-## Architecture Overview
+## 1) End-to-End Architecture
 
-```
-[Fireflies Markdown] → document_metadata INSERT
-                              │
-                     DB trigger (pg_net)
-                              │
-                              ▼
-              POST /api/pipeline/process
-                              │
-                    FastAPI BackgroundTask
-                              │
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-          Stage 1          Stage 2         Stage 3
-          Parser           Embedder        Extractor
-              │               │               │
-    meeting_segments    documents table   decisions
-                                          risks
-                                          tasks
-                                          opportunities
+```text
+Fireflies GraphQL
+  -> backend/src/services/ingestion/fireflies_pipeline.py
+  -> Supabase Storage bucket: meetings/*.md
+  -> document_metadata upsert (raw content + metadata)
+  -> DB trigger enqueue_document_metadata_rag_job
+  -> POST /api/pipeline/process
+  -> run_full_pipeline(metadata_id)
+     Stage 1: parser/document_parser/financial_parser
+     Stage 2: embedder
+     Stage 3: extractor
+     Stage 4: digest (non-blocking)
+  -> tables: meeting_segments, documents, decisions, risks, tasks, opportunities, meeting_digests
 ```
 
----
+## 2) Fireflies Sync Process
 
-## Trigger Flow
+Primary sync path is native backend (not legacy Cloudflare worker):
+- Endpoint: `POST /api/ingest/fireflies/recent`
+- Request model: `FirefliesRecentSyncRequest` in `backend/src/api/main.py`
 
-1. A row is INSERTed into `document_metadata` (e.g. by the ingest endpoint).
-2. The Supabase DB trigger `trg_enqueue_document_metadata_rag_job` fires.
-3. The trigger creates a `fireflies_ingestion_jobs` row with `stage = raw_ingested`.
-4. If `app.pipeline_url` is set, pg_net immediately POSTs `{"metadataId": "<id>"}` to the
-   FastAPI backend — no polling delay.
-5. FastAPI runs all three stages in a `BackgroundTask` and updates the job stage as it progresses.
+Sync implementation:
+- File: `backend/src/services/ingestion/fireflies_pipeline.py`
+- Class: `FirefliesIngestionPipeline`
+- Flow:
+  1. `sync_recent_transcripts(limit, project_id, dry_run, write_markdown_dir)` fetches transcript summaries.
+  2. For each transcript ID, it fetches full transcript + Fireflies Apps outputs.
+  3. It formats normalized markdown with rich sections and full transcript lines.
+  4. It writes markdown to Supabase storage bucket `meetings`.
+  5. It upserts `document_metadata` and transcript chunks for ingestion.
 
-### Configuring the trigger URL
+Important current behavior:
+- Apps outputs are paginated and fetched fully (`limit=10`, `skip` loop), not capped to 5.
+- Storage path uses sanitized filenames to support stable overwrite behavior.
+- Re-sync is tolerant of duplicate ingestion job keys.
 
-The trigger reads its URL from the `pipeline_config` table (migration `20260227000002`).
-`ALTER DATABASE` is not used because Supabase cloud SQL Editor does not have superuser privileges.
+Legacy path status:
+- Legacy worker exists at `backend/src/workers/ingest/index.ts`.
+- `LEGACY_FIREFLIES_SYNC_ENABLED` is `false` in `backend/src/workers/ingest/wrangler.toml`.
+- Legacy endpoints return guidance to use `/api/ingest/fireflies/recent`.
 
-**Step 1 — Run the migration** (paste full contents of `20260227000002_pipeline_config_table.sql` in the Supabase SQL Editor).
+## 3) How the RAG Pipeline Is Initiated
 
-**Step 2 — Set the URL:**
+### A) Automatic trigger (preferred)
 
-```sql
--- Production (Render / Railway / etc.)
-UPDATE public.pipeline_config
-SET value = 'https://your-backend.com/api/pipeline/process'
-WHERE key = 'pipeline_url';
-
--- Local development (Docker)
-UPDATE public.pipeline_config
-SET value = 'http://host.docker.internal:8051/api/pipeline/process'
-WHERE key = 'pipeline_url';
-```
+1. A row is inserted into `document_metadata`.
+2. Trigger function `enqueue_document_metadata_rag_job()` inserts `fireflies_ingestion_jobs` at stage `raw_ingested`.
+3. Trigger reads `pipeline_url` from `pipeline_config` and calls FastAPI.
 
-The trigger is a no-op when `pipeline_url` is empty — documents must then be processed
-manually via `POST /api/pipeline/process`.
+SQL migrations:
+- `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`
+- `supabase/migrations/20260227000002_pipeline_config_table.sql`
 
----
+### B) Manual backend trigger
 
-## Pipeline Stages
+- Endpoint: `POST /api/pipeline/process`
+- Payload: `{ "metadataId": "<uuid>" }`
+- File: `backend/src/api/main.py`
+- Execution uses bounded concurrency (`PIPELINE_MAX_CONCURRENCY`) via `_run_pipeline_limited`.
 
-### Stage 1 — Parser (`backend/src/services/pipeline/parser.py`)
+### C) Upload-triggered path (non-Fireflies docs)
 
-**Input:** `document_metadata.id` (UUID)
+- Route: `frontend/src/app/api/documents/upload/route.ts`
+- Uploads document to storage bucket `documents` and inserts `document_metadata`.
+- DB trigger then initiates the same backend pipeline.
 
-**What it does:**
-- Fetches the raw Fireflies markdown from `document_metadata.content`
-- Parses it with `FirefliesIngestionPipeline.parse_markdown()` (extracts transcript lines, participants, metadata)
-- Calls `gpt-4o-mini` to generate a 3–5 paragraph **meeting summary**
-- Calls `gpt-4o-mini` with JSON mode to **semantically segment** the transcript into 10–50 line topic blocks
+### D) Legacy/manual UI path (exists but legacy-oriented)
 
-**Output:**
-- `meeting_segments` rows (one per segment) with title, start/end indices, summary, decisions, risks, tasks
-- `document_metadata.overview` updated with the generated summary
-- `document_metadata.status = "segmented"`
-- `fireflies_ingestion_jobs.stage = "segmented"`
+- Route: `frontend/src/app/api/documents/trigger-pipeline/route.ts`
+- UI page: `frontend/src/app/(main)/pipeline/page.tsx`
+- This route triggers Cloudflare worker phase endpoints (`/parser/process`, `/embedder/process`, `/extractor/process`), not the native backend path.
+- Treat as legacy/manual operational tooling unless intentionally used.
 
----
+## 4) Pipeline Stages and Strategies
 
-### Stage 2 — Embedder (`backend/src/services/pipeline/embedder.py`)
+## Stage 1 Router
 
-**Input:** `document_metadata.id` (UUID)
+File: `backend/src/services/pipeline/orchestrator.py`
 
-**What it does:**
-- Fetches segments from `meeting_segments`
-- Re-parses the transcript to get indexed lines for precise chunking
-- Creates overlapping text chunks (≈3000 chars with 500-char overlap) per segment
-- Adds meeting-level summary chunk and per-segment summary chunks
-- Batch-embeds all chunks with `text-embedding-3-small` (1536 dimensions)
-- Embeds segment summaries and writes them back to `meeting_segments.summary_embedding`
-- Stores all chunks in the `documents` table with metadata including content hash for deduplication
+Routing logic:
+- Meeting transcript -> `run_parser` (`parser.py`)
+- Generic document (pdf/doc/docx/non-meeting category) -> `run_document_parser` (`document_parser.py`)
+- Financial/tabular document (financial category or csv/tsv/xls/xlsx) -> `run_financial_parser` (`financial_parser.py`)
 
-**Output:**
-- `documents` rows (one per chunk) with `embedding`, `file_id`, `source = "fireflies"`
-- `meeting_segments.summary_embedding` updated for each segment
-- `document_metadata.status = "embedded"`
-- `fireflies_ingestion_jobs.stage = "embedded"` (via `"chunked"` → `"embedded"`)
+### Stage 1A: Meeting parser
 
----
+File: `backend/src/services/pipeline/parser.py`
 
-### Stage 3 — Extractor (`backend/src/services/pipeline/extractor.py`)
+Strategy:
+- Parse Fireflies markdown via `FirefliesIngestionPipeline.parse_markdown()`.
+- Convert transcript segments to indexed lines.
+- Generate meeting summary (`gpt-4o-mini`).
+- Perform semantic segmentation into sections with decisions/risks/tasks (`gpt-4o-mini`, JSON mode).
+- Upsert segments into `meeting_segments`.
 
-**Input:** `document_metadata.id` (UUID)
+Outputs:
+- `meeting_segments`
+- `document_metadata.overview`, `document_metadata.status = segmented`
+- `fireflies_ingestion_jobs.stage = segmented`
 
-**What it does:**
-- Collects raw decisions, risks, and tasks from all `meeting_segments`
-- Adds action items from `document_metadata.action_items`
-- Calls `gpt-4o-mini` with JSON mode to normalize, deduplicate, add context, and **identify opportunities**
-- Batch-embeds all structured item descriptions
-- Upserts to `decisions`, `risks`, `tasks`, and `opportunities` tables (idempotent on `metadata_id,description`)
+### Stage 1B: Generic document parser
 
-**Output:**
-- Rows in `decisions`, `risks`, `tasks`, `opportunities` with embeddings
-- `document_metadata.status = "complete"`
-- `fireflies_ingestion_jobs.stage = "done"`
+File: `backend/src/services/pipeline/document_parser.py`
 
----
+Strategy:
+- Extract text from PDF/DOCX/text.
+- Generate summary via LLM.
+- Segment content semantically (line-indexed).
+- Reuse same downstream shape by writing to `meeting_segments`.
 
-## Key Files
+### Stage 1C: Financial parser
 
-| File | Purpose |
-|------|---------|
-| `backend/src/services/pipeline/__init__.py` | Package entry — exports `run_full_pipeline` |
-| `backend/src/services/pipeline/models.py` | Shared dataclasses (`TranscriptLine`, `MeetingSegment`, `DocumentChunk`, `StructuredData`, etc.) |
-| `backend/src/services/pipeline/llm.py` | OpenAI helpers — `batch_embed`, `generate_meeting_summary`, `segment_transcript`, `extract_structured_data` |
-| `backend/src/services/pipeline/parser.py` | Stage 1 |
-| `backend/src/services/pipeline/embedder.py` | Stage 2 |
-| `backend/src/services/pipeline/extractor.py` | Stage 3 |
-| `backend/src/services/pipeline/orchestrator.py` | Chains all 3 stages; marks job `error` on failure |
-| `backend/src/api/main.py` | `POST /api/pipeline/process` endpoint |
-| `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql` | DB trigger + `net.http_post` call |
-| `supabase/migrations/20260227000002_pipeline_config_table.sql` | `pipeline_config` key-value table; updated trigger to read URL from table instead of `current_setting()` |
-
----
-
-## Database Tables
-
-| Table | Written by | Purpose |
-|-------|-----------|---------|
-| `document_metadata` | Ingest endpoint | Source of truth — raw content, title, participants |
-| `fireflies_ingestion_jobs` | Trigger + each stage | Job tracking (`raw_ingested → segmented → chunked → embedded → done / error`) |
-| `meeting_segments` | Parser (Stage 1) | Semantic segments with LLM-extracted decisions/risks/tasks |
-| `documents` | Embedder (Stage 2) | Chunked content with pgvector embeddings for similarity search |
-| `decisions` | Extractor (Stage 3) | Normalized decisions with embeddings |
-| `risks` | Extractor (Stage 3) | Normalized risks with category/likelihood/impact |
-| `tasks` | Extractor (Stage 3) | Normalized action items with assignee/due_date/priority |
-| `opportunities` | Extractor (Stage 3) | LLM-identified opportunities from discussion |
-
----
-
-## API Endpoint
-
-```
-POST /api/pipeline/process
-Content-Type: application/json
-
-{"metadataId": "uuid-of-document-metadata-row"}
-
-→ 200 {"status": "queued", "metadataId": "..."}
-```
-
-The pipeline runs in a FastAPI `BackgroundTask` so the HTTP response returns immediately.
-Monitor progress via `fireflies_ingestion_jobs.stage`.
-
----
-
-## Models
-
-| | Model |
-|-|-------|
-| Chat completions | `gpt-4o-mini` (temperature 0.3) |
-| Embeddings | `text-embedding-3-small` (1536 dimensions) |
-
-Segmentation and extraction use JSON mode.
-
----
-
-## document_metadata.status Values
-
-| Value | Set by | Meaning |
-|-------|--------|---------|
-| `null` | — | Row inserted, not yet processed |
-| `"segmented"` | Parser (Stage 1) | Transcript parsed and segmented |
-| `"embedded"` | Embedder (Stage 2) | Chunks embedded and stored in `documents` |
-| `"complete"` | Extractor (Stage 3) | All structured data extracted; fully searchable |
-
-Query to see counts by status:
-
-```sql
-SELECT status, COUNT(*) FROM public.document_metadata GROUP BY status ORDER BY count DESC;
-```
-
----
-
-## Backfill Processing
-
-To process existing rows that haven't been embedded yet, run this in the Supabase SQL Editor.
-Re-running it is safe — it skips rows that already have a `done` job.
-
-```sql
-DO $$
-DECLARE
-  rec          RECORD;
-  pipeline_url TEXT;
-BEGIN
-  SELECT value INTO pipeline_url
-  FROM public.pipeline_config
-  WHERE key = 'pipeline_url';
-
-  IF pipeline_url IS NULL OR pipeline_url = '' THEN
-    RAISE EXCEPTION 'pipeline_url not configured in pipeline_config';
-  END IF;
-
-  FOR rec IN
-    SELECT dm.id
-    FROM public.document_metadata dm
-    LEFT JOIN public.fireflies_ingestion_jobs j
-      ON j.metadata_id = dm.id::TEXT AND j.stage = 'done'
-    WHERE j.fireflies_id IS NULL
-    ORDER BY dm.created_at DESC
-    LIMIT 20                        -- increase or remove for full backfill
-  LOOP
-    PERFORM net.http_post(
-      url     := pipeline_url,
-      body    := json_build_object('metadataId', rec.id::TEXT)::jsonb,
-      headers := '{"Content-Type": "application/json"}'::jsonb
-    );
-    RAISE NOTICE 'Queued: %', rec.id;
-  END LOOP;
-END;
-$$;
-```
-
-Monitor progress:
-
-```sql
-SELECT stage, COUNT(*) FROM public.fireflies_ingestion_jobs GROUP BY stage ORDER BY count DESC;
-```
-
----
-
-## Error Handling
-
-If any stage throws, `orchestrator.py` catches the exception, sets
-`fireflies_ingestion_jobs.stage = "error"` with `error_message`, and re-raises so FastAPI
-logs the traceback. The document remains in whatever partial state it reached.
-
-To re-process a document manually:
-
-```bash
-# Local
-curl -X POST http://localhost:8051/api/pipeline/process \
-  -H "Content-Type: application/json" \
-  -d '{"metadataId": "your-metadata-uuid"}'
-
-# Production
-curl -X POST https://alleato-backend-3mmq.onrender.com/api/pipeline/process \
-  -H "Content-Type: application/json" \
-  -d '{"metadataId": "your-metadata-uuid"}'
-```
-
----
-
-## Previous Architecture (Cloudflare Workers — deprecated)
-
-The pipeline previously ran as three separate Cloudflare Workers (`parser`, `embedder`,
-`extractor`) with cron triggers that polled for pending jobs every 5 minutes. This created
-~5-minute latency from ingest to searchable embeddings.
-
-The current Python implementation eliminates:
-- Separate CF Workers deployment
-- Cron polling delays
-- Worker chaining via `ctx.waitUntil`
-
-The TS worker code remains in `backend/src/workers/` for reference but is no longer the
-active pipeline.
+File: `backend/src/services/pipeline/financial_parser.py`
+
+Strategy:
+- Parse CSV/TSV/XLS/XLSX into dataframes.
+- Persist normalized row data into `document_rows` (`dataset_id = metadata_id`).
+- Create text summaries/sections into `meeting_segments` for downstream embedding.
+- Update `document_metadata` with synthesized overview + extracted text content.
+
+## Stage 2: Embedder
+
+File: `backend/src/services/pipeline/embedder.py`
+
+Chunking strategy:
+- Transcript chunks:
+  - Target size: `CHUNK_TARGET_CHARS = 3000`
+  - Overlap: `CHUNK_OVERLAP_CHARS = 500`
+  - Sentence-aware splitting (`_split_sentences`) and overlap tail carry-forward.
+- Adds `meeting_summary` chunk and per-segment `segment_summary` chunks.
+- Adds section-aware chunks from rich Fireflies sections:
+  - Summary, Short Summary, Gist, Bullet Gist, Shorthand Bullet, Outline, Action Items
+  - Notes subtopics (`notes_topic` doc type)
+
+Embedding strategy:
+- Model: `text-embedding-3-small`
+- Batch embedding via `llm.batch_embed`
+- Segment summaries also embedded to `meeting_segments.summary_embedding`
+
+Storage strategy:
+- Upsert to `documents` with metadata:
+  - `doc_type`, `chunk_index`, `segment_index`, `segment_id`, `content_hash`, `participants`
+- Dedup/update behavior via `content_hash` lookup for existing docs per `file_id`.
+
+Outputs:
+- `documents`
+- `meeting_segments.summary_embedding`
+- `document_metadata.status = embedded`
+- `fireflies_ingestion_jobs.stage = chunked -> embedded`
+
+## Stage 3: Extractor
+
+File: `backend/src/services/pipeline/extractor.py`
+
+Extraction strategy:
+- Collect raw decisions/risks/tasks from `meeting_segments`.
+- Add action items from metadata.
+- Re-parse rich Notes and Action Items sections for enhanced context.
+- Build speaker->email map and pass into LLM prompt.
+- Normalize/dedupe and enrich structured items using `gpt-4o-mini` (JSON mode).
+- Priority/date inference rules are prompt-driven.
+
+Structured outputs:
+- `decisions` (upsert on `metadata_id,description`)
+- `risks` (upsert on `metadata_id,description`)
+- `tasks` (upsert on `metadata_id,description`, source_system=`fireflies`, includes `project_ids`, optional `assignee_email`)
+- `opportunities` (upsert on `metadata_id,description`)
+
+Finalization:
+- `fireflies_ingestion_jobs.stage = done`
+- `document_metadata.status = complete`
+
+## Stage 4: Digest (non-blocking)
+
+File: `backend/src/services/pipeline/digest.py`
+
+Strategy:
+- Reads Stage 3 outputs.
+- If enough extracted content exists, generates executive digest JSON via LLM.
+- Upserts to `meeting_digests`.
+- Failures are logged but do not fail pipeline completion.
+
+## 5) Models and Prompting
+
+LLM/embedding file:
+- `backend/src/services/pipeline/llm.py`
+
+Current models:
+- Chat model: `gpt-4o-mini`
+- Embeddings: `text-embedding-3-small`
+
+Prompting patterns:
+- Segmentation and structured extraction run in JSON mode.
+- Extraction prompt explicitly enforces dedupe and extraction from both raw segment items and notes/action-items context.
+- Due-date and priority heuristics are encoded in prompt instructions.
+
+## 6) Retrieval Strategies Used by RAG Agents
+
+### Vector semantic retrieval
+
+File: `backend/src/services/alleato_agent_workflow/tools/vector_search.py`
+
+Methods:
+- `search_meetings`
+- `search_decisions`
+- `search_risks`
+- `search_opportunities`
+- `search_all_knowledge`
+
+Behavior:
+- Generate query embedding.
+- Query Supabase RPC match functions with thresholding.
+- Return similarity-ranked results with source references.
+
+### Structured retrieval (non-vector)
+
+File: `backend/src/services/alleato_agent_workflow/tools/retrieval.py`
+
+Methods:
+- `get_recent_meetings`, `get_tasks_and_decisions`, `get_project_insights`, `list_all_projects`, `get_project_details`
+
+Behavior:
+- Direct table reads for deterministic project/task/risk/decision context.
+
+### Hybrid fallback retrieval utility
+
+File: `backend/src/services/alleato_agent_workflow/rag_tools.py`
+
+Behavior in `company_rag_search`:
+- Try vector search first.
+- Fall back to keyword `ilike` search.
+- Fall back to recent chunks if still empty.
+
+## 7) Canonical File Map
+
+### Ingestion and sync
+- `backend/src/services/ingestion/fireflies_pipeline.py`
+- `backend/src/services/supabase_helpers.py`
+- `backend/src/api/main.py`
+
+### Pipeline core
+- `backend/src/services/pipeline/__init__.py`
+- `backend/src/services/pipeline/orchestrator.py`
+- `backend/src/services/pipeline/parser.py`
+- `backend/src/services/pipeline/document_parser.py`
+- `backend/src/services/pipeline/financial_parser.py`
+- `backend/src/services/pipeline/embedder.py`
+- `backend/src/services/pipeline/extractor.py`
+- `backend/src/services/pipeline/digest.py`
+- `backend/src/services/pipeline/llm.py`
+- `backend/src/services/pipeline/models.py`
+
+### Retrieval and agent-side RAG tools
+- `backend/src/services/alleato_agent_workflow/rag_tools.py`
+- `backend/src/services/alleato_agent_workflow/tools/vector_search.py`
+- `backend/src/services/alleato_agent_workflow/tools/retrieval.py`
+- `backend/src/services/alleato_agent_workflow/rag_debug_tracer.py`
+
+### Triggering and UI
+- `frontend/src/app/api/documents/upload/route.ts`
+- `frontend/src/app/api/documents/status/route.ts`
+- `frontend/src/app/api/documents/trigger-pipeline/route.ts` (legacy/manual worker trigger)
+- `frontend/src/app/(main)/pipeline/page.tsx` (legacy/manual pipeline UI)
+
+### DB trigger/config migrations
+- `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`
+- `supabase/migrations/20260227000002_pipeline_config_table.sql`
+- `supabase/migrations/20260301000001_meeting_digests.sql`
+
+## 8) Operational Notes
+
+- Preferred sync endpoint for Fireflies: `POST /api/ingest/fireflies/recent`.
+- Preferred pipeline executor: backend `run_full_pipeline` via `/api/pipeline/process`.
+- Legacy Cloudflare ingest worker sync is disabled by default.
+- If docs or runtime behavior diverge, trust code paths listed in section 7 and update this file.

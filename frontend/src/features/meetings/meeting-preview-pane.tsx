@@ -1,10 +1,12 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { ArrowUpRight, Flame, FileText, Keyboard } from "lucide-react";
+import { ArrowUpRight, CalendarClock, Flame, FileText, Keyboard, Link as LinkIcon, Users } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Meeting } from "@/lib/validation/meetings";
+import { getParticipantDisplayName, parseParticipants } from "@/features/meetings/meetings-table-config";
 
 interface MeetingPreviewPaneProps {
   meeting: Meeting | null;
@@ -47,93 +49,119 @@ export function MeetingPreviewPane({
     );
   }
 
+  const participants = parseParticipants(meeting).map(getParticipantDisplayName);
+  const hasExternalLinks = Boolean(meeting.source || meeting.fireflies_link || meeting.url);
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="space-y-1.5">
+    <div className="p-6 space-y-6">
+      <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-sm font-semibold text-foreground leading-tight pr-2">
-            {meeting.title || "Untitled meeting"}
-          </p>
+          <div className="min-w-0 space-y-2">
+            <p className="text-sm font-semibold text-foreground leading-tight">
+              {meeting.title || "Untitled meeting"}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {meeting.status ? <Badge variant="outline">{meeting.status}</Badge> : null}
+              {meeting.type ? <Badge variant="secondary">{meeting.type}</Badge> : null}
+              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
+            </div>
+          </div>
           <Button
-            size="icon"
-            variant="ghost"
-            aria-label="Open meeting detail page"
-            title="Open meeting detail page"
+            size="sm"
+            variant="outline"
             onClick={() => onOpenMeetingPage(meeting)}
+            className="shrink-0"
           >
-            <ArrowUpRight className="h-4 w-4" />
+            Open
+            <ArrowUpRight className="h-4 w-4 ml-1.5" />
           </Button>
         </div>
 
-        {meeting.date ? (
-          <p className="text-xs text-muted-foreground">{formatDateTime(meeting.date)}</p>
-        ) : null}
-      </div>
-      <dl className="space-y-3 text-xs">
-        {meeting.project ? (
-          <div>
-            <dt className="text-muted-foreground">Project</dt>
-            <dd className="text-foreground mt-1">{meeting.project}</dd>
-          </div>
-        ) : null}
-        {meeting.type ? (
-          <div>
-            <dt className="text-muted-foreground">Type</dt>
-            <dd className="text-foreground mt-1">{meeting.type}</dd>
-          </div>
-        ) : null}
-        {meeting.category ? (
-          <div>
-            <dt className="text-muted-foreground">Category</dt>
-            <dd className="text-foreground mt-1">{meeting.category}</dd>
-          </div>
-        ) : null}
-        {meeting.participants ? (
-          <div>
-            <dt className="text-muted-foreground">Participants</dt>
-            <dd className="text-foreground mt-1 line-clamp-3">{meeting.participants}</dd>
-          </div>
-        ) : null}
-        {meeting.summary ? (
-          <div>
-            <dt className="text-muted-foreground">Summary</dt>
-            <dd className="text-foreground mt-1 line-clamp-6">{meeting.summary}</dd>
-          </div>
-        ) : null}
-      </dl>
-
-      {(meeting.source || meeting.fireflies_link) && (
-        <div className="pt-2">
-          <div className="flex items-center gap-2">
-            {meeting.source && (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                aria-label="Open transcript"
-                title="Open transcript"
-              >
-                <a href={meeting.source} target="_blank" rel="noopener noreferrer">
-                  <FileText className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
-            {meeting.fireflies_link && (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                aria-label="Open recording"
-                title="Open recording"
-              >
-                <a href={meeting.fireflies_link} target="_blank" rel="noopener noreferrer">
-                  <Flame className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
-          </div>
+        <div className="space-y-1.5 text-xs text-muted-foreground">
+          <p className="inline-flex items-center gap-2">
+            <CalendarClock className="h-3.5 w-3.5" />
+            {formatDateTime(meeting.date)}
+          </p>
+          {meeting.project ? <p>Project: {meeting.project}</p> : null}
         </div>
-      )}
+      </div>
+
+      {participants.length > 0 ? (
+        <section className="space-y-3 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
+            <Users className="h-3.5 w-3.5" />
+            Participants ({participants.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {participants.slice(0, 12).map((participant) => (
+              <Badge key={`preview-participant-${meeting.id}-${participant}`} variant="secondary" className="font-normal">
+                {participant}
+              </Badge>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {meeting.summary ? (
+        <section className="space-y-2 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground">Summary</p>
+          <p className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {meeting.summary}
+          </p>
+        </section>
+      ) : null}
+
+      {meeting.description ? (
+        <section className="space-y-2 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground">Description</p>
+          <p className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">
+            {meeting.description}
+          </p>
+        </section>
+      ) : null}
+
+      {hasExternalLinks ? (
+        <section className="space-y-2 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
+            <LinkIcon className="h-3.5 w-3.5" />
+            Links
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {meeting.source ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={meeting.source} target="_blank" rel="noopener noreferrer">
+                  <FileText className="h-4 w-4 mr-1.5" />
+                  Transcript
+                </a>
+              </Button>
+            ) : null}
+            {meeting.fireflies_link ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={meeting.fireflies_link} target="_blank" rel="noopener noreferrer">
+                  <Flame className="h-4 w-4 mr-1.5" />
+                  Recording
+                </a>
+              </Button>
+            ) : null}
+            {meeting.url ? (
+              <Button asChild size="sm" variant="outline">
+                <a href={meeting.url} target="_blank" rel="noopener noreferrer">
+                  <LinkIcon className="h-4 w-4 mr-1.5" />
+                  Source URL
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="space-y-2 border-t pt-4 text-xs text-muted-foreground">
+        <p className="inline-flex items-center gap-2">
+          <Keyboard className="h-3.5 w-3.5" />
+          Arrow Up/Down (or J/K): move selection
+        </p>
+        <p>Enter: open selected meeting page</p>
+      </section>
     </div>
   );
 }

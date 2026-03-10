@@ -14,7 +14,7 @@ interface ProjectFormPageLayoutProps {
   children: React.ReactNode;
   onBack?: () => void;
   backLabel?: string;
-  maxWidth?: "sm" | "md" | "lg" | "xl";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "full";
   className?: string;
   headerActions?: React.ReactNode;
 }
@@ -24,6 +24,8 @@ const formWidthClassMap = {
   md: "max-w-3xl",
   lg: "max-w-5xl",
   xl: "max-w-6xl",
+  "2xl": "max-w-7xl",
+  full: "max-w-full",
 };
 
 export function ProjectFormPageLayout({
@@ -47,12 +49,14 @@ export function ProjectFormPageLayout({
     <div
       className={cn("mx-auto w-full", formWidthClassMap[maxWidth])}
     >
-      <ProjectPageHeader
-        title={title}
-        description={description}
-        actions={headerActions ?? defaultBackAction}
-      />
-      <PageContainer className={cn("space-y-8", className)}>
+      <div className="pb-6 md:pb-8">
+        <ProjectPageHeader
+          title={title}
+          description={description}
+          actions={headerActions ?? defaultBackAction}
+        />
+      </div>
+      <PageContainer className={cn("space-y-8 pb-16", className)}>
         {children}
       </PageContainer>
     </div>

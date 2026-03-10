@@ -3,7 +3,7 @@
 import * as React from "react";
 import { FormField } from "./FormField";
 import { cn } from "@/lib/utils";
-import { Bold, Italic, Underline, List, ListOrdered, Link } from "lucide-react";
+import { Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -67,15 +67,16 @@ export function RichTextField({
           className,
         )}
       >
-        <div className="flex items-center gap-1 border-b p-2">
+        <div className="flex items-center gap-0.5 border-b px-2 py-1.5">
           <Button
             size="sm"
             variant="ghost"
             type="button"
             onClick={() => execCommand("bold")}
             disabled={disabled}
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Bold className="h-4 w-4" />
+            <Bold className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="sm"
@@ -83,8 +84,9 @@ export function RichTextField({
             type="button"
             onClick={() => execCommand("italic")}
             disabled={disabled}
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Italic className="h-4 w-4" />
+            <Italic className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="sm"
@@ -92,18 +94,20 @@ export function RichTextField({
             type="button"
             onClick={() => execCommand("underline")}
             disabled={disabled}
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Underline className="h-4 w-4" />
+            <Underline className="h-3.5 w-3.5" />
           </Button>
-          <Separator orientation="vertical" className="h-6" />
+          <Separator orientation="vertical" className="mx-1 h-4" />
           <Button
             size="sm"
             variant="ghost"
             type="button"
             onClick={() => execCommand("insertUnorderedList")}
             disabled={disabled}
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <List className="h-4 w-4" />
+            <List className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="sm"
@@ -111,15 +115,16 @@ export function RichTextField({
             type="button"
             onClick={() => execCommand("insertOrderedList")}
             disabled={disabled}
+            className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <ListOrdered className="h-4 w-4" />
+            <ListOrdered className="h-3.5 w-3.5" />
           </Button>
         </div>
         <div
           ref={editorRef}
           contentEditable={!disabled}
           onInput={handleInput}
-          className="min-h-[120px] p-4 focus:outline-none"
+          className="min-h-[120px] px-3 py-2.5 focus:outline-none"
           data-placeholder={placeholder}
           suppressContentEditableWarning={true}
         />

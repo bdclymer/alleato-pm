@@ -106,6 +106,11 @@ export default function EditContractPage() {
   }, [lineItems]);
 
   const handleSubmit = async (data: ContractFormData) => {
+    if (!contract) {
+      toast.error("Contract data is not loaded");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const response = await fetch(
@@ -116,16 +121,19 @@ export default function EditContractPage() {
           body: JSON.stringify({
             contract_number: data.number,
             title: data.title,
-            client_id: data.ownerCompanyId ? parseInt(data.ownerCompanyId) : null,
+            client_id:
+              data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
+                ? Number.parseInt(data.ownerCompanyId, 10)
+                : null,
             contractor_id: data.contractorId || null,
             architect_engineer_id: data.architectEngineerId || null,
-            contract_company_id: data.contractCompanyId || null,
+            contract_company_id:
+              data.ownerCompanyId || data.contractCompanyId || null,
             description: data.description,
             status: data.status || "draft",
             executed: data.executed || false,
-            original_contract_value: data.originalAmount || 0,
-            revised_contract_value:
-              data.revisedAmount || data.originalAmount || 0,
+            original_contract_value:
+              data.originalAmount ?? contract.original_contract_value ?? 0,
             start_date: data.startDate?.toISOString().split("T")[0] || null,
             end_date:
               data.estimatedCompletionDate?.toISOString().split("T")[0] || null,
@@ -329,7 +337,8 @@ export default function EditContractPage() {
     title: contract.title,
     status: contract.status,
     executed: contract.executed,
-    ownerCompanyId: contract.client_id?.toString() || undefined,
+    ownerCompanyId:
+      contract.contract_company_id || contract.client_id?.toString() || undefined,
     contractorId: contract.contractor_id || undefined,
     architectEngineerId: contract.architect_engineer_id || undefined,
     contractCompanyId: contract.contract_company_id || undefined,

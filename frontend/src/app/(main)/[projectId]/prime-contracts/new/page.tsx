@@ -18,7 +18,7 @@ export default function NewContractPage() {
   const handleSubmit = async (data: ContractFormData) => {
     setIsSaving(true);
     try {
-      const sovItems = data.sovItems || [];
+      const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const sovTotal = sovItems.reduce(
         (sum, item) =>
           sum +
@@ -32,19 +32,23 @@ export default function NewContractPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        // API expects client_id (numeric) or contract_company_id (UUID). ownerCompanyId comes from companies.
         body: JSON.stringify({
           contract_number: data.number,
           title: data.title,
-          owner_company_id: data.ownerCompanyId || null,
+          client_id:
+            data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
+              ? Number.parseInt(data.ownerCompanyId, 10)
+              : null,
+          contract_company_id: data.ownerCompanyId || data.contractCompanyId || null,
           contractor_id: data.contractorId || null,
           architect_engineer_id: data.architectEngineerId || null,
-          contract_company_id: data.contractCompanyId || null,
           description: data.description,
           status: data.status || "draft",
           executed: data.executed || false,
           executed_at: data.executed ? new Date().toISOString() : null,
           original_contract_value: sovTotal,
-          revised_contract_value: data.revisedAmount || sovTotal,
+          revised_contract_value: sovTotal,
           start_date: data.startDate?.toISOString() || null,
           end_date: data.estimatedCompletionDate?.toISOString() || null,
           substantial_completion_date:
@@ -158,7 +162,8 @@ export default function NewContractPage() {
       <ProjectFormPageLayout
         title="New Prime Contract"
         description="Create a new owner agreement"
-        maxWidth="xl"
+        maxWidth="lg"
+        onBack={() => router.push(`/${projectId}/prime-contracts`)}
       >
           <ContractForm
             initialData={initialData}

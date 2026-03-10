@@ -32,11 +32,13 @@ import {
 import {
   useCommitmentsList,
   useDeleteCommitment,
+  useUpdateCommitmentInline,
 } from "@/hooks/use-commitments-query";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import { formatCurrency } from "@/lib/utils";
 import {
   buildCommitmentTableColumns,
+  type CommitmentInlineEditableField,
   commitmentColumns,
   commitmentDefaultVisibleColumns,
   commitmentFilters,
@@ -132,6 +134,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
         : undefined;
 
   const deleteCommitment = useDeleteCommitment(projectId);
+  const inlineUpdateMutation = useUpdateCommitmentInline();
 
   const commitments = response?.data ?? [];
 
@@ -167,7 +170,30 @@ export default function ProjectCommitmentsPage(): ReactElement {
     );
   }, [commitments]);
 
-  const tableColumns = buildCommitmentTableColumns();
+  const handleInlineEdit = React.useCallback(
+    async (
+      item: CommitmentListItem,
+      field: CommitmentInlineEditableField,
+      value: string,
+    ) => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        throw new Error("Value cannot be empty");
+      }
+
+      await inlineUpdateMutation.mutateAsync({
+        id: item.id,
+        field,
+        value: trimmed,
+      });
+    },
+    [inlineUpdateMutation],
+  );
+
+  const tableColumns = React.useMemo(
+    () => buildCommitmentTableColumns({ onInlineEdit: handleInlineEdit }),
+    [handleInlineEdit],
+  );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;
     const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);
@@ -317,6 +343,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
         tabs={tabs}
         layout={{
           fullBleedTable: false,
+        }}
+        features={{
+          enableInlineEditing: true,
         }}
         toolbar={{
           totalItems,

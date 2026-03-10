@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Verify contract exists and belongs to project
     const { data: contract } = await supabase
       .from("prime_contracts")
-      .select("id, revised_contract_value")
+      .select("id, original_contract_value")
       .eq("id", contractId)
       .eq("project_id", parseInt(projectId, 10))
       .single();
@@ -105,9 +105,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Update contract revised_contract_value by adding the change order amount
-    const newRevisedValue =
-      (contract.revised_contract_value || 0) + changeOrder.amount;
+    const { data: approvedOrders, error: approvedOrdersError } = await supabase
+      .from("contract_change_orders")
+      .select("amount")
+      .eq("contract_id", contractId)
+      .eq("status", "approved");
+
+    if (approvedOrdersError) {
+      return NextResponse.json(
+        {
+          error: "Change order approved but failed to recalculate contract value",
+          details: approvedOrdersError.message,
+        },
+        { status: 400 },
+      );
+    }
+
+    const approvedTotal = (approvedOrders || []).reduce(
+      (sum, order) => sum + (order.amount ?? 0),
+      0,
+    );
+    const newRevisedValue = (contract.original_contract_value || 0) + approvedTotal;
     const { error: contractUpdateError } = await supabase
       .from("prime_contracts")
       .update({ revised_contract_value: newRevisedValue })

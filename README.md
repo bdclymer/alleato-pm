@@ -2,6 +2,11 @@
 
 Alleato-Procore is the internal repo that powers the Alleato Project Manager add-on for Procore. It bundles a Next.js 15 frontend, a Python backend, Supabase schema management, a suite of Playwright-driven automation, and rich documentation + PRP planning content so every contributor stays grounded in Procore’s workflows.
 
+## Resources
+- Project Context - /Users/meganharrison/Documents/github/alleato-pm/docs/project-context.md
+- Project Overview - /Users/meganharrison/Documents/github/alleato-pm/docs/project-overview.md
+- 
+
 ## Quick start
 
 ### Prerequisites

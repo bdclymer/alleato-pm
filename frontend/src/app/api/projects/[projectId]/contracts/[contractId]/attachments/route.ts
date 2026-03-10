@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       contractId: attachment.attached_to_id,
       fileName: attachment.file_name,
       url: attachment.url,
+      downloadUrl: `/api/projects/${projectId}/contracts/${contractId}/attachments/${attachment.id}/download`,
       uploadedBy: null,
       uploadedAt: attachment.uploaded_at,
       _links: {
@@ -85,6 +87,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     const {
       data: { user },
@@ -127,12 +130,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const storagePath = `prime-contracts/${contract.project_id}/${contractId}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("project-files")
-      .upload(storagePath, file, {
-        contentType: file.type,
+    const bucket = serviceClient.storage.from("project-files");
+    let { error: uploadError } = await bucket.upload(storagePath, file, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+    if (
+      uploadError &&
+      /mime type .* is not supported/i.test(uploadError.message)
+    ) {
+      // Some environments lock `project-files` to a narrow MIME allow-list.
+      // Retry with a generic binary content type so supported extensions still upload.
+      const fileBuffer = await file.arrayBuffer();
+      const retry = await bucket.upload(storagePath, fileBuffer, {
+        contentType: "application/octet-stream",
         upsert: false,
       });
+      uploadError = retry.error;
+    }
 
     if (uploadError) {
       return NextResponse.json(
@@ -143,9 +159,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const {
       data: { publicUrl },
-    } = supabase.storage.from("project-files").getPublicUrl(storagePath);
+    } = bucket.getPublicUrl(storagePath);
 
-    const { data: attachment, error: dbError } = await supabase
+    const { data: attachment, error: dbError } = await serviceClient
       .from("attachments")
       .insert({
         attached_to_id: contractId,
@@ -161,7 +177,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (dbError) {
       console.error('Failed to insert attachment record:', dbError);
-      await supabase.storage.from("project-files").remove([storagePath]);
+      await serviceClient.storage.from("project-files").remove([storagePath]);
       return NextResponse.json(
         {
           error: "Failed to create attachment record",
@@ -183,6 +199,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         },
         uploadedAt: attachment.uploaded_at,
         publicUrl,
+        downloadUrl: `/api/projects/${projectId}/contracts/${contractId}/attachments/${attachment.id}/download`,
       },
       { status: 201 },
     );

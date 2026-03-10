@@ -114,7 +114,6 @@ export const financialManagementTools: NavigationTool[] = [
 
 export const adminTools: NavigationTool[] = [
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
-  { name: "AI Assistant", path: "/ai-assistant", icon: Bot, requiresProject: false },
   { name: "Docs Chat", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
   { name: "Company Knowledge", path: "/admin/company-knowledge", icon: BookOpen, requiresProject: false, adminOnly: true },
@@ -211,6 +210,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
       { name: "360 Reporting", path: "reporting", icon: TrendingUp, requiresProject: false, adminOnly: true },
+      { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "AI Strategist", path: "/ai-assistant", icon: Bot, requiresProject: false },
       { name: "Docs Chat", path: "/docs", icon: MessageCircle, requiresProject: false },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },

@@ -43,7 +43,7 @@ export function FormSection({
     <section className={cn(rootGap, className)}>
       {showHeader && (
         <header className={cn("border-b", headerPad)}>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-8">
             <div className="min-w-0">
               <h3 className="text-base font-semibold tracking-tight text-foreground">
                 {title}

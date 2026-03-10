@@ -114,9 +114,11 @@ export interface Contract {
   created_by: string | null;
   vendor_id: string | null;
   client_id: number | null;
+  contract_company_id: string | null;
   project_id: number;
   vendor?: { id: string; name: string } | null;
   client?: { id: number; name: string } | null;
+  contract_company?: { id: string; name: string } | null;
   contractor?: { id: string; name: string } | null;
   architect_engineer?: { id: string; name: string } | null;
   approved_change_orders: number;
@@ -141,7 +143,8 @@ export interface BudgetCode {
 export interface ContractAttachment {
   id: string;
   fileName: string;
-  url: string;
+  url: string | null;
+  downloadUrl?: string;
   uploadedBy: { id: string; email: string } | null;
   uploadedAt: string;
 }

@@ -6,16 +6,6 @@
     "auditLog": "/Users/meganharrison/Documents/github/alleato-pm/logs/.75bcdec01263db76f03984fb2086233e78adb09a-audit.json",
     "files": [
         {
-            "date": 1771634349705,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-02-20.log",
-            "hash": "15f29dc90df2a474db35baf72eb4458275fe799db1a0048f10b06b3f7b5a7adf"
-        },
-        {
-            "date": 1771673033153,
-            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-02-21.log",
-            "hash": "f345465e1cdcaf3b38342ffe3a85abf00dab2d2ebeea13920482e742fe9cc5b7"
-        },
-        {
             "date": 1772408059196,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-03-01.log",
             "hash": "3460733863fc4fbe5f2554fbe58f5eea24de981d0db71a8a4bcc29de7e36c89a"
@@ -24,6 +14,16 @@
             "date": 1772432173108,
             "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-03-02.log",
             "hash": "843eb2b6335f3b124788506685755160ab6c19ceb9291a0b83f72dae73425718"
+        },
+        {
+            "date": 1772947273464,
+            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-03-08.log",
+            "hash": "35f837569113b8b97930aaf1e89be6f5a263970f1f2091febf5a3428c5a5553d"
+        },
+        {
+            "date": 1773052626511,
+            "name": "/Users/meganharrison/Documents/github/alleato-pm/logs/mcp-puppeteer-2026-03-09.log",
+            "hash": "adb967dead417996b2425ae56016b9d68be7f7dbe0037cdc8b19e8ac7d63a83f"
         }
     ],
     "hashType": "sha256"

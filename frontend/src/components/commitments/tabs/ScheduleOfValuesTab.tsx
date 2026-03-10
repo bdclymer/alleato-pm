@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ds";
 import { Text } from "@/components/ui/text";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,12 +19,6 @@ import {
 } from "@/components/ui/select";
 import { useCostCodes } from "@/hooks/use-cost-codes";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface LineItem {
   id: string;
@@ -277,71 +271,56 @@ export function ScheduleOfValuesTab({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule of Values</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <SectionHeader title="Schedule of Values" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule of Values</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Text tone="destructive">{error}</Text>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <SectionHeader title="Schedule of Values" />
+        <Text tone="destructive">{error}</Text>
+      </div>
     );
   }
 
   if (!items.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Schedule of Values</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Text tone="muted" size="sm">
-              No SOV line items for this commitment
-            </Text>
-            <div className="mt-4">
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button size="sm" onClick={handleAdd}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Line Item
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleImport}
-                  disabled={isImporting}
-                >
-                  {isImporting ? "Importing..." : "Import from Budget"}
-                </Button>
-              </div>
+      <div className="space-y-4">
+        <SectionHeader title="Schedule of Values" />
+        <div className="text-center py-8">
+          <Text tone="muted" size="sm">
+            No SOV line items for this commitment
+          </Text>
+          <div className="mt-4">
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button size="sm" onClick={handleAdd}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Line Item
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleImport}
+                disabled={isImporting}
+              >
+                {isImporting ? "Importing..." : "Import from Budget"}
+              </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Schedule of Values</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
+      <SectionHeader title="Schedule of Values" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Text size="sm" tone="muted">
@@ -419,39 +398,36 @@ export function ScheduleOfValuesTab({
                       />
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <Select
-                                value={item.budget_code || "none"}
-                                onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
-                                disabled={costCodesLoading}
-                              >
-                                <SelectTrigger
-                                  className="w-full"
-                                  aria-label={`Budget code ${index + 1}`}
-                                >
-                                  <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">No budget code</SelectItem>
-                                  {costCodeOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </TooltipTrigger>
-                          {item.budget_code && getBudgetCodeDescription(item.budget_code) && (
-                            <TooltipContent>
-                              <p>{getBudgetCodeDescription(item.budget_code)}</p>
-                            </TooltipContent>
-                          )}
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="space-y-1">
+                        {item.budget_code && (
+                          <Text size="xs" tone="muted" className="px-1">
+                            {item.budget_code}
+                            {getBudgetCodeDescription(item.budget_code)
+                              ? ` — ${getBudgetCodeDescription(item.budget_code)}`
+                              : ""}
+                          </Text>
+                        )}
+                        <Select
+                          value={item.budget_code || "none"}
+                          onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
+                          disabled={costCodesLoading}
+                        >
+                          <SelectTrigger
+                            className="w-full"
+                            aria-label={`Budget code ${index + 1}`}
+                          >
+                            <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No budget code</SelectItem>
+                            {costCodeOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </td>
                     <td className="px-4 py-2 text-right">
                       <Input
@@ -526,8 +502,7 @@ export function ScheduleOfValuesTab({
           items={items}
           costCodes={costCodes}
         />
-      </CardContent>
-    </Card>
+    </div>
   );
 }
 

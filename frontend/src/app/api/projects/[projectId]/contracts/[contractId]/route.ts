@@ -45,6 +45,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    let contractCompany: { id: string; name: string } | null = null;
+    if (contract.contract_company_id) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("id, name")
+        .eq("id", contract.contract_company_id)
+        .single();
+      contractCompany = company ?? null;
+    }
+
     // Aggregate financial data from contract_change_orders (UUID contract_id matches prime_contracts.id)
     // NOTE: contract_financial_summary_mv uses the integer-PK contracts table — not prime_contracts (UUID)
     const [coResult, invoiceResult, paymentResult] = await Promise.all([
@@ -94,6 +104,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Merge contract with calculated financial data
     const enrichedContract = {
       ...contract,
+      contract_company: contractCompany,
       approved_change_orders: approvedCOs,
       pending_change_orders: pendingCOs,
       draft_change_orders: draftCOs,

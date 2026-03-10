@@ -108,19 +108,41 @@ function yesNo(value: boolean): string {
   return value ? "Yes" : "No";
 }
 
-export function buildCommitmentTableColumns(): TableColumn<CommitmentListItem>[] {
+export type CommitmentInlineEditableField = "number" | "title";
+
+interface BuildCommitmentTableColumnsOptions {
+  onInlineEdit?: (
+    item: CommitmentListItem,
+    field: CommitmentInlineEditableField,
+    value: string,
+  ) => Promise<void> | void;
+}
+
+export function buildCommitmentTableColumns(
+  options?: BuildCommitmentTableColumnsOptions,
+): TableColumn<CommitmentListItem>[] {
   return [
     {
       ...commitmentColumns[0],
       render: (item) => <span className="font-medium">{item.number}</span>,
       csvValue: (item) => item.number,
       sortValue: (item) => item.number,
+      editable: Boolean(options?.onInlineEdit),
+      editValue: (item) => item.number,
+      onEdit: options?.onInlineEdit
+        ? (item, value) => options.onInlineEdit?.(item, "number", value)
+        : undefined,
     },
     {
       ...commitmentColumns[1],
       render: (item) => <span>{item.title ?? "-"}</span>,
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
+      editable: Boolean(options?.onInlineEdit),
+      editValue: (item) => item.title ?? "",
+      onEdit: options?.onInlineEdit
+        ? (item, value) => options.onInlineEdit?.(item, "title", value)
+        : undefined,
     },
     {
       ...commitmentColumns[2],

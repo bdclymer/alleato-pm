@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import {
   commitmentListResponseSchema,
+  type CommitmentListItem,
   type CommitmentListResponse,
 } from "@/lib/validation/commitments";
 
@@ -23,6 +24,12 @@ export interface CommitmentListFilters {
   search?: string;
   companyId?: string;
   type?: string;
+}
+
+export interface CommitmentInlineUpdateInput {
+  id: string;
+  field: "number" | "title";
+  value: string;
 }
 
 // =============================================================================
@@ -205,6 +212,119 @@ export function useDeleteCommitment(projectId: string) {
     },
     onError: (error: Error) => {
       toast.error(error.message);
+    },
+  });
+}
+
+function applyInlineCommitmentUpdate(
+  item: CommitmentListItem,
+  input: CommitmentInlineUpdateInput,
+): CommitmentListItem {
+  if (item.id !== input.id) return item;
+
+  if (input.field === "number") {
+    return {
+      ...item,
+      number: input.value,
+    };
+  }
+
+  return {
+    ...item,
+    title: input.value,
+  };
+}
+
+/**
+ * Mutation hook for inline editing commitments from list tables.
+ * Uses optimistic updates for low-latency UX and invalidates detail/list queries after success.
+ */
+export function useUpdateCommitmentInline() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: CommitmentInlineUpdateInput) => {
+      const payload =
+        input.field === "number"
+          ? { number: input.value }
+          : { title: input.value };
+
+      const response = await fetch(`/api/commitments/${input.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update commitment");
+      }
+
+      return response.json();
+    },
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: commitmentKeys.lists() });
+      await queryClient.cancelQueries({
+        queryKey: commitmentKeys.detail(input.id),
+      });
+
+      const previousLists = queryClient.getQueriesData<CommitmentListResponse>({
+        queryKey: commitmentKeys.lists(),
+      });
+      const previousDetail = queryClient.getQueryData(commitmentKeys.detail(input.id));
+
+      for (const [queryKey, data] of previousLists) {
+        if (!data?.data) continue;
+        queryClient.setQueryData<CommitmentListResponse>(queryKey, {
+          ...data,
+          data: data.data.map((item) => applyInlineCommitmentUpdate(item, input)),
+        });
+      }
+
+      queryClient.setQueryData(commitmentKeys.detail(input.id), (current: any) => {
+        if (!current || typeof current !== "object") return current;
+        return {
+          ...current,
+          number:
+            input.field === "number"
+              ? input.value
+              : (current as Record<string, unknown>).number,
+          title:
+            input.field === "title"
+              ? input.value
+              : (current as Record<string, unknown>).title,
+        };
+      });
+
+      return { previousLists, previousDetail };
+    },
+    onError: (_error, input, context) => {
+      if (!context) return;
+
+      for (const [queryKey, data] of context.previousLists) {
+        queryClient.setQueryData(queryKey, data);
+      }
+
+      queryClient.setQueryData(commitmentKeys.detail(input.id), context.previousDetail);
+    },
+    onSuccess: (_result, input) => {
+      queryClient.invalidateQueries({
+        queryKey: commitmentKeys.detail(input.id),
+      });
+      queryClient.invalidateQueries({
+        queryKey: commitmentKeys.lists(),
+      });
+      toast.success("Commitment updated");
+    },
+    onSettled: (_result, _error, input) => {
+      queryClient.invalidateQueries({
+        queryKey: commitmentKeys.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: commitmentKeys.detail(input.id),
+      });
     },
   });
 }

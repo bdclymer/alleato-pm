@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header-unified";
@@ -235,6 +236,7 @@ export function UnifiedTablePage<T>({
   const [editingValue, setEditingValue] = React.useState("");
   const [inlineEdits, setInlineEdits] = React.useState<Record<string, string>>({});
   const tableScrollRef = React.useRef<HTMLDivElement>(null);
+  const rowRefs = React.useRef<Record<string, HTMLTableRowElement | null>>({});
   const resizeStateRef = React.useRef<{
     columnId: string;
     startX: number;
@@ -471,14 +473,30 @@ export function UnifiedTablePage<T>({
   const commitInlineEdit = React.useCallback(
     async (item: T, column: TableColumn<T>, rowId: string, value: string) => {
       const cellKey = `${rowId}::${column.id}`;
-      setInlineEdits((prev) => ({ ...prev, [cellKey]: value }));
-      if (column.onEdit) {
-        await column.onEdit(item, value);
+      const nextValue = value.trim();
+      const currentValue = inlineEdits[cellKey] ?? column.editValue?.(item) ?? "";
+
+      if (nextValue === currentValue) {
+        setEditingCell(null);
+        setEditingValue("");
+        return;
       }
-      setEditingCell(null);
-      setEditingValue("");
+
+      try {
+        if (column.onEdit) {
+          await column.onEdit(item, nextValue);
+        }
+        setInlineEdits((prev) => ({ ...prev, [cellKey]: nextValue }));
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to update cell value",
+        );
+      } finally {
+        setEditingCell(null);
+        setEditingValue("");
+      }
     },
-    [],
+    [inlineEdits],
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -488,6 +506,16 @@ export function UnifiedTablePage<T>({
     overscan: 8,
     enabled: resolvedFeatures.enableVirtualization,
   });
+
+  const activateRow = React.useCallback(
+    (item: T) => {
+      tableScrollRef.current?.focus();
+      table.onRowClick?.(item);
+      const rowId = table.getRowId(item);
+      rowRefs.current[rowId]?.scrollIntoView({ block: "nearest" });
+    },
+    [table],
+  );
 
   const handleTableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     table.onTableKeyDown?.(event, paginatedItems);
@@ -509,7 +537,7 @@ export function UnifiedTablePage<T>({
         : Math.min(Math.max(currentIndex + step, 0), paginatedItems.length - 1);
     const nextItem = paginatedItems[nextIndex];
     if (!nextItem) return;
-    table.onRowClick?.(nextItem);
+    activateRow(nextItem);
   };
 
   const handleColumnResizeStart = React.useCallback(
@@ -656,6 +684,7 @@ export function UnifiedTablePage<T>({
             )}
             tabIndex={0}
             onKeyDown={handleTableKeyDown}
+            onClick={() => tableScrollRef.current?.focus()}
             ref={tableScrollRef}
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
@@ -793,6 +822,9 @@ export function UnifiedTablePage<T>({
                     }))).map(({ item, key, style }) => (
                   <TableRow
                     key={key}
+                    ref={(element) => {
+                      rowRefs.current[key] = element;
+                    }}
                     className={cn(
                       "cursor-pointer transition-colors duration-150",
                       table.activeRowId === table.getRowId(item) && "bg-accent/50",
@@ -815,7 +847,7 @@ export function UnifiedTablePage<T>({
                       setDraggedRowId(null);
                     }}
                     onDragEnd={() => setDraggedRowId(null)}
-                    onClick={() => table.onRowClick?.(item)}
+                    onClick={() => activateRow(item)}
                   >
                     {hasRowSelection && (
                       <TableCell onClick={(event) => event.stopPropagation()}>

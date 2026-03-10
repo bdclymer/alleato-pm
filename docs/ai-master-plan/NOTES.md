@@ -1,5 +1,8 @@
 # NOTES
 
+## Schedule
+
+- Table view - 
 
 
 ## Direct Costs
