@@ -2,6 +2,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { ProjectHomeClient } from "./project-home-client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ProjectHomePage({
   params,
 }: {

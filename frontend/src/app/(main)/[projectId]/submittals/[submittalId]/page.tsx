@@ -2,6 +2,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { SubmittalDetailClient } from "@/features/submittals/submittal-detail-client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ projectId: string; submittalId: string }>;
 }
