@@ -42,6 +42,14 @@ export interface TableColumn<T> extends ColumnConfig {
   editable?: boolean;
   editValue?: (item: T) => string;
   onEdit?: (item: T, value: string) => void | Promise<void>;
+  /** Custom editor widget (e.g. dropdown select). Receives current value, onChange, onCommit, and onCancel. */
+  renderEditor?: (props: {
+    item: T;
+    value: string;
+    onChange: (value: string) => void;
+    onCommit: () => void;
+    onCancel: () => void;
+  }) => ReactNode;
 }
 
 export type SortDirection = "asc" | "desc";
@@ -948,6 +956,24 @@ export function UnifiedTablePage<T>({
                           resolvedFeatures.enableInlineEditing &&
                           column.editable &&
                           column.editValue ? (
+                            column.renderEditor ? (
+                              column.renderEditor({
+                                item,
+                                value: editingValue,
+                                onChange: setEditingValue,
+                                onCommit: () =>
+                                  void commitInlineEdit(
+                                    item,
+                                    column,
+                                    table.getRowId(item),
+                                    editingValue,
+                                  ),
+                                onCancel: () => {
+                                  setEditingCell(null);
+                                  setEditingValue("");
+                                },
+                              })
+                            ) : (
                             <input
                               className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
                               value={editingValue}
@@ -987,6 +1013,7 @@ export function UnifiedTablePage<T>({
                                 }
                               }}
                             />
+                            )
                           ) : (
                             column.render(item)
                           )}
