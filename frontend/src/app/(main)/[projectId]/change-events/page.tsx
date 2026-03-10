@@ -131,7 +131,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const handleEdit = React.useCallback(
     (item: ChangeEvent) => {
-      router.push(`/${projectId}/change-events/${item.id}/edit`);
+      router.push(`/${projectId}/change-events/${item.id}?edit=1`);
     },
     [projectId, router],
   );

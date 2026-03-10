@@ -5,9 +5,13 @@ import {
   PageContainer,
   ProjectPageHeader,
 } from "@/components/layout";
+import {
+  SelectField,
+  TextField,
+  TextareaField,
+} from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -210,95 +214,99 @@ function CompanyProfileTab() {
       <Separator />
 
       <div className="grid gap-4">
-        <FormField
+        <TextareaField
           label="Mission Statement"
-          value={form.mission as string}
-          onChange={(v) => setForm({ ...form, mission: v })}
-          multiline
+          value={(form.mission as string) ?? ""}
+          onChange={(e) => setForm({ ...form, mission: e.target.value })}
+          rows={3}
           placeholder="Our mission is to..."
         />
-        <FormField
+        <TextareaField
           label="Vision"
-          value={form.vision as string}
-          onChange={(v) => setForm({ ...form, vision: v })}
-          multiline
+          value={(form.vision as string) ?? ""}
+          onChange={(e) => setForm({ ...form, vision: e.target.value })}
+          rows={3}
           placeholder="Our vision is to become..."
         />
-        <FormField
+        <TextareaField
           label="Company History"
-          value={form.company_history as string}
-          onChange={(v) => setForm({ ...form, company_history: v })}
-          multiline
+          value={(form.company_history as string) ?? ""}
+          onChange={(e) => setForm({ ...form, company_history: e.target.value })}
+          rows={3}
           placeholder="Founded in... key milestones..."
         />
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField
+          <TextField
             label="Founded Year"
             value={String(form.founded_year ?? "")}
-            onChange={(v) => setForm({ ...form, founded_year: v })}
+            onChange={(e) => setForm({ ...form, founded_year: e.target.value })}
             placeholder="2015"
           />
-          <FormField
+          <TextField
             label="Headquarters"
-            value={form.headquarters as string}
-            onChange={(v) => setForm({ ...form, headquarters: v })}
+            value={(form.headquarters as string) ?? ""}
+            onChange={(e) => setForm({ ...form, headquarters: e.target.value })}
             placeholder="City, State"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <FormField
+          <TextField
             label="Employee Count"
             value={String(form.employee_count ?? "")}
-            onChange={(v) => setForm({ ...form, employee_count: v })}
+            onChange={(e) => setForm({ ...form, employee_count: e.target.value })}
             placeholder="50"
           />
-          <FormField
+          <TextField
             label="Annual Revenue Range"
-            value={form.annual_revenue_range as string}
-            onChange={(v) => setForm({ ...form, annual_revenue_range: v })}
+            value={(form.annual_revenue_range as string) ?? ""}
+            onChange={(e) =>
+              setForm({ ...form, annual_revenue_range: e.target.value })
+            }
             placeholder="$10M - $25M"
           />
         </div>
 
         <Separator />
 
-        <FormField
+        <TextField
           label="Core Values (comma-separated)"
-          value={form.core_values as string}
-          onChange={(v) => setForm({ ...form, core_values: v })}
+          value={(form.core_values as string) ?? ""}
+          onChange={(e) => setForm({ ...form, core_values: e.target.value })}
           placeholder="Integrity, Excellence, Safety, Innovation"
         />
-        <FormField
+        <TextField
           label="Key Differentiators (comma-separated)"
-          value={form.key_differentiators as string}
-          onChange={(v) => setForm({ ...form, key_differentiators: v })}
+          value={(form.key_differentiators as string) ?? ""}
+          onChange={(e) =>
+            setForm({ ...form, key_differentiators: e.target.value })
+          }
           placeholder="In-house engineering, Data-driven approach, 98% on-time delivery"
         />
-        <FormField
+        <TextField
           label="Target Markets (comma-separated)"
-          value={form.target_markets as string}
-          onChange={(v) => setForm({ ...form, target_markets: v })}
+          value={(form.target_markets as string) ?? ""}
+          onChange={(e) => setForm({ ...form, target_markets: e.target.value })}
           placeholder="Commercial, Healthcare, Industrial"
         />
-        <FormField
+        <TextField
           label="Service Areas (comma-separated)"
-          value={form.service_areas as string}
-          onChange={(v) => setForm({ ...form, service_areas: v })}
+          value={(form.service_areas as string) ?? ""}
+          onChange={(e) => setForm({ ...form, service_areas: e.target.value })}
           placeholder="General Contracting, Design-Build, Construction Management"
         />
-        <FormField
+        <TextField
           label="Certifications (comma-separated)"
-          value={form.certifications as string}
-          onChange={(v) => setForm({ ...form, certifications: v })}
+          value={(form.certifications as string) ?? ""}
+          onChange={(e) => setForm({ ...form, certifications: e.target.value })}
           placeholder="LEED AP, OSHA 30, PMP, DBIA"
         />
-        <FormField
+        <TextareaField
           label="Notes"
-          value={form.notes as string}
-          onChange={(v) => setForm({ ...form, notes: v })}
-          multiline
+          value={(form.notes as string) ?? ""}
+          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          rows={3}
           placeholder="Any other context the AI should know about the company..."
         />
       </div>
@@ -539,52 +547,40 @@ function ArticleForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FormField
+      <TextField
         label="Title"
         value={title}
-        onChange={setTitle}
+        onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g., Q4 2025 Strategic Priorities"
         required
       />
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground">
-          Category
-        </label>
-        <Select
-          value={category}
-          onValueChange={(v) => setCategory(v as KnowledgeCategory)}
-        >
-          <SelectTrigger className="h-9 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {KNOWLEDGE_CATEGORIES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <FormField
+      <SelectField
+        label="Category"
+        value={category}
+        onValueChange={(v) => setCategory(v as KnowledgeCategory)}
+        options={KNOWLEDGE_CATEGORIES.map((c) => ({
+          value: c.value,
+          label: c.label,
+        }))}
+      />
+      <TextareaField
         label="Content"
         value={content}
-        onChange={setContent}
-        multiline
+        onChange={(e) => setContent(e.target.value)}
         rows={8}
         placeholder="Enter the knowledge content here. The AI will use this to answer questions about your company."
         required
       />
-      <FormField
+      <TextField
         label="Tags (comma-separated, optional)"
         value={tags}
-        onChange={setTags}
+        onChange={(e) => setTags(e.target.value)}
         placeholder="hiring, growth, Q4"
       />
-      <FormField
+      <TextField
         label="Source (optional)"
         value={source}
-        onChange={setSource}
+        onChange={(e) => setSource(e.target.value)}
         placeholder="e.g., Board Meeting 2026-01-15, Strategy Deck"
       />
       <div className="flex justify-end">
@@ -862,54 +858,6 @@ function DocumentsTab() {
             </div>
           ))}
         </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Shared Form Field
-// ---------------------------------------------------------------------------
-
-function FormField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  multiline,
-  rows = 3,
-  required,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  multiline?: boolean;
-  rows?: number;
-  required?: boolean;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
-      {multiline ? (
-        <Textarea
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          rows={rows}
-          className="text-sm resize-none"
-          required={required}
-        />
-      ) : (
-        <Input
-          value={value ?? ""}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="h-9 text-sm"
-          required={required}
-        />
       )}
     </div>
   );

@@ -78,34 +78,50 @@ export interface AcuSessionState {
 export interface RawVendor {
   VendorID: AcuField<string>;
   VendorName: AcuField<string>;
+  LegalName?: AcuField<string>;
   Status: AcuField<string>;
+  VendorClass?: AcuField<string>;
   CurrencyID: AcuField<string>;
   CurrencyRateType?: AcuField<string>;
   PrimaryContactID?: AcuField<number | null>;
   MainContact?: {
     Email?: AcuField<string>;
     Phone1?: AcuField<string>;
+    Phone1Type?: AcuField<string>;
   };
   PaymentMethod?: AcuField<string>;
   CashAccount?: AcuField<string>;
+  APAccount?: AcuField<string>;
   Terms?: AcuField<string>;
   TaxZone?: AcuField<string>;
+  F1099Vendor?: AcuField<boolean>;
+  ForeignEntity?: AcuField<boolean>;
+  VendorIsLaborUnion?: AcuField<boolean>;
+  VendorIsTaxAgency?: AcuField<boolean>;
   LastModifiedDateTime?: AcuField<string>;
 }
 
 export interface FlatVendor {
   VendorID: string;
   VendorName: string;
+  LegalName?: string;
   Status: string;
+  VendorClass?: string;
   CurrencyID: string;
   CurrencyRateType?: string;
   PrimaryContactID?: number | null;
   Email?: string;
   Phone1?: string;
+  Phone1Type?: string;
   PaymentMethod?: string;
   CashAccount?: string;
+  APAccount?: string;
   Terms?: string;
   TaxZone?: string;
+  F1099Vendor?: boolean;
+  ForeignEntity?: boolean;
+  VendorIsLaborUnion?: boolean;
+  VendorIsTaxAgency?: boolean;
   LastModifiedDateTime?: string;
 }
 

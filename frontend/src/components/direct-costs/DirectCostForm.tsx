@@ -47,6 +47,7 @@ import { RHFTextareaField } from '@/components/forms/fields/RHFTextareaField'
 import { LineItemsManager } from './LineItemsManager'
 import { AttachmentManager } from './AttachmentManager'
 import { AutoSaveIndicator } from './AutoSaveIndicator'
+import { CreateBudgetCodeModal } from '@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal'
 import {
   AlertCircle,
   Wand2,
@@ -113,6 +114,8 @@ export function DirectCostForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   // isDirty is now derived from useFormState below (avoids formState proxy access)
   const [isAutoFilling, setIsAutoFilling] = useState(false)
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = useState(false)
+  const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] = useState<number | null>(null)
 
   // Stable budget codes list for LineItemsManager (prevents new array ref on every render)
   const mappedBudgetCodes = useMemo(
@@ -292,6 +295,31 @@ export function DirectCostForm({
     loadOptions()
   }, [projectId])
 
+  const handleBudgetCodeCreated = useCallback(async (budgetCodeId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/budget-codes`)
+      if (!response.ok) return
+      const budgetCodesData = await response.json()
+      setBudgetCodes(
+        Array.isArray(budgetCodesData)
+          ? budgetCodesData
+          : budgetCodesData.budgetCodes || []
+      )
+      if (targetBudgetCodeRowIndex !== null && budgetCodeId) {
+        form.setValue(
+          `line_items.${targetBudgetCodeRowIndex}.budget_code_id`,
+          budgetCodeId,
+          { shouldDirty: true, shouldValidate: true }
+        )
+      }
+      setTargetBudgetCodeRowIndex(null)
+      toast.success('Budget code created successfully')
+    } catch {
+      toast.error('Budget code created, but failed to refresh list')
+      setTargetBudgetCodeRowIndex(null)
+    }
+  }, [projectId, targetBudgetCodeRowIndex, form])
+
   // Auto-save functionality (edit mode only).
   // Depends only on isDirty and mode — NOT on a watched value object,
   // which would create a new reference on every render and re-fire
@@ -414,7 +442,6 @@ export function DirectCostForm({
         >
           <FormSection
             title="Basic Information"
-            description="Enter the cost details and select vendor"
           >
             <FormGrid columns={2}>
               <RHFSelectField
@@ -506,17 +533,16 @@ export function DirectCostForm({
           </FormSection>
 
           <FormSection
-            title="Line Items"
-            description="Add line items with budget codes, quantities, and costs"
-          >
+            title="Line Items"          >
             <LineItemsManager
               items={fields as any}
               budgetCodes={mappedBudgetCodes}
               onAdd={handleAddLineItem}
               onRemove={handleRemoveLineItem}
               onUpdate={handleUpdateLineItem}
-              onCreateBudgetCode={() => {
-                toast.info('Create budget code feature coming soon')
+              onCreateBudgetCode={(index) => {
+                setTargetBudgetCodeRowIndex(index)
+                setShowCreateBudgetCodeModal(true)
               }}
               form={form as never}
             />
@@ -531,9 +557,7 @@ export function DirectCostForm({
           </FormSection>
 
           <FormSection
-            title="Attachments"
-            description="Upload invoices, receipts, and supporting documents (optional)"
-          >
+            title="Attachments"          >
             <AttachmentManager
               attachments={[]}
               onUpload={async () => {
@@ -579,6 +603,18 @@ export function DirectCostForm({
           </FormActions>
         </form>
       </Form>
+
+      <CreateBudgetCodeModal
+        open={showCreateBudgetCodeModal}
+        onOpenChange={(open) => {
+          setShowCreateBudgetCodeModal(open)
+          if (!open) {
+            setTargetBudgetCodeRowIndex(null)
+          }
+        }}
+        projectId={String(projectId)}
+        onSuccess={handleBudgetCodeCreated}
+      />
     </div>
   )
 }

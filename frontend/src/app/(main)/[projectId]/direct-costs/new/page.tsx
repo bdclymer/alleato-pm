@@ -15,7 +15,7 @@ export default async function NewDirectCostPage({ params }: PageProps) {
     <ProjectFormPageLayout
       title="New Direct Cost"
       description="Create a new direct cost entry for this project"
-      maxWidth="xl"
+      maxWidth="2xl"
     >
       <CreateDirectCostForm projectId={projectId} />
     </ProjectFormPageLayout>

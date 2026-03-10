@@ -310,7 +310,9 @@ export function AttachmentManager({
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">
-          Attachments ({attachments.length})
+          {attachments.length > 0
+            ? `Attachments (${attachments.length})`
+            : "Attachments"}
         </p>
         {attachments.length === 0 ? (
           <div className="rounded-lg border border-border bg-muted/15 px-3 py-4 text-sm text-muted-foreground">

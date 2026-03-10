@@ -30,21 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Slideover,
   SlideoverContent,
@@ -58,6 +44,12 @@ import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { FormGrid, FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 
 // ---------------------------------------------------------------------------
 // Edit form schema
@@ -72,6 +64,14 @@ const invoiceEditSchema = z.object({
 });
 
 type InvoiceEditValues = z.infer<typeof invoiceEditSchema>;
+
+const invoiceStatusOptions = [
+  { value: "draft", label: "Draft" },
+  { value: "submitted", label: "Submitted" },
+  { value: "approved", label: "Approved" },
+  { value: "paid", label: "Paid" },
+  { value: "void", label: "Void" },
+];
 
 // ---------------------------------------------------------------------------
 // Inline edit form
@@ -146,111 +146,60 @@ function InvoiceEditForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-4">
-        <FormField
-          control={form.control}
-          name="invoice_number"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Invoice Number</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. INV-001"
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4">
+        <FormSection
+          title="Invoice Details"
+          description="Update invoice metadata and review status."
+        >
+          <FormGrid columns={2}>
+            <div className="md:col-span-2">
+              <RHFTextField
+                control={form.control}
+                name="invoice_number"
+                label="Invoice Number"
+                placeholder="e.g. INV-001"
+              />
+            </div>
+            <RHFDateField
+              control={form.control}
+              name="period_start"
+              label="Period Start"
+              placeholder="Pick a start date"
+              nullable
+            />
+            <RHFDateField
+              control={form.control}
+              name="period_end"
+              label="Period End"
+              placeholder="Pick an end date"
+              nullable
+            />
+            <div className="md:col-span-2">
+              <RHFSelectField
+                control={form.control}
+                name="status"
+                label="Status"
+                options={invoiceStatusOptions}
+                placeholder="Select status"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <RHFTextareaField
+                control={form.control}
+                name="notes"
+                label="Notes"
+                placeholder="Optional notes about this invoice..."
+                rows={4}
+              />
+            </div>
+          </FormGrid>
+        </FormSection>
+
+        <FormActions
+          submitLabel="Save Changes"
+          onCancel={onCancel}
+          isSubmitting={isSaving}
         />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="period_start"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Period Start</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="period_end"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Period End</FormLabel>
-                <FormControl>
-                  <Input type="date" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="void">Void</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Optional notes about this invoice..."
-                  rows={4}
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
       </form>
     </Form>
   );

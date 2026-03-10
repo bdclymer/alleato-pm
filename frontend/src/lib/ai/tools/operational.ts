@@ -1270,12 +1270,19 @@ export function createOperationalTools(
     semanticSearch: tool({
       description:
         "Search across ALL project knowledge using semantic similarity: " +
-        "meeting transcripts, RFIs, submittals, change orders, insights, " +
-        "and any other indexed content. Use when the user asks a broad " +
-        "question that could span multiple data types, or when keyword " +
-        "search isn't finding results.",
+        "meeting transcripts, chunked document content, RFIs, submittals, " +
+        "change orders, insights, and other indexed content. Uses blended " +
+        "retrieval from unified knowledge + full document chunks. Use when " +
+        "the user asks a broad question that could span multiple data types, " +
+        "or when keyword search isn't finding results.",
       inputSchema: z.object({
         query: z.string().describe("Natural language search query"),
+        projectId: z
+          .number()
+          .optional()
+          .describe(
+            "Optional project ID filter. When provided, non-matching document chunks are excluded.",
+          ),
         matchCount: z
           .number()
           .optional()
@@ -1290,7 +1297,7 @@ export function createOperationalTools(
       execute: withTrace(
         "semanticSearch",
         options,
-        async ({ query, matchCount, threshold }) => {
+        async ({ query, projectId, matchCount, threshold }) => {
           try {
             // Generate embedding
             const openai = getOpenAI();
@@ -1300,19 +1307,134 @@ export function createOperationalTools(
             });
 
             const queryEmbedding = embeddingResponse.data[0].embedding;
+            const embeddingArg = JSON.stringify(queryEmbedding);
+            const targetCount = matchCount ?? 10;
+            const targetThreshold = threshold ?? 0.3;
 
-            // Call search RPC — pgvector expects JSON string
-            const { data, error } = await supabase.rpc(
-              "search_all_knowledge",
-              {
-                query_embedding: JSON.stringify(queryEmbedding),
-                match_count: matchCount ?? 10,
-                match_threshold: threshold ?? 0.3,
-              },
-            );
+            // Blended retrieval:
+            // 1) search_all_knowledge for structured entities
+            // 2) match_documents_full for chunk-level document evidence
+            const [knowledgeRes, documentRes] = await Promise.all([
+              supabase.rpc("search_all_knowledge", {
+                query_embedding: embeddingArg,
+                match_count: targetCount,
+                match_threshold: targetThreshold,
+              }),
+              supabase.rpc("match_documents_full", {
+                query_embedding: embeddingArg,
+                match_count: Math.max(targetCount * 2, 20),
+                match_threshold: targetThreshold,
+              }),
+            ]);
 
-            if (error) return { error: error.message };
-            const results = (data ?? []) as AnyRow[];
+            const knowledgeError = knowledgeRes.error;
+            const documentError = documentRes.error;
+            if (knowledgeError && documentError) {
+              return {
+                error: `Semantic search failed: knowledge=${knowledgeError.message}; documents=${documentError.message}`,
+              };
+            }
+
+            const rawKnowledgeRows = (knowledgeRes.data ?? []) as AnyRow[];
+            const knowledgeRows = rawKnowledgeRows.filter((row) => {
+              if (!projectId) return true;
+              const projectIds = Array.isArray(row.project_ids)
+                ? (row.project_ids as unknown[]).filter(
+                    (v): v is number => typeof v === "number",
+                  )
+                : [];
+              return projectIds.includes(projectId);
+            });
+            const rawDocumentRows = (documentRes.data ?? []) as AnyRow[];
+            const documentRows = rawDocumentRows.filter((row) => {
+              if (!projectId) return true;
+              const primaryProjectId =
+                typeof row.project_id === "number" ? row.project_id : null;
+              const projectIds = Array.isArray(row.project_ids)
+                ? (row.project_ids as unknown[]).filter(
+                    (v): v is number => typeof v === "number",
+                  )
+                : [];
+              return primaryProjectId === projectId || projectIds.includes(projectId);
+            });
+
+            const merged: Array<{
+              key: string;
+              sourceTable: string;
+              recordId: string;
+              content: string;
+              similarity: number;
+              projectIds: number[];
+              metadata: AnyRow | null;
+              createdAt: string | null;
+            }> = [];
+
+            for (const row of knowledgeRows) {
+              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const sourceTable = String(row.source_table ?? "knowledge");
+              const recordId = String(row.record_id ?? "");
+              merged.push({
+                key: `${sourceTable}:${recordId}`,
+                sourceTable,
+                recordId,
+                content: String(row.content ?? ""),
+                similarity,
+                projectIds: Array.isArray(row.project_ids)
+                  ? (row.project_ids as unknown[]).filter(
+                      (v): v is number => typeof v === "number",
+                    )
+                  : [],
+                metadata:
+                  row.metadata && typeof row.metadata === "object"
+                    ? (row.metadata as AnyRow)
+                    : null,
+                createdAt:
+                  typeof row.created_at === "string" ? row.created_at : null,
+              });
+            }
+
+            for (const row of documentRows) {
+              const docId = String(row.id ?? row.file_id ?? "");
+              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const metadata =
+                row.metadata && typeof row.metadata === "object"
+                  ? (row.metadata as AnyRow)
+                  : null;
+              merged.push({
+                key: `documents:${docId}`,
+                sourceTable: "documents",
+                recordId: docId,
+                content: String(row.content ?? ""),
+                similarity,
+                projectIds: Array.isArray(row.project_ids)
+                  ? (row.project_ids as unknown[]).filter(
+                      (v): v is number => typeof v === "number",
+                    )
+                  : typeof row.project_id === "number"
+                    ? [row.project_id]
+                    : [],
+                metadata: {
+                  ...(metadata ?? {}),
+                  title: row.title ?? metadata?.title ?? null,
+                  source: row.source ?? metadata?.source ?? null,
+                  file_id: row.file_id ?? metadata?.file_id ?? null,
+                  file_date: row.file_date ?? metadata?.file_date ?? null,
+                },
+                createdAt:
+                  typeof row.created_at === "string" ? row.created_at : null,
+              });
+            }
+
+            const dedupedMap = new Map<string, (typeof merged)[number]>();
+            for (const item of merged) {
+              const existing = dedupedMap.get(item.key);
+              if (!existing || item.similarity > existing.similarity) {
+                dedupedMap.set(item.key, item);
+              }
+            }
+            const results = Array.from(dedupedMap.values())
+              .sort((a, b) => b.similarity - a.similarity)
+              .slice(0, targetCount);
 
             if (results.length === 0) {
               return {
@@ -1325,13 +1447,19 @@ export function createOperationalTools(
               query,
               resultCount: results.length,
               results: results.map((r) => ({
-                content: (r.content as string)?.substring(0, 500),
-                sourceTable: r.source_table,
-                recordId: r.record_id,
-                similarity: Math.round(asNumber(r.similarity) * 100) / 100,
-                projectIds: r.project_ids,
+                content: r.content.substring(0, 700),
+                sourceTable: r.sourceTable,
+                recordId: r.recordId,
+                similarity: r.similarity,
+                projectIds: r.projectIds,
                 metadata: r.metadata,
+                createdAt: r.createdAt,
               })),
+              retrievalBreakdown: {
+                knowledgeMatches: knowledgeRows.length,
+                documentChunkMatches: documentRows.length,
+                usedProjectFilter: Boolean(projectId),
+              },
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";

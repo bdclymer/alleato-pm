@@ -4,12 +4,11 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -27,6 +26,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProjectFormPageLayout } from "@/components/layout";
+import { FormGrid, FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
 
 const createInvoiceSchema = z.object({
   contract_id: z.number().min(1, "Contract is required"),
@@ -115,17 +116,17 @@ export default function NewInvoicePage() {
         </Button>
       }
     >
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle>Invoice Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6"
-            >
-                {/* Contract */}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 max-w-2xl"
+        >
+          <FormSection
+            title="Invoice Details"
+            description="Set contract, billing period, and starting status."
+          >
+            <FormGrid columns={2}>
+              <div className="md:col-span-2">
                 <FormField
                   control={form.control}
                   name="contract_id"
@@ -161,8 +162,9 @@ export default function NewInvoicePage() {
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Invoice Number */}
+              <div className="md:col-span-2">
                 <FormField
                   control={form.control}
                   name="invoice_number"
@@ -179,38 +181,36 @@ export default function NewInvoicePage() {
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Period Start / End */}
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="period_start"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Period Start</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="period_end"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Period End</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <FormField
+                control={form.control}
+                name="period_start"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Period Start</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="period_end"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Period End</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                {/* Status */}
+              <div className="md:col-span-2">
                 <FormField
                   control={form.control}
                   name="status"
@@ -238,25 +238,17 @@ export default function NewInvoicePage() {
                     </FormItem>
                   )}
                 />
+              </div>
+            </FormGrid>
+          </FormSection>
 
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
-                  <Button type="submit" disabled={isSubmitting}>
-                    <Save className="mr-2 h-4 w-4" />
-                    {isSubmitting ? "Creating..." : "Create Invoice"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push(`/${projectId}/invoicing`)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+          <FormActions
+            submitLabel="Create Invoice"
+            onCancel={() => router.push(`/${projectId}/invoicing`)}
+            isSubmitting={isSubmitting}
+          />
+        </form>
+      </Form>
     </ProjectFormPageLayout>
   );
 }

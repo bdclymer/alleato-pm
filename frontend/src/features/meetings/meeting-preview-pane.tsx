@@ -122,34 +122,25 @@ export function MeetingPreviewPane({
 
       {hasExternalLinks ? (
         <section className="space-y-2 border-t pt-4">
-          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
-            <LinkIcon className="h-3.5 w-3.5" />
-            Links
-          </p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-xs font-semibold text-foreground">Links</p>
+          <div className="flex flex-col gap-1">
             {meeting.source ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={meeting.source} target="_blank" rel="noopener noreferrer">
-                  <FileText className="h-4 w-4 mr-1.5" />
-                  Transcript
-                </a>
-              </Button>
+              <a href={meeting.source} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <FileText className="h-3.5 w-3.5" />
+                Transcript
+              </a>
             ) : null}
             {meeting.fireflies_link ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={meeting.fireflies_link} target="_blank" rel="noopener noreferrer">
-                  <Flame className="h-4 w-4 mr-1.5" />
-                  Recording
-                </a>
-              </Button>
+              <a href={meeting.fireflies_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <Flame className="h-3.5 w-3.5" />
+                Recording
+              </a>
             ) : null}
             {meeting.url ? (
-              <Button asChild size="sm" variant="outline">
-                <a href={meeting.url} target="_blank" rel="noopener noreferrer">
-                  <LinkIcon className="h-4 w-4 mr-1.5" />
-                  Source URL
-                </a>
-              </Button>
+              <a href={meeting.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                <LinkIcon className="h-3.5 w-3.5" />
+                Source URL
+              </a>
             ) : null}
           </div>
         </section>

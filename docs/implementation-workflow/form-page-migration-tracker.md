@@ -1,6 +1,6 @@
 # Form Page Migration Tracker
 
-_Last updated: 2026-03-10_
+_Last updated: 2026-03-10 (migration batch 2)_
 
 ## Status legend
 
@@ -12,24 +12,24 @@ _Last updated: 2026-03-10_
 
 | Route | Page file | `ProjectFormPageLayout` | Shared form system in page file | Migration status | Notes |
 |---|---|---|---|---|---|
-| `/[projectId]/budget/line-item/new` | `frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx` | No | No | Not migrated | |
-| `change-events - edit` | `frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx` | Yes | No | Layout only | |
-| `change-events - new` | `frontend/src/app/(main)/[projectId]/change-events/new/page.tsx` | Yes | No | Layout only | |
+| `/[projectId]/budget/line-item/new` | `frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx` | Yes | Yes | Migrated (form system) | Uses `ProjectFormPageLayout`, `FormSection`, `FormActions`, `BudgetCodeSelector` |
+| `change-events - edit` | `frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx` | Yes | Yes | Migrated (form system) | Uses shared `ChangeEventForm` |
+| `change-events - new` | `frontend/src/app/(main)/[projectId]/change-events/new/page.tsx` | Yes | Yes | Migrated (form system) | Uses shared `ChangeEventForm` |
 | `change-orders - edit` | `frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx` | Yes | No | Layout only | |
 | `change-orders - new` | `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` | Yes | No | Layout only | |
 | `/[projectId]/commitments/[commitmentId]/edit` | `frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx` | Yes | No | Layout only | |
-| `/[projectId]/commitments/configure` | `frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx` | No | No | Not migrated | |
+| `/[projectId]/commitments/configure` | `frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx` | Yes | No | Layout only | Shell migrated to `ProjectFormPageLayout`; field wrappers pending |
 | `/[projectId]/commitments/new` | `frontend/src/app/(main)/[projectId]/commitments/new/page.tsx` | Yes | No | Layout only | |
 | `/[projectId]/direct-costs/new` | `frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx` | Yes | No | Migrated (form system) | Uses `CreateDirectCostForm` -> `DirectCostForm` (shared form system) |
-| `/[projectId]/invoices/new` | `frontend/src/app/(main)/[projectId]/invoices/new/page.tsx` | Yes | No | Layout only | |
-| `/[projectId]/invoicing/[invoiceId]` | `frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx` | No | No | Not migrated | |
-| `/[projectId]/invoicing/new` | `frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx` | Yes | No | Layout only | |
-| `/[projectId]/meetings/schedule` | `frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx` | Yes | No | Layout only | |
-| `/[projectId]/prime-contracts/[contractId]/edit` | `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx` | Yes | No | Layout only | |
+| `/[projectId]/invoices/new` | `frontend/src/app/(main)/[projectId]/invoices/new/page.tsx` | Yes | Yes | Migrated (form system) | Uses `FormSection` + `FormActions` across invoice tabs |
+| `/[projectId]/invoicing/[invoiceId]` | `frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx` | No | Yes | Migrated (form system) | Edit slideover uses RHF form-system fields + `FormSection`/`FormActions` |
+| `/[projectId]/invoicing/new` | `frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx` | Yes | Yes | Migrated (form system) | Form content moved to `FormSection` + `FormGrid` + `FormActions` |
+| `/[projectId]/meetings/schedule` | `frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx` | Yes | Yes | Migrated (form system) | Uses `FormSection` + `FormGrid` + `FormActions` |
+| `/[projectId]/prime-contracts/[contractId]/edit` | `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx` | Yes | Yes | Migrated (form system) | Uses shared `ContractForm` |
 | `/[projectId]/prime-contracts/configure` | `frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx` | Yes | Yes | Migrated (form system) | |
-| `/[projectId]/prime-contracts/new` | `frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx` | Yes | No | Layout only | |
-| `/[projectId]/rfis/new` | `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx` | Yes | No | Layout only | |
-| `/admin/company-knowledge` | `frontend/src/app/(main)/admin/company-knowledge/page.tsx` | No | No | Not migrated | |
+| `/[projectId]/prime-contracts/new` | `frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx` | Yes | Yes | Migrated (form system) | Uses shared `ContractForm` |
+| `/[projectId]/rfis/new` | `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx` | Yes | Yes | Migrated (form system) | Uses `FormSection`, `FormGrid`, `FormActions`, and RHF field wrappers |
+| `/admin/company-knowledge` | `frontend/src/app/(main)/admin/company-knowledge/page.tsx` | No | Yes | Migrated (form system) | Profile/article forms now use shared field components (`TextField`, `TextareaField`, `SelectField`) |
 | `/create-project` | `frontend/src/app/(main)/create-project/page.tsx` | No | Yes | Migrated (form system) | |
 | `/form-template` | `frontend/src/app/(main)/form-template/page.tsx` | No | Yes | Migrated (form system) | Reference template |
 

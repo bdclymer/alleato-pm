@@ -6,8 +6,6 @@ import {
   ChevronDown,
   ChevronsUpDown,
   GripVertical,
-  Loader2,
-  Paperclip,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -25,7 +23,17 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { Form } from "@/components/forms/Form";
+import {
+  CheckboxField,
+  FileUploadField,
+  Form,
+  FormGrid,
+  FormSection,
+  SelectField,
+  TextareaField,
+  TextField,
+} from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
 import { Input } from "@/components/ui/input";
 import {
   InputGroup,
@@ -53,7 +61,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -61,6 +68,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { CreateBudgetCodeModal } from "@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal";
 import { toast } from "sonner";
 
 type ChangeEventStatus = "open" | "pending" | "close" | "void";
@@ -524,6 +532,10 @@ export function ChangeEventForm({
   const [contracts, setContracts] = React.useState<ContractOption[]>([]);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCodeOption[]>([]);
   const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
+    React.useState(false);
+  const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] =
+    React.useState<number | null>(null);
 
   // Fetch dropdown options
   const fetchVendors = React.useCallback(async () => {
@@ -534,6 +546,33 @@ export function ChangeEventForm({
       setVendors(Array.isArray(data) ? data : data.data || []);
     } catch {
       setVendors([]);
+    }
+  }, [projectId]);
+
+  const fetchBudgetCodes = React.useCallback(async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/budget-codes`);
+      if (!response.ok) return;
+      const payload = await response.json();
+      const codes = (payload.budgetCodes || payload.data || []) as Array<{
+        id: string;
+        code: string;
+        description?: string;
+        costType?: string | null;
+        fullLabel?: string;
+      }>;
+      setBudgetCodes(
+        codes.map((bc) => ({
+          id: bc.id,
+          code: bc.code,
+          description: bc.description || "",
+          costType: bc.costType || null,
+          fullLabel:
+            bc.fullLabel || `${bc.code}${bc.description ? ` - ${bc.description}` : ""}`,
+        })),
+      );
+    } catch {
+      setBudgetCodes([]);
     }
   }, [projectId]);
 
@@ -606,36 +645,23 @@ export function ChangeEventForm({
       }
 
       // Budget codes
-      try {
-        const response = await fetch(
-          `/api/projects/${projectId}/budget-codes`,
-        );
-        if (response.ok) {
-          const payload = await response.json();
-          const codes = (payload.budgetCodes || payload.data || []) as Array<{
-            id: string;
-            code: string;
-            description?: string;
-            costType?: string | null;
-            fullLabel?: string;
-          }>;
-          setBudgetCodes(
-            codes.map((bc) => ({
-              id: bc.id,
-              code: bc.code,
-              description: bc.description || "",
-              costType: bc.costType || null,
-              fullLabel: bc.fullLabel || `${bc.code}${bc.description ? ` - ${bc.description}` : ""}`,
-            })),
-          );
-        }
-      } catch {
-        setBudgetCodes([]);
-      }
+      await fetchBudgetCodes();
     };
 
     fetchAll();
-  }, [projectId, fetchVendors]);
+  }, [projectId, fetchVendors, fetchBudgetCodes]);
+
+  const handleBudgetCodeCreated = React.useCallback(
+    async (budgetCodeId: string) => {
+      await fetchBudgetCodes();
+      if (targetBudgetCodeRowIndex !== null && budgetCodeId) {
+        updateLineItem(targetBudgetCodeRowIndex, "budgetCode", budgetCodeId);
+      }
+      setTargetBudgetCodeRowIndex(null);
+      toast.success("Budget code created successfully");
+    },
+    [fetchBudgetCodes, targetBudgetCodeRowIndex],
+  );
 
   const updateFormData = (updates: Partial<ChangeEventFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -729,6 +755,85 @@ export function ChangeEventForm({
     await onSubmit(formData);
   };
 
+  const attachmentsAsInfo = React.useMemo(
+    () =>
+      formData.attachments.map((file) => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      })),
+    [formData.attachments],
+  );
+
+  const statusOptions = React.useMemo(
+    () => [
+      { value: "close", label: "Close" },
+      { value: "open", label: "Open" },
+      { value: "pending", label: "Pending" },
+      { value: "void", label: "Void" },
+    ],
+    [],
+  );
+
+  const originOptions = React.useMemo(
+    () => [
+      { value: "emails", label: "Emails" },
+      { value: "meetings", label: "Meetings" },
+      { value: "rfis", label: "RFI's" },
+    ],
+    [],
+  );
+
+  const typeOptions = React.useMemo(
+    () => [
+      { value: "allowance", label: "Allowance" },
+      { value: "contingency", label: "Contingency" },
+      { value: "owner_change", label: "Owner Change" },
+      { value: "tbd", label: "TBD" },
+      { value: "transfer", label: "Transfer" },
+    ],
+    [],
+  );
+
+  const changeReasonOptions = React.useMemo(
+    () => [
+      { value: "allowance", label: "Allowance" },
+      { value: "backcharge", label: "Backcharge" },
+      { value: "client_request", label: "Client Request" },
+      { value: "design_development", label: "Design Development" },
+      { value: "existing_condition", label: "Existing Condition" },
+    ],
+    [],
+  );
+
+  const scopeOptions = React.useMemo(
+    () => [
+      { value: "In Scope", label: "In Scope" },
+      { value: "Out of Scope", label: "Out of Scope" },
+      { value: "To Be Determined", label: "To Be Determined" },
+    ],
+    [],
+  );
+
+  const revenueSourceOptions = React.useMemo(
+    () => [
+      { value: "match_latest_cost", label: "Match Latest Cost" },
+      { value: "latest_cost", label: "Latest Cost" },
+      { value: "latest_price", label: "Latest Price" },
+    ],
+    [],
+  );
+
+  const primeContractSelectOptions = React.useMemo(() => {
+    if (primeContractOptions.length === 0) {
+      return [{ value: "__none__", label: "No prime contracts available" }];
+    }
+    return primeContractOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+    }));
+  }, [primeContractOptions]);
+
   return (
     <>
       <AddCompanyModal
@@ -745,239 +850,102 @@ export function ChangeEventForm({
       >
         <div className="space-y-12 rounded-sm p-6 lg:p-8">
           {/* ── General Information ── */}
-          <section className="space-y-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-                General Information
-              </h2>
-              <div className="h-px flex-1 bg-primary" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="contractNumber">
-                  Contract Number <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="contractNumber"
-                  value={formData.contractNumber}
-                  onChange={(e) =>
-                    updateFormData({ contractNumber: e.target.value })
-                  }
-                  placeholder="Enter contract number"
-                />
-                {errors.contractNumber && (
-                  <p className="text-sm text-destructive">
-                    {errors.contractNumber}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">
-                  Title <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => updateFormData({ title: e.target.value })}
-                  placeholder="Enter title"
-                />
-                {errors.title && (
-                  <p className="text-sm text-destructive">{errors.title}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">
-                  Status <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    updateFormData({ status: value as ChangeEventStatus })
-                  }
-                >
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="close">Close</SelectItem>
-                    <SelectItem value="open">Open</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="void">Void</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="origin">Origin</Label>
-                <Select
-                  value={formData.origin || ""}
-                  onValueChange={(value) =>
-                    updateFormData({ origin: value as ChangeEventOrigin })
-                  }
-                >
-                  <SelectTrigger id="origin" className="w-full">
-                    <SelectValue placeholder="Select Origin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="emails">Emails</SelectItem>
-                    <SelectItem value="meetings">Meetings</SelectItem>
-                    <SelectItem value="rfis">RFI&apos;s</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
-                <Select
-                  value={formData.type || ""}
-                  onValueChange={(value) =>
-                    updateFormData({ type: value as ChangeEventType })
-                  }
-                >
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="allowance">Allowance</SelectItem>
-                    <SelectItem value="contingency">Contingency</SelectItem>
-                    <SelectItem value="owner_change">Owner Change</SelectItem>
-                    <SelectItem value="tbd">TBD</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="changeReason">Change Reason</Label>
-                <Select
-                  value={formData.changeReason || ""}
-                  onValueChange={(value) =>
-                    updateFormData({ changeReason: value as ChangeReason })
-                  }
-                >
-                  <SelectTrigger id="changeReason" className="w-full">
-                    <SelectValue placeholder="Select Change Reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="allowance">Allowance</SelectItem>
-                    <SelectItem value="backcharge">Backcharge</SelectItem>
-                    <SelectItem value="client_request">
-                      Client Request
-                    </SelectItem>
-                    <SelectItem value="design_development">
-                      Design Development
-                    </SelectItem>
-                    <SelectItem value="existing_condition">
-                      Existing Condition
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="scope">Scope</Label>
-                <Select
-                  value={formData.scope || ""}
-                  onValueChange={(value) => updateFormData({ scope: value })}
-                >
-                  <SelectTrigger id="scope" className="w-full">
-                    <SelectValue placeholder="Select Scope" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="In Scope">In Scope</SelectItem>
-                    <SelectItem value="Out of Scope">Out of Scope</SelectItem>
-                    <SelectItem value="To Be Determined">
-                      To Be Determined
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lineItemRevenueSource">
-                  Line Item Revenue Source
-                </Label>
-                <Select
-                  value={formData.lineItemRevenueSource || ""}
-                  onValueChange={(value) =>
-                    updateFormData({ lineItemRevenueSource: value })
-                  }
-                >
-                  <SelectTrigger id="lineItemRevenueSource" className="w-full">
-                    <SelectValue placeholder="Select Revenue Source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="match_latest_cost">
-                      Match Latest Cost
-                    </SelectItem>
-                    <SelectItem value="latest_cost">Latest Cost</SelectItem>
-                    <SelectItem value="latest_price">Latest Price</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="primeContractId">
-                  Prime Contract For Markup Estimates
-                </Label>
-                <Select
-                  value={formData.primeContractId || ""}
-                  onValueChange={(value) =>
-                    updateFormData({ primeContractId: value })
-                  }
-                >
-                  <SelectTrigger id="primeContractId" className="w-full">
-                    <SelectValue placeholder="Select Prime Contract" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {primeContractOptions.length === 0 ? (
-                      <SelectItem value="__none__" disabled>
-                        No prime contracts available
-                      </SelectItem>
-                    ) : (
-                      primeContractOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                rows={4}
-                value={formData.description || ""}
-                onChange={(e) =>
-                  updateFormData({ description: e.target.value })
-                }
-                placeholder="Describe the change event"
+          <FormSection title="General Information">
+            <FormGrid columns={3}>
+              <TextField
+                label="Contract Number"
+                required
+                value={formData.contractNumber}
+                onChange={(e) => updateFormData({ contractNumber: e.target.value })}
+                placeholder="Enter contract number"
+                error={errors.contractNumber}
               />
-            </div>
+              <TextField
+                label="Title"
+                required
+                value={formData.title}
+                onChange={(e) => updateFormData({ title: e.target.value })}
+                placeholder="Enter title"
+                error={errors.title}
+              />
+              <SelectField
+                label="Status"
+                required
+                options={statusOptions}
+                value={formData.status}
+                onValueChange={(value) => updateFormData({ status: value as ChangeEventStatus })}
+                error={errors.status}
+              />
 
-            <div className="space-y-2">
-              <Label htmlFor="expectingRevenue">Expecting Revenue</Label>
-              <div className="flex h-10 items-center gap-2">
-                <Checkbox
-                  id="expectingRevenue"
+              <SelectField
+                label="Origin"
+                options={originOptions}
+                value={formData.origin || ""}
+                onValueChange={(value) => updateFormData({ origin: value as ChangeEventOrigin })}
+                placeholder="Select Origin"
+              />
+              <SelectField
+                label="Type"
+                options={typeOptions}
+                value={formData.type || ""}
+                onValueChange={(value) => updateFormData({ type: value as ChangeEventType })}
+                placeholder="Select Type"
+              />
+              <SelectField
+                label="Change Reason"
+                options={changeReasonOptions}
+                value={formData.changeReason || ""}
+                onValueChange={(value) => updateFormData({ changeReason: value as ChangeReason })}
+                placeholder="Select Change Reason"
+              />
+
+              <SelectField
+                label="Scope"
+                options={scopeOptions}
+                value={formData.scope || ""}
+                onValueChange={(value) => updateFormData({ scope: value })}
+                placeholder="Select Scope"
+              />
+              <SelectField
+                label="Line Item Revenue Source"
+                options={revenueSourceOptions}
+                value={formData.lineItemRevenueSource || ""}
+                onValueChange={(value) => updateFormData({ lineItemRevenueSource: value })}
+                placeholder="Select Revenue Source"
+              />
+              <SelectField
+                label="Prime Contract For Markup Estimates"
+                options={primeContractSelectOptions}
+                value={formData.primeContractId || ""}
+                onValueChange={(value) => {
+                  if (value === "__none__") return;
+                  updateFormData({ primeContractId: value });
+                }}
+                placeholder="Select Prime Contract"
+                disabled={primeContractOptions.length === 0}
+              />
+
+              <div className="md:col-span-3">
+                <TextareaField
+                  label="Description"
+                  rows={4}
+                  value={formData.description || ""}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  placeholder="Describe the change event"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <CheckboxField
+                  label="Expecting Revenue"
                   checked={!!formData.expectingRevenue}
                   onCheckedChange={(checked) =>
                     updateFormData({ expectingRevenue: checked === true })
                   }
+                  hint="Enable revenue fields"
                 />
-                <Label htmlFor="expectingRevenue" className="text-sm font-normal">
-                  Enable revenue fields
-                </Label>
               </div>
-            </div>
-          </section>
+            </FormGrid>
+          </FormSection>
 
           {/* ── Line Items ── */}
           <section className="space-y-8">
@@ -1067,9 +1035,10 @@ export function ChangeEventForm({
                             updateLineItem(index, "budgetCode", value)
                           }
                           budgetCodes={budgetCodes}
-                          onCreateNew={() =>
-                            toast.info("Create budget code feature coming soon")
-                          }
+                          onCreateNew={() => {
+                            setTargetBudgetCodeRowIndex(index);
+                            setShowCreateBudgetCodeModal(true);
+                          }}
                           placeholder="Select budget code..."
                         />
                       </TableCell>
@@ -1316,85 +1285,57 @@ export function ChangeEventForm({
           </section>
 
           {/* ── Attachments ── */}
-          <section className="space-y-8">
-            <div className="flex items-center gap-3">
-              <h2 className="text-sm font-medium uppercase tracking-[0.08em] text-primary">
-                Attachments
-              </h2>
-              <div className="h-px flex-1 bg-primary" />
-            </div>
-
-            <div className="rounded-lg border border-dashed p-6">
-              <div className="flex flex-col items-center gap-3 text-center">
-                <Paperclip className="h-5 w-5 text-muted-foreground" />
-                <Label
-                  htmlFor="attachments"
-                  className="cursor-pointer rounded-md border bg-muted px-3 py-2 text-sm"
-                >
-                  Attach Files
-                </Label>
-                <p className="text-sm text-muted-foreground">or Drag & Drop</p>
-                <Input
-                  id="attachments"
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => addAttachments(e.target.files)}
-                />
-              </div>
-            </div>
-
-            {formData.attachments.length > 0 && (
-              <div className="space-y-2">
-                {formData.attachments.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="flex items-center justify-between rounded-md border p-3"
-                  >
-                    <div className="truncate text-sm">{file.name}</div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAttachment(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <FormSection title="Attachments">
+            <FileUploadField
+              label="Attach Files"
+              value={attachmentsAsInfo}
+              multiple
+              variant="minimal"
+              onFilesSelected={(files) => {
+                updateFormData({
+                  attachments: [...formData.attachments, ...files],
+                });
+              }}
+              onChange={(nextFiles) => {
+                const remaining = nextFiles.map(
+                  (f) => `${f.name}:${f.size}:${f.type || ""}`,
+                );
+                updateFormData({
+                  attachments: formData.attachments.filter((file) =>
+                    remaining.includes(`${file.name}:${file.size}:${file.type || ""}`),
+                  ),
+                });
+              }}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
+              maxSize={25 * 1024 * 1024}
+              hint="Files are attached to this change event."
+            />
+          </FormSection>
 
           {/* ── Submit Bar ── */}
-          <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+          <FormActions
+            onCancel={onCancel}
+            isSubmitting={isSubmitting}
+            submitLabel={mode === "create" ? "Create Change Event" : "Update Change Event"}
+          >
             <p className="text-sm text-muted-foreground">
               <span className="text-destructive">*</span> Required fields
             </p>
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                data-testid="change-event-submit-button"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="mr-2">Saving...</span>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </>
-                ) : mode === "create" ? (
-                  "Create Change Event"
-                ) : (
-                  "Update Change Event"
-                )}
-              </Button>
-            </div>
-          </div>
+          </FormActions>
         </div>
       </Form>
+
+      <CreateBudgetCodeModal
+        open={showCreateBudgetCodeModal}
+        onOpenChange={(open) => {
+          setShowCreateBudgetCodeModal(open);
+          if (!open) {
+            setTargetBudgetCodeRowIndex(null);
+          }
+        }}
+        projectId={String(projectId)}
+        onSuccess={handleBudgetCodeCreated}
+      />
     </>
   );
 }

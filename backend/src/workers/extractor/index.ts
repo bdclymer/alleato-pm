@@ -56,12 +56,14 @@ function dedupeTasks(
   tasks: Array<{
     description: string;
     assignee?: string;
+    assigneeEmail?: string;
     dueDate?: string;
     priority?: string;
   }>
 ): Array<{
   description: string;
   assignee?: string;
+  assigneeEmail?: string;
   dueDate?: string;
   priority?: string;
 }> {
@@ -69,6 +71,7 @@ function dedupeTasks(
   const output: Array<{
     description: string;
     assignee?: string;
+    assigneeEmail?: string;
     dueDate?: string;
     priority?: string;
   }> = [];
@@ -81,6 +84,82 @@ function dedupeTasks(
   }
 
   return output;
+}
+
+function extractMarkdownSection(content: string, sectionName: string): string {
+  const escaped = sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = content.match(new RegExp(`##\\s*${escaped}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`, "i"));
+  return match ? match[1].trim() : "";
+}
+
+function extractJsonSection(content: string, sectionName: string): unknown {
+  const section = extractMarkdownSection(content, sectionName);
+  if (!section) return null;
+
+  const fenced = section.match(/```json\s*([\s\S]*?)```/i);
+  const rawJson = (fenced ? fenced[1] : section).trim();
+  if (!rawJson) return null;
+
+  try {
+    return JSON.parse(rawJson);
+  } catch {
+    return null;
+  }
+}
+
+function buildSpeakerEmailMap(content: string): Record<string, string> {
+  const speakerEmailMap: Record<string, string> = {};
+  const userSection = extractJsonSection(content, "User");
+  if (userSection && typeof userSection === "object" && !Array.isArray(userSection)) {
+    const name = String((userSection as Record<string, unknown>).name || "").trim();
+    const email = String((userSection as Record<string, unknown>).email || "").trim();
+    if (name && email) {
+      speakerEmailMap[name] = email;
+    }
+  }
+
+  const attendees = extractJsonSection(content, "Meeting Attendees");
+  if (Array.isArray(attendees)) {
+    for (const attendee of attendees) {
+      if (!attendee || typeof attendee !== "object") continue;
+      const row = attendee as Record<string, unknown>;
+      const name = String(row.name || row.displayName || "").trim();
+      const email = String(row.email || "").trim();
+      if (name && email && !speakerEmailMap[name]) {
+        speakerEmailMap[name] = email;
+      }
+    }
+  }
+
+  return speakerEmailMap;
+}
+
+function buildNotesContext(content: string): string {
+  const notes = extractMarkdownSection(content, "Notes");
+  const actionItems = extractMarkdownSection(content, "Action Items");
+  return [notes, actionItems].filter(Boolean).join("\n\n").slice(0, 6000);
+}
+
+function inferMeetingType(metadata: Record<string, unknown>): string {
+  const metadataType = String(metadata.type || "").trim().toLowerCase();
+  if (metadataType) {
+    return metadataType;
+  }
+  const content = String(metadata.content || metadata.raw_text || "");
+  const sectionType = extractMarkdownSection(content, "Meeting Type")
+    .replace(/^[-*•]\s*/, "")
+    .trim()
+    .toLowerCase();
+  return sectionType;
+}
+
+function isInterviewMeeting(metadata: Record<string, unknown>): boolean {
+  const meetingType = inferMeetingType(metadata);
+  if (meetingType === "interview") {
+    return true;
+  }
+  const title = String(metadata.title || "").toLowerCase();
+  return title.includes("interview");
 }
 
 export default {
@@ -237,10 +316,35 @@ async function extractFromMeeting(
   // Some document_metadata rows are created outside Fireflies and may not have fireflies_id.
   // Fall back to metadataId so pipeline stage updates remain addressable.
   const firefliesId = (metadata.fireflies_id as string) || metadataId;
-  const title = metadata.title as string;
-  const meetingSummary = (metadata.meeting_summary as string) || "";
-  const startedAt = metadata.started_at as string | null;
+  const title = (metadata.title as string) || "Untitled Meeting";
+  const meetingSummary = (
+    (metadata.overview as string)
+    || (metadata.meeting_summary as string)
+    || (metadata.summary as string)
+    || ""
+  );
+  const startedAt = (metadata.started_at as string) || (metadata.date as string) || null;
   const participantsArray = (metadata.participants_array as string[]) || [];
+  const projectId = (metadata.project_id as number) || null;
+  const clientId = (metadata.client_id as number) || null;
+  const content = String(metadata.content || metadata.raw_text || "");
+
+  if (isInterviewMeeting(metadata)) {
+    console.log(`[Extract] Skipping interview meeting: ${title} (${firefliesId})`);
+    await updateJobStage(env, firefliesId, "done");
+    await updateMetadataStatus(env, metadataId, "complete");
+    return {
+      metadataId,
+      firefliesId,
+      decisions: 0,
+      risks: 0,
+      tasks: 0,
+      opportunities: 0,
+    };
+  }
+
+  const speakerEmailMap = content ? buildSpeakerEmailMap(content) : {};
+  const notesContext = content ? buildNotesContext(content) : "";
 
   console.log(`[Extract] Processing: ${title} (${firefliesId})`);
 
@@ -282,13 +386,16 @@ async function extractFromMeeting(
     meetingSummary,
     rawDecisions,
     rawRisks,
-    rawTasks
+    rawTasks,
+    notesContext,
+    speakerEmailMap
   );
 
   // Always preserve Fireflies native action items as first-class tasks.
   const nativeActionTasks = parseFirefliesActionItems(actionItems).map((text) => ({
     description: text,
     assignee: undefined,
+    assigneeEmail: undefined,
     dueDate: undefined,
     priority: undefined,
   }));
@@ -345,7 +452,7 @@ async function extractFromMeeting(
   }
 
   for (const task of embeddedStructured.tasks) {
-    await upsertTask(env, task, metadataId);
+    await upsertTask(env, task, metadataId, projectId, clientId);
   }
 
   for (const opportunity of embeddedStructured.opportunities) {
@@ -432,8 +539,11 @@ function parseDate(dateStr?: string): string | null {
 async function upsertTask(
   env: Env,
   task: StructuredData["tasks"][0],
-  metadataId: string
+  metadataId: string,
+  projectId: number | null,
+  clientId: number | null
 ): Promise<void> {
+  const projectIds = projectId ? [projectId] : [];
   await supabaseRequest(
     env,
     "tasks?on_conflict=metadata_id,description",
@@ -442,11 +552,15 @@ async function upsertTask(
       metadata_id: metadataId,
       description: task.description,
       assignee_name: task.assignee,
+      assignee_email: task.assigneeEmail,
       due_date: parseDate(task.dueDate),
       priority: task.priority,
       embedding: task.embedding,
       status: "open",
       source_system: "fireflies",
+      project_id: projectId,
+      project_ids: projectIds,
+      client_id: clientId,
     }
   );
 }

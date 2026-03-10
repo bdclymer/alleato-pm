@@ -12,12 +12,31 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
+import type { FlatVendor } from "./types";
 
 export interface VendorSyncResult {
   created: number;
   updated: number;
-  skipped: number;
   errors: string[];
+}
+
+function toVendorFields(v: FlatVendor, now: string) {
+  return {
+    name: v.VendorName,
+    legal_name: v.LegalName ?? null,
+    contact_email: v.Email ?? null,
+    contact_phone: v.Phone1 ?? null,
+    vendor_class: v.VendorClass ?? null,
+    terms: v.Terms ?? null,
+    payment_method: v.PaymentMethod ?? null,
+    ap_account: v.APAccount ?? null,
+    cash_account: v.CashAccount ?? null,
+    is_1099_vendor: v.F1099Vendor ?? null,
+    is_foreign_entity: v.ForeignEntity ?? null,
+    is_labor_union: v.VendorIsLaborUnion ?? null,
+    is_tax_agency: v.VendorIsTaxAgency ?? null,
+    acumatica_sync_at: now,
+  };
 }
 
 /**
@@ -26,15 +45,13 @@ export interface VendorSyncResult {
  * @param companyId — The Alleato PM company UUID to associate new vendors with
  */
 export async function syncVendors(companyId: string): Promise<VendorSyncResult> {
-  const result: VendorSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const result: VendorSyncResult = { created: 0, updated: 0, errors: [] };
 
   const acuClient = createAcumaticaClient();
   await acuClient.login();
 
-  // Fetch all vendors from Acumatica (active only, filter in-memory)
   const acuVendors = await acuClient.getVendors({
     $top: 500,
-    $select: "VendorID,VendorName,Status,MainContact",
     $expand: "MainContact",
   });
 
@@ -42,7 +59,6 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
 
   const supabase = await createClient();
 
-  // Load existing vendors for this company (id + name + acumatica_vendor_id)
   const { data: existingVendors, error: fetchError } = await supabase
     .from("vendors")
     .select("id, name, acumatica_vendor_id")
@@ -53,7 +69,6 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
     return result;
   }
 
-  // Build lookup maps
   const byAcuId = new Map<string, { id: string; name: string }>();
   const byName = new Map<string, { id: string; name: string }>();
 
@@ -66,64 +81,37 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
 
   for (const acuVendor of activeVendors) {
     const acuId = acuVendor.VendorID;
-    const acuName = acuVendor.VendorName;
+    const fields = toVendorFields(acuVendor, now);
 
     try {
-      // 1. Already linked by Acumatica ID?
       const linkedById = byAcuId.get(acuId);
       if (linkedById) {
-        // Update name/contact fields if they changed
-        await supabase
-          .from("vendors")
-          .update({
-            name: acuName,
-            contact_email: acuVendor.Email ?? null,
-            contact_phone: acuVendor.Phone1 ?? null,
-            acumatica_sync_at: now,
-          })
-          .eq("id", linkedById.id);
-        result.updated++;
+        const { error } = await supabase.from("vendors").update(fields).eq("id", linkedById.id);
+        if (error) result.errors.push(`${acuId}: ${error.message}`);
+        else result.updated++;
         continue;
       }
 
-      // 2. Name match?
-      const linkedByName = byName.get(acuName.toLowerCase().trim());
+      const linkedByName = byName.get(acuVendor.VendorName.toLowerCase().trim());
       if (linkedByName) {
-        await supabase
-          .from("vendors")
-          .update({
-            acumatica_vendor_id: acuId,
-            contact_email: acuVendor.Email ?? null,
-            contact_phone: acuVendor.Phone1 ?? null,
-            acumatica_sync_at: now,
-          })
+        const { error } = await supabase.from("vendors")
+          .update({ ...fields, acumatica_vendor_id: acuId })
           .eq("id", linkedByName.id);
-        // Add to byAcuId so future loops don't re-process
-        byAcuId.set(acuId, linkedByName);
-        result.updated++;
+        if (error) result.errors.push(`${acuId}: ${error.message}`);
+        else { byAcuId.set(acuId, linkedByName); result.updated++; }
         continue;
       }
 
-      // 3. Create new vendor
-      const { error: insertError } = await supabase.from("vendors").insert({
+      const { error } = await supabase.from("vendors").insert({
         company_id: companyId,
-        name: acuName,
-        contact_email: acuVendor.Email ?? null,
-        contact_phone: acuVendor.Phone1 ?? null,
         acumatica_vendor_id: acuId,
-        acumatica_sync_at: now,
         is_active: true,
+        ...fields,
       });
-
-      if (insertError) {
-        result.errors.push(`Failed to create vendor ${acuId} (${acuName}): ${insertError.message}`);
-      } else {
-        result.created++;
-      }
+      if (error) result.errors.push(`${acuId} (${acuVendor.VendorName}): ${error.message}`);
+      else result.created++;
     } catch (err) {
-      result.errors.push(
-        `Error processing vendor ${acuId}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      result.errors.push(`${acuId}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

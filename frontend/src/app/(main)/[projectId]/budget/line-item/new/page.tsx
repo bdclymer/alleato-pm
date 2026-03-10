@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Plus,
-  Search,
-  Trash2,
-  ChevronRight,
-  ChevronDown,
-} from "lucide-react";
+import { Plus, Trash2, ChevronRight, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -33,20 +26,10 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import { BudgetItemDeleteDialog } from "@/components/budget/BudgetItemDeleteDialog";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { ProjectFormPageLayout } from "@/components/layout";
+import { FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 interface BudgetCode {
   id: string;
   code: string;
@@ -98,7 +81,7 @@ export default function NewBudgetLineItemPage() {
       id: "1",
       budgetCodeId: "",
       budgetCodeLabel: "",
-      qty: "",
+      qty: "1",
       uom: "",
       unitCost: "",
       amount: "0.00",
@@ -114,10 +97,6 @@ export default function NewBudgetLineItemPage() {
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set(),
   );
-
-  // Budget Code selector state
-  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Delete confirmation dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -318,7 +297,6 @@ export default function NewBudgetLineItemPage() {
           : row,
       ),
     );
-    setOpenPopoverId(null);
   };
 
   const calculateAmount = (qty: string, unitCost: string): string => {
@@ -356,7 +334,7 @@ export default function NewBudgetLineItemPage() {
       id: Date.now().toString(),
       budgetCodeId: "",
       budgetCodeLabel: "",
-      qty: "",
+      qty: "1",
       uom: "",
       unitCost: "",
       amount: "0.00",
@@ -445,36 +423,36 @@ export default function NewBudgetLineItemPage() {
     router.push(`/${projectId}/budget`);
   };
 
-  const filteredCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
   const previewCostCode = availableCostCodes.find(
     (cc) => cc.id === newCodeData.costCodeId,
   );
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/budget`)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Budget
-          </Button>
-        </div>
-        <h1 className="text-2xl font-bold">Create Budget Line Items</h1>
-        <p className="text-foreground">
-          Add one or more line items to the project budget
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="bg-background border rounded-lg overflow-hidden">
+    <ProjectFormPageLayout
+      title="Create Budget Line Items"
+      description="Add one or more line items to the project budget."
+      onBack={() => router.push(`/${projectId}/budget`)}
+      backLabel="Back to Budget"
+      maxWidth="xl"
+    >
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <FormSection
+          title="Line Items"
+          description="Add budget code, quantity, UOM, unit cost, and amount for each row."
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addRow}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Row
+            </Button>
+          }
+        >
+          <div className="overflow-hidden rounded-lg border bg-background">
           {/* Table Header */}
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -512,67 +490,17 @@ export default function NewBudgetLineItemPage() {
 
                     {/* Budget Code Selector */}
                     <td className="px-4 py-4">
-                      <Popover
-                        open={openPopoverId === row.id}
-                        onOpenChange={(open) =>
-                          setOpenPopoverId(open ? row.id : null)
+                      <BudgetCodeSelector
+                        value={row.budgetCodeId}
+                        onValueChange={(_, code) =>
+                          handleBudgetCodeSelect(row.id, code)
                         }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between text-left font-normal h-9"
-                          >
-                            <span className="truncate">
-                              {row.budgetCodeLabel || "Select budget code..."}
-                            </span>
-                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[400px] p-0" align="start">
-                          <Command>
-                            <CommandInput
-                              placeholder="Search budget codes..."
-                              value={searchQuery}
-                              onValueChange={setSearchQuery}
-                            />
-                            <CommandList>
-                              <CommandEmpty>
-                                {loadingCodes
-                                  ? "Loading..."
-                                  : "No budget codes found."}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {filteredCodes.map((code) => (
-                                  <CommandItem
-                                    key={code.id}
-                                    value={code.fullLabel}
-                                    onSelect={() =>
-                                      handleBudgetCodeSelect(row.id, code)
-                                    }
-                                  >
-                                    {code.fullLabel}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                              <CommandSeparator />
-                              <CommandGroup>
-                                <CommandItem
-                                  onSelect={() => {
-                                    setOpenPopoverId(null);
-                                    setShowCreateCodeModal(true);
-                                  }}
-                                  className="text-primary"
-                                >
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Create New Budget Code
-                                </CommandItem>
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                        budgetCodes={budgetCodes}
+                        loading={loadingCodes}
+                        onCreateNew={() => setShowCreateCodeModal(true)}
+                        placeholder="Select budget code..."
+                        className="h-9"
+                      />
                     </td>
 
                     {/* Quantity */}
@@ -660,24 +588,15 @@ export default function NewBudgetLineItemPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Add Row Button */}
-          <div className="px-4 py-4 border-t bg-muted">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addRow}
-              className="gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Add Row
-            </Button>
           </div>
-        </div>
+        </FormSection>
 
-        {/* Action buttons */}
-        <div className="flex items-center justify-between gap-4 mt-6">
+        <FormActions
+          submitLabel={`Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`}
+          onCancel={handleCancel}
+          isSubmitting={loading}
+          align="between"
+        >
           <DevAutoFillButton
             formType="budgetLineItem"
             onAutoFill={(data) => {
@@ -686,7 +605,7 @@ export default function NewBudgetLineItemPage() {
                   id: "1",
                   budgetCodeId: "",
                   budgetCodeLabel: "",
-                  qty: data.quantity?.toString() || "",
+                  qty: data.quantity?.toString() || "1",
                   uom: data.unit || "",
                   unitCost: data.unit_cost?.toString() || "",
                   amount: data.amount?.toString() || "0.00",
@@ -694,17 +613,7 @@ export default function NewBudgetLineItemPage() {
               ]);
             }}
           />
-          <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading
-                ? "Creating..."
-                : `Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`}
-            </Button>
-          </div>
-        </div>
+        </FormActions>
       </form>
 
       {/* Create Budget Code Modal */}
@@ -845,6 +754,6 @@ export default function NewBudgetLineItemPage() {
             : "this line item"
         }
       />
-    </div>
+    </ProjectFormPageLayout>
   );
 }

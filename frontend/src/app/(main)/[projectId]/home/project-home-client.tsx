@@ -1030,126 +1030,6 @@ export function ProjectHomeClient({
           </div>
         )}
 
-        {/* ── KPI CARDS — 4 metrics ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            {
-              label: "Total Budget",
-              value: hasBudgetData ? formatCompactCurrency(totalBudget) : "$0",
-              sub: hasBudgetData ? "Original contract value" : "No budget set",
-              href: `/${project.id}/budget`,
-            },
-            {
-              label: "Committed",
-              value: committed > 0 ? formatCompactCurrency(committed) : "$0",
-              sub: hasBudgetData && committed > 0 ? `${budgetUtilization.toFixed(0)}% of budget` : "No contracts yet",
-              href: `/${project.id}/commitments`,
-              signal: budgetUtilization > 90 ? "bad" as const : budgetUtilization > 75 ? "warn" as const : undefined,
-            },
-            {
-              label: "Projected Over/Under",
-              value: hasBudgetData && fullBudgetData.length > 0 ? `${projectedOverUnder >= 0 ? "+" : ""}${formatCompactCurrency(projectedOverUnder)}` : "$0",
-              sub: hasBudgetData && fullBudgetData.length > 0 ? (projectedOverUnder >= 0 ? "Under budget" : "Over budget") : "No budget data",
-              href: `/${project.id}/budget`,
-              signal: hasBudgetData && fullBudgetData.length > 0 ? (projectedOverUnder >= 0 ? "good" as const : projectedOverUnder < -50000 ? "bad" as const : "warn" as const) : undefined,
-            },
-            {
-              label: "Schedule",
-              value: scheduleMetrics ? `${scheduleMetrics.pctComplete.toFixed(0)}%` : "0%",
-              sub: scheduleMetrics ? (scheduleMetrics.overdueTasks > 0 ? `${scheduleMetrics.overdueTasks} task${scheduleMetrics.overdueTasks !== 1 ? "s" : ""} overdue` : `${scheduleMetrics.completedTasks}/${scheduleMetrics.totalTasks} tasks done`) : "0/0 tasks done",
-              href: `/${project.id}/schedule`,
-              signal: scheduleMetrics ? (scheduleMetrics.overdueTasks > 3 ? "bad" as const : scheduleMetrics.overdueTasks > 0 ? "warn" as const : "good" as const) : undefined,
-            },
-          ].map((kpi) => (
-            <Link key={kpi.label} href={kpi.href} className="block">
-              <div className="rounded-lg p-5 bg-muted hover:bg-muted transition-colors h-full">
-                <p className="text-xs font-medium text-muted-foreground mb-3">{kpi.label}</p>
-                <p className={cn(
-                  "text-2xl font-bold tracking-tight tabular-nums",
-                  kpi.signal === "bad" ? "text-red-600" : kpi.signal === "warn" ? "text-amber-600" : kpi.signal === "good" ? "text-green-600" : "text-foreground"
-                )}>
-                  {kpi.value}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-
-        {/* ── SCHEDULE — progress + Gantt ── */}
-        <Section
-          title="Schedule"
-          action={
-            <div className="flex items-center gap-2">
-              <Link href={`/${project.id}/schedule`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View full schedule →</Link>
-              <Link href={`/${project.id}/schedule`}>
-                <Button size="sm" variant="outline" className="h-7 text-xs"><Plus className="h-3 w-3 mr-1" />Add Task</Button>
-              </Link>
-            </div>
-          }
-        >
-          {/* Progress bar */}
-          {scheduleMetrics && scheduleMetrics.totalTasks > 0 && (
-            <div className="px-6 py-4">
-              <div className="flex items-center gap-6">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm text-foreground">{scheduleMetrics.completedTasks} of {scheduleMetrics.totalTasks} tasks complete</span>
-                    <span className="text-sm font-semibold tabular-nums text-foreground">{scheduleMetrics.pctComplete.toFixed(0)}%</span>
-                  </div>
-                  <div className="h-2 bg-muted/50 rounded-full overflow-hidden">
-                    <div className={cn("h-full rounded-full transition-all", scheduleMetrics.overdueTasks > 3 ? "bg-red-400" : scheduleMetrics.overdueTasks > 0 ? "bg-amber-400" : "bg-primary/70")} style={{ width: `${Math.min(scheduleMetrics.pctComplete, 100)}%` }} />
-                  </div>
-                </div>
-                {scheduleMetrics.overdueTasks > 0 && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0 px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-500/10">
-                    <Clock className="h-3 w-3 text-red-600" />
-                    <span className="text-xs font-medium text-red-600 tabular-nums">{scheduleMetrics.overdueTasks} overdue</span>
-                  </div>
-                )}
-                {scheduleMetrics.overdueTasks === 0 && scheduleMetrics.pctComplete > 0 && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-500/10">
-                    <CheckCircle2 className="h-3 w-3 text-green-600" />
-                    <span className="text-xs font-medium text-green-600">On track</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Gantt chart */}
-          {scheduleData?.ganttData && scheduleData.ganttData.length > 0 ? (
-            <div className="h-[400px] overflow-auto">
-              <GanttChart data={scheduleData.ganttData} />
-            </div>
-          ) : schedule.length > 0 ? (
-            <div className="h-[400px] overflow-auto">
-              <GanttChart
-                data={schedule.map((t: any) => {
-                  const finishDate = t.finish_date || t.end_date || new Date().toISOString().split("T")[0];
-                  const isOverdue = finishDate ? new Date(finishDate) < new Date() && t.status !== "completed" && t.status !== "complete" : false;
-                  return {
-                    id: String(t.id), name: String(t.name || "Untitled"),
-                    start_date: String(t.start_date || new Date().toISOString().split("T")[0]),
-                    finish_date: String(finishDate), duration_days: Number(t.duration_days) || 1,
-                    percent_complete: Number(t.percent_complete) || 0,
-                    status: (t.status === "completed" || t.status === "complete" ? "complete" : t.status === "in_progress" ? "in_progress" : "not_started") as "complete" | "in_progress" | "not_started",
-                    is_milestone: Boolean(t.is_milestone), parent_task_id: (t.parent_task_id as string | null) || null,
-                    level: Number(t.level) || 0, dependencies: [] as Array<{ predecessor_id: string; type: "finish_to_start"; lag_days: number }>,
-                    is_overdue: isOverdue,
-                  };
-                })}
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-              <p className="text-sm text-muted-foreground mb-2">No schedule set up yet</p>
-              <Link href={`/${project.id}/schedule`} className="text-sm font-medium text-primary hover:underline">Create schedule →</Link>
-            </div>
-          )}
-        </Section>
-
         {/* ── TASKS ── */}
         <Section
           title="Tasks"
@@ -1192,16 +1072,16 @@ export function ProjectHomeClient({
           </div>
         </Section>
 
-        {/* ── BOTTOM ROW: Meetings + Directory ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-6">
+        {/* ── Meetings ── */}
           {/* Meetings */}
           {meetings.length > 0 && (
             <Section className="sm:col-span-3">
-              <div className="px-6 py-5">
                 <MeetingsSection meetings={meetings} projectId={project.id} maxItems={5} />
-              </div>
             </Section>
           )}
+
+
+        {/* ── Directory ── */}
 
           {/* Directory */}
           <Section
@@ -1219,7 +1099,7 @@ export function ProjectHomeClient({
               <DirectorySubSection title="Subcontractors" addLabel="Add subcontractor" members={directoryGroups.subcontractor} allMembers={teamMembers} projectId={project.id} sectionKey="subcontractor" userType="subcontractor" />
             </div>
           </Section>
-        </div>
+
 
         {/* ── RECENT ACTIVITY ── */}
         <Section title="Recent Activity">

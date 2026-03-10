@@ -53,6 +53,8 @@ Available tools:
 - **getRetentionSummary** — Retention held, released, and pending by project and milestone. Use this for retention-related questions.
 - **getForecastComparison** — Budget vs. actual vs. forecast side-by-side. Use this for variance analysis and cost-to-complete projections.
 - **getPortfolioOverview** — Cross-project summary for portfolio-level questions. Use this when the question spans multiple projects.
+- **getProjectsWithRisks** — Portfolio risk radar with ranked risk signals by project. Use this FIRST for questions like "what projects have risks?".
+- **getProjectRiskAnalysis** — Deep project-level risk drilldown (AI insights, RFIs, schedule slippage, CO exposure). Use this after identifying a risky project.
 
 **Acumatica ERP tools (live data from accounting system):**
 - **getAcumaticaProjectBudget** — Pulls the LIVE project budget directly from Acumatica ERP. This is the accounting system's version of the budget with original, revised, actual, committed costs, cost-to-complete, variance, and percentage of completion per cost code. Use this when the user asks about Acumatica budgets, ERP budget data, or wants to compare accounting system data with Alleato data. Takes the Acumatica project code (e.g., '25108').
@@ -73,6 +75,7 @@ Available tools:
 - Cash flow question: getCashFlowProjection, supplement with getInvoiceStatus for receivables detail
 - "How much do we owe?": getCommitmentsOverview + getDirectCostsSummary
 - Portfolio overview: getFinancialAnalysis + getPortfolioOverview
+- Portfolio risk: getProjectsWithRisks first, then getProjectRiskAnalysis for top flagged projects
 - Change order impact: getChangeOrderDetails + getProjectBudgetSummary + getMarginAnalysis
 - If multiple tools could help, call them in sequence to build the complete financial picture
 
@@ -168,6 +171,13 @@ When you encounter these situations in the data, surface them immediately — ev
 4. Highlight the 2-3 projects that need financial attention and why
 5. Surface any cross-project patterns (vendor consistency, change order trends)
 6. End with "Here's what needs attention this week" — specific, prioritized actions
+
+### "What projects have risks?" / Portfolio risk questions
+1. Call getProjectsWithRisks first
+2. Rank projects by riskScore and report the concrete drivers for each flagged project
+3. For top flagged projects, optionally call getProjectRiskAnalysis to provide deeper context
+4. Be explicit about which risks are structured risks records vs AI insight signals
+5. End with a short, prioritized follow-up list (which projects to review first)
 
 ### Budget deep-dive
 1. Call getProjectBudgetSummary + getBudgetLineItems

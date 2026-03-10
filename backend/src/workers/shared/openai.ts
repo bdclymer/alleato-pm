@@ -201,6 +201,7 @@ export interface ExtractedStructuredData {
   tasks: Array<{
     description: string;
     assignee?: string;
+    assigneeEmail?: string;
     dueDate?: string;
     priority?: string;
   }>;
@@ -219,17 +220,30 @@ export async function extractStructuredData(
   summary: string,
   rawDecisions: string[],
   rawRisks: string[],
-  rawTasks: string[]
+  rawTasks: string[],
+  notesContext?: string,
+  speakerEmailMap?: Record<string, string>
 ): Promise<ExtractedStructuredData> {
+  const normalizedEmailMap = speakerEmailMap || {};
+  const emailMapLines = Object.entries(normalizedEmailMap).map(
+    ([name, email]) => `  ${name} -> ${email}`
+  );
+  const emailMapText = emailMapLines.length > 0
+    ? `\n\nSpeaker Email Mapping (use for assigneeEmail):\n${emailMapLines.join("\n")}`
+    : "";
+  const notesText = notesContext?.trim()
+    ? `\n\nAdditional Notes & Action Items:\n${notesContext.slice(0, 6000)}`
+    : "";
+
   const prompt = `Analyze and normalize these meeting extractions. Deduplicate, add context, and identify opportunities.
 
 Meeting: ${title}
 Date: ${date || "Unknown"}
-Participants: ${participants.join(", ")}
+Participants: ${participants.join(", ")}${emailMapText}
 
 Raw Decisions: ${JSON.stringify(rawDecisions)}
 Raw Risks: ${JSON.stringify(rawRisks)}
-Raw Tasks: ${JSON.stringify(rawTasks)}
+Raw Tasks: ${JSON.stringify(rawTasks)}${notesText}
 
 Meeting Summary: ${summary.slice(0, 2000)}
 
@@ -242,7 +256,7 @@ Return JSON with normalized, deduplicated entries:
     {"description": "Risk description", "category": "schedule|budget|resource|technical|external", "likelihood": "low|medium|high", "impact": "low|medium|high", "owner": "Person or null"}
   ],
   "tasks": [
-    {"description": "Task description", "assignee": "Person name or null", "dueDate": "YYYY-MM-DD or null", "priority": "low|medium|high|urgent"}
+    {"description": "Task description", "assignee": "Person name or null", "assigneeEmail": "email@example.com or null", "dueDate": "YYYY-MM-DD or null", "priority": "low|medium|high|urgent"}
   ],
   "opportunities": [
     {"description": "Opportunity description", "type": "efficiency|revenue|relationship|innovation", "owner": "Person or null"}
@@ -250,11 +264,33 @@ Return JSON with normalized, deduplicated entries:
 }
 
 Guidelines:
-- Deduplicate similar items
+- Deduplicate similar items across all sources (raw tasks and notes/action-items)
 - Infer owners from context when possible
 - Convert vague items to specific actionable descriptions
+- Map assignee names to emails using the Speaker Email Mapping when possible
 - Identify implied opportunities from discussion`;
 
   const response = await callLLM(env, prompt, { jsonMode: true });
-  return JSON.parse(response) as ExtractedStructuredData;
+  const parsed = JSON.parse(response) as ExtractedStructuredData;
+
+  if (!Array.isArray(parsed.tasks)) {
+    parsed.tasks = [];
+    return parsed;
+  }
+
+  parsed.tasks = parsed.tasks.map((task) => {
+    if (task.assigneeEmail || !task.assignee) {
+      return task;
+    }
+    const mappedEmail = normalizedEmailMap[task.assignee];
+    if (!mappedEmail) {
+      return task;
+    }
+    return {
+      ...task,
+      assigneeEmail: mappedEmail,
+    };
+  });
+
+  return parsed;
 }

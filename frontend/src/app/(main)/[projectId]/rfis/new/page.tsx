@@ -6,16 +6,7 @@ import { ArrowLeft, Save, Send } from "lucide-react";
 
 import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -24,6 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { FormActions } from "@/components/forms/FormActions";
+import { FormGrid, FormSection } from "@/components/forms";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
+import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
+import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { Input } from "@/components/ui/input";
 import { useCreateRfi } from "@/hooks/use-rfis";
 import {
   rfiDraftSchema,
@@ -105,389 +103,204 @@ export default function NewRfiPage() {
     >
       <Form {...form}>
         <form className="space-y-8">
-              {/* Required Fields */}
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  RFI Details
-                </h3>
+          <FormSection title="RFI Details">
+            <RHFTextField
+              control={form.control}
+              name="subject"
+              label="Subject *"
+              placeholder="Enter RFI subject"
+            />
 
-                <FormField
-                  control={form.control}
-                  name="subject"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subject *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter RFI subject" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <RHFTextareaField
+              control={form.control}
+              name="question"
+              label="Question (required for Open)"
+              placeholder="Describe the information you need..."
+              rows={5}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="question"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Question (required for Open)
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the information you need..."
-                          className="min-h-[120px]"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormGrid columns={2}>
+              <RHFDateField
+                control={form.control}
+                name="due_date"
+                label="Due Date (required for Open)"
+                nullable
+              />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="due_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>
-                          Due Date (required for Open)
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <RHFTextField
+                control={form.control}
+                name="rfi_manager"
+                label="RFI Manager"
+                placeholder="Enter RFI manager name"
+              />
+            </FormGrid>
+          </FormSection>
 
-                  <FormField
-                    control={form.control}
-                    name="rfi_manager"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>RFI Manager</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter RFI manager name"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </section>
+          <FormSection title="Assignment">
+            <FormField
+              control={form.control}
+              name="assignees"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Assignees (required for Open)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter assignee names (comma-separated)"
+                      value={(field.value ?? []).join(", ")}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(
+                          val
+                            ? val.split(",").map((s) => s.trim()).filter(Boolean)
+                            : [],
+                        );
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              {/* Assignees */}
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Assignment
-                </h3>
+            <FormGrid columns={2}>
+              <RHFTextField
+                control={form.control}
+                name="received_from"
+                label="Received From"
+                placeholder="Enter sender name"
+              />
 
-                <FormField
-                  control={form.control}
-                  name="assignees"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Assignees (required for Open)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter assignee names (comma-separated)"
-                          value={(field.value ?? []).join(", ")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(
-                              val
-                                ? val.split(",").map((s) => s.trim()).filter(Boolean)
-                                : [],
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <RHFTextField
+                control={form.control}
+                name="responsible_contractor"
+                label="Responsible Contractor"
+                placeholder="Enter contractor name"
+              />
+            </FormGrid>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="received_from"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Received From</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter sender name"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            <FormField
+              control={form.control}
+              name="distribution_list"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Distribution List</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter distribution list (comma-separated)"
+                      value={(field.value ?? []).join(", ")}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        field.onChange(
+                          val
+                            ? val.split(",").map((s) => s.trim()).filter(Boolean)
+                            : [],
+                        );
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </FormSection>
 
-                  <FormField
-                    control={form.control}
-                    name="responsible_contractor"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Responsible Contractor</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter contractor name"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+          <FormSection title="Additional Details">
+            <FormGrid columns={2}>
+              <RHFTextField
+                control={form.control}
+                name="location"
+                label="Location"
+                placeholder="Enter location"
+              />
 
-                <FormField
-                  control={form.control}
-                  name="distribution_list"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Distribution List</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter distribution list (comma-separated)"
-                          value={(field.value ?? []).join(", ")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(
-                              val
-                                ? val.split(",").map((s) => s.trim()).filter(Boolean)
-                                : [],
-                            );
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </section>
+              <RHFTextField
+                control={form.control}
+                name="specification"
+                label="Specification"
+                placeholder="Enter specification section"
+              />
 
-              {/* Additional Details */}
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">
-                  Additional Details
-                </h3>
+              <RHFTextField
+                control={form.control}
+                name="cost_code"
+                label="Cost Code"
+                placeholder="Enter cost code"
+              />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter location"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <RHFTextField
+                control={form.control}
+                name="rfi_stage"
+                label="RFI Stage"
+                placeholder="Enter RFI stage"
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="specification"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Specification</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter specification section"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+              <RHFSelectField
+                control={form.control}
+                name="schedule_impact"
+                label="Schedule Impact"
+                placeholder="Select..."
+                options={RFI_IMPACT_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="cost_code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cost Code</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter cost code"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+              <RHFSelectField
+                control={form.control}
+                name="cost_impact"
+                label="Cost Impact"
+                placeholder="Select..."
+                options={RFI_IMPACT_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
+            </FormGrid>
 
-                  <FormField
-                    control={form.control}
-                    name="rfi_stage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>RFI Stage</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter RFI stage"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+            <RHFTextField
+              control={form.control}
+              name="reference"
+              label="Reference"
+              placeholder="Enter reference"
+            />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="schedule_impact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Schedule Impact</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ?? undefined}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {RFI_IMPACT_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+            <FormField
+              control={form.control}
+              name="is_private"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-4 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Private</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </FormSection>
 
-                  <FormField
-                    control={form.control}
-                    name="cost_impact"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cost Impact</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value ?? undefined}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {RFI_IMPACT_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="reference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reference</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Enter reference"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_private"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-4 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Private</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </section>
-
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-4 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push(`/${projectId}/rfis`)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleSaveAsDraft}
-                  disabled={createRfi.isPending}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save as Draft
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleCreateOpen}
-                  disabled={createRfi.isPending}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  Create Open
-                </Button>
-              </div>
+          <FormActions
+            submitLabel="Create Open"
+            onCancel={() => router.push(`/${projectId}/rfis`)}
+            isSubmitting={createRfi.isPending}
+            align="between"
+          >
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSaveAsDraft}
+              disabled={createRfi.isPending}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save as Draft
+            </Button>
+          </FormActions>
         </form>
       </Form>
     </ProjectFormPageLayout>

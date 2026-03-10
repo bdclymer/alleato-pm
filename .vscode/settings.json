@@ -24,6 +24,10 @@
         {
             "filePath": "_bmad-output/planning-artifacts/commitments/implementation",
             "group": "Default"
+        },
+        {
+            "filePath": "frontend/src/components/direct-costs/DirectCostForm.tsx",
+            "group": "Default"
         }
     ],
     "files.exclude": {

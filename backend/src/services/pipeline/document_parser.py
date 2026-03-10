@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import io
+import json
 import logging
 import os
 from typing import Any, Dict, List, Optional
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 # Max chars to send to LLM for segmentation (prevents token overflow)
 MAX_LLM_CHARS = 30_000
 MIN_EXTRACTED_CHARS = 50
+DOC_SEGMENT_WINDOW_LINES = int(os.getenv("DOC_SEGMENT_WINDOW_LINES", "260"))
+DOC_SEGMENT_WINDOW_OVERLAP = int(os.getenv("DOC_SEGMENT_WINDOW_OVERLAP", "40"))
+DOC_SUMMARY_MAX_CHARS = int(os.getenv("DOC_SUMMARY_MAX_CHARS", "12000"))
 
 
 # ---------------------------------------------------------------------------
@@ -118,19 +122,16 @@ def detect_and_extract(
 # Document segmentation via LLM
 # ---------------------------------------------------------------------------
 
-def _segment_document(text: str, title: str) -> List[Dict[str, Any]]:
-    """Use LLM to semantically segment a document into logical sections."""
-    # Number lines for reference
-    lines = text.split("\n")
-    numbered = "\n".join(f"[{i}] {line}" for i, line in enumerate(lines))
-    truncated = numbered[:MAX_LLM_CHARS]
-
+def _segment_document_window(
+    numbered_content: str, title: str
+) -> List[Dict[str, Any]]:
+    """Segment one numbered content window."""
     prompt = f"""Analyze this document and identify distinct semantic sections.
 
 Document: {title}
 
 Content (each line prefixed with [index]):
-{truncated}
+{numbered_content}
 
 Return JSON array of sections. Each section should capture a coherent topic or content block.
 
@@ -160,14 +161,100 @@ Guidelines:
 - For reports: each major section is a segment"""
 
     raw = llm._call_llm(prompt, json_mode=True)
-    import json
     parsed = json.loads(raw)
     return parsed.get("segments", [])
 
 
+def _build_document_summary_excerpt(text: str) -> str:
+    """Build representative excerpt from start/middle/end for long docs."""
+    if len(text) <= DOC_SUMMARY_MAX_CHARS:
+        return text
+
+    sample = max(1200, DOC_SUMMARY_MAX_CHARS // 3)
+    middle_start = max(0, (len(text) // 2) - (sample // 2))
+    parts = [
+        ("Start", text[:sample]),
+        ("Middle", text[middle_start : middle_start + sample]),
+        ("End", text[-sample:]),
+    ]
+    return "\n\n".join(f"[{label} Excerpt]\n{chunk}" for label, chunk in parts)
+
+
+def _coerce_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _segment_document(text: str, title: str) -> List[Dict[str, Any]]:
+    """Use LLM to semantically segment a document into logical sections."""
+    lines = text.split("\n")
+    if not lines:
+        return []
+
+    segments: List[Dict[str, Any]] = []
+    start = 0
+    while start < len(lines):
+        end = min(len(lines), start + DOC_SEGMENT_WINDOW_LINES)
+        window_lines = lines[start:end]
+        if not window_lines:
+            break
+
+        numbered = "\n".join(
+            f"[{start + i}] {line}" for i, line in enumerate(window_lines)
+        )
+        if len(numbered) > MAX_LLM_CHARS:
+            numbered = numbered[:MAX_LLM_CHARS]
+
+        window_title = f"{title} (lines {start}-{max(start, end - 1)})"
+        window_segments = _segment_document_window(numbered, window_title)
+        for seg in window_segments:
+            seg_start = _coerce_int(seg.get("start_index"), start)
+            seg_end = _coerce_int(seg.get("end_index"), max(start, end - 1))
+            seg_start = max(start, min(end - 1, seg_start))
+            seg_end = max(seg_start, min(end - 1, seg_end))
+            segments.append(
+                {
+                    "title": seg.get("title", f"Section {seg_start}-{seg_end}"),
+                    "start_index": seg_start,
+                    "end_index": seg_end,
+                    "summary": seg.get("summary", ""),
+                    "decisions": seg.get("decisions") or [],
+                    "risks": seg.get("risks") or [],
+                    "tasks": seg.get("tasks") or [],
+                }
+            )
+
+        if end >= len(lines):
+            break
+        start = max(0, end - DOC_SEGMENT_WINDOW_OVERLAP)
+
+    deduped: List[Dict[str, Any]] = []
+    seen_keys: set[tuple[Any, ...]] = set()
+    for seg in sorted(
+        segments,
+        key=lambda s: (
+            _coerce_int(s.get("start_index"), 0),
+            _coerce_int(s.get("end_index"), 0),
+        ),
+    ):
+        key = (
+            _coerce_int(seg.get("start_index"), 0),
+            _coerce_int(seg.get("end_index"), 0),
+            str(seg.get("title", "")),
+            str(seg.get("summary", "")),
+        )
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        deduped.append(seg)
+    return deduped
+
+
 def _generate_document_summary(text: str, title: str) -> str:
     """Generate a summary of the document."""
-    excerpt = text[:12_000]
+    excerpt = _build_document_summary_excerpt(text)
     prompt = f"""Generate a comprehensive summary of this document.
 
 Document: {title}

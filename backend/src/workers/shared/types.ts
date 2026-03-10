@@ -165,6 +165,7 @@ export interface StructuredData {
   tasks: Array<{
     description: string;
     assignee?: string;
+    assigneeEmail?: string;
     dueDate?: string;
     priority?: string;
     embedding?: number[];

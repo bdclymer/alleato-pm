@@ -1,350 +1,273 @@
-# RAG Pipeline: Source of Truth
+# RAG + AI Assistant Source of Truth
 
 Last updated: 2026-03-10
-Owner: Backend/AI Platform
+Owner: AI Platform
 
-This document is the authoritative reference for:
-- Fireflies transcript sync and markdown generation
-- RAG pipeline initiation and execution
+This document is the single operational reference for:
+- Fireflies sync and markdown generation
+- Document ingestion and pipeline execution
 - Chunking, embedding, and extraction strategy
-- Chat conversation architecture and persistence
-- Retrieval strategy used by agents
-- Exact project files and tables involved
+- AI assistant agents, prompts, and tool wiring
+- Conversation memory and retrieval behavior
+- Known quality failure modes and current fixes
 
-## 1) End-to-End Architecture
+## 1) Core Runtime Architecture
 
 ```text
-Fireflies GraphQL
-  -> backend/src/services/ingestion/fireflies_pipeline.py
-  -> Supabase Storage bucket: meetings/*.md
-  -> document_metadata upsert (raw content + metadata)
-  -> DB trigger enqueue_document_metadata_rag_job
-  -> POST /api/pipeline/process
-  -> run_full_pipeline(metadata_id)
-     Stage 1: parser/document_parser/financial_parser
-     Stage 2: embedder
-     Stage 3: extractor
-     Stage 4: digest (non-blocking)
-  -> tables: meeting_segments, documents, decisions, risks, tasks, opportunities, meeting_digests
+Fireflies / Manual Upload / Local Folder
+  -> document_metadata + storage object
+  -> fireflies_ingestion_jobs enqueue (DB trigger)
+  -> backend /api/pipeline/process
+  -> Stage 1 parser router (meeting | document | financial)
+  -> Stage 2 embedder
+  -> Stage 3 extractor
+  -> Stage 4 digest (non-blocking)
+  -> documents / meeting_segments / risks / tasks / decisions / opportunities / meeting_digests
+
+AI Assistant Chat Route (Next.js API)
+  -> Strategist agent (system prompt)
+  -> consultCFO sub-agent (system prompt)
+  -> project+financial+operational+ERP tools
+  -> streamed response + chat_history persistence
+  -> post-response conversation memory generation
 ```
 
-## 2) Fireflies Sync Process
+## 2) Which Chat Stack Is Primary
 
-Primary sync path is native backend (not legacy Cloudflare worker):
+Primary production assistant path:
+- Chat API route: [`frontend/src/app/api/ai-assistant/chat/route.ts`](../../frontend/src/app/api/ai-assistant/chat/route.ts)
+- Orchestrator: [`frontend/src/lib/ai/orchestrator.ts`](../../frontend/src/lib/ai/orchestrator.ts)
+
+Secondary/legacy parallel paths still in repo:
+- Simple proxy route: [`frontend/src/app/api/rag-chat/route.ts`](../../frontend/src/app/api/rag-chat/route.ts)
+- Backend chat endpoints: [`backend/src/api/main.py`](../../backend/src/api/main.py)
+
+When debugging user-facing answer quality, start with the primary path above.
+
+## 3) Agents and Prompts Currently Set Up
+
+Configured today:
+- Strategist (top-level): [`frontend/src/lib/ai/agents/strategist.ts`](../../frontend/src/lib/ai/agents/strategist.ts)
+- CFO specialist: [`frontend/src/lib/ai/agents/cfo.ts`](../../frontend/src/lib/ai/agents/cfo.ts)
+- Shared agent types: [`frontend/src/lib/ai/agents/types.ts`](../../frontend/src/lib/ai/agents/types.ts)
+
+Important reality:
+- Only `consultCFO` is currently live as a specialist tool in orchestrator.
+- COO/CHRO/CRO/VPBD are planned but not active.
+
+Why prompt files are in `frontend/`:
+- They are executed server-side by Next.js API routes, not in browser client code.
+
+## 4) Tool Wiring (What the Agents Can Actually Use)
+
+Strategist tool construction:
+- [`createStrategistTools()` in `frontend/src/lib/ai/orchestrator.ts`](../../frontend/src/lib/ai/orchestrator.ts)
+- Includes:
+  - `consultCFO` (sub-agent call)
+  - Full `createProjectTools()` tool set for direct strategist use
+
+Main tool registries:
+- Core project tools: [`frontend/src/lib/ai/tools/project-tools.ts`](../../frontend/src/lib/ai/tools/project-tools.ts)
+- Financial tools: [`frontend/src/lib/ai/tools/financial.ts`](../../frontend/src/lib/ai/tools/financial.ts)
+- Operational tools: [`frontend/src/lib/ai/tools/operational.ts`](../../frontend/src/lib/ai/tools/operational.ts)
+- Acumatica tools: [`frontend/src/lib/ai/tools/acumatica.ts`](../../frontend/src/lib/ai/tools/acumatica.ts)
+
+High-impact tools relevant to RAG/assistant quality:
+- `getPortfolioOverview`
+- `getProjectsWithRisks` (portfolio risk ranking)
+- `getProjectRiskAnalysis` (single-project drilldown)
+- `getActionItemsAndInsights`
+- `getMeetingsByDate`
+- `searchDocuments`
+- `recallPastConversations`
+
+## 5) Why Risk Answers Were Weak and What Was Fixed
+
+Observed failure mode:
+- Query: "what projects have risks?"
+- Bad behavior: model answered from `open_critical_items` only, which under-represents real risk.
+
+Root causes:
+1. No dedicated portfolio-level risk tool.
+2. Prompt guidance did not force risk-specific tool usage.
+3. Model often defaulted to `getPortfolioOverview` for risk questions.
+
+Implemented fix:
+- Added `getProjectsWithRisks` in [`frontend/src/lib/ai/tools/project-tools.ts`](../../frontend/src/lib/ai/tools/project-tools.ts)
+  - Aggregates `risks`, unresolved `ai_insights`, `project_issue_summary`, and `project_health_dashboard`
+  - Returns ranked projects with explicit risk signals and `riskScore`
+- Updated strategist prompt in [`frontend/src/lib/ai/agents/strategist.ts`](../../frontend/src/lib/ai/agents/strategist.ts)
+  - Adds mandatory workflow for portfolio risk queries
+- Updated CFO prompt in [`frontend/src/lib/ai/agents/cfo.ts`](../../frontend/src/lib/ai/agents/cfo.ts)
+  - Adds `getProjectsWithRisks` + risk-query strategy
+- Expanded routing keywords in [`frontend/src/lib/ai/orchestrator.ts`](../../frontend/src/lib/ai/orchestrator.ts)
+  - Adds `risk`, `risky`, `issue`, `critical items`, `exposure`
+
+## 6) Fireflies Sync Process
+
+Primary API entrypoint:
 - Endpoint: `POST /api/ingest/fireflies/recent`
-- Request model: `FirefliesRecentSyncRequest` in `backend/src/api/main.py`
+- File: [`backend/src/api/main.py`](../../backend/src/api/main.py)
 
 Sync implementation:
-- File: `backend/src/services/ingestion/fireflies_pipeline.py`
-- Class: `FirefliesIngestionPipeline`
-- Flow:
-  1. `sync_recent_transcripts(limit, project_id, dry_run, write_markdown_dir)` fetches transcript summaries.
-  2. For each transcript ID, it fetches full transcript + Fireflies Apps outputs.
-  3. It formats normalized markdown with rich sections and full transcript lines.
-  4. It writes markdown to Supabase storage bucket `meetings`.
-  5. It upserts `document_metadata` and transcript chunks for ingestion.
+- Service: [`backend/src/services/ingestion/fireflies_pipeline.py`](../../backend/src/services/ingestion/fireflies_pipeline.py)
+- Behavior:
+  - Fetch recent transcript summaries
+  - Pull full transcript + apps outputs
+  - Normalize markdown with rich sections + transcript lines
+  - Upload markdown to Supabase Storage (`meetings` bucket)
+  - Upsert `document_metadata`
+  - Create/advance ingestion job row
 
-Important current behavior:
-- Apps outputs are paginated and fetched fully (`limit=10`, `skip` loop), not capped to 5.
-- Storage path uses sanitized filenames to support stable overwrite behavior.
-- Re-sync is tolerant of duplicate ingestion job keys.
+Legacy ingest worker still exists but is not the preferred path:
+- [`backend/src/workers/ingest/index.ts`](../../backend/src/workers/ingest/index.ts)
 
-Legacy path status:
-- Legacy worker exists at `backend/src/workers/ingest/index.ts`.
-- `LEGACY_FIREFLIES_SYNC_ENABLED` is `false` in `backend/src/workers/ingest/wrangler.toml`.
-- Legacy endpoints return guidance to use `/api/ingest/fireflies/recent`.
+## 7) How the RAG Pipeline Is Initiated
 
-## 3) How the RAG Pipeline Is Initiated
+Automatic (preferred):
+1. Insert/update `document_metadata`
+2. DB trigger enqueues `fireflies_ingestion_jobs`
+3. Triggered call hits backend pipeline endpoint
 
-### A) Automatic trigger (preferred)
+Pipeline endpoint:
+- `POST /api/pipeline/process`
+- File: [`backend/src/api/main.py`](../../backend/src/api/main.py)
 
-1. A row is inserted into `document_metadata`.
-2. Trigger function `enqueue_document_metadata_rag_job()` inserts `fireflies_ingestion_jobs` at stage `raw_ingested`.
-3. Trigger reads `pipeline_url` from `pipeline_config` and calls FastAPI.
+Trigger + config migrations:
+- [`supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`](../../supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql)
+- [`supabase/migrations/20260227000002_pipeline_config_table.sql`](../../supabase/migrations/20260227000002_pipeline_config_table.sql)
 
-SQL migrations:
-- `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`
-- `supabase/migrations/20260227000002_pipeline_config_table.sql`
+Manual document upload path (UI/API):
+- [`frontend/src/app/api/documents/upload/route.ts`](../../frontend/src/app/api/documents/upload/route.ts)
 
-### B) Manual backend trigger
+Manual local folder ingestion:
+- Script: [`scripts/ingestion/ingest_local_documents.py`](../../scripts/ingestion/ingest_local_documents.py)
+- Typical command:
+  - `python3 scripts/ingestion/ingest_local_documents.py --source-dir "<folder>" --process-now`
 
-- Endpoint: `POST /api/pipeline/process`
-- Payload: `{ "metadataId": "<uuid>" }`
-- File: `backend/src/api/main.py`
-- Execution uses bounded concurrency (`PIPELINE_MAX_CONCURRENCY`) via `_run_pipeline_limited`.
+## 8) Stage Details and Strategies
 
-### C) Upload-triggered path (non-Fireflies docs)
+Stage router:
+- [`backend/src/services/pipeline/orchestrator.py`](../../backend/src/services/pipeline/orchestrator.py)
+- Routes by category/extension:
+  - Meeting transcript -> `parser.py`
+  - Generic docs (pdf/doc/docx/text/markdown) -> `document_parser.py`
+  - Tabular finance docs (csv/tsv/xls/xlsx) -> `financial_parser.py`
 
-- Route: `frontend/src/app/api/documents/upload/route.ts`
-- Uploads document to storage bucket `documents` and inserts `document_metadata`.
-- DB trigger then initiates the same backend pipeline.
+Stage 1A - Meeting parser:
+- [`backend/src/services/pipeline/parser.py`](../../backend/src/services/pipeline/parser.py)
+- Parses Fireflies markdown, segments semantically, extracts raw decisions/risks/tasks.
 
-### D) Legacy/manual UI path (exists but legacy-oriented)
+Stage 1B - Generic document parser:
+- [`backend/src/services/pipeline/document_parser.py`](../../backend/src/services/pipeline/document_parser.py)
+- Extracts text (PDF/DOCX/plain), generates summary, segments to `meeting_segments`.
+- Hardened for empty extracts + null-byte sanitation.
 
-- Route: `frontend/src/app/api/documents/trigger-pipeline/route.ts`
-- UI page: `frontend/src/app/(main)/pipeline/page.tsx`
-- This route triggers Cloudflare worker phase endpoints (`/parser/process`, `/embedder/process`, `/extractor/process`), not the native backend path.
-- Treat as legacy/manual operational tooling unless intentionally used.
+Stage 1C - Financial parser:
+- [`backend/src/services/pipeline/financial_parser.py`](../../backend/src/services/pipeline/financial_parser.py)
+- Header inference + row normalization for CSV/XLSX.
+- Persists structured rows to `document_rows`.
+- Generates text summaries for embedding compatibility.
+- Hardened for null-byte sanitation and cleaner row keys.
 
-## 4) Pipeline Stages and Strategies
+Stage 2 - Embedder:
+- [`backend/src/services/pipeline/embedder.py`](../../backend/src/services/pipeline/embedder.py)
+- Chunking strategy:
+  - `CHUNK_TARGET_CHARS = 3000`
+  - `CHUNK_OVERLAP_CHARS = 500`
+  - Sentence-aware splitting with overlap carry-forward
+- Adds summary/section chunks for richer retrieval.
 
-## Stage 1 Router
+Stage 3 - Extractor:
+- [`backend/src/services/pipeline/extractor.py`](../../backend/src/services/pipeline/extractor.py)
+- Normalizes and upserts:
+  - `decisions`
+  - `risks`
+  - `tasks`
+  - `opportunities`
 
-File: `backend/src/services/pipeline/orchestrator.py`
+Stage 4 - Digest (non-blocking):
+- [`backend/src/services/pipeline/digest.py`](../../backend/src/services/pipeline/digest.py)
 
-Routing logic:
-- Meeting transcript -> `run_parser` (`parser.py`)
-- Generic document (pdf/doc/docx/non-meeting category) -> `run_document_parser` (`document_parser.py`)
-- Financial/tabular document (financial category or csv/tsv/xls/xlsx) -> `run_financial_parser` (`financial_parser.py`)
+LLM + embeddings:
+- [`backend/src/services/pipeline/llm.py`](../../backend/src/services/pipeline/llm.py)
+- Current defaults:
+  - Chat: `gpt-4o-mini`
+  - Embeddings: `text-embedding-3-small`
 
-### Stage 1A: Meeting parser
+## 9) Retrieval Strategy Used by the Assistant
 
-File: `backend/src/services/pipeline/parser.py`
+For the primary assistant (`/api/ai-assistant/chat`), retrieval is tool-driven:
+- Structured SQL reads from project + financial + risk + meeting tables
+- Full-text/keyword search via `searchDocuments`
+- Conversation memory semantic recall via `recallPastConversations`
 
-Strategy:
-- Parse Fireflies markdown via `FirefliesIngestionPipeline.parse_markdown()`.
-- Convert transcript segments to indexed lines.
-- Generate meeting summary (`gpt-4o-mini`).
-- Perform semantic segmentation into sections with decisions/risks/tasks (`gpt-4o-mini`, JSON mode).
-- Upsert segments into `meeting_segments`.
+Conversation memory implementation:
+- Generation: [`frontend/src/lib/ai/services/conversation-memory.ts`](../../frontend/src/lib/ai/services/conversation-memory.ts)
+- Recall tool: [`frontend/src/lib/ai/tools/operational.ts`](../../frontend/src/lib/ai/tools/operational.ts)
 
-Outputs:
+Secondary backend RAG utilities exist for other chat paths:
+- [`backend/src/services/alleato_agent_workflow/rag_tools.py`](../../backend/src/services/alleato_agent_workflow/rag_tools.py)
+- [`backend/src/services/alleato_agent_workflow/tools/vector_search.py`](../../backend/src/services/alleato_agent_workflow/tools/vector_search.py)
+- [`backend/src/services/alleato_agent_workflow/tools/retrieval.py`](../../backend/src/services/alleato_agent_workflow/tools/retrieval.py)
+
+## 10) Data Tables Most Relevant to Quality
+
+Ingestion/pipeline:
+- `document_metadata`
+- `fireflies_ingestion_jobs`
 - `meeting_segments`
-- `document_metadata.overview`, `document_metadata.status = segmented`
-- `fireflies_ingestion_jobs.stage = segmented`
-
-### Stage 1B: Generic document parser
-
-File: `backend/src/services/pipeline/document_parser.py`
-
-Strategy:
-- Extract text from PDF/DOCX/text.
-- Generate summary via LLM.
-- Segment content semantically (line-indexed).
-- Reuse same downstream shape by writing to `meeting_segments`.
-
-### Stage 1C: Financial parser
-
-File: `backend/src/services/pipeline/financial_parser.py`
-
-Strategy:
-- Parse CSV/TSV/XLS/XLSX into dataframes.
-- Persist normalized row data into `document_rows` (`dataset_id = metadata_id`).
-- Create text summaries/sections into `meeting_segments` for downstream embedding.
-- Update `document_metadata` with synthesized overview + extracted text content.
-
-## Stage 2: Embedder
-
-File: `backend/src/services/pipeline/embedder.py`
-
-Chunking strategy:
-- Transcript chunks:
-  - Target size: `CHUNK_TARGET_CHARS = 3000`
-  - Overlap: `CHUNK_OVERLAP_CHARS = 500`
-  - Sentence-aware splitting (`_split_sentences`) and overlap tail carry-forward.
-- Adds `meeting_summary` chunk and per-segment `segment_summary` chunks.
-- Adds section-aware chunks from rich Fireflies sections:
-  - Summary, Short Summary, Gist, Bullet Gist, Shorthand Bullet, Outline, Action Items
-  - Notes subtopics (`notes_topic` doc type)
-
-Embedding strategy:
-- Model: `text-embedding-3-small`
-- Batch embedding via `llm.batch_embed`
-- Segment summaries also embedded to `meeting_segments.summary_embedding`
-
-Storage strategy:
-- Upsert to `documents` with metadata:
-  - `doc_type`, `chunk_index`, `segment_index`, `segment_id`, `content_hash`, `participants`
-- Dedup/update behavior via `content_hash` lookup for existing docs per `file_id`.
-
-Outputs:
+- `document_rows`
 - `documents`
-- `meeting_segments.summary_embedding`
-- `document_metadata.status = embedded`
-- `fireflies_ingestion_jobs.stage = chunked -> embedded`
 
-## Stage 3: Extractor
+Structured extracted intelligence:
+- `risks`
+- `tasks`
+- `decisions`
+- `opportunities`
+- `meeting_digests`
+- `ai_insights`
 
-File: `backend/src/services/pipeline/extractor.py`
+Portfolio context:
+- `projects`
+- `project_health_dashboard`
+- `project_issue_summary`
 
-Extraction strategy:
-- Collect raw decisions/risks/tasks from `meeting_segments`.
-- Add action items from metadata.
-- Re-parse rich Notes and Action Items sections for enhanced context.
-- Build speaker->email map and pass into LLM prompt.
-- Normalize/dedupe and enrich structured items using `gpt-4o-mini` (JSON mode).
-- Priority/date inference rules are prompt-driven.
+Assistant memory:
+- `chat_history`
+- `conversation_memories` (via memory service + RPC search)
 
-Structured outputs:
-- `decisions` (upsert on `metadata_id,description`)
-- `risks` (upsert on `metadata_id,description`)
-- `tasks` (upsert on `metadata_id,description`, source_system=`fireflies`, includes `project_ids`, optional `assignee_email`)
-- `opportunities` (upsert on `metadata_id,description`)
+## 11) Debugging Checklist for "Bad Answers"
 
-Finalization:
-- `fireflies_ingestion_jobs.stage = done`
-- `document_metadata.status = complete`
+1. Confirm the request path is primary assistant:
+   - [`frontend/src/app/api/ai-assistant/chat/route.ts`](../../frontend/src/app/api/ai-assistant/chat/route.ts)
+2. Inspect tool trace in `chat_history.metadata.tool_trace` for the session.
+3. Verify correct tool was called:
+   - Risk portfolio query should call `getProjectsWithRisks`.
+4. If tool call is wrong, adjust prompt instructions before changing SQL.
+5. If tool output is thin, inspect table freshness:
+   - `risks`, `ai_insights`, `document_metadata`, `project_health_dashboard`.
+6. Re-run ingestion for failed docs if extraction is stale.
 
-## Stage 4: Digest (non-blocking)
+## 12) Commands (Operational)
 
-File: `backend/src/services/pipeline/digest.py`
+Local folder ingestion:
+```bash
+python3 scripts/ingestion/ingest_local_documents.py \
+  --source-dir "/absolute/path/to/folder" \
+  --process-now
+```
 
-Strategy:
-- Reads Stage 3 outputs.
-- If enough extracted content exists, generates executive digest JSON via LLM.
-- Upserts to `meeting_digests`.
-- Failures are logged but do not fail pipeline completion.
+Dry-run local folder scan:
+```bash
+python3 scripts/ingestion/ingest_local_documents.py \
+  --source-dir "/absolute/path/to/folder" \
+  --dry-run
+```
 
-## 5) Models and Prompting
-
-LLM/embedding file:
-- `backend/src/services/pipeline/llm.py`
-
-Current models:
-- Chat model: `gpt-4o-mini`
-- Embeddings: `text-embedding-3-small`
-
-Prompting patterns:
-- Segmentation and structured extraction run in JSON mode.
-- Extraction prompt explicitly enforces dedupe and extraction from both raw segment items and notes/action-items context.
-- Due-date and priority heuristics are encoded in prompt instructions.
-
-## 6) Retrieval Strategies Used by RAG Agents
-
-### Vector semantic retrieval
-
-File: `backend/src/services/alleato_agent_workflow/tools/vector_search.py`
-
-Methods:
-- `search_meetings`
-- `search_decisions`
-- `search_risks`
-- `search_opportunities`
-- `search_all_knowledge`
-
-Behavior:
-- Generate query embedding.
-- Query Supabase RPC match functions with thresholding.
-- Return similarity-ranked results with source references.
-
-### Structured retrieval (non-vector)
-
-File: `backend/src/services/alleato_agent_workflow/tools/retrieval.py`
-
-Methods:
-- `get_recent_meetings`, `get_tasks_and_decisions`, `get_project_insights`, `list_all_projects`, `get_project_details`
-
-Behavior:
-- Direct table reads for deterministic project/task/risk/decision context.
-
-### Hybrid fallback retrieval utility
-
-File: `backend/src/services/alleato_agent_workflow/rag_tools.py`
-
-Behavior in `company_rag_search`:
-- Try vector search first.
-- Fall back to keyword `ilike` search.
-- Fall back to recent chunks if still empty.
-
-## 7) Chat Conversations and Memory
-
-There are multiple chat paths in this codebase. They are not equivalent.
-
-### A) Persisted AI Assistant conversations (primary product chat memory)
-
-This is the path used by the in-app assistant UI and widget:
-- Frontend API stream route: `frontend/src/app/api/ai-assistant/chat/route.ts`
-- Conversation CRUD:
-  - `frontend/src/app/api/ai-assistant/conversations/route.ts`
-  - `frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts`
-  - `frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts`
-- UI entrypoints:
-  - `frontend/src/components/ai-assistant/rag-chat-page.tsx`
-  - `frontend/src/components/chat/simple-rag-chat.tsx`
-  - `frontend/src/components/chat/ai-chat-widget.tsx` (mounted in `frontend/src/app/layout.tsx`)
-
-Persistence behavior:
-- Conversation metadata stored in `conversations`.
-- Message history stored in `chat_history`.
-- After each streamed response, `generateConversationMemory()` summarizes and embeds conversation context:
-  - File: `frontend/src/lib/ai/services/conversation-memory.ts`
-  - Writes to `memories` table (`memory_type = conversation_summary`).
-- Recall tool uses semantic search RPC:
-  - `search_conversation_memories` (migration: `supabase/migrations/20260306000001_conversation_memories.sql`)
-  - Invoked from `frontend/src/lib/ai/tools/operational.ts` (`recallPastConversations`).
-
-### B) ChatKit thread state in backend memory (not durable)
-
-These ChatKit endpoints keep thread state in Python process memory:
-- `/chatkit`, `/chatkit/state`, `/chatkit/bootstrap`
-- `/rag-chatkit`, `/rag-chatkit/state`, `/rag-chatkit/bootstrap`
-- File: `backend/src/api/main.py`
-
-Storage behavior:
-- Uses in-memory stores (`backend/src/services/memory_store.py` and in-process dict/singleton state).
-- Thread/event/agent context is lost on backend restart unless separately persisted by another path.
-
-### C) Simple backend RAG proxy path
-
-- `frontend/src/app/api/rag-chat/route.ts` proxies to backend `/api/chat`.
-- Backend `/api/chat` (`backend/src/api/main.py`) does retrieval and returns JSON reply/sources.
-- This path is useful fallback/simple mode but does not itself create durable conversation history records.
-
-## 8) Canonical File Map
-
-### Ingestion and sync
-- `backend/src/services/ingestion/fireflies_pipeline.py`
-- `backend/src/services/supabase_helpers.py`
-- `backend/src/api/main.py`
-
-### Pipeline core
-- `backend/src/services/pipeline/__init__.py`
-- `backend/src/services/pipeline/orchestrator.py`
-- `backend/src/services/pipeline/parser.py`
-- `backend/src/services/pipeline/document_parser.py`
-- `backend/src/services/pipeline/financial_parser.py`
-- `backend/src/services/pipeline/embedder.py`
-- `backend/src/services/pipeline/extractor.py`
-- `backend/src/services/pipeline/digest.py`
-- `backend/src/services/pipeline/llm.py`
-- `backend/src/services/pipeline/models.py`
-
-### Retrieval and agent-side RAG tools
-- `backend/src/services/alleato_agent_workflow/rag_tools.py`
-- `backend/src/services/alleato_agent_workflow/tools/vector_search.py`
-- `backend/src/services/alleato_agent_workflow/tools/retrieval.py`
-- `backend/src/services/alleato_agent_workflow/rag_debug_tracer.py`
-
-### Chat conversation stack
-- `frontend/src/app/api/ai-assistant/chat/route.ts`
-- `frontend/src/app/api/ai-assistant/conversations/route.ts`
-- `frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts`
-- `frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts`
-- `frontend/src/lib/ai/services/conversation-memory.ts`
-- `frontend/src/lib/ai/tools/operational.ts` (`recallPastConversations`)
-- `frontend/src/components/ai-assistant/rag-chat-page.tsx`
-- `frontend/src/components/chat/simple-rag-chat.tsx`
-- `frontend/src/components/chat/ai-chat-widget.tsx`
-- `backend/src/api/main.py` (`/chatkit`, `/rag-chatkit`, `/api/chat`)
-- `backend/src/services/memory_store.py`
-
-### Triggering and UI
-- `frontend/src/app/api/documents/upload/route.ts`
-- `frontend/src/app/api/documents/status/route.ts`
-- `frontend/src/app/api/documents/trigger-pipeline/route.ts` (legacy/manual worker trigger)
-- `frontend/src/app/(main)/pipeline/page.tsx` (legacy/manual pipeline UI)
-
-### DB trigger/config migrations
-- `supabase/migrations/20260227000001_auto_trigger_pipeline_on_document_insert.sql`
-- `supabase/migrations/20260227000002_pipeline_config_table.sql`
-- `supabase/migrations/20260301000001_meeting_digests.sql`
-- `supabase/migrations/20260306000001_conversation_memories.sql`
-
-## 9) Operational Notes
-
-- Preferred sync endpoint for Fireflies: `POST /api/ingest/fireflies/recent`.
-- Preferred pipeline executor: backend `run_full_pipeline` via `/api/pipeline/process`.
-- For persistent conversation history + memory recall, use the `/api/ai-assistant/*` stack.
-- `/chatkit` and `/rag-chatkit` expose thread state but are in-memory by default.
-- Legacy Cloudflare ingest worker sync is disabled by default.
-- If docs or runtime behavior diverge, trust code paths listed in section 7 and update this file.
+Manual pipeline run for one metadata row:
+```bash
+curl -X POST "$BACKEND_URL/api/pipeline/process" \
+  -H "Content-Type: application/json" \
+  -d '{"metadataId":"<uuid>"}'
+```

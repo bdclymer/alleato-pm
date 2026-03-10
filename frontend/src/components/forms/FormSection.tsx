@@ -14,10 +14,10 @@ export function FormSection({
   actions,
 }: FormSectionProps) {
   return (
-    <section className="space-y-6">
-      <div className="flex items-start justify-between gap-4 border-b pb-2">
+    <section className="space-y-6 bg-background pb-14 border-gray-300 border-b">
+      <div className="flex items-start justify-between gap-4 pb-2">
         <div>
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-lg text-primary uppercase tracking-wider font-medium">{title}</h2>
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}

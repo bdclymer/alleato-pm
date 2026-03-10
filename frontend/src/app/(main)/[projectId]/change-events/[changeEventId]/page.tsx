@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Edit, FileCheck2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +28,7 @@ import type { ChangeEvent } from "@/types/financial";
 import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
 import { ChangeEventAttachmentsSection } from "@/components/domain/change-events/ChangeEventAttachmentsSection";
+import { ChangeEventForm, type ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventLineItemsGrid } from "@/components/domain/change-events/ChangeEventLineItemsGrid";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { useProjectChangeEventRfqs } from "@/hooks/use-change-event-rfqs";
@@ -75,6 +76,7 @@ interface HistoryEntry {
  */
 export default function ChangeEventDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = parseInt(params.projectId as string, 10);
   const changeEventId = params.changeEventId as string; // UUID string, not a number
@@ -90,6 +92,7 @@ export default function ChangeEventDetailPage() {
   const [showRfqForm, setShowRfqForm] = useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
+  const [isEditing, setIsEditing] = useState(false);
 
   const { rfqs, createRfq } = useProjectChangeEventRfqs(projectId);
 
@@ -173,8 +176,136 @@ export default function ChangeEventDetailPage() {
   }, [router, projectId]);
 
   const handleEdit = useCallback(() => {
-    router.push(`/${projectId}/change-events/${changeEventId}/edit`);
-  }, [router, projectId, changeEventId]);
+    setActiveTab("general");
+    setIsEditing(true);
+  }, []);
+
+  const canEdit = ["open", "rejected"].includes(
+    (changeEvent?.status || "").toLowerCase(),
+  );
+
+  useEffect(() => {
+    if (searchParams.get("edit") === "1" && canEdit) {
+      setActiveTab("general");
+      setIsEditing(true);
+    }
+  }, [searchParams, canEdit]);
+
+  const mapFormStatusToApiStatus = useCallback((status: string) => {
+    if (status === "close") return "closed";
+    if (status === "pending") return "pending_approval";
+    return status;
+  }, []);
+
+  const mapApiStatusToFormStatus = useCallback((status?: string | null) => {
+    if (!status) return "open";
+    if (status === "closed") return "close";
+    if (status === "pending_approval") return "pending";
+    return status;
+  }, []);
+
+  const handleInlineEditSubmit = useCallback(
+    async (data: ChangeEventFormData) => {
+      if (!changeEvent) return;
+
+      try {
+        const REASON_MAP: Record<string, string> = {
+          allowance: "Allowance",
+          backcharge: "Backcharge",
+          client_request: "Client Request",
+          design_development: "Design Development",
+          existing_condition: "Existing Condition",
+        };
+
+        const response = await fetch(
+          `/api/projects/${projectId}/change-events/${changeEventId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              project_id: projectId,
+              number: data.number || data.contractNumber || changeEvent.number,
+              title: data.title,
+              status: mapFormStatusToApiStatus(data.status),
+              reason:
+                REASON_MAP[data.changeReason || ""] || data.changeReason || null,
+              scope: data.scope || null,
+              description: data.description || null,
+              notes: data.notes || null,
+              estimated_impact: data.estimatedImpact || null,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          const errorData = await response
+            .json()
+            .catch(() => ({ message: "Unknown error" }));
+          throw new Error(
+            errorData.message ||
+              `HTTP ${response.status}: ${response.statusText}`,
+          );
+        }
+
+        toast.success("Change event updated successfully");
+        setIsEditing(false);
+        await fetchChangeEventDetails();
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update change event",
+        );
+      }
+    },
+    [
+      changeEvent,
+      projectId,
+      changeEventId,
+      fetchChangeEventDetails,
+      mapFormStatusToApiStatus,
+    ],
+  );
+
+  const initialEditData = useMemo<Partial<ChangeEventFormData> | null>(() => {
+    if (!changeEvent) return null;
+
+    return {
+      number: changeEvent.number || "",
+      contractNumber: changeEvent.number || "",
+      title: changeEvent.title || "",
+      status: mapApiStatusToFormStatus(changeEvent.status),
+      origin: (changeEvent as any).origin || undefined,
+      type: (changeEvent as any).type || undefined,
+      changeReason: (changeEvent as any).reason || undefined,
+      scope: changeEvent.scope || undefined,
+      lineItemRevenueSource: (changeEvent as any).line_item_revenue_source || "",
+      primeContractId: (changeEvent as any).prime_contract_id || "",
+      description: changeEvent.description || undefined,
+      notes: (changeEvent as any).notes || undefined,
+      estimatedImpact: changeEvent.estimated_impact || undefined,
+      attachments: [],
+      lineItems:
+        lineItems.length > 0
+          ? lineItems.map((item: any) => ({
+              budgetCode:
+                item.budgetCode ||
+                item.budget_code_id ||
+                item.budget_code ||
+                "",
+              description: item.description || "",
+              vendor: item.vendor || item.vendor_id || "",
+              contract: item.contract || item.contract_id || "",
+              revenueUnitOfMeasure: item.revenueUnitOfMeasure || item.unitOfMeasure || "",
+              revenueQuantity: Number(item.revenueQuantity || item.quantity || 1) || 1,
+              revenueUnitCost: Number(item.revenueUnitCost || item.unitCost || 0) || 0,
+              revenueRom: Number(item.revenueRom || 0) || 0,
+              costQuantity: Number(item.costQuantity || item.quantity || 1) || 1,
+              costUnitCost: Number(item.costUnitCost || item.unitCost || 0) || 0,
+              costRom: Number(item.costRom || 0) || 0,
+              nonCommittedCost: Number(item.nonCommittedCost || 0) || 0,
+            }))
+          : [],
+    };
+  }, [changeEvent, lineItems, mapApiStatusToFormStatus]);
 
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
@@ -325,6 +456,49 @@ export default function ChangeEventDetailPage() {
     );
   }
 
+  if (isEditing && initialEditData) {
+    return (
+      <Stack>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <Inline align="center" gap="sm">
+              <Text size="2xl" weight="bold">
+                Edit {changeEvent.title}
+              </Text>
+              <Badge variant={getStatusBadgeVariant(changeEvent.status ?? "")}>
+                {getStatusDisplayName(changeEvent.status)}
+              </Badge>
+            </Inline>
+            <Text size="sm" tone="muted">
+              Change Event {changeEvent.number || `CE-${changeEvent.id}`}
+            </Text>
+          </div>
+          <Inline gap="sm">
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+            >
+              Cancel Edit
+            </Button>
+          </Inline>
+        </div>
+
+        <ChangeEventForm
+          initialData={initialEditData}
+          onSubmit={handleInlineEditSubmit}
+          onCancel={() => setIsEditing(false)}
+          mode="edit"
+          projectId={projectId}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <Stack>
       {/* Header */}
@@ -347,7 +521,12 @@ export default function ChangeEventDetailPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEdit}
+            disabled={!canEdit}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>

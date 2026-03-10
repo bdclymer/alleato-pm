@@ -29,6 +29,128 @@ export type Database = {
         }
         Relationships: []
       }
+      acumatica_ar_invoice_lines: {
+        Row: {
+          account: string | null
+          amount: number | null
+          cost_code: string | null
+          created_at: string | null
+          discount_amount: number | null
+          extended_price: number | null
+          id: number
+          invoice_id: number
+          line_nbr: number | null
+          project_task: string | null
+          qty: number | null
+          tax_category: string | null
+          transaction_description: string | null
+          unit_price: number | null
+          uom: string | null
+        }
+        Insert: {
+          account?: string | null
+          amount?: number | null
+          cost_code?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          extended_price?: number | null
+          id?: number
+          invoice_id: number
+          line_nbr?: number | null
+          project_task?: string | null
+          qty?: number | null
+          tax_category?: string | null
+          transaction_description?: string | null
+          unit_price?: number | null
+          uom?: string | null
+        }
+        Update: {
+          account?: string | null
+          amount?: number | null
+          cost_code?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          extended_price?: number | null
+          id?: number
+          invoice_id?: number
+          line_nbr?: number | null
+          project_task?: string | null
+          qty?: number | null
+          tax_category?: string | null
+          transaction_description?: string | null
+          unit_price?: number | null
+          uom?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_ar_invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "acumatica_ar_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_ar_invoices: {
+        Row: {
+          acumatica_sync_at: string | null
+          amount: number | null
+          balance: number | null
+          created_at: string | null
+          customer: string | null
+          date: string | null
+          description: string | null
+          hold: boolean | null
+          id: number
+          link_ar_account: string | null
+          post_period: string | null
+          project: string | null
+          reference_nbr: string
+          status: string | null
+          tax_total: number | null
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          amount?: number | null
+          balance?: number | null
+          created_at?: string | null
+          customer?: string | null
+          date?: string | null
+          description?: string | null
+          hold?: boolean | null
+          id?: number
+          link_ar_account?: string | null
+          post_period?: string | null
+          project?: string | null
+          reference_nbr: string
+          status?: string | null
+          tax_total?: number | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          amount?: number | null
+          balance?: number | null
+          created_at?: string | null
+          customer?: string | null
+          date?: string | null
+          description?: string | null
+          hold?: boolean | null
+          id?: number
+          link_ar_account?: string | null
+          post_period?: string | null
+          project?: string | null
+          reference_nbr?: string
+          status?: string | null
+          tax_total?: number | null
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       admin_view_backups: {
         Row: {
           backed_up_at: string | null
@@ -11856,30 +11978,6 @@ export type Database = {
           },
         ]
       }
-      Prospects: {
-        Row: {
-          contact: number | null
-          created_at: string
-          id: number
-          status: string | null
-          title: string | null
-        }
-        Insert: {
-          contact?: number | null
-          created_at?: string
-          id?: number
-          status?: string | null
-          title?: string | null
-        }
-        Update: {
-          contact?: number | null
-          created_at?: string
-          id?: number
-          status?: string | null
-          title?: string | null
-        }
-        Relationships: []
-      }
       punch_items: {
         Row: {
           assignee_company: string | null
@@ -16142,6 +16240,8 @@ export type Database = {
           acumatica_sync_at: string | null
           acumatica_vendor_id: string | null
           address: string | null
+          ap_account: string | null
+          cash_account: string | null
           city: string | null
           company_id: string
           contact_email: string | null
@@ -16150,18 +16250,28 @@ export type Database = {
           country: string | null
           created_at: string
           id: string
+          is_1099_vendor: boolean | null
           is_active: boolean
+          is_foreign_entity: boolean | null
+          is_labor_union: boolean | null
+          is_tax_agency: boolean | null
+          legal_name: string | null
           name: string
           notes: string | null
+          payment_method: string | null
           state: string | null
           tax_id: string | null
+          terms: string | null
           updated_at: string
+          vendor_class: string | null
           zip_code: string | null
         }
         Insert: {
           acumatica_sync_at?: string | null
           acumatica_vendor_id?: string | null
           address?: string | null
+          ap_account?: string | null
+          cash_account?: string | null
           city?: string | null
           company_id: string
           contact_email?: string | null
@@ -16170,18 +16280,28 @@ export type Database = {
           country?: string | null
           created_at?: string
           id?: string
+          is_1099_vendor?: boolean | null
           is_active?: boolean
+          is_foreign_entity?: boolean | null
+          is_labor_union?: boolean | null
+          is_tax_agency?: boolean | null
+          legal_name?: string | null
           name: string
           notes?: string | null
+          payment_method?: string | null
           state?: string | null
           tax_id?: string | null
+          terms?: string | null
           updated_at?: string
+          vendor_class?: string | null
           zip_code?: string | null
         }
         Update: {
           acumatica_sync_at?: string | null
           acumatica_vendor_id?: string | null
           address?: string | null
+          ap_account?: string | null
+          cash_account?: string | null
           city?: string | null
           company_id?: string
           contact_email?: string | null
@@ -16190,12 +16310,20 @@ export type Database = {
           country?: string | null
           created_at?: string
           id?: string
+          is_1099_vendor?: boolean | null
           is_active?: boolean
+          is_foreign_entity?: boolean | null
+          is_labor_union?: boolean | null
+          is_tax_agency?: boolean | null
+          legal_name?: string | null
           name?: string
           notes?: string | null
+          payment_method?: string | null
           state?: string | null
           tax_id?: string | null
+          terms?: string | null
           updated_at?: string
+          vendor_class?: string | null
           zip_code?: string | null
         }
         Relationships: [

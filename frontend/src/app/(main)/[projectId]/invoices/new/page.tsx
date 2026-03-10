@@ -35,6 +35,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
 import { useCommitments } from "@/hooks/use-commitments";
 import { ProjectFormPageLayout } from "@/components/layout";
+import { FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
 
 
 interface LineItem {
@@ -287,10 +289,10 @@ export default function NewInvoicePage() {
           </TabsList>
 
           <TabsContent value="general">
-              <div>
-                <h4>Invoice Information</h4>
-                <p>Basic invoice details and billing period</p>
-              </div>
+            <FormSection
+              title="Invoice Information"
+              description="Basic invoice details and billing period."
+            >
               <div className="grid gap-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
@@ -549,13 +551,14 @@ export default function NewInvoicePage() {
                   )}
                 </div>
               </div>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value="line-items">
-              <div>
-                <h3>Invoice Line Items</h3>
-                <p>Add line items for billing</p>
-              </div>
+            <FormSection
+              title="Invoice Line Items"
+              description="Add line items for billing."
+            >
               <div>
                 <div className="overflow-x-auto">
                   <Table>
@@ -710,15 +713,14 @@ export default function NewInvoicePage() {
                   </Button>
                 </div>
               </div>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value="summary">
-              <div>
-                <h3>Invoice Summary</h3>
-                <p>
-                  Review invoice totals before submission
-                </p>
-              </div>
+            <FormSection
+              title="Invoice Summary"
+              description="Review invoice totals before submission."
+            >
               <div>
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
@@ -784,18 +786,15 @@ export default function NewInvoicePage() {
                   </div>
                 </div>
               </div>
+            </FormSection>
           </TabsContent>
         </Tabs>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-end gap-4 mt-6">
-            <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Invoice"}
-            </Button>
-          </div>
+        <FormActions
+          submitLabel="Create Invoice"
+          onCancel={handleCancel}
+          isSubmitting={loading}
+        />
         </form>
       </div>
     </ProjectFormPageLayout>

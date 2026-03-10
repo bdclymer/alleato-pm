@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 
 import { ProjectPageHeader } from "@/components/layout";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { TableLayout } from "@/components/layouts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,8 @@ import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { PrimeContractTabs } from "./components/PrimeContractTabs";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
+import { ContractForm } from "@/components/domain/contracts";
+import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 import type {
   BudgetCode,
   ChangeOrderFormState,
@@ -76,6 +79,7 @@ import type {
 
 export default function ProjectContractDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = params.projectId as string;
   const contractId = params.contractId as string;
@@ -141,6 +145,8 @@ export default function ProjectContractDetailPage() {
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Attachments state
   const [attachments, setAttachments] = useState<ContractAttachment[]>([]);
@@ -191,6 +197,12 @@ export default function ProjectContractDetailPage() {
       fetchContract();
     }
   }, [contractId, projectId]);
+
+  useEffect(() => {
+    if (searchParams.get("edit") === "1") {
+      setIsEditing(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchLineItems = async () => {
@@ -530,7 +542,180 @@ export default function ProjectContractDetailPage() {
   };
 
   const handleEdit = () => {
-    router.push(`/${projectId}/prime-contracts/${contractId}/edit`);
+    setIsEditing(true);
+  };
+
+  const existingCostCodeByLineId = useMemo(
+    () => new Map(lineItems.map((item) => [item.id, item.cost_code_id ?? null])),
+    [lineItems],
+  );
+
+  const handleInlineEditSubmit = async (data: ContractFormData) => {
+    if (!contract) {
+      toast.error("Contract data is not loaded");
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contract_number: data.number,
+            title: data.title,
+            client_id:
+              data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
+                ? Number.parseInt(data.ownerCompanyId, 10)
+                : null,
+            contractor_id: data.contractorId || null,
+            architect_engineer_id: data.architectEngineerId || null,
+            contract_company_id:
+              data.ownerCompanyId || data.contractCompanyId || null,
+            description: data.description,
+            status: data.status || "draft",
+            executed: data.executed || false,
+            original_contract_value:
+              data.originalAmount ?? contract.original_contract_value ?? 0,
+            start_date: data.startDate?.toISOString().split("T")[0] || null,
+            end_date:
+              data.estimatedCompletionDate?.toISOString().split("T")[0] || null,
+            substantial_completion_date:
+              data.substantialCompletionDate?.toISOString().split("T")[0] || null,
+            actual_completion_date:
+              data.actualCompletionDate?.toISOString().split("T")[0] || null,
+            signed_contract_received_date:
+              data.signedContractReceivedDate?.toISOString().split("T")[0] || null,
+            contract_termination_date:
+              data.contractTerminationDate?.toISOString().split("T")[0] || null,
+            retention_percentage: data.defaultRetainage || 0,
+            payment_terms: data.paymentTerms || null,
+            billing_schedule: data.billingSchedule || null,
+            is_private: data.isPrivate || false,
+            inclusions: data.inclusions || null,
+            exclusions: data.exclusions || null,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update contract");
+      }
+
+      const budgetCodesResponse = await fetch(
+        `/api/projects/${projectId}/budget-codes`,
+        { credentials: "include" },
+      );
+
+      const budgetCodesPayload = budgetCodesResponse.ok
+        ? await budgetCodesResponse.json().catch(() => ({ budgetCodes: [] }))
+        : { budgetCodes: [] };
+
+      const budgetCodeIdToCostCode = new Map(
+        (budgetCodesPayload.budgetCodes || []).map(
+          (code: { id: string; code: string }) => [code.id, code.code],
+        ),
+      );
+
+      const sovItems = data.sovItems || [];
+      const itemsToPersist = sovItems.map((item, index) => {
+        const budgetCodeId = item.budgetCodeId || "";
+        const budgetCodeValue = budgetCodeIdToCostCode.get(budgetCodeId);
+        const fallbackCostCode = existingCostCodeByLineId.get(item.id) ?? null;
+        const parsedCostCodeId = budgetCodeValue
+          ? Number.parseInt(budgetCodeValue as string, 10)
+          : fallbackCostCode;
+        const costCodeId =
+          parsedCostCodeId !== null && Number.isNaN(parsedCostCodeId)
+            ? null
+            : parsedCostCodeId;
+
+        const quantity =
+          data.accountingMethod === "unit_quantity" ? item.quantity ?? 0 : 1;
+        const unitCost =
+          data.accountingMethod === "unit_quantity"
+            ? item.unitCost ?? 0
+            : item.amount || 0;
+
+        return {
+          id: item.id,
+          line_number: index + 1,
+          description: item.description || `Line ${index + 1}`,
+          cost_code_id: costCodeId,
+          quantity,
+          unit_cost: unitCost,
+          unit_of_measure: item.unitOfMeasure || null,
+        };
+      });
+
+      const existingIds = new Set(lineItems.map((item) => item.id));
+      const incomingIds = new Set(itemsToPersist.map((item) => item.id));
+
+      const updates = itemsToPersist.filter((item) => existingIds.has(item.id));
+      const creates = itemsToPersist.filter((item) => !existingIds.has(item.id));
+      const deletions = lineItems
+        .filter((item) => !incomingIds.has(item.id))
+        .map((item) => item.id);
+
+      const updateResponses = await Promise.all([
+        ...updates.map((item) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                line_number: item.line_number,
+                description: item.description,
+                cost_code_id: item.cost_code_id,
+                quantity: item.quantity,
+                unit_cost: item.unit_cost,
+                unit_of_measure: item.unit_of_measure,
+              }),
+            },
+          ),
+        ),
+        ...creates.map((item) =>
+          fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description,
+              cost_code_id: item.cost_code_id,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              unit_of_measure: item.unit_of_measure,
+            }),
+          }),
+        ),
+        ...deletions.map((lineItemId) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
+            {
+              method: "DELETE",
+            },
+          ),
+        ),
+      ]);
+
+      const firstFailure = updateResponses.find((res) => !res.ok);
+      if (firstFailure) {
+        const errorData = await firstFailure.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update SOV line items");
+      }
+
+      toast.success("Contract updated successfully");
+      setIsEditing(false);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update contract");
+    } finally {
+      setIsSavingEdit(false);
+    }
   };
 
   const handleAddLineItem = async () => {
@@ -930,6 +1115,87 @@ export default function ProjectContractDetailPage() {
             </Button>
           </Card>
         </TableLayout>
+      </>
+    );
+  }
+
+  if (isEditing) {
+    const sovItems = lineItems.map((item) => ({
+      id: item.id,
+      budgetCodeId: "",
+      budgetCodeLabel: item.cost_code
+        ? `${item.cost_code.code} ${item.cost_code.name}`
+        : undefined,
+      description: item.description,
+      amount: item.total_cost,
+      quantity: item.quantity,
+      unitCost: item.unit_cost,
+      unitOfMeasure: item.unit_of_measure ?? undefined,
+      billedToDate: 0,
+      amountRemaining: item.total_cost,
+    }));
+
+    const initialData: Partial<ContractFormData> = {
+      number: contract.contract_number || "",
+      title: contract.title,
+      status: contract.status,
+      executed: contract.executed,
+      ownerCompanyId:
+        contract.contract_company_id || contract.client_id?.toString() || undefined,
+      contractorId: contract.contractor_id || undefined,
+      architectEngineerId: contract.architect_engineer_id || undefined,
+      contractCompanyId: contract.contract_company_id || undefined,
+      description: contract.description || "",
+      originalAmount: contract.original_contract_value,
+      revisedAmount: contract.revised_contract_value,
+      startDate: contract.start_date ? new Date(contract.start_date) : undefined,
+      estimatedCompletionDate: contract.end_date
+        ? new Date(contract.end_date)
+        : undefined,
+      substantialCompletionDate: contract.substantial_completion_date
+        ? new Date(contract.substantial_completion_date)
+        : undefined,
+      actualCompletionDate: contract.actual_completion_date
+        ? new Date(contract.actual_completion_date)
+        : undefined,
+      signedContractReceivedDate: contract.signed_contract_received_date
+        ? new Date(contract.signed_contract_received_date)
+        : undefined,
+      contractTerminationDate: contract.contract_termination_date
+        ? new Date(contract.contract_termination_date)
+        : undefined,
+      defaultRetainage: contract.retention_percentage,
+      paymentTerms: contract.payment_terms || "",
+      billingSchedule: contract.billing_schedule || "",
+      isPrivate: contract.is_private,
+      inclusions: contract.inclusions || "",
+      exclusions: contract.exclusions || "",
+      sovItems,
+    };
+
+    return (
+      <>
+        <ProjectPageHeader
+          title={`Edit: ${contract.contract_number || contract.title}`}
+          description="Update contract details and SOV line items"
+          actions={
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+              Cancel Edit
+            </Button>
+          }
+        />
+        <PageContainer>
+          <div className="rounded-lg border border-border bg-card p-8">
+            <ContractForm
+              initialData={initialData}
+              onSubmit={handleInlineEditSubmit}
+              onCancel={() => setIsEditing(false)}
+              isSubmitting={isSavingEdit}
+              mode="edit"
+              projectId={projectId}
+            />
+          </div>
+        </PageContainer>
       </>
     );
   }

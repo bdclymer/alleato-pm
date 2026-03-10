@@ -1,9 +1,9 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Save, Info } from "lucide-react";
+import { Save, Info } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -232,38 +232,26 @@ export default function CommitmentConfigurePage() {
   const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Commitment Settings"
-        breadcrumbs={[
-          { label: "Commitments", href: `/${projectId}/commitments` },
-          { label: "Configure" },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push(`/${projectId}/commitments`)}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Update
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="flex gap-6 p-6 max-w-7xl mx-auto">
+    <ProjectFormPageLayout
+      title="Commitment Settings"
+      description="Configure commitment defaults, workflows, billing, and permissions."
+      onBack={() => router.push(`/${projectId}/commitments`)}
+      backLabel="Back"
+      maxWidth="2xl"
+      headerActions={
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="gap-2"
+        >
+          <Save className="h-4 w-4" />
+          Update
+        </Button>
+      }
+      contentClassName="space-y-0"
+    >
+      <div className="mx-auto flex max-w-7xl gap-6">
         {/* Sidebar Navigation */}
         <aside className="w-64 shrink-0">
           <nav className="space-y-1 sticky top-6">
@@ -1060,6 +1048,6 @@ export default function CommitmentConfigurePage() {
           </div>
         </main>
       </div>
-    </>
+    </ProjectFormPageLayout>
   );
 }

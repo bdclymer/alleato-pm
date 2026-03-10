@@ -31,6 +31,7 @@ import {
   formatDate,
 } from "./direct-costs-table-utils";
 import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
+import { DirectCostPreviewPane } from "./direct-cost-preview-pane";
 
 import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
 import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
@@ -285,6 +286,11 @@ export function DirectCostsClient({
   }, [tableState.page, tableState.setPage, tableState.setSearchParams, totalPages]);
 
   const selectedSet = React.useMemo(() => new Set(tableState.selectedIds), [tableState.selectedIds]);
+  const detailParam = tableState.detailParam;
+  const selectedDirectCost = detailParam
+    ? filteredSummaryItems.find((item) => item.id === detailParam) ?? null
+    : null;
+  const activeDirectCostId = selectedDirectCost?.id ?? filteredSummaryItems[0]?.id ?? null;
 
   const applyFilters = (nextFilters: DirectCostFilterState): void => {
     tableState.setActiveFilters(nextFilters);
@@ -474,6 +480,52 @@ export function DirectCostsClient({
     setBulkAction(null);
   };
 
+  const handleOpenDetailPage = React.useCallback(
+    (item: DirectCostRow): void => {
+      router.push(`/${projectId}/direct-costs/${item.id}`);
+    },
+    [projectId, router],
+  );
+
+  const handleSummaryRowClick = React.useCallback(
+    (item: DirectCostRow): void => {
+      if (isMobileViewport) {
+        handleOpenDetailPage(item);
+        return;
+      }
+
+      tableState.setSearchParams({ detail: item.id });
+    },
+    [handleOpenDetailPage, isMobileViewport, tableState],
+  );
+
+  const handleSummaryTableKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>, visibleItems: DirectCostRow[]): void => {
+      const target = event.target as HTMLElement | null;
+      if (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName)) {
+        return;
+      }
+
+      if (event.key !== "Enter") return;
+
+      if (visibleItems.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const currentIndex = activeDirectCostId
+        ? visibleItems.findIndex((item) => item.id === activeDirectCostId)
+        : -1;
+      const fallbackIndex = currentIndex >= 0 ? currentIndex : 0;
+      const currentItem = visibleItems[fallbackIndex];
+      if (!currentItem) return;
+
+      event.preventDefault();
+      handleOpenDetailPage(currentItem);
+    },
+    [activeDirectCostId, handleOpenDetailPage],
+  );
+
   const summaryTableColumns = React.useMemo(
     () => [
       {
@@ -590,7 +642,7 @@ export function DirectCostsClient({
     (item: DirectCostRow): ReactElement => (
       <button
         type="button"
-        onClick={() => router.push(`/${projectId}/direct-costs/${item.id}`)}
+        onClick={() => handleSummaryRowClick(item)}
         className="w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:bg-muted/30"
       >
         <div className="flex items-start justify-between gap-3">
@@ -615,7 +667,7 @@ export function DirectCostsClient({
         </div>
       </button>
     ),
-    [projectId, router],
+    [handleSummaryRowClick],
   );
 
 
@@ -747,8 +799,10 @@ export function DirectCostsClient({
         table={{
           columns: summaryTableColumns,
           getRowId: (item) => item.id,
+          activeRowId: activeDirectCostId,
+          onTableKeyDown: handleSummaryTableKeyDown,
           stickyHeader: true,
-          onRowClick: (item) => router.push(`/${projectId}/direct-costs/${item.id}`),
+          onRowClick: handleSummaryRowClick,
           rowActions: (item) => (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -778,6 +832,14 @@ export function DirectCostsClient({
         }}
         views={{
           list: renderSummaryListItem,
+        }}
+        sidePanel={{
+          content: (
+            <DirectCostPreviewPane
+              directCost={selectedDirectCost ?? filteredSummaryItems[0] ?? null}
+              onOpenDirectCostPage={handleOpenDetailPage}
+            />
+          ),
         }}
         sorting={{
           sortBy: tableState.sortBy,

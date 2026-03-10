@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Edit, Mail, Trash2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
@@ -14,6 +14,10 @@ import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
 import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
+import {
+  CreatePurchaseOrderForm,
+  CreateSubcontractForm,
+} from "@/components/domain/contracts";
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -32,6 +36,14 @@ import {
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatDate } from "@/lib/table-config/formatters";
+import type {
+  CreatePurchaseOrderInput,
+  PurchaseOrderSovLineItem,
+} from "@/lib/schemas/create-purchase-order-schema";
+import type {
+  CreateSubcontractInput,
+  SovLineItem,
+} from "@/lib/schemas/create-subcontract-schema";
 import type { Commitment } from "@/types/financial";
 
 type CommitmentDetail = Commitment & {
@@ -53,6 +65,9 @@ type CommitmentDetail = Commitment & {
     budget_code?: string | null;
     description?: string | null;
     amount?: number | null;
+    quantity?: number | null;
+    uom?: string | null;
+    unit_cost?: number | null;
     billed_to_date?: number | null;
   }>;
 };
@@ -117,6 +132,15 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     amount:
       typeof item.amount === "number" || typeof item.amount === "string"
         ? Number(item.amount)
+        : null,
+    quantity:
+      typeof item.quantity === "number" || typeof item.quantity === "string"
+        ? Number(item.quantity)
+        : null,
+    uom: typeof item.uom === "string" ? item.uom : null,
+    unit_cost:
+      typeof item.unit_cost === "number" || typeof item.unit_cost === "string"
+        ? Number(item.unit_cost)
         : null,
     billed_to_date:
       typeof item.billed_to_date === "number" ||
@@ -200,6 +224,7 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
  */
 export default function CommitmentDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const commitmentId = params.commitmentId as string;
@@ -207,6 +232,7 @@ export default function CommitmentDetailPage() {
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Use React Query for cached, deduplicated data fetching
   const {
@@ -236,8 +262,8 @@ export default function CommitmentDetailPage() {
 
   // Action handlers
   const handleEdit = useCallback(() => {
-    router.push(`/${projectId}/commitments/${commitmentId}/edit`);
-  }, [router, projectId, commitmentId]);
+    setIsEditing(true);
+  }, []);
 
   const handleDelete = useCallback(async () => {
     if (
@@ -279,6 +305,159 @@ export default function CommitmentDetailPage() {
   const handleEmail = useCallback(() => {
     setIsEmailDialogOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("edit") === "1") {
+      setIsEditing(true);
+    }
+  }, [searchParams]);
+
+  const normalizeStatus = (
+    rawStatus: unknown,
+    typeHint?: string,
+  ):
+    | CreatePurchaseOrderInput["status"]
+    | CreateSubcontractInput["status"]
+    | undefined => {
+    if (typeof rawStatus !== "string") {
+      return undefined;
+    }
+
+    const normalized = rawStatus
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, " ");
+
+    if (typeHint === "purchase_order") {
+      const purchaseOrderMap: Record<
+        string,
+        CreatePurchaseOrderInput["status"] | undefined
+      > = {
+        draft: "Draft",
+        approved: "Approved",
+        sent: "Sent",
+        acknowledged: "Acknowledged",
+        complete: "Completed",
+        completed: "Completed",
+      };
+      return purchaseOrderMap[normalized];
+    }
+
+    const subcontractMap: Record<
+      string,
+      CreateSubcontractInput["status"] | undefined
+    > = {
+      draft: "Draft",
+      "out for signature": "Out for Signature",
+      pending: "Pending",
+      approved: "Approved",
+      complete: "Complete",
+      void: "Void",
+    };
+    return subcontractMap[normalized];
+  };
+
+  const normalizeAccountingMethod = (
+    rawMethod: unknown,
+    typeHint?: string,
+  ):
+    | CreatePurchaseOrderInput["accountingMethod"]
+    | CreateSubcontractInput["accountingMethod"]
+    | undefined => {
+    if (typeof rawMethod !== "string") {
+      return undefined;
+    }
+
+    const normalized = rawMethod.trim().toLowerCase();
+
+    if (typeHint === "purchase_order") {
+      if (normalized === "unit_quantity" || normalized === "unit-quantity") {
+        return "unit-quantity";
+      }
+      if (normalized === "amount_based" || normalized === "amount") {
+        return "amount";
+      }
+      return undefined;
+    }
+
+    if (normalized === "unit-quantity" || normalized === "unit") {
+      return "unit_quantity";
+    }
+    if (normalized === "amount") {
+      return "amount_based";
+    }
+    return normalized === "unit_quantity" || normalized === "amount_based"
+      ? normalized
+      : undefined;
+  };
+
+  const handleSubmitSubcontract = async (data: CreateSubcontractInput) => {
+    const response = await fetch(`/api/commitments/${commitmentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contract_number: data.contractNumber,
+        title: data.title,
+        contract_company_id: data.contractCompanyId || null,
+        status: data.status,
+        executed: data.executed,
+        description: data.description || null,
+        inclusions: data.inclusions || null,
+        exclusions: data.exclusions || null,
+        default_retainage_percent: data.defaultRetainagePercent || null,
+        start_date: data.dates?.startDate || null,
+        estimated_completion_date: data.dates?.estimatedCompletionDate || null,
+        actual_completion_date: data.dates?.actualCompletionDate || null,
+        contract_date: data.dates?.contractDate || null,
+        is_private: data.privacy?.isPrivate ?? true,
+        allow_non_admin_view_sov_items:
+          data.privacy?.allowNonAdminViewSovItems ?? false,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update subcontract");
+    }
+
+    toast.success("Subcontract updated successfully");
+    setIsEditing(false);
+    await fetchCommitment();
+  };
+
+  const handleSubmitPurchaseOrder = async (data: CreatePurchaseOrderInput) => {
+    const response = await fetch(`/api/commitments/${commitmentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contract_number: data.contractNumber,
+        title: data.title,
+        contract_company_id: data.contractCompanyId || null,
+        status: data.status,
+        executed: data.executed,
+        description: data.description || null,
+        accounting_method: data.accountingMethod || null,
+        assigned_to: data.assignedTo || null,
+        bill_to: data.billTo || null,
+        ship_to: data.shipTo || null,
+        ship_via: data.shipVia || null,
+        payment_terms: data.paymentTerms || null,
+        delivery_date: data.dates?.deliveryDate || null,
+        is_private: data.privacy?.isPrivate ?? true,
+        allow_non_admin_view_sov_items:
+          data.privacy?.allowNonAdminViewSovItems ?? false,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to update purchase order");
+    }
+
+    toast.success("Purchase order updated successfully");
+    setIsEditing(false);
+    await fetchCommitment();
+  };
 
   const breadcrumbs = [
     { label: "Projects", href: "/" },
@@ -337,6 +516,136 @@ export default function CommitmentDetailPage() {
               <Text tone="destructive">{error || "Commitment not found"}</Text>
             </CardContent>
           </Card>
+        </PageContainer>
+      </>
+    );
+  }
+
+  if (isEditing) {
+    const commitmentType = commitment.type || "subcontract";
+    const toDateOrUndefined = (value: string | null | undefined) =>
+      value && value.trim() !== "" ? value : undefined;
+
+    const normalizedStatus = normalizeStatus(commitment.status, commitmentType);
+    const normalizedAccountingMethod = normalizeAccountingMethod(
+      commitment.accounting_method,
+      commitmentType,
+    );
+
+    const subcontractInitialData: Partial<CreateSubcontractInput> & {
+      sovLines?: SovLineItem[];
+    } = {
+      contractNumber: commitment.number || "",
+      title: commitment.title || "",
+      contractCompanyId: commitment.contract_company_id || "",
+      status:
+        (normalizedStatus as CreateSubcontractInput["status"] | undefined) ??
+        ("Draft" as const),
+      executed: false,
+      accountingMethod: (normalizedAccountingMethod ??
+        "amount_based") as CreateSubcontractInput["accountingMethod"],
+      description: commitment.description || "",
+      inclusions: "",
+      exclusions: "",
+      defaultRetainagePercent: commitment.retention_percentage || undefined,
+      dates: {
+        startDate: toDateOrUndefined(commitment.start_date),
+        estimatedCompletionDate: toDateOrUndefined(
+          commitment.substantial_completion_date,
+        ),
+        actualCompletionDate: undefined,
+        contractDate: toDateOrUndefined(commitment.executed_date),
+        signedContractReceivedDate: undefined,
+        issuedOnDate: undefined,
+      },
+      privacy: {
+        isPrivate: commitment.private ?? true,
+        nonAdminUserIds: [],
+        allowNonAdminViewSovItems: false,
+      },
+      invoiceContactIds: [],
+      sovLines: (commitment.line_items || []).map((item, index) => ({
+        lineNumber: index + 1,
+        budgetCode: item.budget_code || undefined,
+        description: item.description || undefined,
+        amount: item.amount || undefined,
+        billedToDate: undefined,
+        changeEventLineItem: undefined,
+      })),
+    };
+
+    const purchaseOrderInitialData: Partial<CreatePurchaseOrderInput> & {
+      sovLines?: PurchaseOrderSovLineItem[];
+    } = {
+      contractNumber: commitment.number || "",
+      title: commitment.title || "",
+      contractCompanyId: commitment.contract_company_id || "",
+      status:
+        (normalizedStatus as CreatePurchaseOrderInput["status"] | undefined) ??
+        ("Draft" as const),
+      executed: false,
+      accountingMethod: (normalizedAccountingMethod ??
+        "unit-quantity") as CreatePurchaseOrderInput["accountingMethod"],
+      assignedTo: "",
+      billTo: "",
+      shipTo: "",
+      shipVia: "",
+      paymentTerms: "",
+      dates: {
+        contractDate: toDateOrUndefined(commitment.executed_date),
+        deliveryDate: undefined,
+        signedPoReceivedDate: undefined,
+        issuedOnDate: undefined,
+      },
+      privacy: {
+        isPrivate: commitment.private ?? true,
+        nonAdminUserIds: [],
+        allowNonAdminViewSovItems: false,
+      },
+      invoiceContactIds: [],
+      sovLines: (commitment.line_items || []).map((item, index) => ({
+        lineNumber: index + 1,
+        budgetCode: item.budget_code || undefined,
+        description: item.description || undefined,
+        amount: item.amount || 0,
+        quantity: item.quantity || undefined,
+        uom: item.uom || undefined,
+        unitCost: item.amount || undefined,
+        billedToDate: undefined,
+        changeEventLineItem: undefined,
+      })),
+    };
+
+    return (
+      <>
+        <ProjectPageHeader
+          title={`Edit ${commitment.number} — ${commitment.title}`}
+          description="Update commitment details"
+          breadcrumbs={breadcrumbs}
+          actions={
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+              Cancel Edit
+            </Button>
+          }
+        />
+        <PageContainer>
+          {commitmentType === "purchase_order" ? (
+            <CreatePurchaseOrderForm
+              projectId={projectId}
+              onSubmit={handleSubmitPurchaseOrder}
+              onCancel={() => setIsEditing(false)}
+              initialData={purchaseOrderInitialData}
+              mode="edit"
+            />
+          ) : (
+            <CreateSubcontractForm
+              projectId={projectId}
+              onSubmit={handleSubmitSubcontract}
+              onCancel={() => setIsEditing(false)}
+              initialData={subcontractInitialData}
+              mode="edit"
+            />
+          )}
         </PageContainer>
       </>
     );

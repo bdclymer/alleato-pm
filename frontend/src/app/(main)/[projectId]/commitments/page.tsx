@@ -234,7 +234,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   };
 
   const handleEdit = (item: CommitmentListItem) => {
-    router.push(`/${projectId}/commitments/${item.id}/edit`);
+    router.push(`/${projectId}/commitments/${item.id}?edit=1`);
   };
 
   const handleDeleteIntent = (item: CommitmentListItem) => {

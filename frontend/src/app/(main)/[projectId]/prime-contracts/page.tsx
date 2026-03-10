@@ -213,7 +213,7 @@ export default function ProjectContractsPage(): ReactElement {
   };
 
   const handleEdit = (item: PrimeContract) => {
-    router.push(`/${projectId}/prime-contracts/${item.id}/edit`);
+    router.push(`/${projectId}/prime-contracts/${item.id}?edit=1`);
   };
 
   const handleDeleteIntent = (item: PrimeContract) => {

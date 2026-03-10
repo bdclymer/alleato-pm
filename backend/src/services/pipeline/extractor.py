@@ -23,6 +23,31 @@ _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 logger = logging.getLogger(__name__)
 
 
+def _meeting_type_from_metadata(metadata: Dict[str, Any]) -> str:
+    metadata_type = str(metadata.get("type") or "").strip().lower()
+    if metadata_type:
+        return metadata_type
+
+    content = str(metadata.get("content") or metadata.get("raw_text") or "")
+    if not content:
+        return ""
+
+    try:
+        sections = _parser._split_sections(content)  # type: ignore[attr-defined]
+        section_type = str(sections.get("Meeting Type") or "").strip().lower()
+        return section_type
+    except Exception:
+        return ""
+
+
+def _is_interview_meeting(metadata: Dict[str, Any]) -> bool:
+    meeting_type = _meeting_type_from_metadata(metadata)
+    if meeting_type == "interview":
+        return True
+    title = str(metadata.get("title") or "").lower()
+    return "interview" in title
+
+
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
     """
     Extract and store structured data from a parsed meeting.
@@ -43,6 +68,27 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     metadata = resp.data
     if not metadata:
         raise ValueError(f"document_metadata not found: {metadata_id}")
+
+    if _is_interview_meeting(metadata):
+        fireflies_id = str(metadata.get("fireflies_id") or metadata_id)
+        client.table("fireflies_ingestion_jobs").update(
+            {"stage": "done"}
+        ).eq("fireflies_id", fireflies_id).execute()
+        client.table("fireflies_ingestion_jobs").update(
+            {"stage": "done"}
+        ).eq("metadata_id", metadata_id).execute()
+        client.table("document_metadata").update(
+            {"status": "complete"}
+        ).eq("id", metadata_id).execute()
+        return {
+            "metadataId": metadata_id,
+            "decisions": 0,
+            "risks": 0,
+            "tasks": 0,
+            "opportunities": 0,
+            "skipped": True,
+            "skipReason": "interview",
+        }
 
     title = metadata.get("title") or "Untitled"
     started_at = metadata.get("started_at") or metadata.get("captured_at")
@@ -164,7 +210,14 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     for risk in structured.risks:
         _upsert_risk(client, risk, metadata_id)
     for task in structured.tasks:
-        _upsert_task(client, task, metadata_id, project_ids)
+        _upsert_task(
+            client,
+            task,
+            metadata_id,
+            project_ids,
+            doc_project_id,
+            metadata.get("client_id"),
+        )
     for opportunity in structured.opportunities:
         _upsert_opportunity(client, opportunity, metadata_id)
 
@@ -220,7 +273,14 @@ def _upsert_risk(client, risk: RiskItem, metadata_id: str) -> None:
     ).execute()
 
 
-def _upsert_task(client, task: TaskItem, metadata_id: str, project_ids: List[int] | None = None) -> None:
+def _upsert_task(
+    client,
+    task: TaskItem,
+    metadata_id: str,
+    project_ids: List[int] | None = None,
+    project_id: int | None = None,
+    client_id: int | None = None,
+) -> None:
     data = {
         "metadata_id": metadata_id,
         "description": task.description,
@@ -231,6 +291,8 @@ def _upsert_task(client, task: TaskItem, metadata_id: str, project_ids: List[int
         "status": "open",
         "source_system": "fireflies",
         "project_ids": project_ids or [],
+        "project_id": project_id,
+        "client_id": client_id,
     }
     if task.assignee_email:
         data["assignee_email"] = task.assignee_email

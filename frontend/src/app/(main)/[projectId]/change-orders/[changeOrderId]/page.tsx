@@ -1,13 +1,19 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useCallback, useEffect } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +34,22 @@ import {
   getActionWarning,
 } from "@/lib/change-orders/status-transitions";
 import { LineItemsTable, type ChangeOrderLineItem } from "@/components/domain/change-orders/LineItemsTable";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
   approved: "default",
@@ -82,8 +104,32 @@ type Contract = {
   contract_number: string;
 };
 
+const changeOrderEditSchema = z.object({
+  co_number: z.string().min(1, "Change order number is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  status: z.enum(["draft", "submitted", "pending", "approved", "rejected", "executed", "withdrawn", "void"]),
+  amount: z.number().min(0, "Amount must be positive"),
+  contract_id: z.number().optional().nullable(),
+  designated_reviewer_id: z.string().optional().nullable(),
+  due_date: z.string().optional().nullable(),
+  is_private: z.boolean().default(false),
+  apply_vertical_markup: z.boolean().default(false),
+  change_event_id: z.string().optional().nullable(),
+});
+
+type ChangeOrderFormData = z.infer<typeof changeOrderEditSchema>;
+
+function getEditableFields(status: string | null) {
+  const statusLower = (status || "draft").toLowerCase();
+  const canEditFinancials = !["approved", "executed"].includes(statusLower);
+  const canEdit = !["executed", "void"].includes(statusLower);
+  return { canEdit, canEditFinancials };
+}
+
 export default function ChangeOrderDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = params.projectId as string;
   const changeOrderId = params.changeOrderId as string;
@@ -95,6 +141,8 @@ export default function ChangeOrderDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserCanApprove, setCurrentUserCanApprove] = useState(false);
   const [currentUserIsCreator, setCurrentUserIsCreator] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Line items state
   const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
@@ -105,6 +153,10 @@ export default function ChangeOrderDetailPage() {
   const [attachmentsLoaded, setAttachmentsLoaded] = useState(false);
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [lineItemsLoaded, setLineItemsLoaded] = useState(false);
+
+  const form = useForm<ChangeOrderFormData>({
+    resolver: zodResolver(changeOrderEditSchema) as any,
+  });
 
   // Change event state (for converted change orders)
   const [changeEvent, setChangeEvent] = useState<{
@@ -193,6 +245,29 @@ export default function ChangeOrderDetailPage() {
 
     fetchData();
   }, [projectId, changeOrderId]);
+
+  useEffect(() => {
+    if (searchParams.get("edit") === "1") {
+      setIsEditing(true);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!changeOrder) return;
+    form.reset({
+      co_number: changeOrder.co_number || "",
+      title: changeOrder.title || "",
+      description: changeOrder.description || "",
+      status: (changeOrder.status as ChangeOrderFormData["status"]) || "draft",
+      amount: changeOrder.amount || 0,
+      contract_id: changeOrder.contract_id,
+      designated_reviewer_id: changeOrder.designated_reviewer_id,
+      due_date: changeOrder.due_date,
+      is_private: changeOrder.is_private || false,
+      apply_vertical_markup: changeOrder.apply_vertical_markup || false,
+      change_event_id: changeOrder.change_event_id,
+    });
+  }, [changeOrder, form]);
 
   // Fetch line items
   const fetchLineItems = useCallback(async () => {
@@ -285,8 +360,37 @@ export default function ChangeOrderDetailPage() {
   }, [router, projectId]);
 
   const handleEdit = useCallback(() => {
-    router.push(`/${projectId}/change-orders/${changeOrderId}/edit`);
-  }, [router, projectId, changeOrderId]);
+    setIsEditing(true);
+  }, []);
+
+  const handleInlineEditSubmit: SubmitHandler<ChangeOrderFormData> = async (data) => {
+    setIsSavingEdit(true);
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/change-orders/${changeOrderId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || `Failed to update change order`);
+      }
+
+      const updated = await response.json();
+      setChangeOrder(updated);
+      setIsEditing(false);
+      toast.success("Change order updated successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update change order");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const handleDelete = useCallback(async () => {
     if (
@@ -507,6 +611,188 @@ export default function ChangeOrderDetailPage() {
               </div>
             </CardContent>
           </Card>
+        </PageContainer>
+      </>
+    );
+  }
+
+  const { canEdit, canEditFinancials } = getEditableFields(changeOrder.status);
+
+  if (isEditing && canEdit) {
+    const pageTitle = changeOrder.co_number
+      ? `Edit ${changeOrder.co_number}`
+      : `Edit Change Order #${changeOrder.id}`;
+
+    return (
+      <>
+        <ProjectPageHeader
+          title={pageTitle}
+          description="Update change order details"
+          actions={
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={isSavingEdit}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={form.handleSubmit(handleInlineEditSubmit)} disabled={isSavingEdit}>
+                {isSavingEdit ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          }
+        />
+        <PageContainer className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleInlineEditSubmit)} className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="co_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Change Order Number *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Enter change order number" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Change order title" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ""} placeholder="Describe the change order..." rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="submitted">Submitted</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="executed">Executed</SelectItem>
+                            <SelectItem value="withdrawn">Withdrawn</SelectItem>
+                            <SelectItem value="void">Void</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Financial & Schedule</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Amount ($) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={field.value}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                            disabled={!canEditFinancials}
+                          />
+                        </FormControl>
+                        {!canEditFinancials && (
+                          <FormDescription>Amount cannot be edited after approval</FormDescription>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="due_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" value={field.value || ""} onChange={field.onChange} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="space-y-4 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="is_private"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Private Change Order</FormLabel>
+                            <FormDescription>Only authorized users can view this change order</FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="apply_vertical_markup"
+                      render={({ field }) => (
+                        <FormItem className="flex items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Apply Vertical Markup</FormLabel>
+                            <FormDescription>Automatically apply markup percentages to amount calculations</FormDescription>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </form>
+          </Form>
         </PageContainer>
       </>
     );

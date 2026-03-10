@@ -146,6 +146,16 @@ async function discoverTablesByProbing(
     "time_entries",
     "expenses",
     "payments",
+    "prospects",
+    "change_events",
+    "prime_contracts",
+    "subcontracts",
+    "direct_costs",
+    "schedule_tasks",
+    "drawing_areas",
+    "observations",
+    "correspondence",
+    "bid_packages",
   ];
 
   const results = await Promise.allSettled(

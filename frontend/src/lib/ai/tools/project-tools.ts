@@ -292,6 +292,243 @@ export function createProjectTools(
       ),
     }),
 
+    getProjectsWithRisks: tool({
+      description:
+        "Portfolio-wide risk radar. Returns which projects currently have risks " +
+        "using structured risk records, unresolved AI insights, issue summaries, " +
+        "and critical health flags. Use this FIRST for questions like " +
+        "'what projects have risks?' or 'which jobs are most at risk?'.",
+      inputSchema: z.object({
+        phase: z
+          .string()
+          .optional()
+          .default("Current")
+          .describe(
+            "Project phase filter: 'Current' (default), 'Complete', 'Estimating', 'Planning', or 'all'",
+          ),
+        maxProjects: z
+          .number()
+          .optional()
+          .default(25)
+          .describe("Max number of risky projects to return"),
+      }),
+      execute: withTrace(
+        "getProjectsWithRisks",
+        options,
+        async ({ phase, maxProjects }) => {
+          let projectQuery = supabase
+            .from("projects")
+            .select("id, name, phase, health_status, health_score")
+            .eq("archived", false)
+            .order("name", { ascending: true })
+            .limit(200);
+
+          if (phase && phase !== "all") {
+            projectQuery = projectQuery.eq("phase", phase);
+          }
+
+          const { data: projectRows, error: projectError } = await projectQuery;
+          if (projectError) return { error: projectError.message };
+
+          const projects = (projectRows ?? []) as AnyRow[];
+          const projectIds = projects
+            .map((p) => Number(p.id))
+            .filter((id) => Number.isFinite(id));
+
+          if (projectIds.length === 0) {
+            return {
+              sourceRef: `[Source: Project Risk Radar - ${phase ?? "all"} projects]`,
+              summary: {
+                phase: phase ?? "all",
+                totalProjectsChecked: 0,
+                riskyProjects: 0,
+              },
+              projects: [],
+              message: "No projects found for the selected phase.",
+            };
+          }
+
+          const [risksRes, insightsRes, issueRes, healthRes, meetingRes] =
+            await Promise.all([
+              supabase
+                .from("risks")
+                .select(
+                  "id, project_id, status, category, likelihood, impact, description, owner_name, metadata_id, created_at",
+                )
+                .in("project_id", projectIds)
+                .order("created_at", { ascending: false })
+                .limit(2000),
+              supabase
+                .from("ai_insights")
+                .select(
+                  "id, project_id, project_name, title, description, severity, insight_type, resolved, created_at",
+                )
+                .in("project_id", projectIds)
+                .order("created_at", { ascending: false })
+                .limit(2000),
+              supabase
+                .from("project_issue_summary")
+                .select("project_id, total_issues, total_cost")
+                .in("project_id", projectIds),
+              supabase
+                .from("project_health_dashboard")
+                .select("id, open_critical_items, health_status, health_score")
+                .in("id", projectIds),
+              supabase
+                .from("document_metadata")
+                .select("project_id, title, date, summary, overview")
+                .in("project_id", projectIds)
+                .or("type.eq.meeting,category.eq.meeting")
+                .order("date", { ascending: false })
+                .limit(300),
+            ]);
+
+          const risks = (risksRes.data ?? []) as AnyRow[];
+          const insights = (insightsRes.data ?? []) as AnyRow[];
+          const issueRows = (issueRes.data ?? []) as AnyRow[];
+          const healthRows = (healthRes.data ?? []) as AnyRow[];
+          const meetings = (meetingRes.data ?? []) as AnyRow[];
+
+          const issuesByProject = new Map<number, AnyRow>();
+          issueRows.forEach((row) => {
+            if (typeof row.project_id === "number") {
+              issuesByProject.set(row.project_id, row);
+            }
+          });
+
+          const healthByProject = new Map<number, AnyRow>();
+          healthRows.forEach((row) => {
+            if (typeof row.id === "number") {
+              healthByProject.set(row.id, row);
+            }
+          });
+
+          const latestMeetingByProject = new Map<number, AnyRow>();
+          meetings.forEach((row) => {
+            const projectIdValue =
+              typeof row.project_id === "number" ? row.project_id : null;
+            if (!projectIdValue || latestMeetingByProject.has(projectIdValue)) return;
+            latestMeetingByProject.set(projectIdValue, row);
+          });
+
+          const riskByProject = new Map<number, AnyRow[]>();
+          risks.forEach((row) => {
+            if (typeof row.project_id !== "number") return;
+            const status = String(row.status ?? "").toLowerCase();
+            if (status === "closed" || status === "resolved" || status === "mitigated") {
+              return;
+            }
+            const arr = riskByProject.get(row.project_id) ?? [];
+            arr.push(row);
+            riskByProject.set(row.project_id, arr);
+          });
+
+          const insightsByProject = new Map<number, AnyRow[]>();
+          insights.forEach((row) => {
+            if (typeof row.project_id !== "number") return;
+            const resolved = Number(row.resolved ?? 0) === 1;
+            if (resolved) return;
+            const arr = insightsByProject.get(row.project_id) ?? [];
+            arr.push(row);
+            insightsByProject.set(row.project_id, arr);
+          });
+
+          const riskyProjects = projects
+            .map((project) => {
+              const pid = Number(project.id);
+              const projectRisks = riskByProject.get(pid) ?? [];
+              const projectInsights = insightsByProject.get(pid) ?? [];
+              const issueSummary = issuesByProject.get(pid);
+              const health = healthByProject.get(pid);
+              const latestMeeting = latestMeetingByProject.get(pid);
+
+              const criticalInsightCount = projectInsights.filter((i) => {
+                const sev = String(i.severity ?? "").toLowerCase();
+                return sev === "critical" || sev === "high";
+              }).length;
+
+              const openRiskCount = projectRisks.length;
+              const openIssueCount = Number(issueSummary?.total_issues ?? 0);
+              const openCriticalItems = Number(health?.open_critical_items ?? 0);
+
+              const riskScore =
+                openRiskCount * 5 +
+                criticalInsightCount * 4 +
+                openCriticalItems * 3 +
+                openIssueCount;
+
+              const topSignals: string[] = [];
+              if (openRiskCount > 0) {
+                topSignals.push(`${openRiskCount} open structured risk(s)`);
+              }
+              if (criticalInsightCount > 0) {
+                topSignals.push(`${criticalInsightCount} high/critical AI insight(s)`);
+              }
+              if (openCriticalItems > 0) {
+                topSignals.push(`${openCriticalItems} critical health item(s)`);
+              }
+              if (openIssueCount > 0) {
+                topSignals.push(`${openIssueCount} tracked issue(s)`);
+              }
+
+              return {
+                id: pid,
+                name: project.name,
+                phase: project.phase,
+                healthStatus:
+                  health?.health_status ?? project.health_status ?? null,
+                healthScore: health?.health_score ?? project.health_score ?? null,
+                riskScore,
+                openRiskCount,
+                criticalInsightCount,
+                openCriticalItems,
+                openIssueCount,
+                topSignals,
+                sourceRef: latestMeeting
+                  ? `[Source: Meeting - "${latestMeeting.title}" - ${latestMeeting.date}]`
+                  : null,
+                latestMeeting: latestMeeting
+                  ? {
+                      title: latestMeeting.title,
+                      date: latestMeeting.date,
+                      summary: String(
+                        latestMeeting.summary || latestMeeting.overview || "",
+                      ).substring(0, 600),
+                    }
+                  : null,
+              };
+            })
+            .filter(
+              (p) =>
+                p.openRiskCount > 0 ||
+                p.criticalInsightCount > 0 ||
+                p.openCriticalItems > 0 ||
+                p.openIssueCount > 0,
+            )
+            .sort((a, b) => b.riskScore - a.riskScore)
+            .slice(0, maxProjects ?? 25);
+
+          return {
+            sourceRef: `[Source: Project Risk Radar - ${phase ?? "all"} projects]`,
+            summary: {
+              phase: phase ?? "all",
+              totalProjectsChecked: projects.length,
+              riskyProjects: riskyProjects.length,
+              projectsWithStructuredRisks: riskyProjects.filter((p) => p.openRiskCount > 0)
+                .length,
+              projectsWithCriticalItems: riskyProjects.filter((p) => p.openCriticalItems > 0)
+                .length,
+            },
+            projects: riskyProjects,
+            message:
+              riskyProjects.length === 0
+                ? "No active project risks were detected for the selected phase."
+                : undefined,
+          };
+        },
+      ),
+    }),
+
     getProjectRiskAnalysis: tool({
       description:
         "Deep risk analysis for a specific project. Pulls AI-identified risks, " +

@@ -316,7 +316,7 @@ export function ChangeOrdersClient({
   };
 
   const handleEdit = (order: UnifiedChangeOrder) => {
-    router.push(`/${projectId}/change-orders/${order.id}/edit`);
+    router.push(`/${projectId}/change-orders/${order.id}?edit=1`);
   };
 
   const handleDelete = async (order: UnifiedChangeOrder) => {

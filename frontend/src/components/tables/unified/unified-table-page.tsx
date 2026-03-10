@@ -632,23 +632,37 @@ export function UnifiedTablePage<T>({
     />
   );
 
+  const headerContent = sidePanel ? (
+    <div className="px-0 sm:px-0 lg:px-0">
+      <div className="flex items-center justify-between gap-3 py-3">
+        <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">{header.title}</h1>
+        {header.actions}
+      </div>
+      <div className="flex items-center gap-2 pb-2">
+        {tableToolbar}
+      </div>
+    </div>
+  ) : (
+    <PageHeader
+      title={header.title}
+      description={header.description}
+      className="px-0 sm:px-0 lg:px-0"
+      actions={
+        toolbarInlineWithHeader ? (
+          <div className="flex items-center gap-2">
+            {header.actions}
+            {tableToolbar}
+          </div>
+        ) : (
+          header.actions
+        )
+      }
+    />
+  );
+
   const leftPaneContent = (
     <>
-      <PageHeader
-        title={header.title}
-        description={header.description}
-        className="px-0 sm:px-0 lg:px-0"
-        actions={
-          toolbarInlineWithHeader ? (
-            <div className="flex items-center gap-2">
-              {header.actions}
-              {tableToolbar}
-            </div>
-          ) : (
-            header.actions
-          )
-        }
-      />
+      {!sidePanel && headerContent}
       {(tabs || !toolbarInlineWithHeader) && (
         <div className="pt-2 sm:pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
@@ -687,7 +701,7 @@ export function UnifiedTablePage<T>({
       )}
 
       {showTable && shouldRenderTableView && (
-        <div className={cn("mt-4", data.isFetching && "opacity-70")}>
+        <div className={cn(sidePanel ? "mt-0" : "mt-4", data.isFetching && "opacity-70")}>
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
@@ -704,10 +718,10 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
+              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20", sidePanel && "bg-accent/40")}>
                 <TableRow>
                   {hasRowSelection && (
-                    <TableHead className="w-[40px]">
+                    <TableHead className={cn("w-[40px]", sidePanel && "bg-accent/40")}>
                       <Checkbox
                         checked={allSelected ? true : someSelected ? "indeterminate" : false}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -734,6 +748,7 @@ export function UnifiedTablePage<T>({
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
                               isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
+                              sidePanel && "bg-accent/40",
                             )}
                           style={columnStyle}
                           draggable={resolvedFeatures.enableColumnReorder}
@@ -760,7 +775,8 @@ export function UnifiedTablePage<T>({
                                 <button
                                   type="button"
                                   className={cn(
-                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold text-xs uppercase tracking-wider text-muted-foreground cursor-pointer",
+                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold text-xs uppercase tracking-wider cursor-pointer",
+                                    sidePanel ? "text-foreground" : "text-muted-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {
@@ -1115,17 +1131,20 @@ export function UnifiedTablePage<T>({
   return (
     <PageContainer className={cn(sidePanel && "pt-0")}>
       {sidePanel ? (
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-10 lg:min-h-[calc(100vh-7.5rem)]">
-          <div className="min-w-0">{leftPaneContent}</div>
-          <aside
-            className={cn(
-              "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto bg-[hsl(var(--surface-alt))] rounded-lg",
-              sidePanel.widthClassName,
-            )}
-          >
-            {sidePanel.content}
-          </aside>
-        </div>
+        <>
+          {headerContent}
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]">
+            <div className="min-w-0">{leftPaneContent}</div>
+            <aside
+              className={cn(
+                "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto bg-muted border-l border-border",
+                sidePanel.widthClassName,
+              )}
+            >
+              {sidePanel.content}
+            </aside>
+          </div>
+        </>
       ) : (
         leftPaneContent
       )}

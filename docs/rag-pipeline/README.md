@@ -1,24 +1,17 @@
 # RAG Pipeline Docs
 
-This folder now has two core docs:
+Core docs in this folder:
 
-1. `rag-pipeline.md` — authoritative architecture, flow, strategy, chat conversation persistence, and file map.
-2. `README.md` (this file) — index and maintenance rules.
+1. [`rag-pipeline.md`](./rag-pipeline.md) — authoritative runbook for:
+   - Fireflies sync
+   - RAG ingestion/pipeline stages
+   - Chunking + extraction strategy
+   - AI assistant agents/prompts/tools wiring
+   - Conversation memory
+   - Known quality failure modes and fixes
+2. `README.md` (this file) — index + maintenance expectations
 
-## Documentation Policy
-
-- `rag-pipeline.md` is the source of truth.
-- Historical run/test notes should live outside this folder unless they are still operationally relevant.
-- If pipeline behavior changes, update `rag-pipeline.md` in the same PR as code changes.
-
-## What was consolidated
-
-These prior docs were consolidated because they overlapped, drifted, or were historical snapshots:
-- `FIREFLIES-SYNC.md`
-- `FIREFLIES-SYNC.html`
-- `RAG-CHAT-TEST-REPORT.md`
-- `RAG-ENHANCEMENT-SUMMARY.md`
-- `fireflies-sync-and-markdown-changes-2026-03-07.md`
-- `rag-integration.md`
-
-If historical context is needed later, recover from git history.
+Documentation policy:
+- Keep [`rag-pipeline.md`](./rag-pipeline.md) aligned with runtime code in the same PR as behavioral changes.
+- Use direct file links in docs so implementation can be verified quickly.
+- Keep this folder limited to operational docs, not one-off test artifacts.

@@ -115,6 +115,8 @@ export interface Contract {
   vendor_id: string | null;
   client_id: number | null;
   contract_company_id: string | null;
+  contractor_id?: string | null;
+  architect_engineer_id?: string | null;
   project_id: number;
   vendor?: { id: string; name: string } | null;
   client?: { id: number; name: string } | null;

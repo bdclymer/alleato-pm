@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 EMBEDDING_MODEL = "text-embedding-3-small"
 CHAT_MODEL = "gpt-4o-mini"
+SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
 
 def _client() -> OpenAI:
@@ -87,14 +88,34 @@ Be specific and include names, dates, and concrete details where mentioned."""
 # Transcript segmentation
 # ---------------------------------------------------------------------------
 
-def segment_transcript(formatted_transcript: str, title: str) -> List[Dict[str, Any]]:
+def segment_transcript(
+    formatted_transcript: str,
+    title: str,
+    max_chars: Optional[int] = None,
+) -> List[Dict[str, Any]]:
     """Returns a list of segment dicts with title/start_index/end_index/summary/decisions/risks/tasks."""
+    effective_max_chars = max_chars
+    if effective_max_chars is None and SEGMENT_TRANSCRIPT_MAX_CHARS > 0:
+        effective_max_chars = SEGMENT_TRANSCRIPT_MAX_CHARS
+
+    transcript_for_prompt = formatted_transcript
+    if (
+        effective_max_chars is not None
+        and len(formatted_transcript) > effective_max_chars
+    ):
+        logger.warning(
+            "[LLM] segment_transcript input truncated from %d to %d chars",
+            len(formatted_transcript),
+            effective_max_chars,
+        )
+        transcript_for_prompt = formatted_transcript[:effective_max_chars]
+
     prompt = f"""Analyze this meeting transcript and identify distinct semantic segments (topic changes, agenda items, discussion phases).
 
 Meeting: {title}
 
 Transcript (each line prefixed with [index]):
-{formatted_transcript[:15000]}
+{transcript_for_prompt}
 
 Return JSON array of segments. Each segment should capture a coherent topic or discussion phase.
 

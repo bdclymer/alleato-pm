@@ -92,6 +92,15 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "contract",
       "change order",
       "change event",
+      "risk",
+      "risks",
+      "risky",
+      "at risk",
+      "issue",
+      "issues",
+      "critical item",
+      "critical items",
+      "exposure",
       "retention",
       "billing",
       "revenue",
@@ -465,6 +474,14 @@ export function createStrategistTools(
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options as any);
+  // Do not expose risk-dedicated tools directly to the Strategist.
+  // This forces portfolio/project risk questions through consultCFO,
+  // where the specialist prompt requires risk-specific workflows.
+  const {
+    getProjectsWithRisks: _riskRadarTool,
+    getProjectRiskAnalysis: _projectRiskTool,
+    ...strategistBaseTools
+  } = baseTools;
 
   return {
     // The Strategist's specialist consultation tools
@@ -527,7 +544,7 @@ export function createStrategistTools(
 
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
-    ...baseTools,
+    ...strategistBaseTools,
   };
 }
 
