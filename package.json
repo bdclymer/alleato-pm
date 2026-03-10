@@ -6,7 +6,7 @@
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && ./start.sh",
-    "build": "cd frontend && npm run build",
+    "build": "pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend run build",
     "start": "cd frontend && npm start",
     "install:all": "npm install && cd frontend && npm install",
     "test": "npm run test:frontend && npm run test:backend",

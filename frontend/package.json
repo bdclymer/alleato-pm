@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "postinstall": "rm -rf .next",
-    "dev": "next dev",
-    "dev:clean": "rm -rf .next && next dev",
+    "dev": "next dev --turbopack",
+    "dev:clean": "rm -rf .next && next dev --turbopack",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' next build --turbopack",
     "start": "next start",
     "lint": "eslint .",
