@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Max chars to send to LLM for segmentation (prevents token overflow)
 MAX_LLM_CHARS = 30_000
+MIN_EXTRACTED_CHARS = 50
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +78,13 @@ def extract_text_from_plain(content: str) -> str:
     return content.strip()
 
 
+def _sanitize_text(text: str) -> str:
+    """Remove DB-breaking control chars while preserving formatting."""
+    if not text:
+        return ""
+    return text.replace("\x00", "").replace("\u0000", "")
+
+
 def detect_and_extract(
     file_bytes: Optional[bytes],
     content: Optional[str],
@@ -87,21 +95,21 @@ def detect_and_extract(
 
     if file_bytes:
         if ext == "pdf":
-            return extract_text_from_pdf(file_bytes)
+            return _sanitize_text(extract_text_from_pdf(file_bytes))
         elif ext in ("docx", "doc"):
-            return extract_text_from_docx(file_bytes)
+            return _sanitize_text(extract_text_from_docx(file_bytes))
         else:
             # Try to decode as text
             try:
-                return file_bytes.decode("utf-8").strip()
+                return _sanitize_text(file_bytes.decode("utf-8").strip())
             except UnicodeDecodeError:
                 # Fall back to PDF detection by magic bytes
                 if file_bytes[:5] == b"%PDF-":
-                    return extract_text_from_pdf(file_bytes)
+                    return _sanitize_text(extract_text_from_pdf(file_bytes))
                 raise ValueError(f"Cannot extract text from file: {file_name}")
 
     if content:
-        return extract_text_from_plain(content)
+        return _sanitize_text(extract_text_from_plain(content))
 
     raise ValueError("No file bytes or content provided")
 
@@ -228,9 +236,9 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
             raise ValueError(f"Failed to download file: {file_path}")
 
     # 3. Extract text
-    extracted_text = detect_and_extract(file_bytes, content, file_name)
-    if not extracted_text or len(extracted_text.strip()) < 50:
-        raise ValueError(f"Extracted text too short ({len(extracted_text)} chars)")
+    extracted_text = _sanitize_text(detect_and_extract(file_bytes, content, file_name))
+    extracted_len = len(extracted_text.strip())
+    extracted_is_too_short = extracted_len < MIN_EXTRACTED_CHARS
 
     logger.info("[DocParser] Extracted %d chars from %s", len(extracted_text), file_name or "content")
 
@@ -241,21 +249,40 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
         ).eq("id", metadata_id).execute()
 
     # 5. Generate document summary
-    summary = _generate_document_summary(extracted_text, title)
-    logger.info("[DocParser] Generated summary: %d chars", len(summary))
+    if extracted_is_too_short:
+        summary = (
+            f"Minimal extract for '{title}'. "
+            f"Parsed content was only {extracted_len} characters and may require OCR or a different source format."
+        )
+        logger.warning(
+            "[DocParser] Extracted text too short (%d chars) for %s; using fallback summary/segment",
+            extracted_len,
+            metadata_id,
+        )
+    else:
+        summary = _generate_document_summary(extracted_text, title)
+        logger.info("[DocParser] Generated summary: %d chars", len(summary))
 
     # 6. Segment the document via LLM
-    segment_dicts = _segment_document(extracted_text, title)
-    logger.info("[DocParser] Created %d segments", len(segment_dicts))
+    if extracted_is_too_short:
+        segment_dicts = []
+    else:
+        segment_dicts = _segment_document(extracted_text, title)
+        logger.info("[DocParser] Created %d segments", len(segment_dicts))
 
     # If LLM returned no segments, create a single fallback segment
     if not segment_dicts:
-        line_count = len(extracted_text.split("\n"))
+        line_count = max(1, len(extracted_text.split("\n")))
+        fallback_summary = summary[:500]
+        fallback_text = extracted_text.strip()
+        if not fallback_text:
+            fallback_text = f"Document: {title}\n\nNo extractable text was found in the uploaded file."
+            extracted_text = fallback_text
         segment_dicts = [{
             "title": title,
             "start_index": 0,
             "end_index": line_count - 1,
-            "summary": summary[:500],
+            "summary": fallback_summary,
             "decisions": [],
             "risks": [],
             "tasks": [],
@@ -306,7 +333,7 @@ def run_document_parser(metadata_id: str) -> Dict[str, Any]:
 
     # 10. Advance job stage
     client.table("fireflies_ingestion_jobs").update(
-        {"stage": "segmented"}
+        {"stage": "segmented", "error_message": None}
     ).eq("metadata_id", metadata_id).execute()
 
     return {

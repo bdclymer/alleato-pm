@@ -48,6 +48,7 @@ _HEADER_KEYWORDS = {
 
 def _normalize_col_name(value: Any, idx: int) -> str:
     raw = (str(value).strip() if value is not None else "")
+    raw = raw.replace("\x00", "").replace("\u0000", "")
     if not raw:
         return f"col_{idx + 1}"
     if raw.lower() in {"nan", "none", "nat", "null"}:
@@ -153,7 +154,7 @@ def _safe_value(value: Any) -> Any:
     if isinstance(value, (int, float, bool)):
         return value
 
-    text = str(value).strip()
+    text = str(value).replace("\x00", "").replace("\u0000", "").strip()
     if text.lower() in {"nan", "none", "nat", "null"}:
         return None
     return text if text else None
@@ -345,7 +346,8 @@ def run_financial_parser(metadata_id: str) -> Dict[str, Any]:
 
     _insert_document_rows(client, metadata_id, all_structured_rows)
 
-    combined_content = "\n\n".join(content_blocks)[:MAX_CONTENT_CHARS]
+    combined_content = "\n\n".join(content_blocks).replace("\x00", "").replace("\u0000", "")
+    combined_content = combined_content[:MAX_CONTENT_CHARS]
     overview = (
         f"Financial dataset with {len(segments)} sheets and "
         f"{len(all_structured_rows)} stored rows. "
