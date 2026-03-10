@@ -10,7 +10,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { FormContainer , ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -321,52 +321,42 @@ export default function EditCommitmentPage(): ReactElement {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Loading..."
-          breadcrumbs={[
-            { label: "Commitments", href: `/${projectId}/commitments` },
-            { label: "Edit" },
-          ]}
-        />
-        <FormContainer maxWidth="xl">
-          <div className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-3/4" />
-          </div>
-        </FormContainer>
-      </>
+      <ProjectFormPageLayout
+        title="Loading..."
+        description="Loading commitment details"
+        maxWidth="xl"
+      >
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-3/4" />
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
   if (error || !commitmentData) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Error"
-          breadcrumbs={[
-            { label: "Commitments", href: `/${projectId}/commitments` },
-            { label: "Edit" },
-          ]}
-          actions={
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          }
-        />
-        <FormContainer maxWidth="xl">
-          <div className="text-center text-destructive p-6">
-            {error || "Commitment not found"}
-          </div>
-        </FormContainer>
-      </>
+      <ProjectFormPageLayout
+        title="Error"
+        description="Unable to load commitment"
+        maxWidth="xl"
+        headerActions={
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        }
+      >
+        <div className="p-6 text-center text-destructive">
+          {error || "Commitment not found"}
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -474,49 +464,39 @@ export default function EditCommitmentPage(): ReactElement {
   };
 
   return (
-    <>
-      <ProjectPageHeader
+    <ProjectFormPageLayout
         title={title}
-        breadcrumbs={[
-          { label: "Commitments", href: `/${projectId}/commitments` },
-          {
-            label: commitmentData?.contract_number || commitmentId,
-            href: `/${projectId}/commitments/${commitmentId}`,
-          },
-          { label: "Edit" },
-        ]}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        }
-      />
-
-      <FormContainer maxWidth="xl">
-        {commitmentType === "purchase_order" ? (
-          <CreatePurchaseOrderForm
-            projectId={projectId}
-            onSubmit={handleSubmitPurchaseOrder}
-            onCancel={handleCancel}
-            initialData={purchaseOrderInitialData}
-            mode="edit"
-          />
-        ) : (
-          <CreateSubcontractForm
-            projectId={projectId}
-            onSubmit={handleSubmitSubcontract}
-            onCancel={handleCancel}
-            initialData={subcontractInitialData}
-            mode="edit"
-          />
-        )}
-      </FormContainer>
-    </>
+      description="Update commitment details"
+      maxWidth="xl"
+      headerActions={
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      }
+    >
+      {commitmentType === "purchase_order" ? (
+        <CreatePurchaseOrderForm
+          projectId={projectId}
+          onSubmit={handleSubmitPurchaseOrder}
+          onCancel={handleCancel}
+          initialData={purchaseOrderInitialData}
+          mode="edit"
+        />
+      ) : (
+        <CreateSubcontractForm
+          projectId={projectId}
+          onSubmit={handleSubmitSubcontract}
+          onCancel={handleCancel}
+          initialData={subcontractInitialData}
+          mode="edit"
+        />
+      )}
+    </ProjectFormPageLayout>
   );
 }

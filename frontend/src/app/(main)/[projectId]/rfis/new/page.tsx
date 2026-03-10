@@ -4,9 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { ArrowLeft, Save, Send } from "lucide-react";
 
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
-
-import { FormContainer } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,26 +87,24 @@ export default function NewRfiPage() {
   const handleCreateOpen = () => submitRfi("open");
 
   return (
-    <>
-      <ProjectPageHeader
+    <ProjectFormPageLayout
         title="New RFI"
         description="Create a new Request for Information"
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/rfis`)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to RFIs
-          </Button>
-        }
-      />
-      <PageContainer>
-        <FormContainer maxWidth="lg">
-          <Form {...form}>
-            <form className="space-y-8">
+      maxWidth="lg"
+      headerActions={
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/${projectId}/rfis`)}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to RFIs
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form className="space-y-8">
               {/* Required Fields */}
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold border-b pb-2">
@@ -492,10 +488,8 @@ export default function NewRfiPage() {
                   Create Open
                 </Button>
               </div>
-            </form>
-          </Form>
-        </FormContainer>
-      </PageContainer>
-    </>
+        </form>
+      </Form>
+    </ProjectFormPageLayout>
   );
 }

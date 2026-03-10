@@ -161,7 +161,15 @@ function SortableLineItemRow({
     transition,
   }
 
-  const lineTotal = (item.quantity || 0) * (item.unit_cost || 0)
+  const quantity = useWatch({
+    control: form.control,
+    name: `line_items.${index}.quantity`,
+  })
+  const unitCost = useWatch({
+    control: form.control,
+    name: `line_items.${index}.unit_cost`,
+  })
+  const lineTotal = (Number(quantity) || 0) * (Number(unitCost) || 0)
 
   return (
     <TableRow
@@ -262,9 +270,12 @@ function SortableLineItemRow({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value || undefined}
+                >
                   <SelectTrigger className="h-10 w-full">
-                    <SelectValue />
+                    <SelectValue placeholder="Select UOM" />
                   </SelectTrigger>
                   <SelectContent>
                     {UnitTypes.map((unit) => (
@@ -570,9 +581,10 @@ export function LineItemsManager({
       <FormTotalRow
         label="Line Items Total"
         value={formatCurrency(grandTotal)}
+        className="border-0 px-4 pt-0 pr-28"
       />
 
-      <div className="flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
             type="button"

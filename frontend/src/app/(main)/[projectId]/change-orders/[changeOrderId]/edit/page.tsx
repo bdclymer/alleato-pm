@@ -29,7 +29,7 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/ui/form";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { ContractChangeOrder } from "@/types/contract-change-orders";
 
 /**
@@ -166,43 +166,39 @@ export default function EditChangeOrderPage() {
   // Loading state
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Loading..."
-          description="Loading change order details"
-        />
-        <PageContainer>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading change order...</p>
-            </div>
+      <ProjectFormPageLayout
+        title="Loading..."
+        description="Loading change order details"
+        maxWidth="xl"
+      >
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-muted-foreground">Loading change order...</p>
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
   // Error state
   if (error || !changeOrder) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Error"
-          description="Failed to load change order"
-        />
-        <PageContainer>
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <p className="text-destructive mb-4">{error || "Change order not found"}</p>
-              <Button variant="outline" onClick={() => router.push(`/${projectId}/change-orders`)}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Change Orders
-              </Button>
-            </div>
+      <ProjectFormPageLayout
+        title="Error"
+        description="Failed to load change order"
+        maxWidth="xl"
+      >
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <p className="mb-4 text-destructive">{error || "Change order not found"}</p>
+            <Button variant="outline" onClick={() => router.push(`/${projectId}/change-orders`)}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Change Orders
+            </Button>
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -211,27 +207,25 @@ export default function EditChangeOrderPage() {
   // Non-editable state
   if (!canEdit) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Cannot Edit Change Order"
-          description={`Change Order ${changeOrder.co_number || changeOrder.id} cannot be edited in ${changeOrder.status} status`}
-        />
-        <PageContainer>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-center text-muted-foreground mb-4">
-                This change order is in <strong>{changeOrder.status}</strong> status and cannot be edited.
-              </p>
-              <div className="flex justify-center">
-                <Button onClick={() => router.push(`/${projectId}/change-orders/${changeOrderId}`)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Detail Page
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </PageContainer>
-      </>
+      <ProjectFormPageLayout
+        title="Cannot Edit Change Order"
+        description={`Change Order ${changeOrder.co_number || changeOrder.id} cannot be edited in ${changeOrder.status} status`}
+        maxWidth="xl"
+      >
+        <Card>
+          <CardContent className="pt-6">
+            <p className="mb-4 text-center text-muted-foreground">
+              This change order is in <strong>{changeOrder.status}</strong> status and cannot be edited.
+            </p>
+            <div className="flex justify-center">
+              <Button onClick={() => router.push(`/${projectId}/change-orders/${changeOrderId}`)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Detail Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -240,26 +234,25 @@ export default function EditChangeOrderPage() {
     : `Edit Change Order #${changeOrder.id}`;
 
   return (
-    <>
-      <ProjectPageHeader
-        title={pageTitle}
-        description="Update change order details"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-            <Button size="sm" onClick={form.handleSubmit(handleSubmit)} disabled={isSaving}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        }
-      />
-      <PageContainer>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+    <ProjectFormPageLayout
+      title={pageTitle}
+      description="Update change order details"
+      maxWidth="xl"
+      headerActions={
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Cancel
+          </Button>
+          <Button size="sm" onClick={form.handleSubmit(handleSubmit)} disabled={isSaving}>
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {/* Basic Information Card */}
             <Card>
               <CardHeader>
@@ -497,9 +490,8 @@ export default function EditChangeOrderPage() {
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
-          </form>
-        </Form>
-      </PageContainer>
-    </>
+        </form>
+      </Form>
+    </ProjectFormPageLayout>
   );
 }

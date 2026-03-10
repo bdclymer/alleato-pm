@@ -1,5 +1,5 @@
 import { CreateDirectCostForm } from "@/components/direct-costs/CreateDirectCostForm";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 
 interface PageProps {
   params: Promise<{
@@ -12,14 +12,12 @@ export default async function NewDirectCostPage({ params }: PageProps) {
   const projectId = Number.parseInt(resolvedParams.projectId, 10);
 
   return (
-    <>
-      <ProjectPageHeader
-        title="New Direct Cost"
-        description="Create a new direct cost entry for this project"
-      />
-      <PageContainer>
-        <CreateDirectCostForm projectId={projectId} />
-      </PageContainer>
-    </>
+    <ProjectFormPageLayout
+      title="New Direct Cost"
+      description="Create a new direct cost entry for this project"
+      maxWidth="xl"
+    >
+      <CreateDirectCostForm projectId={projectId} />
+    </ProjectFormPageLayout>
   );
 }

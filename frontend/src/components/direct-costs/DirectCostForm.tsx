@@ -240,7 +240,7 @@ export function DirectCostForm({
           budget_code_id: '',
           description: '',
           quantity: 1,
-          uom: 'LOT',
+          uom: '',
           unit_cost: 0,
         },
       ],
@@ -384,7 +384,7 @@ export function DirectCostForm({
       budget_code_id: '',
       description: '',
       quantity: 1,
-      uom: 'LOT',
+      uom: '',
       unit_cost: 0,
     } as never)
   }, [append])

@@ -7,7 +7,7 @@ import { z } from "zod"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
-import { PageContainer, PageHeader, FormContainer } from "@/components/layout"
+import { ProjectFormPageLayout } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 
@@ -151,27 +151,25 @@ export default function StandardFormPage() {
   }
 
   return (
-    <PageContainer>
-      <PageHeader
+    <ProjectFormPageLayout
         title="Create New Item"
         description="Example template showing every standard form field pattern"
-        actions={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleCancel}
-            className="w-full sm:w-auto"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to List
-          </Button>
-        }
-      />
-
-      <FormContainer maxWidth="lg" withCard={false}>
-        <Form {...form}>
-          <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      maxWidth="lg"
+      headerActions={
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleCancel}
+          className="w-full sm:w-auto"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to List
+        </Button>
+      }
+    >
+      <Form {...form}>
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <FormSection
               title="Basic Information"
               description="Standard examples for common field types"
@@ -353,9 +351,8 @@ export default function StandardFormPage() {
               submitLabel="Create Item"
               stickyOnMobile
             />
-          </form>
-        </Form>
-      </FormContainer>
-    </PageContainer>
+        </form>
+      </Form>
+    </ProjectFormPageLayout>
   )
 }

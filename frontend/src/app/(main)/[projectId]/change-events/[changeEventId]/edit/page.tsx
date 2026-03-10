@@ -1,5 +1,5 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { TableLayout } from "@/components/layouts";
@@ -103,34 +103,39 @@ export default function EditChangeEventPage() {
   };
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        {" "}
-        <div className="text-center">
-          {" "}
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>{" "}
-          <p className="text-muted-foreground">Loading change event...</p>{" "}
-        </div>{" "}
-      </div>
+      <ProjectFormPageLayout
+        title="Edit Change Event"
+        description="Loading change event..."
+        maxWidth="3xl"
+      >
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+            <p className="text-muted-foreground">Loading change event...</p>
+          </div>
+        </div>
+      </ProjectFormPageLayout>
     );
   }
   if (error || !changeEvent) {
     return (
-      <div className="flex items-center justify-center h-64">
-        {" "}
-        <div className="text-center">
-          {" "}
-          <p className="text-destructive mb-4">
-            {error || "Change event not found"}
-          </p>{" "}
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/${projectId}/change-events`)}
-          >
-            {" "}
-            Back to Change Events{" "}
-          </Button>{" "}
-        </div>{" "}
-      </div>
+      <ProjectFormPageLayout
+        title="Edit Change Event"
+        description="Unable to load change event"
+        maxWidth="3xl"
+      >
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <p className="mb-4 text-destructive">{error || "Change event not found"}</p>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/${projectId}/change-events`)}
+            >
+              Back to Change Events
+            </Button>
+          </div>
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -141,23 +146,17 @@ export default function EditChangeEventPage() {
 
   if (!canEdit) {
     return (
-      <>
-        <ProjectPageHeader
+      <ProjectFormPageLayout
           title="Cannot Edit Change Event"
           description={`Change Event ${changeEvent.number || changeEvent.id} cannot be edited`}
-          breadcrumbs={[
-            { label: "Projects", href: "/" },
-            { label: "Change Events", href: `/${projectId}/change-events` },
-            { label: changeEvent.number || `CE-${changeEvent.id}` },
-            { label: "Edit" },
-          ]}
-          actions={
+          maxWidth="3xl"
+          headerActions={
             <Button variant="ghost" size="sm" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
           }
-        />
+      >
         <TableLayout>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -179,7 +178,7 @@ export default function EditChangeEventPage() {
             </div>
           </div>
         </TableLayout>
-      </>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -196,26 +195,17 @@ export default function EditChangeEventPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
+    <ProjectFormPageLayout
         title="Edit Change Event"
         description={`Modify Change Event ${changeEvent.number || changeEvent.id}`}
-        breadcrumbs={[
-          { label: "Projects", href: "/" },
-          { label: "Change Events", href: `/${projectId}/change-events` },
-          {
-            label: changeEvent.number || `CE-${changeEvent.id}`,
-            href: `/${projectId}/change-events/${changeEventId}`,
-          },
-          { label: "Edit" },
-        ]}
-        actions={
+        maxWidth="3xl"
+        headerActions={
           <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
         }
-      />
+    >
       <TableLayout>
         <ChangeEventForm
           initialData={initialData}
@@ -226,6 +216,6 @@ export default function EditChangeEventPage() {
           projectId={projectId}
         />
       </TableLayout>
-    </>
+    </ProjectFormPageLayout>
   );
 }

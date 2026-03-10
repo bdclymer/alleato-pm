@@ -34,7 +34,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
 import { useCommitments } from "@/hooks/use-commitments";
-import { FormContainer , ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 
 
 interface LineItem {
@@ -260,34 +260,25 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="New Invoice"
-        description="Create a new invoice for billing"
-        breadcrumbs={[
-          { label: "Invoices", href: `/${projectId}/invoices` },
-          { label: "New Invoice" },
-        ]}
-        actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        }
-      />
-
-      <FormContainer
-        maxWidth="xl"
-        withCard={false}
-        padding={false}
-        className="max-w-none mx-0"
-      >
-        <form onSubmit={handleSubmit} className="space-y-6 px-4 sm:px-6 lg:px-8">
+    <ProjectFormPageLayout
+      title="New Invoice"
+      description="Create a new invoice for billing"
+      maxWidth="xl"
+      headerActions={
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+      }
+      contentClassName="space-y-6"
+    >
+      <div className="max-w-none mx-0">
+        <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">General Info</TabsTrigger>
@@ -806,7 +797,7 @@ export default function NewInvoicePage() {
             </Button>
           </div>
         </form>
-      </FormContainer>
-    </>
+      </div>
+    </ProjectFormPageLayout>
   );
 }

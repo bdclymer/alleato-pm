@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
-import { FormContainer, PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type { ContractLineItemWithCostCode } from "@/types/contract-line-items";
 
@@ -279,36 +279,40 @@ export default function EditContractPage() {
 
   if (loading) {
     return (
-      <>
-        <ProjectPageHeader title="Edit Contract" description="Loading contract..." />
-        <PageContainer>
-          <div className="text-center py-8 text-sm text-muted-foreground">Loading contract...</div>
-        </PageContainer>
-      </>
+      <ProjectFormPageLayout
+        title="Edit Contract"
+        description="Loading contract..."
+        maxWidth="3xl"
+      >
+        <div className="py-8 text-center text-sm text-muted-foreground">
+          Loading contract...
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
   if (loadError) {
     return (
-      <>
-        <ProjectPageHeader title="Edit Contract" description="Error loading contract" />
-        <PageContainer>
-          <div className="space-y-4">
-            <p className="text-sm text-destructive">{loadError}</p>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => window.location.reload()}>
-                Retry
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/${projectId}/prime-contracts`)}
-              >
-                Back to Contracts
-              </Button>
-            </div>
+      <ProjectFormPageLayout
+        title="Edit Contract"
+        description="Error loading contract"
+        maxWidth="3xl"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-destructive">{loadError}</p>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/${projectId}/prime-contracts`)}
+            >
+              Back to Contracts
+            </Button>
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </ProjectFormPageLayout>
     );
   }
 
@@ -371,24 +375,30 @@ export default function EditContractPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title={`Edit: ${contract.contract_number || contract.title}`}
-        description="Update contract details and SOV line items"
-      />
-
-      <PageContainer className="bg-muted/30">
-        <FormContainer maxWidth="xl" className="max-w-[1400px] bg-card rounded-lg border border-border p-8">
-          <ContractForm
-            initialData={initialData}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            isSubmitting={isSaving}
-            mode="edit"
-            projectId={projectId}
-          />
-        </FormContainer>
-      </PageContainer>
-    </>
+    <ProjectFormPageLayout
+      title={`Edit: ${contract.contract_number || contract.title}`}
+      description="Update contract details and SOV line items"
+      maxWidth="3xl"
+      headerActions={
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/${projectId}/prime-contracts/${contractId}`)}
+        >
+          Back
+        </Button>
+      }
+    >
+      <div className="rounded-lg border border-border bg-card p-8">
+        <ContractForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          isSubmitting={isSaving}
+          mode="edit"
+          projectId={projectId}
+        />
+      </div>
+    </ProjectFormPageLayout>
   );
 }

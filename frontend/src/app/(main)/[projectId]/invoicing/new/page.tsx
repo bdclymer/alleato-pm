@@ -26,7 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { ProjectFormPageLayout } from "@/components/layout";
 
 const createInvoiceSchema = z.object({
   contract_id: z.number().min(1, "Contract is required"),
@@ -100,32 +100,31 @@ export default function NewInvoicePage() {
   }
 
   return (
-    <>
-      <ProjectPageHeader
+    <ProjectFormPageLayout
         title="Create Owner Invoice"
         description="Add a new owner invoice for this project"
-        actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/invoicing`)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Invoicing
-          </Button>
-        }
-      />
-      <PageContainer>
-        <Card className="max-w-2xl">
-          <CardHeader>
-            <CardTitle>Invoice Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+      maxWidth="lg"
+      headerActions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/${projectId}/invoicing`)}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Invoicing
+        </Button>
+      }
+    >
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle>Invoice Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6"
+            >
                 {/* Contract */}
                 <FormField
                   control={form.control}
@@ -254,11 +253,10 @@ export default function NewInvoicePage() {
                     Cancel
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    </>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </ProjectFormPageLayout>
   );
 }

@@ -80,7 +80,14 @@ export const DirectCostLineItemSchema = z.object({
   budget_code_id: requiredUuidOrEmptySchema,
   description: optionalString,
   quantity: positiveNumber,
-  uom: z.enum(UnitTypes).default('LOT'),
+  uom: z.preprocess(
+    (value) =>
+      typeof value === 'string' && value.trim() === '' ? undefined : value,
+    z.enum(UnitTypes, {
+      required_error: 'UOM is required',
+      invalid_type_error: 'UOM is required',
+    })
+  ),
   unit_cost: nonNegativeNumber,
   line_order: z.number().int().positive().optional(),
 });
