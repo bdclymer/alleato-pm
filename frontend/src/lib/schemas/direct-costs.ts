@@ -84,8 +84,7 @@ export const DirectCostLineItemSchema = z.object({
     (value) =>
       typeof value === 'string' && value.trim() === '' ? undefined : value,
     z.enum(UnitTypes, {
-      required_error: 'UOM is required',
-      invalid_type_error: 'UOM is required',
+      message: 'UOM is required',
     })
   ),
   unit_cost: nonNegativeNumber,
