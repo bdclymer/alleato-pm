@@ -7,6 +7,9 @@ import { FmGlobalClient } from "./fm-global-client";
 import type { FmGlobalSubmissionSummary } from "@/types/fm-global";
 import { fmGlobalSpecInputSchema } from "@/lib/schemas/fm-global-schemas";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function getRecentSubmissions(): Promise<FmGlobalSubmissionSummary[]> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
