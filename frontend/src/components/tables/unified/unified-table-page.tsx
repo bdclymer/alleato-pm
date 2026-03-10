@@ -928,14 +928,20 @@ export function UnifiedTablePage<T>({
                                 } as React.CSSProperties)
                               : undefined
                           }
-                          onDoubleClick={() => {
+                          onClick={(event) => {
                             if (!resolvedFeatures.enableInlineEditing) return;
                             if (!column.editable || !column.editValue) return;
+                            event.stopPropagation();
                             const rowId = table.getRowId(item);
                             const cellKey = `${rowId}::${column.id}`;
                             setEditingCell({ rowId, columnId: column.id });
                             setEditingValue(inlineEdits[cellKey] ?? column.editValue(item));
                           }}
+                          className={cn(
+                            resolvedFeatures.enableInlineEditing && column.editable && column.editValue
+                              ? "cursor-text hover:bg-muted/60 transition-colors"
+                              : "",
+                          )}
                         >
                           {editingCell?.rowId === table.getRowId(item) &&
                           editingCell.columnId === column.id &&
@@ -943,7 +949,7 @@ export function UnifiedTablePage<T>({
                           column.editable &&
                           column.editValue ? (
                             <input
-                              className="h-7 w-full rounded border border-border bg-background px-2 text-xs"
+                              className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
                               value={editingValue}
                               autoFocus
                               onChange={(event) => setEditingValue(event.target.value)}
@@ -971,13 +977,16 @@ export function UnifiedTablePage<T>({
                                   setEditingCell(null);
                                   setEditingValue("");
                                 }
+                                if (event.key === "Tab") {
+                                  void commitInlineEdit(
+                                    item,
+                                    column,
+                                    table.getRowId(item),
+                                    editingValue,
+                                  );
+                                }
                               }}
                             />
-                          ) : column.editable && column.editValue ? (
-                            <span className="block truncate">
-                              {inlineEdits[`${table.getRowId(item)}::${column.id}`] ??
-                                column.editValue(item)}
-                            </span>
                           ) : (
                             column.render(item)
                           )}

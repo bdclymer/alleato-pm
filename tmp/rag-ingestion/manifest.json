@@ -1,5 +1,77 @@
 {
   "files": {
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/Core and Main Material Quote.pdf": {
+      "category": "document",
+      "metadata_id": "456e8416-a129-5d74-a0ca-a22a4106c6ed",
+      "mtime": 1773131400.0,
+      "sha256": "b8c50d56a9a3da5dca30c3906b884316c361f3b54eacae49bbf1cdfd3933df12",
+      "size": 1324844,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:34:53.024008+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Core Mark White GA.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "09e142a0-d6c6-51c7-9b06-90af97df0acf",
+      "mtime": 1773131340.0,
+      "sha256": "58d1167535cf0ddf95584a060481c9e6bbb6e5218d44934d9941c5153153e4ec",
+      "size": 29112,
+      "status": "ingested",
+      "updated_at": "2026-03-10T05:35:03.702408+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Sprinkler Material Take Off Sheet .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "aa24776e-d734-5e32-894e-25a48ec6d8da",
+      "mtime": 1773131340.0,
+      "sha256": "3b9576b52d54636a9efe0df527c670a23b40cd5425e56b004f3e16c4fe5ab784",
+      "size": 16554,
+      "status": "ingested",
+      "updated_at": "2026-03-10T05:35:12.427494+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/RFI - 06 (AC-5 Clearence to Existing RTU8).pdf": {
+      "category": "specification",
+      "metadata_id": "6b4226b1-81a7-5b52-80ef-02daf696553b",
+      "mtime": 1773132240.0,
+      "sha256": "c27f59169284202722be3ab5fefc78baaa8d8698261e52ff3df64a752efaa772",
+      "size": 4494813,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:35:26.042573+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Estimate New RTUs R6 .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "3964ee26-d769-5f8a-85b6-7183b656a497",
+      "mtime": 1773132180.0,
+      "sha256": "2e275821f57630c9142ddb7f549db5ed6a116fd3fedba9a29e70f378aae8c1ea",
+      "size": 68120,
+      "status": "ingested",
+      "updated_at": "2026-03-10T05:36:39.701343+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Estimate New RTUs.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "23949e4a-9e47-5460-8a04-098e420010f4",
+      "mtime": 1773132180.0,
+      "sha256": "ab3baa6ad14945afadea1aa08a7786a77d9b2cf53abda06f47916c5ecc0427b5",
+      "size": 72827,
+      "status": "ingested",
+      "updated_at": "2026-03-10T05:37:02.945489+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Scope Sheet Template.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "93726b2c-ea99-5c30-816e-0601d0144613",
+      "mtime": 1773132180.0,
+      "sha256": "8df9d8bf03be247f88e43d051ebe5290686f319edfeddf7bb6a65883626f4d5e",
+      "size": 38817,
+      "status": "ingested",
+      "updated_at": "2026-03-10T05:37:17.692228+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Sprinkler Material Take Off Sheet .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "aa24776e-d734-5e32-894e-25a48ec6d8da",
+      "mtime": 1773132180.0,
+      "sha256": "3b9576b52d54636a9efe0df527c670a23b40cd5425e56b004f3e16c4fe5ab784",
+      "size": 16554,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:37:17.797273+00:00"
+    },
     "CEVA Burnville Sprinkler Phase 2 .xlsx": {
       "category": "financial_document",
       "metadata_id": "934bd44d-8182-5fa2-bf40-4510814b792f",
@@ -17,8 +89,44 @@
       "size": 28695,
       "status": "ingested",
       "updated_at": "2026-03-10T03:39:44.662246+00:00"
+    },
+    "Radial/04 - Estimate/Scope Sheet Template.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "93726b2c-ea99-5c30-816e-0601d0144613",
+      "mtime": 1773131820.0,
+      "sha256": "8df9d8bf03be247f88e43d051ebe5290686f319edfeddf7bb6a65883626f4d5e",
+      "size": 38817,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:43:22.576457+00:00"
+    },
+    "Radial/04 - Estimate/Sprinkler Material Take Off Sheet .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "aa24776e-d734-5e32-894e-25a48ec6d8da",
+      "mtime": 1773131820.0,
+      "sha256": "3b9576b52d54636a9efe0df527c670a23b40cd5425e56b004f3e16c4fe5ab784",
+      "size": 16554,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:43:28.747332+00:00"
+    },
+    "Radial/05 - Proposal/070325 Radial Brownsburg.pdf": {
+      "category": "financial_document",
+      "metadata_id": "f436de4c-d5dd-51cb-8a5f-2be28b494990",
+      "mtime": 1773131820.0,
+      "sha256": "fe06f95b831ffc25859de7e015060285146eff6c6e9778aa0924fd0c7a46987f",
+      "size": 128621,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:43:28.832670+00:00"
+    },
+    "Radial/05 - Proposal/Contract Change Order PC-4367-000 - Added Guardrails.pdf": {
+      "category": "financial_document",
+      "metadata_id": "e05021ed-e17f-5890-b3e6-dc820ce4132b",
+      "mtime": 1773131820.0,
+      "sha256": "e23759cd2b0270d025bbae678ec41bf077707172373854e23c1a26ec1f367174",
+      "size": 134693,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-10T05:43:28.925496+00:00"
     }
   },
-  "updated_at": "2026-03-10T03:39:44.662265+00:00",
+  "updated_at": "2026-03-10T05:43:50.452248+00:00",
   "version": 1
 }

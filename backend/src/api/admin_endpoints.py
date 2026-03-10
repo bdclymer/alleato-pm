@@ -2,7 +2,7 @@
 Admin API endpoints for document pipeline management
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from typing import Dict, Any, Optional, List
 import logging
@@ -11,6 +11,8 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 import sys
+import os
+import requests
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,7 +24,32 @@ load_env()
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/admin", tags=["Admin"])
+def require_admin_api_key(
+    authorization: Optional[str] = Header(default=None),
+    x_admin_api_key: Optional[str] = Header(default=None),
+) -> None:
+    """Simple admin API key guard for operational endpoints."""
+    expected = os.getenv("ADMIN_API_KEY")
+    if not expected:
+        raise HTTPException(
+            status_code=503,
+            detail="ADMIN_API_KEY is not configured on the backend",
+        )
+
+    bearer_token = ""
+    if authorization and authorization.lower().startswith("bearer "):
+        bearer_token = authorization.split(" ", 1)[1].strip()
+
+    supplied = x_admin_api_key or bearer_token
+    if supplied != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+router = APIRouter(
+    prefix="/api/admin",
+    tags=["Admin"],
+    dependencies=[Depends(require_admin_api_key)],
+)
 
 class EmbeddingGenerationRequest(BaseModel):
     stage: str = "raw_ingested"
@@ -36,11 +63,59 @@ class EmbeddingGenerationResponse(BaseModel):
     task_id: Optional[str] = None
     details: Optional[Dict[str, Any]] = None
 
+
+class ReplayStaleRawIngestedRequest(BaseModel):
+    stale_minutes: int = 120
+    limit: int = 25
+    dry_run: bool = False
+
+
 def get_rag_store() -> SupabaseRagStore:
     return SupabaseRagStore()
 
 # Store for tracking background tasks
 _background_tasks = {}
+
+
+def _resolve_pipeline_process_url(supabase) -> str:
+    """Resolve the pipeline endpoint from DB config, fallback to local backend URL."""
+    config = (
+        supabase.table("pipeline_config")
+        .select("value")
+        .eq("key", "pipeline_url")
+        .maybe_single()
+        .execute()
+    )
+    configured = ((config.data or {}).get("value") or "").strip() if config else ""
+    if configured:
+        return configured.rstrip("/")
+
+    local_backend = (os.getenv("PYTHON_BACKEND_URL") or "http://127.0.0.1:8000").strip().rstrip("/")
+    return f"{local_backend}/api/pipeline/process"
+
+
+def _find_stale_raw_ingested_jobs(
+    supabase,
+    stale_minutes: int,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """Fetch stale raw_ingested jobs with valid metadata IDs."""
+    # Supabase/PostgREST expects ISO timestamp for lte filtering.
+    from datetime import timedelta
+
+    cutoff = (datetime.utcnow() - timedelta(minutes=stale_minutes)).isoformat()
+    response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, created_at, updated_at")
+        .eq("stage", "raw_ingested")
+        .is_("error_message", "null")
+        .lte("updated_at", cutoff)
+        .order("updated_at", desc=False)
+        .limit(limit * 3)
+        .execute()
+    )
+    rows = response.data or []
+    return [row for row in rows if row.get("metadata_id")][:limit]
 
 @router.post("/documents/generate-embeddings", response_model=EmbeddingGenerationResponse)
 async def trigger_generate_embeddings(
@@ -196,4 +271,115 @@ async def get_pipeline_statistics(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get pipeline statistics: {str(e)}"
+        )
+
+
+@router.post("/documents/replay-stale-raw-ingested")
+async def replay_stale_raw_ingested_jobs(
+    request: ReplayStaleRawIngestedRequest,
+    store: SupabaseRagStore = Depends(get_rag_store),
+):
+    """Requeue stale raw_ingested jobs by calling the pipeline process endpoint."""
+    if request.stale_minutes < 1:
+        raise HTTPException(status_code=400, detail="stale_minutes must be >= 1")
+    if request.limit < 1 or request.limit > 200:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 200")
+
+    try:
+        supabase = store._client
+        pipeline_url = _resolve_pipeline_process_url(supabase)
+        jobs = _find_stale_raw_ingested_jobs(
+            supabase=supabase,
+            stale_minutes=request.stale_minutes,
+            limit=request.limit,
+        )
+
+        if not jobs:
+            return {
+                "status": "no_jobs",
+                "message": "No stale raw_ingested jobs found",
+                "stale_minutes": request.stale_minutes,
+                "limit": request.limit,
+                "pipeline_url": pipeline_url,
+                "matched": 0,
+                "queued": 0,
+                "failed": 0,
+                "dry_run": request.dry_run,
+            }
+
+        results: List[Dict[str, Any]] = []
+        queued = 0
+        failed = 0
+
+        for job in jobs:
+            metadata_id = job.get("metadata_id")
+            fireflies_id = job.get("fireflies_id")
+            if request.dry_run:
+                results.append(
+                    {
+                        "fireflies_id": fireflies_id,
+                        "metadata_id": metadata_id,
+                        "status": "would_queue",
+                    }
+                )
+                continue
+
+            try:
+                resp = requests.post(
+                    pipeline_url,
+                    json={"metadataId": metadata_id},
+                    timeout=15,
+                )
+                if resp.ok:
+                    queued += 1
+                    results.append(
+                        {
+                            "fireflies_id": fireflies_id,
+                            "metadata_id": metadata_id,
+                            "status": "queued",
+                            "http_status": resp.status_code,
+                        }
+                    )
+                else:
+                    failed += 1
+                    results.append(
+                        {
+                            "fireflies_id": fireflies_id,
+                            "metadata_id": metadata_id,
+                            "status": "failed",
+                            "http_status": resp.status_code,
+                            "error": resp.text[:300],
+                        }
+                    )
+            except Exception as call_exc:
+                failed += 1
+                results.append(
+                    {
+                        "fireflies_id": fireflies_id,
+                        "metadata_id": metadata_id,
+                        "status": "failed",
+                        "error": str(call_exc),
+                    }
+                )
+
+        return {
+            "status": "ok",
+            "message": "Replay attempted for stale raw_ingested jobs",
+            "stale_minutes": request.stale_minutes,
+            "limit": request.limit,
+            "pipeline_url": pipeline_url,
+            "matched": len(jobs),
+            "queued": queued if not request.dry_run else 0,
+            "failed": failed if not request.dry_run else 0,
+            "dry_run": request.dry_run,
+            "results": results,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Error replaying stale raw_ingested jobs: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to replay stale raw_ingested jobs: {exc}",
         )

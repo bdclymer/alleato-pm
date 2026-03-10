@@ -18,15 +18,24 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   type PipelineDoc,
   buildDocumentTableColumns,
   documentColumns,
   documentDefaultVisibleColumns,
   documentFilters,
+  getDocumentViewUrl,
   renderDocumentCard,
   renderDocumentList,
   renderDocumentRowActions,
@@ -38,9 +47,19 @@ type DocumentFilterState = Record<string, FilterValue>;
 const EMPTY_FILTERS: DocumentFilterState = {
   source: undefined,
   type: undefined,
+  category: undefined,
 };
 
 const MAX_FILE_SIZE = 50 * 1000 * 1000; // 50 MB
+
+interface SimpleProject {
+  id: number;
+  name: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Upload Dialog
+// ---------------------------------------------------------------------------
 
 function UploadDialog({
   open,
@@ -93,14 +112,100 @@ function UploadDialog({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Assign Project Dialog
+// ---------------------------------------------------------------------------
+
+function AssignProjectDialog({
+  open,
+  onOpenChange,
+  document: doc,
+  projects,
+  onAssign,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  document: PipelineDoc | null;
+  projects: SimpleProject[];
+  onAssign: (docId: string, projectId: number | null) => void;
+}) {
+  const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (doc?.project_id) {
+      setSelectedProjectId(String(doc.project_id));
+    } else {
+      setSelectedProjectId("");
+    }
+  }, [doc]);
+
+  const handleSave = () => {
+    if (!doc) return;
+    const projectId = selectedProjectId ? Number(selectedProjectId) : null;
+    onAssign(doc.id, projectId);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign to Project</DialogTitle>
+          <DialogDescription>
+            {doc?.title || "Untitled Document"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <Select
+            value={selectedProjectId}
+            onValueChange={setSelectedProjectId}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a project..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No project</SelectItem>
+              {projects.map((p) => (
+                <SelectItem key={p.id} value={String(p.id)}>
+                  {p.name || `Project #${p.id}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
+
 export default function DocumentsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [documents, setDocuments] = React.useState<PipelineDoc[]>([]);
+  const [projects, setProjects] = React.useState<SimpleProject[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false);
+  const [assignDoc, setAssignDoc] = React.useState<PipelineDoc | null>(null);
+
+  const projectNames = React.useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of projects) {
+      if (p.name) map.set(p.id, p.name);
+    }
+    return map;
+  }, [projects]);
 
   const tableState = useUnifiedTableState({
     entityKey: "documents",
@@ -122,6 +227,7 @@ export default function DocumentsPage() {
 
   const { activeFilters } = tableState;
 
+  // ── Fetch documents ────────────────────────────────────────────
   const refreshDocuments = React.useCallback(async () => {
     setIsLoading(true);
     try {
@@ -140,15 +246,89 @@ export default function DocumentsPage() {
     }
   }, []);
 
+  // ── Fetch projects (for assignment) ────────────────────────────
+  const fetchProjects = React.useCallback(async () => {
+    try {
+      const resp = await fetch("/api/projects?fields=id,name", {
+        cache: "no-store",
+      });
+      if (!resp.ok) return;
+      const result = await resp.json();
+      setProjects(
+        (result.data || result.projects || result || []) as SimpleProject[],
+      );
+    } catch {
+      // Non-critical — assignment will still work with IDs
+    }
+  }, []);
+
   React.useEffect(() => {
     void refreshDocuments();
-  }, [refreshDocuments]);
+    void fetchProjects();
+  }, [refreshDocuments, fetchProjects]);
 
-  const tableColumns = React.useMemo(
-    () => buildDocumentTableColumns(),
+  // ── Assign document to project ─────────────────────────────────
+  const handleAssignProject = React.useCallback(
+    async (docId: string, projectId: number | null) => {
+      try {
+        const resp = await fetch(`/api/documents/${docId}/assign-project`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ project_id: projectId }),
+        });
+        if (!resp.ok) {
+          const result = await resp.json();
+          throw new Error(result?.error || "Failed to assign project");
+        }
+        toast.success(
+          projectId ? "Document assigned to project" : "Project assignment removed",
+        );
+        void refreshDocuments();
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to assign project";
+        toast.error(message);
+      }
+    },
+    [refreshDocuments],
+  );
+
+  // ── Inline edit handler ──────────────────────────────────────
+  const handleEditField = React.useCallback(
+    async (docId: string, field: string, value: string) => {
+      try {
+        const resp = await fetch(`/api/documents/${docId}/assign-project`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [field]: value || null }),
+        });
+        if (!resp.ok) {
+          const result = await resp.json();
+          throw new Error(result?.error || "Failed to update");
+        }
+        // Optimistically update local state
+        setDocuments((prev) =>
+          prev.map((d) => (d.id === docId ? { ...d, [field]: value || null } : d)),
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to update";
+        toast.error(message);
+      }
+    },
     [],
   );
 
+  const tableColumns = React.useMemo(
+    () =>
+      buildDocumentTableColumns({
+        projectNames,
+        onEditField: handleEditField,
+      }),
+    [projectNames, handleEditField],
+  );
+
+  // ── Client-side filtering ──────────────────────────────────────
   const filteredDocuments = React.useMemo(() => {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
     const sourceFilter =
@@ -158,6 +338,10 @@ export default function DocumentsPage() {
     const typeFilter =
       typeof activeFilters.type === "string"
         ? activeFilters.type.toLowerCase()
+        : "";
+    const categoryFilter =
+      typeof activeFilters.category === "string"
+        ? activeFilters.category.toLowerCase()
         : "";
 
     return documents.filter((doc) => {
@@ -172,16 +356,28 @@ export default function DocumentsPage() {
       if (typeFilter && (doc.type ?? "").toLowerCase() !== typeFilter) {
         return false;
       }
+      if (
+        categoryFilter &&
+        (doc.category ?? "").toLowerCase() !== categoryFilter
+      ) {
+        return false;
+      }
       if (!searchTerm) return true;
 
       return (
         (doc.title ?? "").toLowerCase().includes(searchTerm) ||
         (doc.source ?? "").toLowerCase().includes(searchTerm) ||
         (doc.type ?? "").toLowerCase().includes(searchTerm) ||
-        (doc.id ?? "").toLowerCase().includes(searchTerm)
+        (doc.category ?? "").toLowerCase().includes(searchTerm)
       );
     });
-  }, [activeFilters.source, activeFilters.type, documents, tableState.debouncedSearch]);
+  }, [
+    activeFilters.source,
+    activeFilters.type,
+    activeFilters.category,
+    documents,
+    tableState.debouncedSearch,
+  ]);
 
   const totalItems = documents.length;
   const filteredItems = filteredDocuments.length;
@@ -195,19 +391,30 @@ export default function DocumentsPage() {
   };
 
   const handleView = (doc: PipelineDoc) => {
-    toast.info(`Document: ${doc.title || doc.id}`);
+    const viewUrl = getDocumentViewUrl(doc);
+    if (viewUrl) {
+      window.open(viewUrl, "_blank", "noopener,noreferrer");
+    } else {
+      toast.info(`Document: ${doc.title || doc.id}`);
+    }
   };
 
   const handleExport = () => {
-    const headers = ["Title", "Type", "Source", "Pipeline Stage", "Created"];
+    const headers = [
+      "Title",
+      "Type",
+      "Category",
+      "Source",
+      "Pipeline Stage",
+      "Created",
+    ];
     const rows = filteredDocuments.map((d) => [
       d.title || "",
       d.type || "",
+      d.category || "",
       d.source || "",
       d.pipeline_stage || "",
-      d.created_at
-        ? format(new Date(d.created_at), "yyyy-MM-dd")
-        : "",
+      d.created_at ? format(new Date(d.created_at), "yyyy-MM-dd") : "",
     ]);
 
     const csvContent = [headers, ...rows]
@@ -229,6 +436,15 @@ export default function DocumentsPage() {
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         onUploadComplete={refreshDocuments}
+      />
+      <AssignProjectDialog
+        open={assignDoc !== null}
+        onOpenChange={(open) => {
+          if (!open) setAssignDoc(null);
+        }}
+        document={assignDoc}
+        projects={projects}
+        onAssign={handleAssignProject}
       />
       <UnifiedTablePage
         header={{
@@ -275,8 +491,10 @@ export default function DocumentsPage() {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          onRowClick: handleView,
-          rowActions: (item) => renderDocumentRowActions(item, handleView),
+          rowActions: (item) =>
+            renderDocumentRowActions(item, handleView, (doc) =>
+              setAssignDoc(doc),
+            ),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -307,9 +525,7 @@ export default function DocumentsPage() {
           ),
         }}
         features={{
-          enableExport: true,
-          enableBulkDelete: false,
-          enableRowSelection: false,
+          enableInlineEditing: true,
         }}
       />
     </>

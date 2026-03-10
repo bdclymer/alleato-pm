@@ -87,10 +87,13 @@ def _is_financial_document(client, metadata_id: str) -> bool:
 
     category = (row.get("category") or "").lower().strip()
     file_name = (row.get("file_name") or row.get("file_path") or "").lower()
+    is_tabular_extension = file_name.endswith(_FINANCIAL_EXTENSIONS)
 
-    if category in _FINANCIAL_CATEGORIES:
+    # Financial parser is tabular-only; keep PDF/DOCX financial docs on the
+    # generic document parser to avoid unsupported-extension failures.
+    if category in _FINANCIAL_CATEGORIES and is_tabular_extension:
         return True
-    return file_name.endswith(_FINANCIAL_EXTENSIONS)
+    return is_tabular_extension
 
 
 def _is_transient_db_timeout(exc: Exception) -> bool:

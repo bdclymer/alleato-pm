@@ -1,6 +1,12 @@
 import type { ReactElement } from "react";
 
-import { Eye, Link, MoreHorizontal } from "lucide-react";
+import {
+  ExternalLink,
+  Eye,
+  FolderOpen,
+  Link,
+  MoreHorizontal,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
@@ -14,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -23,9 +30,14 @@ export type PipelineDoc = {
   title: string | null;
   status: string | null;
   type: string | null;
+  category: string | null;
   source: string | null;
   date: string | null;
   created_at: string | null;
+  file_path: string | null;
+  storage_bucket: string | null;
+  url: string | null;
+  project_id: number | null;
   pipeline_stage: string;
   attempt_count: number;
   last_attempt_at: string | null;
@@ -39,17 +51,27 @@ const SOURCE_FILTER_OPTIONS = [
 ];
 
 const TYPE_FILTER_OPTIONS = [
-  { value: "meeting", label: "Meeting" },
   { value: "transcript", label: "Transcript" },
   { value: "report", label: "Report" },
   { value: "document", label: "Document" },
+  { value: "specification", label: "Specification" },
+  { value: "contract", label: "Contract" },
+];
+
+const CATEGORY_FILTER_OPTIONS = [
+  { value: "financial", label: "Financial" },
+  { value: "legal", label: "Legal" },
+  { value: "technical", label: "Technical" },
+  { value: "administrative", label: "Administrative" },
 ];
 
 export const documentColumns: ColumnConfig[] = [
   { id: "title", label: "Document", alwaysVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
   { id: "source", label: "Source", defaultVisible: true },
   { id: "pipeline_stage", label: "Pipeline Stage", defaultVisible: true },
+  { id: "project", label: "Project", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
   { id: "error", label: "Error", defaultVisible: false },
 ];
@@ -66,6 +88,12 @@ export const documentFilters: FilterConfig[] = [
     label: "Type",
     type: "select",
     options: TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: "category",
+    label: "Category",
+    type: "select",
+    options: CATEGORY_FILTER_OPTIONS,
   },
 ];
 
@@ -95,17 +123,62 @@ function stageLabel(stage: string): string {
   }
 }
 
-export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
+/**
+ * Get the viewable URL for a document. Checks for:
+ * 1. Direct URL (e.g. fireflies link)
+ * 2. Supabase storage file path
+ */
+export function getDocumentViewUrl(doc: PipelineDoc): string | null {
+  if (doc.url) return doc.url;
+  if (doc.file_path && doc.storage_bucket) {
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${doc.storage_bucket}/${doc.file_path}`;
+  }
+  if (doc.file_path) {
+    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/documents/${doc.file_path}`;
+  }
+  return null;
+}
+
+export function buildDocumentTableColumns(opts?: {
+  projectNames?: Map<number, string>;
+  onEditField?: (docId: string, field: string, value: string) => void;
+}): TableColumn<PipelineDoc>[] {
+  const { projectNames, onEditField } = opts ?? {};
+  const handleEdit = (field: string) =>
+    onEditField
+      ? (item: PipelineDoc, value: string) => onEditField(item.id, field, value)
+      : undefined;
+
   return [
     {
       ...documentColumns[0],
-      render: (item) => (
-        <span className="font-medium">
-          {item.title || "Untitled Document"}
-        </span>
-      ),
+      render: (item) => {
+        const viewUrl = getDocumentViewUrl(item);
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">
+              {item.title || "Untitled Document"}
+            </span>
+            {viewUrl && (
+              <a
+                href={viewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                title="View file"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
+          </div>
+        );
+      },
       sortValue: (item) => item.title ?? "Untitled",
       sortable: true,
+      editable: Boolean(onEditField),
+      editValue: (item) => item.title ?? "",
+      onEdit: handleEdit("title"),
     },
     {
       ...documentColumns[1],
@@ -116,9 +189,25 @@ export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
       ),
       sortValue: (item) => item.type,
       sortable: true,
+      editable: Boolean(onEditField),
+      editValue: (item) => item.type ?? "",
+      onEdit: handleEdit("type"),
     },
     {
       ...documentColumns[2],
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.category || "-"}
+        </span>
+      ),
+      sortValue: (item) => item.category,
+      sortable: true,
+      editable: Boolean(onEditField),
+      editValue: (item) => item.category ?? "",
+      onEdit: handleEdit("category"),
+    },
+    {
+      ...documentColumns[3],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.source || "-"}
@@ -128,7 +217,7 @@ export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
       sortable: true,
     },
     {
-      ...documentColumns[3],
+      ...documentColumns[4],
       render: (item) => (
         <StatusBadge
           status={stageLabel(item.pipeline_stage)}
@@ -145,7 +234,23 @@ export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
       sortable: true,
     },
     {
-      ...documentColumns[4],
+      ...documentColumns[5],
+      render: (item) => {
+        if (!item.project_id) {
+          return <span className="text-sm text-muted-foreground">-</span>;
+        }
+        const name = projectNames?.get(item.project_id);
+        return (
+          <span className="text-sm text-muted-foreground">
+            {name || `Project #${item.project_id}`}
+          </span>
+        );
+      },
+      sortValue: (item) => item.project_id ?? 0,
+      sortable: true,
+    },
+    {
+      ...documentColumns[6],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(item.created_at)}
@@ -155,7 +260,7 @@ export function buildDocumentTableColumns(): TableColumn<PipelineDoc>[] {
       sortable: true,
     },
     {
-      ...documentColumns[5],
+      ...documentColumns[7],
       render: (item) =>
         item.error_message ? (
           <span className="text-xs text-destructive line-clamp-2">
@@ -195,6 +300,7 @@ export function renderDocumentCard(
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         {item.type && <span>{item.type}</span>}
+        {item.category && <span>{item.category}</span>}
         {item.source && <span>{item.source}</span>}
         {item.created_at && <span>{formatDate(item.created_at)}</span>}
       </div>
@@ -222,7 +328,7 @@ export function renderDocumentList(
           {item.title || "Untitled Document"}
         </span>
         <span className="text-xs text-muted-foreground">
-          {[item.type, item.source, formatDate(item.created_at)]
+          {[item.type, item.category, item.source, formatDate(item.created_at)]
             .filter(Boolean)
             .join(" · ")}
         </span>
@@ -244,7 +350,10 @@ export function renderDocumentList(
 export function renderDocumentRowActions(
   item: PipelineDoc,
   onView: (item: PipelineDoc) => void,
+  onAssignProject?: (item: PipelineDoc) => void,
 ): ReactElement {
+  const viewUrl = getDocumentViewUrl(item);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -253,10 +362,25 @@ export function renderDocumentRowActions(
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {viewUrl && (
+          <DropdownMenuItem asChild>
+            <a href={viewUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View file
+            </a>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => onView(item)}>
           <Eye className="mr-2 h-4 w-4" />
-          View
+          Details
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {onAssignProject && (
+          <DropdownMenuItem onClick={() => onAssignProject(item)}>
+            <FolderOpen className="mr-2 h-4 w-4" />
+            {item.project_id ? "Change project" : "Assign to project"}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={() => {
             void navigator.clipboard.writeText(item.id);
