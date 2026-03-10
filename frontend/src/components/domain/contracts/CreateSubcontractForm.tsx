@@ -50,6 +50,7 @@ import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { DateField } from "@/components/forms/DateField";
 import { MultiSelectField } from "@/components/forms/MultiSelectField";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCompanies } from "@/hooks/use-companies";
@@ -94,6 +95,16 @@ interface BudgetCode {
   fullLabel: string;
 }
 
+const UNIT_OF_MEASURES = [
+  { value: "EA", label: "Each" },
+  { value: "LF", label: "Linear Foot" },
+  { value: "SF", label: "Square Foot" },
+  { value: "CY", label: "Cubic Yard" },
+  { value: "TON", label: "Ton" },
+  { value: "HR", label: "Hour" },
+  { value: "LS", label: "Lump Sum" },
+];
+
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -125,10 +136,6 @@ export function CreateSubcontractForm({
   // Budget code state (matching prime contracts pattern)
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
   const [loadingBudgetCodes, setLoadingBudgetCodes] = React.useState(true);
-  const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<
-    number | null
-  >(null);
-  const [budgetCodeSearchQuery, setBudgetCodeSearchQuery] = React.useState("");
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     React.useState(false);
   const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
@@ -194,7 +201,7 @@ export function CreateSubcontractForm({
     resolver: zodResolver(CreateSubcontractSchema) as never,
     reValidateMode: "onBlur",
     defaultValues: {
-      contractNumber: initialData?.contractNumber || "SC-002",
+      contractNumber: initialData?.contractNumber || "",
       status: initialData?.status || "Draft",
       executed: initialData?.executed ?? false,
       accountingMethod: initialData?.accountingMethod || "amount_based",
@@ -305,10 +312,6 @@ export function CreateSubcontractForm({
     fetchCostCodes();
   }, [showCreateBudgetCodeModal]);
 
-  const filteredBudgetCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
-  );
-
   const getCostTypeLabel = (type: string) => {
     const types: Record<string, string> = {
       R: "Contract Revenue",
@@ -342,7 +345,6 @@ export function CreateSubcontractForm({
       budgetCode: code.code,
     };
     setSovLines(updated);
-    setOpenBudgetCodePopover(null);
   };
 
   const handleCreateBudgetCode = async () => {
@@ -453,7 +455,7 @@ export function CreateSubcontractForm({
       budgetCodeLabel: "",
       description: "",
       amount: 0,
-      quantity: isUnitQuantity ? 1 : undefined,
+      quantity: 1,
       unitCost: isUnitQuantity ? 0 : undefined,
       unitOfMeasure: isUnitQuantity ? "" : undefined,
       billedToDate: 0,
@@ -508,6 +510,7 @@ export function CreateSubcontractForm({
           description: descIdx >= 0 ? cols[descIdx] : cols[0] || "",
           budgetCode: budgetCodeIdx >= 0 ? cols[budgetCodeIdx] : undefined,
           amount: amountIdx >= 0 ? parseFloat(cols[amountIdx]) || 0 : 0,
+          quantity: 1,
           billedToDate: 0,
         } as SovLineItem);
       }
@@ -898,8 +901,6 @@ export function CreateSubcontractForm({
           </AccordionContent>
         </AccordionItem>
 
-        {/* Schedule of Values Section - Only shown in edit mode */}
-        {mode === "edit" && (
         <AccordionItem value="schedule-of-values" className="rounded-lg bg-muted/30 border-none px-5 py-1" data-testid="sov-section">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline">
             Schedule of Values
@@ -1076,70 +1077,17 @@ export function CreateSubcontractForm({
                       >
                         <td className="px-4 py-4 text-sm">{index + 1}</td>
                         <td className="px-4 py-4">
-                          <Popover
-                            open={openBudgetCodePopover === index}
-                            onOpenChange={(open) => {
-                              setOpenBudgetCodePopover(open ? index : null);
-                              if (open) setBudgetCodeSearchQuery("");
-                            }}
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className="w-full justify-between text-left font-normal h-8"
-                                data-testid="sov-line-budget-code"
-                              >
-                                <span className="truncate">
-                                  {line.budgetCodeLabel ||
-                                    "Select budget code..."}
-                                </span>
-                                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-96 p-0" align="start">
-                              <Command>
-                                <CommandInput
-                                  placeholder="Search budget codes..."
-                                  value={budgetCodeSearchQuery}
-                                  onValueChange={setBudgetCodeSearchQuery}
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    {loadingBudgetCodes
-                                      ? "Loading..."
-                                      : "No budget codes found."}
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {filteredBudgetCodes.map((code) => (
-                                      <CommandItem
-                                        key={code.id}
-                                        value={code.fullLabel}
-                                        onSelect={() =>
-                                          handleBudgetCodeSelect(index, code)
-                                        }
-                                      >
-                                        {code.fullLabel}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                  <CommandSeparator />
-                                  <CommandGroup>
-                                    <CommandItem
-                                      onSelect={() => {
-                                        setOpenBudgetCodePopover(null);
-                                        setShowCreateBudgetCodeModal(true);
-                                      }}
-                                      className="text-primary"
-                                    >
-                                      <Plus className="mr-2 h-4 w-4" />
-                                      Create New Budget Code
-                                    </CommandItem>
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
+                          <BudgetCodeSelector
+                            value={line.budgetCodeId || ""}
+                            onValueChange={(_, code) =>
+                              handleBudgetCodeSelect(index, code)
+                            }
+                            budgetCodes={budgetCodes}
+                            loading={loadingBudgetCodes}
+                            onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                            placeholder="Select budget code..."
+                            className="h-8"
+                          />
                         </td>
                         <td className="px-4 py-4">
                           <Input
@@ -1159,7 +1107,7 @@ export function CreateSubcontractForm({
                             <td className="px-4 py-4">
                               <Input
                                 type="number"
-                                value={line.quantity ?? ""}
+                                value={line.quantity ?? 1}
                                 onChange={(e) =>
                                   updateSOVLine(index, {
                                     quantity: parseFloat(e.target.value) || 0,
@@ -1170,16 +1118,28 @@ export function CreateSubcontractForm({
                               />
                             </td>
                             <td className="px-4 py-4">
-                              <Input
-                                value={line.unitOfMeasure || ""}
-                                onChange={(e) =>
+                              <Select
+                                value={line.unitOfMeasure || undefined}
+                                onValueChange={(value) =>
                                   updateSOVLine(index, {
-                                    unitOfMeasure: e.target.value,
+                                    unitOfMeasure: value,
                                   })
                                 }
-                                className="h-8"
-                                data-testid="sov-line-unit-of-measure"
-                              />
+                              >
+                                <SelectTrigger
+                                  className="h-8"
+                                  data-testid="sov-line-unit-of-measure"
+                                >
+                                  <SelectValue placeholder="Select UOM" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {UNIT_OF_MEASURES.map((uom) => (
+                                    <SelectItem key={uom.value} value={uom.value}>
+                                      {uom.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </td>
                             <td className="px-4 py-4">
                               <Input
@@ -1303,7 +1263,6 @@ export function CreateSubcontractForm({
           </div>
           </AccordionContent>
         </AccordionItem>
-        )}
 
         {/* Inclusions & Exclusions Section */}
         <AccordionItem value="inclusions-exclusions" className="rounded-lg bg-muted/30 border-none px-5 py-1">

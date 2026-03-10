@@ -169,7 +169,7 @@ export function ContractSetup({
                 onChange={(e) =>
                   updateContract("contract_number", e.target.value)
                 }
-                placeholder="e.g., PC-2024-001"
+                placeholder="Enter contract number"
               />
             </div>
 

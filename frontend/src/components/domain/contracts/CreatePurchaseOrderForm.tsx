@@ -15,7 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Upload, X, Plus, Loader2, AlertCircle, Package } from "lucide-react";
+import {
+  Upload,
+  X,
+  Plus,
+  Loader2,
+  AlertCircle,
+  Package,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import {
   CreatePurchaseOrderSchema,
   type CreatePurchaseOrderInput,
@@ -24,6 +33,17 @@ import {
 import { useCompanies } from "@/hooks/use-companies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RichTextField } from "@/components/forms/RichTextField";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface CreatePurchaseOrderFormProps {
   projectId: number;
@@ -35,12 +55,23 @@ interface CreatePurchaseOrderFormProps {
   mode?: "create" | "edit";
 }
 
-interface BudgetCodeSummary {
+interface BudgetCode {
+  id: string;
   code: string;
+  costType: string | null;
+  description: string;
+  fullLabel: string;
 }
 
 interface BudgetCodesResponse {
-  budgetCodes: BudgetCodeSummary[];
+  budgetCodes: BudgetCode[];
+}
+
+interface CostCodeOption {
+  id: string;
+  title: string | null;
+  status: string | null;
+  division_title: string | null;
 }
 
 interface FormSectionHeadingProps {
@@ -87,11 +118,28 @@ export function CreatePurchaseOrderForm({
   >((initialData?.accountingMethod as any) || "unit-quantity");
   const [attachments, setAttachments] = React.useState<File[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [budgetCodes, setBudgetCodes] = React.useState<string[]>([]);
+  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
   const [budgetCodesLoaded, setBudgetCodesLoaded] = React.useState(false);
   const [budgetCodesError, setBudgetCodesError] = React.useState<string | null>(
     null,
   );
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
+    React.useState(false);
+  const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
+    costCodeId: "",
+    costType: "X",
+  });
+  const [availableCostCodes, setAvailableCostCodes] = React.useState<
+    CostCodeOption[]
+  >([]);
+  const [loadingCostCodes, setLoadingCostCodes] = React.useState(false);
+  const [groupedCostCodes, setGroupedCostCodes] = React.useState<
+    Record<string, CostCodeOption[]>
+  >({});
+  const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(
+    new Set(),
+  );
+  const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
 
   // Use the companies hook - returns { value: uuid, label: name } options
   const { options: companyOptions, isLoading: isLoadingCompanies } =
@@ -107,7 +155,7 @@ export function CreatePurchaseOrderForm({
     resolver: zodResolver(CreatePurchaseOrderSchema) as any,
     reValidateMode: "onBlur",
     defaultValues: {
-      contractNumber: initialData?.contractNumber || "PO-001",
+      contractNumber: initialData?.contractNumber || "",
       status: initialData?.status || "Draft",
       executed: initialData?.executed || false,
       accountingMethod: initialData?.accountingMethod || "unit-quantity",
@@ -151,7 +199,7 @@ export function CreatePurchaseOrderForm({
 
         const data = (await response.json()) as BudgetCodesResponse;
         if (!isMounted) return;
-        setBudgetCodes(data.budgetCodes.map((code) => code.code));
+        setBudgetCodes(data.budgetCodes || []);
       } catch (error) {
         if (!isMounted) return;
         setBudgetCodesError(
@@ -174,8 +222,46 @@ export function CreatePurchaseOrderForm({
     };
   }, [projectId]);
 
+  React.useEffect(() => {
+    const fetchCostCodes = async () => {
+      if (!showCreateBudgetCodeModal) return;
+
+      try {
+        setLoadingCostCodes(true);
+        const supabaseClient = createClient();
+        const { data, error } = await supabaseClient
+          .from("cost_codes")
+          .select("id, title, status, division_title")
+          .eq("status", "Active")
+          .order("id", { ascending: true });
+
+        if (error) return;
+
+        const costCodes = (data || []) as CostCodeOption[];
+        setAvailableCostCodes(costCodes);
+
+        const grouped = costCodes.reduce(
+          (acc: Record<string, CostCodeOption[]>, code: CostCodeOption) => {
+            const division = code.division_title || "Other";
+            if (!acc[division]) {
+              acc[division] = [];
+            }
+            acc[division].push(code);
+            return acc;
+          },
+          {},
+        );
+        setGroupedCostCodes(grouped);
+      } finally {
+        setLoadingCostCodes(false);
+      }
+    };
+
+    fetchCostCodes();
+  }, [showCreateBudgetCodeModal]);
+
   const budgetCodeSet = React.useMemo(() => {
-    return new Set(budgetCodes);
+    return new Set(budgetCodes.map((code) => code.code));
   }, [budgetCodes]);
 
   const unbudgetedLines = React.useMemo(() => {
@@ -186,6 +272,97 @@ export function CreatePurchaseOrderForm({
       }))
       .filter(({ code }) => code.length > 0 && !budgetCodeSet.has(code));
   }, [sovLines, budgetCodeSet]);
+
+  const getCostTypeLabel = (type: string) => {
+    const types: Record<string, string> = {
+      R: "Contract Revenue",
+      E: "Equipment",
+      X: "Expense",
+      L: "Labor",
+      M: "Material",
+      S: "Subcontract",
+    };
+    return types[type] || type;
+  };
+
+  const toggleDivision = (division: string) => {
+    setExpandedDivisions((prev) => {
+      const next = new Set(prev);
+      if (next.has(division)) {
+        next.delete(division);
+      } else {
+        next.add(division);
+      }
+      return next;
+    });
+  };
+
+  const handleCreateBudgetCode = async () => {
+    try {
+      setIsCreatingBudgetCode(true);
+      const selectedCostCode = availableCostCodes.find(
+        (code) => code.id === newBudgetCodeData.costCodeId,
+      );
+
+      if (!selectedCostCode) {
+        toast.error("Please select a cost code");
+        return;
+      }
+
+      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cost_code_id: newBudgetCodeData.costCodeId,
+          cost_type_id: newBudgetCodeData.costType,
+          description: selectedCostCode.title || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error?.error || "Failed to create budget code");
+      }
+
+      const { budgetCode } = (await response.json()) as {
+        budgetCode: BudgetCode;
+      };
+
+      setBudgetCodes((prev) => [...prev, budgetCode]);
+
+      const firstEmptyLineIndex = sovLines.findIndex(
+        (line) => !line.budgetCode?.trim(),
+      );
+
+      if (firstEmptyLineIndex >= 0) {
+        updateSOVLine(firstEmptyLineIndex, "budgetCode", budgetCode.code);
+      } else {
+        setSovLines((prev) => [
+          ...prev,
+          {
+            lineNumber: prev.length + 1,
+            budgetCode: budgetCode.code,
+            description: "",
+            quantity: 1,
+            uom: "",
+            unitCost: 0,
+            amount: 0,
+            billedToDate: 0,
+          },
+        ]);
+      }
+
+      setShowCreateBudgetCodeModal(false);
+      setNewBudgetCodeData({ costCodeId: "", costType: "X" });
+      toast.success("Budget code created and added to form");
+    } catch (error) {
+      toast.error(
+        `Failed to create budget code: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setIsCreatingBudgetCode(false);
+    }
+  };
 
   const handleFormSubmit = async (data: CreatePurchaseOrderInput) => {
     setIsSubmitting(true);
@@ -205,7 +382,8 @@ export function CreatePurchaseOrderForm({
     const newLine: PurchaseOrderSovLineItem & { _id: string } = {
       _id: `line-${Date.now()}-${Math.random()}`,
       lineNumber: sovLines.length + 1,
-      quantity: 0,
+      quantity: 1,
+      uom: "",
       unitCost: 0,
       amount: 0,
       billedToDate: 0,
@@ -749,13 +927,20 @@ export function CreatePurchaseOrderForm({
                           />
                         </td>
                         <td className="px-4 py-2">
-                          <Input
-                            className="text-sm"
-                            placeholder="Budget Code"
-                            value={line.budgetCode || ""}
-                            onChange={(e) =>
-                              updateSOVLine(index, "budgetCode", e.target.value)
+                          <BudgetCodeSelector
+                            value={
+                              budgetCodes.find(
+                                (code) => code.code === (line.budgetCode || ""),
+                              )?.id || ""
                             }
+                            onValueChange={(_, code) =>
+                              updateSOVLine(index, "budgetCode", code.code)
+                            }
+                            budgetCodes={budgetCodes}
+                            loading={!budgetCodesLoaded}
+                            onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                            placeholder="Select budget code..."
+                            className="h-8 text-sm"
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -779,8 +964,8 @@ export function CreatePurchaseOrderForm({
                                 className="text-sm text-right"
                                 type="number"
                                 step="0.01"
-                                placeholder="0"
-                                value={line.quantity || 0}
+                                placeholder="1"
+                                value={line.quantity ?? 1}
                                 onChange={(e) =>
                                   updateSOVLine(
                                     index,
@@ -792,13 +977,13 @@ export function CreatePurchaseOrderForm({
                             </td>
                             <td className="px-4 py-2">
                               <Select
-                                value={line.uom || ""}
+                                value={line.uom || undefined}
                                 onValueChange={(value) =>
                                   updateSOVLine(index, "uom", value)
                                 }
                               >
                                 <SelectTrigger className="text-sm">
-                                  <SelectValue placeholder="UOM" />
+                                  <SelectValue placeholder="Select UOM" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {UNIT_OF_MEASURES.map((uom) => (
@@ -1054,6 +1239,148 @@ export function CreatePurchaseOrderForm({
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={showCreateBudgetCodeModal}
+        onOpenChange={setShowCreateBudgetCodeModal}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create New Budget Code</DialogTitle>
+            <DialogDescription>
+              Add a budget code and assign it directly to this commitment.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="costCode">Cost Code*</Label>
+              {loadingCostCodes ? (
+                <div className="rounded-md border p-4 text-sm text-muted-foreground">
+                  Loading cost codes...
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto rounded-md border">
+                  {Object.entries(groupedCostCodes)
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([division]) => (
+                      <div key={division} className="border-b last:border-b-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleDivision(division)}
+                          className="flex w-full items-center justify-between px-4 py-2 text-left transition-colors hover:bg-muted"
+                        >
+                          <span className="text-sm font-semibold text-foreground">
+                            {division}
+                          </span>
+                          {expandedDivisions.has(division) ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
+                        {expandedDivisions.has(division) && (
+                          <div className="bg-muted/50">
+                            {groupedCostCodes[division].map((costCode) => (
+                              <button
+                                key={costCode.id}
+                                type="button"
+                                onClick={() =>
+                                  setNewBudgetCodeData((prev) => ({
+                                    ...prev,
+                                    costCodeId: costCode.id,
+                                  }))
+                                }
+                                className={`w-full px-6 py-2 text-left text-sm transition-colors hover:bg-muted ${
+                                  newBudgetCodeData.costCodeId === costCode.id
+                                    ? "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                                    : "text-foreground"
+                                }`}
+                              >
+                                {costCode.division_title || costCode.id} -{" "}
+                                {costCode.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Select a division and choose a cost code.
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="costType">Cost Type*</Label>
+              <Select
+                value={newBudgetCodeData.costType}
+                onValueChange={(value) =>
+                  setNewBudgetCodeData((prev) => ({
+                    ...prev,
+                    costType: value,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="R">R - Contract Revenue</SelectItem>
+                  <SelectItem value="E">E - Equipment</SelectItem>
+                  <SelectItem value="X">X - Expense</SelectItem>
+                  <SelectItem value="L">L - Labor</SelectItem>
+                  <SelectItem value="M">M - Material</SelectItem>
+                  <SelectItem value="S">S - Subcontract</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-md bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">Preview:</p>
+              <p className="mt-1 text-sm text-foreground">
+                {newBudgetCodeData.costCodeId ? (
+                  <>
+                    {availableCostCodes.find(
+                      (code) => code.id === newBudgetCodeData.costCodeId,
+                    )?.division_title ||
+                      availableCostCodes.find(
+                        (code) => code.id === newBudgetCodeData.costCodeId,
+                      )?.id}
+                    .{newBudgetCodeData.costType} -{" "}
+                    {
+                      availableCostCodes.find(
+                        (code) => code.id === newBudgetCodeData.costCodeId,
+                      )?.title
+                    }{" "}
+                    - {getCostTypeLabel(newBudgetCodeData.costType)}
+                  </>
+                ) : (
+                  "Select cost code and cost type to preview the budget code."
+                )}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCreateBudgetCodeModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateBudgetCode}
+              disabled={
+                isCreatingBudgetCode ||
+                !newBudgetCodeData.costCodeId ||
+                !newBudgetCodeData.costType
+              }
+            >
+              {isCreatingBudgetCode ? "Creating..." : "Create Budget Code"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

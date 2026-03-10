@@ -112,7 +112,7 @@ export function PurchaseOrderForm({
                 setFormData({ ...formData, number: e.target.value })
               }
               required
-              placeholder="PO-001"
+              placeholder="Enter PO number"
             />
 
             <SelectField

@@ -240,7 +240,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                 id="co-number"
                 value={coForm.change_order_number}
                 onChange={(e) => setCoForm((prev) => ({ ...prev, change_order_number: e.target.value }))}
-                placeholder="CO-001"
+                placeholder="Enter change order number"
               />
             </div>
             <div className="grid gap-2">

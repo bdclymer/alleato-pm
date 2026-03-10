@@ -310,7 +310,7 @@ export default function NewChangeOrderPage() {
                         <FormControl>
                           <Input
                             {...field}
-                            placeholder="CO-001"
+                            placeholder="Enter change order number"
                             data-testid="change-order-number"
                           />
                         </FormControl>

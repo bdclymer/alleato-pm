@@ -266,7 +266,7 @@ export default function EditChangeOrderPage() {
                     <FormItem>
                       <FormLabel>Change Order Number *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="CO-001" />
+                        <Input {...field} placeholder="Enter change order number" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
