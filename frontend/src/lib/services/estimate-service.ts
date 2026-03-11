@@ -187,8 +187,7 @@ export class EstimateService {
     };
 
     if (userId) {
-      insertPayload.created_by_user_id = userId;
-      insertPayload.updated_by_user_id = userId;
+      insertPayload.created_by = userId;
     }
 
     const { data: estimate, error } = await this.supabase

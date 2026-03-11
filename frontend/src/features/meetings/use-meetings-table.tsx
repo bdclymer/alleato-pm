@@ -125,6 +125,8 @@ export interface UseMeetingsTableResult {
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   meetingToDelete: Meeting | null;
   setMeetingToDelete: React.Dispatch<React.SetStateAction<Meeting | null>>;
+  bulkDeleteDialogOpen: boolean;
+  setBulkDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleFilterChange: (nextFilters: FilterState) => void;
   handleRowClick: (meeting: Meeting) => void;
   handleOpenMeetingPage: (meeting: Meeting) => void;
@@ -136,6 +138,7 @@ export interface UseMeetingsTableResult {
   handlePanelOpenChange: (open: boolean) => void;
   handleSave: (data: Partial<Meeting>) => Promise<void>;
   handleDeleteConfirm: () => Promise<void>;
+  handleBulkDeleteConfirm: () => Promise<void>;
   handleSelectAll: (checked: boolean) => void;
   handleSelectRow: (id: string, checked: boolean) => void;
   handleOpenSource: (meeting: Meeting) => void;
@@ -153,6 +156,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   const [meetings, setMeetings] = React.useState<Meeting[]>(initialMeetings);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [meetingToDelete, setMeetingToDelete] = React.useState<Meeting | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [editingMeetingId, setEditingMeetingId] = React.useState<string | null>(null);
 
   // ── Inline editing state ────────────────────────────────────────────────────
@@ -549,6 +553,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
       if (error) throw new Error(error.message);
 
       setMeetings((prev) => prev.filter((meeting) => meeting.id !== meetingToDelete.id));
+      tableState.setSelectedIds((prev) => prev.filter((id) => id !== meetingToDelete.id));
       toast.success("Meeting deleted successfully");
     } catch {
       toast.error("Failed to delete meeting");
@@ -568,9 +573,46 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   const handleSelectRow = (id: string, checked: boolean) => {
     if (checked) {
-      tableState.setSelectedIds((prev) => [...prev, id]);
+      tableState.setSelectedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     } else {
       tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) return;
+
+    try {
+      const supabase = createClient();
+
+      const { error: segmentsDeleteError } = await supabase
+        .from("meeting_segments")
+        .delete()
+        .in("metadata_id", selectedIds);
+
+      if (segmentsDeleteError) throw new Error(segmentsDeleteError.message);
+
+      const { error: meetingsDeleteError } = await supabase
+        .from("document_metadata")
+        .delete()
+        .in("id", selectedIds);
+
+      if (meetingsDeleteError) throw new Error(meetingsDeleteError.message);
+
+      setMeetings((prev) => prev.filter((meeting) => !selectedIds.includes(meeting.id)));
+      tableState.setSelectedIds([]);
+
+      if (detailParam && selectedIds.includes(detailParam)) {
+        tableState.setSearchParams({ detail: null });
+      }
+
+      toast.success(`Deleted ${selectedIds.length} meeting${selectedIds.length === 1 ? "" : "s"}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete selected meetings";
+      toast.error(message);
+    } finally {
+      setBulkDeleteDialogOpen(false);
     }
   };
 
@@ -644,6 +686,8 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     setDeleteDialogOpen,
     meetingToDelete,
     setMeetingToDelete,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
     handleFilterChange,
     handleRowClick,
     handleOpenMeetingPage,
@@ -652,6 +696,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,
+    handleBulkDeleteConfirm,
     handleSelectAll,
     handleSelectRow,
     handleOpenSource,

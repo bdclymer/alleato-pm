@@ -20,7 +20,10 @@ export async function GET() {
 
   let query = supabase
     .from("tasks")
-    .select("*")
+    .select(`
+      *,
+      projects (id, name)
+    `)
     .eq("source_system", "fireflies")
     .not("metadata_id", "is", null)
     .or("project_id.not.is.null,project_ids.not.is.null")
@@ -40,5 +43,14 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ data: data ?? [] });
+  const tasks = (data ?? []).map((task) => {
+    const { projects, ...rest } = task as Record<string, unknown>;
+    const projectMetadata = projects as Record<string, unknown> | undefined;
+    return {
+      ...rest,
+      project_name: projectMetadata?.name ?? null,
+    };
+  });
+
+  return NextResponse.json({ data: tasks });
 }

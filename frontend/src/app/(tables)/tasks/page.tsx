@@ -12,6 +12,16 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   type TasksRow,
   buildTasksTableColumns,
   tasksColumns,
@@ -35,6 +45,8 @@ export default function TasksPage() {
 
   const [data, setData] = React.useState<TasksRow[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   const tableState = useUnifiedTableState({
     entityKey: "tasks",
@@ -93,14 +105,21 @@ export default function TasksPage() {
         (item.source_chunk_id ?? "").toLowerCase().includes(searchTerm) ||
         (item.description ?? "").toLowerCase().includes(searchTerm) ||
         (item.assignee_name ?? "").toLowerCase().includes(searchTerm) ||
-        (item.project_id ?? "").toLowerCase().includes(searchTerm) ||
-        (item.client_id ?? "").toLowerCase().includes(searchTerm)
+        (item.project_name ?? "").toLowerCase().includes(searchTerm) ||
+        (item.assignee_email ?? "").toLowerCase().includes(searchTerm)
       );
     });
   }, [activeFilters.status, data, tableState.debouncedSearch]);
 
   const totalItems = data.length;
   const filteredItems = filteredData.length;
+  const selectableTaskIds = React.useMemo(
+    () =>
+      filteredData
+        .map((item) => item.id)
+        .filter((id): id is string => Boolean(id)),
+    [filteredData],
+  );
   const isFiltered =
     tableState.debouncedSearch.trim().length > 0 ||
     Object.values(activeFilters).some((v) => v !== undefined);
@@ -112,30 +131,83 @@ export default function TasksPage() {
 
   const handleDeleteTask = React.useCallback(
     async (item: TasksRow) => {
+      if (!item.id) {
+        toast.error("Task is missing an ID and cannot be deleted");
+        return;
+      }
       try {
         const resp = await fetch(`/api/tasks/${item.id}`, { method: "DELETE" });
         if (!resp.ok) throw new Error("Failed to delete task");
         toast.success("Task deleted");
+        tableState.setSelectedIds((prev) => prev.filter((id) => id !== item.id));
         void refresh();
       } catch {
         toast.error("Failed to delete task");
       }
     },
-    [refresh],
+    [refresh, tableState],
   );
+
+  const handleSelectAll = React.useCallback(
+    (checked: boolean) => {
+      tableState.setSelectedIds(checked ? selectableTaskIds : []);
+    },
+    [selectableTaskIds, tableState],
+  );
+
+  const handleSelectRow = React.useCallback(
+    (id: string, checked: boolean) => {
+      tableState.setSelectedIds((prev) => {
+        if (checked) {
+          if (prev.includes(id)) return prev;
+          return [...prev, id];
+        }
+        return prev.filter((itemId) => itemId !== id);
+      });
+    },
+    [tableState],
+  );
+
+  const handleBulkDelete = React.useCallback(async () => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const resp = await fetch("/api/tasks/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task_ids: selectedIds }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) {
+        throw new Error(result?.error || "Failed to delete selected tasks");
+      }
+
+      toast.success(`Deleted ${selectedIds.length} tasks`);
+      tableState.setSelectedIds([]);
+      await refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to delete selected tasks";
+      toast.error(message);
+    } finally {
+      setIsBulkDeleting(false);
+      setBulkDeleteDialogOpen(false);
+    }
+  }, [refresh, tableState]);
 
   const handleView = (item: TasksRow) => {
     toast.info(`Viewing: ${item.id || item.id}`);
   };
 
   const handleExport = () => {
-    const headers = ["Description", "Assignee Name", "Assignee Email", "Project Id", "Client Id", "Due Date", "Priority", "Status"];
+    const headers = ["Task Name", "Project Name", "Assigned User", "Assignee Email", "Due Date", "Priority", "Status"];
     const rows = filteredData.map((d) => [
       d.description || "",
+      d.project_name || "",
       d.assignee_name || "",
       d.assignee_email || "",
-      d.project_id || "",
-      d.client_id || "",
       d.due_date ? format(new Date(d.due_date), "yyyy-MM-dd") : "",
       d.priority || "",
       d.status || "",
@@ -153,7 +225,8 @@ export default function TasksPage() {
   };
 
   return (
-    <UnifiedTablePage
+    <>
+      <UnifiedTablePage
       header={{
         title: "Tasks",
         description: "Manage tasks",
@@ -161,7 +234,7 @@ export default function TasksPage() {
       toolbar={{
         totalItems,
         filteredItems,
-        selectedCount: 0,
+        selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search tasks...",
@@ -179,6 +252,7 @@ export default function TasksPage() {
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
         onExport: handleExport,
+        onBulkDelete: () => setBulkDeleteDialogOpen(true),
       }}
       data={{
         items: filteredData,
@@ -190,6 +264,11 @@ export default function TasksPage() {
         getRowId: (item) => item.id ?? "",
         onRowClick: handleView,
         rowActions: (item) => renderTasksRowActions(item, handleView, handleDeleteTask),
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -212,9 +291,33 @@ export default function TasksPage() {
       }}
       features={{
         enableExport: true,
-        enableBulkDelete: false,
-        enableRowSelection: false,
+        enableBulkDelete: true,
+        enableRowSelection: true,
       }}
-    />
+        layout={{ fullBleedTable: false, toolbarInlineWithHeader: true }}
+      />
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected tasks</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {tableState.selectedIds.length} selected task
+              {tableState.selectedIds.length === 1 ? "" : "s"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isBulkDeleting || tableState.selectedIds.length === 0}
+            >
+              {isBulkDeleting ? "Deleting..." : "Delete selected"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

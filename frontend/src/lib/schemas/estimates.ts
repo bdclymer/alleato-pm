@@ -146,10 +146,16 @@ export const EstimateCreateSchema = z.object({
   estimate_number: optionalString,
   revision: z.coerce.number().int().min(1).default(1),
   status: z.enum(EstimateStatuses).default("draft"),
-  estimate_date: z.coerce.date().optional().nullable(),
+  estimate_date: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.coerce.date().nullable().optional()
+  ),
   location: optionalString,
   estimator: optionalString,
-  project_duration_weeks: z.coerce.number().int().positive().optional().nullable(),
+  project_duration_weeks: z.preprocess(
+    (val) => (val === "" || (typeof val === "number" && Number.isNaN(val)) ? null : val),
+    z.coerce.number().int().positive().nullable().optional()
+  ),
   contingency_amount: nonNegativeNumber,
   insurance_rate: z.coerce.number().min(0).max(1).default(0.0125),
   fee_rate: z.coerce.number().min(0).max(1).default(0.1),

@@ -148,5 +148,7 @@ This tool is **automatically blocked in production** via `NODE_ENV` check. The A
 
 - [`frontend/src/components/tables/unified/unified-table-page.tsx`](../../../frontend/src/components/tables/unified/unified-table-page.tsx) — UnifiedTablePage component
 - [`frontend/src/components/tables/unified/use-unified-table-state.ts`](../../../frontend/src/components/tables/unified/use-unified-table-state.ts) — State hook
+- [`frontend/src/components/tables/unified/table-primitives.tsx`](../../../frontend/src/components/tables/unified/table-primitives.tsx) — Shared table cell and menu primitives
+- [`docs/development/table-pages/table-component-catalog.md`](./table-component-catalog.md) — Standardized component usage guide
 - [`frontend/src/features/documents/documents-table-config.tsx`](../../../frontend/src/features/documents/documents-table-config.tsx) — Reference config
 - [`frontend/src/app/(tables)/documents/page.tsx`](../../../frontend/src/app/(tables)/documents/page.tsx) — Reference page

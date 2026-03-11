@@ -28,6 +28,7 @@ import {
 import { ProjectFormPageLayout } from "@/components/layout";
 import { FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
+import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 
 const createInvoiceSchema = z.object({
   contract_id: z.number().min(1, "Contract is required"),
@@ -76,6 +77,23 @@ export default function NewInvoicePage() {
     }
     loadContracts();
   }, [projectId]);
+
+  useEffect(() => {
+    if (isLoadingContracts || contracts.length === 0) return;
+    const selectedContract = form.getValues("contract_id");
+    if (selectedContract) return;
+    form.setValue("contract_id", contracts[0].id, { shouldValidate: true });
+  }, [contracts, isLoadingContracts, form]);
+
+  const handleDevAutoFill = () => {
+    const now = Date.now();
+    const firstContractId = contracts[0]?.id;
+    if (firstContractId) {
+      form.setValue("contract_id", firstContractId, { shouldValidate: true });
+    }
+    form.setValue("invoice_number", `INV-${now}`, { shouldValidate: true });
+    form.setValue("status", "draft", { shouldValidate: true });
+  };
 
   async function onSubmit(values: CreateInvoiceValues) {
     setIsSubmitting(true);
@@ -246,7 +264,12 @@ export default function NewInvoicePage() {
             submitLabel="Create Invoice"
             onCancel={() => router.push(`/${projectId}/invoicing`)}
             isSubmitting={isSubmitting}
-          />
+          >
+            <DevAutoFillButton
+              formType="invoice"
+              onAutoFill={handleDevAutoFill}
+            />
+          </FormActions>
         </form>
       </Form>
     </ProjectFormPageLayout>

@@ -26,6 +26,7 @@ import {
   ChevronDown,
   BarChart3,
   ChevronsUpDown,
+  Wand2,
 } from "lucide-react";
 import {
   CreateSubcontractSchema,
@@ -166,6 +167,7 @@ export function CreateSubcontractForm({
     >
   >({});
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
+  const [isAutoFilling, setIsAutoFilling] = React.useState(false);
   const [openContractCompanyPopover, setOpenContractCompanyPopover] =
     React.useState(false);
   const [richTextMode, setRichTextMode] = React.useState<Record<string, boolean>>({});
@@ -229,6 +231,7 @@ export function CreateSubcontractForm({
       attachments: [],
     },
   });
+  const showAutoFill = process.env.NODE_ENV === "development";
 
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
   const privacyIsPrivate = useWatch({ control, name: "privacy.isPrivate" }) ?? true;
@@ -442,6 +445,28 @@ export function CreateSubcontractForm({
       setErrorDetails(err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDevAutoFill = () => {
+    setIsAutoFilling(true);
+    try {
+      const now = Date.now();
+      const defaultCompanyId = companyOptions[0]?.value || "";
+
+      setValue("title", `Autofilled subcontract ${now}`, {
+        shouldValidate: true,
+      });
+      setValue("contractNumber", `SC-${now}`, { shouldValidate: true });
+      setValue("status", "Draft", { shouldValidate: true });
+      setValue("description", "Autofilled subcontract for form verification.", {
+        shouldValidate: true,
+      });
+      if (defaultCompanyId) {
+        setValue("contractCompanyId", defaultCompanyId, { shouldValidate: true });
+      }
+    } finally {
+      setIsAutoFilling(false);
     }
   };
 
@@ -1595,6 +1620,17 @@ export function CreateSubcontractForm({
             <span className="text-destructive">*</span> Required fields
           </p>
           <div className="flex gap-3">
+            {showAutoFill && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDevAutoFill}
+                disabled={isSubmitting || isAutoFilling}
+              >
+                <Wand2 className="mr-2 h-4 w-4" />
+                {isAutoFilling ? "Filling..." : "Auto-fill"}
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"

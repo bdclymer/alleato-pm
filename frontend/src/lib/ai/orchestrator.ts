@@ -478,6 +478,7 @@ export function createStrategistTools(
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
   const {
+    getPortfolioOverview: _portfolioOverviewTool,
     getProjectsWithRisks: _riskRadarTool,
     getProjectRiskAnalysis: _projectRiskTool,
     ...strategistBaseTools

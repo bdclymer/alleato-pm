@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { changeOrderSchema } from "@/lib/schemas/financial-schemas";
 import type { PaginatedResponse, ZodError } from "@/app/api/types";
 import { apiErrorResponse } from "@/lib/api-error";
+import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 
 export async function GET(
   request: Request,
@@ -19,7 +19,11 @@ export async function GET(
       );
     }
 
-    const supabase = await createClient();
+    const accessResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(accessResult)) {
+      return accessResult;
+    }
+    const supabase = accessResult.serviceClient;
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1");
@@ -114,24 +118,21 @@ export async function POST(
       );
     }
 
-    const supabase = await createClient();
+    const accessResult = await verifyProjectAccess(numericProjectId);
+    if (isAuthError(accessResult)) {
+      return accessResult;
+    }
+    const supabase = accessResult.serviceClient;
     const body = await request.json();
 
     const validatedData = changeOrderSchema.parse(body);
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const { data, error } = await supabase
       .from("change_orders")
       .insert({
         project_id: numericProjectId,
         ...validatedData,
-        submitted_by: user.id,
+        submitted_by: accessResult.membership.authUserId,
       })
       .select()
       .single();

@@ -1,0 +1,321 @@
+"use client";
+
+import * as React from "react";
+import type { LucideIcon } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+export type TableBadgeVariant = "default" | "secondary" | "outline";
+
+interface TableCountIndicatorProps {
+  count: number;
+  className?: string;
+}
+
+export function TableCountIndicator({ count, className }: TableCountIndicatorProps): React.ReactElement | null {
+  if (count <= 0) return null;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground",
+        className,
+      )}
+    >
+      {count}
+    </span>
+  );
+}
+
+interface TableDateValueProps {
+  value: string | null | undefined;
+  showTime?: boolean;
+  emptyLabel?: string;
+  className?: string;
+}
+
+export function TableDateValue({
+  value,
+  showTime = false,
+  emptyLabel = "—",
+  className,
+}: TableDateValueProps): React.ReactElement {
+  if (!value) {
+    return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
+  }
+
+  const dateLabel = parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  if (!showTime) {
+    return <span className={cn("text-xs text-foreground", className)}>{dateLabel}</span>;
+  }
+
+  const timeLabel = parsed.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-xs", className)}>
+      <span className="text-foreground">{dateLabel}</span>
+      <span className="text-muted-foreground">•</span>
+      <span className="text-muted-foreground">{timeLabel}</span>
+    </span>
+  );
+}
+
+function resolveStatusDotClass(status: string | null | undefined): string {
+  const normalized = status?.trim().toLowerCase() ?? "";
+  if (!normalized) return "bg-muted-foreground/40";
+
+  if (
+    normalized.includes("complete") ||
+    normalized.includes("done") ||
+    normalized.includes("embedded") ||
+    normalized.includes("approved") ||
+    normalized.includes("paid")
+  ) {
+    return "bg-[hsl(var(--status-success))]";
+  }
+
+  if (
+    normalized.includes("processing") ||
+    normalized.includes("pending") ||
+    normalized.includes("running") ||
+    normalized.includes("submitted")
+  ) {
+    return "bg-[hsl(var(--status-warning))]";
+  }
+
+  if (normalized.includes("error") || normalized.includes("failed") || normalized.includes("rejected")) {
+    return "bg-[hsl(var(--status-error))]";
+  }
+
+  return "bg-[hsl(var(--status-info))]";
+}
+
+interface TableStatusDotProps {
+  status: string | null | undefined;
+  fallbackLabel?: string;
+  className?: string;
+}
+
+export function TableStatusDot({
+  status,
+  fallbackLabel = "Unknown",
+  className,
+}: TableStatusDotProps): React.ReactElement {
+  const label = status?.trim() || fallbackLabel;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("inline-block h-2 w-2 rounded-full flex-shrink-0", resolveStatusDotClass(status), className)} />
+        </TooltipTrigger>
+        <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+interface TableTagBadgeProps {
+  label: string | null | undefined;
+  variant?: TableBadgeVariant;
+  emptyLabel?: string;
+  className?: string;
+}
+
+export function TableTagBadge({
+  label,
+  variant = "outline",
+  emptyLabel = "—",
+  className,
+}: TableTagBadgeProps): React.ReactElement {
+  const displayLabel = label?.trim() || emptyLabel;
+  return (
+    <Badge variant={variant} className={cn("font-normal", className)}>
+      {displayLabel}
+    </Badge>
+  );
+}
+
+function getParticipantInitials(value: string): string {
+  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
+  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
+  if (tokenized.length >= 2) {
+    return `${tokenized[0][0]}${tokenized[tokenized.length - 1][0]}`.toUpperCase();
+  }
+  const first = tokenized[0] ?? cleaned;
+  return first.slice(0, 2).toUpperCase();
+}
+
+export function formatParticipantDisplayName(value: string): string {
+  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
+  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
+  if (tokenized.length === 0) return value;
+
+  return tokenized
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(" ");
+}
+
+interface TableAvatarUsersProps {
+  users: string[];
+  maxVisible?: number;
+  className?: string;
+}
+
+export function TableAvatarUsers({
+  users,
+  maxVisible = 4,
+  className,
+}: TableAvatarUsersProps): React.ReactElement | null {
+  if (users.length === 0) return null;
+
+  const visibleUsers = users.slice(0, maxVisible);
+  const hiddenCount = Math.max(0, users.length - visibleUsers.length);
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn("inline-flex", className)} onClick={(event) => event.stopPropagation()}>
+            <AvatarGroup className="justify-start">
+              {visibleUsers.map((user) => (
+                <Avatar key={user} className="h-7 w-7">
+                  <AvatarFallback className="text-[10px] font-semibold">{getParticipantInitials(user)}</AvatarFallback>
+                </Avatar>
+              ))}
+              {hiddenCount > 0 ? (
+                <AvatarGroupCount className="h-7 w-7 text-[10px] font-semibold">+{hiddenCount}</AvatarGroupCount>
+              ) : null}
+            </AvatarGroup>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-md">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-foreground">Participants ({users.length})</p>
+            <ul className="space-y-1">
+              {users.map((user) => (
+                <li key={user} className="text-xs text-muted-foreground">
+                  {formatParticipantDisplayName(user)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+interface TableIconLinkItem {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+}
+
+interface TableIconLinksProps {
+  items: TableIconLinkItem[];
+  className?: string;
+}
+
+export function TableIconLinks({ items, className }: TableIconLinksProps): React.ReactElement | null {
+  if (items.length === 0) return null;
+
+  return (
+    <div className={cn("flex items-center gap-2", className)} onClick={(event) => event.stopPropagation()}>
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <a
+            key={`${item.href}-${item.label}`}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={item.label}
+            title={item.label}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Icon className="h-4 w-4" />
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+export interface TableRowActionItem {
+  key: string;
+  label: string;
+  icon?: LucideIcon;
+  onSelect: () => void;
+  destructive?: boolean;
+  disabled?: boolean;
+}
+
+interface TableRowActionsMenuProps {
+  items: TableRowActionItem[];
+  align?: "start" | "center" | "end";
+}
+
+export function TableRowActionsMenu({
+  items,
+  align = "end",
+}: TableRowActionsMenuProps): React.ReactElement | null {
+  const visibleItems = items.filter((item) => Boolean(item.label));
+  if (visibleItems.length === 0) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Open actions menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={align}>
+        {visibleItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <DropdownMenuItem
+              key={item.key}
+              onClick={item.onSelect}
+              disabled={item.disabled}
+              className={item.destructive ? "text-destructive focus:text-destructive" : undefined}
+            >
+              {Icon ? <Icon className="mr-2 h-4 w-4" /> : null}
+              {item.label}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

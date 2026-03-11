@@ -1,10 +1,19 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { ArrowUpRight, CalendarClock, Flame, FileText, Keyboard, Link as LinkIcon, Users } from "lucide-react";
+import {
+  ArrowUpRight,
+  Flame,
+  FileText,
+  Keyboard,
+  Lightbulb,
+  Link as LinkIcon,
+  ListChecks,
+  Users,
+} from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Meeting } from "@/lib/validation/meetings";
 import { getParticipantDisplayName, parseParticipants } from "@/features/meetings/meetings-table-config";
 
@@ -26,6 +35,45 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
+function toSummaryPoints(summary: string | null | undefined): string[] {
+  if (!summary) return [];
+
+  return summary
+    .split(/\n+/)
+    .flatMap((line) => line.split(/[•●▪◦]/))
+    .map((line) =>
+      line
+        .trim()
+        .replace(/^[\s\-*]+/, "")
+        .replace(/^[^\w(]+/, "")
+        .trim(),
+    )
+    .filter((line) => line.length > 0);
+}
+
+function KeyboardTipsPopover(): ReactElement {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Keyboard tips">
+          <Lightbulb className="h-4.5 w-4.5" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 space-y-2 p-3">
+        <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
+          <Keyboard className="h-3.5 w-3.5" />
+          Keyboard tips
+        </p>
+        <ul className="space-y-2 text-xs text-muted-foreground">
+          <li>Arrow Up/Down (or J/K): move selection</li>
+          <li>Enter: open selected meeting page</li>
+          <li>Tab / Shift+Tab while editing: save and move cell</li>
+        </ul>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function MeetingPreviewPane({
   meeting,
   onOpenMeetingPage,
@@ -33,83 +81,46 @@ export function MeetingPreviewPane({
   if (!meeting) {
     return (
       <div className="p-8 space-y-5">
-        <p className="text-sm font-medium text-foreground">Meeting preview</p>
-        <p className="text-sm text-muted-foreground">
-          Select a row to preview details here.
-        </p>
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <p className="inline-flex items-center gap-2">
-            <Keyboard className="h-3.5 w-3.5" />
-            Arrow Up/Down (or J/K): move selection
-          </p>
-          <p>Enter: open selected meeting page</p>
-          <p>Tab / Shift+Tab while editing: save and move cell</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-foreground">Meeting preview</p>
+          <KeyboardTipsPopover />
         </div>
+        <p className="text-sm text-muted-foreground">Select a row to preview details here.</p>
       </div>
     );
   }
 
   const participants = parseParticipants(meeting).map(getParticipantDisplayName);
   const hasExternalLinks = Boolean(meeting.source || meeting.fireflies_link || meeting.url);
+  const summaryPoints = toSummaryPoints(meeting.summary);
 
   return (
     <div className="p-8 space-y-6">
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-2">
+          <div className="min-w-0 space-y-1.5">
             <p className="text-sm font-semibold text-foreground leading-tight">
               {meeting.title || "Untitled meeting"}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {meeting.status ? <Badge variant="outline">{meeting.status}</Badge> : null}
-              {meeting.type ? <Badge variant="secondary">{meeting.type}</Badge> : null}
-              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
-            </div>
+            <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+              {formatDateTime(meeting.date)}
+            </p>
+            {meeting.project ? <p className="text-xs text-muted-foreground">Project: {meeting.project}</p> : null}
           </div>
-          <Button
-            size="xs"
-            variant="default"
-            onClick={() => onOpenMeetingPage(meeting)}
-            className="shrink-0"
-          >
-            Open
-            <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
-          </Button>
-        </div>
-
-        <div className="space-y-1.5 text-xs text-muted-foreground">
-          <p className="inline-flex items-center gap-2">
-            <CalendarClock className="h-3.5 w-3.5" />
-            {formatDateTime(meeting.date)}
-          </p>
-          {meeting.project ? <p>Project: {meeting.project}</p> : null}
+          <div className="flex items-center gap-1.5">
+            <KeyboardTipsPopover />
+            <Button
+              size="xs"
+              variant="default"
+              onClick={() => onOpenMeetingPage(meeting)}
+              className="shrink-0"
+            >
+              View details
+              <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
-
-      {participants.length > 0 ? (
-        <section className="space-y-3 border-t pt-4">
-          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
-            <Users className="h-3.5 w-3.5" />
-            Participants ({participants.length})
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {participants.slice(0, 12).map((participant) => (
-              <Badge key={`preview-participant-${meeting.id}-${participant}`} variant="secondary" className="font-normal">
-                {participant}
-              </Badge>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {meeting.summary ? (
-        <section className="space-y-2 border-t pt-4">
-          <p className="text-xs font-semibold text-foreground">Summary</p>
-          <p className="text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap">
-            {meeting.summary}
-          </p>
-        </section>
-      ) : null}
 
       {meeting.description ? (
         <section className="space-y-2 border-t pt-4">
@@ -120,39 +131,88 @@ export function MeetingPreviewPane({
         </section>
       ) : null}
 
+      {summaryPoints.length > 0 ? (
+        <section className="space-y-3 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
+            <ListChecks className="h-3.5 w-3.5" />
+            Summary
+          </p>
+          <ul className="space-y-3">
+            {summaryPoints.map((point, index) => (
+              <li
+                key={`summary-point-${meeting.id}-${index}`}
+                className="flex items-start gap-2 text-xs text-muted-foreground"
+              >
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/70 shrink-0" />
+                <span className="leading-relaxed">{point}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       {hasExternalLinks ? (
         <section className="space-y-2 border-t pt-4">
           <p className="text-xs font-semibold text-foreground">Links</p>
-          <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-4">
             {meeting.source ? (
-              <a href={meeting.source} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <FileText className="h-3.5 w-3.5" />
-                Transcript
+              <a
+                href={meeting.source}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                title="Transcript"
+                aria-label="Open transcript"
+              >
+                <FileText className="h-4 w-4" strokeWidth={1.5} />
               </a>
             ) : null}
             {meeting.fireflies_link ? (
-              <a href={meeting.fireflies_link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <Flame className="h-3.5 w-3.5" />
-                Recording
+              <a
+                href={meeting.fireflies_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                title="Recording"
+                aria-label="Open recording"
+              >
+                <Flame className="h-4 w-4" strokeWidth={1.5} />
               </a>
             ) : null}
             {meeting.url ? (
-              <a href={meeting.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <LinkIcon className="h-3.5 w-3.5" />
-                Source URL
+              <a
+                href={meeting.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                title="Source URL"
+                aria-label="Open source URL"
+              >
+                <LinkIcon className="h-4 w-4" strokeWidth={1.5} />
               </a>
             ) : null}
           </div>
         </section>
       ) : null}
 
-      <section className="space-y-2 border-t pt-4 text-xs text-muted-foreground">
-        <p className="inline-flex items-center gap-2">
-          <Keyboard className="h-3.5 w-3.5" />
-          Arrow Up/Down (or J/K): move selection
-        </p>
-        <p>Enter: open selected meeting page</p>
-      </section>
+      {participants.length > 0 ? (
+        <section className="space-y-3 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
+            <Users className="h-3.5 w-3.5" />
+            Participants ({participants.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {participants.slice(0, 12).map((participant) => (
+              <span
+                key={`preview-participant-${meeting.id}-${participant}`}
+                className="inline-flex items-center rounded-md border px-2 py-1 text-xs font-normal text-muted-foreground"
+              >
+                {participant}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

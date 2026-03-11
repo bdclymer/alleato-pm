@@ -17,6 +17,26 @@ export default function NewCommitmentPage() {
   const projectId = Number(params.projectId);
   const type = searchParams.get("type") || "subcontract"; // 'subcontract' or 'purchase_order'
 
+  const parseApiError = async (response: Response) => {
+    try {
+      const json = await response.json();
+      return {
+        error:
+          typeof json?.error === "string"
+            ? json.error
+            : `Request failed with status ${response.status}`,
+        details: json?.details,
+      };
+    } catch {
+      const text = await response.text();
+      return {
+        error:
+          text?.trim() || `Request failed with status ${response.status}`,
+        details: undefined,
+      };
+    }
+  };
+
   const handleSubmitSubcontract = async (data: CreateSubcontractInput) => {
     console.warn(
       "[New Commitment Page] Starting subcontract submission for project:",
@@ -35,14 +55,8 @@ export default function NewCommitmentPage() {
       body: JSON.stringify(data),
     });
 
-    const responseData = await response.json();
-    console.warn("[New Commitment Page] Response status:", response.status);
-    console.warn(
-      "[New Commitment Page] Response data:",
-      JSON.stringify(responseData, null, 2),
-    );
-
     if (!response.ok) {
+      const responseData = await parseApiError(response);
       // Create a detailed error with response info
       const errorMessage = responseData.error || "Failed to create subcontract";
       const detailedError = new Error(errorMessage) as Error & {
@@ -59,6 +73,8 @@ export default function NewCommitmentPage() {
       throw detailedError;
     }
 
+    const responseData = await response.json();
+    console.warn("[New Commitment Page] Response status:", response.status);
     console.warn(
       "[New Commitment Page] Subcontract created successfully:",
       responseData.data,
@@ -86,14 +102,8 @@ export default function NewCommitmentPage() {
       body: JSON.stringify(data),
     });
 
-    const responseData = await response.json();
-    console.warn("[New Commitment Page] Response status:", response.status);
-    console.warn(
-      "[New Commitment Page] Response data:",
-      JSON.stringify(responseData, null, 2),
-    );
-
     if (!response.ok) {
+      const responseData = await parseApiError(response);
       const errorMessage =
         responseData.error || "Failed to create purchase order";
       const detailedError = new Error(errorMessage) as Error & {
@@ -110,6 +120,8 @@ export default function NewCommitmentPage() {
       throw detailedError;
     }
 
+    const responseData = await response.json();
+    console.warn("[New Commitment Page] Response status:", response.status);
     console.warn(
       "[New Commitment Page] Purchase order created successfully:",
       responseData.data,

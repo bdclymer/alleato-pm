@@ -48,6 +48,8 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     setDeleteDialogOpen,
     meetingToDelete,
     setMeetingToDelete,
+    bulkDeleteDialogOpen,
+    setBulkDeleteDialogOpen,
     handleFilterChange,
     handleRowClick,
     handleOpenMeetingPage,
@@ -56,6 +58,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,
+    handleBulkDeleteConfirm,
     handleSelectAll,
     handleSelectRow,
     handleOpenSource,
@@ -94,6 +97,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
+          onBulkDelete: () => setBulkDeleteDialogOpen(true),
         }}
         data={{
           items: pagedMeetings,
@@ -103,6 +107,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           columns: tableColumns,
           getRowId: (item) => item.id,
           activeRowId: activeMeetingId,
+          autoFocusOnLoad: true,
           onTableKeyDown: handleTableKeyDown,
           onRowClick: handleRowClick,
           rowActions: (item) =>
@@ -155,6 +160,10 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           filteredDescription: "Try adjusting your search or filters",
           isFiltered,
         }}
+        features={{
+          enableBulkDelete: true,
+          enableRowSelection: true,
+        }}
         pagination={{
           page: tableState.page,
           totalPages,
@@ -198,6 +207,28 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               disabled={!meetingToDelete}
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected meetings</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {tableState.selectedIds.length} selected meeting
+              {tableState.selectedIds.length === 1 ? "" : "s"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={tableState.selectedIds.length === 0}
+            >
+              Delete selected
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -124,6 +124,7 @@ export interface UnifiedTablePageProps<T> {
     onRowClick?: (item: T) => void;
     activeRowId?: string | null;
     onTableKeyDown?: (event: React.KeyboardEvent<HTMLDivElement>, visibleItems: T[]) => void;
+    autoFocusOnLoad?: boolean;
     stickyHeader?: boolean;
     onRowOrderChange?: (orderedRowIds: string[]) => void;
   };
@@ -563,6 +564,16 @@ export function UnifiedTablePage<T>({
     },
     [table],
   );
+
+  React.useEffect(() => {
+    if (!table.autoFocusOnLoad) return;
+    if (!showTable || !shouldRenderTableView) return;
+
+    const raf = window.requestAnimationFrame(() => {
+      tableScrollRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [showTable, shouldRenderTableView, table.autoFocusOnLoad]);
 
   const handleTableKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     table.onTableKeyDown?.(event, paginatedItems);

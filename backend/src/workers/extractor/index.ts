@@ -162,6 +162,17 @@ function isInterviewMeeting(metadata: Record<string, unknown>): boolean {
   return title.includes("interview");
 }
 
+function isMeetingTranscriptRecord(metadata: Record<string, unknown>): boolean {
+  const source = String(metadata.source || "").trim().toLowerCase();
+  const metadataType = String(metadata.type || "").trim().toLowerCase();
+  const category = String(metadata.category || "").trim().toLowerCase();
+  const meetingValues = new Set(["meeting", "transcript", "meeting_transcript"]);
+  if (source === "fireflies") {
+    return true;
+  }
+  return meetingValues.has(metadataType) || meetingValues.has(category);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -328,6 +339,7 @@ async function extractFromMeeting(
   const projectId = (metadata.project_id as number) || null;
   const clientId = (metadata.client_id as number) || null;
   const content = String(metadata.content || metadata.raw_text || "");
+  const isMeetingTranscript = isMeetingTranscriptRecord(metadata);
 
   if (isInterviewMeeting(metadata)) {
     console.log(`[Extract] Skipping interview meeting: ${title} (${firefliesId})`);
@@ -343,8 +355,8 @@ async function extractFromMeeting(
     };
   }
 
-  const speakerEmailMap = content ? buildSpeakerEmailMap(content) : {};
-  const notesContext = content ? buildNotesContext(content) : "";
+  const speakerEmailMap = isMeetingTranscript && content ? buildSpeakerEmailMap(content) : {};
+  const notesContext = isMeetingTranscript && content ? buildNotesContext(content) : "";
 
   console.log(`[Extract] Processing: ${title} (${firefliesId})`);
 
@@ -365,11 +377,16 @@ async function extractFromMeeting(
     if (tasks) rawTasks.push(...tasks);
   }
 
-  // Add action items from metadata
-  const actionItems = metadata.action_items as string;
-  if (actionItems) {
-    rawTasks.push(
-      ...actionItems.split("\n").filter((t) => t.trim())
+  // Add action items from metadata (meeting transcripts only)
+  const actionItems = isMeetingTranscript ? (metadata.action_items as string) : "";
+  if (isMeetingTranscript && actionItems) {
+    rawTasks.push(...actionItems.split("\n").filter((t) => t.trim()));
+  }
+
+  if (!isMeetingTranscript) {
+    rawTasks.length = 0;
+    console.log(
+      `[Extract] Non-meeting metadata (${String(metadata.type || "")}/${String(metadata.category || "")}) -> task extraction disabled`
     );
   }
 
@@ -392,17 +409,16 @@ async function extractFromMeeting(
   );
 
   // Always preserve Fireflies native action items as first-class tasks.
-  const nativeActionTasks = parseFirefliesActionItems(actionItems).map((text) => ({
-    description: text,
-    assignee: undefined,
-    assigneeEmail: undefined,
-    dueDate: undefined,
-    priority: undefined,
-  }));
-  structured.tasks = dedupeTasks([
-    ...nativeActionTasks,
-    ...structured.tasks,
-  ]);
+  const nativeActionTasks = isMeetingTranscript
+    ? parseFirefliesActionItems(actionItems).map((text) => ({
+        description: text,
+        assignee: undefined,
+        assigneeEmail: undefined,
+        dueDate: undefined,
+        priority: undefined,
+      }))
+    : [];
+  structured.tasks = dedupeTasks([...nativeActionTasks, ...structured.tasks]);
 
   console.log(
     `[Extract] Structured: ${structured.decisions.length} decisions, ${structured.risks.length} risks, ${structured.tasks.length} tasks, ${structured.opportunities.length} opportunities`
@@ -451,7 +467,8 @@ async function extractFromMeeting(
     await upsertRisk(env, risk, metadataId);
   }
 
-  for (const task of embeddedStructured.tasks) {
+  const tasksToPersist = isMeetingTranscript ? embeddedStructured.tasks : [];
+  for (const task of tasksToPersist) {
     await upsertTask(env, task, metadataId, projectId, clientId);
   }
 
@@ -468,7 +485,7 @@ async function extractFromMeeting(
     firefliesId,
     decisions: embeddedStructured.decisions.length,
     risks: embeddedStructured.risks.length,
-    tasks: embeddedStructured.tasks.length,
+    tasks: tasksToPersist.length,
     opportunities: embeddedStructured.opportunities.length,
   };
 }

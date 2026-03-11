@@ -46,6 +46,8 @@ export interface NavigationTool {
   icon?: LucideIcon;
   requiresProject?: boolean;
   isFavorite?: boolean;
+  /** Display this tool only when no project is selected */
+  onlyWithoutProject?: boolean;
   /** Permission module required to see this tool. If omitted, always visible. */
   module?: PermissionModule;
   /** Minimum permission level required. Defaults to "read". */
@@ -162,6 +164,7 @@ export function filterToolsByPermission<T extends NavigationTool>(
   userType: string | null
 ): T[] {
   return tools.filter((tool) => {
+    if (tool.onlyWithoutProject && projectId) return false;
     // Hide project-scoped tools when no project selected
     if (tool.requiresProject && !projectId) return false;
     // Admin-only tools: only for app admins or developers
@@ -208,6 +211,34 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     icon: Building2,
     tools: [
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
+      {
+        name: "Meetings",
+        path: "tables/meetings",
+        icon: Calendar,
+        requiresProject: false,
+        onlyWithoutProject: true,
+      },
+      {
+        name: "Tasks",
+        path: "tables/tasks",
+        icon: CheckCircle,
+        requiresProject: false,
+        onlyWithoutProject: true,
+      },
+      {
+        name: "Estimates",
+        path: "tables/projects",
+        icon: ClipboardList,
+        requiresProject: false,
+        onlyWithoutProject: true,
+      },
+      {
+        name: "Prospects",
+        path: "directory/prospects",
+        icon: Building2,
+        requiresProject: false,
+        onlyWithoutProject: true,
+      },
       { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
       { name: "360 Reporting", path: "reporting", icon: TrendingUp, requiresProject: false, adminOnly: true },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
@@ -430,6 +461,34 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: Users,
         description: "People, companies, contacts",
         module: "directory",
+      },
+      {
+        name: "Meetings",
+        path: "tables/meetings",
+        requiresProject: false,
+        icon: Users,
+        description: "Company-wide meetings and segments",
+      },
+      {
+        name: "Tasks",
+        path: "tables/tasks",
+        requiresProject: false,
+        icon: CheckCircle,
+        description: "Company task board",
+      },
+      {
+        name: "Estimates",
+        path: "tables/projects",
+        requiresProject: false,
+        icon: ClipboardList,
+        description: "Estimate snapshots across projects",
+      },
+      {
+        name: "Prospects",
+        path: "directory/prospects",
+        requiresProject: false,
+        icon: Building2,
+        description: "Lead tracking and qualification",
       },
       {
         name: "360 Reporting",

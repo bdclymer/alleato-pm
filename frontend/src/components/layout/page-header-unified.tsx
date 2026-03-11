@@ -160,10 +160,10 @@ export function PageHeader({
 
   // Default variant (includes budget variant behavior)
   return (
-    <div className={cn("px-4 sm:px-6 lg:px-8", className)}>
+    <div className={cn("px-3 sm:px-5 lg:px-7", className)}>
       <div>
         {/* Title and Actions */}
-        <div className="flex items-start justify-between gap-3 py-3 min-w-0 sm:items-center">
+        <div className="flex items-start justify-between gap-3 pt-3 pb-4 min-w-0 sm:items-center">
           <div className="min-w-0 flex-1 overflow-hidden">
             {/* Project Name */}
             {shouldShowProjectName && (

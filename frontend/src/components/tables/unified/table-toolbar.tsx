@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
+import { TableCountIndicator } from "./table-primitives";
 
 export type ViewMode = "table" | "card" | "list";
 
@@ -300,14 +300,7 @@ function FilterMenu({
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-8 w-8 shrink-0">
                 <Filter className="h-4 w-4" />
-                {activeCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute -right-1 -top-1 h-4 min-w-4 px-1 text-[10px]"
-                  >
-                    {activeCount}
-                  </Badge>
-                )}
+                <TableCountIndicator count={activeCount} className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
@@ -500,11 +493,7 @@ export function TableToolbar({
                 aria-label="Open table controls"
               >
                 <Filter className="h-4 w-4" />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                    {activeFilterCount}
-                  </span>
-                )}
+                <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[320px] p-0 sm:w-[360px]">

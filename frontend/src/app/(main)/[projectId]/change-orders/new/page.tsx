@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { ProjectFormPageLayout } from "@/components/layout";
 import { useUsers } from "@/hooks/use-users";
+import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import {
@@ -176,6 +177,41 @@ export default function NewChangeOrderPage() {
 
     fetchContracts();
   }, [numericProjectId, projectId]);
+
+  useEffect(() => {
+    if (isLoadingContracts || contracts.length === 0) return;
+    const currentContractId = form.getValues("contract_id");
+    if (currentContractId) return;
+
+    const firstContract = contracts[0];
+    form.setValue("contract_id", firstContract.id, { shouldValidate: true });
+    form.setValue("change_order_type", firstContract.contract_type, {
+      shouldValidate: true,
+    });
+  }, [contracts, isLoadingContracts, form]);
+
+  const handleDevAutoFill = () => {
+    const now = Date.now();
+    const firstContract = contracts[0];
+
+    form.setValue("co_number", `CO-${now}`, { shouldValidate: true });
+    form.setValue("title", `Autofilled change order ${now}`, {
+      shouldValidate: true,
+    });
+    form.setValue(
+      "description",
+      "Autofilled change order for finance form verification.",
+      { shouldValidate: true },
+    );
+    form.setValue("amount", 1000, { shouldValidate: true });
+    form.setValue("status", "draft", { shouldValidate: true });
+    if (firstContract) {
+      form.setValue("contract_id", firstContract.id, { shouldValidate: true });
+      form.setValue("change_order_type", firstContract.contract_type, {
+        shouldValidate: true,
+      });
+    }
+  };
 
   const handleSubmit = async (data: ChangeOrderFormValues) => {
     setIsSubmitting(true);
@@ -832,9 +868,15 @@ export default function NewChangeOrderPage() {
               onCancel={handleCancel}
               isSubmitting={isSubmitting}
             >
-              <p className="text-sm text-muted-foreground">
-                <span className="text-destructive">*</span> Required fields
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-destructive">*</span> Required fields
+                </p>
+                <DevAutoFillButton
+                  formType="contract"
+                  onAutoFill={handleDevAutoFill}
+                />
+              </div>
             </FormActions>
           </form>
         </Form>

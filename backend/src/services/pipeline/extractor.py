@@ -10,6 +10,7 @@ Stores the enriched, embedded results in the ``decisions``, ``risks``,
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Dict, List
 
 from ..supabase_helpers import get_supabase_client
@@ -21,6 +22,15 @@ from . import llm
 _parser = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
 
 logger = logging.getLogger(__name__)
+_GENERIC_TASK_PREFIX_RE = re.compile(
+    r"^(prepare|review|follow up|check|ensure|discuss|coordinate|look into)\b",
+    re.IGNORECASE,
+)
+_LOW_SIGNAL_TASK_RE = re.compile(
+    r"\b(next meeting|as needed|if needed|when possible|as soon as possible)\b",
+    re.IGNORECASE,
+)
+_VALID_PRIORITIES = {"low", "medium", "high", "urgent"}
 
 
 def _meeting_type_from_metadata(metadata: Dict[str, Any]) -> str:
@@ -46,6 +56,60 @@ def _is_interview_meeting(metadata: Dict[str, Any]) -> bool:
         return True
     title = str(metadata.get("title") or "").lower()
     return "interview" in title
+
+
+def _is_meeting_record(metadata: Dict[str, Any]) -> bool:
+    source = str(metadata.get("source") or "").strip().lower()
+    metadata_type = str(metadata.get("type") or "").strip().lower()
+    category = str(metadata.get("category") or "").strip().lower()
+    meeting_values = {"meeting", "transcript", "meeting_transcript"}
+    if source == "fireflies":
+        return True
+    return metadata_type in meeting_values or category in meeting_values
+
+
+def _normalize_task_priority(raw: str | None) -> str:
+    if not raw:
+        return "medium"
+    normalized = str(raw).strip().lower()
+    if normalized not in _VALID_PRIORITIES:
+        return "medium"
+    return normalized
+
+
+def _is_generic_low_signal_task(task: TaskItem) -> bool:
+    description = (task.description or "").strip()
+    if len(description) < 24:
+        return True
+    if _GENERIC_TASK_PREFIX_RE.match(description) and _LOW_SIGNAL_TASK_RE.search(description):
+        return True
+    return False
+
+
+def _apply_task_quality_gates(tasks: List[TaskItem]) -> List[TaskItem]:
+    """Keep only actionable tasks and normalize confidence-sensitive fields."""
+    filtered: List[TaskItem] = []
+    dropped = 0
+    for task in tasks:
+        task.priority = _normalize_task_priority(task.priority)
+        has_owner = bool(task.assignee or task.assignee_email)
+        has_due_date = bool(task.due_date)
+        is_low_signal = _is_generic_low_signal_task(task)
+
+        # Drop noisy extraction artifacts that are generic and unowned/undated.
+        if is_low_signal and not has_owner and not has_due_date:
+            dropped += 1
+            continue
+
+        # Avoid false urgency when extraction has no ownership or deadline signal.
+        if not has_owner and not has_due_date and task.priority in {"high", "urgent"}:
+            task.priority = "medium"
+
+        filtered.append(task)
+
+    if dropped:
+        logger.info("[Extractor] Dropped %d low-signal tasks via quality gates", dropped)
+    return filtered
 
 
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
@@ -90,6 +154,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             "skipReason": "interview",
         }
 
+    is_meeting = _is_meeting_record(metadata)
+
     title = metadata.get("title") or "Untitled"
     started_at = metadata.get("started_at") or metadata.get("captured_at")
     participants: List[str] = metadata.get("participants_array") or []
@@ -122,18 +188,19 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         if row.get("tasks"):
             raw_tasks.extend(row["tasks"])
 
-    # Also include action_items stored in metadata
-    action_items_raw = metadata.get("action_items") or ""
-    if action_items_raw:
-        raw_tasks.extend(
-            t.strip() for t in action_items_raw.split("\n") if t.strip()
-        )
+    # Also include action_items stored in metadata (meeting-only).
+    if is_meeting:
+        action_items_raw = metadata.get("action_items") or ""
+        if action_items_raw:
+            raw_tasks.extend(
+                t.strip() for t in action_items_raw.split("\n") if t.strip()
+            )
 
     # 2b. Extract rich section context for enhanced task extraction
     content = metadata.get("content") or metadata.get("raw_text") or ""
     notes_context = ""
     speaker_email_map: Dict[str, str] = {}
-    if content:
+    if content and is_meeting:
         try:
             parsed = _parser.parse_markdown(content)
             # Build notes context from notes topics + action items section
@@ -149,6 +216,12 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                 logger.info("[Extractor] Speaker-email map: %s", speaker_email_map)
         except Exception as exc:
             logger.warning("[Extractor] Failed to parse rich sections: %s", exc)
+    elif not is_meeting:
+        logger.info(
+            "[Extractor] Non-meeting metadata (%s/%s) -> task extraction disabled",
+            metadata.get("type"),
+            metadata.get("category"),
+        )
 
     logger.info(
         "[Extractor] Raw: %d decisions, %d risks, %d tasks | Notes context: %d chars",
@@ -176,6 +249,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         len(structured.tasks),
         len(structured.opportunities),
     )
+    structured.tasks = _apply_task_quality_gates(structured.tasks)
+    logger.info("[Extractor] Tasks after quality gates: %d", len(structured.tasks))
 
     # 4. Batch embed all descriptions in one call
     all_descriptions = [
@@ -209,7 +284,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         _upsert_decision(client, decision, metadata_id)
     for risk in structured.risks:
         _upsert_risk(client, risk, metadata_id)
-    for task in structured.tasks:
+    tasks_to_persist = structured.tasks if is_meeting else []
+    for task in tasks_to_persist:
         _upsert_task(
             client,
             task,
@@ -234,7 +310,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "metadataId": metadata_id,
         "decisions": len(structured.decisions),
         "risks": len(structured.risks),
-        "tasks": len(structured.tasks),
+        "tasks": len(tasks_to_persist),
         "opportunities": len(structured.opportunities),
     }
 
@@ -281,6 +357,13 @@ def _upsert_task(
     project_id: int | None = None,
     client_id: int | None = None,
 ) -> None:
+    resolved_project_id = project_id
+    if resolved_project_id is None and project_ids:
+        try:
+            resolved_project_id = int(project_ids[0])
+        except (TypeError, ValueError):
+            resolved_project_id = None
+
     data = {
         "metadata_id": metadata_id,
         "description": task.description,
@@ -291,7 +374,7 @@ def _upsert_task(
         "status": "open",
         "source_system": "fireflies",
         "project_ids": project_ids or [],
-        "project_id": project_id,
+        "project_id": resolved_project_id,
         "client_id": client_id,
     }
     if task.assignee_email:

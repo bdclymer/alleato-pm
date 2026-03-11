@@ -8,11 +8,11 @@ import { createClient } from "@/lib/supabase/client"
 import { getBestAvatarUrl } from "@/lib/gravatar"
 import type { User } from "@supabase/supabase-js"
 import {
+  Folder,
   ChevronsLeft,
   ChevronsRight,
   DollarSign,
   List,
-  Building2,
   SlidersHorizontal,
 } from "lucide-react"
 
@@ -152,7 +152,7 @@ function CollapsedGroupIcon({
   const minimalIconByGroup: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
     financial: DollarSign,
     operations: List,
-    company: Building2,
+    company: Folder,
     admin: SlidersHorizontal,
   }
   const Icon = minimalIconByGroup[group.id] ?? List
@@ -171,7 +171,7 @@ function CollapsedGroupIcon({
         )}
         aria-label={group.label}
       >
-        <Icon className="h-4 w-4" strokeWidth={1.5} />
+        <Icon className="h-3.5 w-3.5" strokeWidth={1.3} />
       </button>
       <SidebarFlyout
         group={group}
@@ -284,6 +284,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {
       return tools.filter((tool) => {
+        if (tool.onlyWithoutProject && projectId) return false;
         if (tool.requiresProject && !projectId) return false
         if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
         if (tool.module && projectId) {
@@ -344,26 +345,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       {/* ── Header ── */}
-      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-4 pb-2" : "px-3 py-3")}>
+      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-2" : "px-3 pt-5 pb-3")}>
         {isCollapsed ? (
           // Collapsed: logo icon + expand toggle
           <div className="flex flex-col items-center gap-1.5">
             <Link href="/" className="flex items-center justify-center">
               <Image
-                src="/favicon-light.png"
+                src="/alleato-favicon.png"
                 alt="Alleato"
-                width={24}
-                height={24}
+                width={28}
+                height={28}
                 className="rounded"
               />
             </Link>
             <button
               type="button"
               onClick={toggleSidebar}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="mt-1 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="Expand sidebar"
             >
-              <ChevronsRight className="h-3.5 w-3.5" strokeWidth={1.6} />
+              <ChevronsRight className="h-4 w-4" strokeWidth={1.4} />
             </button>
           </div>
         ) : (
@@ -374,9 +375,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Image
                   src="/Alleato-Group-Logo_Dark.png"
                   alt="Alleato Group"
-                  width={132}
-                  height={24}
-                  className="h-6 w-auto"
+                  width={146}
+                  height={28}
+                  className="h-7 w-auto"
                 />
               </Link>
               <button
@@ -403,7 +404,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       {/* ── Content ── */}
-      <SidebarContent className={cn(isCollapsed ? "items-center px-0 py-2" : "px-0 py-1")}>
+      <SidebarContent className={cn(isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1")}>
         {isCollapsed ? (
           // Collapsed: group icons with hover flyouts
           <div className="flex flex-col items-center gap-1">

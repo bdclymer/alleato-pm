@@ -259,6 +259,31 @@ class FirefliesIngestionPipeline:
                 continue
             try:
                 transcript = self._fetch_transcript(transcript_id)
+                meeting_info = transcript.get("meeting_info") or {}
+                summary_status = str(meeting_info.get("summary_status") or "").strip().lower()
+                sentences = transcript.get("sentences") or []
+
+                # Skip partially processed Fireflies transcripts to avoid persisting
+                # reduced markdown that later lacks expected sections/fields.
+                if summary_status and summary_status not in {"processed", "complete", "completed"}:
+                    results.append(
+                        {
+                            "transcript_id": transcript_id,
+                            "skipped": True,
+                            "reason": f"summary_status={summary_status}",
+                        }
+                    )
+                    continue
+                if not sentences:
+                    results.append(
+                        {
+                            "transcript_id": transcript_id,
+                            "skipped": True,
+                            "reason": "no_sentences",
+                        }
+                    )
+                    continue
+
                 apps_outputs = self._fetch_apps_outputs(transcript_id)
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
                 captured_at = self._parse_datetime(

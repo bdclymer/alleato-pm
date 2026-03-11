@@ -27,6 +27,23 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join("");
 }
 
+function isPortfolioRiskQuery(text: string): boolean {
+  const normalized = text.toLowerCase();
+  const hasRiskLanguage =
+    normalized.includes("risk") ||
+    normalized.includes("risky") ||
+    normalized.includes("at risk") ||
+    normalized.includes("critical item") ||
+    normalized.includes("critical items") ||
+    normalized.includes("exposure");
+  const hasPortfolioLanguage =
+    normalized.includes("project") ||
+    normalized.includes("projects") ||
+    normalized.includes("portfolio") ||
+    normalized.includes("jobs");
+  return hasRiskLanguage && hasPortfolioLanguage;
+}
+
 export async function POST(request: Request) {
   const user = await getApiRouteUser();
   if (!user) {
@@ -79,7 +96,16 @@ export async function POST(request: Request) {
       toolTrace.push(trace);
     },
   });
-  const systemPrompt = getStrategistSystemPrompt();
+  const lastUserContent = lastUserMessage
+    ? extractTextFromParts(lastUserMessage.parts)
+    : "";
+  let systemPrompt = getStrategistSystemPrompt();
+  if (lastUserContent && isPortfolioRiskQuery(lastUserContent)) {
+    systemPrompt +=
+      "\n\n## Runtime Risk Routing Override\n" +
+      "For THIS request, you MUST call consultCFO before any other tool. " +
+      "Then ensure CFO analysis includes getProjectsWithRisks output before final answer.";
+  }
   const tracer = trace.getTracer("ai-assistant");
   const requestSpan = tracer.startSpan("ai-assistant.chat.request");
   let requestSpanEnded = false;

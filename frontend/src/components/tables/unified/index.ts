@@ -3,6 +3,18 @@
 export { TableToolbar, type TableToolbarProps, type ViewMode, type FilterConfig, type ColumnConfig } from "./table-toolbar";
 export { DetailPanel, type DetailPanelProps, type DetailFieldConfig, type RelatedSectionConfig } from "./detail-panel";
 export {
+  TableCountIndicator,
+  TableDateValue,
+  TableStatusDot,
+  TableTagBadge,
+  TableAvatarUsers,
+  TableIconLinks,
+  TableRowActionsMenu,
+  formatParticipantDisplayName,
+  type TableBadgeVariant,
+  type TableRowActionItem,
+} from "./table-primitives";
+export {
   UnifiedTablePage,
   type UnifiedTablePageProps,
   type TableColumn,

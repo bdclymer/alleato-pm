@@ -42,6 +42,11 @@ const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
 
+const TABLE_ROUTE_ALIASES: Record<string, string> = {
+  tasks: "tables/tasks",
+  projects: "tables/projects",
+};
+
 export function useHeaderNav(): UseHeaderNavReturn {
   const pathname = usePathname();
   const router = useRouter();
@@ -94,6 +99,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     // Check global routes
     if (segments.length >= 1) {
       const firstSegment = segments[0];
+      const aliasedPath = TABLE_ROUTE_ALIASES[firstSegment];
       const allTools: HeaderNavigationTool[] = [
         ...headerNavGroups.flatMap((g) => g.tools),
         ...adminSettingsTools,
@@ -101,6 +107,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
       const matchingTool = allTools.find(
         (tool) =>
           tool.path === firstSegment ||
+          (aliasedPath ? tool.path === aliasedPath : false) ||
           tool.path === segments.join("/") ||
           tool.path.split("/")[0] === firstSegment
       );
@@ -118,7 +125,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     if (segments.length >= 2 && /^\d+$/.test(segments[0])) {
       toolPath = segments[1];
     } else if (segments.length >= 1) {
-      toolPath = segments[0];
+      toolPath = TABLE_ROUTE_ALIASES[segments[0]] ?? segments[0];
     }
 
     return getActiveGroupId(toolPath, headerNavGroups);
@@ -179,9 +186,14 @@ export function useHeaderNav(): UseHeaderNavReturn {
           ...adminSettingsTools,
         ];
         const matchingTool = allTools.find((tool) => tool.path === segment);
+        const aliasMatchingTool =
+          index === 0 && TABLE_ROUTE_ALIASES[segment]
+            ? allTools.find((tool) => tool.path === TABLE_ROUTE_ALIASES[segment])
+            : null;
 
-        if (matchingTool) {
-          label = matchingTool.name;
+        if (matchingTool || aliasMatchingTool) {
+          const resolvedTool = matchingTool ?? aliasMatchingTool;
+          label = resolvedTool?.name ?? segment;
         } else {
           // Format segment name for display
           label = segment

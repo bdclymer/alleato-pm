@@ -153,15 +153,10 @@ export function DirectCostForm({
   const handleAutoFill = async () => {
     setIsAutoFilling(true)
     try {
-      // Use first available vendor or employee
+      // Use first available options when present, but do not block autofill.
       const vendorId = vendors.length > 0 ? vendors[0].id : null
       const employeeId = employees.length > 0 ? employees[0].id : null
       const budgetCodeId = budgetCodes.length > 0 ? budgetCodes[0].id : null
-
-      if (!vendorId && !employeeId) {
-        toast.error('No vendors or employees available - cannot auto-fill')
-        return
-      }
 
       if (!budgetCodeId) {
         toast.error('No budget codes available - cannot auto-fill')
@@ -175,7 +170,7 @@ export function DirectCostForm({
         date: new Date(),
         invoice_number: `TEST-${Date.now()}`,
         description: `Auto-filled test direct cost - ${new Date().toLocaleString()}`,
-        vendor_id: vendorId,
+        vendor_id: vendorId || null,
         employee_id: employeeId || null,
         terms: 'Net 30',
         line_items: [
@@ -183,7 +178,7 @@ export function DirectCostForm({
             budget_code_id: budgetCodeId,
             description: 'Test line item',
             quantity: 1,
-            uom: 'LOT' as const,
+            uom: 'EA' as const,
             unit_cost: 100,
           },
         ],

@@ -850,13 +850,51 @@ export default function PortfolioPage() {
         const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
         if (!res.ok) throw new Error("Failed to delete project");
         setProjects((prev) => prev.filter((p) => p.id !== project.id));
+        tableState.setSelectedIds((prev) => prev.filter((id) => id !== project.id));
         toast.success(`Project "${project.name}" deleted`);
       } catch {
         toast.error("Failed to delete project");
       }
     },
-    [],
+    [tableState],
   );
+
+  const handleBulkDelete = React.useCallback(async () => {
+    const selectedIds = tableState.selectedIds;
+    if (selectedIds.length === 0) {
+      toast.info("Select at least one project to delete.");
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete ${selectedIds.length} selected project(s)?`);
+    if (!confirmed) return;
+
+    const deleteResults = await Promise.allSettled(
+      selectedIds.map(async (projectId) => {
+        const response = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
+        if (!response.ok) {
+          throw new Error(`Failed to delete project ${projectId}`);
+        }
+      }),
+    );
+
+    const failedCount = deleteResults.filter((result) => result.status === "rejected").length;
+    const successCount = deleteResults.length - failedCount;
+
+    if (successCount > 0) {
+      const deletedIds = new Set(
+        selectedIds.filter((_, index) => deleteResults[index]?.status === "fulfilled"),
+      );
+      setProjects((prev) => prev.filter((project) => !deletedIds.has(project.id)));
+      toast.success(`${successCount} project(s) deleted.`);
+    }
+
+    if (failedCount > 0) {
+      toast.error(`Failed to delete ${failedCount} project(s).`);
+    }
+
+    tableState.setSelectedIds([]);
+  }, [tableState]);
 
   return (
     <>
@@ -896,6 +934,7 @@ export default function PortfolioPage() {
         columns: tableColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        onBulkDelete: handleBulkDelete,
       }}
       data={{
         items: filteredProjects,

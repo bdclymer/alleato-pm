@@ -230,16 +230,15 @@ export function EstimatesClient({
           totalItems: estimates.length,
           filteredItems: filteredItems.length,
           selectedCount: tableState.selectedIds?.length ?? 0,
-          searchValue: tableState.search,
-          onSearchChange: tableState.setSearch,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search estimates...",
-          currentView: tableState.view,
-          onViewChange: tableState.setView,
+          currentView: tableState.currentView,
+          onViewChange: tableState.setCurrentView,
           enabledViews: ["table", "list"],
           filters: ESTIMATE_FILTERS,
           activeFilters: tableState.activeFilters,
-          onFilterChange: tableState.setFilters,
-          onClearFilters: tableState.clearFilters,
+          onFilterChange: tableState.setActiveFilters,
           columns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
@@ -321,12 +320,27 @@ export function EstimatesClient({
         sorting={{
           sortBy: tableState.sortBy ?? "updated_at",
           sortDirection: tableState.sortDirection ?? "desc",
-          onSortChange: tableState.setSortBy,
+          onSortChange: (sortBy: string, direction: "asc" | "desc") => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+          },
         }}
         selection={{
           selectedIds: tableState.selectedIds ?? [],
-          onSelectAll: tableState.selectAll,
-          onSelectRow: tableState.selectRow,
+          onSelectAll: (checked: boolean) => {
+            if (checked) {
+              tableState.setSelectedIds(
+                filteredItems.map((item) => String(item.estimate_id))
+              );
+            } else {
+              tableState.setSelectedIds([]);
+            }
+          },
+          onSelectRow: (id: string, checked: boolean) => {
+            tableState.setSelectedIds((prev) =>
+              checked ? [...prev, id] : prev.filter((i) => i !== id)
+            );
+          },
         }}
         emptyState={{
           title: "No estimates yet",
@@ -349,7 +363,7 @@ export function EstimatesClient({
           totalPages,
           perPage: tableState.perPage,
           onPageChange: tableState.setPage,
-          onPerPageChange: tableState.setPerPage,
+          onPerPageChange: (val: string) => tableState.setPerPage(Number(val)),
           clientSide: true,
         }}
       />

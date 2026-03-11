@@ -42,7 +42,9 @@
     "rag:ingest:local:watch": "python3 scripts/ingestion/ingest_local_documents.py --watch",
     "rag:verify:financial": "python3 scripts/verify/verify_financial_numeric_retrieval.py",
     "rag:verify:financial:fallback": "python3 scripts/verify/verify_financial_fallback_retrieval.py",
-    "rag:verify:risk-routing": "python3 scripts/verify/verify_ai_assistant_risk_routing.py"
+    "rag:verify:risk-routing": "python3 scripts/verify/verify_ai_assistant_risk_routing.py",
+    "rag:verify:risk-quality": "python3 scripts/verify/verify_ai_assistant_risk_quality.py",
+    "rag:verify:task-integrity": "python3 scripts/verify/verify_fireflies_task_integrity.py"
   },
   "devDependencies": {
     "@playwright/mcp": "^0.0.63",

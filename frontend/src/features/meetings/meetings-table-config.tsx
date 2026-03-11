@@ -1,27 +1,26 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ArrowUpRight, FileText, Flame, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ArrowUpRight, FileText, Flame, Pencil, Trash2 } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type {
-  ColumnConfig,
-  FilterConfig,
-  TableColumn,
-  DetailFieldConfig,
+import {
+  type ColumnConfig,
+  type FilterConfig,
+  type TableColumn,
+  type DetailFieldConfig,
+  TableAvatarUsers,
+  TableDateValue,
+  TableIconLinks,
+  TableRowActionsMenu,
+  TableStatusDot,
+  TableTagBadge,
+  formatParticipantDisplayName,
 } from "@/components/tables/unified";
 import type { Meeting } from "@/lib/validation/meetings";
 
@@ -116,56 +115,6 @@ export function buildMeetingDetailFields(options: {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime(value: string | null | undefined): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function badgeVariant(value: string | null | undefined): "default" | "secondary" | "outline" {
-  if (!value) return "outline";
-  const normalized = value.toLowerCase();
-  if (normalized.includes("owner") || normalized.includes("client")) return "default";
-  if (normalized.includes("internal")) return "secondary";
-  return "outline";
-}
-
-function getStatusMeta(status: string | null | undefined): { label: string; dotClassName: string } {
-  const normalized = status?.trim().toLowerCase() ?? "";
-  if (!normalized) {
-    return { label: "Unknown", dotClassName: "bg-muted-foreground/40" };
-  }
-
-  if (normalized.includes("complete") || normalized.includes("done") || normalized.includes("embedded")) {
-    return { label: status ?? "Complete", dotClassName: "bg-[hsl(var(--status-success))]" };
-  }
-
-  if (normalized.includes("processing") || normalized.includes("pending") || normalized.includes("running")) {
-    return { label: status ?? "In progress", dotClassName: "bg-[hsl(var(--status-warning))]" };
-  }
-
-  if (normalized.includes("error") || normalized.includes("failed")) {
-    return { label: status ?? "Failed", dotClassName: "bg-[hsl(var(--status-error))]" };
-  }
-
-  return { label: status ?? "Unknown", dotClassName: "bg-[hsl(var(--status-info))]" };
-}
-
 export function parseParticipants(item: Meeting): string[] {
   const normalizeEntry = (value: unknown): string | null => {
     if (typeof value === "string") {
@@ -213,23 +162,8 @@ export function parseParticipants(item: Meeting): string[] {
   return dedupe(rawParticipants.split(/[\n,;]+/));
 }
 
-function getParticipantInitials(value: string): string {
-  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
-  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
-  if (tokenized.length >= 2) {
-    return `${tokenized[0][0]}${tokenized[tokenized.length - 1][0]}`.toUpperCase();
-  }
-  const first = tokenized[0] ?? cleaned;
-  return first.slice(0, 2).toUpperCase();
-}
-
 export function getParticipantDisplayName(value: string): string {
-  const cleaned = value.replace(/^[^a-zA-Z0-9]+/, "");
-  const tokenized = cleaned.split("@")[0]?.split(/[._\-\s]+/).filter(Boolean) ?? [];
-  if (tokenized.length === 0) return value;
-  return tokenized
-    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
-    .join(" ");
+  return formatParticipantDisplayName(value);
 }
 
 // ─── Inline edit primitives ───────────────────────────────────────────────────
@@ -404,7 +338,6 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
         const isEditing =
           editContext?.editingCell?.meetingId === item.id &&
           editContext?.editingCell?.field === "title";
-        const statusMeta = getStatusMeta(item.status);
         const titleText = item.title ?? "Untitled";
 
         if (isEditing) {
@@ -421,18 +354,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
 
         return (
           <div className="group/title inline-flex items-center gap-2 min-w-0 w-full">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className={`inline-block h-2 w-2 rounded-full flex-shrink-0 ${statusMeta.dotClassName}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">
-                  {statusMeta.label}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <TableStatusDot status={item.status} />
             <span className="font-medium truncate">{titleText}</span>
             <Button
               variant="ghost"
@@ -466,14 +388,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              item.date ? (
-                <div className="leading-tight">
-                  <p className="text-xs text-foreground">{formatDate(item.date)}</p>
-                  <p className="text-[11px] text-muted-foreground">{formatTime(item.date)}</p>
-                </div>
-              ) : (
-                <span className="sr-only">No date</span>
-              )
+              <TableDateValue value={item.date} showTime emptyLabel="No date" />
             }
             onClickToEdit={(e) => {
               e.stopPropagation();
@@ -505,13 +420,11 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              item.project ? (
-                <Badge variant={badgeVariant(item.project)} className="font-normal">
-                  {item.project}
-                </Badge>
-              ) : (
-                <span className="sr-only">No project</span>
-              )
+              <TableTagBadge
+                label={item.project}
+                variant={item.project?.toLowerCase().includes("internal") ? "secondary" : "outline"}
+                emptyLabel="No project"
+              />
             }
             onClickToEdit={(e) => {
               e.stopPropagation();
@@ -568,55 +481,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
       ...meetingColumns[4],
       render: (item) => {
         const participants = parseParticipants(item);
-        if (participants.length === 0) {
-          return null;
-        }
-
-        const maxVisible = 4;
-        const visibleParticipants = participants.slice(0, maxVisible);
-        const hiddenCount = Math.max(0, participants.length - visibleParticipants.length);
-
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="inline-flex" onClick={(e) => e.stopPropagation()}>
-                  <AvatarGroup className="justify-start">
-                    {visibleParticipants.map((participant) => (
-                      <Avatar key={participant} className="h-7 w-7">
-                        <AvatarFallback className="text-[10px] font-semibold">
-                          {getParticipantInitials(participant)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {hiddenCount > 0 ? (
-                      <AvatarGroupCount className="h-7 w-7 text-[10px] font-semibold">
-                        +{hiddenCount}
-                      </AvatarGroupCount>
-                    ) : null}
-                  </AvatarGroup>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-md">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-foreground">
-                    Participants ({participants.length})
-                  </p>
-                  <ul className="space-y-1">
-                    {participants.map((participant) => (
-                      <li
-                        key={`participant-${item.id}-${participant}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {getParticipantDisplayName(participant)}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
+        return <TableAvatarUsers users={participants} />;
       },
       csvValue: (item) => parseParticipants(item).join("; "),
       sortValue: (item) => parseParticipants(item).length,
@@ -634,13 +499,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              item.type ? (
-                <Badge variant="secondary" className="font-normal">
-                  {item.type}
-                </Badge>
-              ) : (
-                <span className="sr-only">No type</span>
-              )
+              <TableTagBadge label={item.type} variant="secondary" emptyLabel="No type" />
             }
             onClickToEdit={(e) => {
               e.stopPropagation();
@@ -673,13 +532,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              item.category ? (
-                <Badge variant="outline" className="font-normal">
-                  {item.category}
-                </Badge>
-              ) : (
-                <span className="sr-only">No category</span>
-              )
+              <TableTagBadge label={item.category} variant="outline" emptyLabel="No category" />
             }
             onClickToEdit={(e) => {
               e.stopPropagation();
@@ -704,39 +557,17 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     {
       ...meetingColumns[7],
       render: (item) => {
-        const hasLinks = item.source || item.fireflies_link;
-        if (!hasLinks) return null;
-
         return (
-          <div
-            className="flex items-center gap-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {item.source && (
-              <a
-                href={item.source}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open transcript file"
-                title="Open transcript / source file"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <FileText className="h-4 w-4" />
-              </a>
-            )}
-            {item.fireflies_link && (
-              <a
-                href={item.fireflies_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Open in Fireflies"
-                title="View Fireflies recording"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Flame className="h-4 w-4" />
-              </a>
-            )}
-          </div>
+          <TableIconLinks
+            items={[
+              ...(item.source
+                ? [{ href: item.source, icon: FileText, label: "Open transcript / source file" }]
+                : []),
+              ...(item.fireflies_link
+                ? [{ href: item.fireflies_link, icon: Flame, label: "View Fireflies recording" }]
+                : []),
+            ]}
+          />
         );
       },
       csvValue: (item) =>
@@ -764,50 +595,53 @@ export function renderMeetingRowActions(
   onOpenRecording: (meeting: Meeting) => void,
 ): ReactElement {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onOpenMeetingPage(item)}>
-          <ArrowUpRight className="mr-2 h-4 w-4" />
-          Open meeting page
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEdit(item)}>
-          <FileText className="mr-2 h-4 w-4" />
-          Edit details
-        </DropdownMenuItem>
-        {item.source && (
-          <DropdownMenuItem onClick={() => onOpenSource(item)}>
-            <FileText className="mr-2 h-4 w-4" />
-            View transcript
-          </DropdownMenuItem>
-        )}
-        {item.fireflies_link && (
-          <DropdownMenuItem onClick={() => onOpenRecording(item)}>
-            <Flame className="mr-2 h-4 w-4" />
-            View Fireflies
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <TableRowActionsMenu
+      items={[
+        {
+          key: "open",
+          label: "Open meeting page",
+          icon: ArrowUpRight,
+          onSelect: () => onOpenMeetingPage(item),
+        },
+        {
+          key: "edit",
+          label: "Edit details",
+          icon: FileText,
+          onSelect: () => onEdit(item),
+        },
+        ...(item.source
+          ? [
+              {
+                key: "source",
+                label: "View transcript",
+                icon: FileText,
+                onSelect: () => onOpenSource(item),
+              },
+            ]
+          : []),
+        ...(item.fireflies_link
+          ? [
+              {
+                key: "fireflies",
+                label: "View Fireflies",
+                icon: Flame,
+                onSelect: () => onOpenRecording(item),
+              },
+            ]
+          : []),
+        {
+          key: "delete",
+          label: "Delete",
+          icon: Trash2,
+          onSelect: () => onDelete(item),
+          destructive: true,
+        },
+      ]}
+    />
   );
 }
 
 // ─── Card / list renderers ────────────────────────────────────────────────────
-
-function formatDateShort(value: string | null | undefined): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => void): ReactElement {
   return (
@@ -817,12 +651,10 @@ export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => 
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">{formatDateShort(item.date)}</p>
+          <TableDateValue value={item.date} className="uppercase text-muted-foreground" />
           <h3 className="font-medium">{item.title ?? "Untitled Meeting"}</h3>
         </div>
-        <Badge variant="secondary" className="font-normal">
-          {item.type ?? "—"}
-        </Badge>
+        <TableTagBadge label={item.type} variant="secondary" />
       </div>
       <p className="text-sm text-muted-foreground">{item.project ?? "—"}</p>
       {item.category && (
@@ -840,11 +672,9 @@ export function renderMeetingList(item: Meeting, onClick: (meeting: Meeting) => 
     >
       <div>
         <p className="text-sm font-medium">{item.title ?? "Untitled Meeting"}</p>
-        <p className="text-xs text-muted-foreground">{formatDateShort(item.date)}</p>
+        <TableDateValue value={item.date} className="text-muted-foreground" />
       </div>
-      <Badge variant="secondary" className="font-normal">
-        {item.type ?? "—"}
-      </Badge>
+      <TableTagBadge label={item.type} variant="secondary" />
     </div>
   );
 }

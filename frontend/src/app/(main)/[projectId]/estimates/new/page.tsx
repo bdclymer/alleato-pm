@@ -22,9 +22,20 @@ import {
   EstimateStatuses,
   EstimateStatusLabels,
 } from "@/lib/schemas/estimates";
-import type { z } from "zod";
-
-type EstimateFormValues = z.input<typeof EstimateCreateSchema>;
+interface EstimateFormValues {
+  title: string;
+  estimate_number?: string | null;
+  revision?: number;
+  status?: "draft" | "pending_review" | "approved" | "rejected";
+  estimate_date?: string | null;
+  location?: string | null;
+  estimator?: string | null;
+  project_duration_weeks?: number | null;
+  contingency_amount?: number;
+  insurance_rate?: number;
+  fee_rate?: number;
+  notes?: string | null;
+}
 
 export default function NewEstimatePage() {
   const router = useRouter();
@@ -32,7 +43,8 @@ export default function NewEstimatePage() {
   const projectId = params.projectId as string;
 
   const form = useForm<EstimateFormValues>({
-    resolver: zodResolver(EstimateCreateSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(EstimateCreateSchema) as any,
     defaultValues: {
       title: "",
       estimate_number: "",
@@ -72,7 +84,7 @@ export default function NewEstimatePage() {
 
       const result = await response.json();
       toast.success("Estimate created successfully");
-      router.push(`/${projectId}/estimates/${result.data.estimate_id}`);
+      router.push(`/${projectId}/estimates/${result.estimate_id}`);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to create estimate"
