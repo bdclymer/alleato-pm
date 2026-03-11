@@ -4,11 +4,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +30,8 @@ import {
 } from "@/components/ui/form";
 import { ProjectFormPageLayout } from "@/components/layout";
 import { useUsers } from "@/hooks/use-users";
+import { FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
 import {
   LineItemsTable,
   type ChangeOrderLineItem,
@@ -289,13 +290,7 @@ export default function NewChangeOrderPage() {
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-10"
           >
-            <section className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Basic Information
-                </h2>
-              </div>
-
+            <FormSection title="Basic Information">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
                   <FormField
@@ -391,15 +386,9 @@ export default function NewChangeOrderPage() {
                   )}
                 />
               </div>
-            </section>
+            </FormSection>
 
-            <section className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Contract & Financial Details
-                </h2>
-              </div>
-
+            <FormSection title="Contract & Financial Details">
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -602,15 +591,9 @@ export default function NewChangeOrderPage() {
                   />
                 </div>
               </div>
-            </section>
+            </FormSection>
 
-            <section className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Line Items
-                </h2>
-              </div>
-
+            <FormSection title="Line Items">
               <div className="space-y-4">
                 {hasAmountConflict && (
                   <Alert variant="destructive">
@@ -652,15 +635,9 @@ export default function NewChangeOrderPage() {
                   </p>
                 )}
               </div>
-            </section>
+            </FormSection>
 
-            <section className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Scope & Schedule Impact
-                </h2>
-              </div>
-
+            <FormSection title="Scope & Schedule Impact">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
                   <FormField
@@ -732,15 +709,9 @@ export default function NewChangeOrderPage() {
                   />
                 </div>
               </div>
-            </section>
+            </FormSection>
 
-            <section className="space-y-6">
-              <div className="border-b pb-4">
-                <h2 className="text-base font-semibold tracking-tight">
-                  Workflow & Review
-                </h2>
-              </div>
-
+            <FormSection title="Workflow & Review">
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -854,31 +825,17 @@ export default function NewChangeOrderPage() {
                   )}
                 />
               </div>
-            </section>
+            </FormSection>
 
-            <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+            <FormActions
+              submitLabel="Create Change Order"
+              onCancel={handleCancel}
+              isSubmitting={isSubmitting}
+            >
               <p className="text-sm text-muted-foreground">
                 <span className="text-destructive">*</span> Required fields
               </p>
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  data-testid="change-order-submit"
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {isSubmitting ? "Creating..." : "Create Change Order"}
-                </Button>
-              </div>
-            </div>
+            </FormActions>
           </form>
         </Form>
       </div>

@@ -6975,6 +6975,314 @@ export type Database = {
           },
         ]
       }
+      estimate_allowances: {
+        Row: {
+          allowance_id: number
+          allowance_number: number
+          amount: number
+          created_at: string
+          description: string
+          estimate_id: number
+          scope_type: string | null
+          sort_order: number
+        }
+        Insert: {
+          allowance_id?: number
+          allowance_number: number
+          amount?: number
+          created_at?: string
+          description: string
+          estimate_id: number
+          scope_type?: string | null
+          sort_order?: number
+        }
+        Update: {
+          allowance_id?: number
+          allowance_number?: number
+          amount?: number
+          created_at?: string
+          description?: string
+          estimate_id?: number
+          scope_type?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_allowances_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimate_alternates: {
+        Row: {
+          alternate_id: number
+          alternate_number: number
+          alternate_type: string
+          amount: number
+          created_at: string
+          description: string
+          estimate_id: number
+          sort_order: number
+        }
+        Insert: {
+          alternate_id?: number
+          alternate_number: number
+          alternate_type?: string
+          amount?: number
+          created_at?: string
+          description: string
+          estimate_id: number
+          sort_order?: number
+        }
+        Update: {
+          alternate_id?: number
+          alternate_number?: number
+          alternate_type?: string
+          amount?: number
+          created_at?: string
+          description?: string
+          estimate_id?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_alternates_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimate_line_items: {
+        Row: {
+          comment_type: string | null
+          comments: string | null
+          created_at: string
+          depth: number | null
+          description: string | null
+          division_code: string
+          equipment_cost: number | null
+          equipment_duration: number | null
+          equipment_rate: number | null
+          equipment_unit: string | null
+          estimate_id: number
+          gc_cost_code: string | null
+          labor_cost: number | null
+          labor_crew_size: number | null
+          labor_hours: number | null
+          labor_man_hours: number | null
+          labor_rate: number | null
+          length: number | null
+          line_item_id: number
+          line_number: number | null
+          material_cost: number | null
+          material_unit_price: number | null
+          number_of_each: number | null
+          quantity: number | null
+          sort_order: number
+          subcontract_cost: number | null
+          subcontract_unit_price: number | null
+          total_cost: number | null
+          unit: string | null
+          updated_at: string
+          vendor_name: string | null
+          width: number | null
+        }
+        Insert: {
+          comment_type?: string | null
+          comments?: string | null
+          created_at?: string
+          depth?: number | null
+          description?: string | null
+          division_code: string
+          equipment_cost?: number | null
+          equipment_duration?: number | null
+          equipment_rate?: number | null
+          equipment_unit?: string | null
+          estimate_id: number
+          gc_cost_code?: string | null
+          labor_cost?: number | null
+          labor_crew_size?: number | null
+          labor_hours?: number | null
+          labor_man_hours?: number | null
+          labor_rate?: number | null
+          length?: number | null
+          line_item_id?: number
+          line_number?: number | null
+          material_cost?: number | null
+          material_unit_price?: number | null
+          number_of_each?: number | null
+          quantity?: number | null
+          sort_order?: number
+          subcontract_cost?: number | null
+          subcontract_unit_price?: number | null
+          total_cost?: number | null
+          unit?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          width?: number | null
+        }
+        Update: {
+          comment_type?: string | null
+          comments?: string | null
+          created_at?: string
+          depth?: number | null
+          description?: string | null
+          division_code?: string
+          equipment_cost?: number | null
+          equipment_duration?: number | null
+          equipment_rate?: number | null
+          equipment_unit?: string | null
+          estimate_id?: number
+          gc_cost_code?: string | null
+          labor_cost?: number | null
+          labor_crew_size?: number | null
+          labor_hours?: number | null
+          labor_man_hours?: number | null
+          labor_rate?: number | null
+          length?: number | null
+          line_item_id?: number
+          line_number?: number | null
+          material_cost?: number | null
+          material_unit_price?: number | null
+          number_of_each?: number | null
+          quantity?: number | null
+          sort_order?: number
+          subcontract_cost?: number | null
+          subcontract_unit_price?: number | null
+          total_cost?: number | null
+          unit?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_line_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
+          },
+        ]
+      }
+      estimates: {
+        Row: {
+          contingency_amount: number
+          created_at: string
+          created_by: string | null
+          estimate_date: string | null
+          estimate_id: number
+          estimate_number: string | null
+          estimator: string | null
+          fee_rate: number
+          insurance_rate: number
+          is_deleted: boolean
+          location: string | null
+          notes: string | null
+          project_duration_weeks: number | null
+          project_id: number
+          revision: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          contingency_amount?: number
+          created_at?: string
+          created_by?: string | null
+          estimate_date?: string | null
+          estimate_id?: number
+          estimate_number?: string | null
+          estimator?: string | null
+          fee_rate?: number
+          insurance_rate?: number
+          is_deleted?: boolean
+          location?: string | null
+          notes?: string | null
+          project_duration_weeks?: number | null
+          project_id: number
+          revision?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          contingency_amount?: number
+          created_at?: string
+          created_by?: string | null
+          estimate_date?: string | null
+          estimate_id?: number
+          estimate_number?: string | null
+          estimator?: string | null
+          fee_rate?: number
+          insurance_rate?: number
+          is_deleted?: boolean
+          location?: string | null
+          notes?: string | null
+          project_duration_weeks?: number | null
+          project_id?: number
+          revision?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       files: {
         Row: {
           category: string | null
@@ -18047,6 +18355,28 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sub_jobs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_estimate_division_totals: {
+        Row: {
+          division_code: string | null
+          division_name: string | null
+          division_total: number | null
+          equipment_total: number | null
+          estimate_id: number | null
+          labor_total: number | null
+          line_count: number | null
+          material_total: number | null
+          subcontract_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimate_line_items_estimate_id_fkey"
+            columns: ["estimate_id"]
+            isOneToOne: false
+            referencedRelation: "estimates"
+            referencedColumns: ["estimate_id"]
           },
         ]
       }

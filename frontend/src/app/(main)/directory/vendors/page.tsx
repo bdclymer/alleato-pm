@@ -1,0 +1,394 @@
+"use client";
+
+import * as React from "react";
+import type { ReactElement } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+
+import { createClient } from "@/lib/supabase/client";
+import { getDirectoryTabs } from "@/config/directory-tabs";
+import type { Database } from "@/types/database.types";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
+import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ds";
+
+type Vendor = Database["public"]["Tables"]["vendors"]["Row"];
+
+type VendorFilterState = Record<string, FilterValue>;
+
+const EMPTY_FILTERS: VendorFilterState = {
+  is_active: undefined,
+  vendor_class: undefined,
+  payment_method: undefined,
+};
+
+const vendorColumns: ColumnConfig[] = [
+  { id: "name", label: "Vendor Name", alwaysVisible: true },
+  { id: "legal_name", label: "Legal Name", defaultVisible: false },
+  { id: "contact_name", label: "Contact", defaultVisible: true },
+  { id: "contact_email", label: "Email", defaultVisible: true },
+  { id: "contact_phone", label: "Phone", defaultVisible: true },
+  { id: "city", label: "City", defaultVisible: true },
+  { id: "state", label: "State", defaultVisible: true },
+  { id: "is_active", label: "Status", defaultVisible: true },
+  { id: "vendor_class", label: "Class", defaultVisible: true },
+  { id: "payment_method", label: "Payment Method", defaultVisible: false },
+  { id: "terms", label: "Terms", defaultVisible: false },
+  { id: "is_1099_vendor", label: "1099", defaultVisible: false },
+  { id: "acumatica_vendor_id", label: "Acumatica ID", defaultVisible: false },
+  { id: "created_at", label: "Created", defaultVisible: false },
+];
+
+const vendorDefaultVisibleColumns = vendorColumns
+  .filter((col) => col.defaultVisible !== false)
+  .map((col) => col.id);
+
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString();
+}
+
+function buildVendorTableColumns(): TableColumn<Vendor>[] {
+  return [
+    {
+      ...vendorColumns[0],
+      render: (item) => <span className="font-medium">{item.name}</span>,
+      sortValue: (item) => item.name,
+    },
+    {
+      ...vendorColumns[1],
+      render: (item) => <span>{item.legal_name || "-"}</span>,
+      sortValue: (item) => item.legal_name || "",
+    },
+    {
+      ...vendorColumns[2],
+      render: (item) => <span>{item.contact_name || "-"}</span>,
+      sortValue: (item) => item.contact_name || "",
+    },
+    {
+      ...vendorColumns[3],
+      render: (item) => <span>{item.contact_email || "-"}</span>,
+      sortValue: (item) => item.contact_email || "",
+    },
+    {
+      ...vendorColumns[4],
+      render: (item) => <span>{item.contact_phone || "-"}</span>,
+      sortValue: (item) => item.contact_phone || "",
+    },
+    {
+      ...vendorColumns[5],
+      render: (item) => <span>{item.city || "-"}</span>,
+      sortValue: (item) => item.city || "",
+    },
+    {
+      ...vendorColumns[6],
+      render: (item) => <span>{item.state || "-"}</span>,
+      sortValue: (item) => item.state || "",
+    },
+    {
+      ...vendorColumns[7],
+      render: (item) => (
+        <StatusBadge status={item.is_active ? "Active" : "Inactive"} />
+      ),
+      sortValue: (item) => (item.is_active ? "Active" : "Inactive"),
+    },
+    {
+      ...vendorColumns[8],
+      render: (item) => <span>{item.vendor_class || "-"}</span>,
+      sortValue: (item) => item.vendor_class || "",
+    },
+    {
+      ...vendorColumns[9],
+      render: (item) => <span>{item.payment_method || "-"}</span>,
+      sortValue: (item) => item.payment_method || "",
+    },
+    {
+      ...vendorColumns[10],
+      render: (item) => <span>{item.terms || "-"}</span>,
+      sortValue: (item) => item.terms || "",
+    },
+    {
+      ...vendorColumns[11],
+      render: (item) => <span>{item.is_1099_vendor ? "Yes" : "No"}</span>,
+      sortValue: (item) => (item.is_1099_vendor ? "Yes" : "No"),
+    },
+    {
+      ...vendorColumns[12],
+      render: (item) => (
+        <span className="font-mono text-xs">{item.acumatica_vendor_id || "-"}</span>
+      ),
+      sortValue: (item) => item.acumatica_vendor_id || "",
+    },
+    {
+      ...vendorColumns[13],
+      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+    },
+  ];
+}
+
+export default function DirectoryVendorsPage(): ReactElement {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialFilters: VendorFilterState = {
+    is_active: searchParams.get("is_active") || undefined,
+    vendor_class: searchParams.get("vendor_class") || undefined,
+    payment_method: searchParams.get("payment_method") || undefined,
+  };
+
+  const tableState = useUnifiedTableState({
+    entityKey: "global-directory-vendors",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "name",
+      sortDirection: "asc",
+      visibleColumns: vendorDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  const [vendors, setVendors] = React.useState<Vendor[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  const fetchVendors = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const supabase = createClient();
+      const { data, error: fetchError } = await supabase
+        .from("vendors")
+        .select("*")
+        .order("name", { ascending: true });
+
+      if (fetchError) throw fetchError;
+      setVendors(data || []);
+    } catch (fetchError) {
+      setError(fetchError as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchVendors();
+  }, [fetchVendors]);
+
+  // Sync URL filters to table state
+  React.useEffect(() => {
+    const nextActive = searchParams.get("is_active") || undefined;
+    const nextClass = searchParams.get("vendor_class") || undefined;
+    const nextPayment = searchParams.get("payment_method") || undefined;
+    tableState.setActiveFilters((prev) => {
+      if (
+        prev.is_active === nextActive &&
+        prev.vendor_class === nextClass &&
+        prev.payment_method === nextPayment
+      ) {
+        return prev;
+      }
+      return { is_active: nextActive, vendor_class: nextClass, payment_method: nextPayment };
+    });
+  }, [searchParams, tableState.setActiveFilters]);
+
+  const activeFilters = tableState.activeFilters as VendorFilterState;
+
+  // Derive filter options from data
+  const filterOptions = React.useMemo(() => {
+    const classes = Array.from(new Set(vendors.map((v) => v.vendor_class).filter(Boolean)));
+    const methods = Array.from(new Set(vendors.map((v) => v.payment_method).filter(Boolean)));
+    return { classes, methods };
+  }, [vendors]);
+
+  const filters: FilterConfig[] = React.useMemo(
+    () => [
+      {
+        id: "is_active",
+        label: "Status",
+        type: "select",
+        options: [
+          { value: "true", label: "Active" },
+          { value: "false", label: "Inactive" },
+        ],
+      },
+      {
+        id: "vendor_class",
+        label: "Class",
+        type: "select",
+        options: filterOptions.classes.map((c) => ({ value: String(c), label: String(c) })),
+      },
+      {
+        id: "payment_method",
+        label: "Payment Method",
+        type: "select",
+        options: filterOptions.methods.map((m) => ({ value: String(m), label: String(m) })),
+      },
+    ],
+    [filterOptions],
+  );
+
+  // Client-side filtering
+  const filteredVendors = React.useMemo(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const activeFilter = typeof activeFilters.is_active === "string" ? activeFilters.is_active : "";
+    const classFilter = typeof activeFilters.vendor_class === "string" ? activeFilters.vendor_class : "";
+    const methodFilter = typeof activeFilters.payment_method === "string" ? activeFilters.payment_method : "";
+
+    return vendors.filter((v) => {
+      if (activeFilter) {
+        const isActive = activeFilter === "true";
+        if (v.is_active !== isActive) return false;
+      }
+      if (classFilter && (v.vendor_class || "").toLowerCase() !== classFilter.toLowerCase()) return false;
+      if (methodFilter && (v.payment_method || "").toLowerCase() !== methodFilter.toLowerCase()) return false;
+      if (!search) return true;
+      return (
+        v.name.toLowerCase().includes(search) ||
+        (v.legal_name || "").toLowerCase().includes(search) ||
+        (v.contact_name || "").toLowerCase().includes(search) ||
+        (v.contact_email || "").toLowerCase().includes(search) ||
+        (v.city || "").toLowerCase().includes(search) ||
+        (v.state || "").toLowerCase().includes(search) ||
+        (v.acumatica_vendor_id || "").toLowerCase().includes(search)
+      );
+    });
+  }, [vendors, activeFilters, tableState.debouncedSearch]);
+
+  const tableColumns = React.useMemo(() => buildVendorTableColumns(), []);
+  const tabs = getDirectoryTabs(pathname);
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.is_active) ||
+    Boolean(activeFilters.vendor_class) ||
+    Boolean(activeFilters.payment_method);
+
+  const handleDeleteVendor = React.useCallback(
+    async (vendor: Vendor) => {
+      try {
+        const supabase = createClient();
+        const { error: deleteError } = await supabase
+          .from("vendors")
+          .delete()
+          .eq("id", vendor.id);
+        if (deleteError) throw deleteError;
+        toast.success("Vendor deleted");
+        setVendors((prev) => prev.filter((v) => v.id !== vendor.id));
+      } catch {
+        toast.error("Failed to delete vendor");
+      }
+    },
+    [],
+  );
+
+  const handleFilterChange = (nextFilters: VendorFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      is_active: typeof nextFilters.is_active === "string" ? nextFilters.is_active : null,
+      vendor_class: typeof nextFilters.vendor_class === "string" ? nextFilters.vendor_class : null,
+      payment_method: typeof nextFilters.payment_method === "string" ? nextFilters.payment_method : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    tableState.setSelectedIds(
+      checked ? filteredVendors.map((v) => v.id) : [],
+    );
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    tableState.setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((i) => i !== id),
+    );
+  };
+
+  return (
+    <UnifiedTablePage
+      header={{
+        title: "Company Directory: Vendors",
+        description:
+          "Manage vendors, payment terms, and accounting integration across your organization",
+        actions: (
+          <Button className="bg-primary hover:bg-primary/90">
+            <Plus className="mr-2 h-4 w-4" />
+            New Vendor
+          </Button>
+        ),
+      }}
+      tabs={tabs}
+      toolbar={{
+        totalItems: vendors.length,
+        filteredItems: filteredVendors.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search name, contact, email, city, Acumatica ID...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
+        filters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns: vendorColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredVendors,
+        isLoading,
+        isFetching: false,
+        error: error ?? undefined,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => item.id,
+        onDelete: handleDeleteVendor,
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+        },
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
+      }}
+      emptyState={{
+        title: "No vendors found",
+        description: "No vendors have been added yet.",
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered,
+      }}
+      features={{
+        enableExport: false,
+        enableBulkDelete: true,
+      }}
+    />
+  );
+}

@@ -17,7 +17,7 @@ function Input({ className, type, variant = "default", ...props }: InputProps) {
         // Variant-specific styles
         variant === "inline"
           ? "border-0 !bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-ring"
-          : "border-input dark:bg-input/30 border !bg-transparent shadow-xs focus-visible:border-neutral-400 focus-visible:outline-none",
+          : "border-input border bg-white dark:bg-white shadow-xs focus-visible:border-neutral-400 focus-visible:outline-none",
         "aria-invalid:border-destructive",
         className
       )}

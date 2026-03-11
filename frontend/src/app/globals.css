@@ -342,6 +342,23 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  /* Enforce white form field backgrounds across the app, including custom combobox triggers. */
+  input[data-slot="input"],
+  textarea[data-slot="textarea"],
+  [data-slot="select-trigger"],
+  [data-slot="input-group"],
+  button[role="combobox"] {
+    background-color: #ffffff !important;
+  }
+
+  form input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  form textarea,
+  form [data-slot="select-trigger"],
+  form button[role="combobox"] {
+    background-color: #ffffff !important;
+  }
+
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     font-family: var(--font-sans);

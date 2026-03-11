@@ -23,6 +23,16 @@ export function getDirectoryTabs(currentPath: string): TabConfig[] {
       isActive: currentPath === "/directory/access",
     },
     {
+      label: "Vendors",
+      href: "/directory/vendors",
+      isActive: currentPath === "/directory/vendors",
+    },
+    {
+      label: "Prospects",
+      href: "/directory/prospects",
+      isActive: currentPath === "/directory/prospects",
+    },
+    {
       label: "Distribution Groups",
       href: "/directory/groups",
       isActive: currentPath === "/directory/groups",

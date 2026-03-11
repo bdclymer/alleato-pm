@@ -49,18 +49,21 @@ CREATE INDEX IF NOT EXISTS idx_company_knowledge_search ON company_knowledge USI
 ALTER TABLE company_knowledge ENABLE ROW LEVEL SECURITY;
 
 -- All authenticated users can read company knowledge
+DROP POLICY IF EXISTS "Users can read company knowledge" ON company_knowledge;
 CREATE POLICY "Users can read company knowledge"
   ON company_knowledge FOR SELECT
   TO authenticated
   USING (true);
 
 -- Only authenticated users can insert knowledge
+DROP POLICY IF EXISTS "Users can insert company knowledge" ON company_knowledge;
 CREATE POLICY "Users can insert company knowledge"
   ON company_knowledge FOR INSERT
   TO authenticated
   WITH CHECK (true);
 
 -- Users can update their own knowledge entries
+DROP POLICY IF EXISTS "Users can update own company knowledge" ON company_knowledge;
 CREATE POLICY "Users can update own company knowledge"
   ON company_knowledge FOR UPDATE
   TO authenticated
@@ -75,6 +78,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_company_knowledge_timestamp ON company_knowledge;
 CREATE TRIGGER update_company_knowledge_timestamp
   BEFORE UPDATE ON company_knowledge
   FOR EACH ROW

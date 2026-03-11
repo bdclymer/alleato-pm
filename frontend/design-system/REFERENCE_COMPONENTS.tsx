@@ -7,8 +7,8 @@
  * Do NOT invent new visual patterns — use these.
  *
  * Tech stack: React 18+, TypeScript, Tailwind CSS, shadcn/ui, Next.js App Router
- * Theme: Light mode, Procore orange accent (hsl(29, 71%, 52%)), mapped to --primary
- *
+ * Theme: Light mode
+ * 
  * CRITICAL: All colors use semantic tokens (text-foreground, bg-muted, etc.)
  * NEVER use hardcoded colors (bg-gray-200, text-orange-600, border-gray-200).
  * See tokens.md for the full token list.

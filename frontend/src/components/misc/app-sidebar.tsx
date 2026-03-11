@@ -70,6 +70,7 @@ const projectManagementTools = [
 
 const financialManagementTools = [
   { name: "Prime Contracts", path: "contracts", icon: IconFileDescription, requiresProject: true },
+  { name: "Estimates", path: "estimates", icon: IconClipboardList, requiresProject: true },
   { name: "Budget", path: "budget", icon: IconReportMoney, requiresProject: true },
   { name: "Commitments", path: "commitments", icon: IconBriefcase, requiresProject: true },
   { name: "Change Orders", path: "change-orders", icon: IconFileInvoice, requiresProject: true },

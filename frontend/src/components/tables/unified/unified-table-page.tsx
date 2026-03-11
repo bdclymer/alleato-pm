@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header-unified";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -171,6 +171,7 @@ export interface UnifiedTablePageProps<T> {
     fullBleedTable?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
+    maxWidth?: PageContainerProps["maxWidth"];
   };
   features?: UnifiedTableFeatures;
 }
@@ -240,6 +241,7 @@ export function UnifiedTablePage<T>({
   const isFullBleedTable = layout?.fullBleedTable ?? true;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
+  const containerMaxWidth = layout?.maxWidth ?? "full";
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -1184,7 +1186,7 @@ export function UnifiedTablePage<T>({
 
   return (
     <>
-      <PageContainer className={cn(sidePanel && "pt-0")}>
+      <PageContainer maxWidth={containerMaxWidth} className={cn(sidePanel && "pt-0")}>
         {sidePanel ? (
           <>
             {headerContent}
