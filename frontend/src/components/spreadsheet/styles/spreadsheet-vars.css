@@ -1,0 +1,68 @@
+/* Spreadsheet CSS variables - scoped to avoid global conflicts */
+/* These are needed by the CSS modules in the spreadsheet components */
+
+:root {
+  --spreadsheet-margin: 16px;
+  --spreadsheet-padding: 8px;
+  --spreadsheet-radius: 5px;
+  --spreadsheet-border: 2px;
+}
+
+/* The CSS modules reference generic var names, so we alias them
+   within a spreadsheet scope class */
+.spreadsheet-scope {
+  --margin: 16px;
+  --padding: 8px;
+  --radius: 5px;
+  --border: 2px;
+  --accent: #07f;
+  --white: #fff;
+  --black: #000;
+  --gray-0: var(--white);
+  --gray-100: #f3f4f6;
+  --gray-200: #e8eaee;
+  --gray-300: #d6dae1;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-1000: var(--black);
+  --red-100: #fee2e2;
+  --red-500: #ef4444;
+}
+
+.grabbing *,
+.scrubbing *,
+.resizing-column *,
+.resizing-row * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.grabbing {
+  cursor: grabbing;
+}
+
+.scrubbing {
+  cursor: ew-resize;
+}
+
+.resizing-column {
+  cursor: col-resize;
+}
+
+.resizing-row {
+  cursor: row-resize;
+}
+
+@keyframes appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes disappear {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

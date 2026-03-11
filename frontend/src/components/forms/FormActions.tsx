@@ -14,7 +14,6 @@ interface FormActionsProps {
   stickyOnMobile?: boolean;
   children?: React.ReactNode;
   className?: string;
-  withBorder?: boolean;
 }
 
 export function FormActions({
@@ -28,7 +27,6 @@ export function FormActions({
   stickyOnMobile = true,
   children,
   className,
-  withBorder = true,
 }: FormActionsProps) {
   const justifyClass =
     align === "start"
@@ -41,7 +39,6 @@ export function FormActions({
     <div
       className={cn(
         "flex flex-col gap-4 sm:flex-row sm:items-center",
-        withBorder && "border-t border-border/70",
         justifyClass,
         stickyOnMobile
           ? "sticky bottom-0 z-20 -mx-4 bg-background/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/90 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-5 sm:backdrop-blur-none"

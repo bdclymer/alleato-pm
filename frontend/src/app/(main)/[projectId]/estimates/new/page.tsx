@@ -4,24 +4,21 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+
 import { ProjectFormPageLayout } from "@/components/layout";
-import { FormSection } from "@/components/forms/FormSection";
-import { FormField } from "@/components/forms/FormField";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormGrid, FormSection } from "@/components/forms";
+import { FormActions } from "@/components/forms/FormActions";
+import { TextField } from "@/components/forms/TextField";
+import { SelectField } from "@/components/forms/SelectField";
+import { NumberField } from "@/components/forms/NumberField";
+import { TextareaField } from "@/components/forms/TextareaField";
+import { DateField } from "@/components/forms/DateField";
 import {
   EstimateCreateSchema,
   EstimateStatuses,
   EstimateStatusLabels,
 } from "@/lib/schemas/estimates";
+
 interface EstimateFormValues {
   title: string;
   estimate_number?: string | null;
@@ -37,13 +34,23 @@ interface EstimateFormValues {
   notes?: string | null;
 }
 
+function toDateValue(value?: string | null) {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function toDateString(value?: Date) {
+  if (!value) return undefined;
+  return value.toISOString().split("T")[0];
+}
+
 export default function NewEstimatePage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
 
   const form = useForm<EstimateFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(EstimateCreateSchema) as any,
     defaultValues: {
       title: "",
@@ -60,14 +67,6 @@ export default function NewEstimatePage() {
       notes: "",
     },
   });
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = form;
 
   const onSubmit = async (data: EstimateFormValues) => {
     try {
@@ -87,10 +86,13 @@ export default function NewEstimatePage() {
       router.push(`/${projectId}/estimates/${result.estimate_id}`);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create estimate"
+        error instanceof Error ? error.message : "Failed to create estimate",
       );
     }
   };
+
+  const values = form.watch();
+  const errors = form.formState.errors;
 
   return (
     <ProjectFormPageLayout
@@ -100,147 +102,172 @@ export default function NewEstimatePage() {
       backLabel="Back to Estimates"
       maxWidth="xl"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormSection title="Basic Information">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <FormField label="Title" required error={errors.title?.message}>
-                <Input
-                  {...register("title")}
-                  placeholder="e.g., Ulta Beauty Fresno DC New RTUs R6"
-                />
-              </FormField>
-            </div>
+          <FormGrid columns={2}>
+            <TextField
+              label="Title"
+              required
+              fullWidth
+              value={values.title ?? ""}
+              onChange={(event) =>
+                form.setValue("title", event.target.value, { shouldValidate: true })
+              }
+              error={errors.title?.message}
+              placeholder="e.g., Ulta Beauty Fresno DC New RTUs R6"
+            />
 
-            <FormField label="Estimate Number" error={errors.estimate_number?.message}>
-              <Input
-                {...register("estimate_number")}
-                placeholder="Optional reference number"
-              />
-            </FormField>
+            <TextField
+              label="Estimate Number"
+              value={values.estimate_number ?? ""}
+              onChange={(event) =>
+                form.setValue("estimate_number", event.target.value, {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.estimate_number?.message}
+              placeholder="Optional reference number"
+            />
 
-            <FormField label="Revision" error={errors.revision?.message}>
-              <Input
-                type="number"
-                min={1}
-                {...register("revision", { valueAsNumber: true })}
-              />
-            </FormField>
+            <NumberField
+              label="Revision"
+              value={values.revision ?? 1}
+              onChange={(value) =>
+                form.setValue("revision", value, { shouldValidate: true })
+              }
+              error={errors.revision?.message}
+              min={1}
+            />
 
-            <FormField label="Status" error={errors.status?.message}>
-              <Select
-                value={watch("status")}
-                onValueChange={(val) =>
-                  setValue("status", val as EstimateFormValues["status"])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EstimateStatuses.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {EstimateStatusLabels[status]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
+            <SelectField
+              label="Status"
+              value={values.status ?? "draft"}
+              onValueChange={(value) =>
+                form.setValue("status", value as EstimateFormValues["status"], {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.status?.message}
+              options={EstimateStatuses.map((status) => ({
+                value: status,
+                label: EstimateStatusLabels[status],
+              }))}
+            />
 
-            <FormField label="Date" error={errors.estimate_date?.message}>
-              <Input type="date" {...register("estimate_date")} />
-            </FormField>
+            <DateField
+              label="Date"
+              value={toDateValue(values.estimate_date)}
+              onChange={(value) =>
+                form.setValue("estimate_date", toDateString(value), {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.estimate_date?.message}
+            />
 
-            <FormField label="Estimator" error={errors.estimator?.message}>
-              <Input {...register("estimator")} placeholder="Person preparing the estimate" />
-            </FormField>
+            <TextField
+              label="Estimator"
+              value={values.estimator ?? ""}
+              onChange={(event) =>
+                form.setValue("estimator", event.target.value, {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.estimator?.message}
+              placeholder="Person preparing the estimate"
+            />
 
-            <FormField label="Location" error={errors.location?.message}>
-              <Input
-                {...register("location")}
-                placeholder="Project location"
-              />
-            </FormField>
-          </div>
+            <TextField
+              label="Location"
+              value={values.location ?? ""}
+              onChange={(event) =>
+                form.setValue("location", event.target.value, {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.location?.message}
+              placeholder="Project location"
+            />
+          </FormGrid>
         </FormSection>
 
         <FormSection title="Project Duration & Markup Rates">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <FormField
+          <FormGrid columns={3}>
+            <NumberField
               label="Project Duration (weeks)"
+              value={values.project_duration_weeks ?? undefined}
+              onChange={(value) =>
+                form.setValue("project_duration_weeks", value, {
+                  shouldValidate: true,
+                })
+              }
               error={errors.project_duration_weeks?.message}
-            >
-              <Input
-                type="number"
-                min={1}
-                {...register("project_duration_weeks", { valueAsNumber: true })}
-                placeholder="e.g., 12"
-              />
-            </FormField>
-
-            <FormField
-              label="Insurance Rate"
-              error={errors.insurance_rate?.message}
-            >
-              <Input
-                type="number"
-                step="0.0001"
-                min={0}
-                max={1}
-                {...register("insurance_rate", { valueAsNumber: true })}
-                placeholder="0.0125 (1.25%)"
-              />
-            </FormField>
-
-            <FormField label="Fee Rate" error={errors.fee_rate?.message}>
-              <Input
-                type="number"
-                step="0.0001"
-                min={0}
-                max={1}
-                {...register("fee_rate", { valueAsNumber: true })}
-                placeholder="0.10 (10%)"
-              />
-            </FormField>
-
-            <FormField
-              label="Contingency Amount"
-              error={errors.contingency_amount?.message}
-            >
-              <Input
-                type="number"
-                step="0.01"
-                min={0}
-                {...register("contingency_amount", { valueAsNumber: true })}
-                placeholder="0.00"
-              />
-            </FormField>
-          </div>
-        </FormSection>
-
-        <FormSection title="Notes">
-          <FormField label="Notes" error={errors.notes?.message}>
-            <Textarea
-              {...register("notes")}
-              placeholder="Additional notes about this estimate..."
-              rows={3}
+              min={1}
+              placeholder="e.g., 12"
             />
-          </FormField>
+
+            <NumberField
+              label="Insurance Rate"
+              value={values.insurance_rate ?? undefined}
+              onChange={(value) =>
+                form.setValue("insurance_rate", value, { shouldValidate: true })
+              }
+              error={errors.insurance_rate?.message}
+              min={0}
+              max={1}
+              step="0.0001"
+              placeholder="0.0125"
+            />
+
+            <NumberField
+              label="Fee Rate"
+              value={values.fee_rate ?? undefined}
+              onChange={(value) =>
+                form.setValue("fee_rate", value, { shouldValidate: true })
+              }
+              error={errors.fee_rate?.message}
+              min={0}
+              max={1}
+              step="0.0001"
+              placeholder="0.10"
+            />
+
+            <NumberField
+              label="Contingency Amount"
+              value={values.contingency_amount ?? undefined}
+              onChange={(value) =>
+                form.setValue("contingency_amount", value, {
+                  shouldValidate: true,
+                })
+              }
+              error={errors.contingency_amount?.message}
+              min={0}
+              step="0.01"
+              placeholder="0.00"
+            />
+          </FormGrid>
         </FormSection>
 
-        <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Estimate"}
-          </Button>
-        </div>
-      </form>
+        <FormSection title="Notes" className="border-b-0 pb-0">
+          <TextareaField
+            label="Notes"
+            value={values.notes ?? ""}
+            onChange={(event) =>
+              form.setValue("notes", event.target.value, { shouldValidate: true })
+            }
+            error={errors.notes?.message}
+            placeholder="Additional notes about this estimate..."
+            rows={3}
+            fullWidth
+          />
+        </FormSection>
+
+        <FormActions
+          submitLabel={form.formState.isSubmitting ? "Creating..." : "Create Estimate"}
+          onCancel={() => router.back()}
+          isSubmitting={form.formState.isSubmitting}
+        />
+      </Form>
     </ProjectFormPageLayout>
   );
 }

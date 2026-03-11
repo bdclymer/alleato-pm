@@ -4,6 +4,7 @@ export { FormSection } from "./FormSection";
 export { FormGrid } from "./FormGrid";
 export { FormGridRow } from "./FormGridRow";
 export { FormTotalRow } from "./FormTotalRow";
+export { FormActions } from "./FormActions";
 export { FormField } from "./FormField";
 export { TextField } from "./TextField";
 export { TextareaField } from "./TextareaField";
