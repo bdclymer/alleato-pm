@@ -32,14 +32,10 @@ export async function POST(request: NextRequest) {
   }
 
   const { status, body } = await liveblocks.identifyUser(
-    {
-      userId: user.id,
-    },
+    user.id,
     {
       userInfo: {
         name,
-        email: user.email ?? "",
-        avatar: undefined,
       },
     },
   );

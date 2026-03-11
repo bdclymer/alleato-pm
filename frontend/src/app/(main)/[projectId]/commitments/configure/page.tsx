@@ -249,65 +249,61 @@ export default function CommitmentConfigurePage() {
           Update
         </Button>
       }
-      contentClassName="space-y-0"
+      contentClassName="space-y-8"
     >
-      <div className="mx-auto flex max-w-7xl gap-6">
-        {/* Sidebar Navigation */}
-        <aside className="w-64 shrink-0">
-          <nav className="space-y-1 sticky top-6">
+      <div className="space-y-8">
+        <nav className="flex flex-wrap gap-2 border-b border-border/70 pb-4">
             <button
               onClick={() => setActiveTab("contract-configuration")}
-              className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+              className={`rounded-md px-4 py-2 text-sm ${
                 activeTab === "contract-configuration"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
+                  : "border border-border bg-background hover:bg-muted"
               }`}
             >
               Contract Configuration
             </button>
             <button
               onClick={() => setActiveTab("workflow-settings")}
-              className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+              className={`rounded-md px-4 py-2 text-sm ${
                 activeTab === "workflow-settings"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
+                  : "border border-border bg-background hover:bg-muted"
               }`}
             >
               Workflow Settings
             </button>
             <button
               onClick={() => setActiveTab("invoice-settings")}
-              className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+              className={`rounded-md px-4 py-2 text-sm ${
                 activeTab === "invoice-settings"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
+                  : "border border-border bg-background hover:bg-muted"
               }`}
             >
               Invoice Settings
             </button>
             <button
               onClick={() => setActiveTab("permissions")}
-              className={`w-full text-left px-4 py-2 rounded-md text-sm ${
+              className={`rounded-md px-4 py-2 text-sm ${
                 activeTab === "permissions"
                   ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted"
+                  : "border border-border bg-background hover:bg-muted"
               }`}
             >
               Permissions Table
             </button>
           </nav>
-        </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 space-y-8">
+        <main className="space-y-8">
           {activeTab === "contract-configuration" && (
             <>
               {/* Contract Configuration Section */}
-              <Card>
-                <CardHeader>
+              <Card className="border-0 bg-transparent shadow-none">
+                <CardHeader className="px-0 pt-0">
                   <CardTitle>Contract Configuration</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 px-0">
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between py-2 border-b">
                       <Label htmlFor="contractsPrivateByDefault">
@@ -502,11 +498,11 @@ export default function CommitmentConfigurePage() {
               </Alert>
 
               {/* Default Distributions Section */}
-              <Card>
-                <CardHeader>
+              <Card className="border-0 bg-transparent shadow-none">
+                <CardHeader className="px-0 pt-0">
                   <CardTitle>Default Distributions</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 px-0">
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between py-2 border-b">
                       <Label htmlFor="includePrimaryContactInDistribution">
@@ -575,11 +571,11 @@ export default function CommitmentConfigurePage() {
               </Card>
 
               {/* Default Contract Settings Section */}
-              <Card>
-                <CardHeader>
+              <Card className="border-0 bg-transparent shadow-none">
+                <CardHeader className="px-0 pt-0">
                   <CardTitle>Default Contract Settings</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 px-0">
                   <div className="grid gap-4">
                     <div className="grid grid-cols-2 gap-8 py-2 border-b">
                       <div className="flex items-center justify-between">
@@ -794,15 +790,15 @@ export default function CommitmentConfigurePage() {
           )}
 
           {activeTab === "workflow-settings" && (
-            <Card>
-              <CardHeader>
+            <Card className="border-0 bg-transparent shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Workflow Settings</CardTitle>
                 <CardDescription>
                   Configure approval workflows and notification settings for
                   commitments.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 px-0">
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
@@ -815,14 +811,14 @@ export default function CommitmentConfigurePage() {
           )}
 
           {activeTab === "invoice-settings" && (
-            <Card>
-              <CardHeader>
+            <Card className="border-0 bg-transparent shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Invoice Settings</CardTitle>
                 <CardDescription>
                   Configure billing periods, reminders, and invoice defaults.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 px-0">
                 <div className="grid gap-4">
                   <div className="flex items-center justify-between py-2 border-b">
                     <Label>Enable Prefilled Billing Periods:</Label>
@@ -1016,14 +1012,14 @@ export default function CommitmentConfigurePage() {
           )}
 
           {activeTab === "permissions" && (
-            <Card>
-              <CardHeader>
+            <Card className="border-0 bg-transparent shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Permissions Table</CardTitle>
                 <CardDescription>
                   Manage user permissions for the Commitments tool.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0">
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>

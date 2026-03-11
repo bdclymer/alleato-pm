@@ -1,8 +1,6 @@
-import { ArrowUpRight, Eye, Link2, Trash2 } from "lucide-react";
+import { ArrowUpRight, Eye, Trash2 } from "lucide-react";
 import {
-  TableAvatarUsers,
   TableDateValue,
-  TableIconLinks,
   TableRowActionsMenu,
   TableStatusDot,
   TableTagBadge,
@@ -23,6 +21,7 @@ export interface TasksRow {
   description: string | null;
   assignee_name: string | null;
   assignee_email: string | null;
+  meeting_title: string | null;
   project_id: string | null;
   project_name: string | null;
   client_id: string | null;
@@ -44,11 +43,11 @@ export const tasksColumns: ColumnConfig[] = [
   { id: "description", label: "Task Name", alwaysVisible: true },
   { id: "assignee_name", label: "Assigned User", defaultVisible: true },
   { id: "project_name", label: "Project Name", defaultVisible: true },
-  { id: "assignee_email", label: "Assignee Email", defaultVisible: true },
+  { id: "meeting_title", label: "Meeting Title", defaultVisible: true },
+  { id: "assignee_email", label: "Assignee Email", defaultVisible: false },
   { id: "due_date", label: "Due Date", defaultVisible: true },
   { id: "priority", label: "Priority", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "links", label: "Links", defaultVisible: true },
 ];
 
 export const tasksFilters: FilterConfig[] = [
@@ -80,9 +79,9 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <div className="flex max-w-[360px] items-center gap-2 min-w-0" title={item.description ?? ""}>
+            <div className="flex max-w-[540px] items-center gap-2 min-w-0" title={item.description ?? ""}>
               <TableStatusDot status={item.status} />
-              <span className="text-sm text-muted-foreground truncate">
+              <span className="text-sm font-medium text-foreground truncate">
                 {item.description || "Untitled Task"}
               </span>
             </div>
@@ -93,13 +92,11 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
       case "assignee_name":
         return {
           ...column,
-          render: (item) => {
-            const users = [item.assignee_name, item.assignee_email].filter(
-              (value): value is string => Boolean(value && value.trim()),
-            );
-            if (users.length === 0) return <span className="text-sm text-muted-foreground">Unassigned</span>;
-            return <TableAvatarUsers users={[users[0]]} maxVisible={1} />;
-          },
+          render: (item) => (
+            <span className="text-sm text-foreground block max-w-[180px] truncate">
+              {item.assignee_name || "Unassigned"}
+            </span>
+          ),
           sortValue: (item) => item.assignee_name ?? "",
           sortable: true,
         };
@@ -107,11 +104,30 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <span className="text-sm text-muted-foreground block max-w-[160px] truncate">
-              {item.project_name || "—"}
+            <span className="text-sm text-foreground block max-w-[220px] truncate">
+              {item.project_name || "Unlinked"}
             </span>
           ),
           sortValue: (item) => item.project_name ?? "",
+          sortable: true,
+        };
+      case "meeting_title":
+        return {
+          ...column,
+          render: (item) => {
+            if (!item.metadata_id) return <span className="text-sm text-muted-foreground">—</span>;
+            return (
+              <a
+                href={`/meetings/${item.metadata_id}`}
+                className="text-sm text-foreground hover:text-primary underline-offset-2 hover:underline block max-w-[280px] truncate"
+                onClick={(event) => event.stopPropagation()}
+                title={item.meeting_title || "Open source meeting"}
+              >
+                {item.meeting_title || "Open source meeting"}
+              </a>
+            );
+          },
+          sortValue: (item) => item.meeting_title ?? "",
           sortable: true,
         };
       case "assignee_email":
@@ -154,24 +170,6 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
             />
           ),
           sortValue: (item) => item.status ?? "",
-          sortable: true,
-        };
-      case "links":
-        return {
-          ...column,
-          render: (item) => {
-            const sourceMeetingHref = item.metadata_id ? `/meetings/${item.metadata_id}` : null;
-            return (
-              <TableIconLinks
-                items={[
-                  ...(sourceMeetingHref
-                    ? [{ href: sourceMeetingHref, icon: Link2, label: "Open source meeting" }]
-                    : []),
-                ]}
-              />
-            );
-          },
-          sortValue: (item) => (item.metadata_id ? "meeting" : ""),
           sortable: true,
         };
       default:

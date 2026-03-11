@@ -76,6 +76,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
         layout={{
           headerAlignment: "left",
           toolbarInlineWithHeader: true,
+          containerClassName: "pl-0 sm:pl-0 lg:pl-0",
         }}
         toolbar={{
           totalItems: unfilteredTotal,
@@ -130,6 +131,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               onOpenMeetingPage={handleOpenMeetingPage}
             />
           ),
+          columnClassName: "lg:grid-cols-[minmax(0,1fr)_32rem] xl:grid-cols-[minmax(0,1fr)_36rem]",
         }}
         sorting={{
           sortBy: tableState.sortBy,

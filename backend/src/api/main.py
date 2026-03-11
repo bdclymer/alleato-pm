@@ -1104,6 +1104,22 @@ def ingest_fireflies_endpoint(
     Returns:
         Dict with ingestion result details.
     """
+    allow_file_ingest = os.getenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "false").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if not allow_file_ingest:
+        raise HTTPException(
+            status_code=410,
+            detail=(
+                "Legacy file-based Fireflies ingest is disabled. "
+                "Use POST /api/ingest/fireflies/recent (or enable "
+                "ENABLE_LEGACY_FIREFLIES_FILE_INGEST=true for explicit legacy use)."
+            ),
+        )
+
     result = pipeline.ingest_file(payload.path, project_id=payload.project_id, dry_run=payload.dry_run)
     return {"result": result.__dict__}
 

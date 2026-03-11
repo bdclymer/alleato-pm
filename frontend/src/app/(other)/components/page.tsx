@@ -17,7 +17,7 @@ import { AnimatedBackground } from "@/components/motion/animated-background";
 import { AnimatedList } from "@/components/motion/animated-list";
 import { Marquee } from "@/components/motion/marquee";
 import { TabsTransitionPanel } from "@/components/motion/motion-tabs";
-import { AppleStyleDock } from "@/components/motion/motion-dock";
+
 import { TextEffect } from "@/components/motion/text-effect";
 
 export default function ComponentsPage() {
@@ -212,14 +212,6 @@ export default function ComponentsPage() {
         </ComponentSection>
 
         {/* Apple Style Dock */}
-        <ComponentSection
-          title="Apple Style Dock"
-          description="Interactive dock with hover effects"
-        >
-          <div className="relative h-48 rounded-lg bg-gradient-to-b from-gray-900 to-gray-800 shadow-sm">
-            <AppleStyleDock />
-          </div>
-        </ComponentSection>
       </div>
     </div>
   );

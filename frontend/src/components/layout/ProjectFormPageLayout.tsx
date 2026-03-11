@@ -50,21 +50,14 @@ export function ProjectFormPageLayout({
 
   return (
     <div className={cn("mx-auto w-full", formWidthClassMap[maxWidth], className)}>
-      <div className="pt-2 pb-4 md:pb-6">
+      <PageContainer className="space-y-8 pb-14 pt-3 sm:pt-4 md:pb-16">
         <ProjectPageHeader
           title={title}
           description={description}
           actions={headerActions ?? defaultBackAction}
         />
-      </div>
-      <div className="px-4 sm:px-6 lg:px-8 pb-14 md:pb-16">
-        <PageContainer
-          padding={false}
-          className={cn("space-y-8", contentClassName)}
-        >
-          {children}
-        </PageContainer>
-      </div>
+        <div className={cn("space-y-8", contentClassName)}>{children}</div>
+      </PageContainer>
     </div>
   );
 }

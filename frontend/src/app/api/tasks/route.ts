@@ -22,11 +22,12 @@ export async function GET() {
     .from("tasks")
     .select(`
       *,
-      projects (id, name)
+      projects (id, name),
+      document_metadata:tasks_metadata_id_fkey (title)
     `)
     .eq("source_system", "fireflies")
     .not("metadata_id", "is", null)
-    .or("project_id.not.is.null,project_ids.not.is.null")
+    .or("project_id.not.is.null,project_ids.neq.{}")
     .order("created_at", { ascending: false });
 
   const interviewIds = (interviewMeetings ?? []).map((m) => m.id).filter(Boolean);
@@ -44,11 +45,13 @@ export async function GET() {
   }
 
   const tasks = (data ?? []).map((task) => {
-    const { projects, ...rest } = task as Record<string, unknown>;
+    const { projects, document_metadata, ...rest } = task as Record<string, unknown>;
     const projectMetadata = projects as Record<string, unknown> | undefined;
+    const meetingMetadata = document_metadata as Record<string, unknown> | undefined;
     return {
       ...rest,
       project_name: projectMetadata?.name ?? null,
+      meeting_title: (meetingMetadata?.title as string | null) ?? null,
     };
   });
 

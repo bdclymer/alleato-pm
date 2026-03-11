@@ -163,7 +163,7 @@ export function PageHeader({
     <div className={cn("px-3 sm:px-5 lg:px-7", className)}>
       <div>
         {/* Title and Actions */}
-        <div className="flex items-start justify-between gap-3 pt-3 pb-4 min-w-0 sm:items-center">
+        <div className="flex flex-col gap-2 pt-3 pb-4 min-w-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div className="min-w-0 flex-1 overflow-hidden">
             {/* Project Name */}
             {shouldShowProjectName && (
@@ -186,7 +186,7 @@ export function PageHeader({
               titleContent
             ) : (
               <Inline gap="md" align="center">
-                <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">
+                <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold truncate">
                   {title}
                 </h1>
                 {statusBadge}

@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/header";
 import Footer from "@/components/layout/Footer";
+import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 
 /**
  * SidebarLayout - Shared layout component for routes that need the app sidebar
@@ -28,6 +29,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
           <Footer />
+          <AIChatWidgetLazy />
         </div>
       </SidebarInset>
     </SidebarProvider>

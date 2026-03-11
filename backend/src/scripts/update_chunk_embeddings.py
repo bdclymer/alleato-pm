@@ -15,6 +15,8 @@ from supabase_helpers import SupabaseRagStore, get_supabase_client
 
 def update_embeddings():
     print("Updating chunk embeddings with text-embedding-3-small (1536 dimensions)...")
+    print("NOTE: This script only updates vectors in document_chunks.")
+    print("      It does NOT refresh transcript markdown/content from Fireflies.")
     
     # Create clients
     client = get_supabase_client()

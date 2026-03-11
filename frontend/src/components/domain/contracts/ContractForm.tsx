@@ -174,10 +174,15 @@ function SplitFormSection({
   rightHeaderActions,
 }: SplitFormSectionProps) {
   return (
-    <section className={cn("border-b border-border pb-10 pt-8 first:pt-0 last:border-b-0 last:pb-0", className)}>
-      <div className="grid gap-10 lg:gap-20 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground">
+    <section
+      className={cn(
+        "border-b border-border/70 pb-8 pt-8 first:pt-0 last:border-b-0 last:pb-0",
+        className,
+      )}
+    >
+      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
+        <div className="space-y-1">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">
             {title}
           </h3>
           {description ? (

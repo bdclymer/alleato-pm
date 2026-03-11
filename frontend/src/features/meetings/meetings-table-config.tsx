@@ -355,7 +355,13 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
         return (
           <div className="group/title inline-flex items-center gap-2 min-w-0 w-full">
             <TableStatusDot status={item.status} />
-            <span className="font-medium truncate">{titleText}</span>
+            <a
+              href={`/meetings/${item.id}`}
+              className="font-medium truncate hover:underline underline-offset-2"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {titleText}
+            </a>
             <Button
               variant="ghost"
               size="icon"
@@ -567,6 +573,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                 ? [{ href: item.fireflies_link, icon: Flame, label: "View Fireflies recording" }]
                 : []),
             ]}
+            className="gap-3 [&_svg]:h-4.5 [&_svg]:w-4.5"
           />
         );
       },

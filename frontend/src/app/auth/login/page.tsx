@@ -40,6 +40,7 @@ export default async function LoginPage({
           src="/alleato-group.jpg"
           alt="Alleato Group"
           fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover"
           priority
         />

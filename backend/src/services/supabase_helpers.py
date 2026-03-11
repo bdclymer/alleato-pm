@@ -206,6 +206,9 @@ class SupabaseRagStore:
         self._client.table("project_insights").insert(insight).execute()
 
     # document chunks ---------------------------------------------------
+    def delete_chunks_for_document(self, document_id: str) -> None:
+        self._client.table("document_chunks").delete().eq("document_id", document_id).execute()
+
     def upsert_chunks(self, chunks: List[DocumentChunk]) -> None:
         if not chunks:
             return

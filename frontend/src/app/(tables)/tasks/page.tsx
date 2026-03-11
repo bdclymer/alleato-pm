@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { format } from "date-fns";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ArrowUpRight, Calendar, CircleAlert, FolderKanban, User } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -21,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   type TasksRow,
   buildTasksTableColumns,
@@ -37,6 +39,77 @@ type TasksFilterState = Record<string, FilterValue>;
 const EMPTY_FILTERS: TasksFilterState = {
   status: undefined,
 };
+
+function TaskPreviewPane({
+  task,
+  onOpenSourceMeeting,
+}: {
+  task: TasksRow | null;
+  onOpenSourceMeeting: (task: TasksRow) => void;
+}) {
+  if (!task) {
+    return (
+      <div className="p-6 space-y-3 text-sm text-muted-foreground">
+        <p>Select a task to preview details.</p>
+        <p className="text-xs">Use arrow keys to move between rows.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold leading-tight">
+          {task.description || "Untitled Task"}
+        </p>
+        {task.metadata_id ? (
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Open source meeting"
+            title="Open source meeting"
+            onClick={() => onOpenSourceMeeting(task)}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+          </Button>
+        ) : null}
+      </div>
+
+      <dl className="space-y-3 text-xs">
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <CircleAlert className="h-3.5 w-3.5" />
+            Status
+          </dt>
+          <dd className="text-foreground mt-1">{task.status || "-"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5" />
+            Assignee
+          </dt>
+          <dd className="text-foreground mt-1">{task.assignee_name || task.assignee_email || "-"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <FolderKanban className="h-3.5 w-3.5" />
+            Project
+          </dt>
+          <dd className="text-foreground mt-1">{task.project_name || "-"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
+            Due Date
+          </dt>
+          <dd className="text-foreground mt-1">
+            {task.due_date ? format(new Date(task.due_date), "MMM d, yyyy") : "-"}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
 
 export default function TasksPage() {
   const router = useRouter();
@@ -91,6 +164,14 @@ export default function TasksPage() {
 
   // ── Table columns ──────────────────────────────────────────────
   const tableColumns = React.useMemo(() => buildTasksTableColumns(), []);
+  const allowedColumnIds = React.useMemo(
+    () => tasksColumns.map((column) => column.id),
+    [],
+  );
+  const sanitizedVisibleColumns = React.useMemo(() => {
+    const filtered = tableState.visibleColumns.filter((id) => allowedColumnIds.includes(id));
+    return filtered.length > 0 ? filtered : tasksDefaultVisibleColumns;
+  }, [allowedColumnIds, tableState.visibleColumns]);
 
   // ── Filtering ──────────────────────────────────────────────────
   const filteredData = React.useMemo(() => {
@@ -113,6 +194,14 @@ export default function TasksPage() {
 
   const totalItems = data.length;
   const filteredItems = filteredData.length;
+  const selectedTaskId = searchParams.get("detail");
+  const selectedTask =
+    (selectedTaskId
+      ? filteredData.find((item) => item.id && item.id === selectedTaskId)
+      : null) ??
+    filteredData[0] ??
+    null;
+  const activeTaskId = selectedTask?.id ?? null;
   const selectableTaskIds = React.useMemo(
     () =>
       filteredData
@@ -198,7 +287,13 @@ export default function TasksPage() {
   }, [refresh, tableState]);
 
   const handleView = (item: TasksRow) => {
-    toast.info(`Viewing: ${item.id || item.id}`);
+    if (!item.id) return;
+    tableState.setSearchParams({ detail: item.id });
+  };
+
+  const handleOpenSourceMeeting = (item: TasksRow) => {
+    if (!item.metadata_id) return;
+    router.push(`/meetings/${item.metadata_id}`);
   };
 
   const handleExport = () => {
@@ -249,8 +344,9 @@ export default function TasksPage() {
         onFilterChange: handleFilterChange,
         onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
         columns: tasksColumns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
+        visibleColumns: sanitizedVisibleColumns,
+        onColumnVisibilityChange: (columns) =>
+          tableState.setVisibleColumns(columns.filter((id) => allowedColumnIds.includes(id))),
         onExport: handleExport,
         onBulkDelete: () => setBulkDeleteDialogOpen(true),
       }}
@@ -262,8 +358,17 @@ export default function TasksPage() {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id ?? "",
+        activeRowId: activeTaskId,
         onRowClick: handleView,
         rowActions: (item) => renderTasksRowActions(item, handleView, handleDeleteTask),
+      }}
+      sidePanel={{
+        content: (
+          <TaskPreviewPane
+            task={selectedTask}
+            onOpenSourceMeeting={handleOpenSourceMeeting}
+          />
+        ),
       }}
       selection={{
         selectedIds: tableState.selectedIds,
@@ -294,7 +399,11 @@ export default function TasksPage() {
         enableBulkDelete: true,
         enableRowSelection: true,
       }}
-        layout={{ fullBleedTable: false, toolbarInlineWithHeader: true }}
+        layout={{
+          fullBleedTable: false,
+          toolbarInlineWithHeader: true,
+          containerClassName: "pt-0 pl-0 sm:pl-0 lg:pl-0",
+        }}
       />
 
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>

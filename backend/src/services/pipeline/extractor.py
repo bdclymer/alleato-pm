@@ -285,6 +285,11 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     for risk in structured.risks:
         _upsert_risk(client, risk, metadata_id)
     tasks_to_persist = structured.tasks if is_meeting else []
+    # Replace task set for this meeting to avoid stale rows from prior runs
+    # (for example tasks created before project assignment existed).
+    client.table("tasks").delete().eq("metadata_id", metadata_id).eq(
+        "source_system", "fireflies"
+    ).execute()
     for task in tasks_to_persist:
         _upsert_task(
             client,

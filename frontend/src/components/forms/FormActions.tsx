@@ -13,6 +13,8 @@ interface FormActionsProps {
   align?: "start" | "end" | "between";
   stickyOnMobile?: boolean;
   children?: React.ReactNode;
+  className?: string;
+  withBorder?: boolean;
 }
 
 export function FormActions({
@@ -25,6 +27,8 @@ export function FormActions({
   align = "end",
   stickyOnMobile = true,
   children,
+  className,
+  withBorder = true,
 }: FormActionsProps) {
   const justifyClass =
     align === "start"
@@ -37,10 +41,12 @@ export function FormActions({
     <div
       className={cn(
         "flex flex-col gap-4 sm:flex-row sm:items-center",
+        withBorder && "border-t border-border/70",
         justifyClass,
         stickyOnMobile
-          ? "sticky bottom-0 z-20 -mx-4 bg-background/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-6 sm:backdrop-blur-none"
-          : "pt-6",
+          ? "sticky bottom-0 z-20 -mx-4 bg-background/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-4 backdrop-blur supports-[backdrop-filter]:bg-background/90 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-5 sm:backdrop-blur-none"
+          : "pt-5",
+        className,
       )}
     >
       {children ? <div className="w-full sm:w-auto">{children}</div> : null}

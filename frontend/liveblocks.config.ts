@@ -1,21 +1,99 @@
-import { createClient } from "@liveblocks/client";
-import { createLiveblocksContext } from "@liveblocks/react";
+// Liveblocks configuration for Alleato PM
+// https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
+//
+// IMPORTANT: ActivitiesData values must be flat primitive types only
+// (string | number | boolean). No nested objects, no arrays, no optionals.
 
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
+// ── Custom notification data types ──────────────────────────────────────────
 
-// Liveblocks types for the application
+/** A critical issue that needs immediate attention */
+export type CriticalIssueData = {
+  title: string;
+  message: string;
+  severity: string; // "critical" | "high" | "medium"
+  entityType: string;
+  entityId: string;
+  projectName: string;
+  url: string;
+};
+
+/** A deadline is approaching or has passed */
+export type DeadlineData = {
+  title: string;
+  entityType: string;
+  entityId: string;
+  dueDate: string;
+  daysRemaining: number;
+  projectName: string;
+  url: string;
+};
+
+/** A status change on a tracked item */
+export type StatusChangeData = {
+  title: string;
+  entityType: string;
+  entityId: string;
+  oldStatus: string;
+  newStatus: string;
+  changedBy: string;
+  projectName: string;
+  url: string;
+};
+
+/** A budget or cost alert */
+export type BudgetAlertData = {
+  title: string;
+  alertType: string; // "over_budget" | "approaching_limit" | "variance" | "cost_change"
+  amount: number;
+  percentage: number;
+  projectName: string;
+  url: string;
+};
+
+/** Weekly digest / summary notification (flattened stats) */
+export type WeeklyDigestData = {
+  title: string;
+  summary: string;
+  newIssues: number;
+  resolvedIssues: number;
+  pendingApprovals: number;
+  upcomingDeadlines: number;
+  projectName: string;
+  url: string;
+};
+
+/** Someone was assigned to or mentioned in an item */
+export type AssignmentData = {
+  title: string;
+  entityType: string;
+  entityId: string;
+  assignedBy: string;
+  projectName: string;
+  url: string;
+};
+
+/** A document or item requires approval */
+export type ApprovalRequestData = {
+  title: string;
+  entityType: string;
+  entityId: string;
+  requestedBy: string;
+  projectName: string;
+  url: string;
+};
+
+// ── Global Liveblocks type declarations ─────────────────────────────────────
+
 declare global {
   interface Liveblocks {
     Presence: Record<string, never>;
+
     Storage: Record<string, never>;
 
     UserMeta: {
       id: string;
       info: {
-        name: string;
-        email: string;
+        name?: string;
         avatar?: string;
       };
     };
@@ -27,23 +105,21 @@ declare global {
     };
 
     RoomInfo: {
-      name: string;
+      title: string;
       url: string;
+    };
+
+    // Custom notification kinds with $ prefix
+    ActivitiesData: {
+      $criticalIssue: CriticalIssueData;
+      $deadline: DeadlineData;
+      $statusChange: StatusChangeData;
+      $budgetAlert: BudgetAlertData;
+      $weeklyDigest: WeeklyDigestData;
+      $assignment: AssignmentData;
+      $approvalRequest: ApprovalRequestData;
     };
   }
 }
 
-export const {
-  suspense: {
-    LiveblocksProvider,
-    useInboxNotifications,
-    useUnreadInboxNotificationsCount,
-    useMarkAllInboxNotificationsAsRead,
-    useMarkInboxNotificationAsRead,
-    useDeleteAllInboxNotifications,
-    useDeleteInboxNotification,
-    useRoomInfo,
-  },
-} = createLiveblocksContext(client);
-
-export { client };
+export {};

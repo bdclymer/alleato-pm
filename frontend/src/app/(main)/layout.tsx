@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
+import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 
@@ -24,6 +25,7 @@ export default function MainLayout({
           <main className="flex flex-1 flex-col overflow-auto min-w-0">
             {children}
           </main>
+          <AIChatWidgetLazy />
         </CreateProjectDevConfigProvider>
       </SidebarInset>
     </SidebarProvider>

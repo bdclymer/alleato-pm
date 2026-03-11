@@ -1,8 +1,9 @@
 # Alleato-Procore Frontend Sitemap
 
-> **Last Updated:** 2026-01-10
+> **Last Updated:** 2026-03-11
 > **Total Pages:** 97
 > **Table Factory Pages:** 24 (25%)
+> **View Mode Legend:** `Split View` = table + persistent detail sidebar, `Standard` = normal full-page table layout
 
 ## 1. GLOBAL PAGES
 
@@ -29,49 +30,50 @@
 
 ### Company Directory Pages
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Directory Home | `/directory` | Directory | N/A | Directory navigation hub |
-| Companies Directory | `/directory/companies` | Table | GenericDataTable | ✅ Global company management with infinite scroll |
-| Clients Directory | `/directory/clients` | Table | GenericDataTable | ✅ Client listing (migrated 2026-01-10) |
-| Contacts Directory | `/directory/contacts` | Table | GenericDataTable | ✅ Contact directory (migrated 2026-01-10) |
-| Users Directory | `/directory/users` | Table | GenericDataTable | ✅ User management (migrated 2026-01-10) |
-| Employees Directory | `/directory/employees` | Table | EmployeesDataTable | ⏭️ Employee listing with avatars (needs factory support) |
-| Groups Directory | `/directory/groups` | Table | GenericDataTable | ✅ Distribution group management (migrated 2026-01-10) |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Directory Home | `/directory` | Directory | N/A | N/A | Directory navigation hub |
+| Companies Directory | `/directory/companies` | Table | GenericDataTable | Split View | ✅ Global company management with infinite scroll |
+| Vendors Directory | `/directory/vendors` | Table | GenericDataTable | Split View | ✅ Global vendor directory |
+| Clients Directory | `/directory/clients` | Table | GenericDataTable | Change to Split View | ✅ Client listing (migrated 2026-01-10) |
+| Contacts Directory | `/directory/contacts` | Table | GenericDataTable | Change to Split View | ✅ Contact directory (migrated 2026-01-10) |
+| Users Directory | `/directory/users` | Table | GenericDataTable | Change to Split View | ✅ User management (migrated 2026-01-10) |
+| Employees Directory | `/directory/employees` | Table | EmployeesDataTable | Change to Split View | ⏭️ Employee listing with avatars (needs factory support) |
+| Groups Directory | `/directory/groups` | Table | **GenericDataTable** | Change to Split View | ✅ Distribution group management (migrated 2026-01-10) |
 
 ### Global Table Pages
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Projects | `/(tables)/projects` | Table | GenericDataTable | ✅ Project listing (migrated 2026-01-10) |
-| Infinite Projects | `/(tables)/infinite-projects` | Table | GenericDataTable | ✅ Projects with infinite scroll (migrated 2026-01-10) |
-| Meetings | `/(tables)/meetings` | Table | GenericDataTable | ✅ Meeting records (migrated 2026-01-10) |
-| Infinite Meetings | `/(tables)/infinite-meetings` | Table | GenericDataTable | ✅ Meetings with inline editing (migrated 2026-01-10) |
-| Submittals | `/(tables)/submittals` | Table | GenericDataTable | ✅ Submittal tracking (migrated 2026-01-10) |
-| Drawings | `/(tables)/drawings` | Table | GenericDataTable | ✅ Drawing management (migrated 2026-01-10) |
-| Punch List | `/(tables)/punch-list` | Table | GenericDataTable | ✅ Punch list items (migrated 2026-01-10) |
-| RFIs | `/(tables)/rfis` | Table | GenericDataTable | ✅ RFI management (migrated 2026-01-10) |
-| Daily Log | `/(tables)/daily-log` | Table | GenericDataTable | ✅ Site daily logs (migrated 2026-01-10) |
-| Photos | `/(tables)/photos` | Table | GenericDataTable | ✅ Photo gallery (migrated 2026-01-10) |
-| Emails | `/(tables)/emails` | Table | GenericDataTable | ✅ Email correspondence (migrated 2026-01-10) |
-| Employees | `/(tables)/employees` | Table | EmployeesDataTable | ⏭️ Employee records with photos (held off - needs image support) |
-| Documents | `/(tables)/documents` | Table | Custom | Placeholder - minimal implementation |
-| Tasks | `/(tables)/tasks` | Table | GenericDataTable | ✅ Task tracking/management |
-| Issues | `/(tables)/issues` | Table | GenericDataTable | ✅ Issue tracking |
-| Daily Logs | `/(tables)/daily-logs` | Table | GenericDataTable | ✅ Construction daily logs |
-| Daily Recaps | `/(tables)/daily-recaps` | Table | Custom | Redirect to daily-logs |
-| Daily Reports | `/(tables)/daily-reports` | Table | GenericDataTable | ✅ Daily reporting |
-| Notes | `/(tables)/notes` | Table | GenericDataTable | ✅ Project notes |
-| Opportunities | `/(tables)/opportunities` | Table | GenericDataTable | ✅ Business opportunities |
-| Risks | `/(tables)/risks` | Table | GenericDataTable | ✅ Risk management |
-| Insights | `/(tables)/insights` | Table | GenericDataTable | ✅ AI insights |
-| Subcontractors | `/(tables)/subcontractors` | Table | GenericDataTable | ✅ Subcontractor directory |
-| Meeting Segments | `/(tables)/meeting-segments` | Table | GenericDataTable | ✅ Meeting breakdowns |
-| Meetings 2 | `/(tables)/meetings2` | Table | GenericDataTable | ✅ Alternative meeting view |
-| Clients | `/(tables)/clients` | Table | GenericDataTable | ✅ Client management (migrated 2026-01-10) |
-| Companies | `/(tables)/companies` | Table | GenericDataTable | ✅ Company listing (migrated 2026-01-10) |
-| Contacts | `/(tables)/contacts` | Table | GenericDataTable | ✅ Contact listing (migrated 2026-01-10) |
-| Decisions | `/(tables)/decisions` | Table | GenericDataTable | ✅ Decision tracking |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Projects | `/(tables)/projects` | Table | GenericDataTable | Standard | ✅ Project listing (migrated 2026-01-10) |
+| Infinite Projects | `/(tables)/infinite-projects` | Table | GenericDataTable | Standard | ✅ Projects with infinite scroll (migrated 2026-01-10) |
+| Meetings | `/(tables)/meetings` | Table | GenericDataTable | Split View | ✅ Meeting records (migrated 2026-01-10) |
+| Infinite Meetings | `/(tables)/infinite-meetings` | Table | GenericDataTable | Standard | ✅ Meetings with inline editing (migrated 2026-01-10) |
+| Submittals | `/(tables)/submittals` | Table | GenericDataTable | Standard | ✅ Submittal tracking (migrated 2026-01-10) |
+| Drawings | `/(tables)/drawings` | Table | GenericDataTable | Standard | ✅ Drawing management (migrated 2026-01-10) |
+| Punch List | `/(tables)/punch-list` | Table | GenericDataTable | Standard | ✅ Punch list items (migrated 2026-01-10) |
+| RFIs | `/(tables)/rfis` | Table | GenericDataTable | Standard | ✅ RFI management (migrated 2026-01-10) |
+| Daily Log | `/(tables)/daily-log` | Table | GenericDataTable | Standard | ✅ Site daily logs (migrated 2026-01-10) |
+| Photos | `/(tables)/photos` | Table | GenericDataTable | Standard | ✅ Photo gallery (migrated 2026-01-10) |
+| Emails | `/(tables)/emails` | Table | GenericDataTable | Standard | ✅ Email correspondence (migrated 2026-01-10) |
+| Employees | `/(tables)/employees` | Table | EmployeesDataTable | Standard | ⏭️ Employee records w/ photos (updates needed) |
+| Documents | `/(tables)/documents` | Table | Custom | Standard | Placeholder - minimal implementation |
+| Tasks | `/(tables)/tasks` | Table | GenericDataTable | Split View | ✅ Task tracking/management |
+| Issues | `/(tables)/issues` | Table | GenericDataTable | Standard | ✅ Issue tracking |
+| Daily Logs | `/(tables)/daily-logs` | Table | GenericDataTable | Standard | ✅ Construction daily logs |
+| Daily Recaps | `/(tables)/daily-recaps` | Table | Custom | Change to Split View | Redirect to daily-logs |
+| Daily Reports | `/(tables)/daily-reports` | Table | GenericDataTable | Standard | ✅ Daily reporting |
+| Notes | `/(tables)/notes` | Table | GenericDataTable | Standard | ✅ Project notes |
+| Opportunities | `/(tables)/opportunities` | Table | GenericDataTable | Standard | ✅ Business opportunities |
+| Risks | `/(tables)/risks` | Table | GenericDataTable | Standard | ✅ Risk management |
+| Insights | `/(tables)/insights` | Table | GenericDataTable | Standard | ✅ AI insights |
+| Subcontractors | `/(tables)/subcontractors` | Table | GenericDataTable | Standard | ✅ Subcontractor directory |
+| Meeting Segments | `/(tables)/meeting-segments` | Table | GenericDataTable | Standard | ✅ Meeting breakdowns |
+| Meetings 2 | `/(tables)/meetings2` | Table | GenericDataTable | Standard | ✅ Alternative meeting view |
+| Clients | `/(tables)/clients` | Table | GenericDataTable | Standard | ✅ Client management (migrated 2026-01-10) |
+| Companies | `/(tables)/companies` | Table | GenericDataTable | Standard | ✅ Company listing (migrated 2026-01-10) |
+| Contacts | `/(tables)/contacts` | Table | GenericDataTable | Standard | ✅ Contact listing (migrated 2026-01-10) |
+| Decisions | `/(tables)/decisions` | Table | GenericDataTable | Standard | ✅ Decision tracking |
 
 ### Chat & AI Pages
 
@@ -110,14 +112,14 @@
 
 ### Misc Global Pages
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Privacy Policy | `/privacy` | Legal | N/A | Privacy policy content |
-| Pipeline | `/pipeline` | Dashboard | N/A | Sales/project pipeline |
-| Stats | `/stats` | Analytics | N/A | Application statistics |
-| Change Orders | `/change-orders` | Table | Custom | Global change order view |
-| Billing Periods | `/billing-periods` | Table | Custom | Billing period management |
-| Supabase Manager | `/supabase-manager.disabled` | Admin | N/A | Database manager (disabled) |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Privacy Policy | `/privacy` | Legal | N/A | N/A | Privacy policy content |
+| Pipeline | `/pipeline` | Dashboard | N/A | N/A | Sales/project pipeline |
+| Stats | `/stats` | Analytics | N/A | N/A | Application statistics |
+| Change Orders | `/change-orders` | Table | Custom | Standard | Global change order view |
+| Billing Periods | `/billing-periods` | Table | Custom | Standard | Billing period management |
+| Supabase Manager | `/supabase-manager.disabled` | Admin | N/A | N/A | Database manager (disabled) |
 
 ### Global Form Pages
 
@@ -144,56 +146,56 @@
 
 ### Financial Management
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Budget | `/[projectId]/budget` | Table/Dashboard | Custom | Complex budget UI with 8+ tabs and modals |
-| Budget V2 | `/[projectId]/budget-v2` | Table | Custom | Alternative budget view |
-| Budget Setup | `/[projectId]/budget/setup` | Form | N/A | Budget initialization wizard |
-| Budget Line Item New | `/[projectId]/budget/line-item/new` | Form | N/A | Add new budget line |
-| Change Orders | `/[projectId]/change-orders` | Table | GenericDataTable | ✅ Change order tracking (migrated 2026-01-10) |
-| Change Events | `/[projectId]/change-events` | Table | GenericDataTable | ✅ Change event management (migrated 2026-01-10) |
-| Commitments | `/[projectId]/commitments` | Table | GenericDataTable | ✅ PO & subcontract listing (migrated 2026-01-10) |
-| Commitment Detail | `/[projectId]/commitments/[commitmentId]` | Detail | N/A | Individual commitment detail view |
-| Contracts | `/[projectId]/contracts` | Table | GenericDataTable | ✅ Prime contract management (migrated 2026-01-10) |
-| Direct Costs | `/[projectId]/direct-costs` | Table | GenericDataTable | ✅ Direct cost tracking (migrated 2026-01-10) |
-| Invoices | `/[projectId]/invoices` | Table | Custom | Invoice management and tracking |
-| Schedule of Values | `/[projectId]/sov` | Table | GenericDataTable | ✅ SOV line items (migrated 2026-01-10) |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Budget | `/[projectId]/budget` | Table/Dashboard | Custom | Standard | Complex budget UI with 8+ tabs and modals |
+| Budget V2 | `/[projectId]/budget-v2` | Table | Custom | Standard | Alternative budget view |
+| Budget Setup | `/[projectId]/budget/setup` | Form | N/A | N/A | Budget initialization wizard |
+| Budget Line Item New | `/[projectId]/budget/line-item/new` | Form | N/A | N/A | Add new budget line |
+| Change Orders | `/[projectId]/change-orders` | Table | GenericDataTable | Standard | ✅ Change order tracking (migrated 2026-01-10) |
+| Change Events | `/[projectId]/change-events` | Table | GenericDataTable | Standard | ✅ Change event management (migrated 2026-01-10) |
+| Commitments | `/[projectId]/commitments` | Table | GenericDataTable | Standard | ✅ PO & subcontract listing (migrated 2026-01-10) |
+| Commitment Detail | `/[projectId]/commitments/[commitmentId]` | Detail | N/A | N/A | Individual commitment detail view |
+| Contracts | `/[projectId]/contracts` | Table | GenericDataTable | Standard | ✅ Prime contract management (migrated 2026-01-10) |
+| Direct Costs | `/[projectId]/direct-costs` | Table | GenericDataTable | Split View | ✅ Direct cost tracking (migrated 2026-01-10) |
+| Invoices | `/[projectId]/invoices` | Table | Custom | Standard | Invoice management and tracking |
+| Schedule of Values | `/[projectId]/sov` | Table | GenericDataTable | Standard | ✅ SOV line items (migrated 2026-01-10) |
 
 ### Project Operations
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Meetings | `/[projectId]/meetings` | Table | GenericDataTable | ✅ Meeting records with transcripts (migrated 2026-01-10) |
-| Tasks | `/[projectId]/tasks` | Table | Custom | Project task management |
-| Daily Log | `/[projectId]/daily-log` | Table | GenericDataTable | ✅ Site daily logs (migrated 2026-01-10) |
-| Schedule | `/[projectId]/schedule` | Table | Custom | Gantt chart / project schedule |
-| Specifications | `/[projectId]/specifications` | Table | Custom | Project specifications |
-| Submittals | `/[projectId]/submittals` | Table | GenericDataTable | ✅ Submittal management (migrated 2026-01-10) |
-| Transmittals | `/[projectId]/transmittals` | Table | Custom | Transmittal tracking |
-| RFIs | `/[projectId]/rfis` | Table | GenericDataTable | ✅ Request for Information (migrated 2026-01-10) |
-| Punch List | `/[projectId]/punch-list` | Table | GenericDataTable | ✅ Punch list items (migrated 2026-01-10) |
-| Reporting | `/[projectId]/reporting` | Report | N/A | Project reports and analytics |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Meetings | `/[projectId]/meetings` | Table | GenericDataTable | Standard | ✅ Meeting records with transcripts (migrated 2026-01-10) |
+| Tasks | `/[projectId]/tasks` | Table | Custom | Standard | Project task management |
+| Daily Log | `/[projectId]/daily-log` | Table | GenericDataTable | Standard | ✅ Site daily logs (migrated 2026-01-10) |
+| Schedule | `/[projectId]/schedule` | Table | Custom | Standard | Gantt chart / project schedule |
+| Specifications | `/[projectId]/specifications` | Table | Custom | Standard | Project specifications |
+| Submittals | `/[projectId]/submittals` | Table | GenericDataTable | Standard | ✅ Submittal management (migrated 2026-01-10) |
+| Transmittals | `/[projectId]/transmittals` | Table | Custom | Standard | Transmittal tracking |
+| RFIs | `/[projectId]/rfis` | Table | GenericDataTable | Standard | ✅ Request for Information (migrated 2026-01-10) |
+| Punch List | `/[projectId]/punch-list` | Table | GenericDataTable | Standard | ✅ Punch list items (migrated 2026-01-10) |
+| Reporting | `/[projectId]/reporting` | Report | N/A | N/A | Project reports and analytics |
 
 ### Project Documents & Media
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Documents | `/[projectId]/documents` | Table | Custom | Project document library |
-| Drawings | `/[projectId]/drawings` | Table | GenericDataTable | ✅ Engineering drawings (migrated 2026-01-10) |
-| Photos | `/[projectId]/photos` | Table | GenericDataTable | ✅ Project photography (migrated 2026-01-10) |
-| Emails | `/[projectId]/emails` | Table | GenericDataTable | ✅ Email correspondence (migrated 2026-01-10) |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Documents | `/[projectId]/documents` | Table | Custom | Standard | Project document library |
+| Drawings | `/[projectId]/drawings` | Table | GenericDataTable | Standard | ✅ Engineering drawings (migrated 2026-01-10) |
+| Photos | `/[projectId]/photos` | Table | GenericDataTable | Standard | ✅ Project photography (migrated 2026-01-10) |
+| Emails | `/[projectId]/emails` | Table | GenericDataTable | Standard | ✅ Email correspondence (migrated 2026-01-10) |
 
 ### Project Directory
 
-| Name | Slug | Type | Table Type | Notes |
-|------|------|------|------------|-------|
-| Directory Home | `/[projectId]/directory` | Directory | N/A | Project directory navigation |
-| Directory Companies | `/[projectId]/directory/companies` | Table | GenericDataTable | ✅ Project-specific companies (migrated 2026-01-10) |
-| Directory Contacts | `/[projectId]/directory/contacts` | Table | GenericDataTable | ✅ Project contacts (migrated 2026-01-10) |
-| Directory Employees | `/[projectId]/directory/employees` | Table | GenericDataTable | ✅ Project team members (migrated 2026-01-10) |
-| Directory Users | `/[projectId]/directory/users` | Table | GenericDataTable | ✅ Project users (migrated 2026-01-10) |
-| Directory Groups | `/[projectId]/directory/groups` | Table | GenericDataTable | ✅ Project groups (migrated 2026-01-10) |
-| Directory Settings | `/[projectId]/directory/settings` | Settings | N/A | Directory configuration |
+| Name | Slug | Type | Table Type | View Mode | Notes |
+|------|------|------|------------|-----------|-------|
+| Directory Home | `/[projectId]/directory` | Directory | N/A | N/A | Project directory navigation |
+| Directory Companies | `/[projectId]/directory/companies` | Table | GenericDataTable | Split View | ✅ Project-specific companies (migrated 2026-01-10) |
+| Directory Contacts | `/[projectId]/directory/contacts` | Table | GenericDataTable | Standard | ✅ Project contacts (migrated 2026-01-10) |
+| Directory Employees | `/[projectId]/directory/employees` | Table | GenericDataTable | Standard | ✅ Project team members (migrated 2026-01-10) |
+| Directory Users | `/[projectId]/directory/users` | Table | GenericDataTable | Standard | ✅ Project users (migrated 2026-01-10) |
+| Directory Groups | `/[projectId]/directory/groups` | Table | GenericDataTable | Standard | ✅ Project groups (migrated 2026-01-10) |
+| Directory Settings | `/[projectId]/directory/settings` | Settings | N/A | N/A | Directory configuration |
 
 ### Project Forms
 

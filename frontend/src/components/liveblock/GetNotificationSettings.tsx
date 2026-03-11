@@ -1,14 +1,17 @@
+"use client";
+
 import { useNotificationSettings } from "@liveblocks/react";
 
-export function App() {
+export function GetNotificationSettingsExample() {
   const [{ isLoading, error, settings }] = useNotificationSettings();
 
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
+  if (!settings.email) return null;
 
   return (
     <div>
-      <Switch id="emailThreadNotification" checked={settings.email.thread} />
+      Email thread notifications: {settings.email.thread ? "On" : "Off"}
     </div>
   );
 }

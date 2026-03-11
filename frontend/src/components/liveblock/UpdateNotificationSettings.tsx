@@ -1,21 +1,27 @@
-import { 
+"use client";
+
+import type { ChangeEvent } from "react";
+import {
   useNotificationSettings,
-  // or useUpdateNotificationSettings
+  useUpdateNotificationSettings,
 } from "@liveblocks/react";
 
-export function App() {
-  const [{ isLoading, error, settings }, useUpdateNotificationSettings] = useNotificationSettings();
+export function UpdateNotificationSettingsExample() {
+  const [{ isLoading, error, settings }] = useNotificationSettings();
+  const updateNotificationSettings = useUpdateNotificationSettings();
 
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
+  if (!settings.email) return null;
 
   return (
     <div>
-      <Switch
+      <input
         id="emailThreadNotification"
+        type="checkbox"
         checked={settings.email.thread}
-        onChange={(event) => {
-          updateChannelsNotificationSettings({
+        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          updateNotificationSettings({
             email: {
               thread: event.target.checked,
             },

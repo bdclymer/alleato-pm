@@ -167,12 +167,14 @@ export interface UnifiedTablePageProps<T> {
   sidePanel?: {
     content: ReactNode;
     widthClassName?: string;
+    columnClassName?: string;
   };
   layout?: {
     fullBleedTable?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
+    containerClassName?: string;
   };
   features?: UnifiedTableFeatures;
 }
@@ -243,6 +245,7 @@ export function UnifiedTablePage<T>({
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const containerMaxWidth = layout?.maxWidth ?? "full";
+  const containerClassName = layout?.containerClassName;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -676,8 +679,8 @@ export function UnifiedTablePage<T>({
   );
 
   const headerContent = sidePanel ? (
-    <div className="px-0 sm:px-0 lg:px-0">
-      <div className="flex items-center justify-between gap-3 py-3">
+    <div>
+      <div className="flex items-center justify-between gap-3 pt-3 pb-5">
         <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">{header.title}</h1>
         {toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
@@ -696,7 +699,7 @@ export function UnifiedTablePage<T>({
     <PageHeader
       title={header.title}
       description={header.description}
-      className="px-0 sm:px-0 lg:px-0"
+      className=""
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
@@ -920,7 +923,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className="w-[50px]" />}
+                  {hasRowActions && <TableHead className={cn("w-[50px]", sidePanel && "bg-accent/40")} />}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -958,6 +961,7 @@ export function UnifiedTablePage<T>({
                     }}
                     className={cn(
                       "cursor-pointer transition-colors duration-150",
+                      "hover:bg-muted",
                       table.activeRowId === table.getRowId(item) && "bg-accent/50",
                       selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
                     )}
@@ -1197,11 +1201,19 @@ export function UnifiedTablePage<T>({
 
   return (
     <>
-      <PageContainer maxWidth={containerMaxWidth} className={cn(sidePanel && "pt-0")}>
+      <PageContainer
+        maxWidth={containerMaxWidth}
+        className={cn(sidePanel && "pt-0", containerClassName)}
+      >
         {sidePanel ? (
           <>
             {headerContent}
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]">
+            <div
+              className={cn(
+                "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]",
+                sidePanel.columnClassName,
+              )}
+            >
               <div className="min-w-0">{leftPaneContent}</div>
               <aside
                 className={cn(

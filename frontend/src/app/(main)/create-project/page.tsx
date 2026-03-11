@@ -12,22 +12,15 @@ import {
 import { toast } from "sonner";
 import {
   Loader2,
-  ArrowLeft,
   Info,
   Upload,
   ImageIcon,
   X,
 } from "lucide-react";
 import { AppShell } from "@/components/layouts";
+import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -65,6 +58,8 @@ import {
   type FieldName,
   type FormSection,
 } from "@/lib/create-project/form";
+import { FormSection as StandardFormSection } from "@/components/forms/FormSection";
+import { FormActions } from "@/components/forms/FormActions";
 
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
 const getFileName = (value: unknown) =>
@@ -179,42 +174,18 @@ export default function CreateProjectPage() {
       currentTool="Portfolio"
       userInitials="BC"
     >
-      <div className="flex min-h-[calc(100vh-48px)] flex-col bg-muted">
-        <header className="border-b bg-background">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6">
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Portfolio
-              </Link>
-              <span>/</span>
-              <span>Projects</span>
-              <span>/</span>
-              <span className="text-foreground">Create Project</span>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-semibold text-foreground">
-                  Create Project
-                </h1>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="rounded-full border border-dashed border-orange-200 px-4 py-1">
-                  Draft status · Not synced
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-        <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-6xl px-6 py-8">
-            <CreateProjectForm />
-          </div>
-        </main>
-      </div>
+      <ProjectFormPageLayout
+        title="Create Project"
+        description="Set up core project details, location, and delivery defaults."
+        maxWidth="xl"
+        headerActions={
+          <Button type="button" variant="ghost" asChild>
+            <Link href="/">Back to Portfolio</Link>
+          </Button>
+        }
+      >
+        <CreateProjectForm />
+      </ProjectFormPageLayout>
     </AppShell>
   );
 }
@@ -630,8 +601,10 @@ function CreateProjectForm() {
   );
 
   const activeLayout: FormLayoutMode = isDevAdmin
-    ? activeTemplateConfig.layout
-    : "cards";
+    ? activeTemplateConfig.layout === "cards"
+      ? "sections"
+      : activeTemplateConfig.layout
+    : "sections";
 
   const renderSection = (section: FormSection) => {
     const sectionGridClass =
@@ -641,36 +614,14 @@ function CreateProjectForm() {
           ? "grid grid-cols-1 gap-4"
           : "grid grid-cols-1 gap-4 md:grid-cols-2";
 
-    if (activeLayout === "sections") {
-      return (
-        <section key={section.id} className="space-y-4 border-b border-border pb-8">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
-            {section.description && (
-              <p className="text-sm text-muted-foreground">{section.description}</p>
-            )}
-          </div>
-          <div className={sectionGridClass}>
-            {section.fields.map(renderField)}
-          </div>
-        </section>
-      );
-    }
-
     return (
-      <Card key={section.id}>
-        <CardHeader>
-          <CardTitle>{section.title}</CardTitle>
-          {section.description && (
-            <CardDescription>{section.description}</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className={sectionGridClass}>
-            {section.fields.map(renderField)}
-          </div>
-        </CardContent>
-      </Card>
+      <StandardFormSection
+        key={section.id}
+        title={section.title}
+        description={section.description}
+      >
+        <div className={sectionGridClass}>{section.fields.map(renderField)}</div>
+      </StandardFormSection>
     );
   };
 
@@ -689,51 +640,34 @@ function CreateProjectForm() {
       />
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
           {effectiveFormSections.length > 0 ? (
             effectiveFormSections.map(renderSection)
           ) : (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
                 No fields are currently visible for the selected template.
-              </CardContent>
-            </Card>
+            </div>
           )}
 
-          <div className="flex flex-col gap-4 rounded-lg border border-dashed border-muted bg-background p-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Need to start over?
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Reset clears unsaved values but keeps Procore defaults.
-              </p>
-            </div>
-            <div className="flex justify-between items-center flex-wrap gap-4">
+          <FormActions
+            submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
+            onCancel={() => router.push("/")}
+            isSubmitting={isSubmitting}
+          >
+            <div className="flex flex-wrap items-center gap-3">
               <DevAutoFillButton />
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    form.reset(defaultValues);
-                    setFileResetKey((key) => key + 1);
-                  }}
-                >
-                  Reset Form
-                </Button>
-                <Button type="button" variant="outline" asChild>
-                  <Link href="/">Cancel</Link>
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {isSubmitting ? "Creating Project…" : "Create Project"}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  form.reset(defaultValues);
+                  setFileResetKey((key) => key + 1);
+                }}
+              >
+                Reset Form
+              </Button>
             </div>
-          </div>
+          </FormActions>
         </form>
       </Form>
     </>

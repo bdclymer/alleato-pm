@@ -1,10 +1,12 @@
 import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface FormSectionProps {
   title: string;
   description?: string;
   children: React.ReactNode;
   actions?: React.ReactNode;
+  className?: string;
 }
 
 export function FormSection({
@@ -12,12 +14,20 @@ export function FormSection({
   description,
   children,
   actions,
+  className,
 }: FormSectionProps) {
   return (
-    <section className="space-y-6 bg-background pb-14 border-gray-300 border-b">
-      <div className="flex items-start justify-between gap-4 pb-2">
-        <div>
-          <h2 className="text-lg text-primary uppercase tracking-wider font-medium">{title}</h2>
+    <section
+      className={cn(
+        "space-y-4 border-b border-border/70 pb-8 last:border-b-0 last:pb-0",
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            {title}
+          </h2>
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}

@@ -43,8 +43,8 @@ const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
-  tasks: "tables/tasks",
-  projects: "tables/projects",
+  tasks: "tasks",
+  projects: "projects",
 };
 
 export function useHeaderNav(): UseHeaderNavReturn {

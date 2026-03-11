@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "frontend",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:frontend"],
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": ["-l", "-c", "cd frontend && npm run dev"],
       "port": 3000,
       "autoPort": true
     }

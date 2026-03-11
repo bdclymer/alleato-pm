@@ -140,7 +140,9 @@ export function FormattedTranscript({
       })
       // Add double line breaks before speaker timestamps (e.g., **0:15:30**)
       .replace(/(\*\*\d+:\d+:\d+\*\*)/g, "\n\n$1\n")
-      // Add double line breaks before speaker name labels
+      // Add double line breaks before Fireflies-format utterances: [MM:SS] **Name**:
+      .replace(/(\[\d{1,2}:\d{2}\]\s+\*\*[^*\n]+\*\*:)/g, "\n\n$1")
+      // Add double line breaks before speaker name labels (**Name:** colon-inside format)
       .replace(/(\*\*[^*]+:\*\*)/g, "\n\n$1 ")
       // Normalise excessive blank lines
       .replace(/\n{3,}/g, "\n\n")

@@ -6,10 +6,12 @@ import { HeaderProvider } from "@/components/layout/header-context";
 import { ProjectProvider } from "@/contexts/project-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
-import { AIChatWidget } from "@/components/chat/ai-chat-widget";
 import { DevAutoFillForms } from "@/components/dev/DevAutoFillForms";
+import { Providers } from "./Providers";
 import { Agentation } from "agentation";
 import "./globals.css";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-ui/styles/dark/media-query.css";
 import "swagger-ui-dist/swagger-ui.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -51,19 +53,20 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <Suspense fallback={null}>
-              <ProjectProvider>
-                <FavoritesProvider>
-                  <HeaderProvider>
-                    {children}
-                    <DevAutoFillForms />
-                  </HeaderProvider>
-                </FavoritesProvider>
-              </ProjectProvider>
+              <Providers>
+                <ProjectProvider>
+                  <FavoritesProvider>
+                    <HeaderProvider>
+                      {children}
+                      <DevAutoFillForms />
+                    </HeaderProvider>
+                  </FavoritesProvider>
+                </ProjectProvider>
+              </Providers>
             </Suspense>
           </ThemeProvider>
         </QueryProvider>
         <Toaster />
-        <AIChatWidget />
         {process.env.NODE_ENV === "development" && <Agentation />}
       </body>
     </html>

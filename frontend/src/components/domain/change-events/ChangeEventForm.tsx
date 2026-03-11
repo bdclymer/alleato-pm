@@ -855,7 +855,7 @@ export function ChangeEventForm({
         data-dev-autofill-disabled="true"
         data-form-id="change-event-create"
       >
-        <div className="space-y-12 rounded-sm p-6 lg:p-8">
+        <div className="space-y-4">
           {/* ── General Information ── */}
           <FormSection title="General Information">
             <FormGrid columns={3}>
@@ -991,7 +991,7 @@ export function ChangeEventForm({
                     <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="cursor-help border-b border-dotted border-muted-foreground">QTY</span>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
                         </TooltipTrigger>
                         <TooltipContent>Revenue quantity for this line item</TooltipContent>
                       </Tooltip>
@@ -1001,7 +1001,7 @@ export function ChangeEventForm({
                     <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="cursor-help border-b border-dotted border-muted-foreground">QTY</span>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
                         </TooltipTrigger>
                         <TooltipContent>Cost quantity for this line item</TooltipContent>
                       </Tooltip>
@@ -1100,13 +1100,16 @@ export function ChangeEventForm({
                       <TableCell className="w-40 px-1 py-1.5 align-top">
                         <Input
                           type="number"
+                          inputMode="numeric"
+                          step="1"
+                          min="0"
                           className="min-w-[96px] text-right"
-                          value={item.revenueQuantity ?? 1}
+                          value={Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
                           onChange={(e) =>
                             updateLineItem(
                               index,
                               "revenueQuantity",
-                              e.target.value === "" ? 1 : Number(e.target.value) || 1,
+                              e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
                             )
                           }
                           onFocus={(e) => e.target.select()}
@@ -1154,13 +1157,16 @@ export function ChangeEventForm({
                       <TableCell className="w-40 px-1 py-1.5 align-top">
                         <Input
                           type="number"
+                          inputMode="numeric"
+                          step="1"
+                          min="0"
                           className="min-w-[96px] text-right"
-                          value={item.costQuantity ?? 1}
+                          value={Number.isFinite(item.costQuantity) ? Math.trunc(item.costQuantity) : 1}
                           onChange={(e) =>
                             updateLineItem(
                               index,
                               "costQuantity",
-                              e.target.value === "" ? 1 : Number(e.target.value) || 1,
+                              e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
                             )
                           }
                           onFocus={(e) => e.target.select()}
@@ -1306,7 +1312,6 @@ export function ChangeEventForm({
               }}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
               maxSize={25 * 1024 * 1024}
-              hint="Files are attached to this change event."
             />
           </FormSection>
 

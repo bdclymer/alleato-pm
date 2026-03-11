@@ -133,6 +133,10 @@ class IngestOutcome:
     reason: Optional[str] = None
 
 
+class PayloadTooLargeError(RuntimeError):
+    """Raised when storage upload rejects a file because it is too large."""
+
+
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -260,9 +264,18 @@ def upload_binary(
     try:
         client.storage.from_(bucket).upload(storage_path, payload, options)
     except Exception as exc:
+        message = str(exc).lower()
+        if (
+            "statuscode': 413" in message
+            or "payload too large" in message
+            or "maximum allowed size" in message
+            or "object exceeded the maximum allowed size" in message
+        ):
+            raise PayloadTooLargeError(str(exc)) from exc
+
         # If a bucket mime allowlist blocks this upload, retry with a
         # generic content type for resiliency across environments.
-        if "mime type" in str(exc).lower() and "not supported" in str(exc).lower():
+        if "mime type" in message and "not supported" in message:
             fallback_options = {"upsert": "true", "content-type": "application/octet-stream"}
             try:
                 client.storage.from_(bucket).upload(storage_path, payload, fallback_options)
@@ -285,6 +298,57 @@ def fetch_existing_by_hash(client, content_hash: str) -> Optional[Dict[str, Any]
     return rows[0] if rows else None
 
 
+def resolve_project_id(
+    client,
+    explicit_project_id: Optional[int],
+    project_name: Optional[str],
+) -> Optional[int]:
+    if explicit_project_id is not None:
+        return explicit_project_id
+    if not project_name:
+        return None
+
+    target = project_name.strip()
+    if not target:
+        return None
+
+    exact_resp = (
+        client.table("projects")
+        .select("id, name")
+        .ilike("name", target)
+        .limit(5)
+        .execute()
+    )
+    exact_rows = exact_resp.data or []
+    if len(exact_rows) == 1:
+        return int(exact_rows[0]["id"])
+    if len(exact_rows) > 1:
+        names = ", ".join(str(r.get("name") or r.get("id")) for r in exact_rows)
+        raise RuntimeError(
+            f"Multiple projects match '{project_name}' exactly (case-insensitive): {names}. "
+            "Use --project-id to disambiguate."
+        )
+
+    contains_resp = (
+        client.table("projects")
+        .select("id, name")
+        .ilike("name", f"%{target}%")
+        .limit(10)
+        .execute()
+    )
+    contains_rows = contains_resp.data or []
+    if len(contains_rows) == 1:
+        return int(contains_rows[0]["id"])
+    if len(contains_rows) > 1:
+        names = ", ".join(str(r.get("name") or r.get("id")) for r in contains_rows)
+        raise RuntimeError(
+            f"Multiple projects partially match '{project_name}': {names}. "
+            "Use --project-id to disambiguate."
+        )
+
+    raise RuntimeError(f"Project not found for name '{project_name}'.")
+
+
 def make_metadata_id(rel_path: str, content_hash: str) -> str:
     return str(uuid5(NAMESPACE_URL, f"{rel_path}:{content_hash}"))
 
@@ -297,8 +361,19 @@ def ingest_candidate(
     project_id: Optional[int],
     process_now: bool,
     dry_run: bool,
+    max_file_size_bytes: Optional[int],
 ) -> IngestOutcome:
     category, strategy = classify_document(candidate.rel_path, candidate.extension)
+
+    if max_file_size_bytes is not None and candidate.size > max_file_size_bytes:
+        limit_mb = max_file_size_bytes / (1024 * 1024)
+        actual_mb = candidate.size / (1024 * 1024)
+        return IngestOutcome(
+            file=candidate.rel_path,
+            status="skipped_oversized",
+            category=category,
+            reason=f"file size {actual_mb:.2f} MB exceeds max {limit_mb:.2f} MB",
+        )
 
     existing = fetch_existing_by_hash(client, candidate.sha256)
     if existing:
@@ -349,7 +424,17 @@ def ingest_candidate(
             reason=f"would enqueue {strategy}",
         )
 
-    upload_binary(client, bucket, storage_path, candidate.path)
+    try:
+        upload_binary(client, bucket, storage_path, candidate.path)
+    except PayloadTooLargeError as exc:
+        return IngestOutcome(
+            file=candidate.rel_path,
+            status="skipped_oversized",
+            metadata_id=metadata_id,
+            category=category,
+            reason=f"storage rejected upload as too large: {exc}",
+        )
+
     client.table("document_metadata").upsert(metadata_row).execute()
     client.table("fireflies_ingestion_jobs").upsert(
         job_row, on_conflict="fireflies_id"
@@ -373,12 +458,18 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
     if not source_dir.exists() or not source_dir.is_dir():
         raise RuntimeError(f"Source directory does not exist: {source_dir}")
 
+    max_file_size_bytes: Optional[int] = None
+    if args.max_file_size_mb is not None and args.max_file_size_mb > 0:
+        max_file_size_bytes = int(args.max_file_size_mb * 1024 * 1024)
+
     manifest_path = Path(args.manifest).expanduser().resolve()
     manifest = load_manifest(manifest_path)
     manifest_files: Dict[str, Any] = manifest.get("files", {})
 
     client = None
-    if not args.dry_run:
+    effective_project_id = args.project_id
+    should_init_client = (not args.dry_run) or bool(args.project_name)
+    if should_init_client:
         try:
             from services.supabase_helpers import get_supabase_client
         except Exception as exc:
@@ -387,6 +478,7 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
                 "Install backend requirements first: `cd backend && pip install -r requirements.txt`"
             ) from exc
         client = get_supabase_client()
+        effective_project_id = resolve_project_id(client, args.project_id, args.project_name)
 
     candidates = list(iter_candidates(source_dir))
     candidates.sort(key=lambda c: c.rel_path.lower())
@@ -419,9 +511,10 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
                     candidate=c,
                     source_dir=source_dir,
                     bucket=args.bucket,
-                    project_id=args.project_id,
+                    project_id=effective_project_id,
                     process_now=args.process_now,
                     dry_run=args.dry_run,
+                    max_file_size_bytes=max_file_size_bytes,
                 )
         except Exception as exc:
             outcome = IngestOutcome(
@@ -432,7 +525,7 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
 
         outcomes.append(outcome)
 
-        if outcome.status in {"ingested", "skipped_existing", "dry_run"}:
+        if outcome.status in {"ingested", "skipped_existing", "skipped_oversized", "dry_run"}:
             manifest_files[c.rel_path] = {
                 "sha256": c.sha256,
                 "size": c.size,
@@ -456,9 +549,12 @@ def run_once(args: argparse.Namespace) -> Dict[str, Any]:
         "ingested": sum(1 for o in outcomes if o.status == "ingested"),
         "skipped_existing": sum(1 for o in outcomes if o.status == "skipped_existing"),
         "dry_run": sum(1 for o in outcomes if o.status == "dry_run"),
+        "skipped_oversized": sum(1 for o in outcomes if o.status == "skipped_oversized"),
         "errors": sum(1 for o in outcomes if o.status == "error"),
         "manifest": str(manifest_path),
         "process_now": bool(args.process_now),
+        "project_id": effective_project_id,
+        "max_file_size_mb": args.max_file_size_mb,
         "results": [o.__dict__ for o in outcomes],
     }
     return summary
@@ -476,6 +572,11 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=None,
         help="Optional project_id to attach to all ingested docs",
+    )
+    parser.add_argument(
+        "--project-name",
+        default=os.getenv("RAG_LOCAL_PROJECT_NAME"),
+        help="Optional project name to resolve and attach as project_id",
     )
     parser.add_argument(
         "--bucket",
@@ -509,6 +610,12 @@ def parse_args() -> argparse.Namespace:
         help="Preview classification and enqueue decisions without writing",
     )
     parser.add_argument(
+        "--max-file-size-mb",
+        type=float,
+        default=float(os.getenv("RAG_LOCAL_MAX_FILE_SIZE_MB", "45")),
+        help="Skip files larger than this size in MB (<=0 disables pre-check)",
+    )
+    parser.add_argument(
         "--watch",
         action="store_true",
         help="Poll the folder continuously",
@@ -523,8 +630,12 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args()
     if not args.source_dir:
         parser.error("--source-dir is required (or set RAG_LOCAL_SOURCE_DIR)")
+    if args.project_id is not None and args.project_name:
+        parser.error("Use either --project-id or --project-name, not both")
     if args.interval_seconds < 10:
         parser.error("--interval-seconds must be >= 10")
+    if args.max_file_size_mb is not None and args.max_file_size_mb < 0:
+        parser.error("--max-file-size-mb must be >= 0")
     return args
 
 

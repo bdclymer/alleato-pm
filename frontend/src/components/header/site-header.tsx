@@ -22,6 +22,7 @@ import {
 
 import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
+import { NotificationBell } from "./notification-bell";
 
 /**
  * Top header — breadcrumbs left, tools + project selector right.
@@ -44,7 +45,7 @@ export function SiteHeader() {
             variant="ghost"
             size="sm"
             onClick={toggleSidebar}
-            className="-ml-1 h-8 w-8 p-2 text-muted-foreground hover:text-foreground md:hidden"
+            className="-ml-2 h-11 w-11 p-2 text-muted-foreground hover:text-foreground md:hidden"
             aria-label="Toggle menu"
           >
             <Menu className="h-5 w-5" />
@@ -88,6 +89,9 @@ export function SiteHeader() {
             isAppAdmin={isAppAdmin}
             userType={userType}
           />
+          <React.Suspense fallback={null}>
+            <NotificationBell />
+          </React.Suspense>
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}

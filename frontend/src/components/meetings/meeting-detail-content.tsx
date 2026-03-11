@@ -5,10 +5,6 @@ import {
   Clock,
   Tag,
   Calendar,
-  CheckCircle,
-  AlertTriangle,
-  ListTodo,
-  Sparkles,
   ArrowLeft,
   Users,
   FileText,
@@ -128,27 +124,22 @@ function AccordionSection({
 // ─── Sidebar List ───────────────────────────────────────────────────────────
 
 function SidebarList({
-  icon,
   label,
   items,
 }: {
-  icon: React.ReactNode;
   label: string;
   items: string[];
 }) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-        {icon}
+    <div className="space-y-2">
+      <div className="text-sm font-semibold text-foreground">
         {label}
       </div>
-      <ul className="space-y-1.5 pl-5">
+      <ul className="space-y-1.5">
         {items.map((item, idx) => (
-          <li
-            key={idx}
-            className="text-xs leading-relaxed text-muted-foreground list-disc"
-          >
-            {item}
+          <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
+            <span aria-hidden className="mt-0.5 text-muted-foreground">-</span>
+            <span>{item}</span>
           </li>
         ))}
       </ul>
@@ -205,71 +196,14 @@ function FirefliesSectionContent({ value }: { value: string }) {
   );
 }
 
-function dedupeItems(items: string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  for (const raw of items) {
-    const cleaned = raw.replace(/\s+/g, " ").trim();
-    if (!cleaned) continue;
-    const key = cleaned.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(cleaned);
-  }
-
-  return result;
-}
-
-function extractActionItems(value: string | null): string[] {
-  if (!value) return [];
-
-  const trimmed = value.trim();
-  if (!trimmed) return [];
-
-  if (
-    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-    (trimmed.startsWith("[") && trimmed.endsWith("]"))
-  ) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        const jsonItems = parsed
-          .map((entry) => {
-            if (typeof entry === "string") return entry;
-            if (entry && typeof entry === "object") {
-              const obj = entry as Record<string, unknown>;
-              return (
-                (typeof obj.description === "string" && obj.description) ||
-                (typeof obj.task === "string" && obj.task) ||
-                (typeof obj.title === "string" && obj.title) ||
-                null
-              );
-            }
-            return null;
-          })
-          .filter((item): item is string => Boolean(item));
-        return dedupeItems(jsonItems);
-      }
-    } catch {
-      // Fall through to line-based parsing
-    }
-  }
-
-  const lines = trimmed
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) =>
-      line
-        .replace(/^[-*•]\s+/, "")
-        .replace(/^\d+[.)]\s+/, "")
-        .replace(/^\[\s?\]\s+/, "")
-        .trim()
-    )
-    .filter(Boolean);
-
-  return dedupeItems(lines);
+function ReadableTextBlock({ value }: { value: string }) {
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/20 p-4">
+      <pre className="whitespace-pre-wrap text-sm leading-6 text-foreground font-sans">
+        {value.trim()}
+      </pre>
+    </div>
+  );
 }
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -279,9 +213,9 @@ export function MeetingDetailContent({
   segments,
   parsedSections,
   participantsList,
-  allTasks,
+  allTasks: _allTasks,
   allRisks,
-  allDecisions,
+  allDecisions: _allDecisions,
   allOpportunities,
   transcriptContent,
   backHref,
@@ -292,46 +226,22 @@ export function MeetingDetailContent({
   transcriptSlot,
   summarySlot,
 }: MeetingDetailContentProps) {
-  const overviewContent = meeting.summary || undefined;
+  const overviewContent =
+    parsedSections?.shortSummary?.trim() ||
+    parsedSections?.shortOverview?.trim() ||
+    parsedSections?.gist?.trim() ||
+    parsedSections?.bulletGist?.trim() ||
+    meeting.summary ||
+    undefined;
   const firefliesHighlights: Array<{ label: string; content: string | null }> = [
-    { label: "Short Summary", content: parsedSections?.shortSummary || null },
-    { label: "Short Overview", content: parsedSections?.shortOverview || null },
-    { label: "Gist", content: parsedSections?.gist || null },
-    { label: "Bullet Gist", content: parsedSections?.bulletGist || null },
     { label: "Topics Discussed", content: parsedSections?.topicsDiscussed || null },
     { label: "Notes", content: parsedSections?.notes || null },
     { label: "Meeting Type", content: parsedSections?.meetingType || null },
     { label: "Transcript Chapters", content: parsedSections?.transcriptChapters || null },
     { label: "Action Items", content: parsedSections?.actionItems || null },
   ].filter((section) => Boolean(section.content?.trim()));
-
-  const firefliesMetadata: Array<{ label: string; content: string | null }> = [
-    { label: "Organizer Email", content: parsedSections?.organizerEmail || null },
-    { label: "Host Email", content: parsedSections?.hostEmail || null },
-    { label: "Fireflies ID", content: parsedSections?.firefliesId || null },
-    { label: "Fireflies Link", content: parsedSections?.firefliesLink || null },
-    { label: "Shorthand Bullet", content: parsedSections?.shorthandBullet || null },
-    { label: "Outline", content: parsedSections?.outline || null },
-    { label: "Meeting Attendees", content: parsedSections?.meetingAttendees || null },
-    { label: "Meeting Attendance", content: parsedSections?.meetingAttendance || null },
-    { label: "User", content: parsedSections?.user || null },
-    { label: "Speakers", content: parsedSections?.speakers || null },
-    { label: "Meeting Info", content: parsedSections?.meetingInfo || null },
-    { label: "Analytics", content: parsedSections?.analytics || null },
-    { label: "Channels", content: parsedSections?.channels || null },
-    { label: "Apps Preview", content: parsedSections?.appsPreview || null },
-    { label: "Shared With", content: parsedSections?.sharedWith || null },
-    { label: "Extended Sections", content: parsedSections?.extendedSections || null },
-  ].filter((section) => Boolean(section.content?.trim()));
-
-  const sidebarTasks = dedupeItems([
-    ...allTasks,
-    ...extractActionItems(parsedSections?.actionItems || null),
-  ]);
-
+  const shorthandBullet = parsedSections?.shorthandBullet?.trim() || null;
   const hasActionItems =
-    sidebarTasks.length > 0 ||
-    allDecisions.length > 0 ||
     allRisks.length > 0 ||
     allOpportunities.length > 0;
 
@@ -432,20 +342,11 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Full Fireflies metadata */}
-          {firefliesMetadata.length > 0 ? (
+          {/* Shorthand Bullet */}
+          {shorthandBullet ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Fireflies Metadata" defaultOpen={false}>
-                <div className="space-y-5">
-                  {firefliesMetadata.map((section) => (
-                    <div key={section.label} className="space-y-1.5">
-                      <h3 className="text-sm font-medium text-foreground">
-                        {section.label}
-                      </h3>
-                      <FirefliesSectionContent value={section.content || ""} />
-                    </div>
-                  ))}
-                </div>
+              <AccordionSection label="Shorthand Bullet" defaultOpen={false}>
+                <ReadableTextBlock value={shorthandBullet} />
               </AccordionSection>
             </section>
           ) : null}
@@ -527,41 +428,17 @@ export function MeetingDetailContent({
                 Action Snapshot
               </div>
 
-              {sidebarTasks.length > 0 && (
-                <div className="border-b border-border pb-4">
-                  <SidebarList
-                    icon={<ListTodo className="h-3.5 w-3.5 text-blue-600" />}
-                    label="Tasks"
-                    items={sidebarTasks}
-                  />
-                </div>
-              )}
-
-              {allDecisions.length > 0 && (
-                <div className="border-b border-border pb-4">
-                  <SidebarList
-                    icon={
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    }
-                    label="Decisions"
-                    items={allDecisions}
-                  />
-                </div>
-              )}
-
               {allRisks.length > 0 && (
-                <SidebarList
-                  icon={
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                  }
-                  label="Risks"
-                  items={allRisks}
-                />
+                <div className="border-b border-border pb-4">
+                  <SidebarList
+                    label="Risks"
+                    items={allRisks}
+                  />
+                </div>
               )}
 
               {allOpportunities.length > 0 && (
                 <SidebarList
-                  icon={<Sparkles className="h-3.5 w-3.5 text-purple-600" />}
                   label="Opportunities"
                   items={allOpportunities}
                 />

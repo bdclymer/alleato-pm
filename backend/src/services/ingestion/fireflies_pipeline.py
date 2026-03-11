@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import sys
@@ -33,6 +34,7 @@ from supabase_helpers import DocumentChunk, SupabaseRagStore
 TIMESTAMP_LINE = re.compile(r"^\[(?P<stamp>\d{2}:\d{2})\]\s+\*\*(?P<speaker>.+?)\*\*:\s*(?P<text>.+)$")
 SECTION_PREFIX = "## "
 FIREFLIES_VIEW_URL_RE = re.compile(r"fireflies\.ai\/view\/([A-Za-z0-9_-]{8,})")
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -118,6 +120,49 @@ class FirefliesIngestionPipeline:
         self.embedder = EmbeddingGenerator(model=embedding_model)
         self._fireflies_api_url = "https://api.fireflies.ai/graphql"
         self._fireflies_api_key = os.getenv("FIREFLIES_API_KEY")
+        self._project_assigner = None
+
+    def _get_project_assigner(self):
+        if self._project_assigner is not None:
+            return self._project_assigner
+        try:
+            from ..alleato_agent_workflow.tools.project_assignment import ProjectAssigner
+        except Exception:
+            return None
+        self._project_assigner = ProjectAssigner(self.store._client)
+        return self._project_assigner
+
+    def _infer_project_id_from_context(
+        self,
+        title: str,
+        participants: List[str],
+        content: str,
+    ) -> Optional[int]:
+        assigner = self._get_project_assigner()
+        if assigner is None:
+            return None
+
+        min_confidence = float(os.getenv("FIREFLIES_PROJECT_ASSIGN_MIN_CONFIDENCE", "0.8"))
+        try:
+            inferred_id, method, confidence = assigner.assign_project(
+                meeting_title=title,
+                participants=participants,
+                content=content[:3000],
+                existing_project_id=None,
+            )
+        except Exception as exc:
+            logger.warning("[FirefliesIngestion] Project inference failed: %s", exc)
+            return None
+
+        if inferred_id and confidence >= min_confidence:
+            logger.info(
+                "[FirefliesIngestion] Auto-assigned project_id=%s via %s (confidence=%.2f)",
+                inferred_id,
+                method,
+                confidence,
+            )
+            return int(inferred_id)
+        return None
 
     # ------------------------------------------------------------------
     # Public API
@@ -138,15 +183,40 @@ class FirefliesIngestionPipeline:
         storage_url: Optional[str] = None,
     ) -> IngestionResult:
         parsed = self.parse_markdown(content)
+
+        # Canonicalize Fireflies markdown from the API when legacy/minimal
+        # files are ingested through file-based paths. This prevents stale or
+        # reduced local exports from overwriting richer sections.
+        if (
+            parsed.fireflies_id
+            and self._fireflies_api_key
+            and self._is_likely_legacy_fireflies_markdown(content)
+        ):
+            try:
+                transcript = self._fetch_transcript(parsed.fireflies_id)
+                apps_outputs = self._fetch_apps_outputs(parsed.fireflies_id)
+                content = self._format_transcript_markdown(transcript, apps_outputs)
+                parsed = self.parse_markdown(content)
+            except Exception:
+                # Fall back to provided content if Fireflies API is unavailable.
+                pass
         content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
 
         existing = self.store.find_document_by_hash(content_hash)
         existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
+        inferred_project_id: Optional[int] = None
+        if project_id is None and (existing or {}).get("project_id") is None and (existing_by_fireflies or {}).get("project_id") is None:
+            inferred_project_id = self._infer_project_id_from_context(
+                title=parsed.title,
+                participants=parsed.attendees,
+                content=parsed.raw_text,
+            )
         effective_project_id = (
             project_id
             if project_id is not None
             else (existing or {}).get("project_id")
             or (existing_by_fireflies or {}).get("project_id")
+            or inferred_project_id
         )
         document_id = (
             (existing or {}).get("id")
@@ -197,6 +267,9 @@ class FirefliesIngestionPipeline:
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings):
                 chunk.embedding = embedding
+            # Replace existing chunks for this document so stale chunks from prior
+            # transcript formats cannot survive after a re-sync.
+            self.store.delete_chunks_for_document(document_id)
             self.store.upsert_chunks(chunks)
 
             # NOTE: Task extraction is handled by the pipeline extractor
@@ -228,6 +301,31 @@ class FirefliesIngestionPipeline:
             skipped=skipped,
             dry_run=False,
         )
+
+    @staticmethod
+    def _is_likely_legacy_fireflies_markdown(markdown: str) -> bool:
+        """Heuristic for reduced Fireflies exports missing richer sections."""
+        text = markdown or ""
+        has_fireflies_marker = ("**Fireflies ID:**" in text) or ("fireflies.ai/view/" in text)
+        if not has_fireflies_marker:
+            return False
+
+        minimal_markers = ("## Summary", "## Gist", "## Short Summary", "## Keywords")
+        has_minimal = all(marker in text for marker in minimal_markers)
+        if not has_minimal:
+            return False
+
+        rich_markers = (
+            "## Meeting Attendees",
+            "## Meeting Info",
+            "## Analytics",
+            "## Speakers",
+            "## Bullet Gist",
+            "## Shorthand Bullet",
+            "## Notes",
+            "## Action Items",
+        )
+        return not any(marker in text for marker in rich_markers)
 
     def sync_recent_transcripts(
         self,

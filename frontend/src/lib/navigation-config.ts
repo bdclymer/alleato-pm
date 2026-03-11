@@ -213,21 +213,21 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       {
         name: "Meetings",
-        path: "tables/meetings",
+        path: "meetings",
         icon: Calendar,
         requiresProject: false,
         onlyWithoutProject: true,
       },
       {
         name: "Tasks",
-        path: "tables/tasks",
+        path: "tasks",
         icon: CheckCircle,
         requiresProject: false,
         onlyWithoutProject: true,
       },
       {
         name: "Estimates",
-        path: "tables/projects",
+        path: "projects",
         icon: ClipboardList,
         requiresProject: false,
         onlyWithoutProject: true,
@@ -478,7 +478,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
       },
       {
         name: "Estimates",
-        path: "estimates",
+        path: "projects",
         requiresProject: false,
         icon: ClipboardList,
         description: "Estimate snapshots across projects",

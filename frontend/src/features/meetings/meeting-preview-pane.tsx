@@ -8,7 +8,6 @@ import {
   Keyboard,
   Lightbulb,
   Link as LinkIcon,
-  ListChecks,
   Users,
 } from "lucide-react";
 
@@ -35,21 +34,6 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
-function toSummaryPoints(summary: string | null | undefined): string[] {
-  if (!summary) return [];
-
-  return summary
-    .split(/\n+/)
-    .flatMap((line) => line.split(/[•●▪◦]/))
-    .map((line) =>
-      line
-        .trim()
-        .replace(/^[\s\-*]+/, "")
-        .replace(/^[^\w(]+/, "")
-        .trim(),
-    )
-    .filter((line) => line.length > 0);
-}
 
 function KeyboardTipsPopover(): ReactElement {
   return (
@@ -92,20 +76,24 @@ export function MeetingPreviewPane({
 
   const participants = parseParticipants(meeting).map(getParticipantDisplayName);
   const hasExternalLinks = Boolean(meeting.source || meeting.fireflies_link || meeting.url);
-  const summaryPoints = toSummaryPoints(meeting.summary);
 
   return (
     <div className="p-8 space-y-6">
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-sm font-semibold text-foreground leading-tight">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground leading-tight pb-2">
               {meeting.title || "Untitled meeting"}
             </p>
-            <p className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-              {formatDateTime(meeting.date)}
+            <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+              <span>{formatDateTime(meeting.date)}</span>
+              {meeting.project ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <span>{meeting.project}</span>
+                </>
+              ) : null}
             </p>
-            {meeting.project ? <p className="text-xs text-muted-foreground">Project: {meeting.project}</p> : null}
           </div>
           <div className="flex items-center gap-1.5">
             <KeyboardTipsPopover />
@@ -115,7 +103,7 @@ export function MeetingPreviewPane({
               onClick={() => onOpenMeetingPage(meeting)}
               className="shrink-0"
             >
-              View details
+              View
               <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
             </Button>
           </div>
@@ -131,40 +119,29 @@ export function MeetingPreviewPane({
         </section>
       ) : null}
 
-      {summaryPoints.length > 0 ? (
-        <section className="space-y-3 border-t pt-4">
-          <p className="text-xs font-semibold text-foreground inline-flex items-center gap-2">
-            <ListChecks className="h-3.5 w-3.5" />
-            Summary
+      {meeting.summary ? (
+        <section className="space-y-2 border-t pt-4">
+          <p className="text-xs font-semibold text-foreground">Summary</p>
+          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {meeting.summary.trim()}
           </p>
-          <ul className="space-y-3">
-            {summaryPoints.map((point, index) => (
-              <li
-                key={`summary-point-${meeting.id}-${index}`}
-                className="flex items-start gap-2 text-xs text-muted-foreground"
-              >
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-muted-foreground/70 shrink-0" />
-                <span className="leading-relaxed">{point}</span>
-              </li>
-            ))}
-          </ul>
         </section>
       ) : null}
 
       {hasExternalLinks ? (
         <section className="space-y-2 border-t pt-4">
           <p className="text-xs font-semibold text-foreground">Links</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {meeting.source ? (
               <a
                 href={meeting.source}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors p-1"
                 title="Transcript"
                 aria-label="Open transcript"
               >
-                <FileText className="h-4 w-4" strokeWidth={1.5} />
+                <FileText className="h-5 w-5" strokeWidth={1.5} />
               </a>
             ) : null}
             {meeting.fireflies_link ? (
@@ -172,11 +149,11 @@ export function MeetingPreviewPane({
                 href={meeting.fireflies_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors p-1"
                 title="Recording"
                 aria-label="Open recording"
               >
-                <Flame className="h-4 w-4" strokeWidth={1.5} />
+                <Flame className="h-5 w-5" strokeWidth={1.5} />
               </a>
             ) : null}
             {meeting.url ? (
@@ -184,11 +161,11 @@ export function MeetingPreviewPane({
                 href={meeting.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors"
+                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors p-1"
                 title="Source URL"
                 aria-label="Open source URL"
               >
-                <LinkIcon className="h-4 w-4" strokeWidth={1.5} />
+                <LinkIcon className="h-5 w-5" strokeWidth={1.5} />
               </a>
             ) : null}
           </div>

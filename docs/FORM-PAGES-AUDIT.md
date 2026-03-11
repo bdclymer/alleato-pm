@@ -1,36 +1,41 @@
 # Form Pages Audit
 
-Audit date: 2026-03-11  
-Standard: `/docs/FORM-SYSTEM.md`
+_Last updated: 2026-03-11_
 
-| Name | URL | Notes | Audit Status | Screenshot |
-| --- | --- | --- | --- | --- |
-| New Commitment | `/:projectId/commitments/new` | Uses `CreateSubcontractForm` / `CreatePurchaseOrderForm`; form logic is centralized but still mixes legacy field composition and direct UI primitives. | Partial | Pending capture |
-| Commitment Detail (Inline Edit) | `/:projectId/commitments/:commitmentId?edit=1` | Edit is inline on detail page (meets no-separate-edit-page requirement). Uses shared commitment form components. | Partial | Pending capture |
-| Commitment Edit Redirect | `/:projectId/commitments/:commitmentId/edit` | Redirect-only route to inline edit query state. | Pass | N/A (redirect route) |
-| New Change Order | `/:projectId/change-orders/new` | Updated to use `FormSection` + `FormActions`. Still uses `@/components/ui/form` fields directly for many controls; next step is RHF wrapper migration. | Partial | Pending capture |
-| Change Order Detail (Inline Edit) | `/:projectId/change-orders/:changeOrderId?edit=1` | Inline edit on detail page (meets no-separate-edit-page requirement). Edit UI still mostly manual `ui/form` composition. | Partial | Pending capture |
-| Change Order Edit Redirect | `/:projectId/change-orders/:changeOrderId/edit` | Redirect-only route to inline edit query state. | Pass | N/A (redirect route) |
-| New Direct Cost | `/:projectId/direct-costs/new` | Uses `CreateDirectCostForm`/`DirectCostForm` with form-system layout components and RHF field wrappers. | Pass | Pending capture |
-| Direct Cost Detail (Inline Edit Slideover) | `/:projectId/direct-costs/:costId` | Edit happens inline in detail view via `DirectCostForm` slideover. No separate edit page. | Pass | Pending capture |
-| New Prime Contract | `/:projectId/prime-contracts/new` | Uses `ContractForm`; good reuse, but not fully migrated to RHF field wrappers from form system. | Partial | Pending capture |
-| Prime Contract Detail (Inline Edit) | `/:projectId/prime-contracts/:contractId?edit=1` | Inline-edit query-state pattern used. | Partial | Pending capture |
-| Prime Contract Edit Redirect | `/:projectId/prime-contracts/:contractId/edit` | Redirect-only route to inline edit query state. | Pass | N/A (redirect route) |
-| New Change Event | `/:projectId/change-events/new` | Uses `ChangeEventForm`; wide form (`maxWidth=3xl`) is justified by line-item and attachment complexity. | Partial | Pending capture |
-| Change Event Detail (Inline Edit) | `/:projectId/change-events/:changeEventId?edit=1` | Inline-edit query-state pattern used. | Partial | Pending capture |
-| Change Event Edit Redirect | `/:projectId/change-events/:changeEventId/edit` | Redirect-only route to inline edit query state. | Pass | N/A (redirect route) |
-| New RFI | `/:projectId/rfis/new` | Uses form-system components including RHF wrappers for key fields. | Pass | Pending capture |
-| New Invoice (Invoices) | `/:projectId/invoices/new` | Uses form-system sectioning and actions; field-level migration to RHF wrappers is mixed. | Partial | Pending capture |
-| New Invoice (Invoicing) | `/:projectId/invoicing/new` | Uses `FormGrid`/`FormSection`/`FormActions`; has mixed manual field wiring. | Partial | Pending capture |
-| Invoice Detail (Invoicing Inline Edit) | `/:projectId/invoicing/:invoiceId` | Uses RHF wrappers for several fields and inline editing. | Pass | Pending capture |
-| Budget Line Item (New) | `/:projectId/budget/line-item/new` | Uses form-system sections/actions; some manual field composition remains due advanced logic. | Partial | Pending capture |
-| Meetings Schedule | `/:projectId/meetings/schedule` | Uses `FormGrid`, `FormSection`, and `FormActions`; consistent structure. | Pass | Pending capture |
-| Commitments Configure | `/:projectId/commitments/configure` | Configuration form page uses project form layout but not fully standardized field wrappers. | Partial | Pending capture |
-| Prime Contracts Configure | `/:projectId/prime-contracts/configure` | Uses form-system sections; toggle and controls are mixed with manual wiring. | Partial | Pending capture |
-| Create Project | `/create-project` | Uses legacy `ui/form` composition heavily; should be migrated into form-system wrappers for consistency. | Needs migration | Pending capture |
+## Status legend
 
-## Summary
+- `Verified`: Manually checked in the browser during this pass.
+- `Pass`: Visually consistent with the current shared form shell.
+- `Partial`: Mostly aligned, but still has visible bespoke styling or layout drift.
+- `Needs follow-up`: Clearly off the target system and should be migrated further.
 
-- Direct requirement met for detail-page editing: commitments, change orders, and direct costs all support inline edit flow from their detail pages.
-- Separate edit routes for commitments/change-orders/prime-contracts/change-events are redirect-only and no longer host standalone forms.
-- Remaining consistency work is wrapper migration: standardize pages still relying on direct `@/components/ui/form` field composition.
+## Screenshot evidence
+
+![Schedule Meeting form system reference](../frontend/public/images/docs/form-system-schedule-meeting-2026-03-11.png)
+
+## Form pages
+
+| Route | Page file | Verification | Consistency | Screenshot | Notes |
+|---|---|---|---|---|---|
+| `/form-template` | `frontend/src/app/(main)/form-template/page.tsx` | Verified | Needs follow-up | `frontend/public/images/docs/form-audit-2026-03-11/form-template.png` | Not a clean canonical template yet. The audit card and embedded screenshot dominate the page and distort the reference layout. |
+| `/create-project` | `frontend/src/app/(main)/create-project/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/create-project.png` | Now uses the shared page shell and shared section/action treatment. |
+| `/[projectId]/budget/line-item/new` | `frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/budget-line-item-new.png` | Special-case table form is acceptable, but the footer/button treatment still drifts from the standard action bar. |
+| `/[projectId]/change-events/new` | `frontend/src/app/(main)/[projectId]/change-events/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/change-events-new.png` | Wide form, but spacing, labels, and section rhythm are aligned well. |
+| `/[projectId]/change-orders/new` | `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/change-orders-new.png` | Matches the shared shell closely. |
+| `/[projectId]/commitments/new?type=subcontract` | `frontend/src/app/(main)/[projectId]/commitments/new/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/commitments-new-subcontract.png` | Shared page shell is working, but internal section/collapse patterns are still bespoke. |
+| `/[projectId]/commitments/new?type=purchase_order` | `frontend/src/app/(main)/[projectId]/commitments/new/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/commitments-new-purchase-order.png` | Major wrapper-card drift is removed; some internal field composition is still bespoke. |
+| `/[projectId]/commitments/configure` | `frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/commitments-configure.png` | Navigation and card treatment are improved, but it still reads as a settings surface more than a true form page. |
+| `/[projectId]/direct-costs/new` | `frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/direct-costs-new.png` | Wide special-case form, but the current shell and field rhythm are consistent. |
+| `/[projectId]/estimates/new` | `frontend/src/app/(main)/[projectId]/estimates/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/estimates-new.png` | Clean alignment with the current form system. |
+| `/[projectId]/invoices/new` | `frontend/src/app/(main)/[projectId]/invoices/new/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/invoices-new.png` | Tabbed flow works, but the surface still has some custom composition compared with the simpler shared pages. |
+| `/[projectId]/invoicing/new` | `frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/invoicing-new.png` | Good match for the shared shell. |
+| `/[projectId]/meetings/schedule` | `frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/meetings-schedule.png` | Migrated in this pass and now aligns with the system. |
+| `/[projectId]/prime-contracts/new` | `frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/prime-contracts-new.png` | Split layout is still specialized, but the section headings and page width are now much closer to the shared system. |
+| `/[projectId]/prime-contracts/configure` | `frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx` | Verified | Partial | `frontend/public/images/docs/form-audit-2026-03-11/prime-contracts-configure.png` | Simpler than commitments configure, but still reads as a bespoke settings page. |
+| `/[projectId]/rfis/new` | `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx` | Verified | Pass | `frontend/public/images/docs/form-audit-2026-03-11/rfis-new.png` | Shared spacing and section treatment are consistent. |
+
+## Notes
+
+- This tracker reflects an actual browser pass against the authenticated app on `http://localhost:3010` using project `1`.
+- Complex budget, direct cost, contract, and commitment forms can be wider than standard forms, but they should still keep the same header rhythm, section dividers, field spacing, and action bar treatment.
+- Highest-priority follow-up pages are `commitments/configure`, `commitments/new?type=subcontract`, `commitments/new?type=purchase_order`, and `prime-contracts/new`.

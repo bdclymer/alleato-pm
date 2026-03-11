@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Building2, CircleCheck, Mail, Phone, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -153,6 +153,59 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
   ];
 }
 
+function VendorPreviewPane({ vendor }: { vendor: Vendor | null }): ReactElement {
+  if (!vendor) {
+    return (
+      <div className="p-6 space-y-3 text-sm text-muted-foreground">
+        <p>Select a vendor to preview details.</p>
+        <p className="text-xs">Use arrow keys to move between rows.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-5">
+      <div className="space-y-1">
+        <p className="text-sm font-semibold leading-tight">{vendor.name}</p>
+        {vendor.legal_name ? (
+          <p className="text-xs text-muted-foreground">{vendor.legal_name}</p>
+        ) : null}
+      </div>
+
+      <dl className="space-y-3 text-xs">
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <CircleCheck className="h-3.5 w-3.5" />
+            Status
+          </dt>
+          <dd className="text-foreground mt-1">{vendor.is_active ? "Active" : "Inactive"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <Building2 className="h-3.5 w-3.5" />
+            Vendor Class
+          </dt>
+          <dd className="text-foreground mt-1">{vendor.vendor_class || "-"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <Mail className="h-3.5 w-3.5" />
+            Email
+          </dt>
+          <dd className="text-foreground mt-1">{normalizeVendorField(vendor.contact_email) || "-"}</dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <Phone className="h-3.5 w-3.5" />
+            Phone
+          </dt>
+          <dd className="text-foreground mt-1">{normalizeVendorField(vendor.contact_phone) || "-"}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 export default function DirectoryVendorsPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
@@ -291,6 +344,14 @@ export default function DirectoryVendorsPage(): ReactElement {
 
   const tableColumns = React.useMemo(() => buildVendorTableColumns(), []);
   const tabs = getDirectoryTabs(pathname);
+  const selectedVendorId = searchParams.get("detail");
+  const selectedVendor =
+    (selectedVendorId
+      ? filteredVendors.find((vendor) => vendor.id === selectedVendorId)
+      : null) ??
+    filteredVendors[0] ??
+    null;
+  const activeVendorId = selectedVendor?.id ?? null;
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.is_active) ||
@@ -382,7 +443,12 @@ export default function DirectoryVendorsPage(): ReactElement {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        activeRowId: activeVendorId,
+        onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
         onDelete: handleDeleteVendor,
+      }}
+      sidePanel={{
+        content: <VendorPreviewPane vendor={selectedVendor} />,
       }}
       sorting={{
         sortBy: tableState.sortBy,

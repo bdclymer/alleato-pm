@@ -162,8 +162,9 @@ export default function NewContractPage() {
       <ProjectFormPageLayout
         title="New Prime Contract"
         description="Create a new owner agreement"
-        maxWidth="lg"
+        maxWidth="xl"
         onBack={() => router.push(`/${projectId}/prime-contracts`)}
+        backLabel="Back to Prime Contracts"
       >
           <ContractForm
             initialData={initialData}

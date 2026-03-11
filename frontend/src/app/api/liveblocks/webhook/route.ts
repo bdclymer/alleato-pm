@@ -51,9 +51,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const teamsWebhookUrl = process.env.LIVEBLOCKS_TEAMS_WEBHOOK_URL;
-  if (!teamsWebhookUrl) {
-    console.error("[liveblocks-webhook] LIVEBLOCKS_TEAMS_WEBHOOK_URL is missing");
+  const adaptiveCardUrl = process.env.LIVEBLOCKS_TEAMS_ADAPTIVE_CARD_URL;
+  const bodyUrl = process.env.LIVEBLOCKS_TEAMS_BODY_URL;
+
+  if (!adaptiveCardUrl && !bodyUrl) {
+    console.error("[liveblocks-webhook] No Teams webhook URLs configured");
     return NextResponse.json(
       { error: "Missing Teams webhook URL" },
       { status: 500 }
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await sendTeamsNotification(teamsWebhookUrl, {
+    await sendTeamsNotification({ adaptiveCardUrl, bodyUrl }, {
       event,
       inboxNotification,
       appBaseUrl: process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL,

@@ -33,6 +33,7 @@ import {
 import { useCompanies } from "@/hooks/use-companies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RichTextField } from "@/components/forms/RichTextField";
+import { FormActions } from "@/components/forms/FormActions";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -81,10 +82,10 @@ interface FormSectionHeadingProps {
 
 function FormSectionHeading({ title, description }: FormSectionHeadingProps) {
   return (
-    <div className="border-b pb-4">
-      <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+    <div className="space-y-1">
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
       {description ? (
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p className="text-sm leading-6 text-muted-foreground">
           {description}
         </p>
       ) : null}
@@ -467,9 +468,9 @@ export function CreatePurchaseOrderForm({
       onSubmit={handleSubmit(handleFormSubmitWrapper)}
       className="space-y-8"
     >
-      <div className="space-y-10 rounded-lg border bg-card p-6 lg:p-8">
+      <div className="space-y-8">
         {/* General Information Section */}
-        <section className="space-y-6">
+        <section className="space-y-6 border-b border-border/70 pb-8">
           <FormSectionHeading
             title="General Information"
             description="Define the purchase order identity, vendor, and commercial terms."
@@ -688,7 +689,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Attachments Section */}
-        <section className="space-y-6">
+        <section className="space-y-6 border-b border-border/70 pb-8">
           <FormSectionHeading
             title="Attachments"
             description="Upload source documents, drawings, and supporting files."
@@ -756,7 +757,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Schedule of Values Section */}
-        <section className="space-y-6">
+        <section className="space-y-6 border-b border-border/70 pb-8">
           <FormSectionHeading
             title="Schedule of Values"
             description="Build line items and totals that define the PO financial breakdown."
@@ -1067,7 +1068,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Contract Dates Section */}
-        <section className="space-y-6">
+        <section className="space-y-6 border-b border-border/70 pb-8">
           <FormSectionHeading
             title="Contract Dates"
             description="Capture timing milestones used for procurement and tracking."
@@ -1123,7 +1124,7 @@ export function CreatePurchaseOrderForm({
         </section>
 
         {/* Contract Privacy Section */}
-        <section className="space-y-6">
+        <section className="space-y-6 border-b border-border/70 pb-8">
           <FormSectionHeading
             title="Privacy & Access"
             description="Control which non-admin users can access this commitment."
@@ -1212,32 +1213,15 @@ export function CreatePurchaseOrderForm({
           )}
         </section>
 
-        {/* Footer Actions */}
-        <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+        <FormActions
+          submitLabel="Create Purchase Order"
+          onCancel={onCancel}
+          isSubmitting={isSubmitting}
+        >
           <p className="text-sm text-muted-foreground">
             <span className="text-destructive">*</span> Required fields
           </p>
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Purchase Order"
-              )}
-            </Button>
-          </div>
-        </div>
+        </FormActions>
       </div>
 
       <Dialog

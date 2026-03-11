@@ -1,5 +1,7 @@
+"use client";
+
 import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
-import { useInboxNotifications } from "../liveblocks.config";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
 
 export function NotificationInbox() {
   const { inboxNotifications } = useInboxNotifications();

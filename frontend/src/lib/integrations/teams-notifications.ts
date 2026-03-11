@@ -19,7 +19,8 @@ function buildAppLink(payload: TeamsNotificationPayload): string | null {
   }
 
   const safeBase = baseUrl.replace(/\/$/, "");
-  const threadId = "threadId" in payload.event.data ? payload.event.data.threadId : null;
+  const threadId =
+    "threadId" in payload.event.data ? payload.event.data.threadId : null;
 
   if (!threadId) {
     return `${safeBase}/rooms/${encodeURIComponent(roomId)}`;
@@ -28,37 +29,116 @@ function buildAppLink(payload: TeamsNotificationPayload): string | null {
   return `${safeBase}/rooms/${encodeURIComponent(roomId)}?threadId=${encodeURIComponent(threadId)}`;
 }
 
-function buildSummaryText(payload: TeamsNotificationPayload): string {
+function humanKind(kind: string): string {
+  const map: Record<string, string> = {
+    thread: "New thread comment",
+    textMention: "You were mentioned",
+    $thread: "New thread comment",
+    $textMention: "You were mentioned",
+  };
+  return map[kind] ?? kind;
+}
+
+function buildFacts(
+  payload: TeamsNotificationPayload
+): Array<{ title: string; value: string }> {
+  const { data } = payload.event;
+  const facts: Array<{ title: string; value: string }> = [];
+
+  facts.push({ title: "Type", value: humanKind(data.kind) });
+
+  if (data.roomId) {
+    facts.push({ title: "Room", value: data.roomId });
+  }
+
+  if ("threadId" in data && data.threadId) {
+    facts.push({ title: "Thread", value: String(data.threadId) });
+  }
+
+  if ("mentionId" in data && data.mentionId) {
+    facts.push({ title: "Mention", value: String(data.mentionId) });
+  }
+
+  if (data.userId) {
+    facts.push({ title: "User", value: data.userId });
+  }
+
+  facts.push({
+    title: "Time",
+    value: new Date(data.triggeredAt).toLocaleString("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }),
+  });
+
+  return facts;
+}
+
+function buildAdaptiveCard(payload: TeamsNotificationPayload): unknown {
+  const link = buildAppLink(payload);
+  const facts = buildFacts(payload);
+  const title = humanKind(payload.event.data.kind);
+
+  const body: unknown[] = [
+    {
+      type: "TextBlock",
+      text: title,
+      weight: "Bolder",
+      size: "Medium",
+      wrap: true,
+    },
+    {
+      type: "FactSet",
+      facts: facts.map((f) => ({ title: f.title, value: f.value })),
+    },
+  ];
+
+  const actions: unknown[] = [];
+
+  if (link) {
+    actions.push({
+      type: "Action.OpenUrl",
+      title: "Open in Alleato",
+      url: link,
+    });
+  }
+
+  return {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+          type: "AdaptiveCard",
+          version: "1.4",
+          body,
+          ...(actions.length > 0 ? { actions } : {}),
+        },
+      },
+    ],
+  };
+}
+
+function buildPlainTextFallback(payload: TeamsNotificationPayload): string {
   const { data } = payload.event;
   const lines: string[] = [
-    "Liveblocks notification",
-    `Kind: ${data.kind}`,
-    `Channel: ${data.channel}`,
-    `Project: ${data.projectId}`,
+    `**${humanKind(data.kind)}**`,
     `Room: ${data.roomId ?? "(none)"}`,
     `User: ${data.userId}`,
-    `Inbox notification: ${data.inboxNotificationId}`,
-    `Triggered at: ${data.triggeredAt}`,
   ];
 
   if ("threadId" in data) {
     lines.push(`Thread: ${data.threadId}`);
   }
 
-  if ("mentionId" in data) {
-    lines.push(`Mention: ${data.mentionId}`);
-  }
-
-  if ("subjectId" in data) {
-    lines.push(`Subject: ${data.subjectId}`);
-  }
-
   const link = buildAppLink(payload);
   if (link) {
-    lines.push(`Open: ${link}`);
+    lines.push(`[Open in Alleato](${link})`);
   }
 
-  return lines.join("\n");
+  return lines.join("\n\n");
 }
 
 async function postJson(url: string, body: unknown): Promise<Response> {
@@ -79,40 +159,58 @@ async function postJson(url: string, body: unknown): Promise<Response> {
   }
 }
 
+export type TeamsWebhookUrls = {
+  /** Adaptive Card workflow URL (Power Automate trigger) */
+  adaptiveCardUrl?: string;
+  /** Body/text workflow URL (Power Automate trigger) */
+  bodyUrl?: string;
+};
+
 export async function sendTeamsNotification(
-  webhookUrl: string,
+  webhookUrls: string | TeamsWebhookUrls,
   payload: TeamsNotificationPayload
 ): Promise<void> {
-  const summaryText = buildSummaryText(payload);
+  const urls: TeamsWebhookUrls =
+    typeof webhookUrls === "string"
+      ? { adaptiveCardUrl: webhookUrls }
+      : webhookUrls;
 
-  const messageCardPayload = {
-    "@type": "MessageCard",
-    "@context": "https://schema.org/extensions",
-    summary: "Liveblocks notification",
-    themeColor: "0078D4",
-    sections: [
-      {
-        activityTitle: "Liveblocks notification",
-        text: summaryText,
-      },
-    ],
-  };
+  const errors: string[] = [];
 
-  const cardResponse = await postJson(webhookUrl, messageCardPayload);
-  if (cardResponse.ok) {
-    return;
+  // Send Adaptive Card to the dedicated Adaptive Card workflow
+  if (urls.adaptiveCardUrl) {
+    const adaptiveCard = buildAdaptiveCard(payload);
+    const response = await postJson(urls.adaptiveCardUrl, adaptiveCard);
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      errors.push(`adaptiveCard: ${response.status} ${body}`);
+    }
   }
 
-  // Fallback for workflows/endpoints that only accept a plain text payload.
-  const textResponse = await postJson(webhookUrl, { text: summaryText });
-  if (textResponse.ok) {
-    return;
+  // Send plain-text body to the dedicated body workflow
+  if (urls.bodyUrl) {
+    const text = buildPlainTextFallback(payload);
+    const response = await postJson(urls.bodyUrl, { text });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      errors.push(`body: ${response.status} ${body}`);
+    }
   }
 
-  const cardError = await cardResponse.text().catch(() => "");
-  const textError = await textResponse.text().catch(() => "");
+  // If no URLs were configured at all, that's an error
+  if (!urls.adaptiveCardUrl && !urls.bodyUrl) {
+    throw new Error("No Teams webhook URLs configured");
+  }
 
-  throw new Error(
-    `Failed to send Teams notification (card: ${cardResponse.status} ${cardError}; text: ${textResponse.status} ${textError})`
-  );
+  // If ALL configured webhooks failed, throw
+  const configuredCount =
+    (urls.adaptiveCardUrl ? 1 : 0) + (urls.bodyUrl ? 1 : 0);
+
+  if (errors.length === configuredCount) {
+    throw new Error(
+      `Failed to send Teams notification (${errors.join("; ")})`
+    );
+  }
 }

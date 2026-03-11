@@ -23,6 +23,7 @@ export default async function ProjectHomePage({
   const [
     projectResult,
     tasksResult,
+    tasksByProjectIdResult,
     tasksViaDocsResult,
     meetingsResult,
     changeOrdersResult,
@@ -46,12 +47,21 @@ export default async function ProjectHomePage({
       .order("created_at", { ascending: false })
       .limit(20),
 
+    // Fetch tasks — by scalar project_id (legacy / partially backfilled rows)
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("project_id", numericProjectId)
+      .not("status", "in", '("done","cancelled")')
+      .order("created_at", { ascending: false })
+      .limit(20),
+
     // Fetch tasks — via document_metadata link (for tasks with empty project_ids)
     supabase
       .from("tasks")
       .select("*, document_metadata!tasks_metadata_id_fkey!inner(project_id)")
       .eq("document_metadata.project_id", numericProjectId)
-      .filter("project_ids", "eq", "{}")
+      .or("project_ids.is.null,project_ids.eq.{}")
       .not("status", "in", '("done","cancelled")')
       .order("created_at", { ascending: false })
       .limit(20),
@@ -133,6 +143,7 @@ export default async function ProjectHomePage({
   // and deduplicate by id, keeping most-recent-first ordering
   type TaskRow = NonNullable<typeof tasksResult.data>[number];
   const directTasks: TaskRow[] = tasksResult.data || [];
+  const directProjectIdTasks: TaskRow[] = tasksByProjectIdResult.data || [];
   const linkedTasksRaw = tasksViaDocsResult.data || [];
   // Strip the joined document_metadata field so shape matches TaskRow
   const linkedTasks: TaskRow[] = linkedTasksRaw.map((row) => {
@@ -140,9 +151,10 @@ export default async function ProjectHomePage({
     const { document_metadata, ...task } = row as TaskRow & { document_metadata: unknown };
     return task;
   });
-  const seenIds = new Set(directTasks.map((t) => t.id));
+  const mergedDirect = [...directTasks, ...directProjectIdTasks];
+  const seenIds = new Set(mergedDirect.map((t) => t.id));
   const uniqueLinked = linkedTasks.filter((t) => !seenIds.has(t.id));
-  const tasks = [...directTasks, ...uniqueLinked].sort(
+  const tasks = [...mergedDirect, ...uniqueLinked].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 

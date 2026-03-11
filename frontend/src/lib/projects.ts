@@ -20,17 +20,3 @@ export async function fetchProjectDetail(
   if (!res.ok) throw new Error("Failed to load project detail");
   return res.json();
 }
-
-export async function postFirefliesIngestion(data: {
-  path: string;
-  project_id?: number;
-  dry_run?: boolean;
-}) {
-  const res = await fetch("/api/ingest/fireflies", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Ingestion failed");
-  return res.json();
-}
