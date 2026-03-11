@@ -1,49 +1,49 @@
-// Define Liveblocks types for your application
-// https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
+import { createClient } from "@liveblocks/client";
+import { createLiveblocksContext } from "@liveblocks/react";
+
+const client = createClient({
+  authEndpoint: "/api/liveblocks-auth",
+});
+
+// Liveblocks types for the application
 declare global {
   interface Liveblocks {
-    // Each user's Presence, for useMyPresence, useOthers, etc.
-    Presence: {
-      // Example, real-time cursor coordinates
-      // cursor: { x: number; y: number };
-    };
+    Presence: Record<string, never>;
+    Storage: Record<string, never>;
 
-    // The Storage tree for the room, for useMutation, useStorage, etc.
-    Storage: {
-      // Example, a conflict-free list
-      // animals: LiveList<string>;
-    };
-
-    // Custom user info set when authenticating with a secret key
     UserMeta: {
       id: string;
       info: {
-        // Example properties, for useSelf, useUser, useOthers, etc.
-        // name: string;
-        // avatar: string;
+        name: string;
+        email: string;
+        avatar?: string;
       };
     };
 
-    // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: {};
-      // Example has two events, using a union
-      // | { type: "PLAY" } 
-      // | { type: "REACTION"; emoji: "🔥" };
+    RoomEvent: Record<string, never>;
 
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
-      // Example, attaching coordinates to a thread
-      // x: number;
-      // y: number;
+      resolved?: boolean;
     };
 
-    // Custom room info set with resolveRoomsInfo, for useRoomInfo
     RoomInfo: {
-      // Example, rooms with a title and url
-      // title: string;
-      // url: string;
+      name: string;
+      url: string;
     };
   }
 }
 
-export {};
+export const {
+  suspense: {
+    LiveblocksProvider,
+    useInboxNotifications,
+    useUnreadInboxNotificationsCount,
+    useMarkAllInboxNotificationsAsRead,
+    useMarkInboxNotificationAsRead,
+    useDeleteAllInboxNotifications,
+    useDeleteInboxNotification,
+    useRoomInfo,
+  },
+} = createLiveblocksContext(client);
+
+export { client };
