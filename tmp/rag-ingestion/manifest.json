@@ -1,5 +1,122 @@
 {
   "files": {
+    "2025.12.18 - Alleato Group - Estimate Canton R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "3abbeae4-fba9-5481-87d5-a31c7a558b6c",
+      "mtime": 1773198553.1775334,
+      "sha256": "f15e09aa64c068d42214a6eb4eeb29a478354c1a8b88a5e37adb402bcb6ef7df",
+      "size": 168304,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:37:46.344169+00:00"
+    },
+    "2025.12.18 - Alleato Group - Estimate Galesburg R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "9e3afaf3-ab71-528d-a13b-2086a145ea42",
+      "mtime": 1773201411.44213,
+      "sha256": "9ce4f2670b0e2d2400d0655ca96736589d53c22e30ba0de84329a5be1d6b0909",
+      "size": 5213286,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:38:53.236165+00:00"
+    },
+    "2025.12.18 - Alleato Group - Estimate Macomb R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "a6036ec1-cb7a-5278-8874-6f71d5a8efdc",
+      "mtime": 1773198449.2184708,
+      "sha256": "ae04b3707049d91a2954f9ee16cb9b8d965b5d2395248720b94d0af6ec5320a5",
+      "size": 168468,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:39:59.226819+00:00"
+    },
+    "2025.12.18 - Alleato Group - Estimate Morris R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "2748095e-4ada-5a10-bb17-9b45bed242e5",
+      "mtime": 1773201517.3000348,
+      "sha256": "a82c6f784208b3a0fc48b7379ad915230433d0d81a5ba8f4d2b1a69b28526498",
+      "size": 170225,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:40:49.010569+00:00"
+    },
+    "2025.12.18 - Alleato Group - Estimate Pioneer R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "dbc09027-8c35-5106-90e2-2a12edb0e83b",
+      "mtime": 1773201320.8690097,
+      "sha256": "207da3252d3bcf750dd9e36922d036b342dbca88a266f43c9be4735abf749214",
+      "size": 172024,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:41:42.405725+00:00"
+    },
+    "2025.12.18 - Alleato Group - Estimate Washington R2.pdf": {
+      "category": "financial_document",
+      "metadata_id": "52504964-2020-5e0e-8c0b-9a9dea64b091",
+      "mtime": 1773201363.743427,
+      "sha256": "ed592f634263bc7a62af4acd1624c9a78dbae9b9b088c2276429e0d68ba7df3c",
+      "size": 174678,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:42:40.834561+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/7 Hills - 2025 w9.pdf": {
+      "category": "document",
+      "metadata_id": "467becd3-88c5-5002-81f9-8382922dbaa8",
+      "mtime": 1773131460.0,
+      "sha256": "98107d06d9989f52f9d0d40bcb9c8dc0f97ae91ac365991787ba8ae592a7275a",
+      "size": 72407,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:40.921765+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/7 Hills - COI.pdf": {
+      "category": "document",
+      "metadata_id": "577029d5-ea40-57b7-b847-7d2a8fef3db6",
+      "mtime": 1773131460.0,
+      "sha256": "1300a0beaf6a1171146e13eeb7c9c283134e2fd89d52a02e1c03d644922aa23b",
+      "size": 58421,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.012882+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/7 Hills Quote.pdf": {
+      "category": "document",
+      "metadata_id": "1f70d066-c2ab-5c0b-a334-d3fd6585da15",
+      "mtime": 1773131460.0,
+      "sha256": "e3f1c46da945b0266d172f0e0f72b59cfd989cfcf25a216a68cedb45552e999f",
+      "size": 354961,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.210036+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/Commitment Change Order CCO-2733-0003 (Restock-Freight-Spare Heads) 8.12.25.pdf": {
+      "category": "contract",
+      "metadata_id": "0f5b8ec2-efa5-585e-bc89-ef2233d0c462",
+      "mtime": 1773131460.0,
+      "sha256": "eba8cfb4e6f2e79429a19be1f8a8c911baf7d584f475da50fcfaea184d8f0dd9",
+      "size": 154427,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.435793+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/INVOICE - 7 Hills - Chain Wheel Return.pdf": {
+      "category": "financial_document",
+      "metadata_id": "712c18f0-cd6d-5fa8-970f-8062e7b9df17",
+      "mtime": 1773131460.0,
+      "sha256": "6e06f3ff00ccb649ae62dce084da9f2796b3cdc73f6c8c3b4eb5ed7d50a4d4ac",
+      "size": 87792,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.725654+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/7 Hills Commitment/app 1 waiver.pdf": {
+      "category": "document",
+      "metadata_id": "03599dc2-404a-5de8-a290-87ffba220cb7",
+      "mtime": 1773131460.0,
+      "sha256": "c5f910ddf43b0f5433cc82694b03d1c95c5170898a00ed6b890a24838130e5e8",
+      "size": 297555,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.326100+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/ALLEATO GROUP  i43796 White Ga ASRS-2.pdf": {
+      "category": "document",
+      "metadata_id": "456e8416-a129-5d74-a0ca-a22a4106c6ed",
+      "mtime": 1773117034.1906836,
+      "sha256": "b8c50d56a9a3da5dca30c3906b884316c361f3b54eacae49bbf1cdfd3933df12",
+      "size": 1324844,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.810954+00:00"
+    },
     "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/Core and Main Material Quote.pdf": {
       "category": "document",
       "metadata_id": "456e8416-a129-5d74-a0ca-a22a4106c6ed",
@@ -8,6 +125,24 @@
       "size": 1324844,
       "status": "skipped_existing",
       "updated_at": "2026-03-10T05:34:53.024008+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Clarifications Template.docx": {
+      "category": "financial_document",
+      "metadata_id": "c7af08bf-ae9a-5caf-bc4e-178afde462b7",
+      "mtime": 1773131340.0,
+      "sha256": "a01560eee95fbd5521af775ba20045318b95a1b46c58e85ea92238b6c04d34ce",
+      "size": 96340,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.891443+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Core Mark Sprinkler Clarifications .docx": {
+      "category": "financial_document",
+      "metadata_id": "2e02e12e-098c-5cda-a51f-445e6f373e6c",
+      "mtime": 1773131340.0,
+      "sha256": "ec372f18c88d4f0438809aac26807a153c1f27dccdc4fca292e2caa7440d38fb",
+      "size": 56082,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:41.998487+00:00"
     },
     "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Core Mark White GA.xlsx": {
       "category": "financial_document",
@@ -18,6 +153,15 @@
       "status": "ingested",
       "updated_at": "2026-03-10T05:35:03.702408+00:00"
     },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Estimate Template.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "083edaff-9e4b-52d5-8772-ec1d87d54629",
+      "mtime": 1773131340.0,
+      "sha256": "e183331fd84acec87e8de6d03f72a258631aa609056e7ccd818651de67e24655",
+      "size": 118807,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.085449+00:00"
+    },
     "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/CoreMark Estimates/Sprinkler Material Take Off Sheet .xlsx": {
       "category": "financial_document",
       "metadata_id": "aa24776e-d734-5e32-894e-25a48ec6d8da",
@@ -27,6 +171,33 @@
       "status": "ingested",
       "updated_at": "2026-03-10T05:35:12.427494+00:00"
     },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/Double D Quote.pdf": {
+      "category": "document",
+      "metadata_id": "38fb97a4-171a-5150-ab08-e6af03475144",
+      "mtime": 1773131400.0,
+      "sha256": "a87663d96930942a849e1a8e3fd7ad2328f503c3ad0d4f3017f5be7449748e9b",
+      "size": 721073,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.333274+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/Sprinkler Design Quote.pdf": {
+      "category": "document",
+      "metadata_id": "710f13f1-7a4f-519b-bc62-fcb7c1106f7b",
+      "mtime": 1773131400.0,
+      "sha256": "f8cb653de68833e6b8808a7bde2da2ec82bc06bc92256d994e01d3e70b4e600d",
+      "size": 145723,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.414618+00:00"
+    },
+    "25- 101 Core Mark Atlanta (White, GA)/CoreMark Bid Responses/Sprinkler Heads Quote.pdf": {
+      "category": "document",
+      "metadata_id": "45e14dee-4055-50f6-bc8b-b2a4610836d4",
+      "mtime": 1773117015.4454918,
+      "sha256": "3a15de110bd033bbe02600ca95028f105fb220e747f0dfa895af65138987fe34",
+      "size": 150344,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.504396+00:00"
+    },
     "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/RFI - 06 (AC-5 Clearence to Existing RTU8).pdf": {
       "category": "specification",
       "metadata_id": "6b4226b1-81a7-5b52-80ef-02daf696553b",
@@ -35,6 +206,132 @@
       "size": 4494813,
       "status": "skipped_existing",
       "updated_at": "2026-03-10T05:35:26.042573+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-AC-5.pdf": {
+      "category": "specification",
+      "metadata_id": "da0966d3-32a5-50cb-9e2e-397037bcafc4",
+      "mtime": 1773132240.0,
+      "sha256": "02e0e36383c571e3a0bb953bf9b05722e32f4385feb4ddf25f9f6afd31e90d18",
+      "size": 4178898,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.776719+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI - 06 (AC-5 Clearance to Existing RTU8).pdf": {
+      "category": "specification",
+      "metadata_id": "6b4226b1-81a7-5b52-80ef-02daf696553b",
+      "mtime": 1773132240.0,
+      "sha256": "c27f59169284202722be3ab5fefc78baaa8d8698261e52ff3df64a752efaa772",
+      "size": 4494813,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.857415+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI - 06 (AC-5 Clearence to Existing RTU8).pdf": {
+      "category": "specification",
+      "metadata_id": "6b4226b1-81a7-5b52-80ef-02daf696553b",
+      "mtime": 1773132240.0,
+      "sha256": "c27f59169284202722be3ab5fefc78baaa8d8698261e52ff3df64a752efaa772",
+      "size": 4494813,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:42.936445+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-01 (AC1 Relocation).pdf": {
+      "category": "specification",
+      "metadata_id": "fb7a7324-69b7-5155-b4fa-44bc4ea89d91",
+      "mtime": 1773132240.0,
+      "sha256": "a48a02657315d0589f41487d9876dbfe1f5fe36a8bf842a96296673eab9457b6",
+      "size": 88498,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:42:43.020208+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-02 (HVLS Relocation).pdf": {
+      "category": "specification",
+      "metadata_id": "98fb5be6-d73b-589f-83a7-5e471246218d",
+      "mtime": 1773132240.0,
+      "sha256": "81ee96fb95452a0cade180d01c5a39eee33bf7755a3466d3af28fd57e02e8146",
+      "size": 90204,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:04.928175+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-02 HVLS Relocation(Response).pdf": {
+      "category": "specification",
+      "metadata_id": "12dab9a9-c0af-513c-bbd1-5eb6b6ae2abd",
+      "mtime": 1773132240.0,
+      "sha256": "e0de7a690181579e4c5167edcc3da4477d8c6a29ea2879dc0162d12b49fe0bc8",
+      "size": 7384664,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.013993+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-03 (AC6 Relocation).pdf": {
+      "category": "specification",
+      "metadata_id": "4bd6b897-646b-5fd7-ab7b-810fae291f6b",
+      "mtime": 1773132240.0,
+      "sha256": "dc79bd1723562e4df829cd692ca24f5215f460d8f9e2bdcd28f3116b5f17a91f",
+      "size": 88654,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.101769+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-03 AC6 Relocation (Response).pdf": {
+      "category": "specification",
+      "metadata_id": "7215874a-4bf6-5b4d-b918-12d59524604c",
+      "mtime": 1773132240.0,
+      "sha256": "adb0d66fb655d098112a1ca32af4eb036ea56610dd1d6e3313c3df7f56560fe5",
+      "size": 775684,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.186977+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-04 (AC5 Relocation).pdf": {
+      "category": "specification",
+      "metadata_id": "908de963-5649-5cf1-b8a0-c054bf0d92b1",
+      "mtime": 1773132240.0,
+      "sha256": "1f5e25b6ed30aebe6e7be602b02903f45e5c481cea8cdcdc27db903ce0d26095",
+      "size": 88163,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.316435+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-04 AC5 Relocation (Response).pdf": {
+      "category": "specification",
+      "metadata_id": "5f1a7666-e4bb-5388-8f6d-683655e9fbde",
+      "mtime": 1773132240.0,
+      "sha256": "d594e1ace7395948127b0adec1e02667ff4b315f5ecde86255e8e8a04d6343d1",
+      "size": 794038,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.406006+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-05 (Welding Detail For Gap).pdf": {
+      "category": "drawing",
+      "metadata_id": "4004de5d-4708-5dd4-a44a-3a5528d1cd3e",
+      "mtime": 1773132240.0,
+      "sha256": "262f2266f0fee92be0c2a7f059d1b95ef5f7d1730857931edcf5735cbca67f11",
+      "size": 89495,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.494008+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/15 - RFI/Ulta-Fresno-RFI-05 Welding Detail For Gap (Response).pdf": {
+      "category": "drawing",
+      "metadata_id": "ce8aebb7-3c5b-58f1-a17a-6aa65e98ea72",
+      "mtime": 1773132240.0,
+      "sha256": "b6a5ca90a1fa48782f92f20cd77e503dd0a0a946446675926a5e2b6157b547c4",
+      "size": 3798187,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.584128+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Procurement Logs/Ulta Fresno Pricing Log.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "424fa4fe-89de-5505-9eb1-d01cab763522",
+      "mtime": 1773132180.0,
+      "sha256": "15d91d6a533b797fca7843dc606fbec0da17bda521c9430feab0628bd1dd8533",
+      "size": 15446,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.671810+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Procurement Logs/Ulta Fresno Procurement Log.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "531baefb-ca31-5b1b-ba77-e587ba6394cc",
+      "mtime": 1773132180.0,
+      "sha256": "457a0d1df2e6fdfe2a84ff580ce7f9801b1a09baf2fad082a00cd2974bc6fbfb",
+      "size": 13100,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.845296+00:00"
     },
     "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Estimate New RTUs R6 .xlsx": {
       "category": "financial_document",
@@ -72,6 +369,366 @@
       "status": "skipped_existing",
       "updated_at": "2026-03-10T05:37:17.797273+00:00"
     },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Ulta Fresno New RTUs Clarifications R6.docx": {
+      "category": "financial_document",
+      "metadata_id": "137a9908-d454-5f96-a000-c2dbcb45eee1",
+      "mtime": 1773132180.0,
+      "sha256": "9681f1b97636f8c7a1e635291c51c7df5187d4a19ba6bde9d2f4e614b5ef8730",
+      "size": 96124,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:05.933977+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Ulta Fresno New RTUs Clarifications.pdf": {
+      "category": "financial_document",
+      "metadata_id": "cb348676-9c3a-572d-a57b-9e7257d89368",
+      "mtime": 1773132180.0,
+      "sha256": "5533b5b48b6a044c737770e4fbcaacc0c0bbb1e2b7e480cd3b496d2024fed95e",
+      "size": 66490,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.020331+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Ulta Fresno R7.pdf": {
+      "category": "financial_document",
+      "metadata_id": "78c598ad-8a68-5f9d-9902-cbb6a5ce343d",
+      "mtime": 1773132180.0,
+      "sha256": "24f758f9ee85a04e33f28b7a5cf4122acd565c7fd07382e14c72a5907b97b219",
+      "size": 655611,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.109805+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Ulta Fresno RTU Addition R7.docx": {
+      "category": "financial_document",
+      "metadata_id": "920d4087-4292-5e52-86a3-775b4bb177cb",
+      "mtime": 1773132180.0,
+      "sha256": "f3a303325e19155dc131f7a268b39d09b8f44b8bfa0317f9e80bb50527e90cac",
+      "size": 95224,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.198635+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Estimates/Ulta-Fresno-Estimate New RTUs R6 .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "3964ee26-d769-5f8a-85b6-7183b656a497",
+      "mtime": 1773132180.0,
+      "sha256": "2e275821f57630c9142ddb7f549db5ed6a116fd3fedba9a29e70f378aae8c1ea",
+      "size": 68120,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.367582+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Proposal/Ulta Fresno RTU Addition.pdf": {
+      "category": "financial_document",
+      "metadata_id": "e3e2efe0-b979-5721-9124-d03aed99935a",
+      "mtime": 1773132180.0,
+      "sha256": "e3d92b33088ed62988fe915c61a8cec6ed7842f88f57824db03a0009321c83da",
+      "size": 67903,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.458772+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Proposal/Ulta Fresno RTU R7.pdf": {
+      "category": "financial_document",
+      "metadata_id": "c00ec3c1-fef1-5e5e-990a-a4c15299a96d",
+      "mtime": 1773132180.0,
+      "sha256": "741a0a3db9a610136bb37be24bf7f811ec63134b20c8d0c3a9f61e3196a53b0e",
+      "size": 8320212,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.552622+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta - Proposal/Ulta Fresno SOW Package 12-2 - BC Signed.pdf": {
+      "category": "financial_document",
+      "metadata_id": "8f276798-70eb-57fa-a081-3164a368cf5d",
+      "mtime": 1773132180.0,
+      "sha256": "3776b8335b3f253c36f52405da54b8c099ae2d13a91f907e9450e2e431aed6e8",
+      "size": 7596801,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.640707+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Invoices/Invoice Ulta Fresno - PO 4700058603.pdf": {
+      "category": "financial_document",
+      "metadata_id": "48ac3330-ae90-590c-808e-f718f553e3d0",
+      "mtime": 1773132060.0,
+      "sha256": "9d4682dc7539ec1596ec9bc92d0fb22467664a6ca4ab4d7727e027d3c9a6b51d",
+      "size": 45404,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.733519+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Invoices/Owner Pay App - Jan.pdf": {
+      "category": "financial_document",
+      "metadata_id": "3e0bb245-b203-592a-98d0-dfdf32690a99",
+      "mtime": 1773132060.0,
+      "sha256": "86f388d7657181e930a0a8d25b01bfba857c5d5b1bc4351b770d6c395191f602",
+      "size": 163160,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.894287+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Alleato & Ulta Master Purchase Agreement - Fully Executed.pdf": {
+      "category": "contract",
+      "metadata_id": "c7a1feec-0c06-57ff-ab17-6e3bb7109940",
+      "mtime": 1773132120.0,
+      "sha256": "3cc364f8b28f0f4fab85aba464fa7e745b9a8c431cb7cef99463120e7f62db7d",
+      "size": 425323,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:06.984787+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/BUILDING_Permit_ B25-16020.pdf": {
+      "category": "contract",
+      "metadata_id": "a74d41b7-a7b3-50d8-8a95-407d9f947562",
+      "mtime": 1773132180.0,
+      "sha256": "69ab808ef5952cb43b4d48c6d9aa71db8cdbb2cbcb7f159a8a5e96cd4593e7bf",
+      "size": 326971,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:25.549492+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.10.26.docx": {
+      "category": "document",
+      "metadata_id": "8eadaec4-eb29-510f-8867-1708f320de78",
+      "mtime": 1773132120.0,
+      "sha256": "71bd518ad2860a1cd052b3abc5e311bfe04da2dcd184818d50ff85ab6330dd08",
+      "size": 1399122,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:25.630096+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.10.26.pdf": {
+      "category": "document",
+      "metadata_id": "2567cee3-3a2a-5a4c-8103-6c4c8dcf39f8",
+      "mtime": 1773132120.0,
+      "sha256": "d98949137d0ba7e09ff065d61a565cff261ba2a6a78fd358411ee514bd943237",
+      "size": 4252614,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:25.768575+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.18.26.docx": {
+      "category": "document",
+      "metadata_id": "c4e9a99b-36c0-523e-89f2-3c88fd5f9082",
+      "mtime": 1773132120.0,
+      "sha256": "732a725470fe3e0f7895f1f0ad9ffde56cb2f54c1c700980ebc3f04ae0ac46aa",
+      "size": 1157657,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:25.850746+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.18.26.pdf": {
+      "category": "document",
+      "metadata_id": "2a2d74d8-98ec-50e0-a215-9d790af78100",
+      "mtime": 1773132120.0,
+      "sha256": "5ef51373e88c92839bc944031c6a7b9414652efe2aedb71bc22939739f4a7aeb",
+      "size": 3740441,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:25.930665+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.3.26.docx": {
+      "category": "document",
+      "metadata_id": "852fbe95-d335-5209-b954-b7db7806b30d",
+      "mtime": 1773132120.0,
+      "sha256": "e7352d3a2a394eb895bd23e62fb7b60e88da13b9304b7981746b141e765278f7",
+      "size": 537349,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.012395+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.3.26.pdf": {
+      "category": "document",
+      "metadata_id": "6d1a13f6-2097-57ad-85df-c9941a99fef5",
+      "mtime": 1773132120.0,
+      "sha256": "35ff6e75448d0b09935ac8ebdc2aa6d11c10df025489c57968ff20d5cb798cb2",
+      "size": 1004457,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.102775+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.4.26.docx": {
+      "category": "document",
+      "metadata_id": "930867df-6e86-5f5e-9d51-78bd5329dcb9",
+      "mtime": 1773132120.0,
+      "sha256": "9b82375596200220459e51e389b5cb6b7af3f80c1188bbf41b88e96aea58465c",
+      "size": 538082,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.191426+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.4.26.pdf": {
+      "category": "document",
+      "metadata_id": "26f120b6-4368-5ccb-a991-94cfa8c74797",
+      "mtime": 1773132120.0,
+      "sha256": "40bdfee5affba3c6e60aa4654fa3eb9d61303dcb4d414b718f977c3054f8c1e2",
+      "size": 2584199,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.292166+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.5.26.docx": {
+      "category": "document",
+      "metadata_id": "a1f4e0fb-716b-5563-852a-6272fedb05f8",
+      "mtime": 1773132120.0,
+      "sha256": "08a37d4c204e88dacbd0eb5cf2a0e153fe77628208856687a75113b057186150",
+      "size": 2112147,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.376198+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Daily Update Report 2.5.26.pdf": {
+      "category": "document",
+      "metadata_id": "ad6f36b8-0008-5c25-b62d-957a16b1ce02",
+      "mtime": 1773132120.0,
+      "sha256": "20e2457d1683f43bb6ccb5a8f55f3eaf0a24f5537185ef1a375c41914e74932d",
+      "size": 7197759,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.459615+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Weekly Update Report 2.27.26.pdf": {
+      "category": "document",
+      "metadata_id": "06e8d5f8-ac70-5ae2-b95b-fe24e2e86089",
+      "mtime": 1773132120.0,
+      "sha256": "917582dd5545b125c45a418cfd9bd58f3f25fd63b255bfe205ef47d0238e43d0",
+      "size": 4939456,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.537314+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Daily Reports/Ulta Beauty Fresno - Weekly Update Report 3.6.26.pdf": {
+      "category": "document",
+      "metadata_id": "abdb5bfd-ca50-5c3c-ab8d-615c57e69073",
+      "mtime": 1773132120.0,
+      "sha256": "814f32aa9fcc9fa800769bfcb8d54c13a7be494c287ca0da4b4a6388c7cd2b1f",
+      "size": 5823056,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:43:26.622873+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Site Overhead - Google Maps 1.16.26.pdf": {
+      "category": "document",
+      "metadata_id": "0858fb64-e5ac-544a-8b54-0c6b4e198818",
+      "mtime": 1773132180.0,
+      "sha256": "b71764313d1d2af71fb3786b9c01999402cd94653f6d501dae21a7e2dc6fa13b",
+      "size": 615348,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:47.135866+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.16.26.docx": {
+      "category": "document",
+      "metadata_id": "67fcb79c-b87a-5c2c-b69b-b5e4769e11a4",
+      "mtime": 1773132180.0,
+      "sha256": "82abb097a52a77eef821477a6b9d50ef61eb18972efa9ea5abfb197b54529680",
+      "size": 1341837,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:47.438439+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.16.26.pdf": {
+      "category": "document",
+      "metadata_id": "197a93b1-483e-57ff-8f28-03797eea346f",
+      "mtime": 1773132180.0,
+      "sha256": "fc62de904a4298d0dbb0873c9148ecf9ee10b5fec1ecb312785669aac7da902a",
+      "size": 1535908,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:47.592272+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.23.26.docx": {
+      "category": "document",
+      "metadata_id": "f44d3c4e-896f-59b5-b4e1-99a6c799c8cc",
+      "mtime": 1773132180.0,
+      "sha256": "d6b601193db68b9b95f455b36a3c547f9ab1bb9318d40a31151ccbc76b0a68ea",
+      "size": 170485,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:47.961307+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.23.26.pdf": {
+      "category": "document",
+      "metadata_id": "3b73ab80-cdb4-581c-8bd4-13f1524840ca",
+      "mtime": 1773132180.0,
+      "sha256": "7ca6879b9c1ad28a666bf6fc4e96deb8eed06e241c4d7749242502d6649d3501",
+      "size": 695407,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.107600+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.30.26.docx": {
+      "category": "document",
+      "metadata_id": "1fd72295-854b-581f-a326-8c3c6797ba31",
+      "mtime": 1773132180.0,
+      "sha256": "1ac6d6bead4754ff35404ec4d56368d1292caf4beae6753b505b78879eb7dcf6",
+      "size": 205343,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.252185+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 1.30.26.pdf": {
+      "category": "document",
+      "metadata_id": "ede128e7-82a6-5bec-a426-7ca85eb3c27d",
+      "mtime": 1773132180.0,
+      "sha256": "3cd1f0f8324158b1b3121f70127c3372026cc8100f259af3cf3f5215cd89ea0c",
+      "size": 2750027,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.426224+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.13.26.docx": {
+      "category": "document",
+      "metadata_id": "fd6495b4-60ba-53af-bbf0-3f93e0df1b50",
+      "mtime": 1773132180.0,
+      "sha256": "de5b5e27216b9ce4723db85bb9360a911e86b05b9a270de807060f5e9ce93423",
+      "size": 1767901,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.545983+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.13.26.pdf": {
+      "category": "document",
+      "metadata_id": "a8e8c530-0e1a-55fd-b0da-26f9d51e28dd",
+      "mtime": 1773132180.0,
+      "sha256": "d381e384e631f49279ef9db8e1c6314795928fb7ef30046126399bec6c6feb70",
+      "size": 5864345,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.658819+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.20.26.docx": {
+      "category": "document",
+      "metadata_id": "2953f34c-12a2-57d3-9d62-27c73297f03e",
+      "mtime": 1773132180.0,
+      "sha256": "c260c9c88cf4c21447b28ac9ff6b7b33eca2681c76f34f810cee0ab6d186ead2",
+      "size": 1579472,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:48.952907+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.20.26.pdf": {
+      "category": "document",
+      "metadata_id": "aea7573c-9fb7-52b4-8c3f-4e7dc5f90534",
+      "mtime": 1773132180.0,
+      "sha256": "0e6614509c7f99128528bc7fc7800e478ebdecc9268afa2f1b57c4c7d8d07cf4",
+      "size": 6854777,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.043960+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.27.26.docx": {
+      "category": "document",
+      "metadata_id": "d9a54cfd-ea9f-5324-9cb8-5de69a56b6d5",
+      "mtime": 1773132180.0,
+      "sha256": "cbc32e5d6a1ba6be4699ebe5745dde6e8384e12f38824934311edaa496a3ee4f",
+      "size": 1524384,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.144291+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.6.26.docx": {
+      "category": "document",
+      "metadata_id": "512c68e0-ab87-5b7f-be41-05eca5e6d6f2",
+      "mtime": 1773132180.0,
+      "sha256": "ac0097cf595426c178bde463746c15f597d34d81fc261d5b4e8a0e1fe4520afc",
+      "size": 1067206,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.257857+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 2.6.26.pdf": {
+      "category": "document",
+      "metadata_id": "966f47fc-d90f-5ba7-8892-7766eb87f6be",
+      "mtime": 1773132180.0,
+      "sha256": "44701fe25bbda6f69f0b24eb35a3fe52a8fd91b6a60a045abcb4f45d50e71561",
+      "size": 4427620,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.473560+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Reports/Weekly Reports/Ulta Beauty Fresno - Weekly Update Report 3.6.26.docx": {
+      "category": "document",
+      "metadata_id": "482ec9df-74f8-5c37-ad63-4a3d70a02337",
+      "mtime": 1773132180.0,
+      "sha256": "067d1df73335ef7561e1cfd1d49939275d2dca9f8cefb3e9383e45374b70a098",
+      "size": 1801688,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.569281+00:00"
+    },
+    "25- 127 - Ulta Beauty (Fresno, CA)/25- 127 - Ulta Reports/Ulta Inc Mutual NDA - Signed.pdf": {
+      "category": "document",
+      "metadata_id": "cdb910bb-d830-5a9f-ada6-662b0860cd3a",
+      "mtime": 1773132180.0,
+      "sha256": "8401fc93567645eb48d06b492d2bca56058f0a4f4a1e661939060b065da9fe1b",
+      "size": 77142,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:47:49.675045+00:00"
+    },
     "CEVA Burnville Sprinkler Phase 2 .xlsx": {
       "category": "financial_document",
       "metadata_id": "934bd44d-8182-5fa2-bf40-4510814b792f",
@@ -89,6 +746,321 @@
       "size": 28695,
       "status": "ingested",
       "updated_at": "2026-03-10T03:39:44.662246+00:00"
+    },
+    "Change Order (2026-03-08).pdf": {
+      "category": "contract",
+      "metadata_id": "349cef19-fb98-5288-bbfa-5606c67b43f9",
+      "mtime": 1772953288.9627523,
+      "sha256": "25b4b8607e22e1f2ff44bad7263009f4e34c7ad1451088417a625b1f7ffc72b8",
+      "size": 8077,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:48:33.516320+00:00"
+    },
+    "Chase Credit Card -7414-20260115.csv": {
+      "category": "financial_document",
+      "metadata_id": "7cc084de-5d88-5076-832b-fd5305fb6033",
+      "mtime": 1773164099.1033707,
+      "sha256": "1c6988ba791ee5303973b3490615fcded99347120a591e042f6e25f35a93be3b",
+      "size": 1433,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:48:40.932175+00:00"
+    },
+    "Close Out Document Tracker.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "5f876303-515e-5ab6-a18a-c45db89df8c9",
+      "mtime": 1773117471.6796904,
+      "sha256": "e582136be3b30bd34ea160ae4ab18506d0f93ff549c548ae3a74cc34c4067722",
+      "size": 11890,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:48:43.200523+00:00"
+    },
+    "Contract Change Order PC-4367-000 - Added Guardrails.pdf": {
+      "category": "contract",
+      "metadata_id": "e05021ed-e17f-5890-b3e6-dc820ce4132b",
+      "mtime": 1773117460.3872223,
+      "sha256": "e23759cd2b0270d025bbae678ec41bf077707172373854e23c1a26ec1f367174",
+      "size": 134693,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T06:48:56.056229+00:00"
+    },
+    "Estimate Commons/GW Central Illinois Commons Scope 120125.pdf": {
+      "category": "financial_document",
+      "metadata_id": "1dd4e8e3-c83e-562a-9d19-4ccdec79f7ab",
+      "mtime": 1773215520.0,
+      "sha256": "68c3067caafddc8843626e9fd01428b6443a83c1250e3d9a920054f9a08c284f",
+      "size": 77261,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:54:07.195785+00:00"
+    },
+    "Estimate Commons/GW Central Illinois Commons Scope.docx": {
+      "category": "financial_document",
+      "metadata_id": "c8292bd5-508d-5f50-bd60-3254ce9c59a8",
+      "mtime": 1773215520.0,
+      "sha256": "a048503f87302d236d195c87ec6b85b2fff7031e40dc01f011c2d1123629e87e",
+      "size": 98331,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:55:12.740987+00:00"
+    },
+    "Estimate Commons/Scope Sheet Commons (PDF).pdf": {
+      "category": "financial_document",
+      "metadata_id": "97ea7660-ae9b-522e-96d1-da69fd1832cb",
+      "mtime": 1773215520.0,
+      "sha256": "3ace7b6241627b297f00f361c906dd2d05bd8bedfcef7bae46e13a5939a65258",
+      "size": 110668,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:56:16.701312+00:00"
+    },
+    "Estimate Commons/Scope Sheet Commons.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "07dd4fbc-1883-553b-bed3-4fe8000f5a91",
+      "mtime": 1773215520.0,
+      "sha256": "46dbd2da8c7f9f8726369d3a735b57527d2231e2085831a45356f963f50a432a",
+      "size": 32269,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:56:35.832205+00:00"
+    },
+    "Estimate Galesburg/Updated proposal - 12.16.25/2025.12.17 - Alleato Group - Estimate Galesburg R1.pdf": {
+      "category": "financial_document",
+      "metadata_id": "d3a4a341-6551-5e6a-afd7-88cae8623919",
+      "mtime": 1773215760.0,
+      "sha256": "96216dc66ae3387169ad084b02072932ef2e471ef270ab488807b506d2bd9baa",
+      "size": 5213294,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:57:38.910905+00:00"
+    },
+    "Estimate Galesburg/Updated proposal - 12.16.25/Estimate Galesburg AJ.pdf": {
+      "category": "financial_document",
+      "metadata_id": "b7462332-cc59-53fa-a399-d2c428a4416a",
+      "mtime": 1773215760.0,
+      "sha256": "03d30353399b8e3a8137ed0368a1908f60996a495d9a49b63191c1b6ee414960",
+      "size": 81592,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:58:15.976980+00:00"
+    },
+    "Estimate Galesburg/Updated proposal - 12.16.25/GW Central Illinois Galesburg Scope.docx": {
+      "category": "financial_document",
+      "metadata_id": "2583d3ab-c7c6-5605-9bd0-9ed1f0fd938e",
+      "mtime": 1773215760.0,
+      "sha256": "5c262e137206c8a8e2cead47a5cd5c4c6faedc6c4cd0f1cbb096c0247116429f",
+      "size": 1532858,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:59:23.495705+00:00"
+    },
+    "Estimate Galesburg/Updated proposal - 12.16.25/GW Central Illinois Galesburg Scope.pdf": {
+      "category": "financial_document",
+      "metadata_id": "88979554-a3c1-5a8d-a5c6-4271332f1f3c",
+      "mtime": 1773215760.0,
+      "sha256": "639f472a1199efde5447fed071eec4beeed45f7dfdbae3900da2b422e6b36570",
+      "size": 5132632,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:00:55.349376+00:00"
+    },
+    "Estimate Macomb/Estimate Macomb AJ.pdf": {
+      "category": "financial_document",
+      "metadata_id": "9519141e-a4da-56a3-bae1-bd61930e299d",
+      "mtime": 1773212820.0,
+      "sha256": "01f4122bf4d4bd4803d1b7d21d303a51b0be1751ab551f29d3dc5d28c91eb030",
+      "size": 81730,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:01:37.463445+00:00"
+    },
+    "Estimate Macomb/GW Central Illinois Macomb Scope.docx": {
+      "category": "financial_document",
+      "metadata_id": "f4cf60dd-7ab2-5c1f-a836-a88dceb3d5ae",
+      "mtime": 1773212820.0,
+      "sha256": "0412e6b3afd6cfee0d5ec36f616472ba74578fc5883e3d14fd97ec6b5bca4a06",
+      "size": 98695,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:02:52.940741+00:00"
+    },
+    "Estimate Macomb/GW Central Illinois Macomb Scope.pdf": {
+      "category": "financial_document",
+      "metadata_id": "3df91a4d-583d-5d75-a5fb-9e0695eddf26",
+      "mtime": 1773212820.0,
+      "sha256": "081bac27e53bcb012fb2740c6e40c5e4c560f5d5fc35f4d2782037f623a96e5b",
+      "size": 87603,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:03:58.904435+00:00"
+    },
+    "Estimate Morris/2025.12.17 - Alleato Group - Estimate Morris R1.pdf": {
+      "category": "financial_document",
+      "metadata_id": "475be6f7-743c-57e3-a670-580e3826e299",
+      "mtime": 1773212880.0,
+      "sha256": "9b89f8d45411a5cdde7306ba3589f5b878163999bfa37cdb6670ed7f024a1a14",
+      "size": 170239,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:04:59.863301+00:00"
+    },
+    "Estimate Morris/Estimate Morris AJ.pdf": {
+      "category": "financial_document",
+      "metadata_id": "7fd7e767-eb6f-5d09-aadb-56cb0ce88279",
+      "mtime": 1773212880.0,
+      "sha256": "3e4a49c1c0909fb4b8782691a942648da64499b879f9a04337d2c0cdfdc1e52c",
+      "size": 82475,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:05:38.184328+00:00"
+    },
+    "Estimate Morris/GW Central Illinois Morris Scope.pdf": {
+      "category": "financial_document",
+      "metadata_id": "53186bb8-1c17-5717-9254-2ee91b986170",
+      "mtime": 1773212880.0,
+      "sha256": "21e4d2da41fc637df4f0de0dd0e383ff4750471b2472c888d44df3d9d4e2c00f",
+      "size": 88607,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:06:32.090269+00:00"
+    },
+    "Estimate Pioneer pkwy/Clarifications Template Updated Offices.docx": {
+      "category": "financial_document",
+      "metadata_id": "b9fbf81e-3eb8-52a7-9c81-c6e9bb05e6d1",
+      "mtime": 1773215700.0,
+      "sha256": "a83dd4537eda0a641c15648e3fbedaeb086dec995087087d35f5e624b5a8e86a",
+      "size": 100850,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:07:19.297051+00:00"
+    },
+    "Estimate Pioneer pkwy/GW Central Illinois Pioneer Scope.docx": {
+      "category": "financial_document",
+      "metadata_id": "bf789558-4766-578e-874b-a8a67c885017",
+      "mtime": 1773215700.0,
+      "sha256": "f8c5aec9fab6706cdf2af8b9858f78ba1e5f9917d28c879e204d158beb27ea83",
+      "size": 99993,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:08:57.840320+00:00"
+    },
+    "Estimate Pioneer pkwy/Scope Sheet Template.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "93726b2c-ea99-5c30-816e-0601d0144613",
+      "mtime": 1773215700.0,
+      "sha256": "8df9d8bf03be247f88e43d051ebe5290686f319edfeddf7bb6a65883626f4d5e",
+      "size": 38817,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:08:57.940423+00:00"
+    },
+    "Estimate Pioneer pkwy/Sprinkler Material Take Off Sheet .xlsx": {
+      "category": "financial_document",
+      "metadata_id": "aa24776e-d734-5e32-894e-25a48ec6d8da",
+      "mtime": 1773215700.0,
+      "sha256": "3b9576b52d54636a9efe0df527c670a23b40cd5425e56b004f3e16c4fe5ab784",
+      "size": 16554,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:08:58.029875+00:00"
+    },
+    "Exol Wilmer FA.pdf": {
+      "category": "document",
+      "metadata_id": "4434cf68-35e0-5d77-a9b0-56f64f36d761",
+      "mtime": 1773201258.2962008,
+      "sha256": "3649e1b0c2cc89154f7e21f8c00ca9ec784d93951a8f1cd7e35c09670d138c32",
+      "size": 76549,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:09:34.530229+00:00"
+    },
+    "Invoice RI-4367-0001.pdf": {
+      "category": "financial_document",
+      "metadata_id": "1d8b7c26-0580-573b-8a51-204ab4d8c221",
+      "mtime": 1773117506.386442,
+      "sha256": "f9aa518934f6c33e349bf0f082fba3716323327ed0faefd9022f59cab4ee6091",
+      "size": 129440,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:09:40.580968+00:00"
+    },
+    "PARADISE ISLE.pdf": {
+      "category": "document",
+      "metadata_id": "c8175f68-1de3-5ca8-bab1-6e2a80ec7d5a",
+      "mtime": 1772952579.126941,
+      "sha256": "6f391bf2555a4d942f6eb0a0b61576d664705793201267cf21c6a7c15c5bee4a",
+      "size": 1141070,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:09:50.194048+00:00"
+    },
+    "Radial/04 - Estimate/070325 Radial Brownsburg.pdf": {
+      "category": "financial_document",
+      "metadata_id": "f436de4c-d5dd-51cb-8a5f-2be28b494990",
+      "mtime": 1773131820.0,
+      "sha256": "fe06f95b831ffc25859de7e015060285146eff6c6e9778aa0924fd0c7a46987f",
+      "size": 128621,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:04.791597+00:00"
+    },
+    "Radial/04 - Estimate/Clarifications Template.docx": {
+      "category": "financial_document",
+      "metadata_id": "0e47e6b2-4569-55a5-80ab-aada943c39b6",
+      "mtime": 1773131820.0,
+      "sha256": "ed781175b393db05ba1624d6ecbe2ea38fa16d8405a7713d0d8cf861dfb8fdc8",
+      "size": 92402,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:04.874977+00:00"
+    },
+    "Radial/04 - Estimate/Clarifications Template.pdf": {
+      "category": "financial_document",
+      "metadata_id": "6a519b30-e447-5a5a-b30c-a774fd0611dc",
+      "mtime": 1773131820.0,
+      "sha256": "029fd3c067000bf2eeb5e26874e961d6b82a5d60ea92a9a16b205407b8b83f25",
+      "size": 143826,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:04.958418+00:00"
+    },
+    "Radial/04 - Estimate/Clarifications. Radial Brownsburg.docx": {
+      "category": "financial_document",
+      "metadata_id": "784bae2b-6188-5639-8041-355e172af2ca",
+      "mtime": 1773131820.0,
+      "sha256": "2813e2523c0cfc0a1ecba47b09b4d8d92a1b5f5f1ba542926706ff0f5463a290",
+      "size": 106671,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.038970+00:00"
+    },
+    "Radial/04 - Estimate/Clarifications.pdf": {
+      "category": "financial_document",
+      "metadata_id": "bd9fbb6e-1a21-5985-a6f6-c0f12ffa31c6",
+      "mtime": 1773131820.0,
+      "sha256": "69a8ef70d92dbbcbd9616071af9eab1156e94fe028a8922db9fd40c456fb80e5",
+      "size": 51791,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.125825+00:00"
+    },
+    "Radial/04 - Estimate/Radial Brownsburg Estimate.xlsx": {
+      "category": "financial_document",
+      "metadata_id": "dfeca50f-6e29-5cc9-9247-a3b7bb7040e4",
+      "mtime": 1773131820.0,
+      "sha256": "0170553a3093f401f66beef8a734451cdba7abc6c7b9ee389f92940087eb3423",
+      "size": 124289,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.211893+00:00"
+    },
+    "Radial/04 - Estimate/SOW/Updated 6.24.25 - Indy1 - Locus Induct Closeup.pdf": {
+      "category": "financial_document",
+      "metadata_id": "e24c5a02-b13c-57ea-8c41-343b105a7780",
+      "mtime": 1773131820.0,
+      "sha256": "a4e191d3530b61ca4a6aaf8b594616b732371d42ac7b0305661817b87743d9a9",
+      "size": 649464,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.316700+00:00"
+    },
+    "Radial/04 - Estimate/SOW/Updated 6.24.25 - Indy1 - WF_Locus_Power+Guardrails.pdf": {
+      "category": "financial_document",
+      "metadata_id": "3637d3cc-c788-5c15-a3dd-70898e76f312",
+      "mtime": 1773131820.0,
+      "sha256": "96f50d231745d0b4ec3bfdbf18db7af19c98324e74a632e10832433ce2108f49",
+      "size": 1310912,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.399970+00:00"
+    },
+    "Radial/04 - Estimate/SOW/White Fox Indy 1 Locus SOW v1 06.11.25.docx": {
+      "category": "financial_document",
+      "metadata_id": "d47aa8f1-4ba0-5e46-aa37-6a41b9b3b5ca",
+      "mtime": 1773131820.0,
+      "sha256": "0076454a2b1300ae3a79093b76cd0fd4b3a2eed4aa266b48c34c975bea29f7c7",
+      "size": 20035,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.483982+00:00"
+    },
+    "Radial/04 - Estimate/SOW/White Fox Indy 1 Locus SOW v2 06.24.25.docx": {
+      "category": "financial_document",
+      "metadata_id": "1d12e3a8-8363-5570-9716-e7a7b73316d4",
+      "mtime": 1773131820.0,
+      "sha256": "9b1b622d2052f8d3ec63d15c3ee646ef5724e87360cada9fa93a6a52c976f302",
+      "size": 20374,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.569214+00:00"
     },
     "Radial/04 - Estimate/Scope Sheet Template.xlsx": {
       "category": "financial_document",
@@ -125,8 +1097,179 @@
       "size": 134693,
       "status": "skipped_existing",
       "updated_at": "2026-03-10T05:43:28.925496+00:00"
+    },
+    "Radial/05 - Proposal/Contract PC-4367-0001.pdf": {
+      "category": "financial_document",
+      "metadata_id": "725cb531-28a4-56e6-a11b-988011c97c65",
+      "mtime": 1773131820.0,
+      "sha256": "0db5636ff7f912b0420a50d4cbbce1e6e41b0cacfa089371bfaa1b55e64fde19",
+      "size": 147904,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.653407+00:00"
+    },
+    "Radial/06 - Bid (Responses)/11 - Equipment/Best Equipment & Welding/Added Guardrail Change Order.pdf": {
+      "category": "contract",
+      "metadata_id": "037312b7-aa4f-5d02-b3f8-3b0819c0fea4",
+      "mtime": 1773131820.0,
+      "sha256": "40472c46c637d3c472f4fb83375527499f3fecf2d49a09d7df803ac422467b34",
+      "size": 82392,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.737289+00:00"
+    },
+    "Radial/06 - Bid (Responses)/11 - Equipment/Best Equipment & Welding/Brownsburg guardrailing revised - Signed.pdf": {
+      "category": "document",
+      "metadata_id": "40355a16-e0c7-5e48-af0c-d2ed873b4254",
+      "mtime": 1773131820.0,
+      "sha256": "35e28baec0695f55e86d0e6c0ccfa647ae00356f6a1e21880647b9a56cb51efa",
+      "size": 197532,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.842810+00:00"
+    },
+    "Radial/06 - Bid (Responses)/11 - Equipment/Best Equipment & Welding/Commitment Change Order SC-4367-0001 - Additional Guardrails.pdf": {
+      "category": "contract",
+      "metadata_id": "a4ecaf16-9c91-55d5-9d07-63883fc1757f",
+      "mtime": 1773131820.0,
+      "sha256": "112e6c771a4a144d39fad9cdfdb56b78b1ef51488fabec12c47d66e3b98b86e2",
+      "size": 79427,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:05.920463+00:00"
+    },
+    "Radial/06 - Bid (Responses)/11 - Equipment/Best Equipment & Welding/Q02655 Alleato Guardrail Installation Brownsburg Radial Add-on 265 FT.pdf": {
+      "category": "document",
+      "metadata_id": "10a0d564-8a85-521e-bbd3-cc15aa3061a2",
+      "mtime": 1773131820.0,
+      "sha256": "1f118f37e394796498f290e0c0e20188189d886861d6739d1a1fea233724cb7c",
+      "size": 127780,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.020005+00:00"
+    },
+    "Radial/06 - Bid (Responses)/11 - Equipment/Best Equipment & Welding/Void/Brownsburg guardrailing.pdf": {
+      "category": "document",
+      "metadata_id": "a9c1a441-f2d0-5e3e-be52-66a889cb2e6e",
+      "mtime": 1773131820.0,
+      "sha256": "631c9d798c614f2fed12f853091b97ff85b7486a6769dbc7fb4616ec275f7c42",
+      "size": 196203,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.100645+00:00"
+    },
+    "Radial/06 - Bid (Responses)/26 - Electrical/CO#1.1 DAVID Electric_Radial Brownsburg - Locus Charging_Alleato.pdf": {
+      "category": "document",
+      "metadata_id": "11684814-0ad3-52cf-a34c-e6947bfc26f1",
+      "mtime": 1773131820.0,
+      "sha256": "923817fa8bbf0d94b8b1d05cb32d7a9bab8b25cf018bb2d3a8cbae1988a8f7a9",
+      "size": 157619,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.185313+00:00"
+    },
+    "Radial/06 - Bid (Responses)/26 - Electrical/LOP DAVID Electric_Radial Brownsburg - Locus Charging_Alleato.pdf": {
+      "category": "document",
+      "metadata_id": "d8f9f98e-aa1d-5738-9126-3189f9510fdb",
+      "mtime": 1773131820.0,
+      "sha256": "6d65e6a5fdccbce58975cf95b971dc5627260c1571bd90e7a885213aaee1c0ab",
+      "size": 163751,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.266594+00:00"
+    },
+    "Radial/OneDrive_2_3-10-2026/Radial Brownsburg - Progress Report - 7.18.25.docx": {
+      "category": "document",
+      "metadata_id": "f017eb80-3d1e-5916-a442-2761363d5400",
+      "mtime": 1773131880.0,
+      "sha256": "543b81578b5a126f452f73b99ab9c5403acece3ac16a9c97d6f84e18c5bdf97d",
+      "size": 886677,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.363157+00:00"
+    },
+    "Radial/OneDrive_2_3-10-2026/Radial Brownsburg - Progress Report - 7.18.25.pdf": {
+      "category": "document",
+      "metadata_id": "5398d15e-d156-5661-828b-c0ddd7f4ac5c",
+      "mtime": 1773131880.0,
+      "sha256": "799eca01b86a086048297db6a8907a13afddaf41610b0c23d1b0cefdb84b2393",
+      "size": 3009948,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.446671+00:00"
+    },
+    "Radial/PO4500060771.PDF": {
+      "category": "document",
+      "metadata_id": "f7c4e631-bcd8-5d23-aa11-372d17352e8e",
+      "mtime": 1773117515.694022,
+      "sha256": "b837622367649fc1f32c8789ffdfdef201474ea62d94e6abbbb1cd9efbfe7199",
+      "size": 14790,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.528642+00:00"
+    },
+    "Tag Radial -FES gear O&M.pdf": {
+      "category": "document",
+      "metadata_id": "c2879163-45d7-5eac-84e3-1a39dc956103",
+      "mtime": 1773117482.8969104,
+      "sha256": "896c89302b782de7e5dbb2936844c5deb40a0462f4f41c3d575ece1be637cee1",
+      "size": 3006476,
+      "status": "skipped_existing",
+      "updated_at": "2026-03-11T07:10:06.611609+00:00"
+    },
+    "Transactions 06092025 Procore.csv": {
+      "category": "financial_document",
+      "metadata_id": "d417ddef-896d-54e3-870c-5181d5202e5e",
+      "mtime": 1772951942.796559,
+      "sha256": "4bd95c47dc40f4405f644ae2cc32919a24601e682d31de17ba903f3805c94000",
+      "size": 18093,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:10:12.552535+00:00"
+    },
+    "Transactions approved 02-11-26 Exp.csv": {
+      "category": "financial_document",
+      "metadata_id": "899e06f5-eee1-5d44-855c-e7e2e5258436",
+      "mtime": 1773164073.022785,
+      "sha256": "87921accd46fbc802e42b0946767b8a5b68fcca67f7b58379e1b4fa5fbe61dcb",
+      "size": 10379,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:10:18.740471+00:00"
+    },
+    "estimate Canton/2025.12.17 - Alleato Group - Estimate Canton R1.pdf": {
+      "category": "financial_document",
+      "metadata_id": "ae93fd63-10d8-51c6-8421-3c1b363307bb",
+      "mtime": 1773212940.0,
+      "sha256": "e1916e505d276e08f09eebe7c05ad9909a73bc73e2b5f639645bf5ff3da76402",
+      "size": 168654,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:49:34.522958+00:00"
+    },
+    "estimate Canton/Estimate Canton 12.16.25.pdf": {
+      "category": "financial_document",
+      "metadata_id": "d5702b54-c4a9-5b63-90ab-b76f16f12384",
+      "mtime": 1773212940.0,
+      "sha256": "4c916c02f6193f823110067df68f815ad614fb63bb251fd29a276bac06f423eb",
+      "size": 80936,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:50:13.906092+00:00"
+    },
+    "estimate Canton/GW Central Illinois Canton Scope - 12.16.25.docx": {
+      "category": "financial_document",
+      "metadata_id": "76b53144-3595-5e71-8460-bdaabe4a9070",
+      "mtime": 1773212940.0,
+      "sha256": "b919341c05df9326127db543fde85337908a995460c2a255be9a0de0460b0a88",
+      "size": 99167,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:51:13.102768+00:00"
+    },
+    "estimate Canton/GW Central Illinois Canton Scope - 12.16.25.pdf": {
+      "category": "financial_document",
+      "metadata_id": "fc631678-0fbf-5954-967c-37cbc36bc76e",
+      "mtime": 1773212940.0,
+      "sha256": "64e30457dddb3b45353f0b7dce2b30c55a2bf7ecf0adc2de0517e5f29f0e07a9",
+      "size": 88233,
+      "status": "ingested",
+      "updated_at": "2026-03-11T06:52:28.129123+00:00"
+    },
+    "export1-7.csv": {
+      "category": "financial_document",
+      "metadata_id": "35c6cf2d-9beb-5f4f-844d-fc90eb42e67d",
+      "mtime": 1773156703.6922312,
+      "sha256": "e0f37971a7e8f95d95b7370beac1e3d01e51b2b912f2f3545c275a37a54eef62",
+      "size": 25550,
+      "status": "ingested",
+      "updated_at": "2026-03-11T07:09:40.494593+00:00"
     }
   },
-  "updated_at": "2026-03-10T05:43:50.452248+00:00",
+  "updated_at": "2026-03-11T07:10:20.767732+00:00",
   "version": 1
 }

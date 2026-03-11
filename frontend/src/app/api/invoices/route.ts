@@ -3,6 +3,46 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
+const LEGACY_STATUSES = ["draft", "submitted", "approved", "paid", "void"] as const;
+
+type LegacyInvoiceStatus = (typeof LEGACY_STATUSES)[number];
+
+function toLegacyStatus(status: string | null): LegacyInvoiceStatus {
+  const normalized = (status ?? "").trim().toLowerCase();
+  if (LEGACY_STATUSES.includes(normalized as LegacyInvoiceStatus)) {
+    return normalized as LegacyInvoiceStatus;
+  }
+
+  switch (normalized) {
+    case "open":
+      return "submitted";
+    case "closed":
+      return "paid";
+    case "hold":
+      return "draft";
+    case "voided":
+      return "void";
+    default:
+      return "draft";
+  }
+}
+
+function toAcumaticaStatus(status: LegacyInvoiceStatus): string {
+  switch (status) {
+    case "draft":
+      return "Hold";
+    case "submitted":
+    case "approved":
+      return "Open";
+    case "paid":
+      return "Closed";
+    case "void":
+      return "Voided";
+    default:
+      return "Open";
+  }
+}
+
 // Zod schema for invoice creation
 // OWASP: Input validation on financial data endpoints (A03:2021 - Injection, A04:2021 - Insecure Design)
 const createInvoiceSchema = z.object({
@@ -11,23 +51,7 @@ const createInvoiceSchema = z.object({
     .trim()
     .min(1, "Invoice number is required")
     .max(100, "Invoice number must be at most 100 characters"),
-  commitment_id: z.string().uuid("Must be a valid UUID").nullable().optional(),
-  contract_id: z.string().uuid("Must be a valid UUID").nullable().optional(),
   project_id: z.coerce.number().int().positive().nullable().optional(),
-  billing_period_start: z
-    .string()
-    .min(1, "Billing period start is required")
-    .refine(
-      (val) => !Number.isNaN(Date.parse(val)),
-      "Must be a valid date string",
-    ),
-  billing_period_end: z
-    .string()
-    .min(1, "Billing period end is required")
-    .refine(
-      (val) => !Number.isNaN(Date.parse(val)),
-      "Must be a valid date string",
-    ),
   invoice_date: z
     .string()
     .min(1, "Invoice date is required")
@@ -35,20 +59,11 @@ const createInvoiceSchema = z.object({
       (val) => !Number.isNaN(Date.parse(val)),
       "Must be a valid date string",
     ),
-  due_date: z
-    .string()
-    .refine(
-      (val) => !val || !Number.isNaN(Date.parse(val)),
-      "Must be a valid date string",
-    )
-    .optional()
-    .nullable(),
   status: z
-    .enum(["draft", "submitted", "approved", "paid", "void"])
+    .enum(LEGACY_STATUSES)
     .default("draft"),
   amount: z.coerce.number().default(0),
-  retention_amount: z.coerce.number().default(0),
-  net_amount: z.coerce.number().default(0),
+  tax_amount: z.coerce.number().optional().default(0),
   notes: z.string().trim().max(2000, "Notes must be at most 2000 characters").optional().nullable(),
 });
 
@@ -63,30 +78,25 @@ export async function GET(request: Request) {
 
     const search = searchParams.get("search");
     const status = searchParams.get("status");
-    const projectId = searchParams.get("project_id");
-    const commitmentId = searchParams.get("commitment_id");
+    const projectId = searchParams.get("project_id") ?? searchParams.get("projectId");
 
     let query = supabase
-      .from("invoices")
-      .select("*")
+      .from("acumatica_ar_invoices")
+      .select("id, reference_nbr, status, date, description, amount, balance, tax_total, project_id, created_at, updated_at")
       .order("created_at", { ascending: false });
 
     if (search) {
       query = query.or(
-        `invoice_number.ilike.%${search}%,notes.ilike.%${search}%`,
+        `reference_nbr.ilike.%${search}%,description.ilike.%${search}%,customer.ilike.%${search}%,project.ilike.%${search}%`,
       );
     }
 
     if (status) {
-      query = query.eq("status", status);
+      query = query.ilike("status", status);
     }
 
     if (projectId) {
       query = query.eq("project_id", parseInt(projectId));
-    }
-
-    if (commitmentId) {
-      query = query.eq("commitment_id", commitmentId);
     }
 
     const { data, error } = await query;
@@ -95,7 +105,33 @@ export async function GET(request: Request) {
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data || []);
+    const mapped = (data ?? []).map((row) => {
+      const amount = row.amount ?? 0;
+      const balance = row.balance ?? amount;
+      const paidAmount = Math.max(amount - balance, 0);
+
+      return {
+        id: String(row.id),
+        commitment_id: "",
+        number: row.reference_nbr,
+        billing_period_start: row.date,
+        billing_period_end: row.date,
+        status: toLegacyStatus(row.status),
+        invoice_date: row.date,
+        due_date: null,
+        subtotal: amount,
+        tax_amount: row.tax_total ?? 0,
+        retention_amount: 0,
+        total_amount: amount,
+        paid_amount: paidAmount,
+        payment_date: null,
+        notes: row.description,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      };
+    });
+
+    return NextResponse.json({ data: mapped });
   } catch (error) {
     return apiErrorResponse(error);
   }
@@ -122,30 +158,49 @@ export async function POST(request: Request) {
     const validated = validation.data;
 
     const { data, error } = await supabase
-      .from("invoices")
+      .from("acumatica_ar_invoices")
       .insert({
-        invoice_number: validated.invoice_number,
-        commitment_id: validated.commitment_id || null,
-        contract_id: validated.contract_id || null,
+        reference_nbr: validated.invoice_number,
+        type: "Invoice",
+        status: toAcumaticaStatus(validated.status),
+        date: validated.invoice_date,
         project_id: validated.project_id || null,
-        billing_period_start: validated.billing_period_start,
-        billing_period_end: validated.billing_period_end,
-        invoice_date: validated.invoice_date,
-        due_date: validated.due_date,
-        status: validated.status,
         amount: validated.amount,
-        retention_amount: validated.retention_amount,
-        net_amount: validated.net_amount,
-        notes: validated.notes,
+        balance: validated.status === "paid" ? 0 : validated.amount,
+        tax_total: validated.tax_amount ?? 0,
+        hold: validated.status === "draft",
+        description: validated.notes,
       })
-      .select()
+      .select("id, reference_nbr, status, date, description, amount, balance, tax_total, project_id, created_at, updated_at")
       .single();
 
     if (error) {
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data, { status: 201 });
+    const amount = data.amount ?? 0;
+    const balance = data.balance ?? amount;
+    const mapped = {
+      id: String(data.id),
+      commitment_id: "",
+      number: data.reference_nbr,
+      billing_period_start: data.date,
+      billing_period_end: data.date,
+      status: toLegacyStatus(data.status),
+      invoice_date: data.date,
+      due_date: null,
+      subtotal: amount,
+      tax_amount: data.tax_total ?? 0,
+      retention_amount: 0,
+      total_amount: amount,
+      paid_amount: Math.max(amount - balance, 0),
+      payment_date: null,
+      notes: data.description,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    return NextResponse.json({ data: mapped }, { status: 201 });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -56,6 +56,24 @@ function formatDate(value: string | null | undefined): string {
   return parsed.toLocaleDateString();
 }
 
+function normalizeVendorField(value: string | null | undefined): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  // Supabase/Postgres empty-array/object text artifacts sometimes appear as "{}"/"[]".
+  if (
+    trimmed === "{}" ||
+    trimmed === "[]" ||
+    trimmed.toLowerCase() === "null" ||
+    trimmed.toLowerCase() === "undefined"
+  ) {
+    return "";
+  }
+
+  return trimmed;
+}
+
 function buildVendorTableColumns(): TableColumn<Vendor>[] {
   return [
     {
@@ -75,13 +93,13 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
     },
     {
       ...vendorColumns[3],
-      render: (item) => <span>{item.contact_email || "-"}</span>,
-      sortValue: (item) => item.contact_email || "",
+      render: (item) => <span>{normalizeVendorField(item.contact_email) || "-"}</span>,
+      sortValue: (item) => normalizeVendorField(item.contact_email),
     },
     {
       ...vendorColumns[4],
-      render: (item) => <span>{item.contact_phone || "-"}</span>,
-      sortValue: (item) => item.contact_phone || "",
+      render: (item) => <span>{normalizeVendorField(item.contact_phone) || "-"}</span>,
+      sortValue: (item) => normalizeVendorField(item.contact_phone),
     },
     {
       ...vendorColumns[5],
@@ -262,7 +280,8 @@ export default function DirectoryVendorsPage(): ReactElement {
         v.name.toLowerCase().includes(search) ||
         (v.legal_name || "").toLowerCase().includes(search) ||
         (v.contact_name || "").toLowerCase().includes(search) ||
-        (v.contact_email || "").toLowerCase().includes(search) ||
+        normalizeVendorField(v.contact_email).toLowerCase().includes(search) ||
+        normalizeVendorField(v.contact_phone).toLowerCase().includes(search) ||
         (v.city || "").toLowerCase().includes(search) ||
         (v.state || "").toLowerCase().includes(search) ||
         (v.acumatica_vendor_id || "").toLowerCase().includes(search)

@@ -96,6 +96,8 @@ export type Database = {
           acumatica_sync_at: string | null
           amount: number | null
           balance: number | null
+          billing_period_id: string | null
+          company_id: string | null
           created_at: string | null
           customer: string | null
           date: string | null
@@ -105,6 +107,7 @@ export type Database = {
           link_ar_account: string | null
           post_period: string | null
           project: string | null
+          project_id: number | null
           reference_nbr: string
           status: string | null
           tax_total: number | null
@@ -115,6 +118,8 @@ export type Database = {
           acumatica_sync_at?: string | null
           amount?: number | null
           balance?: number | null
+          billing_period_id?: string | null
+          company_id?: string | null
           created_at?: string | null
           customer?: string | null
           date?: string | null
@@ -124,6 +129,7 @@ export type Database = {
           link_ar_account?: string | null
           post_period?: string | null
           project?: string | null
+          project_id?: number | null
           reference_nbr: string
           status?: string | null
           tax_total?: number | null
@@ -134,6 +140,8 @@ export type Database = {
           acumatica_sync_at?: string | null
           amount?: number | null
           balance?: number | null
+          billing_period_id?: string | null
+          company_id?: string | null
           created_at?: string | null
           customer?: string | null
           date?: string | null
@@ -143,13 +151,71 @@ export type Database = {
           link_ar_account?: string | null
           post_period?: string | null
           project?: string | null
+          project_id?: number | null
           reference_nbr?: string
           status?: string | null
           tax_total?: number | null
           type?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_ar_invoices_billing_period_id_fkey"
+            columns: ["billing_period_id"]
+            isOneToOne: false
+            referencedRelation: "billing_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ar_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_view_backups: {
         Row: {
@@ -15869,6 +15935,7 @@ export type Database = {
           description: string
           due_date: string | null
           embedding: string | null
+          file_name: string | null
           id: string
           metadata_id: string
           priority: string | null
@@ -15888,6 +15955,7 @@ export type Database = {
           description: string
           due_date?: string | null
           embedding?: string | null
+          file_name?: string | null
           id?: string
           metadata_id: string
           priority?: string | null
@@ -15907,6 +15975,7 @@ export type Database = {
           description?: string
           due_date?: string | null
           embedding?: string | null
+          file_name?: string | null
           id?: string
           metadata_id?: string
           priority?: string | null

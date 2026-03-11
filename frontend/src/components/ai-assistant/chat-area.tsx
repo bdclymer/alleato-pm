@@ -110,6 +110,40 @@ function formatToolName(name: string): string {
     .trim();
 }
 
+/**
+ * Normalize numbered meeting summaries into a clearer layout:
+ * "1. **Meeting Name** - details" => "### 1. Meeting Name\n\ndetails"
+ */
+function formatStructuredMeetingList(text: string): string {
+  if (!text.includes("\n") || !text.includes("1.")) return text;
+
+  const lines = text.split("\n");
+  const linePattern =
+    /^(\d+)\.\s*(?:\*\*([^*]+)\*\*|([^—–:\-]+))\s*[—–:\-]\s*(.+)$/;
+
+  const matches = lines
+    .map((line, index) => ({ line, index, match: line.match(linePattern) }))
+    .filter((item) => item.match);
+
+  // Only transform when this really looks like a meeting/results list.
+  if (matches.length < 2) return text;
+
+  const firstMatchIndex = matches[0].index;
+  const before = lines.slice(0, firstMatchIndex).join("\n").trim();
+  const transformed = matches
+    .map((item) => {
+      const match = item.match;
+      if (!match) return item.line;
+      const num = match[1];
+      const title = (match[2] ?? match[3] ?? "").trim();
+      const description = match[4].trim();
+      return `### ${num}. ${title}\n\n${description}`;
+    })
+    .join("\n\n");
+
+  return before ? `${before}\n\n${transformed}` : transformed;
+}
+
 // ─── Assistant Avatar ───────────────────────────────────────────────
 
 function AssistantAvatar() {
@@ -462,6 +496,9 @@ export function ChatArea({
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
+                const formattedAssistantText = isAssistant
+                  ? formatStructuredMeetingList(text)
+                  : text;
                 const reasoningText = isAssistant ? getReasoningText(msg) : "";
                 const toolParts = isAssistant
                   ? getToolParts(msg)
@@ -563,7 +600,7 @@ export function ChatArea({
                           ) : null}
 
                           {/* Main text response */}
-                          <MessageResponse>{text}</MessageResponse>
+                          <MessageResponse>{formattedAssistantText}</MessageResponse>
 
                           {/* Persisted tool traces (historical messages) */}
                           {toolParts.length === 0 &&

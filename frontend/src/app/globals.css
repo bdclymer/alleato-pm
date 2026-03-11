@@ -1749,20 +1749,27 @@
     /* ─── Lists (critical fix: numbers/bullets rendering) ── */
     & ol {
       list-style-type: decimal;
+      list-style-position: inside;
       padding-left: 1.5rem;
       margin-top: 0.5rem;
       margin-bottom: 0.5rem;
     }
     & ul {
       list-style-type: disc;
+      list-style-position: inside;
       padding-left: 1.5rem;
       margin-top: 0.5rem;
       margin-bottom: 0.5rem;
     }
     & li {
+      display: list-item;
       margin-top: 0.125rem;
       margin-bottom: 0.125rem;
       line-height: 1.7;
+    }
+    & li::marker {
+      color: hsl(var(--muted-foreground));
+      font-weight: 500;
     }
     & li > p {
       margin-top: 0.125rem;
