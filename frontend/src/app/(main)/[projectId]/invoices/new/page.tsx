@@ -222,6 +222,9 @@ export default function NewInvoicePage() {
         },
         body: JSON.stringify({
           invoice_number: invoiceData.invoiceNumber,
+          project_id: Number.isNaN(parseInt(projectId, 10))
+            ? null
+            : parseInt(projectId, 10),
           contract_id:
             invoiceData.contractType === "prime"
               ? invoiceData.contractId
