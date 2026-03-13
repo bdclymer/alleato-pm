@@ -29,6 +29,230 @@ export type Database = {
         }
         Relationships: []
       }
+      acumatica_ap_bill_lines: {
+        Row: {
+          account: string | null
+          amount: number | null
+          bill_id: number
+          cost_code: string | null
+          created_at: string
+          description: string | null
+          extended_cost: number | null
+          id: number
+          inventory_id: string | null
+          line_nbr: number | null
+          po_order_nbr: string | null
+          po_order_type: string | null
+          project_code: string | null
+          project_task: string | null
+          qty: number | null
+          raw_payload: Json | null
+          tax_category: string | null
+          transaction_description: string | null
+          unit_cost: number | null
+          uom: string | null
+        }
+        Insert: {
+          account?: string | null
+          amount?: number | null
+          bill_id: number
+          cost_code?: string | null
+          created_at?: string
+          description?: string | null
+          extended_cost?: number | null
+          id?: number
+          inventory_id?: string | null
+          line_nbr?: number | null
+          po_order_nbr?: string | null
+          po_order_type?: string | null
+          project_code?: string | null
+          project_task?: string | null
+          qty?: number | null
+          raw_payload?: Json | null
+          tax_category?: string | null
+          transaction_description?: string | null
+          unit_cost?: number | null
+          uom?: string | null
+        }
+        Update: {
+          account?: string | null
+          amount?: number | null
+          bill_id?: number
+          cost_code?: string | null
+          created_at?: string
+          description?: string | null
+          extended_cost?: number | null
+          id?: number
+          inventory_id?: string | null
+          line_nbr?: number | null
+          po_order_nbr?: string | null
+          po_order_type?: string | null
+          project_code?: string | null
+          project_task?: string | null
+          qty?: number | null
+          raw_payload?: Json | null
+          tax_category?: string | null
+          transaction_description?: string | null
+          unit_cost?: number | null
+          uom?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_ap_bill_lines_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "acumatica_ap_bills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_ap_bills: {
+        Row: {
+          acumatica_sync_at: string | null
+          amount: number | null
+          approved_for_payment: boolean | null
+          balance: number | null
+          cash_account: string | null
+          company_id: string | null
+          created_at: string
+          currency_id: string | null
+          date: string | null
+          description: string | null
+          document_type: string | null
+          due_date: string | null
+          external_key: string
+          hold: boolean | null
+          id: number
+          last_modified_at: string | null
+          post_period: string | null
+          project_code: string | null
+          project_id: number | null
+          raw_payload: Json | null
+          reference_nbr: string
+          status: string | null
+          tax_total: number | null
+          terms: string | null
+          updated_at: string
+          vendor_id: string | null
+          vendor_ref: string | null
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          amount?: number | null
+          approved_for_payment?: boolean | null
+          balance?: number | null
+          cash_account?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          external_key: string
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          post_period?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr: string
+          status?: string | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_ref?: string | null
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          amount?: number | null
+          approved_for_payment?: boolean | null
+          balance?: number | null
+          cash_account?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          external_key?: string
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          post_period?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr?: string
+          status?: string | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_ap_bills_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_ap_bills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acumatica_ar_invoice_lines: {
         Row: {
           account: string | null
@@ -96,12 +320,14 @@ export type Database = {
           acumatica_sync_at: string | null
           amount: number | null
           balance: number | null
+          billing_period: string | null
           billing_period_id: string | null
           company_id: string | null
           created_at: string | null
           customer: string | null
           date: string | null
           description: string | null
+          due_date: string | null
           hold: boolean | null
           id: number
           link_ar_account: string | null
@@ -118,12 +344,14 @@ export type Database = {
           acumatica_sync_at?: string | null
           amount?: number | null
           balance?: number | null
+          billing_period?: string | null
           billing_period_id?: string | null
           company_id?: string | null
           created_at?: string | null
           customer?: string | null
           date?: string | null
           description?: string | null
+          due_date?: string | null
           hold?: boolean | null
           id?: number
           link_ar_account?: string | null
@@ -140,12 +368,14 @@ export type Database = {
           acumatica_sync_at?: string | null
           amount?: number | null
           balance?: number | null
+          billing_period?: string | null
           billing_period_id?: string | null
           company_id?: string | null
           created_at?: string | null
           customer?: string | null
           date?: string | null
           description?: string | null
+          due_date?: string | null
           hold?: boolean | null
           id?: number
           link_ar_account?: string | null
@@ -216,6 +446,276 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      acumatica_checks: {
+        Row: {
+          acumatica_sync_at: string | null
+          application_date: string | null
+          cash_account: string | null
+          created_at: string
+          currency_id: string | null
+          description: string | null
+          document_type: string | null
+          external_key: string
+          id: number
+          last_modified_at: string | null
+          payment_amount: number | null
+          payment_method: string | null
+          payment_ref: string | null
+          raw_payload: Json | null
+          reference_nbr: string
+          status: string | null
+          updated_at: string
+          vendor_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          application_date?: string | null
+          cash_account?: string | null
+          created_at?: string
+          currency_id?: string | null
+          description?: string | null
+          document_type?: string | null
+          external_key: string
+          id?: number
+          last_modified_at?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          raw_payload?: Json | null
+          reference_nbr: string
+          status?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          application_date?: string | null
+          cash_account?: string | null
+          created_at?: string
+          currency_id?: string | null
+          description?: string | null
+          document_type?: string | null
+          external_key?: string
+          id?: number
+          last_modified_at?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          raw_payload?: Json | null
+          reference_nbr?: string
+          status?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
+      acumatica_project_budgets: {
+        Row: {
+          account_group: string | null
+          actual_amount: number | null
+          actual_plus_open_committed_amount: number | null
+          acumatica_sync_at: string | null
+          budgeted_co_amount: number | null
+          committed_co_amount: number | null
+          committed_invoiced_amount: number | null
+          committed_open_amount: number | null
+          company_id: string | null
+          cost_at_completion: number | null
+          cost_code: string | null
+          cost_to_complete: number | null
+          created_at: string
+          description: string | null
+          draft_invoices_amount: number | null
+          external_key: string
+          id: number
+          inventory_id: string | null
+          last_modified_at: string | null
+          original_budgeted_amount: number | null
+          original_committed_amount: number | null
+          pending_invoice_amount: number | null
+          percentage_of_completion: number | null
+          project_code: string
+          project_id: number | null
+          project_task_id: string | null
+          raw_payload: Json | null
+          record_type: string | null
+          retainage: number | null
+          revised_budgeted_amount: number | null
+          revised_committed_amount: number | null
+          unit_rate: number | null
+          uom: string | null
+          updated_at: string
+          variance_amount: number | null
+        }
+        Insert: {
+          account_group?: string | null
+          actual_amount?: number | null
+          actual_plus_open_committed_amount?: number | null
+          acumatica_sync_at?: string | null
+          budgeted_co_amount?: number | null
+          committed_co_amount?: number | null
+          committed_invoiced_amount?: number | null
+          committed_open_amount?: number | null
+          company_id?: string | null
+          cost_at_completion?: number | null
+          cost_code?: string | null
+          cost_to_complete?: number | null
+          created_at?: string
+          description?: string | null
+          draft_invoices_amount?: number | null
+          external_key: string
+          id?: number
+          inventory_id?: string | null
+          last_modified_at?: string | null
+          original_budgeted_amount?: number | null
+          original_committed_amount?: number | null
+          pending_invoice_amount?: number | null
+          percentage_of_completion?: number | null
+          project_code: string
+          project_id?: number | null
+          project_task_id?: string | null
+          raw_payload?: Json | null
+          record_type?: string | null
+          retainage?: number | null
+          revised_budgeted_amount?: number | null
+          revised_committed_amount?: number | null
+          unit_rate?: number | null
+          uom?: string | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Update: {
+          account_group?: string | null
+          actual_amount?: number | null
+          actual_plus_open_committed_amount?: number | null
+          acumatica_sync_at?: string | null
+          budgeted_co_amount?: number | null
+          committed_co_amount?: number | null
+          committed_invoiced_amount?: number | null
+          committed_open_amount?: number | null
+          company_id?: string | null
+          cost_at_completion?: number | null
+          cost_code?: string | null
+          cost_to_complete?: number | null
+          created_at?: string
+          description?: string | null
+          draft_invoices_amount?: number | null
+          external_key?: string
+          id?: number
+          inventory_id?: string | null
+          last_modified_at?: string | null
+          original_budgeted_amount?: number | null
+          original_committed_amount?: number | null
+          pending_invoice_amount?: number | null
+          percentage_of_completion?: number | null
+          project_code?: string
+          project_id?: number | null
+          project_task_id?: string | null
+          raw_payload?: Json | null
+          record_type?: string | null
+          retainage?: number | null
+          revised_budgeted_amount?: number | null
+          revised_committed_amount?: number | null
+          unit_rate?: number | null
+          uom?: string | null
+          updated_at?: string
+          variance_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_project_budgets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_sync_state: {
+        Row: {
+          entity_name: string
+          last_cursor: string | null
+          last_error: string | null
+          last_started_at: string | null
+          last_stats: Json | null
+          last_success_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          entity_name: string
+          last_cursor?: string | null
+          last_error?: string | null
+          last_started_at?: string | null
+          last_stats?: Json | null
+          last_success_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          entity_name?: string
+          last_cursor?: string | null
+          last_error?: string | null
+          last_started_at?: string | null
+          last_stats?: Json | null
+          last_success_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       admin_view_backups: {
         Row: {
@@ -5484,6 +5984,11 @@ export type Database = {
       }
       direct_costs: {
         Row: {
+          acumatica_doc_type: string | null
+          acumatica_document_key: string | null
+          acumatica_financial_period: string | null
+          acumatica_ref_nbr: string | null
+          acumatica_sync_at: string | null
           cost_type: string
           created_at: string
           created_by_user_id: string
@@ -5504,6 +6009,11 @@ export type Database = {
           vendor_id: string | null
         }
         Insert: {
+          acumatica_doc_type?: string | null
+          acumatica_document_key?: string | null
+          acumatica_financial_period?: string | null
+          acumatica_ref_nbr?: string | null
+          acumatica_sync_at?: string | null
           cost_type: string
           created_at?: string
           created_by_user_id: string
@@ -5524,6 +6034,11 @@ export type Database = {
           vendor_id?: string | null
         }
         Update: {
+          acumatica_doc_type?: string | null
+          acumatica_document_key?: string | null
+          acumatica_financial_period?: string | null
+          acumatica_ref_nbr?: string | null
+          acumatica_sync_at?: string | null
           cost_type?: string
           created_at?: string
           created_by_user_id?: string

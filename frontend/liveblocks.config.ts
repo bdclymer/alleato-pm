@@ -84,17 +84,34 @@ export type ApprovalRequestData = {
 
 // ── Global Liveblocks type declarations ─────────────────────────────────────
 
+import { LiveList, LiveObject } from "@liveblocks/client";
+
 declare global {
   interface Liveblocks {
-    Presence: Record<string, never>;
+    Presence: {
+      selectedCell?: { col: string; row: string } | null;
+    };
 
-    Storage: Record<string, never>;
+    Storage: {
+      // Issue tracker storage
+      meta: LiveObject<{ title: string }>;
+      properties: LiveObject<{
+        progress: string;
+        priority: string;
+        assignedTo: string;
+      }>;
+      labels: LiveList<string>;
+      links: LiveList<string>;
+      // Spreadsheet storage
+      spreadsheet?: LiveObject<Record<string, unknown>>;
+    };
 
     UserMeta: {
       id: string;
       info: {
         name?: string;
         avatar?: string;
+        color?: string;
       };
     };
 

@@ -42,8 +42,8 @@ export function Providers({ children }: PropsWithChildren) {
         resolveRoomsInfo={async ({ roomIds }) => {
           const rooms = await getRoomsFromIds(roomIds);
           return rooms.map((room) => ({
-            id: room.id,
-            metadata: room.metadata,
+            title: room.metadata?.title ?? "Untitled",
+            url: `/issue-tracker-demo/${room.metadata?.issueId ?? ""}`,
           }));
         }}
       >

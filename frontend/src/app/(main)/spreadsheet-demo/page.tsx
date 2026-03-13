@@ -172,7 +172,8 @@ export default function SpreadsheetDemoPage() {
           initialPresence={{
             selectedCell: null,
           }}
-          initialStorage={initialStorage}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          initialStorage={initialStorage as any}
         >
           <TooltipProvider>
             <SpreadsheetContent />

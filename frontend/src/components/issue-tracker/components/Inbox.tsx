@@ -19,6 +19,7 @@ import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { Mention } from "@/components/issue-tracker/components/Mention";
 import { Link } from "@/components/issue-tracker/components/Link";
+import { getIssueId } from "@/components/issue-tracker/config";
 import { CheckCheckIcon } from "@/components/issue-tracker/icons/CheckCheckIcon";
 import { useMemo } from "react";
 import { RubbishIcon } from "@/components/issue-tracker/icons/RubbishIcon";
@@ -140,18 +141,22 @@ function SmallInboxNotification({
 
   const { openInbox } = useInbox();
 
+  const issueId = inboxNotification?.roomId
+    ? getIssueId(inboxNotification.roomId)
+    : null;
+
   if (
     !latestComment ||
     !inboxNotification?.roomId ||
     isLoading ||
     error ||
-    !info.metadata.issueId
+    !issueId
   ) {
     return null;
   }
   return (
     <NextLink
-      href={`/issue/${info?.metadata.issueId}`}
+      href={`/issue-tracker-demo/${issueId}`}
       onClick={() => {
         openInbox();
         markAsRead(inboxNotification.id);
@@ -176,7 +181,7 @@ function SmallInboxNotification({
         </div>
         <div className="flex-grow w-full overflow-hidden">
           <div className="font-medium text-neutral-700 truncate flex justify-between items-center">
-            {info.metadata.title}
+            {info?.title ?? "Untitled"}
             {inboxNotification.readAt === null ? (
               <div className="w-2 h-2 bg-indigo-500 rounded-full" />
             ) : null}

@@ -36,10 +36,8 @@ export async function createIssue() {
     links: new LiveList([]),
   });
 
-  await liveblocks.initializeStorageDocument(
-    roomId,
-    toPlainLson(initialStorage) as unknown as Record<string, unknown>
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await liveblocks.initializeStorageDocument(roomId, toPlainLson(initialStorage) as any);
 
   redirect(`/issue-tracker-demo/${issueId}`);
 }

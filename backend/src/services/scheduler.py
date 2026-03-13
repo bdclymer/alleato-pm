@@ -3,6 +3,7 @@ Scheduled analysis engine — runs periodic jobs via APScheduler.
 
 Currently registered jobs:
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
+  - Acumatica financial sync: periodic incremental ERP import into Supabase
 
 Future jobs (Phase 2+):
   - Project health scoring
@@ -44,6 +45,18 @@ def init_scheduler() -> None:
         name="Daily Meeting Digest",
         replace_existing=True,
     )
+
+    if os.getenv("ACUMATICA_FINANCIAL_SYNC_ENABLED", "true").lower() not in ("0", "false", "no"):
+        sync_interval_hours = max(1, int(os.getenv("ACUMATICA_FINANCIAL_SYNC_INTERVAL_HOURS", "4")))
+        sync_minute = int(os.getenv("ACUMATICA_FINANCIAL_SYNC_MINUTE", "15"))
+        scheduler.add_job(
+            run_acumatica_financial_sync_job,
+            CronTrigger(hour=f"*/{sync_interval_hours}", minute=sync_minute),
+            id="acumatica_financial_sync",
+            name="Acumatica Financial Sync",
+            replace_existing=True,
+            max_instances=1,
+        )
 
     scheduler.start()
     logger.info(
@@ -87,10 +100,32 @@ async def run_daily_digest_job() -> None:
         logger.error("[Scheduler] Daily digest job failed: %s", e, exc_info=True)
 
 
+async def run_acumatica_financial_sync_job() -> None:
+    """Scheduled job: incrementally sync Acumatica finance data into Supabase."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Acumatica financial sync job")
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_acumatica_financial_sync)
+        logger.info("[Scheduler] Acumatica financial sync complete: %s", result.get("status"))
+        if result.get("errors"):
+            logger.warning("[Scheduler] Acumatica financial sync reported errors: %s", result["errors"])
+    except Exception as e:
+        logger.error("[Scheduler] Acumatica financial sync failed: %s", e, exc_info=True)
+
+
 def _run_digest_sync():
     """Synchronous wrapper for daily digest generation."""
     from .daily_digest import run_daily_digest
     return run_daily_digest()
+
+
+def _run_acumatica_financial_sync():
+    """Synchronous wrapper for Acumatica ERP finance sync."""
+    from .acumatica_sync import run_acumatica_financial_sync
+
+    return run_acumatica_financial_sync()
 
 
 def _get_daily_recipients() -> list[str]:

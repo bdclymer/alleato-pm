@@ -1,61 +1,37 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo, type HTMLAttributes } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useForm,
-  type ControllerRenderProps,
-  type DefaultValues,
-} from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  Loader2,
-  Info,
-  Upload,
-  ImageIcon,
-  X,
-} from "lucide-react";
 import { AppShell } from "@/components/layouts";
 import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+  FormGrid,
+  TextField,
+  TextareaField,
+  SelectField,
+  NumberField,
+  MoneyField,
+  DateField,
+  CheckboxField,
+  FileUploadField,
+} from "@/components/forms";
 import { ProjectCreatedModal } from "@/components/project/ProjectCreatedModal";
 import { useCreateProjectDevConfig } from "@/components/project/create-project-dev-config";
 import {
   createProjectSchema,
   defaultValues,
   formSections,
-  formatCurrency,
-  formatNumberWithCommas,
   FormLayoutMode,
-  getFieldControlOptions,
   isControlAllowedForField,
-  parseFormattedNumber,
   type CreateProjectFormValues,
   type FieldDefinition,
-  type FieldName,
   type FormSection,
 } from "@/lib/create-project/form";
 import { FormSection as StandardFormSection } from "@/components/forms/FormSection";
@@ -64,108 +40,6 @@ import { FormActions } from "@/components/forms/FormActions";
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
 const getFileName = (value: unknown) =>
   typeof File !== "undefined" && value instanceof File ? value.name : null;
-
-/**
- * Input that formats numbers with commas as you type while preserving cursor position.
- * On blur, applies the full format (e.g. currency prefix).
- */
-function FormattedNumberInput({
-  ariaProps,
-  placeholder,
-  value,
-  onChange,
-  format,
-  inputMode = "numeric",
-}: {
-  ariaProps: Record<string, string>;
-  placeholder?: string;
-  value: number | undefined | null;
-  onChange: (v: number | undefined) => void;
-  format: (v: number | string | undefined | null) => string;
-  inputMode?: "numeric" | "decimal";
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [displayValue, setDisplayValue] = useState(() => format(value));
-  const [isFocused, setIsFocused] = useState(false);
-  const cursorRef = useRef<number | null>(null);
-
-  // Sync from form state when not focused (auto-fill, reset, initial load)
-  const formattedFromForm = format(value);
-  if (!isFocused && displayValue !== formattedFromForm) {
-    setDisplayValue(formattedFromForm);
-  }
-
-  // Restore cursor position after formatting changes the display value
-  useEffect(() => {
-    if (cursorRef.current != null && inputRef.current) {
-      inputRef.current.setSelectionRange(cursorRef.current, cursorRef.current);
-      cursorRef.current = null;
-    }
-  });
-
-  // Format with commas only (no $ prefix) for while-typing display
-  const formatWhileTyping = (raw: string): string => {
-    const cleaned = raw.replace(/[^0-9.]/g, "");
-    if (cleaned === "") return "";
-    // Split on decimal point to only format the integer part
-    const parts = cleaned.split(".");
-    const intPart = parts[0];
-    const formatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    if (parts.length > 1) {
-      return `${formatted}.${parts[1]}`;
-    }
-    return formatted;
-  };
-
-  return (
-    <Input
-      {...ariaProps}
-      ref={inputRef}
-      type="text"
-      inputMode={inputMode}
-      placeholder={placeholder}
-      value={displayValue}
-      onFocus={() => {
-        setIsFocused(true);
-        // Show comma-formatted number on focus (strip $ but keep commas)
-        if (value != null) {
-          setDisplayValue(formatWhileTyping(String(value)));
-        }
-      }}
-      onChange={(event) => {
-        const raw = event.target.value;
-        const cursorPos = event.target.selectionStart ?? 0;
-
-        // Count commas before cursor in old value
-        const oldCommasBefore = (displayValue.slice(0, cursorPos).match(/,/g) || []).length;
-
-        const formatted = formatWhileTyping(raw);
-
-        // Count commas before equivalent cursor position in new value
-        // The cursor position in the raw string (minus old commas) tells us where the digit cursor is
-        const digitPos = cursorPos - oldCommasBefore;
-        let newCursor = 0;
-        let digits = 0;
-        for (let i = 0; i < formatted.length; i++) {
-          if (digits === digitPos) break;
-          if (formatted[i] !== ",") digits++;
-          newCursor = i + 1;
-        }
-        cursorRef.current = newCursor;
-
-        setDisplayValue(formatted);
-        const parsed = parseFormattedNumber(formatted);
-        onChange(parsed);
-      }}
-      onBlur={() => {
-        const parsed = parseFormattedNumber(displayValue);
-        onChange(parsed);
-        setDisplayValue(format(parsed));
-        setIsFocused(false);
-      }}
-    />
-  );
-}
 
 export default function CreateProjectPage() {
   return (
@@ -207,6 +81,8 @@ function CreateProjectForm() {
 
   const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as any);
   const { isDevAdmin, activeTemplateConfig } = useCreateProjectDevConfig();
+  const values = form.watch();
+  const errors = form.formState.errors;
 
   const effectiveFormSections = useMemo(() => {
     if (!isDevAdmin) return formSections;
@@ -321,284 +197,213 @@ function CreateProjectForm() {
     }
   };
 
-  const renderFieldControl = (
-    field: FieldDefinition,
-    formField: ControllerRenderProps<CreateProjectFormValues, FieldName>,
-    fieldId: string,
-    labelId: string,
-  ) => {
-    const ariaProps = {
-      id: fieldId,
-      "aria-label": field.label,
-      "aria-labelledby": labelId,
-    };
+  const renderField = (field: FieldDefinition) => {
+    const currentValue = values[field.name];
+    const error = errors[field.name]?.message as string | undefined;
+    const fullWidth = field.colSpan === "full";
 
     if (field.control === "textarea") {
       return (
-        <Textarea
-          {...ariaProps}
+        <TextareaField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
           placeholder={field.placeholder}
-          className="min-h-[120px]"
-          value={formField.value ?? ""}
-          onChange={(event) => formField.onChange(event.target.value)}
+          value={typeof currentValue === "string" ? currentValue : ""}
+          onChange={(event) =>
+            form.setValue(field.name, event.target.value as never, {
+              shouldValidate: true,
+            })
+          }
+          rows={5}
+          fullWidth={fullWidth}
         />
       );
     }
 
     if (field.control === "select") {
+      const options = field.allowEmptyOption
+        ? [{ value: CLEAR_SELECT_VALUE, label: "Clear selection" }, ...(field.options ?? [])]
+        : (field.options ?? []);
+
       return (
-        <Select
-          value={formField.value ?? undefined}
-          onValueChange={(value) => {
-            if (field.allowEmptyOption && value === CLEAR_SELECT_VALUE) {
-              formField.onChange(undefined);
-              return;
-            }
-            formField.onChange(value);
-          }}
-        >
-          <SelectTrigger
-            id={fieldId}
-            aria-label={field.label}
-            aria-labelledby={labelId}
-          >
-            <SelectValue
-              placeholder={
-                field.placeholder ?? `Select ${field.label.toLowerCase()}`
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {field.allowEmptyOption && (
-              <SelectItem
-                value={CLEAR_SELECT_VALUE}
-                className="text-muted-foreground"
-              >
-                Clear selection
-              </SelectItem>
-            )}
-            {field.options?.map((option: { label: string; value: string }) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SelectField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
+          placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+          options={options}
+          value={typeof currentValue === "string" ? currentValue : undefined}
+          onValueChange={(value) =>
+            form.setValue(
+              field.name,
+              (field.allowEmptyOption && value === CLEAR_SELECT_VALUE
+                ? undefined
+                : value) as never,
+              { shouldValidate: true },
+            )
+          }
+          fullWidth={fullWidth}
+        />
       );
     }
 
     if (field.control === "formatted-number") {
       return (
-        <FormattedNumberInput
-          ariaProps={ariaProps}
+        <NumberField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
           placeholder={field.placeholder}
-          value={formField.value}
-          onChange={formField.onChange}
-          format={formatNumberWithCommas}
+          value={typeof currentValue === "number" ? currentValue : undefined}
+          onChange={(value) =>
+            form.setValue(field.name, value as never, { shouldValidate: true })
+          }
+          fullWidth={fullWidth}
         />
       );
     }
 
     if (field.control === "currency") {
       return (
-        <FormattedNumberInput
-          ariaProps={ariaProps}
+        <MoneyField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
           placeholder={field.placeholder}
-          value={formField.value}
-          onChange={formField.onChange}
-          format={formatCurrency}
-          inputMode="decimal"
+          value={typeof currentValue === "number" ? currentValue : undefined}
+          onChange={(value) =>
+            form.setValue(field.name, value as never, { shouldValidate: true })
+          }
+          fullWidth={fullWidth}
         />
       );
     }
 
     if (field.control === "number") {
       return (
-        <Input
-          {...ariaProps}
-          type="number"
-          step={field.step ?? "1"}
+        <NumberField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
           placeholder={field.placeholder}
-          value={formField.value ?? ""}
-          onChange={(event) => {
-            const value = event.target.value;
-            formField.onChange(value === "" ? undefined : Number(value));
-          }}
+          value={typeof currentValue === "number" ? currentValue : undefined}
+          onChange={(value) =>
+            form.setValue(field.name, value as never, { shouldValidate: true })
+          }
+          step={field.step ?? "1"}
+          fullWidth={fullWidth}
         />
       );
     }
 
     if (field.control === "date") {
       return (
-        <Input
-          {...ariaProps}
-          type="date"
-          placeholder={field.placeholder}
-          value={formField.value ?? ""}
-          onChange={(event) => formField.onChange(event.target.value)}
+        <DateField
+          key={field.name}
+          label={field.label}
+          required={field.required}
+          hint={field.description}
+          error={error}
+          value={
+            typeof currentValue === "string" && currentValue
+              ? new Date(`${currentValue}T00:00:00`)
+              : undefined
+          }
+          onChange={(value) =>
+            form.setValue(
+              field.name,
+              (value ? value.toISOString().split("T")[0] : "") as never,
+              { shouldValidate: true },
+            )
+          }
+          fullWidth={fullWidth}
         />
+      );
+    }
+
+    if (field.control === "checkbox") {
+      return (
+        <div key={field.name} className={fullWidth ? "sm:col-span-2" : undefined}>
+          <CheckboxField
+            label={field.label}
+            checked={Boolean(currentValue)}
+            onCheckedChange={(checked) =>
+              form.setValue(field.name, checked as never, { shouldValidate: true })
+            }
+            hint={field.description}
+            error={error}
+            className="rounded-md border border-input bg-background px-4 py-4"
+          />
+        </div>
       );
     }
 
     if (field.control === "file") {
       const file =
-        typeof File !== "undefined" && formField.value instanceof File
-          ? formField.value
-          : null;
-      const inputId = `${fieldId}-file-input`;
+        typeof File !== "undefined" && currentValue instanceof File ? currentValue : null;
 
       return (
-        <div key={`${String(field.name)}-${fileResetKey}`}>
-          <input
-            id={inputId}
-            type="file"
-            accept={field.accept}
-            className="sr-only"
-            onChange={(event) => {
-              const selected = event.target.files?.[0];
-              formField.onChange(selected ?? undefined);
-            }}
-          />
-          {file ? (
-            <div className="flex items-center gap-4 rounded-lg border border-input bg-background px-4 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(file.size / 1024).toFixed(0)} KB
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  formField.onChange(undefined);
-                  setFileResetKey((k) => k + 1);
-                }}
-                className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <label
-              htmlFor={inputId}
-              className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/30 px-4 py-8 cursor-pointer hover:border-muted-foreground/40 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  Click to upload
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  JPG, PNG, TIFF, or BMP
-                </p>
-              </div>
-            </label>
-          )}
-        </div>
+        <FileUploadField
+          key={`${field.name}-${fileResetKey}`}
+          label={field.label}
+          hint={field.description}
+          error={error}
+          accept={field.accept}
+          maxFiles={1}
+          variant="minimal"
+          fullWidth={fullWidth}
+          value={
+            file
+              ? [{ name: file.name, size: file.size, type: file.type }]
+              : []
+          }
+          onChange={(files) => {
+            if (files.length === 0) {
+              form.setValue(field.name, undefined as never, {
+                shouldValidate: true,
+              });
+              setFileResetKey((key) => key + 1);
+            }
+          }}
+          onFilesSelected={(files) =>
+            form.setValue(field.name, (files[0] ?? undefined) as never, {
+              shouldValidate: true,
+            })
+          }
+        />
       );
     }
 
-    // Default text input
     return (
-      <Input
-        {...ariaProps}
-        type={field.inputType ?? "text"}
+      <TextField
+        key={field.name}
+        label={field.label}
+        required={field.required}
+        hint={field.description}
+        error={error}
         placeholder={field.placeholder}
         inputMode={field.inputMode}
-        value={formField.value ?? ""}
-        onChange={(event) => formField.onChange(event.target.value)}
+        value={typeof currentValue === "string" ? currentValue : ""}
+        onChange={(event) =>
+          form.setValue(field.name, event.target.value as never, {
+            shouldValidate: true,
+          })
+        }
+        fullWidth={fullWidth}
       />
     );
   };
-
-  const renderField = (field: FieldDefinition) => (
-    <FormField
-      key={field.name}
-      control={form.control}
-      name={field.name}
-      render={({ field: formField }) => {
-        const fieldId = String(field.name);
-        const labelId = `${fieldId}-label`;
-        const baseClasses = field.colSpan === "full" ? "md:col-span-2" : "";
-        if (field.control === "checkbox") {
-          return (
-            <FormItem className={baseClasses}>
-              <div className="flex items-start space-x-4 rounded-md border border-input bg-background px-4 py-4">
-                <FormControl>
-                  <Checkbox
-                    id={fieldId}
-                    checked={!!formField.value}
-                    onCheckedChange={(checked) =>
-                      formField.onChange(Boolean(checked))
-                    }
-                  />
-                </FormControl>
-                <div className="space-y-1">
-                  <FormLabel
-                    id={labelId}
-                    htmlFor={fieldId}
-                    className="font-medium leading-none"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>
-                        {field.label}
-                        {field.required && (
-                          <span className="text-destructive">*</span>
-                        )}
-                      </span>
-                      {field.statusHint && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 text-xs font-medium text-amber-900">
-                          <Info className="h-3 w-3" />
-                          {field.statusHint}
-                        </span>
-                      )}
-                    </span>
-                  </FormLabel>
-                  {field.description && (
-                    <FormDescription>{field.description}</FormDescription>
-                  )}
-                </div>
-              </div>
-              <FormMessage />
-            </FormItem>
-          );
-        }
-
-        return (
-          <FormItem className={baseClasses}>
-            <FormLabel id={labelId} htmlFor={fieldId}>
-              <span className="flex items-center gap-2">
-                <span>
-                  {field.label}
-                  {field.required && (
-                    <span className="text-destructive">*</span>
-                  )}
-                </span>
-                {field.statusHint && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 text-xs font-medium text-amber-900">
-                    <Info className="h-3 w-3" />
-                    {field.statusHint}
-                  </span>
-                )}
-              </span>
-            </FormLabel>
-            <FormControl>
-              {renderFieldControl(field, formField, fieldId, labelId)}
-            </FormControl>
-            {field.description && (
-              <FormDescription>{field.description}</FormDescription>
-            )}
-            <FormMessage />
-          </FormItem>
-        );
-      }}
-    />
-  );
 
   const activeLayout: FormLayoutMode = isDevAdmin
     ? activeTemplateConfig.layout === "cards"
@@ -607,12 +412,8 @@ function CreateProjectForm() {
     : "sections";
 
   const renderSection = (section: FormSection) => {
-    const sectionGridClass =
-      section.id === "project-status"
-        ? "grid grid-cols-1 gap-4 md:grid-cols-3"
-        : activeLayout === "single-column"
-          ? "grid grid-cols-1 gap-4"
-          : "grid grid-cols-1 gap-4 md:grid-cols-2";
+    const sectionColumns =
+      section.id === "project-status" ? 3 : activeLayout === "single-column" ? 1 : 2;
 
     return (
       <StandardFormSection
@@ -620,7 +421,7 @@ function CreateProjectForm() {
         title={section.title}
         description={section.description}
       >
-        <div className={sectionGridClass}>{section.fields.map(renderField)}</div>
+        <FormGrid columns={sectionColumns}>{section.fields.map(renderField)}</FormGrid>
       </StandardFormSection>
     );
   };
@@ -639,36 +440,34 @@ function CreateProjectForm() {
         projectName={createdProject?.name ?? ""}
       />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-          {effectiveFormSections.length > 0 ? (
-            effectiveFormSections.map(renderSection)
-          ) : (
-            <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                No fields are currently visible for the selected template.
-            </div>
-          )}
+      <Form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        {effectiveFormSections.length > 0 ? (
+          effectiveFormSections.map(renderSection)
+        ) : (
+          <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+            No fields are currently visible for the selected template.
+          </div>
+        )}
 
-          <FormActions
-            submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
-            onCancel={() => router.push("/")}
-            isSubmitting={isSubmitting}
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <DevAutoFillButton />
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  form.reset(defaultValues);
-                  setFileResetKey((key) => key + 1);
-                }}
-              >
-                Reset Form
-              </Button>
-            </div>
-          </FormActions>
-        </form>
+        <FormActions
+          submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
+          onCancel={() => router.push("/")}
+          isSubmitting={isSubmitting}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <DevAutoFillButton />
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                form.reset(defaultValues);
+                setFileResetKey((key) => key + 1);
+              }}
+            >
+              Reset Form
+            </Button>
+          </div>
+        </FormActions>
       </Form>
     </>
   );

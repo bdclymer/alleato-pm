@@ -74,7 +74,7 @@ export async function Issue({ issueId }: { issueId: string }) {
         </h1>
         <div>
           This issue has been deleted. Go back to the{" "}
-          <Link className="font-bold underline" href="/">
+          <Link className="font-bold underline" href="/issue-tracker-demo">
             issue list
           </Link>
           .

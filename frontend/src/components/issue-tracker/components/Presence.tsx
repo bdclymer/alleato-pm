@@ -25,16 +25,16 @@ function Avatars() {
   return (
     <div className="flex">
       <div className="flex [&>div]:-ml-1.5">
-        {users.map(({ connectionId, info, presence }) => {
+        {users.map(({ connectionId, info }) => {
           return (
-            <Avatar key={connectionId} src={info.avatar} name={info.name} />
+            <Avatar key={connectionId} src={info.avatar ?? ""} name={info.name ?? "Anonymous"} />
           );
         })}
       </div>
 
       {currentUser && (
         <div className="relative ml-3 first:ml-0">
-          <Avatar src={currentUser.info.avatar} name={currentUser.info.name} />
+          <Avatar src={currentUser.info.avatar ?? ""} name={currentUser.info.name ?? "You"} />
         </div>
       )}
     </div>
