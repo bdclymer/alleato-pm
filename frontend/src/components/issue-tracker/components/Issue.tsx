@@ -52,10 +52,11 @@ export async function Issue({ issueId }: { issueId: string }) {
   );
 
   let error;
-  let results;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let results: [any, string] | undefined;
 
   try {
-    results = await Promise.all([storagePromise, contentHtmlPromise]);
+    results = await Promise.all([storagePromise, contentHtmlPromise]) as [any, string];
   } catch (err) {
     console.log(err);
     error = err;
