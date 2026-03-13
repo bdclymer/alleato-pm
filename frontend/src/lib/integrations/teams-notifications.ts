@@ -1,5 +1,5 @@
 import type { NotificationEvent } from "@liveblocks/node";
-import type { InboxNotificationData } from "@liveblocks/core";
+import type { InboxNotificationData } from "@liveblocks/client";
 
 type TeamsNotificationPayload = {
   event: NotificationEvent;

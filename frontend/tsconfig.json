@@ -50,6 +50,7 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/__tests__/**",
-    "tests/**"
+    "tests/**",
+    "src/lib/_archived/**"
   ]
 }

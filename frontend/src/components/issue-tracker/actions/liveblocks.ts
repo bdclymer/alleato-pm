@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
 import { getRoomId, Metadata, RoomWithMetadata } from "@/components/issue-tracker/config";
 import { liveblocks } from "@/components/issue-tracker/liveblocks.server.config";
-import { LiveList, LiveObject, toPlainLson } from "@liveblocks/core";
+import { LiveList, LiveObject, toPlainLson } from "@liveblocks/client";
 import { IssueTrackerStorage } from "@/components/issue-tracker/liveblocks.config";
 
 export async function createIssue() {

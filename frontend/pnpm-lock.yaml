@@ -72,23 +72,23 @@ importers:
         specifier: ^0.35.0
         version: 0.35.0(yjs@13.6.29)
       '@liveblocks/client':
-        specifier: ^3.15.1
-        version: 3.15.1(@types/json-schema@7.0.15)
+        specifier: ^3.15.2
+        version: 3.15.2(@types/json-schema@7.0.15)
       '@liveblocks/node':
-        specifier: ^3.15.1
-        version: 3.15.1(@types/json-schema@7.0.15)
+        specifier: ^3.15.2
+        version: 3.15.2(@types/json-schema@7.0.15)
       '@liveblocks/node-lexical':
-        specifier: ^3.15.1
+        specifier: ^3.15.2
         version: 3.15.2(@lexical/headless@0.35.0)(@lexical/markdown@0.35.0)(@lexical/selection@0.35.0)(@lexical/yjs@0.35.0(yjs@13.6.29))(@types/json-schema@7.0.15)(lexical@0.35.0)
       '@liveblocks/react':
-        specifier: ^3.15.1
-        version: 3.15.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react@19.2.4)
+        specifier: ^3.15.2
+        version: 3.15.2(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react@19.2.4)
       '@liveblocks/react-lexical':
-        specifier: ^3.15.1
+        specifier: ^3.15.2
         version: 3.15.2(@lexical/react@0.35.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(yjs@13.6.29))(@lexical/rich-text@0.35.0)(@lexical/selection@0.35.0)(@lexical/utils@0.35.0)(@lexical/yjs@0.35.0(yjs@13.6.29))(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(lexical@0.35.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@liveblocks/react-ui':
-        specifier: ^3.15.1
-        version: 3.15.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^3.15.2
+        version: 3.15.2(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@once-ui-system/core':
         specifier: ^1.6.0
         version: 1.6.0(next@15.5.12(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3)(sharp@0.34.5)
@@ -389,6 +389,9 @@ importers:
       react-dropzone:
         specifier: ^14.4.0
         version: 14.4.0(react@19.2.4)
+      react-error-boundary:
+        specifier: ^6.1.1
+        version: 6.1.1(react@19.2.4)
       react-hook-form:
         specifier: ^7.71.1
         version: 7.71.1(react@19.2.4)
@@ -1782,16 +1785,8 @@ packages:
   '@lezer/python@1.1.18':
     resolution: {integrity: sha512-31FiUrU7z9+d/ElGQLJFXl+dKOdx0jALlP3KEOsGTex8mvj+SoE1FgItcHWK/axkxCHGUSpqIHt6JAWfWu9Rhg==}
 
-  '@liveblocks/client@3.15.1':
-    resolution: {integrity: sha512-blyXz3ZytMCZn6gis0CtadMe6zPB7aPlJ+5JaRcJM4wP9ANP1/bM+K65lMCQZ/kSSVLuRJpUFlWYFTrTQbBqEg==}
-
   '@liveblocks/client@3.15.2':
     resolution: {integrity: sha512-+rAOO2Z+eCM93FRwVhfiwNUMg3zjUhFC4ZiUsp4Jgk8+gcy5irxtq+nGPrGQVlarCewvT3C96Ur/h6uLO57JgQ==}
-
-  '@liveblocks/core@3.15.1':
-    resolution: {integrity: sha512-rPjHU7Z1x2IQlKLd5S7ySk8oL3z8sFr4+8u2sStZ5JqpD+0wnJpMxT1QHlswwx116ZTBBRcKp3Pm/0ihPraIHg==}
-    peerDependencies:
-      '@types/json-schema': ^7
 
   '@liveblocks/core@3.15.2':
     resolution: {integrity: sha512-2RCqC9iTA3LAhrHPqoCDXyL5TteVWqRV9hZYdZOWtoFnDP5DRWk3a3zPuEhDPPArWfq3T8jupaO28+7GTet0ow==}
@@ -1806,9 +1801,6 @@ packages:
       '@lexical/selection': 0.35.0
       '@lexical/yjs': 0.35.0
       lexical: 0.35.0
-
-  '@liveblocks/node@3.15.1':
-    resolution: {integrity: sha512-ais3uEnKQqBPzZTM7Zd1d5PbF4F0L1tGo5bbHYcmHiddc7try0HRI/I9dLCICRpil72eFhPubV7/vy2EOBaDSA==}
 
   '@liveblocks/node@3.15.2':
     resolution: {integrity: sha512-mGwG+qXWRy8XSO6TOJioXYC76CyL0XO0jnALvwF9s3yl4xzNUr3+2CiYkOSj1/+ield8mNdTrtIispsBfiwGsw==}
@@ -1832,19 +1824,6 @@ packages:
       '@types/react-dom':
         optional: true
 
-  '@liveblocks/react-ui@3.15.1':
-    resolution: {integrity: sha512-DZzCdkgAz7gw9bzE2gohkV2OltYLrCNaQodYuRE1Dh15xpoXz+TY2zSTLM3johaFQ3g6dyrhSnkV0TydsNFcFg==}
-    peerDependencies:
-      '@types/react': '*'
-      '@types/react-dom': '*'
-      react: ^18 || ^19 || ^19.0.0-rc
-      react-dom: ^18 || ^19 || ^19.0.0-rc
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
-        optional: true
-
   '@liveblocks/react-ui@3.15.2':
     resolution: {integrity: sha512-bVMynGDsaIH71Xdm+TvzGHtgR9SwVfczDBrMdCzKVS/MY6Bq+uMvQO0XO4KXY95pCLNWAw4/3eyA7cJTm3dSJw==}
     peerDependencies:
@@ -1852,18 +1831,6 @@ packages:
       '@types/react-dom': '*'
       react: ^18 || ^19 || ^19.0.0-rc
       react-dom: ^18 || ^19 || ^19.0.0-rc
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
-        optional: true
-
-  '@liveblocks/react@3.15.1':
-    resolution: {integrity: sha512-NYVJn90KJY6fcWWpMXypxl09JEuB75kXGDZIG1H+Wz/RaXEvOQVhpvFdW9Q/cCkfOpe3cqqVMeRhdZGlrZEseA==}
-    peerDependencies:
-      '@types/react': '*'
-      '@types/react-dom': '*'
-      react: ^18 || ^19 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -5923,8 +5890,8 @@ packages:
   immer@11.1.3:
     resolution: {integrity: sha512-6jQTc5z0KJFtr1UgFpIL3N9XSC3saRaI9PwWtzM2pSqkNGtiNkYY2OSwkOGDK2XcTRcLb1pi/aNkKZz0nxVH4Q==}
 
-  immutable@5.1.4:
-    resolution: {integrity: sha512-p6u1bG3YSnINT5RQmx/yRZBpenIl30kVxkTLDyHLIMk0gict704Q9n+thfDI7lTRm9vXdDYutVzXhzcThxTnXA==}
+  immutable@5.1.5:
+    resolution: {integrity: sha512-t7xcm2siw+hlUM68I+UEOK+z84RzmN59as9DZ7P1l0994DKUWV7UXBMQZVxaoMSRQ+PBZbHCOoBt7a2wxOMt+A==}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -7637,6 +7604,11 @@ packages:
     engines: {node: '>=10', npm: '>=6'}
     peerDependencies:
       react: '>=16.13.1'
+
+  react-error-boundary@6.1.1:
+    resolution: {integrity: sha512-BrYwPOdXi5mqkk5lw+Uvt0ThHx32rCt3BkukS4X23A2AIWDPSGX6iaWTc0y9TU/mHDA/6qOSGel+B2ERkOvD1w==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   react-hook-form@7.71.1:
     resolution: {integrity: sha512-9SUJKCGKo8HUSsCO+y0CtqkqI5nNuaDqTxyqPsZPqIwudpj4rCrAz/jZV+jn57bx5gtZKOh3neQu94DXMc+w5w==}
@@ -10268,21 +10240,11 @@ snapshots:
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.8
 
-  '@liveblocks/client@3.15.1(@types/json-schema@7.0.15)':
-    dependencies:
-      '@liveblocks/core': 3.15.1(@types/json-schema@7.0.15)
-    transitivePeerDependencies:
-      - '@types/json-schema'
-
   '@liveblocks/client@3.15.2(@types/json-schema@7.0.15)':
     dependencies:
       '@liveblocks/core': 3.15.2(@types/json-schema@7.0.15)
     transitivePeerDependencies:
       - '@types/json-schema'
-
-  '@liveblocks/core@3.15.1(@types/json-schema@7.0.15)':
-    dependencies:
-      '@types/json-schema': 7.0.15
 
   '@liveblocks/core@3.15.2(@types/json-schema@7.0.15)':
     dependencies:
@@ -10298,16 +10260,6 @@ snapshots:
       '@liveblocks/node': 3.15.2(@types/json-schema@7.0.15)
       lexical: 0.35.0
       yjs: 13.6.29
-    transitivePeerDependencies:
-      - '@types/json-schema'
-      - encoding
-
-  '@liveblocks/node@3.15.1(@types/json-schema@7.0.15)':
-    dependencies:
-      '@liveblocks/core': 3.15.1(@types/json-schema@7.0.15)
-      '@stablelib/base64': 1.0.1
-      fast-sha256: 1.3.0
-      node-fetch: 2.7.0
     transitivePeerDependencies:
       - '@types/json-schema'
       - encoding
@@ -10346,27 +10298,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/json-schema'
 
-  '@liveblocks/react-ui@3.15.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@floating-ui/react-dom': 2.1.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@liveblocks/client': 3.15.1(@types/json-schema@7.0.15)
-      '@liveblocks/core': 3.15.1(@types/json-schema@7.0.15)
-      '@liveblocks/react': 3.15.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react@19.2.4)
-      frimousse: 0.2.0(react@19.2.4)
-      marked: 15.0.12
-      radix-ui: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-      slate: 0.110.2
-      slate-history: 0.110.3(slate@0.110.2)
-      slate-hyperscript: 0.100.0(slate@0.110.2)
-      slate-react: 0.110.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(slate@0.110.2)
-    optionalDependencies:
-      '@types/react': 19.2.10
-      '@types/react-dom': 19.2.3(@types/react@19.2.10)
-    transitivePeerDependencies:
-      - '@types/json-schema'
-
   '@liveblocks/react-ui@3.15.2(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@floating-ui/react-dom': 2.1.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -10382,17 +10313,6 @@ snapshots:
       slate-history: 0.110.3(slate@0.110.2)
       slate-hyperscript: 0.100.0(slate@0.110.2)
       slate-react: 0.110.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(slate@0.110.2)
-    optionalDependencies:
-      '@types/react': 19.2.10
-      '@types/react-dom': 19.2.3(@types/react@19.2.10)
-    transitivePeerDependencies:
-      - '@types/json-schema'
-
-  '@liveblocks/react@3.15.1(@types/json-schema@7.0.15)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react@19.2.4)':
-    dependencies:
-      '@liveblocks/client': 3.15.1(@types/json-schema@7.0.15)
-      '@liveblocks/core': 3.15.1(@types/json-schema@7.0.15)
-      react: 19.2.4
     optionalDependencies:
       '@types/react': 19.2.10
       '@types/react-dom': 19.2.3(@types/react@19.2.10)
@@ -14930,7 +14850,7 @@ snapshots:
 
   immer@11.1.3: {}
 
-  immutable@5.1.4: {}
+  immutable@5.1.5: {}
 
   import-fresh@3.3.1:
     dependencies:
@@ -17187,6 +17107,10 @@ snapshots:
       '@babel/runtime': 7.28.6
       react: 19.2.4
 
+  react-error-boundary@6.1.1(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+
   react-hook-form@7.71.1(react@19.2.4):
     dependencies:
       react: 19.2.4
@@ -17632,7 +17556,7 @@ snapshots:
   sass@1.97.3:
     dependencies:
       chokidar: 4.0.3
-      immutable: 5.1.4
+      immutable: 5.1.5
       source-map-js: 1.2.1
     optionalDependencies:
       '@parcel/watcher': 2.5.6

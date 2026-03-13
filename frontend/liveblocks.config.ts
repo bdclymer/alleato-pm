@@ -96,8 +96,8 @@ declare global {
       // Issue tracker storage
       meta: LiveObject<{ title: string }>;
       properties: LiveObject<{
-        progress: string;
-        priority: string;
+        progress: "none" | "todo" | "progress" | "review" | "done";
+        priority: "none" | "low" | "medium" | "high" | "urgent";
         assignedTo: string;
       }>;
       labels: LiveList<string>;
