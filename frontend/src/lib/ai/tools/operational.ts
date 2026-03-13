@@ -1271,8 +1271,11 @@ export function createOperationalTools(
       description:
         "Search across ALL project knowledge using semantic similarity: " +
         "meeting transcripts, chunked document content, RFIs, submittals, " +
-        "change orders, insights, and other indexed content. Uses blended " +
-        "retrieval from unified knowledge + full document chunks. Use when " +
+        "change orders, insights, company knowledge base entries (lessons learned, " +
+        "pricing intel, system design notes, vendor intel), and other indexed content. " +
+        "Uses blended retrieval from unified knowledge + document chunks + knowledge base. " +
+        "Works CROSS-PROJECT by default — no project filter needed. " +
+        "Optionally filter by project name or ID. Use when " +
         "the user asks a broad question that could span multiple data types, " +
         "or when keyword search isn't finding results.",
       inputSchema: z.object({
@@ -1283,6 +1286,10 @@ export function createOperationalTools(
           .describe(
             "Optional project ID filter. When provided, non-matching document chunks are excluded.",
           ),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Optional project name to resolve to ID (e.g. 'Uniqlo', 'Cedar Park')"),
         matchCount: z
           .number()
           .optional()
@@ -1297,7 +1304,16 @@ export function createOperationalTools(
       execute: withTrace(
         "semanticSearch",
         options,
-        async ({ query, projectId, matchCount, threshold }) => {
+        async ({ query, projectId, projectName, matchCount, threshold }) => {
+          // Resolve project name to ID if provided
+          let resolvedProjectId = projectId;
+          if (!resolvedProjectId && projectName) {
+            const resolved = await resolveProject(supabase, undefined, projectName);
+            if (!("error" in resolved)) {
+              resolvedProjectId = resolved.id;
+            }
+            // If project name doesn't resolve, still search across all projects
+          }
           try {
             // Generate embedding
             const openai = getOpenAI();
@@ -1314,7 +1330,8 @@ export function createOperationalTools(
             // Blended retrieval:
             // 1) search_all_knowledge for structured entities
             // 2) match_documents_full for chunk-level document evidence
-            const [knowledgeRes, documentRes] = await Promise.all([
+            // 3) search_knowledge_base for company knowledge base entries
+            const [knowledgeRes, documentRes, knowledgeBaseRes] = await Promise.all([
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg,
                 match_count: targetCount,
@@ -1324,6 +1341,14 @@ export function createOperationalTools(
                 query_embedding: embeddingArg,
                 match_count: Math.max(targetCount * 2, 20),
                 match_threshold: targetThreshold,
+              }),
+              // search_knowledge_base RPC added via migration — not yet in generated types
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (supabase.rpc as any)("search_knowledge_base", {
+                query_embedding: embeddingArg,
+                match_count: targetCount,
+                match_threshold: targetThreshold,
+                ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
               }),
             ]);
 
@@ -1337,17 +1362,17 @@ export function createOperationalTools(
 
             const rawKnowledgeRows = (knowledgeRes.data ?? []) as AnyRow[];
             const knowledgeRows = rawKnowledgeRows.filter((row) => {
-              if (!projectId) return true;
+              if (!resolvedProjectId) return true;
               const projectIds = Array.isArray(row.project_ids)
                 ? (row.project_ids as unknown[]).filter(
                     (v): v is number => typeof v === "number",
                   )
                 : [];
-              return projectIds.includes(projectId);
+              return projectIds.includes(resolvedProjectId);
             });
             const rawDocumentRows = (documentRes.data ?? []) as AnyRow[];
             const documentRows = rawDocumentRows.filter((row) => {
-              if (!projectId) return true;
+              if (!resolvedProjectId) return true;
               const primaryProjectId =
                 typeof row.project_id === "number" ? row.project_id : null;
               const projectIds = Array.isArray(row.project_ids)
@@ -1355,7 +1380,7 @@ export function createOperationalTools(
                     (v): v is number => typeof v === "number",
                   )
                 : [];
-              return primaryProjectId === projectId || projectIds.includes(projectId);
+              return primaryProjectId === resolvedProjectId || projectIds.includes(resolvedProjectId);
             });
 
             const merged: Array<{
@@ -1425,6 +1450,30 @@ export function createOperationalTools(
               });
             }
 
+            // 3) Knowledge base entries (company_knowledge with embeddings)
+            const rawKBRows = (knowledgeBaseRes.data ?? []) as AnyRow[];
+            for (const row of rawKBRows) {
+              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const kbId = String(row.id ?? "");
+              merged.push({
+                key: `knowledge_base:${kbId}`,
+                sourceTable: "knowledge_base",
+                recordId: kbId,
+                content: `[${String(row.category ?? "general")}] ${String(row.title ?? "")}: ${String(row.content ?? "")}`,
+                similarity,
+                projectIds: typeof row.project_id === "number" ? [row.project_id] : [],
+                metadata: {
+                  title: row.title,
+                  category: row.category,
+                  tags: row.tags,
+                  source: row.source,
+                  origin: row.origin,
+                },
+                createdAt:
+                  typeof row.created_at === "string" ? row.created_at : null,
+              });
+            }
+
             const dedupedMap = new Map<string, (typeof merged)[number]>();
             for (const item of merged) {
               const existing = dedupedMap.get(item.key);
@@ -1458,7 +1507,7 @@ export function createOperationalTools(
               retrievalBreakdown: {
                 knowledgeMatches: knowledgeRows.length,
                 documentChunkMatches: documentRows.length,
-                usedProjectFilter: Boolean(projectId),
+                usedProjectFilter: Boolean(resolvedProjectId),
               },
             };
           } catch (err) {
@@ -1697,6 +1746,533 @@ export function createOperationalTools(
                 "Unable to search past conversations. Proceed without historical context.",
             };
           }
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 12. Search Meetings By Topic (cross-project, enriched results)
+    // -----------------------------------------------------------------
+
+    searchMeetingsByTopic: tool({
+      description:
+        "Search for meetings about a specific topic across ALL projects. " +
+        "Returns enriched results with speaker quotes, decisions, risks, " +
+        "and action items from meeting digests and segments. " +
+        "Use this when the user asks 'find meetings about X' or " +
+        "'what have we discussed about Y'. Works cross-project by default. " +
+        "Combines keyword search AND semantic search for best coverage.",
+      inputSchema: z.object({
+        topic: z
+          .string()
+          .describe("The topic to search for (e.g. 'ASRS', 'sprinkler design', 'pricing')"),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Optional project ID to filter by"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Optional project name to filter by (e.g. 'Uniqlo')"),
+        maxResults: z
+          .number()
+          .optional()
+          .default(10)
+          .describe("Max meetings to return"),
+      }),
+      execute: withTrace(
+        "searchMeetingsByTopic",
+        options,
+        async ({ topic, projectId, projectName, maxResults }) => {
+          // Resolve project name
+          let resolvedProjectId = projectId;
+          if (!resolvedProjectId && projectName) {
+            const resolved = await resolveProject(supabase, undefined, projectName);
+            if (!("error" in resolved)) {
+              resolvedProjectId = resolved.id;
+            }
+          }
+
+          const targetCount = maxResults ?? 10;
+
+          // Strategy: run keyword search + semantic search in parallel
+          const [keywordRes, semanticRes] = await Promise.all([
+            // 1. Full-text search
+            supabase.rpc("full_text_search_meetings", {
+              search_query: topic,
+              match_count: targetCount,
+            }),
+            // 2. Semantic search via embeddings
+            (async () => {
+              try {
+                const openai = getOpenAI();
+                const embResp = await openai.embeddings.create({
+                  model: "text-embedding-3-small",
+                  input: topic,
+                });
+                const emb = JSON.stringify(embResp.data[0].embedding);
+                return supabase.rpc("match_documents_full", {
+                  query_embedding: emb,
+                  match_count: targetCount * 2,
+                  match_threshold: 0.3,
+                });
+              } catch {
+                return { data: [], error: null };
+              }
+            })(),
+          ]);
+
+          // Collect unique meeting IDs from both searches
+          const meetingIds = new Set<string>();
+          const keywordMeetings = (keywordRes.data ?? []) as AnyRow[];
+          for (const m of keywordMeetings) {
+            if (m.id) meetingIds.add(String(m.id));
+          }
+          const semanticDocs = (semanticRes.data ?? []) as AnyRow[];
+          for (const d of semanticDocs) {
+            const fileId = d.file_id ?? (d.metadata as AnyRow)?.file_id;
+            if (fileId) meetingIds.add(String(fileId));
+          }
+
+          if (meetingIds.size === 0) {
+            return {
+              results: [],
+              message: `No meetings found discussing "${topic}". Try broader terms.`,
+            };
+          }
+
+          // Fetch full meeting metadata + digests + segments for matched meetings
+          const ids = Array.from(meetingIds).slice(0, targetCount);
+          let meetingQuery = supabase
+            .from("document_metadata")
+            .select("id, title, date, project, project_id, summary, overview, participants, action_items")
+            .in("id", ids)
+            .order("date", { ascending: false });
+          if (resolvedProjectId) {
+            meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
+          }
+
+          const [meetingsRes, digestsRes, segmentsRes] = await Promise.all([
+            meetingQuery,
+            supabase
+              .from("meeting_digests")
+              .select("metadata_id, key_takeaways, decisions_summary, risks_summary, action_items_summary")
+              .in("metadata_id", ids),
+            supabase
+              .from("meeting_segments")
+              .select("metadata_id, title, summary, decisions, risks, tasks, segment_index")
+              .in("metadata_id", ids)
+              .order("segment_index", { ascending: true }),
+          ]);
+
+          const meetings = (meetingsRes.data ?? []) as AnyRow[];
+          const digests = (digestsRes.data ?? []) as AnyRow[];
+          const segments = (segmentsRes.data ?? []) as AnyRow[];
+
+          // Index digests and segments by meeting ID
+          const digestMap = new Map<string, AnyRow>();
+          for (const d of digests) {
+            digestMap.set(String(d.metadata_id), d);
+          }
+          const segmentMap = new Map<string, AnyRow[]>();
+          for (const s of segments) {
+            const key = String(s.metadata_id);
+            const existing = segmentMap.get(key) ?? [];
+            existing.push(s);
+            segmentMap.set(key, existing);
+          }
+
+          return {
+            searchScope: resolvedProjectId ? `Filtered to project ${resolvedProjectId}` : "All projects",
+            topic,
+            totalResults: meetings.length,
+            results: meetings.map((m) => {
+              const mId = String(m.id);
+              const digest = digestMap.get(mId);
+              const segs = segmentMap.get(mId) ?? [];
+              // Find segments most relevant to the topic
+              const topicLower = topic.toLowerCase();
+              const relevantSegs = segs.filter((s) => {
+                const text = `${s.title ?? ""} ${s.summary ?? ""}`.toLowerCase();
+                return topicLower.split(/\s+/).some((word) => text.includes(word));
+              }).slice(0, 3);
+
+              return {
+                sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
+                id: m.id,
+                title: m.title,
+                date: m.date,
+                project: m.project,
+                projectId: m.project_id,
+                participants: m.participants,
+                summary: String(m.summary || m.overview || "").substring(0, 800),
+                actionItems: m.action_items,
+                digest: digest
+                  ? {
+                      keyTakeaways: digest.key_takeaways,
+                      decisions: digest.decisions_summary,
+                      risks: digest.risks_summary,
+                      actionItems: digest.action_items_summary,
+                    }
+                  : null,
+                relevantSegments: relevantSegs.map((s) => ({
+                  topic: s.title,
+                  summary: String(s.summary ?? "").substring(0, 500),
+                  decisions: s.decisions,
+                  risks: s.risks,
+                  tasks: s.tasks,
+                })),
+              };
+            }),
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 13. Get Meeting Details (full meeting with digest + segments + quotes)
+    // -----------------------------------------------------------------
+
+    getMeetingDetails: tool({
+      description:
+        "Get the FULL details of a specific meeting including its digest, " +
+        "segments with speaker discussion topics, decisions, risks, and " +
+        "action items. Use this after finding a meeting via search to get " +
+        "the complete picture including who said what.",
+      inputSchema: z.object({
+        meetingId: z.string().describe("The meeting ID (document_metadata.id)"),
+      }),
+      execute: withTrace(
+        "getMeetingDetails",
+        options,
+        async ({ meetingId }) => {
+          const [meetingRes, digestRes, segmentsRes, insightsRes] =
+            await Promise.all([
+              supabase
+                .from("document_metadata")
+                .select("*")
+                .eq("id", meetingId)
+                .single(),
+              supabase
+                .from("meeting_digests")
+                .select("*")
+                .eq("metadata_id", meetingId)
+                .maybeSingle(),
+              supabase
+                .from("meeting_segments")
+                .select("*")
+                .eq("metadata_id", meetingId)
+                .order("segment_index", { ascending: true }),
+              supabase
+                .from("ai_insights")
+                .select("title, description, insight_type, severity, exact_quotes_text, stakeholders_affected")
+                .eq("meeting_id", meetingId),
+            ]);
+
+          if (meetingRes.error || !meetingRes.data) {
+            return { error: `Meeting ${meetingId} not found` };
+          }
+
+          const m = meetingRes.data as AnyRow;
+          const digest = digestRes.data as AnyRow | null;
+          const segments = (segmentsRes.data ?? []) as AnyRow[];
+          const insights = (insightsRes.data ?? []) as AnyRow[];
+
+          return {
+            sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
+            meeting: {
+              id: m.id,
+              title: m.title,
+              date: m.date,
+              project: m.project,
+              projectId: m.project_id,
+              participants: m.participants,
+              participantsArray: m.participants_array,
+              duration: m.duration_minutes,
+              summary: m.summary,
+              overview: m.overview,
+              actionItems: m.action_items,
+              bulletPoints: m.bullet_points,
+            },
+            digest: digest
+              ? {
+                  digestText: (digest.digest_text as string)?.substring(0, 2000),
+                  keyTakeaways: digest.key_takeaways,
+                  decisions: digest.decisions_summary,
+                  risks: digest.risks_summary,
+                  actionItems: digest.action_items_summary,
+                  opportunities: digest.opportunities_summary,
+                  followUps: digest.follow_ups,
+                }
+              : null,
+            segments: segments.map((s) => ({
+              index: s.segment_index,
+              topic: s.title,
+              summary: String(s.summary ?? "").substring(0, 600),
+              decisions: s.decisions,
+              risks: s.risks,
+              tasks: s.tasks,
+            })),
+            insights: insights.map((i) => ({
+              title: i.title,
+              description: i.description,
+              type: i.insight_type,
+              severity: i.severity,
+              quotes: i.exact_quotes_text,
+              stakeholders: i.stakeholders_affected,
+            })),
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 14. Save to Knowledge Base (write tool)
+    // -----------------------------------------------------------------
+
+    saveToKnowledgeBase: tool({
+      description:
+        "Save knowledge, lessons learned, best practices, or institutional " +
+        "memory to the company knowledge base. Use this when the user says " +
+        "'save this', 'remember this', 'I want to capture this', or " +
+        "'add this to the knowledge base'. The saved knowledge becomes " +
+        "searchable and available to all users via the AI assistant. " +
+        "Categories: lessons_learned, best_practice, process, policy, " +
+        "market_intel, general, strategy, org_update.",
+      inputSchema: z.object({
+        title: z
+          .string()
+          .describe("Clear, descriptive title for the knowledge entry"),
+        content: z
+          .string()
+          .describe("The knowledge content — be thorough and include context, rationale, and specifics"),
+        category: z
+          .enum([
+            "lessons_learned",
+            "best_practice",
+            "process",
+            "policy",
+            "market_intel",
+            "general",
+            "strategy",
+            "org_update",
+          ])
+          .describe("Category for the knowledge entry"),
+        tags: z
+          .array(z.string())
+          .optional()
+          .describe("Tags for searchability (e.g. ['ASRS', 'fire suppression', 'pricing'])"),
+        source: z
+          .string()
+          .optional()
+          .describe("Source of the knowledge (e.g. 'Meeting: Sprinkler Pricing Review 2026-03-13', 'Brandon Clymer')"),
+      }),
+      execute: withTrace(
+        "saveToKnowledgeBase",
+        options,
+        async ({ title, content, category, tags, source }) => {
+          try {
+            const { data, error } = await supabase
+              .from("company_knowledge")
+              .insert({
+                title,
+                content,
+                category,
+                tags: tags ?? [],
+                source: source ?? "AI Assistant",
+                author_id: _userId,
+                is_active: true,
+              })
+              .select("id, title, category, tags")
+              .single();
+
+            if (error) return { error: `Failed to save knowledge: ${error.message}` };
+
+            return {
+              success: true,
+              savedEntry: data,
+              message: `Knowledge saved: "${title}" (${category}). This is now searchable by all users via the AI assistant.`,
+            };
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Unknown error";
+            return { error: `Failed to save knowledge: ${msg}` };
+          }
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 15. Save Insight from Meeting/Conversation (write tool)
+    // -----------------------------------------------------------------
+
+    saveInsight: tool({
+      description:
+        "Save a structured insight extracted from meetings or conversations. " +
+        "Use when the user highlights something important from a meeting " +
+        "or discussion that should be tracked — risks, decisions, cost " +
+        "impacts, design considerations, etc. Links to the source meeting " +
+        "when available.",
+      inputSchema: z.object({
+        title: z.string().describe("Concise insight title"),
+        description: z
+          .string()
+          .describe("Detailed description of the insight"),
+        insightType: z
+          .enum(["risk", "decision", "opportunity", "cost_impact", "design_consideration", "lesson_learned", "action_required"])
+          .describe("Type of insight"),
+        severity: z
+          .enum(["low", "medium", "high", "critical"])
+          .optional()
+          .default("medium")
+          .describe("Severity/importance level"),
+        projectId: z.number().optional().describe("Project ID if applicable"),
+        projectName: z.string().optional().describe("Project name if known"),
+        meetingId: z.string().optional().describe("Source meeting ID if applicable"),
+        meetingName: z.string().optional().describe("Source meeting name"),
+        meetingDate: z.string().optional().describe("Source meeting date"),
+        quotes: z.string().optional().describe("Relevant quotes from the discussion"),
+        stakeholders: z
+          .array(z.string())
+          .optional()
+          .describe("People involved or affected"),
+        financialImpact: z.number().optional().describe("Estimated financial impact in dollars"),
+      }),
+      execute: withTrace(
+        "saveInsight",
+        options,
+        async ({
+          title,
+          description,
+          insightType,
+          severity,
+          projectId,
+          projectName,
+          meetingId,
+          meetingName,
+          meetingDate,
+          quotes,
+          stakeholders,
+          financialImpact,
+        }) => {
+          try {
+            // Resolve project if name provided
+            let resolvedProjectId = projectId;
+            let resolvedProjectName = projectName;
+            if (!resolvedProjectId && projectName) {
+              const resolved = await resolveProject(supabase, undefined, projectName);
+              if (!("error" in resolved)) {
+                resolvedProjectId = resolved.id;
+                resolvedProjectName = resolved.name;
+              }
+            }
+
+            const { data, error } = await supabase
+              .from("ai_insights")
+              .insert({
+                title,
+                description,
+                insight_type: insightType,
+                severity: severity ?? "medium",
+                project_id: resolvedProjectId ?? null,
+                project_name: resolvedProjectName ?? null,
+                meeting_id: meetingId ?? null,
+                meeting_name: meetingName ?? null,
+                meeting_date: meetingDate ?? null,
+                exact_quotes_text: quotes ?? null,
+                stakeholders_affected: stakeholders ?? [],
+                financial_impact: financialImpact ?? null,
+                status: "active",
+              })
+              .select("id, title, insight_type, severity, project_name")
+              .single();
+
+            if (error) return { error: `Failed to save insight: ${error.message}` };
+
+            return {
+              success: true,
+              savedInsight: data,
+              message: `Insight saved: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} This is now visible in project dashboards and AI analysis.`,
+            };
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Unknown error";
+            return { error: `Failed to save insight: ${msg}` };
+          }
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 16. Resolve Project (utility — find project by name)
+    // -----------------------------------------------------------------
+
+    findProject: tool({
+      description:
+        "Look up a project by name (partial match) or list all active projects. " +
+        "Use this when the user mentions a project by name and you need to " +
+        "resolve it to an ID, or when you're unsure which project they mean. " +
+        "Returns project ID, name, phase, and key stats.",
+      inputSchema: z.object({
+        projectName: z
+          .string()
+          .optional()
+          .describe("Project name or partial name to search for"),
+        listAll: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe("If true, list all active (non-archived) projects"),
+      }),
+      execute: withTrace(
+        "findProject",
+        options,
+        async ({ projectName, listAll }) => {
+          if (listAll) {
+            const { data, error } = await supabase
+              .from("projects")
+              .select("id, name, phase")
+              .eq("archived", false)
+              .order("name", { ascending: true })
+              .limit(50);
+            if (error) return { error: error.message };
+            return {
+              projects: ((data ?? []) as unknown as AnyRow[]).map((p) => ({
+                id: p.id,
+                name: p.name,
+                phase: p.phase,
+              })),
+            };
+          }
+
+          if (!projectName) {
+            return { error: "Provide a projectName to search for, or set listAll: true" };
+          }
+
+          const { data, error } = await supabase
+            .from("projects")
+            .select("id, name, phase")
+            .eq("archived", false)
+            .ilike("name", `%${projectName}%`)
+            .order("name", { ascending: true })
+            .limit(5);
+
+          if (error) return { error: error.message };
+          const matches = (data ?? []) as unknown as AnyRow[];
+
+          if (matches.length === 0) {
+            return {
+              matches: [],
+              message: `No projects found matching "${projectName}". Try a different name or use listAll to see all projects.`,
+            };
+          }
+
+          return {
+            matches: matches.map((p) => ({
+              id: p.id,
+              name: p.name,
+              phase: p.phase,
+            })),
+            bestMatch: { id: matches[0].id, name: matches[0].name },
+          };
         },
       ),
     }),

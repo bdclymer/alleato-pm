@@ -1280,7 +1280,8 @@ export function createProjectTools(
     searchDocuments: tool({
       description:
         "Search meeting transcripts, notes, and project documents by keyword. " +
-        "Meetings are stored in the document_metadata table. " +
+        "Works across ALL projects by default — no project filter needed. " +
+        "Optionally filter by project name or ID. " +
         "Use when investigating specific topics, decisions, or looking for " +
         "context on a particular issue discussed in meetings.",
       inputSchema: z.object({
@@ -1291,6 +1292,10 @@ export function createProjectTools(
           .number()
           .optional()
           .describe("Optional project ID to scope the search"),
+        projectName: z
+          .string()
+          .optional()
+          .describe("Optional project name to resolve and filter by (e.g. 'Uniqlo', 'Cedar Park')"),
         maxResults: z
           .number()
           .optional()
@@ -1300,12 +1305,30 @@ export function createProjectTools(
       execute: withTrace(
         "searchDocuments",
         options,
-        async ({ query, projectId, maxResults }) => {
-        if (projectId) {
+        async ({ query, projectId, projectName, maxResults }) => {
+        // Resolve project name to ID if provided
+        let resolvedProjectId = projectId;
+        let resolvedProjectName: string | null = null;
+        if (!resolvedProjectId && projectName) {
+          const { data: projectRow } = await supabase
+            .from("projects")
+            .select("id, name")
+            .ilike("name", `%${projectName}%`)
+            .order("name", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (projectRow?.id) {
+            resolvedProjectId = projectRow.id;
+            resolvedProjectName = projectRow.name ?? null;
+          }
+          // If project name doesn't resolve, still search across all projects
+        }
+
+        if (resolvedProjectId) {
           const { data: docRows } = await supabase
             .from("document_metadata")
             .select("*")
-            .eq("project_id", projectId)
+            .eq("project_id", resolvedProjectId)
             .or("type.eq.meeting,category.eq.meeting")
             .textSearch("content", query.split(" ").join(" & "))
             .order("date", { ascending: false })
@@ -1314,11 +1337,14 @@ export function createProjectTools(
 
           if (docs.length) {
             return {
+              project: { id: resolvedProjectId, name: resolvedProjectName ?? projectName ?? null },
               results: docs.map((d) => ({
                 sourceRef: `[Source: ${d.category === "meeting" ? "Meeting" : "Document"} - "${d.title}" - ${d.date}]`,
                 id: d.id,
                 title: d.title,
                 date: d.date,
+                projectId: d.project_id,
+                projectName: d.project,
                 participants: d.participants,
                 category: d.category,
                 summary: d.summary ?? d.overview,
@@ -1329,6 +1355,7 @@ export function createProjectTools(
           }
         }
 
+        // Cross-project full-text search (no project filter required)
         const { data, error } = await supabase.rpc(
           "full_text_search_meetings",
           {
@@ -1342,16 +1369,19 @@ export function createProjectTools(
         if (!results.length) {
           return {
             results: [],
-            message: `No documents found matching "${query}"`,
+            message: `No documents found matching "${query}". Try broader keywords or use semanticSearch for meaning-based results.`,
           };
         }
 
         return {
+          searchScope: resolvedProjectId ? `Project: ${resolvedProjectName ?? resolvedProjectId}` : "All projects",
           results: results.map((r) => ({
             sourceRef: `[Source: ${r.category === "meeting" ? "Meeting" : "Document"} - "${r.title}" - ${r.date}]`,
             id: r.id,
             title: r.title,
             date: r.date,
+            projectId: r.project_id,
+            projectName: r.project,
             category: r.category,
             participants: r.participants,
             content: r.content?.substring(0, 1000),
