@@ -13,6 +13,7 @@ import {
   Settings,
   SlidersHorizontal,
   ClipboardList,
+  Brain,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,6 +33,12 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Account", href: "/settings/account", icon: Building2 },
       { label: "Preferences", href: "/settings/preferences", icon: SlidersHorizontal },
+    ],
+  },
+  {
+    title: "AI",
+    items: [
+      { label: "Memory", href: "/settings/memory", icon: Brain },
     ],
   },
   {

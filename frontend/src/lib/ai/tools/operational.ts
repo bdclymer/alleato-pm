@@ -2,6 +2,12 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import OpenAI from "openai";
+import {
+  searchMemories as searchAiMemories,
+  writeMemory as writeAiMemory,
+  type MemoryType,
+  type MemoryVisibility,
+} from "@/lib/ai/services/ai-memory-service";
 
 type AnyRow = Record<string, unknown>;
 
@@ -105,7 +111,7 @@ function getOpenAI(): OpenAI {
 // ---------------------------------------------------------------------------
 
 export function createOperationalTools(
-  _userId: string,
+  userId: string,
   options: CreateOperationalToolsOptions = {},
 ) {
   const supabase = createServiceClient();
@@ -1342,9 +1348,7 @@ export function createOperationalTools(
                 match_count: Math.max(targetCount * 2, 20),
                 match_threshold: targetThreshold,
               }),
-              // search_knowledge_base RPC added via migration — not yet in generated types
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (supabase.rpc as any)("search_knowledge_base", {
+              supabase.rpc("search_knowledge_base", {
                 query_embedding: embeddingArg,
                 match_count: targetCount,
                 match_threshold: targetThreshold,
@@ -1703,7 +1707,7 @@ export function createOperationalTools(
               {
                 query_embedding: JSON.stringify(queryEmbedding),
                 match_count: matchCount ?? 5,
-                filter_user_id: _userId,
+                filter_user_id: userId,
               },
             );
 
@@ -2080,7 +2084,7 @@ export function createOperationalTools(
                 category,
                 tags: tags ?? [],
                 source: source ?? "AI Assistant",
-                author_id: _userId,
+                author_id: userId,
                 is_active: true,
               })
               .select("id, title, category, tags")
@@ -2204,6 +2208,148 @@ export function createOperationalTools(
     // -----------------------------------------------------------------
     // 16. Resolve Project (utility — find project by name)
     // -----------------------------------------------------------------
+
+    // -----------------------------------------------------------------
+    // 17. Search Memories (semantic search over user's memory store)
+    // -----------------------------------------------------------------
+
+    searchMemories: tool({
+      description:
+        "Search your memory of this user — their preferences, facts about projects, " +
+        "lessons learned, open commitments, and recent context from past sessions. " +
+        "Use this when the user references something from a previous conversation, " +
+        "or when you want to personalize a response based on what you know about them. " +
+        "Memory types: fact (project/people facts), preference (how they like info), " +
+        "lesson (patterns you've observed), commitment (tracked commitments), " +
+        "context (situational context from recent sessions).",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe("What you're looking for in memory (natural language)"),
+        type: z
+          .enum(["fact", "preference", "lesson", "commitment", "context"])
+          .optional()
+          .describe("Filter to a specific memory type"),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Filter to memories linked to a specific project"),
+      }),
+      execute: withTrace(
+        "searchMemories",
+        options,
+        async ({ query, type, projectId }) => {
+          const results = await searchAiMemories({
+            userId,
+            query,
+            type: type as MemoryType | undefined,
+            projectId,
+            matchCount: 8,
+            matchThreshold: 0.4,
+          });
+
+          if (results.length === 0) {
+            return { memories: [], message: "No relevant memories found." };
+          }
+
+          return {
+            memories: results.map((m) => ({
+              type: m.type,
+              content: m.content,
+              confidence: m.confidence,
+              importance: m.importance,
+              projectId: m.project_id,
+              source: m.source,
+              createdAt: m.created_at,
+              similarity: m.similarity,
+            })),
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 18. Write Memory (store something worth remembering)
+    // -----------------------------------------------------------------
+
+    writeMemory: tool({
+      description:
+        "Store a durable memory about this user for future sessions. " +
+        "Use this when you learn something worth remembering: a preference, " +
+        "a fact about their projects or team, a pattern you've noticed, " +
+        "a commitment that needs tracking, or important context. " +
+        "Do NOT use this for transient operational data — only things that " +
+        "improve future conversations. Memory types: " +
+        "fact (objective facts), preference (how they like things), " +
+        "lesson (patterns/insights), commitment (tracked commitment with owner + deadline), " +
+        "context (situational context, expires in 30 days).",
+      inputSchema: z.object({
+        type: z
+          .enum(["fact", "preference", "lesson", "commitment", "context"])
+          .describe("Type of memory to store"),
+        content: z
+          .string()
+          .describe(
+            "The memory content — 1-2 sentences, specific. " +
+            "Include names, numbers, dates when relevant. " +
+            "Example: 'User prefers bullet-point financial summaries over prose paragraphs' " +
+            "or 'Brandon Clymer committed to ROM estimates for Vermillion Rise by March 15, 2026'",
+          ),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Project ID if this memory is project-specific"),
+        importance: z
+          .number()
+          .min(0.1)
+          .max(1.0)
+          .optional()
+          .describe(
+            "How important is this to surface in future sessions? " +
+            "0.1 = minor detail, 0.5 = useful context, 1.0 = critical to remember",
+          ),
+        confidence: z
+          .number()
+          .min(0.1)
+          .max(1.0)
+          .optional()
+          .describe("How confident are you this is accurate? Default 0.9"),
+        visibility: z
+          .enum(["private", "team"])
+          .optional()
+          .describe(
+            "Who should see this memory? " +
+            "private = only this user (default for preferences/context), " +
+            "team = all users (use for facts/lessons about projects that benefit everyone)",
+          ),
+      }),
+      execute: withTrace(
+        "writeMemory",
+        options,
+        async ({ type, content, projectId, importance, confidence, visibility }) => {
+          const result = await writeAiMemory({
+            userId,
+            type: type as MemoryType,
+            content,
+            projectId,
+            importance,
+            confidence,
+            visibility: visibility as MemoryVisibility | undefined,
+            source: "conversation",
+          });
+
+          if ("error" in result) {
+            return { success: false, error: result.error };
+          }
+
+          return {
+            success: true,
+            id: result.id,
+            message: `Memory stored: [${type}] "${content.substring(0, 80)}${content.length > 80 ? "..." : ""}"`,
+          };
+        },
+      ),
+    }),
 
     findProject: tool({
       description:

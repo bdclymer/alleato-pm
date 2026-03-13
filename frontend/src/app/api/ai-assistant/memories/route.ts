@@ -1,0 +1,63 @@
+import { getApiRouteUser } from "@/lib/supabase/server";
+import {
+  getUserMemories,
+  writeMemory,
+  type MemoryType,
+  type MemoryVisibility,
+} from "@/lib/ai/services/ai-memory-service";
+
+/** GET /api/ai-assistant/memories — list the current user's memories */
+export async function GET(request: Request) {
+  const user = await getApiRouteUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get("type") as MemoryType | null;
+  const limit = Math.min(parseInt(searchParams.get("limit") ?? "50", 10), 200);
+  const offset = parseInt(searchParams.get("offset") ?? "0", 10);
+
+  const result = await getUserMemories(user.id, {
+    type: type ?? undefined,
+    limit,
+    offset,
+  });
+
+  return Response.json(result);
+}
+
+/** POST /api/ai-assistant/memories — manually create a memory */
+export async function POST(request: Request) {
+  const user = await getApiRouteUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
+
+  const body = await request.json();
+  const { type, content, projectId, importance, confidence, visibility } = body as {
+    type: MemoryType;
+    content: string;
+    projectId?: number;
+    importance?: number;
+    confidence?: number;
+    visibility?: MemoryVisibility;
+  };
+
+  if (!type || !content?.trim()) {
+    return new Response("type and content are required", { status: 400 });
+  }
+
+  const result = await writeMemory({
+    userId: user.id,
+    type,
+    content: content.trim(),
+    projectId,
+    importance,
+    confidence,
+    visibility,
+    source: "manual",
+  });
+
+  if ("error" in result) {
+    return new Response(result.error, { status: 500 });
+  }
+
+  return Response.json(result);
+}

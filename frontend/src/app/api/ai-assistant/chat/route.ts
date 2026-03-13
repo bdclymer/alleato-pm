@@ -12,11 +12,17 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
+  buildCouncilModePromptInjection,
   createStrategistTools,
   getStrategistSystemPrompt,
   STRATEGIST_MODEL,
 } from "@/lib/ai/orchestrator";
 import { generateConversationMemory } from "@/lib/ai/services/conversation-memory";
+import {
+  getMemoriesForSession,
+  buildMemoryContextBlock,
+} from "@/lib/ai/services/ai-memory-service";
+import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
 
 export const maxDuration = 120;
 
@@ -51,9 +57,10 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { id: sessionId, messages } = body as {
+  const { id: sessionId, messages, councilMode } = body as {
     id: string;
     messages: UIMessage[];
+    councilMode?: boolean;
   };
 
   if (!sessionId || !messages?.length) {
@@ -99,12 +106,39 @@ export async function POST(request: Request) {
   const lastUserContent = lastUserMessage
     ? extractTextFromParts(lastUserMessage.parts)
     : "";
+
+  // Inject user memories into the system prompt.
+  // Preferences are always included. Semantically relevant facts/lessons/
+  // context/commitments are retrieved based on the current message.
   let systemPrompt = getStrategistSystemPrompt();
+  if (lastUserContent) {
+    try {
+      const { preferences, relevant, team } = await getMemoriesForSession({
+        userId: user.id,
+        firstMessage: lastUserContent,
+      });
+      const memoryBlock = buildMemoryContextBlock(preferences, relevant, team);
+      if (memoryBlock) {
+        systemPrompt = memoryBlock + "\n\n---\n\n" + systemPrompt;
+      }
+    } catch {
+      // Memory injection failure is non-fatal — continue without it
+    }
+  }
+
   if (lastUserContent && isPortfolioRiskQuery(lastUserContent)) {
     systemPrompt +=
       "\n\n## Runtime Risk Routing Override\n" +
       "For THIS request, you MUST call consultCFO before any other tool. " +
       "Then ensure CFO analysis includes getProjectsWithRisks output before final answer.";
+  }
+
+  // Council Mode — multi-voice C-Suite session.
+  // Overrides the normal synthesize-and-present flow: each specialist speaks
+  // in their own voice, labeled with their icon, and the Strategist adds only
+  // a brief closing synthesis. Inspired by BMAD party-mode.
+  if (councilMode) {
+    systemPrompt += buildCouncilModePromptInjection();
   }
   const tracer = trace.getTracer("ai-assistant");
   const requestSpan = tracer.startSpan("ai-assistant.chat.request");
@@ -177,6 +211,7 @@ export async function POST(request: Request) {
                   tool_trace: toolTrace,
                   model: STRATEGIST_MODEL,
                   architecture: "csuite",
+                  councilMode: councilMode ?? false,
                   usage: totalUsage
                     ? {
                         inputTokens: totalUsage.inputTokens ?? 0,
@@ -227,6 +262,14 @@ export async function POST(request: Request) {
       await generateConversationMemory(sessionId, user.id);
     } catch (e) {
       console.error("[conversation-memory] failed:", e);
+    }
+
+    // 3. Extract and store durable typed memories (facts, preferences,
+    //    lessons, commitments, context) from this conversation.
+    try {
+      await extractAndStoreMemories(sessionId, user.id);
+    } catch (e) {
+      console.error("[memory-extraction] failed:", e);
     }
   });
 

@@ -288,6 +288,19 @@ class FirefliesIngestionPipeline:
                 }
                 self.store.insert_insight(insight)
 
+            # Extract team-scoped AI memories from this meeting.
+            # Runs best-effort: failures don't block ingestion.
+            try:
+                self._extract_meeting_memories(
+                    document_id=document_id,
+                    project_id=effective_project_id,
+                    title=parsed.title,
+                    content=parsed.raw_text,
+                    action_items=parsed.action_items,
+                )
+            except Exception as mem_exc:
+                logger.warning("Memory extraction failed for %s: %s", document_id, mem_exc)
+
             self.store.complete_ingestion_job(job_id, status="completed")
         except Exception as exc:  # pragma: no cover - network errors
             self.store.complete_ingestion_job(job_id, status="failed", error=str(exc))
@@ -608,7 +621,25 @@ class FirefliesIngestionPipeline:
               members { user_id email name }
             }
             shared_with { email name photo_url expires_at }
-            sentences { speaker_name text start_time end_time }
+            sentences {
+              index
+              speaker_name
+              speaker_id
+              text
+              raw_text
+              start_time
+              end_time
+              ai_filters {
+                task
+                pricing
+                metric
+                question
+                date_and_time
+                text_cleanup
+                sentiment
+              }
+            }
+            privacy
           }
         }
         """
@@ -705,6 +736,8 @@ class FirefliesIngestionPipeline:
             lines.append(f"**Cal ID:** {transcript['cal_id']}")
         if transcript.get("is_live") is not None:
             lines.append(f"**Is Live:** {str(bool(transcript['is_live'])).lower()}")
+        if transcript.get("privacy"):
+            lines.append(f"**Privacy:** {transcript['privacy']}")
         lines.append(f"**Fireflies ID:** {transcript.get('id')}")
         lines.append("")
 
@@ -748,7 +781,27 @@ class FirefliesIngestionPipeline:
                 if not text:
                     continue
                 stamp = self._seconds_to_mmss((sentence or {}).get("start_time"))
-                lines.append(f"[{stamp}] **{speaker}**: {text}")
+                ai_filters = (sentence or {}).get("ai_filters") or {}
+                tags = [k for k, v in ai_filters.items() if v and k != "text_cleanup" and k != "sentiment"]
+                tag_str = f" [{', '.join(tags)}]" if tags else ""
+                lines.append(f"[{stamp}] **{speaker}**: {text}{tag_str}")
+
+            # Append AI filters summary as structured data for downstream extraction
+            ai_filter_sentences = [
+                s for s in sentences
+                if s and (s.get("ai_filters") or {})
+                and any(v for k, v in (s.get("ai_filters") or {}).items() if k not in ("text_cleanup", "sentiment"))
+            ]
+            if ai_filter_sentences:
+                self._append_json_section(lines, "AI Sentence Filters", [
+                    {
+                        "index": s.get("index"),
+                        "speaker": s.get("speaker_name"),
+                        "text": (s.get("text") or "")[:200],
+                        "filters": {k: v for k, v in (s.get("ai_filters") or {}).items() if v},
+                    }
+                    for s in ai_filter_sentences
+                ])
 
         return "\n".join(lines).strip() + "\n"
 
@@ -1167,6 +1220,144 @@ class FirefliesIngestionPipeline:
         lines.append(json.dumps(value, indent=2))
         lines.append("```")
         lines.append("")
+
+    # -------------------------------------------------------------------------
+    # Meeting-triggered memory extraction
+    # -------------------------------------------------------------------------
+
+    def _extract_meeting_memories(
+        self,
+        document_id: str,
+        project_id: Optional[int],
+        title: str,
+        content: str,
+        action_items: List[str],
+    ) -> None:
+        """Extract team-scoped AI memories from an ingested meeting transcript.
+
+        Uses GPT-4.1-nano to identify facts, lessons, and commitments from the
+        meeting. Stores them directly in ai_memories with visibility='team' so
+        they are injected for all users, not just the one who triggered ingestion.
+
+        Commitment memories are stored with project linkage so they also surface
+        as ai_insights action items via the TypeScript bridge.
+        """
+        if OpenAI is None:
+            logger.debug("OpenAI not available, skipping memory extraction")
+            return
+
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            return
+
+        client = OpenAI(api_key=api_key)
+
+        # Build a compact transcript excerpt (first 4,000 chars)
+        excerpt = content[:4000]
+
+        # Build action items summary
+        action_summary = ""
+        if action_items:
+            action_summary = "\n\nAction items identified:\n" + "\n".join(
+                f"- {item}" for item in action_items[:20]
+            )
+
+        prompt = (
+            f"Meeting: {title}\n\n"
+            f"Transcript excerpt:\n{excerpt}"
+            f"{action_summary}\n\n"
+            "Extract durable team memories from this meeting. Return a JSON array. "
+            "Each object: {\"type\": \"fact\"|\"lesson\"|\"commitment\", "
+            "\"content\": \"1-2 sentence memory\", "
+            "\"importance\": 0.1-1.0, \"confidence\": 0.1-1.0}\n"
+            "Types:\n"
+            "- fact: objective facts about projects, people, decisions made\n"
+            "- lesson: patterns or institutional knowledge worth remembering\n"
+            "- commitment: specific commitments with owner + deadline\n"
+            "Rules: be specific (include names, numbers, dates). Max 5 memories. "
+            "Return [] if nothing meaningful. Return ONLY valid JSON array."
+        )
+
+        response = client.chat.completions.create(
+            model="gpt-4.1-nano",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=512,
+        )
+
+        raw = (response.choices[0].message.content or "").strip()
+        raw = raw.lstrip("```json").lstrip("```").rstrip("```").strip()
+
+        try:
+            memories = json.loads(raw)
+            if not isinstance(memories, list):
+                return
+        except (json.JSONDecodeError, ValueError):
+            return
+
+        if not memories:
+            return
+
+        # Embed all memories in one batch
+        valid = [
+            m for m in memories
+            if isinstance(m, dict)
+            and m.get("content", "").strip()
+            and m.get("type") in ("fact", "lesson", "commitment")
+            and float(m.get("importance", 0)) >= 0.3
+        ]
+        if not valid:
+            return
+
+        texts = [m["content"][:500] for m in valid]
+        embeddings_resp = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=texts,
+        )
+        embeddings = [e.embedding for e in embeddings_resp.data]
+
+        supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+        supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+        if not supabase_url or not supabase_key:
+            logger.warning("Supabase env vars not set, cannot store meeting memories")
+            return
+
+        import urllib.request
+
+        for mem, embedding in zip(valid, embeddings):
+            # Use a deterministic system user_id for team memories (nil UUID)
+            # Team memories have visibility='team' so they're shared across all users.
+            # We use the Supabase service role key for direct insert.
+            payload = json.dumps({
+                "user_id": "00000000-0000-0000-0000-000000000001",  # system/team user
+                "type": mem["type"],
+                "content": mem["content"].strip(),
+                "embedding": json.dumps(embedding),
+                "project_id": project_id,
+                "meeting_id": document_id,
+                "confidence": float(mem.get("confidence", 0.85)),
+                "importance": float(mem.get("importance", 0.5)),
+                "source": "meeting_ingest",
+                "visibility": "team",
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                f"{supabase_url}/rest/v1/ai_memories",
+                data=payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "apikey": supabase_key,
+                    "Authorization": f"Bearer {supabase_key}",
+                    "Prefer": "return=minimal",
+                },
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    if resp.status not in (200, 201):
+                        logger.warning("Memory insert returned %d", resp.status)
+            except Exception as e:
+                logger.warning("Failed to insert meeting memory: %s", e)
 
 
 if __name__ == "__main__":

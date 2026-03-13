@@ -907,6 +907,137 @@ export type Database = {
           },
         ]
       }
+      ai_memories: {
+        Row: {
+          access_count: number
+          confidence: number
+          content: string
+          created_at: string
+          embedding: string | null
+          expires_at: string | null
+          id: string
+          importance: number
+          is_active: boolean
+          last_accessed_at: string | null
+          meeting_id: string | null
+          project_id: number | null
+          source: string
+          superseded_by: string | null
+          type: string
+          user_id: string
+          visibility: string
+        }
+        Insert: {
+          access_count?: number
+          confidence?: number
+          content: string
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          importance?: number
+          is_active?: boolean
+          last_accessed_at?: string | null
+          meeting_id?: string | null
+          project_id?: number | null
+          source?: string
+          superseded_by?: string | null
+          type: string
+          user_id: string
+          visibility?: string
+        }
+        Update: {
+          access_count?: number
+          confidence?: number
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          expires_at?: string | null
+          id?: string
+          importance?: number
+          is_active?: boolean
+          last_accessed_at?: string | null
+          meeting_id?: string | null
+          project_id?: number | null
+          source?: string
+          superseded_by?: string | null
+          type?: string
+          user_id?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_memories_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "ai_memories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_models: {
         Row: {
           config: Json | null
@@ -4568,8 +4699,12 @@ export type Database = {
           category: string
           content: string
           created_at: string | null
+          embedding: string | null
           id: string
           is_active: boolean | null
+          meeting_id: string | null
+          origin: string
+          project_id: number | null
           source: string | null
           tags: string[] | null
           title: string
@@ -4580,8 +4715,12 @@ export type Database = {
           category: string
           content: string
           created_at?: string | null
+          embedding?: string | null
           id?: string
           is_active?: boolean | null
+          meeting_id?: string | null
+          origin?: string
+          project_id?: number | null
           source?: string | null
           tags?: string[] | null
           title: string
@@ -4592,14 +4731,82 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string | null
+          embedding?: string | null
           id?: string
           is_active?: boolean | null
+          meeting_id?: string | null
+          origin?: string
+          project_id?: number | null
           source?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "company_knowledge_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contract_billing_periods: {
         Row: {
@@ -7759,6 +7966,7 @@ export type Database = {
           estimate_date: string | null
           estimate_id: number
           estimate_number: string | null
+          estimate_type: string | null
           estimator: string | null
           fee_rate: number
           insurance_rate: number
@@ -7779,6 +7987,7 @@ export type Database = {
           estimate_date?: string | null
           estimate_id?: number
           estimate_number?: string | null
+          estimate_type?: string | null
           estimator?: string | null
           fee_rate?: number
           insurance_rate?: number
@@ -7799,6 +8008,7 @@ export type Database = {
           estimate_date?: string | null
           estimate_id?: number
           estimate_number?: string | null
+          estimate_type?: string | null
           estimator?: string | null
           fee_rate?: number
           insurance_rate?: number
@@ -19077,6 +19287,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decay_memory_confidence: {
+        Args: never
+        Returns: {
+          decayed_count: number
+          expired_count: number
+        }[]
+      }
       email_to_names: {
         Args: { email: string }
         Returns: {
@@ -19104,6 +19321,7 @@ export type Database = {
         }[]
       }
       execute_custom_sql: { Args: { sql_query: string }; Returns: Json }
+      expire_ai_memories: { Args: never; Returns: number }
       extract_names: {
         Args: { participant: string }
         Returns: {
@@ -19121,6 +19339,21 @@ export type Database = {
           similarity_score: number
           title1: string
           title2: string
+        }[]
+      }
+      find_duplicate_memory: {
+        Args: {
+          p_type: string
+          p_user_id: string
+          query_embedding: string
+          similarity_threshold?: number
+        }
+        Returns: {
+          confidence: number
+          content: string
+          id: string
+          importance: number
+          similarity: number
         }[]
       }
       find_sprinkler_requirements:
@@ -20151,6 +20384,28 @@ export type Database = {
           }
       refresh_contract_financial_summary: { Args: never; Returns: undefined }
       refresh_search_vectors: { Args: never; Returns: undefined }
+      search_ai_memories: {
+        Args: {
+          filter_project_id?: number
+          filter_type?: string
+          match_count?: number
+          match_threshold?: number
+          p_user_id: string
+          query_embedding: string
+        }
+        Returns: {
+          confidence: number
+          content: string
+          created_at: string
+          id: string
+          importance: number
+          meeting_id: string
+          project_id: number
+          similarity: number
+          source: string
+          type: string
+        }[]
+      }
       search_all_knowledge: {
         Args: {
           match_count?: number
@@ -20261,6 +20516,28 @@ export type Database = {
           title: string
         }[]
       }
+      search_knowledge_base: {
+        Args: {
+          filter_category?: string
+          filter_project_id?: number
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          meeting_id: string
+          origin: string
+          project_id: number
+          similarity: number
+          source: string
+          tags: string[]
+          title: string
+        }[]
+      }
       search_meeting_chunks:
         | {
             Args: {
@@ -20343,6 +20620,25 @@ export type Database = {
           similarity: number
         }[]
       }
+      search_team_memories: {
+        Args: {
+          filter_type?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          confidence: number
+          content: string
+          created_at: string
+          id: string
+          importance: number
+          project_id: number
+          similarity: number
+          source: string
+          type: string
+        }[]
+      }
       search_text_chunks: {
         Args: {
           compliance_filter?: string
@@ -20395,6 +20691,7 @@ export type Database = {
         }[]
       }
       text2ltree: { Args: { "": string }; Returns: unknown }
+      touch_ai_memories: { Args: { memory_ids: string[] }; Returns: undefined }
       update_document_project_assignment: {
         Args: {
           p_confidence?: number
