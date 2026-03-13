@@ -51,12 +51,18 @@ export async function Issue({ issueId }: { issueId: string }) {
     }
   );
 
-  let error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let results: [any, string] | undefined;
+  let storage: any;
+  let contentHtml: string | undefined;
+  let error: unknown;
 
   try {
-    results = await Promise.all([storagePromise, contentHtmlPromise]) as [any, string];
+    // Await separately to avoid "excessively deep" TS error from Promise.all
+    // combining Liveblocks recursive storage types
+    [storage, contentHtml] = await Promise.all([
+      storagePromise as Promise<unknown>,
+      contentHtmlPromise,
+    ]);
   } catch (err) {
     console.log(err);
     error = err;
@@ -64,8 +70,8 @@ export async function Issue({ issueId }: { issueId: string }) {
 
   if (
     error ||
-    !Array.isArray(results) ||
-    Object.keys(results[0]).length === 0
+    !storage ||
+    Object.keys(storage).length === 0
   ) {
     console.log(error);
     return (
@@ -84,8 +90,6 @@ export async function Issue({ issueId }: { issueId: string }) {
     );
   }
 
-  const [storage, contentHtml] = results;
-
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
@@ -100,7 +104,7 @@ export async function Issue({ issueId }: { issueId: string }) {
                 <Editor
                   storageFallback={storage}
                   contentFallback={
-                    <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+                    <div dangerouslySetInnerHTML={{ __html: contentHtml ?? "" }} />
                   }
                 />
                 <div className="my-6">
