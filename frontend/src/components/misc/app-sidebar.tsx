@@ -110,18 +110,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     name: tool.name,
     url: buildUrl(tool.path, tool.requiresProject),
     icon: tool.icon,
+    disabled: tool.requiresProject && !projectId,
   }));
 
   const projectManagementNavItems = projectManagementTools.map((tool) => ({
     name: tool.name,
     url: buildUrl(tool.path, tool.requiresProject),
     icon: tool.icon,
+    disabled: tool.requiresProject && !projectId,
   }));
 
   const financialNavItems = financialManagementTools.map((tool) => ({
     name: tool.name,
     url: buildUrl(tool.path, tool.requiresProject),
     icon: tool.icon,
+    disabled: tool.requiresProject && !projectId,
   }));
 
   const adminNavItems = adminTools.map((tool) => ({

@@ -34,6 +34,7 @@ export function NavDocuments({
     name: string;
     url: string;
     icon: Icon;
+    disabled?: boolean;
   }[];
   label?: string;
 }) {
@@ -45,42 +46,55 @@ export function NavDocuments({
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild tooltip={item.name}>
-              <Link href={item.url}>
+            {item.disabled ? (
+              <SidebarMenuButton
+                tooltip={`${item.name} (select a project first)`}
+                disabled
+                className="pointer-events-none opacity-40"
+              >
                 <item.icon />
                 <span>{item.name}</span>
-              </Link>
-            </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  showOnHover
-                  className="data-[state=open]:bg-accent rounded-sm"
-                >
-                  <IconDots />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-24 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
-                <DropdownMenuItem>
-                  <IconFolder />
-                  <span>Open</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <IconShare3 />
-                  <span>Share</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  <IconTrash />
-                  <span>Delete</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </SidebarMenuButton>
+            ) : (
+              <>
+                <SidebarMenuButton asChild tooltip={item.name}>
+                  <Link href={item.url}>
+                    <item.icon />
+                    <span>{item.name}</span>
+                  </Link>
+                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuAction
+                      showOnHover
+                      className="data-[state=open]:bg-accent rounded-sm"
+                    >
+                      <IconDots />
+                      <span className="sr-only">More</span>
+                    </SidebarMenuAction>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-24 rounded-lg"
+                    side={isMobile ? "bottom" : "right"}
+                    align={isMobile ? "end" : "start"}
+                  >
+                    <DropdownMenuItem>
+                      <IconFolder />
+                      <span>Open</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <IconShare3 />
+                      <span>Share</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive">
+                      <IconTrash />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

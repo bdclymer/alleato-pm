@@ -1223,10 +1223,16 @@ export function createProjectTools(
           }
 
           if (effectiveDate) {
-            meetingsQuery = meetingsQuery.eq("date", effectiveDate);
+            // date column stores full ISO timestamps (e.g. "2026-03-13T16:30:00+00:00")
+            // so we must use a range filter instead of exact string equality
+            meetingsQuery = meetingsQuery
+              .gte("date", `${effectiveDate}T00:00:00`)
+              .lt("date", `${effectiveDate}T23:59:59.999`);
           } else {
-            if (startDate) meetingsQuery = meetingsQuery.gte("date", startDate);
-            if (endDate) meetingsQuery = meetingsQuery.lte("date", endDate);
+            if (startDate)
+              meetingsQuery = meetingsQuery.gte("date", `${startDate}T00:00:00`);
+            if (endDate)
+              meetingsQuery = meetingsQuery.lte("date", `${endDate}T23:59:59.999`);
           }
 
           const { data: meetingRows, error } = await meetingsQuery;
