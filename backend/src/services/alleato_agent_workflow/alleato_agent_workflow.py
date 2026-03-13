@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from pathlib import Path
 
 # Add parent directory to path for env_loader import
@@ -13,6 +14,7 @@ from agents import HostedMCPTool, WebSearchTool, Agent, ModelSettings, TResponse
 from openai import AsyncOpenAI
 from types import SimpleNamespace
 from pydantic import BaseModel
+from supabase import create_client
 
 # Import RAG tools
 from .rag_tools import (
@@ -21,6 +23,7 @@ from .rag_tools import (
     get_recent_meetings,
     task_writer,
     list_projects,
+    get_project_profile,
     assign_meeting_to_project,
     classify_segment_projects,
     batch_assign_unassigned_meetings,
@@ -34,6 +37,123 @@ try:
 except ImportError:
     GUARDRAILS_AVAILABLE = False
     print("Warning: Guardrails not available. Continuing without guardrail protection.")
+
+
+def _normalize_text(value: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]+", " ", (value or "").lower())).strip()
+
+
+def _extract_project_query_focus(user_text: str) -> str:
+    text = user_text or ""
+    patterns = [
+        r"tell me about\s+(.+?)(?:\?|$)",
+        r"about\s+(.+?)(?:\?|$)",
+        r"status of\s+(.+?)(?:\?|$)",
+        r"update on\s+(.+?)(?:\?|$)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            focus = match.group(1).strip()
+            focus = re.sub(r"\bproject\b", "", focus, flags=re.IGNORECASE).strip(" -,:.")
+            if focus:
+                return focus
+    return text
+
+
+def _find_ambiguous_project_prompt(user_text: str) -> str | None:
+    """Return a deterministic disambiguation question when multiple projects match."""
+    focus = _extract_project_query_focus(user_text)
+    normalized_focus = _normalize_text(focus)
+    if len(normalized_focus) < 3:
+        return None
+
+    stopwords = {
+        "the", "and", "for", "with", "from", "that", "this", "about",
+        "project", "status", "update", "tell", "me", "please",
+    }
+    tokens = [t for t in normalized_focus.split() if len(t) >= 4 and t not in stopwords]
+    if not tokens:
+        return None
+
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
+    if not supabase_url or not supabase_key:
+        return None
+
+    client = create_client(supabase_url, supabase_key)
+
+    scores: dict[int, dict[str, object]] = {}
+    for token in tokens[:5]:
+        resp = client.table("projects").select("id,name").ilike("name", f"%{token}%").limit(50).execute()
+        for row in (resp.data or []):
+            pid = int(row["id"])
+            entry = scores.setdefault(pid, {"id": pid, "name": row.get("name", "Unknown"), "score": 0})
+            entry["score"] = int(entry["score"]) + 1
+
+    if len(scores) < 2:
+        return None
+
+    for entry in scores.values():
+        name_norm = _normalize_text(str(entry["name"]))
+        if normalized_focus and normalized_focus in name_norm:
+            entry["score"] = int(entry["score"]) + 3
+        if name_norm and name_norm in normalized_focus:
+            entry["score"] = int(entry["score"]) + 3
+
+    ranked = sorted(scores.values(), key=lambda x: (-int(x["score"]), str(x["name"])))
+    if len(ranked) < 2:
+        return None
+
+    # Ask for clarification when top candidates are close enough to be ambiguous.
+    if int(ranked[0]["score"]) > int(ranked[1]["score"]) + 1:
+        return None
+
+    top = ranked[:5]
+    opts = "\n".join(f"- {r['name']} (ID: {r['id']})" for r in top)
+    return (
+        f"I found multiple projects matching \"{focus}\". Which one do you mean?\n"
+        f"{opts}"
+    )
+
+
+def _detect_query_mode(user_text: str) -> str:
+    """Detect likely user intent for response-shape steering."""
+    t = (user_text or "").lower()
+    if re.search(r"\b(financial|budget|cost|margin|profit|loss|forecast|invoice|pay app|cash flow|change order)\b", t):
+        return "financial"
+    if re.search(r"\b(what changed|since last|last week|delta|trend)\b", t):
+        return "change_over_time"
+    if re.search(r"\b(risk|blocked|stuck|issue|problem|bottleneck)\b", t):
+        return "risk_blocker"
+    if re.search(r"\b(next steps|what should we do|action|plan)\b", t):
+        return "action_plan"
+    return "overview"
+
+
+def _build_project_operator_note(user_text: str) -> str:
+    """Inject a high-priority operator playbook for conversational + high-value answers."""
+    mode = _detect_query_mode(user_text)
+    mode_guidance = {
+        "overview": "Default to concise project overview first. No deep finance unless requested.",
+        "financial": "User asked for finance depth. Focus on budget/contract/change-order facts only.",
+        "change_over_time": "User asked for changes over time. Highlight deltas and what changed recently.",
+        "risk_blocker": "User asked about risks/blockers. Prioritize what is stuck, why, and impact.",
+        "action_plan": "User asked for actions. Provide concrete next 3 actions with owners and timeline.",
+    }[mode]
+    return (
+        "SYSTEM OPERATOR PLAYBOOK (highest priority):\n"
+        "1) Be conversational and direct. Sound like a pragmatic teammate, not a report generator.\n"
+        "2) Match user intent exactly. Do not expand scope unless asked.\n"
+        "3) Use grounded facts only from tools/context. If unknown, say 'I don't see that data yet.'\n"
+        "4) If project is ambiguous, ask a one-line disambiguation question and stop.\n"
+        "5) Response shape for Brandon-style ops questions:\n"
+        "   - Quick Answer\n"
+        "   - What Matters Now (top 3)\n"
+        "   - Next Best Actions (top 3)\n"
+        "6) Avoid CFO tone unless user explicitly asks for executive financial assessment.\n"
+        f"7) Current query mode: {mode}. {mode_guidance}"
+    )
 
 # Tool definitions
 mcp = HostedMCPTool(tool_config={
@@ -293,8 +413,38 @@ You have access to the following tools to retrieve company data:
 - `structured_analytics_query`: Query tasks, insights, and project metadata
 - `get_recent_meetings`: Get a list of recent meetings with summaries
 - `list_projects`: List all projects with activity summary
+- `get_project_profile`: Deterministically resolve project by name and return grounded project stats
 
 ALWAYS use these tools to ground your responses in actual company data. Never make up information.
+
+**Project Identity and Financial Safety Rules (MANDATORY):**
+- If the user names a project (for example: "Ulta Beauty"), call `get_project_profile` first.
+- If `get_project_profile` returns multiple matches, ask the user to pick one and stop. Do not blend projects.
+- Do not report margin, loss %, or "critical financial concern" unless those exact fields are available in tool output.
+- If a required financial field is missing, explicitly say "data not available" rather than inferring.
+- Never map one project name to another without explicit evidence from tool results.
+
+**Intent-Match Rules (MANDATORY):**
+- Answer the user's requested scope first. Do not expand into financial analysis unless asked.
+- For prompts like "tell me about project X", return a neutral overview:
+  - project identity
+  - current status/phase
+  - recent activity
+  - top risks/blockers
+  - next actions
+- Only include deep financial breakdown when the user explicitly asks for terms like:
+  `financial`, `budget`, `cost`, `margin`, `profit`, `loss`, `forecast`, `invoice`, `pay app`, `change order amount`.
+- If you are unsure whether they want finance depth, ask a brief clarifying question instead of assuming.
+- Never present CFO framing unless the user asks for executive financial assessment.
+
+**Conversation-First Output Policy (HIGHEST PRIORITY):**
+- Override prior JSON-example formatting unless the user explicitly asks for JSON.
+- Respond in natural conversational language with short sections and plain wording.
+- Default response template:
+  1) Quick answer
+  2) What matters now (top 3)
+  3) Next best actions (top 3)
+- Keep tone practical and direct. No inflated executive language.
 
 **REMINDER:**
 Your primary objectives are (1) high-quality executive reasoning before conclusion, (2) context-rich, actionable guidance, and (3) persistent, proactive strategic analysis across all organizational knowledge. All outputs must strictly follow [reasoning] → [conclusion] order.""",
@@ -304,12 +454,13 @@ Your primary objectives are (1) high-quality executive reasoning before conclusi
     structured_analytics_query,
     get_recent_meetings,
     list_projects,
+    get_project_profile,
     assign_meeting_to_project,
     batch_assign_unassigned_meetings,
     get_meeting_category,
   ],
   model_settings=ModelSettings(
-    temperature=1,
+    temperature=0.2,
     top_p=1,
     max_tokens=4096,
     store=True
@@ -590,6 +741,29 @@ async def run_workflow(workflow_input: WorkflowInput):
         "output_parsed": classification_agent_result_temp.final_output.model_dump()
       }
       if classification_agent_result["output_parsed"]["classification"] == "project":
+        operator_note = _build_project_operator_note(workflow["input_as_text"])
+        conversation_history.append({
+          "role": "system",
+          "content": [{"type": "input_text", "text": operator_note}]
+        })
+
+        ambiguity_prompt = _find_ambiguous_project_prompt(workflow["input_as_text"])
+        if ambiguity_prompt:
+          return {"output_text": ambiguity_prompt}
+
+        # Proactively prefetch grounded project profile context when possible.
+        focus = _extract_project_query_focus(workflow["input_as_text"])
+        if focus and len(_normalize_text(focus)) >= 3:
+          profile_text = get_project_profile(focus)
+          if profile_text and "Error resolving project profile" not in profile_text:
+            conversation_history.append({
+              "role": "system",
+              "content": [{
+                "type": "input_text",
+                "text": f"Grounded project context (tool output):\n{profile_text}"
+              }]
+            })
+
         project_result_temp = await Runner.run(
           project,
           input=[

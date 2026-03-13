@@ -441,6 +441,98 @@ def list_projects() -> str:
 
 
 @function_tool
+def get_project_profile(project_name: str) -> str:
+    """
+    Resolve a project by name and return grounded project details.
+
+    Behavior:
+    - No match: returns a clear "not found" message.
+    - Multiple matches: returns candidate list for disambiguation (no synthesis).
+    - Single match: returns deterministic fields only (no inferred metrics).
+    """
+    client = get_supabase_client()
+
+    if not project_name or not project_name.strip():
+        return "Project name is required."
+
+    q = project_name.strip()
+    try:
+        projects_resp = (
+            client.table("projects")
+            .select("id, name, state, current_phase, budget, budget_used")
+            .ilike("name", f"%{q}%")
+            .order("name")
+            .limit(12)
+            .execute()
+        )
+        matches = projects_resp.data or []
+
+        if not matches:
+            return f"No projects found matching '{q}'. Try a more specific name."
+
+        if len(matches) > 1:
+            lines = [f"Multiple project matches found for '{q}'. Please choose one:"]
+            for p in matches:
+                lines.append(f"- {p.get('name', 'Unknown')} (ID: {p.get('id')})")
+            return "\n".join(lines)
+
+        project = matches[0]
+        project_id = project.get("id")
+
+        contracts_total = (
+            client.table("contracts")
+            .select("original_contract_amount")
+            .eq("project_id", project_id)
+            .execute()
+        ).data or []
+        contract_amount = sum(float(c.get("original_contract_amount") or 0) for c in contracts_total)
+
+        change_events = (
+            client.table("change_events")
+            .select("id, status", count="exact")
+            .eq("project_id", project_id)
+            .execute()
+        )
+        ce_rows = change_events.data or []
+        ce_total = change_events.count or len(ce_rows)
+        ce_open = sum(
+            1
+            for r in ce_rows
+            if str(r.get("status") or "").lower() not in {"closed", "complete", "completed", "approved"}
+        )
+
+        change_orders = (
+            client.table("change_orders")
+            .select("amount, status", count="exact")
+            .eq("project_id", project_id)
+            .execute()
+        )
+        co_rows = change_orders.data or []
+        co_total = change_orders.count or len(co_rows)
+        co_amount = sum(float(r.get("amount") or 0) for r in co_rows)
+        co_pending_amount = sum(
+            float(r.get("amount") or 0)
+            for r in co_rows
+            if str(r.get("status") or "").lower() in {"pending", "draft", "under_review", "submitted"}
+        )
+
+        lines = [
+            f"Project: {project.get('name', 'Unknown')} (ID: {project_id})",
+            f"Status: {project.get('state') or 'unknown'}",
+            f"Phase: {project.get('current_phase') or 'unknown'}",
+            f"Budget: {project.get('budget') if project.get('budget') is not None else 'not available'}",
+            f"Budget Used: {project.get('budget_used') if project.get('budget_used') is not None else 'not available'}",
+            f"Total Contract Amount: {contract_amount:.2f}",
+            f"Change Events: {ce_total} (open: {ce_open})",
+            f"Change Orders: {co_total} (amount total: {co_amount:.2f}, pending amount: {co_pending_amount:.2f})",
+            "Data note: Values above are direct database fields only; no inferred margin/loss is computed here.",
+        ]
+        return "\n".join(lines)
+    except Exception as e:
+        return f"Error resolving project profile for '{q}': {str(e)}"
+
+
+@function_tool
 def assign_meeting_to_project(
     meeting_id: str,
     meeting_title: str,
