@@ -84,7 +84,7 @@ export type ApprovalRequestData = {
 
 // ── Global Liveblocks type declarations ─────────────────────────────────────
 
-import { LiveList, LiveObject } from "@liveblocks/client";
+import type { JsonObject, LiveList, LiveObject } from "@liveblocks/client";
 
 declare global {
   interface Liveblocks {
@@ -103,7 +103,7 @@ declare global {
       labels: LiveList<string>;
       links: LiveList<string>;
       // Spreadsheet storage
-      spreadsheet?: LiveObject<Record<string, unknown>>;
+      spreadsheet?: LiveObject<Record<string, JsonObject>>;
     };
 
     UserMeta: {
