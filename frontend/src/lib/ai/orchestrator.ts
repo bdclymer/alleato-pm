@@ -23,6 +23,10 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { cfoSystemPrompt } from "@/lib/ai/agents/cfo";
+import { cooSystemPrompt } from "@/lib/ai/agents/coo";
+import { croSystemPrompt } from "@/lib/ai/agents/cro";
+import { chroSystemPrompt } from "@/lib/ai/agents/chro";
+import { vpbdSystemPrompt } from "@/lib/ai/agents/vpbd";
 import type {
   AgentName,
   AgentResponse,
@@ -38,6 +42,8 @@ import type {
 export interface AgentConfig {
   /** Human-readable name (e.g. "CFO"). */
   name: string;
+  /** Emoji icon used in Council Mode responses (e.g. "💰"). */
+  icon: string;
   /** The agent's full system prompt defining personality and expertise. */
   systemPrompt: string;
   /** The AI Gateway model ID to use for this agent. */
@@ -76,11 +82,13 @@ export interface AgentConfig {
 export const agentRegistry: Record<string, AgentConfig> = {
   cfo: {
     name: "CFO",
+    icon: "💰",
     systemPrompt: cfoSystemPrompt,
     modelId: "anthropic/claude-sonnet-4.5",
     description:
       "Financial analysis, budgets, cash flow, margins, contracts, change orders, invoicing, retention",
     triggerKeywords: [
+      // Core financial terms
       "budget",
       "cost",
       "margin",
@@ -92,15 +100,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "contract",
       "change order",
       "change event",
-      "risk",
-      "risks",
-      "risky",
-      "at risk",
-      "issue",
-      "issues",
-      "critical item",
-      "critical items",
-      "exposure",
       "retention",
       "billing",
       "revenue",
@@ -137,6 +136,12 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "owed",
       "how much",
       "total value",
+      "forecast",
+      "variance",
+      "budget vs actual",
+      "cost to complete",
+      "cost at completion",
+      "percentage of completion",
       // Acumatica ERP / live accounting data
       "acumatica",
       "erp",
@@ -150,7 +155,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "gl journal",
       "general ledger",
       "journal entry",
-      "check",
       "outstanding bill",
       "outstanding invoice",
       "overdue payable",
@@ -162,62 +166,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "outflow",
       "project budget",
       "project list",
-      "cost code",
-      "cost to complete",
-      "cost at completion",
-      "percentage of completion",
-      // Operational tools (schedule, people, vendors, RFIs, submittals)
-      "schedule",
-      "timeline",
-      "milestone",
-      "delay",
-      "overdue",
-      "critical path",
-      "task",
-      "dependency",
-      "rfi",
-      "request for information",
-      "submittal",
-      "shop drawing",
-      "material submission",
-      "approval",
-      "ball in court",
-      "vendor",
-      "subcontractor",
-      "trade partner",
-      "personnel",
-      "team member",
-      "directory",
-      "who works",
-      "contact",
-      "compare project",
-      "cross project",
-      "portfolio comparison",
-      "trend",
-      "velocity",
-      "trajectory",
-      "historical",
-      "forecast",
-      "variance",
-      "over budget",
-      "under budget",
-      "budget vs actual",
-      "semantic search",
-      "search knowledge",
-      // Company knowledge
-      "company",
-      "mission",
-      "vision",
-      "strategy",
-      "differentiator",
-      "competitive",
-      "okr",
-      "goal",
-      "policy",
-      "certification",
-      "org structure",
-      "best practice",
-      "lesson learned",
     ],
     createTools: (userId: string, options?) => {
       // CFO gets the full project tools which include:
@@ -234,16 +182,330 @@ export const agentRegistry: Record<string, AgentConfig> = {
     },
   },
 
-  // Future agents are added here:
-  //
-  // coo: {
-  //   name: "COO",
-  //   systemPrompt: cooSystemPrompt,
-  //   modelId: "anthropic/claude-sonnet-4.5",
-  //   description: "Operations, scheduling, execution, submittals, RFIs",
-  //   triggerKeywords: ["schedule", "delay", "submittal", "rfi", "critical path", ...],
-  //   createTools: (userId) => createOperationalTools(userId),
-  // },
+  coo: {
+    name: "COO",
+    icon: "🏗️",
+    systemPrompt: cooSystemPrompt,
+    modelId: "anthropic/claude-sonnet-4.5",
+    description:
+      "Operations, scheduling, procurement velocity, RFIs, submittals, subcontractor performance, action item accountability, field execution",
+    triggerKeywords: [
+      "schedule",
+      "timeline",
+      "milestone",
+      "delay",
+      "delayed",
+      "overdue",
+      "critical path",
+      "task",
+      "tasks",
+      "dependency",
+      "dependencies",
+      "behind",
+      "on track",
+      "completion",
+      "percent complete",
+      "rfi",
+      "rfis",
+      "request for information",
+      "submittal",
+      "submittals",
+      "shop drawing",
+      "material submission",
+      "approval",
+      "ball in court",
+      "vendor",
+      "subcontractor",
+      "sub",
+      "subs",
+      "trade",
+      "trades",
+      "trade partner",
+      "procurement",
+      "action item",
+      "action items",
+      "follow up",
+      "accountable",
+      "accountability",
+      "who owns",
+      "who is responsible",
+      "responsible party",
+      "open items",
+      "outstanding items",
+      "field",
+      "site",
+      "on site",
+      "construction progress",
+      "work in place",
+      "execution",
+      "operational",
+      "operations",
+      "oac meeting",
+      "owner meeting",
+      "meeting prep",
+      "what needs attention",
+      "what is overdue",
+      "what is blocking",
+      "blocking",
+      "blocker",
+      "bottleneck",
+    ],
+    createTools: (userId: string, options?) => {
+      // COO gets the full project tools which include all operational tools:
+      // schedule analysis, people & roles, vendor performance, RFI status,
+      // submittal status, cross-project comparison, historical trends,
+      // action items, meeting search, and semantic search.
+      return createProjectTools(userId, options as any);
+    },
+  },
+
+  cro: {
+    name: "CRO",
+    icon: "🛡️",
+    systemPrompt: croSystemPrompt,
+    modelId: "anthropic/claude-sonnet-4.5",
+    description:
+      "Risk identification, financial exposure, contract risk, claim signals, procurement risk, and portfolio-level risk patterns",
+    triggerKeywords: [
+      "risk",
+      "risks",
+      "risky",
+      "at risk",
+      "exposure",
+      "claim",
+      "claims",
+      "dispute",
+      "disputed",
+      "contested",
+      "unresolved",
+      "warning",
+      "critical",
+      "red flag",
+      "flags",
+      "flagged",
+      "concern",
+      "concerns",
+      "issue",
+      "issues",
+      "problem",
+      "problems",
+      "liability",
+      "notice",
+      "reservation of rights",
+      "contract risk",
+      "compliance",
+      "scope creep",
+      "unpriced",
+      "unquantified",
+      "change event",
+      "change events",
+      "orphaned",
+      "missing commitment",
+      "budget overrun",
+      "overrun",
+      "blow",
+      "blown",
+      "contingency",
+      "liquidated damages",
+      "ld",
+      "substantial completion",
+      "delay damages",
+      "what could go wrong",
+      "worst case",
+      "downside",
+      "portfolio risk",
+      "risk dashboard",
+      "risk scan",
+      "risk assessment",
+      "risk profile",
+      "risk signal",
+      "risk signals",
+    ],
+    createTools: (userId: string, options?) => {
+      // CRO gets the full project tools which include all risk-related tools:
+      // getProjectsWithRisks, getProjectRiskAnalysis, getPortfolioOverview,
+      // getRFIStatus, getSubmittalStatus, getChangeOrderDetails, budget summary,
+      // meeting search, action items, and semantic search.
+      return createProjectTools(userId, options as any);
+    },
+  },
+
+  chro: {
+    name: "CHRO",
+    icon: "👥",
+    systemPrompt: chroSystemPrompt,
+    modelId: "anthropic/claude-sonnet-4.5",
+    description:
+      "People and capacity: team composition, staffing gaps, action item accountability, subcontractor relationships, institutional knowledge, and lessons learned",
+    triggerKeywords: [
+      // Team / people
+      "who is on",
+      "who's on",
+      "team",
+      "staff",
+      "staffing",
+      "roster",
+      "directory",
+      "personnel",
+      "person",
+      "people",
+      "who handles",
+      "who owns",
+      "who is responsible",
+      "responsible party",
+      "contact",
+      "contacts",
+      "reach out",
+      "pm",
+      "project manager",
+      "superintendent",
+      "super",
+      "owner rep",
+      "architect",
+      // Capacity
+      "capacity",
+      "overloaded",
+      "stretched",
+      "bandwidth",
+      "availability",
+      "workload",
+      "too many projects",
+      "spread thin",
+      // Accountability
+      "accountable",
+      "accountability",
+      "follow through",
+      "follow-through",
+      "action item owner",
+      "who is accountable",
+      // Knowledge
+      "lesson learned",
+      "lessons learned",
+      "best practice",
+      "best practices",
+      "institutional knowledge",
+      "what have we learned",
+      "knowledge base",
+      "company knowledge",
+      "certification",
+      "capability",
+      "capabilities",
+      // Subcontractor / vendor relationships
+      "sub relationship",
+      "trade relationship",
+      "vendor relationship",
+      // Org / roles
+      "org",
+      "org structure",
+      "role",
+      "roles",
+      "hire",
+      "hiring",
+      "onboard",
+      "offboard",
+      "departure",
+      "new hire",
+      "transition",
+    ],
+    createTools: (userId: string, options?) => {
+      // CHRO gets the full project tools which include:
+      // getPeopleAndRoles, getActionItemsAndInsights, getCrossProjectComparison,
+      // getVendorPerformance, getPortfolioOverview, searchMeetingsByTopic,
+      // getMeetingDetails, getCompanyKnowledge, and semanticSearch.
+      return createProjectTools(userId, options as any);
+    },
+  },
+
+  vpbd: {
+    name: "VP of Business Development",
+    icon: "🤝",
+    systemPrompt: vpbdSystemPrompt,
+    modelId: "anthropic/claude-sonnet-4.5",
+    description:
+      "Pipeline, client relationships, revenue trajectory, competitive positioning, company differentiators, past project references, and proposal preparation",
+    triggerKeywords: [
+      // Pipeline
+      "pipeline",
+      "pursuit",
+      "pursuits",
+      "bid",
+      "bids",
+      "bidding",
+      "proposal",
+      "proposals",
+      "estimating",
+      "estimate",
+      "new work",
+      "new project",
+      "win",
+      "winning",
+      "won",
+      "lost",
+      "award",
+      "awarded",
+      "rfp",
+      "rfq",
+      "request for proposal",
+      "go no go",
+      "go/no-go",
+      "pursue",
+      // Client relationships
+      "client",
+      "clients",
+      "owner relationship",
+      "client relationship",
+      "repeat work",
+      "repeat client",
+      "relationship",
+      "business development",
+      "bd",
+      "business dev",
+      "account",
+      // Revenue / growth
+      "revenue",
+      "growth",
+      "backlog",
+      "future work",
+      "revenue gap",
+      "revenue horizon",
+      "pipeline value",
+      // Competitive / positioning
+      "differentiator",
+      "differentiators",
+      "competitive",
+      "competition",
+      "competitors",
+      "what makes us different",
+      "our strengths",
+      "positioning",
+      "brand",
+      // References / past performance
+      "past project",
+      "past performance",
+      "reference",
+      "references",
+      "case study",
+      "case studies",
+      "portfolio",
+      "track record",
+      "similar project",
+      "comparable project",
+      // BD meeting prep
+      "bd meeting",
+      "client meeting",
+      "interview",
+      "pitch",
+      "presentation",
+    ],
+    createTools: (userId: string, options?) => {
+      // VP BD gets the full project tools which include:
+      // getPortfolioOverview (with all phase filters), getFinancialAnalysis,
+      // getCompanyKnowledge, semanticSearch, searchMeetingsByTopic,
+      // getMeetingDetails, getProjectDetails, getProjectRiskAnalysis,
+      // getHistoricalTrends, and getCrossProjectComparison.
+      return createProjectTools(userId, options as any);
+    },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -525,23 +787,168 @@ export function createStrategistTools(
       },
     }),
 
-    // Future consult tools are added here as agents are built:
-    //
-    // consultCOO: tool({
-    //   description: "Consult the COO for operational analysis...",
-    //   inputSchema: z.object({
-    //     question: z.string(),
-    //     context: z.string().optional(),
-    //   }),
-    //   execute: async ({ question, context }) => {
-    //     const response = await consultAgent("coo", question, userId, context);
-    //     return { ... };
-    //   },
-    // }),
-    //
-    // consultCHRO: tool({ ... }),
-    // consultCRO: tool({ ... }),
-    // consultVPBD: tool({ ... }),
+    consultCOO: tool({
+      description:
+        "Consult the COO (Chief Operating Officer) for operational analysis. " +
+        "Use this for ANY question about project execution: schedule health, " +
+        "milestones, overdue tasks, critical path, RFI status, submittal " +
+        "pipeline, subcontractor performance, procurement velocity, action " +
+        "item accountability, field progress, or meeting prep. The COO has " +
+        "access to real operational data and will call its own tools to " +
+        "analyze it.",
+      inputSchema: z.object({
+        question: z
+          .string()
+          .describe(
+            "The operational question to analyze. Be specific — include " +
+              "project names and the type of operational data needed.",
+          ),
+        context: z
+          .string()
+          .optional()
+          .describe(
+            "Optional additional context to help the COO understand " +
+              "the broader question being answered.",
+          ),
+      }),
+      execute: async ({ question, context }) => {
+        const response = await consultAgent("coo", question, userId, context, {
+          onTrace: options.onTrace,
+        });
+        return {
+          agent: response.agent,
+          analysis: response.content,
+          confidence: response.confidence,
+          toolsUsed: response.toolsCalled,
+          durationMs: response.durationMs,
+          alerts: response.alerts,
+        };
+      },
+    }),
+
+    consultCRO: tool({
+      description:
+        "Consult the CRO (Chief Risk Officer) for risk analysis. " +
+        "Use this for ANY question about project or portfolio risk: financial " +
+        "exposure, unpriced change events, contract risk, claim signals, " +
+        "procurement risk (aging RFIs/submittals), schedule risk, budget " +
+        "overrun risk, dispute patterns, or portfolio-level risk ranking. " +
+        "Also use for 'what could go wrong?' or 'what should I be worried about?' " +
+        "questions. The CRO has access to real risk data and will call its " +
+        "own tools to analyze it.",
+      inputSchema: z.object({
+        question: z
+          .string()
+          .describe(
+            "The risk question to analyze. Be specific — include " +
+              "project names and the type of risk being assessed.",
+          ),
+        context: z
+          .string()
+          .optional()
+          .describe(
+            "Optional additional context to help the CRO understand " +
+              "the broader question being answered.",
+          ),
+      }),
+      execute: async ({ question, context }) => {
+        const response = await consultAgent("cro", question, userId, context, {
+          onTrace: options.onTrace,
+        });
+        return {
+          agent: response.agent,
+          analysis: response.content,
+          confidence: response.confidence,
+          toolsUsed: response.toolsCalled,
+          durationMs: response.durationMs,
+          alerts: response.alerts,
+        };
+      },
+    }),
+
+    consultCHRO: tool({
+      description:
+        "Consult the CHRO (Chief Human Resources Officer) for people and capacity analysis. " +
+        "Use this for ANY question about team composition, staffing gaps, capacity constraints, " +
+        "action item accountability patterns, subcontractor relationships, institutional knowledge, " +
+        "or lessons learned. Examples: 'Who is on this project?', 'Is anyone stretched too thin?', " +
+        "'Who owns this action item?', 'What have we learned about [topic]?'.",
+      inputSchema: z.object({
+        question: z
+          .string()
+          .describe(
+            "The people or capacity question to analyze. Be specific — include " +
+              "project names and the type of information needed.",
+          ),
+        context: z
+          .string()
+          .optional()
+          .describe(
+            "Optional additional context to help the CHRO understand " +
+              "the broader question being answered.",
+          ),
+      }),
+      execute: async ({ question, context }) => {
+        const response = await consultAgent(
+          "chro",
+          question,
+          userId,
+          context,
+          { onTrace: options.onTrace },
+        );
+        return {
+          agent: response.agent,
+          analysis: response.content,
+          confidence: response.confidence,
+          toolsUsed: response.toolsCalled,
+          durationMs: response.durationMs,
+          alerts: response.alerts,
+        };
+      },
+    }),
+
+    consultVPBD: tool({
+      description:
+        "Consult the VP of Business Development for pipeline, client relationship, " +
+        "and growth analysis. Use this for ANY question about the pursuit pipeline, " +
+        "projects in estimating or planning, revenue trajectory, client relationship health, " +
+        "competitive positioning, company differentiators, proposal preparation, " +
+        "or past project references. Examples: 'What's in our pipeline?', " +
+        "'How is the client relationship on X?', 'What are our differentiators?', " +
+        "'Help me prep for a BD meeting'.",
+      inputSchema: z.object({
+        question: z
+          .string()
+          .describe(
+            "The business development question to analyze. Be specific — include " +
+              "client names, project types, or sectors where relevant.",
+          ),
+        context: z
+          .string()
+          .optional()
+          .describe(
+            "Optional additional context to help the VP BD understand " +
+              "the broader question being answered.",
+          ),
+      }),
+      execute: async ({ question, context }) => {
+        const response = await consultAgent(
+          "vpbd",
+          question,
+          userId,
+          context,
+          { onTrace: options.onTrace },
+        );
+        return {
+          agent: response.agent,
+          analysis: response.content,
+          confidence: response.confidence,
+          toolsUsed: response.toolsCalled,
+          durationMs: response.durationMs,
+          alerts: response.alerts,
+        };
+      },
+    }),
 
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
@@ -552,6 +959,107 @@ export function createStrategistTools(
 // ---------------------------------------------------------------------------
 // Strategist Configuration
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Council Mode
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds the system prompt injection for Council Mode.
+ *
+ * Council Mode is the Alleato equivalent of BMAD's party-mode. Instead of the
+ * Strategist synthesizing specialist input into a single voice, each specialist
+ * speaks directly — labeled with their icon and role — and the Strategist adds
+ * only a brief closing synthesis.
+ *
+ * The user hears the raw expert perspectives, not a pre-digested summary.
+ * Each specialist still calls their own tools, so responses are grounded in
+ * real data. The difference is presentation: multi-voice, not single-voice.
+ *
+ * Formatting contract:
+ *   [icon] **[Role]**
+ *   [specialist's full analysis]
+ *
+ *   ---
+ *
+ *   ⚡ **Chief Strategist**
+ *   [1–2 sentence synthesis of the key tension or decision]
+ */
+export function buildCouncilModePromptInjection(): string {
+  // Build a formatted roster of all available specialists for the prompt
+  const specialistRoster = Object.entries(agentRegistry)
+    .map(([, cfg]) => `- ${cfg.icon} **${cfg.name}** — ${cfg.description}`)
+    .join("\n");
+
+  return `
+
+## ⚡ COUNCIL MODE ACTIVE
+
+You are now facilitating a C-Suite council session. Your role fundamentally changes.
+
+**Normal mode:** You consult specialists and synthesize their findings into one voice.
+**Council mode:** You present EACH specialist's analysis in their own voice, then add a brief closing statement.
+
+### How to respond in Council Mode
+
+1. **Select 2–3 specialists** most relevant to the question. If the question is clearly multi-domain (e.g. "how's the business?"), use 3–4. Never use all five for a single question — focus.
+
+2. **Call each specialist** using their consult tool. Let them do their full analysis with tool calls.
+
+3. **Present each specialist's response verbatim**, prefixed with their icon and role header:
+
+\`\`\`
+[icon] **[Role]**
+[specialist's analysis — do NOT summarize, paraphrase, or cut]
+\`\`\`
+
+4. **Add a thin horizontal rule** between each specialist section:
+\`---\`
+
+5. **Close with the Chief Strategist's synthesis** — 1–2 sentences maximum. This is YOUR voice. State the single most important decision, tension, or action that emerges from the council's perspectives.
+
+\`\`\`
+---
+
+⚡ **Chief Strategist**
+[1–2 sentences: the key insight that connects the specialist views]
+\`\`\`
+
+### Specialist Roster
+${specialistRoster}
+
+### Council Mode Rules (NON-NEGOTIABLE)
+
+- **Never strip specialist responses.** Present them in full. Do not paraphrase or condense.
+- **Never put the Chief Strategist synthesis first.** Lead with the specialists, close with synthesis.
+- **Never consult more than 4 specialists** for one message. Pick the most relevant.
+- **Let specialists disagree.** If the CFO says the budget is tight and the VP BD sees a pipeline opportunity, show both. The tension is the value.
+- **Your synthesis is 2 sentences, max.** The specialists did the analysis. You name the decision.
+- **Cite the specialists when cross-referencing.** If the COO's operational issue connects to the CFO's cash concern, note it: "As both the COO and CFO flagged..."
+
+### Example Council Mode Response Structure
+
+\`\`\`
+💰 **CFO**
+[Full CFO analysis with data and source citations]
+
+---
+
+🏗️ **COO**
+[Full COO analysis with data and source citations]
+
+---
+
+🛡️ **CRO**
+[Full CRO analysis with data and source citations]
+
+---
+
+⚡ **Chief Strategist**
+The financial exposure and schedule slippage on Cedar Park are compounding — the owner meeting on Thursday needs a recovery plan, not just a status update. Recommend calling an internal alignment session before Thursday.
+\`\`\`
+`;
+}
 
 /** Model used for the Strategist agent. */
 export const STRATEGIST_MODEL = "anthropic/claude-sonnet-4.5";
