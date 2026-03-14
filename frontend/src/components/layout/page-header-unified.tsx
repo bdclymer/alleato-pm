@@ -145,7 +145,7 @@ export function PageHeader({
   if (variant === "compact") {
     return (
       <div className={cn("border-b", className)}>
-        <div className="px-4 py-4 sm:px-6 lg:px-8">
+        <div className="px-3 py-4 sm:px-5 lg:px-7">
           <div className="flex items-center justify-between">
             <Inline gap="md" align="center">
               {titleContent || <Heading level={2}>{title}</Heading>}

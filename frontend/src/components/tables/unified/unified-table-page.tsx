@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -168,6 +168,18 @@ export interface UnifiedTablePageProps<T> {
     content: ReactNode;
     widthClassName?: string;
     columnClassName?: string;
+    /** Initial width in px (default: 416 = 26rem) */
+    defaultWidth?: number;
+    /** Minimum drag width in px (default: 280) */
+    minWidth?: number;
+    /** Maximum drag width in px (default: 640) */
+    maxWidth?: number;
+    /** Show collapse toggle (default: true) */
+    collapsible?: boolean;
+    /** Show drag handle for resizing (default: true) */
+    resizable?: boolean;
+    /** localStorage key suffix for persisting width/collapsed state */
+    storageKey?: string;
   };
   layout?: {
     fullBleedTable?: boolean;
@@ -241,7 +253,7 @@ export function UnifiedTablePage<T>({
     resolvedFeatures.enableViews && toolbar.currentView === "list" && Boolean(views?.list);
   const shouldRenderTableView =
     toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
-  const isFullBleedTable = layout?.fullBleedTable ?? true;
+  const isFullBleedTable = layout?.fullBleedTable ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const containerMaxWidth = layout?.maxWidth ?? "full";
@@ -295,6 +307,100 @@ export function UnifiedTablePage<T>({
   } | null>(null);
   const [isResizingColumn, setIsResizingColumn] = React.useState(false);
   const hasUserManagedColumnOrderRef = React.useRef(false);
+
+  // ── Side panel collapse & resize state ───────────────────────────────
+  const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
+  const panelDefaultWidth = sidePanel?.defaultWidth ?? 416;
+  const panelMinWidth = sidePanel?.minWidth ?? 280;
+  const panelMaxWidth = sidePanel?.maxWidth ?? 640;
+  const panelCollapsible = sidePanel?.collapsible !== false;
+  const panelResizable = sidePanel?.resizable !== false;
+
+  const [panelCollapsed, setPanelCollapsed] = React.useState(false);
+  const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
+  const [panelMounted, setPanelMounted] = React.useState(false);
+  const [isResizingPanel, setIsResizingPanel] = React.useState(false);
+  const panelResizeRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
+  const gridRef = React.useRef<HTMLDivElement>(null);
+
+  // Hydrate from localStorage after mount (avoids SSR mismatch)
+  React.useEffect(() => {
+    if (!sidePanel) return;
+    try {
+      const stored = localStorage.getItem(`alleato-panel-${panelStorageKey}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { collapsed?: boolean; width?: number };
+        if (typeof parsed.collapsed === "boolean") setPanelCollapsed(parsed.collapsed);
+        if (typeof parsed.width === "number") setPanelWidth(parsed.width);
+      }
+    } catch { /* ignore */ }
+    setPanelMounted(true);
+  }, [panelStorageKey, sidePanel]);
+
+  const persistPanel = React.useCallback(
+    (collapsed: boolean, width: number) => {
+      try {
+        localStorage.setItem(
+          `alleato-panel-${panelStorageKey}`,
+          JSON.stringify({ collapsed, width }),
+        );
+      } catch { /* ignore */ }
+    },
+    [panelStorageKey],
+  );
+
+  const togglePanelCollapsed = React.useCallback(() => {
+    setPanelCollapsed((prev) => {
+      const next = !prev;
+      persistPanel(next, panelWidth);
+      return next;
+    });
+  }, [panelWidth, persistPanel]);
+
+  // Panel resize drag handlers (mirrors column resize pattern)
+  const handlePanelResizeStart = React.useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      panelResizeRef.current = { startX: event.clientX, startWidth: panelWidth };
+      setIsResizingPanel(true);
+      document.body.style.cursor = "col-resize";
+    },
+    [panelWidth],
+  );
+
+  React.useEffect(() => {
+    if (!isResizingPanel) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const state = panelResizeRef.current;
+      if (!state) return;
+      // Dragging left = wider panel (handle is on left edge)
+      const delta = state.startX - event.clientX;
+      const maxAllowed = Math.min(panelMaxWidth, window.innerWidth * 0.6);
+      const next = Math.max(panelMinWidth, Math.min(maxAllowed, state.startWidth + delta));
+      setPanelWidth(next);
+    };
+
+    const handleMouseUp = () => {
+      panelResizeRef.current = null;
+      setIsResizingPanel(false);
+      document.body.style.cursor = "";
+      // Persist final width
+      setPanelWidth((w) => {
+        persistPanel(panelCollapsed, w);
+        return w;
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+    };
+  }, [isResizingPanel, panelCollapsed, panelMaxWidth, panelMinWidth, persistPanel]);
 
   const sortedItems = React.useMemo(() => {
     if (!sorting?.sortBy) return data.items;
@@ -962,7 +1068,7 @@ export function UnifiedTablePage<T>({
                     className={cn(
                       "cursor-pointer transition-colors duration-150",
                       "hover:bg-muted",
-                      table.activeRowId === table.getRowId(item) && "bg-accent/50",
+                      table.activeRowId === table.getRowId(item) && "bg-accent",
                       selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
                     )}
                     style={style}
@@ -1209,20 +1315,74 @@ export function UnifiedTablePage<T>({
           <>
             {headerContent}
             <div
+              ref={gridRef}
               className={cn(
-                "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_26rem] lg:min-h-[calc(100vh-7.5rem)]",
-                sidePanel.columnClassName,
+                "relative grid grid-cols-1 lg:min-h-[calc(100vh-7.5rem)]",
+                // Use Tailwind classes only when panel hasn't been custom-sized
+                !panelMounted && "lg:grid-cols-[minmax(0,1fr)_26rem]",
+                !panelMounted && sidePanel.columnClassName,
               )}
+              style={
+                panelMounted
+                  ? {
+                      gridTemplateColumns: panelCollapsed
+                        ? "minmax(0, 1fr)"
+                        : `minmax(0, 1fr) ${panelWidth}px`,
+                      transition: isResizingPanel
+                        ? "none"
+                        : "grid-template-columns 200ms ease-in-out",
+                    }
+                  : undefined
+              }
             >
               <div className="min-w-0">{leftPaneContent}</div>
+
+              {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto bg-muted border-l border-border",
+                  "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] bg-muted border-l border-border relative",
+                  panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
                   sidePanel.widthClassName,
                 )}
               >
+                {/* Drag-to-resize handle */}
+                {panelResizable && (
+                  <div
+                    className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+                    onMouseDown={handlePanelResizeStart}
+                    aria-hidden="true"
+                  />
+                )}
                 {sidePanel.content}
               </aside>
+
+              {/* Collapse/expand toggle button */}
+              {panelCollapsible && panelMounted && (
+                <button
+                  type="button"
+                  onClick={togglePanelCollapsed}
+                  className={cn(
+                    "hidden lg:flex items-center justify-center",
+                    "absolute z-20 top-1/2 -translate-y-1/2",
+                    "h-7 w-5 rounded-l-md bg-muted border border-r-0 border-border",
+                    "text-muted-foreground hover:text-foreground hover:bg-accent",
+                    "transition-colors cursor-pointer",
+                  )}
+                  style={{
+                    right: panelCollapsed ? 0 : panelWidth - 1,
+                    transition: isResizingPanel
+                      ? "none"
+                      : "right 200ms ease-in-out",
+                  }}
+                  aria-label={panelCollapsed ? "Expand panel" : "Collapse panel"}
+                >
+                  {panelCollapsed ? (
+                    <ChevronsLeft className="h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronsRight className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              )}
             </div>
           </>
         ) : (

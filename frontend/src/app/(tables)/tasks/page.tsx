@@ -402,7 +402,7 @@ export default function TasksPage() {
         layout={{
           fullBleedTable: false,
           toolbarInlineWithHeader: true,
-          containerClassName: "pt-0 pl-0 sm:pl-0 lg:pl-0",
+          containerClassName: "pt-0",
         }}
       />
 

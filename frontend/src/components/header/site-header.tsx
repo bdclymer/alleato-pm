@@ -37,7 +37,7 @@ export function SiteHeader() {
 
   return (
     <header className="relative z-40 flex h-12 shrink-0 items-center bg-background text-foreground">
-      <div className="flex w-full items-center justify-between px-4 lg:px-6 min-w-0">
+      <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">
         {/* ── Left: Mobile hamburger + Breadcrumbs ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Mobile: Hamburger to open sidebar sheet */}
