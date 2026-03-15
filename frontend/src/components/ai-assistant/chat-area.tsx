@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import {
   Conversation,
@@ -146,10 +147,14 @@ function formatStructuredMeetingList(text: string): string {
 
 // ─── Assistant Avatar ───────────────────────────────────────────────
 
-function AssistantAvatar() {
+function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
   return (
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
-      <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+      {councilMode ? (
+        <span className="text-[13px] leading-none">⚡</span>
+      ) : (
+        <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+      )}
     </div>
   );
 }
@@ -184,10 +189,16 @@ function getToolStepStatus(state: string): "complete" | "active" | "pending" {
 
 // ─── Streaming indicator ────────────────────────────────────────────
 
-function StreamingIndicator({ hasToolCalls }: { hasToolCalls: boolean }) {
+function StreamingIndicator({
+  hasToolCalls,
+  councilMode,
+}: {
+  hasToolCalls: boolean;
+  councilMode?: boolean;
+}) {
   return (
     <div className="flex items-start gap-3">
-      <AssistantAvatar />
+      <AssistantAvatar councilMode={councilMode} />
       <Message from="assistant">
         <MessageContent>
           <div className="flex items-center gap-2.5 py-1">
@@ -195,7 +206,9 @@ function StreamingIndicator({ hasToolCalls }: { hasToolCalls: boolean }) {
               <>
                 <DatabaseIcon className="h-4 w-4 animate-pulse text-muted-foreground" />
                 <Shimmer as="span" duration={1.5} className="text-sm">
-                  Analyzing your project data...
+                  {councilMode
+                    ? "Convening the council…"
+                    : "Analyzing your project data..."}
                 </Shimmer>
               </>
             ) : (
@@ -367,6 +380,8 @@ interface ChatAreaProps {
   isStreaming: boolean;
   input: string;
   sessionId?: string;
+  councilMode?: boolean;
+  onCouncilModeChange?: (val: boolean) => void;
   onInputChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onStop: () => void;
@@ -380,10 +395,20 @@ export function ChatArea({
   isStreaming,
   input,
   sessionId,
+  councilMode: councilModeProp,
+  onCouncilModeChange,
   onInputChange,
   onSubmit,
   onStop,
 }: ChatAreaProps) {
+  // Council mode can be controlled externally (via prop) or internally
+  const [councilModeInternal, setCouncilModeInternal] = useState(false);
+  const councilMode = councilModeProp ?? councilModeInternal;
+  const handleCouncilToggle = useCallback(() => {
+    const next = !councilMode;
+    setCouncilModeInternal(next);
+    onCouncilModeChange?.(next);
+  }, [councilMode, onCouncilModeChange]);
   const handleSubmit = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
@@ -454,8 +479,29 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
     >
-      <PromptInputTextarea placeholder="Ask anything about your projects..." />
-      <PromptInputActions className="justify-end px-2 pb-2">
+      <PromptInputTextarea placeholder={councilMode ? "Ask the C-Suite anything…" : "Ask anything about your projects..."} />
+      <PromptInputActions className="justify-between px-2 pb-2">
+        {/* Council Mode toggle */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Council Mode</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={councilMode}
+            onClick={handleCouncilToggle}
+            className={cn(
+              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none",
+              councilMode ? "bg-primary" : "bg-muted-foreground/30",
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 mt-0.5",
+                councilMode ? "translate-x-4" : "translate-x-0.5",
+              )}
+            />
+          </button>
+        </div>
         <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
           <Button
             size="icon"
@@ -512,7 +558,7 @@ export function ChatArea({
                   if (toolParts.length > 0) {
                     return (
                       <div key={msg.id} className="flex items-start gap-3">
-                        <AssistantAvatar />
+                        <AssistantAvatar councilMode={councilMode} />
                         <Message from="assistant">
                           <MessageContent>
                             {toolParts.length > 1 ? (
@@ -561,7 +607,7 @@ export function ChatArea({
                 // Assistant messages — left-aligned with avatar
                 return (
                   <div key={msg.id} className="flex items-start gap-3">
-                    <AssistantAvatar />
+                    <AssistantAvatar councilMode={councilMode} />
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <Message from="assistant">
                         <MessageContent>
@@ -647,6 +693,7 @@ export function ChatArea({
               {showStreamingIndicator && (
                 <StreamingIndicator
                   hasToolCalls={lastIsAssistantWithToolCalls}
+                  councilMode={councilMode}
                 />
               )}
 

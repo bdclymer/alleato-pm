@@ -77,11 +77,24 @@ export interface FirefliesTranscript {
     extended_sections?: unknown[];
   };
   sentences?: Array<{
+    index?: number;
     speaker_name: string;
+    speaker_id?: string;
     text: string;
+    raw_text?: string;
     start_time: number;
     end_time: number;
+    ai_filters?: {
+      task?: boolean;
+      pricing?: boolean;
+      metric?: boolean;
+      question?: boolean;
+      date_and_time?: boolean;
+      text_cleanup?: boolean;
+      sentiment?: string;
+    };
   }>;
+  privacy?: string;
 }
 
 // -----------------------------------------------------------------------------

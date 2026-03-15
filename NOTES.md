@@ -1,5 +1,20 @@
 # NOTES
 
+## ASRS
+
+- Automatically highlight and call out items that seem substantially lower than average. This is a high priority there is a miscalculation.
+
+## Estimates
+we have estimates setup on a project level but I want a version at a company level also.
+/Users/meganharrison/Documents/alleato-pm/frontend/src/app/(main)/[projectId]/estimates
+
+I'd like your expertise on how you think would be the most valuable way to set this up. I was
+thinking maybe the initial estimate page could have links to different types of estimates like
+asrs, industrial project, ect.
+
+## Agent Team
+I think it might be best to create an agent team that has different agents created for each specialty like CFO, Operations, the main level orchestrator that could be the business strategist, and anything else you think would be valuable. What are your thoughts? 
+
 - unable to load pdf in specs
 - rag pipeline tasks
 - create punch list template for importing

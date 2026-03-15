@@ -132,18 +132,15 @@ export function MeetingPreviewPane({
         <section className="space-y-2 border-t pt-4">
           <p className="text-xs font-semibold text-foreground">Links</p>
           <div className="flex items-center gap-6">
-            {meeting.source ? (
-              <a
-                href={meeting.source}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-primary/70 hover:text-primary transition-colors p-1"
-                title="Transcript"
-                aria-label="Open transcript"
-              >
-                <FileText className="h-5 w-5" strokeWidth={1.5} />
-              </a>
-            ) : null}
+            <button
+              type="button"
+              onClick={() => onOpenMeetingPage(meeting)}
+              className="inline-flex items-center text-primary/70 hover:text-primary transition-colors p-1"
+              title="Meeting detail"
+              aria-label="Open meeting detail page"
+            >
+              <FileText className="h-5 w-5" strokeWidth={1.5} />
+            </button>
             {meeting.fireflies_link ? (
               <a
                 href={meeting.fireflies_link}

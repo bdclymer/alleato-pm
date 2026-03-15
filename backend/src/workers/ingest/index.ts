@@ -929,11 +929,24 @@ async function fetchFirefliesTranscript(
           expires_at
         }
         sentences {
+          index
           speaker_name
+          speaker_id
           text
+          raw_text
           start_time
           end_time
+          ai_filters {
+            task
+            pricing
+            metric
+            question
+            date_and_time
+            text_cleanup
+            sentiment
+          }
         }
+        privacy
       }
     }
   `;
@@ -1111,6 +1124,9 @@ function formatFirefliesAsMarkdown(transcript: FirefliesTranscript): string {
   if (typeof transcript.is_live === "boolean") {
     lines.push(`**Is Live:** ${transcript.is_live ? "true" : "false"}`);
   }
+  if (transcript.privacy) {
+    lines.push(`**Privacy:** ${transcript.privacy}`);
+  }
   lines.push(`**Fireflies ID:** ${transcript.id}`);
   lines.push("");
 
@@ -1144,6 +1160,7 @@ function formatFirefliesAsMarkdown(transcript: FirefliesTranscript): string {
   if (transcript.sentences && transcript.sentences.length > 0) {
     lines.push("## Transcript");
     lines.push("");
+    const aiFilterSentences: Array<Record<string, unknown>> = [];
     for (const sentence of transcript.sentences) {
       const sec =
         typeof sentence.start_time === "number" && Number.isFinite(sentence.start_time)
@@ -1154,9 +1171,31 @@ function formatFirefliesAsMarkdown(transcript: FirefliesTranscript): string {
       const stamp = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
       const speaker = sentence.speaker_name?.trim() || "Unknown";
       const text = sentence.text?.trim() || "";
-      if (text) {
-        lines.push(`[${stamp}] **${speaker}**: ${text}`);
+      if (!text) continue;
+
+      const filters = sentence.ai_filters;
+      const tags = filters
+        ? Object.entries(filters)
+            .filter(([k, v]) => v && k !== "text_cleanup" && k !== "sentiment")
+            .map(([k]) => k)
+        : [];
+      const tagStr = tags.length > 0 ? ` [${tags.join(", ")}]` : "";
+      lines.push(`[${stamp}] **${speaker}**: ${text}${tagStr}`);
+
+      if (filters && Object.values(filters).some(Boolean)) {
+        aiFilterSentences.push({
+          index: sentence.index,
+          speaker: sentence.speaker_name,
+          text: text.slice(0, 200),
+          filters: Object.fromEntries(
+            Object.entries(filters).filter(([, v]) => v)
+          ),
+        });
       }
+    }
+
+    if (aiFilterSentences.length > 0) {
+      appendJsonSection(lines, "AI Sentence Filters", aiFilterSentences);
     }
   }
 

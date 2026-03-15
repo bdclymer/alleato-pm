@@ -66,6 +66,8 @@ function ChatWithSession({
   sourcesByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
+  councilMode,
+  onCouncilModeChange,
   onFinishMessage,
 }: {
   sessionId: string;
@@ -74,9 +76,14 @@ function ChatWithSession({
   sourcesByMessageId: Record<string, unknown[]>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
+  councilMode: boolean;
+  onCouncilModeChange: (val: boolean) => void;
   onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState(pendingFirstMessage ?? "");
+  const councilModeRef = useRef(councilMode);
+  councilModeRef.current = councilMode;
+
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
 
@@ -92,6 +99,7 @@ function ChatWithSession({
             id: sessionIdRef.current,
             message: lastMessage,
             messages: request.messages,
+            councilMode: councilModeRef.current,
           },
         };
       },
@@ -140,6 +148,8 @@ function ChatWithSession({
       isStreaming={isStreaming}
       input={input}
       sessionId={sessionId}
+      councilMode={councilMode}
+      onCouncilModeChange={onCouncilModeChange}
       onInputChange={setInput}
       onSubmit={handleSubmit}
       onStop={stop}
@@ -166,6 +176,7 @@ export function RagChatPage() {
   >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
+  const [councilMode, setCouncilMode] = useState(false);
 
   // Conversation CRUD (React Query — unchanged)
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -304,6 +315,8 @@ export function RagChatPage() {
           sourcesByMessageId={sourcesByMessageId}
           isLoadingMessages={isLoadingMessages}
           pendingFirstMessage={pendingFirstMessage}
+          councilMode={councilMode}
+          onCouncilModeChange={setCouncilMode}
           onFinishMessage={handleFinishMessage}
         />
       ) : (
@@ -313,6 +326,8 @@ export function RagChatPage() {
           isLoadingMessages={false}
           isStreaming={false}
           input={noSessionInput}
+          councilMode={councilMode}
+          onCouncilModeChange={setCouncilMode}
           onInputChange={setNoSessionInput}
           onSubmit={(msg: string) => {
             setNoSessionInput("");
