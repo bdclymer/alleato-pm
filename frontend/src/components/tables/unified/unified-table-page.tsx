@@ -805,7 +805,7 @@ export function UnifiedTablePage<T>({
     <PageHeader
       title={header.title}
       description={header.description}
-      className=""
+      className="px-0"
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
