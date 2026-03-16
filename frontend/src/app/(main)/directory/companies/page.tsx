@@ -14,6 +14,7 @@ import {
   Mail,
   Phone,
   Plus,
+  RefreshCw,
   Upload,
   X,
 } from "lucide-react";
@@ -40,6 +41,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CompanyRow {
   id: string;
@@ -443,6 +450,27 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const companyTypeFilter =
     typeof activeFilters.company_type === "string" ? activeFilters.company_type : undefined;
 
+  const [isSyncing, setIsSyncing] = React.useState(false);
+
+  const handleErpSync = React.useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const resp = await fetch("/api/sync/acumatica/vendors", { method: "POST" });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const { result } = data;
+      toast.success(
+        `ERP sync complete: ${result.created} created, ${result.updated} updated` +
+          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [router]);
+
   const { companies, pagination, isLoading, isFetching, error } = useGlobalProjectCompanies({
     search: tableState.debouncedSearch || undefined,
     status: statusFilter || "all",
@@ -637,6 +665,25 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         columns: companyColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        customActions: (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  disabled={isSyncing}
+                  onClick={handleErpSync}
+                  aria-label="Sync from ERP"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Sync companies &amp; vendors from Acumatica</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ),
       }}
       data={{
         items: companies,

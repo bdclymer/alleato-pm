@@ -12,6 +12,7 @@ import {
   MapPin,
   Phone,
   Plus,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +27,12 @@ import {
 } from "@/components/tables/unified";
 import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds";
 
 type Vendor = Database["public"]["Tables"]["vendors"]["Row"];
@@ -361,6 +368,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const [vendors, setVendors] = React.useState<Vendor[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const fetchVendors = React.useCallback(async () => {
     try {
@@ -382,6 +390,25 @@ export default function DirectoryVendorsPage(): ReactElement {
 
   React.useEffect(() => {
     fetchVendors();
+  }, [fetchVendors]);
+
+  const handleErpSync = React.useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const resp = await fetch("/api/sync/acumatica/vendors", { method: "POST" });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const { result } = data;
+      toast.success(
+        `ERP sync complete: ${result.created} created, ${result.updated} updated` +
+          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+      );
+      await fetchVendors();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
   }, [fetchVendors]);
 
   // Sync URL filters to table state
@@ -556,6 +583,25 @@ export default function DirectoryVendorsPage(): ReactElement {
         columns: vendorColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        customActions: (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  disabled={isSyncing}
+                  onClick={handleErpSync}
+                  aria-label="Sync from ERP"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Sync vendors from Acumatica</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ),
       }}
       data={{
         items: filteredVendors,

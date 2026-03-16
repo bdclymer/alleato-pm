@@ -108,6 +108,8 @@ export interface UnifiedTablePageProps<T> {
     onExport?: () => void;
     onBulkDelete?: () => void;
     mobilePanelActions?: ReactNode;
+    /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
+    customActions?: ReactNode;
   };
   data: {
     items: T[];
@@ -326,6 +328,7 @@ export function UnifiedTablePage<T>({
   const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
   const [panelMounted, setPanelMounted] = React.useState(false);
   const [isResizingPanel, setIsResizingPanel] = React.useState(false);
+  const [panelToggleLeft, setPanelToggleLeft] = React.useState<number | null>(null);
   const panelResizeRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
@@ -362,6 +365,19 @@ export function UnifiedTablePage<T>({
       return next;
     });
   }, [panelWidth, persistPanel]);
+
+  const updatePanelTogglePosition = React.useCallback(() => {
+    if (!sidePanel || !panelMounted) {
+      setPanelToggleLeft(null);
+      return;
+    }
+    const gridRect = gridRef.current?.getBoundingClientRect();
+    if (!gridRect) return;
+
+    const dividerX = panelCollapsed ? gridRect.right : gridRect.right - panelWidth;
+    // Button width is 20px (w-5); offset by half width so its center sits on the divider.
+    setPanelToggleLeft(dividerX - 10);
+  }, [panelCollapsed, panelMounted, panelWidth, sidePanel]);
 
   // Panel resize drag handlers (mirrors column resize pattern)
   const handlePanelResizeStart = React.useCallback(
@@ -407,6 +423,31 @@ export function UnifiedTablePage<T>({
       document.body.style.cursor = "";
     };
   }, [isResizingPanel, panelCollapsed, panelMaxWidth, panelMinWidth, persistPanel]);
+
+  React.useEffect(() => {
+    updatePanelTogglePosition();
+  }, [updatePanelTogglePosition]);
+
+  React.useEffect(() => {
+    if (!sidePanel || !panelMounted) return;
+
+    const syncTogglePosition = () => {
+      updatePanelTogglePosition();
+    };
+
+    window.addEventListener("resize", syncTogglePosition);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && gridRef.current) {
+      observer = new ResizeObserver(syncTogglePosition);
+      observer.observe(gridRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", syncTogglePosition);
+      observer?.disconnect();
+    };
+  }, [panelMounted, sidePanel, updatePanelTogglePosition]);
 
   const sortedItems = React.useMemo(() => {
     if (!sorting?.sortBy) return data.items;
@@ -781,6 +822,7 @@ export function UnifiedTablePage<T>({
       onExport={toolbar.onExport}
       onBulkDelete={toolbar.onBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
+      customActions={toolbar.customActions}
       enableSearch={resolvedFeatures.enableSearch}
       enableViews={resolvedFeatures.enableViews}
       enableFilters={resolvedFeatures.enableFilters}
@@ -1414,10 +1456,13 @@ export function UnifiedTablePage<T>({
                     "transition-colors cursor-pointer",
                   )}
                   style={{
-                    right: panelCollapsed ? -2 : panelWidth - 10,
+                    left: panelToggleLeft ?? undefined,
+                    right: panelToggleLeft == null ? (panelCollapsed ? -2 : panelWidth - 10) : undefined,
                     transition: isResizingPanel
                       ? "none"
-                      : "right 200ms ease-in-out",
+                      : panelToggleLeft == null
+                        ? "right 200ms ease-in-out"
+                        : "left 200ms ease-in-out",
                   }}
                   aria-label={panelCollapsed ? "Expand panel" : "Collapse panel"}
                 >

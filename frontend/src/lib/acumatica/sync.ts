@@ -12,7 +12,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
-import type { FlatVendor } from "./types";
+import type { FlatBill, FlatVendor } from "./types";
 
 export interface VendorSyncResult {
   created: number;
@@ -112,6 +112,134 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
       else result.created++;
     } catch (err) {
       result.errors.push(`${acuId}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Direct Costs Sync (AP Bills → direct_costs)
+// ---------------------------------------------------------------------------
+
+export interface DirectCostSyncResult {
+  created: number;
+  updated: number;
+  errors: string[];
+}
+
+function mapBillStatus(acuStatus: string): string {
+  switch (acuStatus) {
+    case "Open":
+      return "Pending";
+    case "Closed":
+      return "Approved";
+    case "Balanced":
+      return "Approved";
+    case "On Hold":
+      return "Draft";
+    default:
+      return "Draft";
+  }
+}
+
+function toBillCostType(bill: FlatBill): string {
+  if (bill.Type === "DebitAdj") return "Expense";
+  return "Invoice";
+}
+
+/**
+ * Pull AP Bills from Acumatica and upsert into the direct_costs table
+ * for a given project.
+ *
+ * Matching: acumatica_ref_nbr (unique per bill).
+ * Bills without a project association are included — they represent
+ * company-level AP that should still be visible.
+ */
+export async function syncDirectCosts(
+  projectId: number,
+  userId: string,
+): Promise<DirectCostSyncResult> {
+  const result: DirectCostSyncResult = { created: 0, updated: 0, errors: [] };
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const acuBills = await acuClient.getBills({
+    $top: 500,
+  });
+
+  const supabase = await createClient();
+
+  // Load existing direct costs for this project that have an acumatica_ref_nbr
+  const { data: existingCosts, error: fetchError } = await supabase
+    .from("direct_costs")
+    .select("id, acumatica_ref_nbr")
+    .eq("project_id", projectId)
+    .not("acumatica_ref_nbr", "is", null);
+
+  if (fetchError) {
+    result.errors.push(`Failed to load existing direct costs: ${fetchError.message}`);
+    return result;
+  }
+
+  const byRefNbr = new Map<string, string>();
+  for (const c of existingCosts ?? []) {
+    if (c.acumatica_ref_nbr) byRefNbr.set(c.acumatica_ref_nbr, c.id);
+  }
+
+  // Build vendor name → vendor_id lookup
+  const { data: vendors } = await supabase
+    .from("vendors")
+    .select("id, acumatica_vendor_id");
+
+  const vendorByAcuId = new Map<string, string>();
+  for (const v of vendors ?? []) {
+    if (v.acumatica_vendor_id) vendorByAcuId.set(v.acumatica_vendor_id, v.id);
+  }
+
+  const now = new Date().toISOString();
+
+  for (const bill of acuBills) {
+    const refNbr = bill.ReferenceNbr;
+
+    const fields = {
+      date: bill.Date ? bill.Date.split("T")[0] : now.split("T")[0],
+      description: bill.Description ?? null,
+      invoice_number: bill.VendorRef ?? null,
+      total_amount: bill.Amount ?? 0,
+      cost_type: toBillCostType(bill),
+      status: mapBillStatus(bill.Status),
+      terms: null as string | null,
+      vendor_id: vendorByAcuId.get(bill.Vendor) ?? null,
+      acumatica_ref_nbr: refNbr,
+      acumatica_doc_type: bill.Type ?? null,
+      acumatica_financial_period: bill.FinancialPeriod ?? null,
+      acumatica_sync_at: now,
+      paid_date: bill.Status === "Closed" && bill.Balance === 0 ? now.split("T")[0] : null,
+    };
+
+    try {
+      const existingId = byRefNbr.get(refNbr);
+      if (existingId) {
+        const { error } = await supabase
+          .from("direct_costs")
+          .update({ ...fields, updated_by_user_id: userId })
+          .eq("id", existingId);
+        if (error) result.errors.push(`${refNbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase.from("direct_costs").insert({
+          ...fields,
+          project_id: projectId,
+          created_by_user_id: userId,
+          updated_by_user_id: userId,
+        });
+        if (error) result.errors.push(`${refNbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`${refNbr}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

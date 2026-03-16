@@ -84,6 +84,8 @@ export interface TableToolbarProps {
   onExport?: () => void;
   onBulkDelete?: () => void;
   mobilePanelActions?: ReactNode;
+  /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
+  customActions?: ReactNode;
   enableSearch?: boolean;
   enableViews?: boolean;
   enableFilters?: boolean;
@@ -425,6 +427,7 @@ export function TableToolbar({
   onExport,
   onBulkDelete,
   mobilePanelActions,
+  customActions,
   enableSearch = true,
   enableViews = true,
   enableFilters = true,
@@ -661,6 +664,8 @@ export function TableToolbar({
               onColumnVisibilityChange={onColumnVisibilityChange}
             />
           )}
+
+          {customActions}
 
           {enableExport && onExport && (
             <TooltipProvider>

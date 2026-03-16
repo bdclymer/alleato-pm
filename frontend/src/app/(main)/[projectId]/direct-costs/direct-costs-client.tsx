@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, MoreHorizontal, Plus, Upload } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus, RefreshCw, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import {
@@ -18,6 +18,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
@@ -142,6 +148,7 @@ export function DirectCostsClient({
   const [isEditLoading, setIsEditLoading] = React.useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
+  const [isSyncing, setIsSyncing] = React.useState(false);
   const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
   const [bulkAction, setBulkAction] = React.useState<BulkActionType | null>(null);
   const [isMobileViewport, setIsMobileViewport] = React.useState(false);
@@ -206,6 +213,29 @@ export function DirectCostsClient({
     tableState.setCurrentView,
     tableState.setSearchParams,
   ]);
+
+  const handleErpSync = React.useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const resp = await fetch("/api/sync/acumatica/direct-costs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: Number(projectId) }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const { result } = data;
+      toast.success(
+        `ERP sync complete: ${result.created} created, ${result.updated} updated` +
+          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [projectId, router]);
 
   const buildTabHref = (tab: SummaryTab): string => {
     const params = new URLSearchParams(searchParams.toString());
@@ -755,6 +785,25 @@ export function DirectCostsClient({
           columns: SUMMARY_COLUMNS,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          customActions: (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    disabled={isSyncing}
+                    onClick={handleErpSync}
+                    aria-label="Sync from ERP"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Sync direct costs from Acumatica</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ),
           onExport: () => setIsExportDialogOpen(true),
           mobilePanelActions: (
             <Button
