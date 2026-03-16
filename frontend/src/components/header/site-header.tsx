@@ -89,9 +89,6 @@ export function SiteHeader() {
             isAppAdmin={isAppAdmin}
             userType={userType}
           />
-          <React.Suspense fallback={null}>
-            <NotificationBell />
-          </React.Suspense>
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
@@ -101,6 +98,9 @@ export function SiteHeader() {
             onProjectSelect={nav.handleProjectSelect}
             onViewAll={() => router.push("/")}
           />
+          <React.Suspense fallback={null}>
+            <NotificationBell />
+          </React.Suspense>
         </div>
       </div>
     </header>

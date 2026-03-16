@@ -13,7 +13,10 @@ import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialo
 import {
   UnifiedTablePage,
   useUnifiedTableState,
+  CellBadge,
+  CellLink,
   type FilterValue,
+  type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,7 @@ interface ContactTableRow {
   email: string;
   type: string;
   company: string;
+  company_id: string | null;
   phone: string;
   is_admin: boolean;
   created_at: string | null;
@@ -53,6 +57,12 @@ type InlineEditDraft = Pick<ContactTableRow, "first_name" | "last_name" | "email
 const EMPTY_FILTERS: ContactFilterState = {
   type: undefined,
   is_admin: undefined,
+};
+
+const CONTACT_TYPE_COLORS: CellColorMap = {
+  user: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  employee: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  contact: "bg-muted text-muted-foreground",
 };
 
 const contactColumns: ColumnConfig[] = [
@@ -73,7 +83,11 @@ function formatDate(value: string | null): string {
   if (!value) return "-";
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function escapeCsvValue(value: string): string {
@@ -141,14 +155,20 @@ function buildContactTableColumns(
             className="h-8"
           />
         ) : (
-          <span>{item.type || "-"}</span>
+          <CellBadge value={item.type} colorMap={CONTACT_TYPE_COLORS} emptyLabel="-" />
         ),
       sortValue: (item) => item.type || "",
       csvValue: (item) => item.type || "",
     },
     {
       ...contactColumns[3],
-      render: (item) => <span>{item.company || "-"}</span>,
+      render: (item) => (
+        <CellLink
+          value={item.company}
+          href={item.company_id ? `/directory/companies?companyId=${item.company_id}` : null}
+          emptyLabel="-"
+        />
+      ),
       sortValue: (item) => item.company || "",
       csvValue: (item) => item.company || "",
     },
@@ -170,11 +190,10 @@ function buildContactTableColumns(
     },
     {
       ...contactColumns[5],
-      render: (item) => (
-        <Badge variant={item.is_admin ? "default" : "secondary"}>
-          {item.is_admin ? "Admin" : "Standard"}
-        </Badge>
-      ),
+      render: (item) =>
+        item.is_admin ? (
+          <Badge variant="default">Admin</Badge>
+        ) : null,
       sortValue: (item) => (item.is_admin ? 1 : 0),
       csvValue: (item) => (item.is_admin ? "Admin" : "Standard"),
     },
@@ -319,6 +338,7 @@ export default function DirectoryContactsPage(): ReactElement {
         email: contact.email || "",
         type: contact.person_type || "",
         company: contact.company?.name || "",
+        company_id: contact.company_id ?? null,
         phone: contact.phone_business || contact.phone_mobile || "",
         is_admin: Boolean(contact.is_admin),
         created_at: contact.created_at,
@@ -602,7 +622,7 @@ export default function DirectoryContactsPage(): ReactElement {
     <>
       <UnifiedTablePage
         header={{
-          title: "Company Directory: Contacts",
+          title: "Contacts",
           description:
             "Manage companies, clients, contacts, users, and employees across your organization",
           actions: (

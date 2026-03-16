@@ -8,6 +8,9 @@ type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
 
 type ProjectCompanyListItem = ProjectCompanyRow & {
   company_name: string | null;
+  website: string | null;
+  contact_count: number;
+  project_count: number;
 };
 
 export async function GET(request: NextRequest) {
@@ -119,30 +122,72 @@ export async function GET(request: NextRequest) {
       new Set(projectCompanies.map((row) => row.company_id).filter(Boolean)),
     );
 
-    let companyNameMap = new Map<string, string | null>();
-    if (companyIds.length > 0) {
-      const { data: companies, error: companiesError } = await supabase
-        .from("companies")
-        .select("id, name")
-        .in("id", companyIds)
-        .returns<Pick<CompanyRow, "id" | "name">[]>();
+    let companyInfoMap = new Map<string, { name: string | null; website: string | null }>();
+    const contactCountMap = new Map<string, number>();
+    const projectCountMap = new Map<string, number>();
 
-      if (companiesError) {
+    if (companyIds.length > 0) {
+      const [companiesResult, contactsResult, projectsResult] = await Promise.all([
+        supabase
+          .from("companies")
+          .select("id, name, website")
+          .in("id", companyIds)
+          .returns<Pick<CompanyRow, "id" | "name" | "website">[]>(),
+        supabase
+          .from("people")
+          .select("company_id")
+          .in("company_id", companyIds),
+        supabase
+          .from("project_companies")
+          .select("company_id, project_id")
+          .in("company_id", companyIds),
+      ]);
+
+      if (companiesResult.error) {
         return NextResponse.json(
-          { error: "Failed to fetch company names", details: companiesError.message },
+          { error: "Failed to fetch company details", details: companiesResult.error.message },
           { status: 500 },
         );
       }
 
-      companyNameMap = new Map(
-        (companies || []).map((company) => [company.id, company.name || null]),
+      companyInfoMap = new Map(
+        (companiesResult.data || []).map((c) => [c.id, { name: c.name || null, website: c.website || null }]),
       );
+
+      // Count contacts per company
+      for (const row of contactsResult.data || []) {
+        if (row.company_id) {
+          contactCountMap.set(row.company_id, (contactCountMap.get(row.company_id) || 0) + 1);
+        }
+      }
+
+      // Count unique projects per company
+      const projectSets = new Map<string, Set<number>>();
+      for (const row of projectsResult.data || []) {
+        if (row.company_id) {
+          const existing = projectSets.get(row.company_id);
+          if (existing) {
+            existing.add(row.project_id);
+          } else {
+            projectSets.set(row.company_id, new Set([row.project_id]));
+          }
+        }
+      }
+      for (const [cid, projects] of projectSets) {
+        projectCountMap.set(cid, projects.size);
+      }
     }
 
-    const rows: ProjectCompanyListItem[] = projectCompanies.map((row) => ({
-      ...row,
-      company_name: companyNameMap.get(row.company_id) ?? null,
-    }));
+    const rows: ProjectCompanyListItem[] = projectCompanies.map((row) => {
+      const info = companyInfoMap.get(row.company_id);
+      return {
+        ...row,
+        company_name: info?.name ?? null,
+        website: info?.website ?? null,
+        contact_count: contactCountMap.get(row.company_id) ?? 0,
+        project_count: projectCountMap.get(row.company_id) ?? 0,
+      };
+    });
 
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);

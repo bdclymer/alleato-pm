@@ -26,6 +26,13 @@ const STARTER_PROMPTS = [
   "Summarize the latest meetings",
 ];
 
+const COUNCIL_STARTER_PROMPTS = [
+  "Give me the state of the business",
+  "What should we focus on this week?",
+  "What are our biggest risks right now?",
+  "Should we bid on this project?",
+];
+
 function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
   return {
     id: msg.id,
@@ -51,7 +58,12 @@ export function SimpleRagChat({
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [input, setInput] = useState("");
+  const [councilMode, setCouncilMode] = useState(false);
+  const councilModeRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Keep ref in sync so the transport closure always reads current value
+  councilModeRef.current = councilMode;
 
   sessionIdRef.current = sessionId;
 
@@ -66,6 +78,7 @@ export function SimpleRagChat({
             id: sessionIdRef.current,
             message: lastMessage,
             messages: request.messages,
+            councilMode: councilModeRef.current,
           },
         };
       },
@@ -157,6 +170,8 @@ export function SimpleRagChat({
   const isLoading =
     isLoadingMessages || isCreatingSession || status === "submitted" || status === "streaming";
 
+  const activeStarters = councilMode ? COUNCIL_STARTER_PROMPTS : STARTER_PROMPTS;
+
   return (
     <div className="flex flex-col h-full w-full bg-background" data-testid="simple-rag-chat">
       {/* Messages */}
@@ -166,16 +181,30 @@ export function SimpleRagChat({
             Loading…
           </div>
         ) : messages.length === 0 ? (
-          /* Welcome state — no robot icon, no card borders */
+          /* Welcome state */
           <div className="flex flex-col items-center justify-center h-full text-center gap-3">
-            <h3 className="text-base font-semibold text-foreground">
-              Alleato AI Assistant
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-              Ask me about your projects, tasks, meetings, or anything else.
-            </p>
+            {councilMode ? (
+              <>
+                <div className="text-2xl">⚡</div>
+                <h3 className="text-base font-semibold text-foreground">
+                  Council Mode
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                  Your C-Suite speaks directly. Ask a big question and hear from the CFO, COO, CRO, and more — each in their own voice.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-base font-semibold text-foreground">
+                  Alleato AI Assistant
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                  Ask me about your projects, tasks, meetings, or anything else.
+                </p>
+              </>
+            )}
             <div className="flex flex-col gap-2 mt-2 w-full max-w-xs">
-              {STARTER_PROMPTS.map((prompt) => (
+              {activeStarters.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => setInput(prompt)}
@@ -197,7 +226,7 @@ export function SimpleRagChat({
             >
               {message.role === "assistant" && (
                 <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary">
-                  A
+                  {councilMode ? "⚡" : "A"}
                 </div>
               )}
               <div
@@ -216,13 +245,16 @@ export function SimpleRagChat({
           ))
         )}
 
-        {/* Loading dots */}
+        {/* Loading dots — council mode shows "Convening council…" */}
         {isLoading && messages.length > 0 && (
           <div className="flex gap-3 animate-in fade-in">
             <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[11px] font-semibold text-primary">
-              A
+              {councilMode ? "⚡" : "A"}
             </div>
-            <div className="bg-muted rounded-2xl px-4 py-3 flex items-center gap-1">
+            <div className="bg-muted rounded-2xl px-4 py-3 flex items-center gap-2">
+              {councilMode && (
+                <span className="text-xs text-muted-foreground mr-1">Convening council</span>
+              )}
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
               <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
@@ -233,14 +265,36 @@ export function SimpleRagChat({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input — only the textarea has a border */}
-      <div className="px-4 pb-4 pt-2">
+      {/* Input area */}
+      <div className="px-4 pb-4 pt-2 space-y-2">
+        {/* Council Mode toggle — sits above the input, no border on the row itself */}
+        <div className="flex items-center justify-end gap-2 px-1">
+          <span className="text-xs text-muted-foreground">Council Mode</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={councilMode}
+            onClick={() => setCouncilMode((v) => !v)}
+            className={cn(
+              "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none",
+              councilMode ? "bg-primary" : "bg-muted-foreground/30",
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 mt-0.5",
+                councilMode ? "translate-x-4" : "translate-x-0.5",
+              )}
+            />
+          </button>
+        </div>
+
         <div className="flex gap-2 items-end">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={councilMode ? "Ask the C-Suite anything…" : placeholder}
             disabled={isLoading}
             className="min-h-[44px] max-h-[160px] resize-none rounded-xl"
             rows={1}

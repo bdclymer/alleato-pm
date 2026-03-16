@@ -153,3 +153,8 @@ export function useCreateProjectDevConfig() {
   }
   return context;
 }
+
+/** Safe variant that returns null when outside the provider (e.g. sidebar dev panel). */
+export function useCreateProjectDevConfigOptional() {
+  return useContext(CreateProjectDevConfigContext) ?? null;
+}

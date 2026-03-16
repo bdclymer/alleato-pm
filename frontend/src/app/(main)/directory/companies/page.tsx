@@ -7,9 +7,15 @@ import {
   ArrowUpRight,
   Building2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   FileSpreadsheet,
+  Globe,
+  Mail,
+  Phone,
   Plus,
   Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,11 +24,16 @@ import { useGlobalProjectCompanies } from "@/hooks/use-global-project-companies"
 import {
   UnifiedTablePage,
   useUnifiedTableState,
+  CellBadge,
+  CellText,
+  CellEmail,
+  CellLink,
+  TableDateValue,
   type FilterValue,
+  type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +55,9 @@ interface CompanyRow {
   created_at: string | null;
   updated_at: string | null;
   company_name: string | null;
+  website: string | null;
+  contact_count: number;
+  project_count: number;
 }
 
 type CompanyFilterState = Record<string, FilterValue>;
@@ -53,118 +67,163 @@ const EMPTY_FILTERS: CompanyFilterState = {
   company_type: undefined,
 };
 
+const STATUS_COLORS: CellColorMap = {
+  active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  inactive: "bg-muted text-muted-foreground",
+};
+
+const TYPE_COLORS: CellColorMap = {
+  subcontractor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  supplier: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  vendor: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+  "connected company": "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+};
+
 const companyColumns: ColumnConfig[] = [
-  { id: "id", label: "ID", alwaysVisible: true },
-  { id: "project_id", label: "Project ID", defaultVisible: true },
-  { id: "company_id", label: "Company ID", defaultVisible: true },
-  { id: "business_phone", label: "Business Phone", defaultVisible: true },
-  { id: "email_address", label: "Email Address", defaultVisible: true },
-  { id: "primary_contact_id", label: "Primary Contact ID", defaultVisible: false },
-  { id: "erp_vendor_id", label: "ERP Vendor ID", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
+  { id: "company_name", label: "Name", alwaysVisible: true },
   { id: "company_type", label: "Type", defaultVisible: true },
-  { id: "logo_url", label: "Logo URL", defaultVisible: false },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "contact_count", label: "Contacts", defaultVisible: true },
+  { id: "project_count", label: "Projects", defaultVisible: true },
+  { id: "business_phone", label: "Phone", defaultVisible: true },
+  { id: "website", label: "Website", defaultVisible: true },
+  { id: "email_address", label: "Email", defaultVisible: false },
+  { id: "erp_vendor_id", label: "ERP Vendor ID", defaultVisible: false },
   { id: "created_at", label: "Date Added", defaultVisible: false },
   { id: "updated_at", label: "Last Updated", defaultVisible: false },
-  { id: "company_name", label: "Company Name", defaultVisible: false },
+  { id: "id", label: "ID", defaultVisible: false },
+  { id: "project_id", label: "Project ID", defaultVisible: false },
+  { id: "company_id", label: "Company ID", defaultVisible: false },
+  { id: "primary_contact_id", label: "Primary Contact ID", defaultVisible: false },
+  { id: "logo_url", label: "Logo URL", defaultVisible: false },
 ];
 
 const companyDefaultVisibleColumns = companyColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
-}
-
-function statusVariant(status: string | null | undefined): "default" | "secondary" | "outline" | "destructive" {
-  if (!status) return "outline";
-  const normalized = status.toLowerCase();
-  if (normalized === "active") return "default";
-  if (normalized === "inactive") return "secondary";
-  return "outline";
-}
-
 function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
+  const colMap = Object.fromEntries(companyColumns.map((c) => [c.id, c]));
+  const col = (id: string) => colMap[id];
+
   return [
     {
-      ...companyColumns[0],
-      render: (item) => <span className="font-mono text-xs">{item.id}</span>,
-      sortValue: (item) => item.id,
+      ...col("company_name"),
+      render: (item) => (
+        <CellLink
+          value={item.company_name || item.company_id}
+          href={`/directory/companies/${item.company_id}`}
+        />
+      ),
+      sortValue: (item) => item.company_name || item.company_id,
     },
     {
-      ...companyColumns[1],
-      render: (item) => <span>{item.project_id}</span>,
-      sortValue: (item) => item.project_id,
-    },
-    {
-      ...companyColumns[2],
-      render: (item) => <span className="font-mono text-xs">{item.company_id}</span>,
-      sortValue: (item) => item.company_id,
-    },
-    {
-      ...companyColumns[3],
-      render: (item) => <span>{item.business_phone || "-"}</span>,
-      sortValue: (item) => item.business_phone || "",
-    },
-    {
-      ...companyColumns[4],
-      render: (item) => <span>{item.email_address || "-"}</span>,
-      sortValue: (item) => item.email_address || "",
-    },
-    {
-      ...companyColumns[5],
-      render: (item) => <span className="font-mono text-xs">{item.primary_contact_id || "-"}</span>,
-      sortValue: (item) => item.primary_contact_id || "",
-    },
-    {
-      ...companyColumns[6],
-      render: (item) => <span>{item.erp_vendor_id || "-"}</span>,
-      sortValue: (item) => item.erp_vendor_id || "",
-    },
-    {
-      ...companyColumns[7],
-      render: (item) => <Badge variant={statusVariant(item.status)}>{item.status || "-"}</Badge>,
-      sortValue: (item) => item.status || "",
-    },
-    {
-      ...companyColumns[8],
-      render: (item) => <span>{item.company_type || "-"}</span>,
+      ...col("company_type"),
+      render: (item) => <CellBadge value={item.company_type} colorMap={TYPE_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.company_type || "",
     },
     {
-      ...companyColumns[9],
-      render: (item) => <span>{item.logo_url || "-"}</span>,
-      sortValue: (item) => item.logo_url || "",
+      ...col("status"),
+      render: (item) => <CellBadge value={item.status} colorMap={STATUS_COLORS} emptyLabel="-" />,
+      sortValue: (item) => item.status || "",
     },
     {
-      ...companyColumns[10],
-      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      ...col("contact_count"),
+      render: (item) => (
+        <span className={item.contact_count > 0 ? "text-foreground" : "text-muted-foreground"}>
+          {item.contact_count}
+        </span>
+      ),
+      sortValue: (item) => item.contact_count,
+    },
+    {
+      ...col("project_count"),
+      render: (item) => (
+        <span className={item.project_count > 0 ? "text-foreground" : "text-muted-foreground"}>
+          {item.project_count}
+        </span>
+      ),
+      sortValue: (item) => item.project_count,
+    },
+    {
+      ...col("business_phone"),
+      render: (item) => <CellText value={item.business_phone} emptyLabel="-" />,
+      sortValue: (item) => item.business_phone || "",
+    },
+    {
+      ...col("website"),
+      render: (item) => {
+        if (!item.website) return <span className="text-muted-foreground">-</span>;
+        const display = item.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+        return <CellLink value={display} href={item.website} external />;
+      },
+      sortValue: (item) => item.website || "",
+    },
+    {
+      ...col("email_address"),
+      render: (item) => <CellEmail value={item.email_address} emptyLabel="-" />,
+      sortValue: (item) => item.email_address || "",
+    },
+    {
+      ...col("erp_vendor_id"),
+      render: (item) => <CellText value={item.erp_vendor_id} emptyLabel="-" />,
+      sortValue: (item) => item.erp_vendor_id || "",
+    },
+    {
+      ...col("created_at"),
+      render: (item) => <TableDateValue value={item.created_at} emptyLabel="-" />,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
     {
-      ...companyColumns[11],
-      render: (item) => <span>{formatDate(item.updated_at)}</span>,
+      ...col("updated_at"),
+      render: (item) => <TableDateValue value={item.updated_at} emptyLabel="-" />,
       sortValue: (item) => (item.updated_at ? new Date(item.updated_at).getTime() : 0),
     },
     {
-      ...companyColumns[12],
-      render: (item) => <span>{item.company_name || "-"}</span>,
-      sortValue: (item) => item.company_name || "",
+      ...col("id"),
+      render: (item) => <CellText value={item.id} emptyLabel="-" className="font-mono text-xs" />,
+      sortValue: (item) => item.id,
+    },
+    {
+      ...col("project_id"),
+      render: (item) => <CellText value={String(item.project_id)} />,
+      sortValue: (item) => item.project_id,
+    },
+    {
+      ...col("company_id"),
+      render: (item) => <CellText value={item.company_id} className="font-mono text-xs" />,
+      sortValue: (item) => item.company_id,
+    },
+    {
+      ...col("primary_contact_id"),
+      render: (item) => <CellText value={item.primary_contact_id} emptyLabel="-" className="font-mono text-xs" />,
+      sortValue: (item) => item.primary_contact_id || "",
+    },
+    {
+      ...col("logo_url"),
+      render: (item) => <CellText value={item.logo_url} emptyLabel="-" />,
+      sortValue: (item) => item.logo_url || "",
     },
   ];
 }
 
 function CompanyPreviewPane({
   company,
+  companies,
   onOpenCompanyPage,
+  onSelectCompany,
+  onClose,
 }: {
   company: CompanyRow | null;
+  companies: CompanyRow[];
   onOpenCompanyPage: (company: CompanyRow) => void;
+  onSelectCompany: (id: string) => void;
+  onClose: () => void;
 }): ReactElement {
+  const currentIndex = company ? companies.findIndex((c) => c.id === company.id) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < companies.length - 1;
+
   if (!company) {
     return (
       <div className="p-6 space-y-3 text-sm text-muted-foreground">
@@ -174,57 +233,158 @@ function CompanyPreviewPane({
     );
   }
 
+  const displayName = company.company_name || company.company_id;
+  const typeLabel = company.company_type
+    ? company.company_type.replace(/_/g, " ").split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")
+    : null;
+
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-semibold leading-tight">
-          {company.company_name || company.company_id}
-        </p>
-        <Button
-          size="icon"
-          variant="ghost"
-          aria-label="Open company detail page"
-          title="Open company detail page"
-          onClick={() => onOpenCompanyPage(company)}
-        >
-          <ArrowUpRight className="h-4 w-4" />
-        </Button>
+    <div className="flex flex-col h-full">
+      {/* Panel header with navigation */}
+      <div className="flex items-center justify-between gap-1 px-4 py-2.5 border-b border-border">
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onSelectCompany(companies[currentIndex - 1].id)}
+            aria-label="Previous company"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            disabled={!hasNext}
+            onClick={() => hasNext && onSelectCompany(companies[currentIndex + 1].id)}
+            aria-label="Next company"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentIndex + 1} of {companies.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => onOpenCompanyPage(company)}
+            aria-label="Open full page"
+            title="Open full page"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
 
-      <dl className="space-y-3 text-xs">
-        <div>
-          <dt className="text-muted-foreground">ID</dt>
-          <dd className="text-foreground mt-1 font-mono">{company.id}</dd>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Company header */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {typeLabel && (
+                  <CellBadge value={company.company_type} colorMap={TYPE_COLORS} />
+                )}
+                {company.status && (
+                  <CellBadge value={company.status} colorMap={STATUS_COLORS} />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <dt className="text-muted-foreground">Project ID</dt>
-          <dd className="text-foreground mt-1">{company.project_id}</dd>
+
+        {/* Identity section */}
+        {(company.business_phone || company.email_address || company.website) && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Contact
+            </p>
+            <div className="space-y-2">
+              {company.business_phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{company.business_phone}</span>
+                </div>
+              )}
+              {company.email_address && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <a href={`mailto:${company.email_address}`} className="text-primary hover:underline truncate">
+                    {company.email_address}
+                  </a>
+                </div>
+              )}
+              {company.website && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
+                    {company.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Stats section */}
+        <div className="px-5 pb-4">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+            Overview
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md bg-background p-3">
+              <p className="text-lg font-semibold">{company.contact_count}</p>
+              <p className="text-xs text-muted-foreground">Contacts</p>
+            </div>
+            <div className="rounded-md bg-background p-3">
+              <p className="text-lg font-semibold">{company.project_count}</p>
+              <p className="text-xs text-muted-foreground">Projects</p>
+            </div>
+          </div>
         </div>
-        {company.company_type ? (
-          <div>
-            <dt className="text-muted-foreground">Type</dt>
-            <dd className="text-foreground mt-1">{company.company_type}</dd>
+
+        {/* Additional details */}
+        {(company.erp_vendor_id || company.created_at) && (
+          <div className="px-5 pb-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Details
+            </p>
+            <dl className="space-y-2 text-sm">
+              {company.erp_vendor_id && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">ERP Vendor ID</dt>
+                  <dd className="font-mono text-xs">{company.erp_vendor_id}</dd>
+                </div>
+              )}
+              {company.created_at && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Added</dt>
+                  <dd><TableDateValue value={company.created_at} /></dd>
+                </div>
+              )}
+            </dl>
           </div>
-        ) : null}
-        {company.status ? (
-          <div>
-            <dt className="text-muted-foreground">Status</dt>
-            <dd className="text-foreground mt-1">{company.status}</dd>
-          </div>
-        ) : null}
-        {company.business_phone ? (
-          <div>
-            <dt className="text-muted-foreground">Business Phone</dt>
-            <dd className="text-foreground mt-1">{company.business_phone}</dd>
-          </div>
-        ) : null}
-        {company.email_address ? (
-          <div>
-            <dt className="text-muted-foreground">Email</dt>
-            <dd className="text-foreground mt-1">{company.email_address}</dd>
-          </div>
-        ) : null}
-      </dl>
+        )}
+      </div>
     </div>
   );
 }
@@ -493,7 +653,15 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         onDelete: handleDeleteCompany,
       }}
       sidePanel={{
-        content: <CompanyPreviewPane company={selectedCompany} onOpenCompanyPage={openCompanyPage} />,
+        content: (
+          <CompanyPreviewPane
+            company={selectedCompany}
+            companies={companies}
+            onOpenCompanyPage={openCompanyPage}
+            onSelectCompany={(id) => tableState.setSearchParams({ detail: id })}
+            onClose={() => tableState.setSearchParams({ detail: null })}
+          />
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,

@@ -269,7 +269,13 @@ export function UnifiedTablePage<T>({
       })),
     [table.columns, toolbar.columns],
   );
-  const visibleColumns = toolbar.visibleColumns ?? toolbarColumns.map((column) => column.id);
+  // Always include alwaysVisible columns even if stale localStorage omits them
+  const rawVisibleColumns = toolbar.visibleColumns ?? toolbarColumns.map((column) => column.id);
+  const visibleColumns = React.useMemo(() => {
+    const alwaysVisibleIds = toolbarColumns.filter((c) => c.alwaysVisible).map((c) => c.id);
+    const missing = alwaysVisibleIds.filter((id) => !rawVisibleColumns.includes(id));
+    return missing.length > 0 ? [...missing, ...rawVisibleColumns] : rawVisibleColumns;
+  }, [rawVisibleColumns, toolbarColumns]);
   const activeFilters = toolbar.activeFilters ?? {};
   const handleFilterChange =
     toolbar.onFilterChange ??
@@ -784,28 +790,11 @@ export function UnifiedTablePage<T>({
     />
   );
 
-  const headerContent = sidePanel ? (
-    <div>
-      <div className="flex items-center justify-between gap-3 pt-3 pb-5">
-        <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">{header.title}</h1>
-        {toolbarInlineWithHeader ? (
-          <div className="flex items-center gap-2">
-            {header.actions}
-            {tableToolbar}
-          </div>
-        ) : header.actions}
-      </div>
-      {!toolbarInlineWithHeader && (
-        <div className="flex items-center gap-2 pb-2">
-          {tableToolbar}
-        </div>
-      )}
-    </div>
-  ) : (
+  const headerContent = (
     <PageHeader
       title={header.title}
       description={header.description}
-      className="px-0"
+      className="px-0 sm:px-0 lg:px-0"
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
@@ -819,16 +808,22 @@ export function UnifiedTablePage<T>({
     />
   );
 
-  const leftPaneContent = (
+  // Split content into "above table" (header, tabs, toolbar) and "table area" so
+  // the side panel grid can align its top with the table, not the page header.
+  const aboveTableContent = (
     <>
-      {!sidePanel && headerContent}
+      {headerContent}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className="pt-2 sm:pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="pt-1 sm:pt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           {!toolbarInlineWithHeader ? tableToolbar : null}
         </div>
       )}
+    </>
+  );
 
+  const tableAreaContent = (
+    <>
       {data.isLoading && (
         <div className="mt-4 space-y-2 py-4">
           {[...Array(5)].map((_, i) => (
@@ -860,7 +855,7 @@ export function UnifiedTablePage<T>({
       )}
 
       {showTable && shouldRenderTableView && (
-        <div className={cn(sidePanel ? "mt-0" : "mt-4", data.isFetching && "opacity-70")}>
+        <div className={cn("mt-4", data.isFetching && "opacity-70")}>
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
@@ -877,10 +872,10 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20", sidePanel && "bg-accent/40 [&_tr:first-child_th]:pt-3.5 [&_tr:first-child_th:first-child]:rounded-tl-md [&_tr:first-child_th:last-child]:rounded-tr-md")}>
+              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
                 <TableRow>
                   {hasRowSelection && (
-                    <TableHead className={cn("w-[40px]", sidePanel && "bg-accent/40")}>
+                    <TableHead className="w-[40px]">
                       <Checkbox
                         checked={allSelected ? true : someSelected ? "indeterminate" : false}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -907,7 +902,6 @@ export function UnifiedTablePage<T>({
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
                               isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
-                              sidePanel && "bg-accent/40",
                             )}
                           style={columnStyle}
                           draggable={resolvedFeatures.enableColumnReorder}
@@ -935,7 +929,7 @@ export function UnifiedTablePage<T>({
                                   type="button"
                                   className={cn(
                                     "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold text-xs uppercase tracking-wider cursor-pointer",
-                                    sidePanel ? "text-foreground" : "text-muted-foreground",
+                                    "text-muted-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {
@@ -1029,7 +1023,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className={cn("w-[50px]", sidePanel && "bg-accent/40")} />}
+                  {hasRowActions && <TableHead className="w-[50px]" />}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -1066,7 +1060,7 @@ export function UnifiedTablePage<T>({
                       rowRefs.current[key] = element;
                     }}
                     className={cn(
-                      "cursor-pointer transition-colors duration-150",
+                      "group/row cursor-pointer transition-colors duration-150",
                       "hover:bg-muted",
                       table.activeRowId === table.getRowId(item) && "bg-accent",
                       selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
@@ -1196,7 +1190,7 @@ export function UnifiedTablePage<T>({
                         </TableCell>
                       ))}
                     {hasRowActions && (
-                      <TableCell onClick={(event) => event.stopPropagation()}>
+                      <TableCell onClick={(event) => event.stopPropagation()} className="opacity-0 group-hover/row:opacity-100 transition-opacity">
                         {table.rowActions ? table.rowActions(item) : table.onDelete ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1305,6 +1299,14 @@ export function UnifiedTablePage<T>({
     </>
   );
 
+  // For non-sidePanel pages, combine header + table into one block
+  const leftPaneContent = (
+    <>
+      {aboveTableContent}
+      {tableAreaContent}
+    </>
+  );
+
   return (
     <>
       <PageContainer
@@ -1313,12 +1315,11 @@ export function UnifiedTablePage<T>({
       >
         {sidePanel ? (
           <>
-            {headerContent}
+            {aboveTableContent}
             <div
               ref={gridRef}
               className={cn(
-                "relative grid grid-cols-1 lg:min-h-[calc(100vh-7.5rem)]",
-                // Use Tailwind classes only when panel hasn't been custom-sized
+                "relative grid grid-cols-1",
                 !panelMounted && "lg:grid-cols-[minmax(0,1fr)_26rem]",
                 !panelMounted && sidePanel.columnClassName,
               )}
@@ -1335,17 +1336,16 @@ export function UnifiedTablePage<T>({
                   : undefined
               }
             >
-              <div className="min-w-0">{leftPaneContent}</div>
+              <div className="min-w-0">{tableAreaContent}</div>
 
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:block lg:sticky lg:top-0 lg:h-[calc(100vh-7rem)] bg-muted border-l border-border relative",
+                  "hidden lg:block lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] bg-muted border-l border-border relative",
                   panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
                   sidePanel.widthClassName,
                 )}
               >
-                {/* Drag-to-resize handle */}
                 {panelResizable && (
                   <div
                     className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"

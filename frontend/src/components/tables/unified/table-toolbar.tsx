@@ -634,6 +634,8 @@ export function TableToolbar({
           </div>
         )}
 
+        {enableViews && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
+
         <div className="flex items-center gap-1 shrink-0">
           {enableSearch && (
             <ExpandableSearch
@@ -707,9 +709,9 @@ export function TableToolbar({
           )}
         </div>
 
-        {hasRightActions && <div className="mx-1 h-4 w-px shrink-0 bg-border" />}
+        {hasRightActions && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
 
-        <span className="inline-flex h-8 shrink-0 items-center px-2.5 text-xs text-muted-foreground">
+        <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-muted/60 px-2 text-[11px] font-medium text-muted-foreground">
           {filteredItems === totalItems
             ? `${totalItems} items`
             : `${filteredItems} of ${totalItems}`}

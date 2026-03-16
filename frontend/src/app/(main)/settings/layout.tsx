@@ -14,6 +14,7 @@ import {
   SlidersHorizontal,
   ClipboardList,
   Brain,
+  Sparkles,
 } from "lucide-react";
 
 interface NavItem {
@@ -58,6 +59,12 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Security", href: "/settings/security", icon: Shield },
       { label: "Audit Log", href: "/settings/audit", icon: ClipboardList },
+    ],
+  },
+  {
+    title: "Platform",
+    items: [
+      { label: "What's New", href: "/updates", icon: Sparkles },
     ],
   },
 ];

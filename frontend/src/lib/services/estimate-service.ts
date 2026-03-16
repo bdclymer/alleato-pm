@@ -22,6 +22,9 @@ import {
   EstimateLineItem,
   EstimateAlternate,
   EstimateAllowance,
+  CompanyEstimateRow,
+  EstimateTypeStat,
+  EstimateTypes,
   calculateLineItemCosts,
 } from "@/lib/schemas/estimates";
 
@@ -91,6 +94,89 @@ export class EstimateService {
         has_prev_page: page > 1,
       },
     };
+  }
+
+  // =============================================================================
+  // COMPANY-LEVEL LIST (cross-project)
+  // =============================================================================
+
+  async listAll(estimateType?: string | null): Promise<CompanyEstimateRow[]> {
+    let query = this.supabase
+      .from("estimates")
+      .select("estimate_id, project_id, estimate_type, title, estimate_number, revision, status, estimate_date, location, estimator, updated_at, created_at, projects(name, project_number)")
+      .eq("is_deleted", false)
+      .order("updated_at", { ascending: false });
+
+    if (estimateType && estimateType !== "all") {
+      query = query.eq("estimate_type", estimateType);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw new Error(`Failed to fetch company estimates: ${error.message}`);
+
+    return (data ?? []).map((row: any) => ({
+      estimate_id: row.estimate_id,
+      project_id: row.project_id,
+      estimate_type: row.estimate_type ?? null,
+      title: row.title,
+      estimate_number: row.estimate_number ?? null,
+      revision: row.revision,
+      status: row.status,
+      estimate_date: row.estimate_date ?? null,
+      location: row.location ?? null,
+      estimator: row.estimator ?? null,
+      updated_at: row.updated_at,
+      created_at: row.created_at,
+      project_name: row.projects?.name ?? null,
+      project_number: row.projects?.project_number ?? null,
+    }));
+  }
+
+  async getTypeStats(): Promise<EstimateTypeStat[]> {
+    const { data, error } = await this.supabase
+      .from("estimates")
+      .select("estimate_type, status")
+      .eq("is_deleted", false);
+
+    if (error) throw new Error(`Failed to fetch estimate stats: ${error.message}`);
+
+    // Aggregate in memory
+    const statsMap = new Map<string, EstimateTypeStat>();
+
+    for (const type of [...EstimateTypes, null] as (typeof EstimateTypes[number] | null)[]) {
+      const key = type ?? "__null__";
+      statsMap.set(key, {
+        type,
+        total: 0,
+        pending_review: 0,
+        draft: 0,
+        approved: 0,
+        rejected: 0,
+      });
+    }
+
+    for (const row of (data ?? [])) {
+      const key = row.estimate_type ?? "__null__";
+      if (!statsMap.has(key)) {
+        statsMap.set(key, {
+          type: row.estimate_type as any,
+          total: 0,
+          pending_review: 0,
+          draft: 0,
+          approved: 0,
+          rejected: 0,
+        });
+      }
+      const stat = statsMap.get(key)!;
+      stat.total += 1;
+      if (row.status === "pending_review") stat.pending_review += 1;
+      else if (row.status === "draft") stat.draft += 1;
+      else if (row.status === "approved") stat.approved += 1;
+      else if (row.status === "rejected") stat.rejected += 1;
+    }
+
+    return Array.from(statsMap.values()).filter((s) => s.total > 0 || EstimateTypes.includes(s.type as any));
   }
 
   // =============================================================================
@@ -174,6 +260,7 @@ export class EstimateService {
       estimate_number: data.estimate_number ?? null,
       revision: data.revision ?? 1,
       status: data.status ?? "draft",
+      estimate_type: (data as any).estimate_type ?? null,
       estimate_date: data.estimate_date
         ? new Date(data.estimate_date).toISOString().split("T")[0]
         : null,
@@ -229,6 +316,8 @@ export class EstimateService {
       updatePayload.insurance_rate = data.insurance_rate;
     if (data.fee_rate !== undefined) updatePayload.fee_rate = data.fee_rate;
     if (data.notes !== undefined) updatePayload.notes = data.notes;
+    if ((data as any).estimate_type !== undefined)
+      updatePayload.estimate_type = (data as any).estimate_type;
 
     const { data: updated, error } = await this.supabase
       .from("estimates")

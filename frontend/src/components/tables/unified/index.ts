@@ -10,9 +10,14 @@ export {
   TableAvatarUsers,
   TableIconLinks,
   TableRowActionsMenu,
+  CellText,
+  CellBadge,
+  CellLink,
+  CellEmail,
   formatParticipantDisplayName,
   type TableBadgeVariant,
   type TableRowActionItem,
+  type CellColorMap,
 } from "./table-primitives";
 export {
   UnifiedTablePage,

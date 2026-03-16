@@ -17,6 +17,8 @@ import {
   EstimateCreateSchema,
   EstimateStatuses,
   EstimateStatusLabels,
+  EstimateTypes,
+  EstimateTypeLabels,
 } from "@/lib/schemas/estimates";
 
 interface EstimateFormValues {
@@ -24,6 +26,7 @@ interface EstimateFormValues {
   estimate_number?: string | null;
   revision?: number;
   status?: "draft" | "pending_review" | "approved" | "rejected";
+  estimate_type?: "asrs" | "design_build" | null;
   estimate_date?: string | null;
   location?: string | null;
   estimator?: string | null;
@@ -57,6 +60,7 @@ export default function NewEstimatePage() {
       estimate_number: "",
       revision: 1,
       status: "draft",
+      estimate_type: null,
       estimate_date: undefined,
       location: "",
       estimator: "",
@@ -152,6 +156,27 @@ export default function NewEstimatePage() {
                 value: status,
                 label: EstimateStatusLabels[status],
               }))}
+            />
+
+            <SelectField
+              label="Estimate Type"
+              value={values.estimate_type ?? ""}
+              onValueChange={(value) =>
+                form.setValue(
+                  "estimate_type",
+                  (value || null) as EstimateFormValues["estimate_type"],
+                  { shouldValidate: true }
+                )
+              }
+              error={errors.estimate_type?.message}
+              placeholder="Select type (optional)"
+              options={[
+                { value: "", label: "None" },
+                ...EstimateTypes.map((t) => ({
+                  value: t,
+                  label: EstimateTypeLabels[t],
+                })),
+              ]}
             />
 
             <DateField

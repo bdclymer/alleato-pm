@@ -17,6 +17,30 @@ export const EstimateStatuses = [
 ] as const;
 export type EstimateStatus = (typeof EstimateStatuses)[number];
 
+export const EstimateTypes = ["asrs", "design_build"] as const;
+export type EstimateType = (typeof EstimateTypes)[number];
+
+export const EstimateTypeLabels: Record<EstimateType, string> = {
+  asrs: "ASRS",
+  design_build: "Construction Design Build",
+};
+
+export const EstimateTypeDescriptions: Record<EstimateType, string> = {
+  asrs: "Automated Storage & Retrieval Systems — Sprinkler Design",
+  design_build: "Construction Design Build Projects",
+};
+
+// Slug ↔ DB value mapping (URL slugs use hyphens, DB uses underscores)
+export const EstimateTypeSlugMap: Record<string, EstimateType> = {
+  asrs: "asrs",
+  "design-build": "design_build",
+};
+
+export const EstimateTypeToSlug: Record<EstimateType, string> = {
+  asrs: "asrs",
+  design_build: "design-build",
+};
+
 export const EstimateStatusLabels: Record<EstimateStatus, string> = {
   draft: "Draft",
   pending_review: "Pending Review",
@@ -146,6 +170,7 @@ export const EstimateCreateSchema = z.object({
   estimate_number: optionalString,
   revision: z.coerce.number().int().min(1).default(1),
   status: z.enum(EstimateStatuses).default("draft"),
+  estimate_type: z.enum(EstimateTypes).nullable().optional(),
   estimate_date: z.preprocess(
     (val) => (val === "" || val === undefined ? null : val),
     z.coerce.date().nullable().optional()
@@ -225,6 +250,34 @@ export type EstimateListParams = z.infer<typeof EstimateListParamsSchema>;
 export type EstimateLineItem = z.infer<typeof EstimateLineItemSchema>;
 export type EstimateAlternate = z.infer<typeof EstimateAlternateSchema>;
 export type EstimateAllowance = z.infer<typeof EstimateAllowanceSchema>;
+
+// Company-level estimate row — includes joined project info
+export interface CompanyEstimateRow {
+  estimate_id: number;
+  project_id: number;
+  estimate_type: string | null;
+  title: string;
+  estimate_number: string | null;
+  revision: number;
+  status: string;
+  estimate_date: string | null;
+  location: string | null;
+  estimator: string | null;
+  updated_at: string;
+  created_at: string;
+  project_name: string | null;
+  project_number: string | null;
+}
+
+// Stats for hub tiles
+export interface EstimateTypeStat {
+  type: EstimateType | null;
+  total: number;
+  pending_review: number;
+  draft: number;
+  approved: number;
+  rejected: number;
+}
 
 export interface EstimateWithLineItems extends EstimateRow {
   line_items: EstimateLineItemRow[];

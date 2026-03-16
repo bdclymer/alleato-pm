@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { LucideIcon } from "lucide-react";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
@@ -270,6 +271,175 @@ export function TableIconLinks({ items, className }: TableIconLinksProps): React
     </div>
   );
 }
+
+/* ---------------------------------------------------------------------------
+ * Cell Renderers — reusable data-type components for table columns.
+ *
+ * Usage in column definitions:
+ *   render: (item) => <CellBadge value={item.type} colorMap={contactTypeColors} />
+ *   render: (item) => <CellLink value={item.company} href={`/companies/${item.companyId}`} />
+ *   render: (item) => <CellText value={item.phone} />
+ * ------------------------------------------------------------------------- */
+
+/** A map from lowercase value → Tailwind classes for badge coloring. */
+export type CellColorMap = Record<string, string>;
+
+// ── CellText ────────────────────────────────────────────────────────────────
+
+interface CellTextProps {
+  value: string | null | undefined;
+  emptyLabel?: string;
+  muted?: boolean;
+  className?: string;
+}
+
+/** Plain text cell. Renders `emptyLabel` when value is falsy. */
+export function CellText({
+  value,
+  emptyLabel = "—",
+  muted = false,
+  className,
+}: CellTextProps): React.ReactElement {
+  const display = value?.trim() || emptyLabel;
+  return (
+    <span className={cn(muted ? "text-muted-foreground" : undefined, className)}>
+      {display}
+    </span>
+  );
+}
+
+// ── CellBadge ───────────────────────────────────────────────────────────────
+
+interface CellBadgeProps {
+  value: string | null | undefined;
+  /** Map of lowercase value → Tailwind color classes. Unmatched values use a muted fallback. */
+  colorMap?: CellColorMap;
+  /** Capitalize the displayed label (default true). */
+  capitalize?: boolean;
+  emptyLabel?: string;
+  className?: string;
+}
+
+const CELL_BADGE_FALLBACK = "bg-muted text-muted-foreground";
+
+/** Colored pill/badge for categorical values like type, role, status. */
+export function CellBadge({
+  value,
+  colorMap,
+  capitalize = true,
+  emptyLabel = "—",
+  className,
+}: CellBadgeProps): React.ReactElement {
+  if (!value?.trim()) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+
+  // Clean up raw DB values: replace underscores with spaces, then title-case each word
+  const cleaned = value.replace(/_/g, " ");
+  const label = capitalize
+    ? cleaned.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")
+    : cleaned;
+
+  const lookupKey = cleaned.toLowerCase();
+  const colors = colorMap?.[lookupKey] ?? colorMap?.[value.toLowerCase()] ?? CELL_BADGE_FALLBACK;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        colors,
+        className,
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+// ── CellLink ────────────────────────────────────────────────────────────────
+
+interface CellLinkProps {
+  value: string | null | undefined;
+  href: string | null | undefined;
+  emptyLabel?: string;
+  /** Open in new tab (default false). */
+  external?: boolean;
+  className?: string;
+}
+
+/** Clickable text that navigates to a detail page. Falls back to plain text when href is absent. */
+export function CellLink({
+  value,
+  href,
+  emptyLabel = "—",
+  external = false,
+  className,
+}: CellLinkProps): React.ReactElement {
+  const display = value?.trim();
+  if (!display) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+
+  if (!href) {
+    return <span className={className}>{display}</span>;
+  }
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={cn("hover:text-primary hover:underline transition-colors", className)}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {display}
+      </a>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cn("hover:text-primary hover:underline transition-colors", className)}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {display}
+    </Link>
+  );
+}
+
+// ── CellEmail ───────────────────────────────────────────────────────────────
+
+interface CellEmailProps {
+  value: string | null | undefined;
+  emptyLabel?: string;
+  className?: string;
+}
+
+/** Email address rendered as a mailto link. */
+export function CellEmail({
+  value,
+  emptyLabel = "—",
+  className,
+}: CellEmailProps): React.ReactElement {
+  const display = value?.trim();
+  if (!display) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+
+  return (
+    <a
+      href={`mailto:${display}`}
+      className={cn("hover:text-primary hover:underline transition-colors", className)}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {display}
+    </a>
+  );
+}
+
+// ── Legacy exports below ────────────────────────────────────────────────────
 
 export interface TableRowActionItem {
   key: string;

@@ -14,6 +14,9 @@ interface GlobalProjectCompany {
   created_at: string | null;
   updated_at: string | null;
   company_name: string | null;
+  website: string | null;
+  contact_count: number;
+  project_count: number;
 }
 
 interface GlobalProjectCompanyListResponse {

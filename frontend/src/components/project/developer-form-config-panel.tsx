@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useCreateProjectDevConfig } from "@/components/project/create-project-dev-config";
+import { useCreateProjectDevConfigOptional } from "@/components/project/create-project-dev-config";
 import {
   formSections,
   PROJECT_TEMPLATE_OPTIONS,
@@ -30,20 +30,20 @@ import {
 } from "@/lib/create-project/form";
 
 export function DeveloperFormConfigPanel() {
+  const ctx = useCreateProjectDevConfigOptional();
+
+  if (!ctx || !ctx.isDevAdmin || !ctx.isCreateProjectRoute) {
+    return null;
+  }
+
   const {
-    isDevAdmin,
-    isCreateProjectRoute,
     selectedTemplate,
     setSelectedTemplate,
     activeTemplateConfig,
     updateActiveTemplateConfig,
     resetActiveTemplateConfig,
     clearAllDevFormConfigs,
-  } = useCreateProjectDevConfig();
-
-  if (!isDevAdmin || !isCreateProjectRoute) {
-    return null;
-  }
+  } = ctx;
 
   return (
     <>
