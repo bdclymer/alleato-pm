@@ -19,12 +19,12 @@ export function FormSection({
   return (
     <section
       className={cn(
-        "space-y-4 border-b border-border/70 pb-8 last:border-b-0 last:pb-0",
+        "space-y-3 border-b border-border/70 pb-8 last:border-b-0 last:pb-0",
         className,
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             {title}
           </h2>

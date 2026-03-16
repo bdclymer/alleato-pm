@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface FormFieldProps {
-  label: string;
+  label: React.ReactNode;
   children: React.ReactNode;
   error?: string;
   hint?: string;
@@ -24,10 +24,10 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn(fullWidth ? "sm:col-span-2" : "", className)}>
-      <label className="block text-sm font-medium text-foreground">
+      <div className="block text-sm font-medium text-foreground">
         {label}
         {required && <span className="ml-1 text-destructive">*</span>}
-      </label>
+      </div>
       <div className="mt-1">
         {children}
         {hint && !error && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}

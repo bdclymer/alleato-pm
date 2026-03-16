@@ -14,7 +14,7 @@ interface FileInfo {
 }
 
 interface FileUploadFieldProps {
-  label: string;
+  label: React.ReactNode;
   value?: FileInfo[];
   onChange?: (files: FileInfo[]) => void;
   onFilesSelected?: (files: File[]) => void;
@@ -29,6 +29,7 @@ interface FileUploadFieldProps {
   className?: string;
   disabled?: boolean;
   variant?: "default" | "minimal";
+  showMetaText?: boolean;
   dropzoneTestId?: string;
   inputTestId?: string;
   fileListTestId?: string;
@@ -50,6 +51,7 @@ export function FileUploadField({
   className,
   disabled = false,
   variant = "default",
+  showMetaText = true,
   dropzoneTestId,
   inputTestId,
   fileListTestId,
@@ -191,15 +193,17 @@ export function FileUploadField({
                   browse
                 </Button>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {accept && `Accepted formats: ${accept}`}
-                {maxSize && ` • Max size: ${formatFileSize(maxSize)}`}
-              </p>
+              {showMetaText ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {accept && `Accepted formats: ${accept}`}
+                  {maxSize && ` • Max size: ${formatFileSize(maxSize)}`}
+                </p>
+              ) : null}
             </>
           )}
         </div>
 
-        {isMinimal ? (
+        {isMinimal && showMetaText ? (
           <p className="text-xs text-muted-foreground">
             {accept && `Accepted formats: ${accept}`}
             {maxSize && ` • Max size: ${formatFileSize(maxSize)}`}

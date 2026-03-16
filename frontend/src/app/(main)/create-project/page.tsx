@@ -3,10 +3,10 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CircleHelp } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AppShell } from "@/components/layouts";
 import { ProjectFormPageLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
@@ -36,31 +36,38 @@ import {
 } from "@/lib/create-project/form";
 import { FormSection as StandardFormSection } from "@/components/forms/FormSection";
 import { FormActions } from "@/components/forms/FormActions";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CLEAR_SELECT_VALUE = "__CLEAR_OPTION__";
+const PROJECT_MEDIA_TOOLTIP: Record<string, string> = {
+  project_logo:
+    "Accepted formats: .jpg, .jpeg, .png, .tif, .tiff, .bmp. Square image recommended.",
+  project_photo:
+    "Accepted formats: .jpg, .jpeg, .png, .tif, .tiff, .bmp. Landscape image recommended.",
+};
+
 const getFileName = (value: unknown) =>
   typeof File !== "undefined" && value instanceof File ? value.name : null;
 
 export default function CreateProjectPage() {
   return (
-    <AppShell
-      companyName="Alleato Group"
-      currentTool="Portfolio"
-      userInitials="BC"
+    <ProjectFormPageLayout
+      title="Create Project"
+      description="Set up core project details, location, and delivery defaults."
+      maxWidth="xl"
+      headerActions={
+        <Button type="button" variant="ghost" asChild>
+          <Link href="/">Back to Portfolio</Link>
+        </Button>
+      }
     >
-      <ProjectFormPageLayout
-        title="Create Project"
-        description="Set up core project details, location, and delivery defaults."
-        maxWidth="xl"
-        headerActions={
-          <Button type="button" variant="ghost" asChild>
-            <Link href="/">Back to Portfolio</Link>
-          </Button>
-        }
-      >
-        <CreateProjectForm />
-      </ProjectFormPageLayout>
-    </AppShell>
+      <CreateProjectForm />
+    </ProjectFormPageLayout>
   );
 }
 
@@ -150,9 +157,6 @@ function CreateProjectForm() {
           city: values.city,
           postal_code: values.postal_code || null,
           country: values.country,
-          timezone: values.timezone,
-          phone: values.phone || null,
-          region: values.region || null,
           office: values.office || null,
           erp_sync: values.erp_sync,
           test_project: values.test_project,
@@ -352,16 +356,42 @@ function CreateProjectForm() {
     if (field.control === "file") {
       const file =
         typeof File !== "undefined" && currentValue instanceof File ? currentValue : null;
+      const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
+      const fieldLabel = tooltipContent ? (
+        <span className="inline-flex items-center gap-1.5">
+          <span>{field.label}</span>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={`${field.label} guidance`}
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-sm text-left">
+                {tooltipContent}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </span>
+      ) : (
+        field.label
+      );
+      const shouldHideMediaHint = field.name === "project_logo" || field.name === "project_photo";
 
       return (
         <FileUploadField
           key={`${field.name}-${fileResetKey}`}
-          label={field.label}
-          hint={field.description}
+          label={fieldLabel}
+          hint={shouldHideMediaHint ? undefined : field.description}
           error={error}
           accept={field.accept}
           maxFiles={1}
           variant="minimal"
+          showMetaText={!shouldHideMediaHint}
           fullWidth={fullWidth}
           value={
             file
@@ -453,6 +483,7 @@ function CreateProjectForm() {
           submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
           onCancel={() => router.push("/")}
           isSubmitting={isSubmitting}
+          className="border-t border-border"
         >
           <div className="flex flex-wrap items-center gap-3">
             <DevAutoFillButton />

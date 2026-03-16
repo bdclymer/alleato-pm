@@ -200,6 +200,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     content = metadata.get("content") or metadata.get("raw_text") or ""
     notes_context = ""
     speaker_email_map: Dict[str, str] = {}
+    direct_fireflies_tasks: List[TaskItem] = []
     if content and is_meeting:
         try:
             parsed = _parser.parse_markdown(content)
@@ -212,6 +213,22 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
                 notes_parts.append(f"### Action Items\n{action_items_section}")
             notes_context = "\n\n".join(notes_parts)
             speaker_email_map = parsed.speaker_email_map or {}
+            direct_fireflies_tasks = [
+                TaskItem(
+                    description=row["description"],
+                    assignee=row.get("assignee_name"),
+                    assignee_email=row.get("assignee_email"),
+                    priority=row.get("priority"),
+                )
+                for row in _parser._build_task_rows_from_action_items(  # type: ignore[attr-defined]
+                    metadata_id=metadata_id,
+                    action_items=parsed.action_items,
+                    project_id=metadata.get("project_id"),
+                    speaker_email_map=parsed.speaker_email_map,
+                    speakers_json=parsed.speakers_json,
+                    attendees_json=parsed.attendees_json,
+                )
+            ]
             if speaker_email_map:
                 logger.info("[Extractor] Speaker-email map: %s", speaker_email_map)
         except Exception as exc:
@@ -249,7 +266,14 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         len(structured.tasks),
         len(structured.opportunities),
     )
-    structured.tasks = _apply_task_quality_gates(structured.tasks)
+    if direct_fireflies_tasks:
+        structured.tasks = direct_fireflies_tasks
+        logger.info(
+            "[Extractor] Using %d direct Fireflies action items for task upserts",
+            len(structured.tasks),
+        )
+    else:
+        structured.tasks = _apply_task_quality_gates(structured.tasks)
     logger.info("[Extractor] Tasks after quality gates: %d", len(structured.tasks))
 
     # 4. Batch embed all descriptions in one call

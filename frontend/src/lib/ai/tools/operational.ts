@@ -405,21 +405,7 @@ export function createOperationalTools(
             resolvedName = resolved.name;
           }
 
-          // Fetch vendors
-          let vendorQuery = supabase
-            .from("vendors")
-            .select("id, name, is_active, contact_name, contact_email")
-            .eq("is_active", true)
-            .limit(100);
-
-          if (vendorName) {
-            vendorQuery = vendorQuery.ilike("name", `%${vendorName}%`);
-          }
-
-          const { data: vendorRows } = await vendorQuery;
-          const vendors = (vendorRows ?? []) as AnyRow[];
-
-          // Fetch subcontracts for commitment data
+          // Fetch subcontracts for commitment data first so we know which companies to look up
           let subQuery = supabase
             .from("subcontracts")
             .select(
@@ -435,16 +421,40 @@ export function createOperationalTools(
           const { data: subRows } = await subQuery.limit(200);
           const subs = (subRows ?? []) as unknown as AnyRow[];
 
-          // Fetch SOVs for financial data on subcontracts
+          // Collect unique company UUIDs from subcontracts
+          // contract_company_id is a UUID referencing companies.id (not vendors.id)
+          const companyIds = Array.from(
+            new Set(subs.map((s) => s.contract_company_id as string).filter(Boolean)),
+          );
+
+          // Fetch companies by UUID — parallel with SOV fetch
           const subIds = subs.map((s) => s.id as string).filter(Boolean);
-          let sovData: AnyRow[] = [];
-          if (subIds.length > 0) {
-            const { data } = await supabase
-              .from("schedule_of_values")
-              .select("id, commitment_id, total_amount, status")
-              .in("commitment_id", subIds);
-            sovData = (data ?? []) as unknown as AnyRow[];
+          const [companiesRes, sovRes] = await Promise.all([
+            companyIds.length > 0
+              ? supabase
+                  .from("companies")
+                  .select("id, name, contact_name, contact_email")
+                  .in("id", companyIds)
+                  .then((r) => r)
+              : Promise.resolve({ data: [] }),
+            subIds.length > 0
+              ? supabase
+                  .from("schedule_of_values")
+                  .select("id, commitment_id, total_amount, status")
+                  .in("commitment_id", subIds)
+              : Promise.resolve({ data: [] }),
+          ]);
+
+          // Optionally filter by vendor name
+          let companies = (companiesRes.data ?? []) as AnyRow[];
+          if (vendorName) {
+            const lower = vendorName.toLowerCase();
+            companies = companies.filter((c) =>
+              String(c.name ?? "").toLowerCase().includes(lower),
+            );
           }
+
+          const sovData = (sovRes.data ?? []) as AnyRow[];
 
           // Index SOVs by commitment_id
           const sovByCommitment = new Map<string, AnyRow>();
@@ -452,9 +462,9 @@ export function createOperationalTools(
             if (s.commitment_id) sovByCommitment.set(s.commitment_id as string, s);
           });
 
-          // Build vendor performance map
-          const vendorMap = new Map<number, AnyRow>();
-          vendors.forEach((v) => vendorMap.set(v.id as number, v));
+          // Build company lookup map (UUID → company row)
+          const companyMap = new Map<string, AnyRow>();
+          companies.forEach((c) => companyMap.set(c.id as string, c));
 
           const vendorPerformance = new Map<
             string,
@@ -470,7 +480,7 @@ export function createOperationalTools(
             if (!companyId) return;
 
             const existing = vendorPerformance.get(companyId) ?? {
-              vendor: vendorMap.get(Number(companyId)) ?? {
+              vendor: companyMap.get(companyId) ?? {
                 id: companyId,
                 name: "Unknown",
               },
@@ -507,7 +517,7 @@ export function createOperationalTools(
               totalContracts: subs.length,
             },
             vendors: ranked.slice(0, 25).map((v) => ({
-              vendorName: v.vendor.name,
+              companyName: v.vendor.name,
               contactName: v.vendor.contact_name,
               contactEmail: v.vendor.contact_email,
               contractCount: v.contracts,

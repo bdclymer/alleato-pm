@@ -854,7 +854,9 @@ export function createProjectTools(
         }
 
         return {
-          sourceRef: "[Source: Financial Analysis - Portfolio]",
+          sourceRef: projectId
+            ? `[Source: Financial Analysis - Project ${projectId}]`
+            : "[Source: Financial Analysis - Portfolio]",
           summary: {
             totalOriginalContractValue: totalOriginalContracts,
             totalRevisedContractValue: totalRevisedContracts,
@@ -1069,15 +1071,18 @@ export function createProjectTools(
         let insightQuery = supabase
           .from("ai_insights")
           .select("*")
-          .in("resolved", [0])
           .order("created_at", { ascending: false })
-          .limit(maxResults ?? 20);
+          .limit((maxResults ?? 20) * 3); // fetch extra to account for JS-side resolved filter
 
         if (projectId) {
           insightQuery = insightQuery.eq("project_id", projectId);
         }
         const { data: insightRows } = await insightQuery;
-        const insights = (insightRows ?? []) as AnyRow[];
+        // Filter unresolved in JS — handles boolean false, integer 0, and null
+        const insights = ((insightRows ?? []) as AnyRow[]).filter((row) => {
+          const r = row.resolved;
+          return r === null || r === undefined || r === false || r === 0 || r === "0";
+        }).slice(0, maxResults ?? 20);
 
         // Meeting summaries — the richest data source for what needs attention
         let docQuery = supabase
@@ -1450,7 +1455,9 @@ export function createProjectTools(
               .from("rfis")
               .select("id, number, subject, status, due_date")
               .eq("project_id", project.id)
-              .order("created_at", { ascending: false })
+              .neq("status", "closed")
+              .neq("status", "Closed")
+              .order("due_date", { ascending: true })
               .limit(10),
             supabase
               .from("document_metadata")

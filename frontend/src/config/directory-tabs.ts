@@ -61,14 +61,19 @@ export function getProjectDirectoryTabs(
 ): TabConfig[] {
   return [
     {
-      label: "All",
-      href: `/${projectId}/directory/all`,
-      isActive: currentPath === `/${projectId}/directory/all`,
+      label: "Team",
+      href: `/${projectId}/directory/team`,
+      isActive: currentPath === `/${projectId}/directory/team`,
     },
     {
-      label: "Companies",
-      href: `/${projectId}/directory/companies`,
-      isActive: currentPath === `/${projectId}/directory/companies`,
+      label: "Vendors",
+      href: `/${projectId}/directory/vendors`,
+      isActive: currentPath === `/${projectId}/directory/vendors`,
+    },
+    {
+      label: "Members",
+      href: `/${projectId}/directory/members`,
+      isActive: currentPath === `/${projectId}/directory/members`,
     },
     {
       label: "Distribution Groups",

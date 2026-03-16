@@ -39,7 +39,7 @@ export function ContractSetup({
     title: "Prime Contract",
     status: "draft",
     original_contract_amount: 0,
-    client_id: 1, // This would need to come from project data
+    client_id: null, // Set from project data when available
   });
 
   const supabase = createClient();
@@ -93,7 +93,7 @@ export function ContractSetup({
           status: "draft",
           original_contract_amount: contract.original_contract_amount || 0,
           revised_contract_amount: contract.original_contract_amount || 0,
-          client_id: contract.client_id || 1,
+          client_id: contract.client_id || null,
         })
         .select()
         .single();

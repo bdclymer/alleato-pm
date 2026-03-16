@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 export interface Contract {
   id: number;
   contract_number: string | null;
-  client_id: number;
+  client_id: string | null;
   project_id: number | null;
   status: string | null;
   original_contract_amount: number | null;
@@ -22,7 +22,7 @@ export interface Contract {
   created_at: string;
   // Joined data
   client?: {
-    id: number;
+    id: string;
     name: string | null;
   } | null;
   project?: {
@@ -47,7 +47,7 @@ interface UseContractsOptions {
   // Filter by project ID
   projectId?: number;
   // Filter by client ID
-  clientId?: number;
+  clientId?: string;
   // Whether to include only executed contracts
   executedOnly?: boolean;
   // Limit number of results
@@ -98,7 +98,7 @@ export function useContracts(
         .select(
           `
           *,
-          client:clients(id, name),
+          client:companies(id, name),
           project:projects(id, name, project_number)
         `,
         )
@@ -155,7 +155,7 @@ export function useContracts(
           .from("contracts")
           .insert({
             contract_number: contract.contract_number,
-            client_id: contract.client_id || 0,
+            client_id: contract.client_id || null,
             project_id: contract.project_id || 0,
             title: contract.contract_number || "Untitled Contract",
             status: contract.status || "draft",
@@ -166,7 +166,7 @@ export function useContracts(
           .select(
             `
           *,
-          client:clients(id, name),
+          client:companies(id, name),
           project:projects(id, name, project_number)
         `,
           )

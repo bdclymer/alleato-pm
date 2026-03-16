@@ -53,6 +53,7 @@ export async function GET(
       return {
         id: row.id as string,
         vendor_name: row.name as string,
+        company_id: (row.company_id as string | null) ?? null,
         company: companyName || undefined,
       };
     });

@@ -236,6 +236,24 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - Prioritize fast findability and low-friction scanning
 - Use navigation aids (search, breadcrumbs, back actions) as support, not a crutch for unclear information architecture
 
+### 8. Line Items Table Parity (MANDATORY)
+
+For any form that includes editable line items (SOV, cost lines, invoice lines, etc.), the line-items UI must follow the same visual shell and spacing pattern as the Direct Costs form line-items component.
+
+Canonical reference:
+- `frontend/src/components/direct-costs/LineItemsManager.tsx`
+
+Required parity points:
+- Same table container treatment (subtle bordered shell + muted header row)
+- Same compact header typography and row density
+- Same totals-row treatment and right-aligned monetary totals
+- Primary `Add Line Item` action placed below the table (not embedded in header cells)
+
+Not allowed for line-items sections:
+- Accordion-only presentation for the line-items block
+- Decorative alternate table skins that diverge from the canonical pattern
+- Per-page reinvention of spacing/typography for line-item grids
+
 Reference: `docs/design/AI-UI-BASELINE.md`
 
 ---

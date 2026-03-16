@@ -233,6 +233,8 @@ class FirefliesIngestionPipeline:
             "captured_at": parsed.captured_at.isoformat() if parsed.captured_at else None,
             "fireflies_id": parsed.fireflies_id,
             "summary": parsed.summary or parsed.overview,
+            "overview": parsed.overview or parsed.summary,
+            "action_items": "\n".join(parsed.action_items),
             "content_hash": content_hash,
             "participants": ", ".join(parsed.attendees),
             "participants_array": parsed.attendees,
@@ -264,6 +266,15 @@ class FirefliesIngestionPipeline:
 
         try:
             self.store.upsert_document_metadata(metadata)
+            for task in self._build_task_rows_from_action_items(
+                metadata_id=document_id,
+                action_items=parsed.action_items,
+                project_id=effective_project_id,
+                speaker_email_map=parsed.speaker_email_map,
+                speakers_json=parsed.speakers_json,
+                attendees_json=parsed.attendees_json,
+            ):
+                self.store.upsert_task(task)
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings):
                 chunk.embedding = embedding
@@ -406,7 +417,7 @@ class FirefliesIngestionPipeline:
                 )
                 storage_url = None
                 if not dry_run:
-                    storage_url = self.store.upload_public_text("meetings", storage_path, markdown)
+                    storage_url = self.store.upload_public_text("transcripts", storage_path, markdown)
 
                 markdown_file = None
                 if output_dir is not None:
@@ -1183,6 +1194,197 @@ class FirefliesIngestionPipeline:
             if line:
                 items.append(line)
         return items
+
+    @staticmethod
+    def _normalize_person_text(value: str) -> str:
+        normalized = unicodedata.normalize("NFKD", value or "")
+        ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+        ascii_text = ascii_text.lower().replace("'", " ")
+        ascii_text = re.sub(r"[^a-z0-9]+", " ", ascii_text)
+        return re.sub(r"\s+", " ", ascii_text).strip()
+
+    @staticmethod
+    def _strip_action_item_timestamp(value: str) -> str:
+        return re.sub(r"\s*\(\d{2}:\d{2}\)\s*$", "", value or "").strip()
+
+    @classmethod
+    def _build_people_lookup(
+        cls,
+        speaker_email_map: Optional[Dict[str, str]],
+        speakers_json: Optional[List[Dict[str, Any]]],
+        attendees_json: Optional[List[Dict[str, Any]]],
+    ) -> List[Dict[str, Optional[str]]]:
+        people: List[Dict[str, Optional[str]]] = []
+        seen: set[tuple[str, str]] = set()
+
+        def add_person(name: str, email: Optional[str]) -> None:
+            clean_name = (name or "").strip()
+            clean_email = (email or "").strip() or None
+            if not clean_name:
+                return
+            key = (clean_name.lower(), (clean_email or "").lower())
+            if key in seen:
+                return
+            seen.add(key)
+            people.append({"name": clean_name, "email": clean_email})
+
+        for name, email in (speaker_email_map or {}).items():
+            add_person(name, email)
+
+        for speaker in speakers_json or []:
+            speaker_name = str(speaker.get("speakerName") or speaker.get("name") or "").strip()
+            if not speaker_name:
+                continue
+            add_person(speaker_name, (speaker_email_map or {}).get(speaker_name))
+
+        for attendee in attendees_json or []:
+            attendee_name = str(attendee.get("displayName") or attendee.get("name") or "").strip()
+            attendee_email = str(attendee.get("email") or "").strip() or None
+            if attendee_name:
+                add_person(attendee_name, attendee_email)
+
+        return people
+
+    @classmethod
+    def _resolve_action_item_assignee(
+        cls,
+        action_item: str,
+        speaker_email_map: Optional[Dict[str, str]],
+        speakers_json: Optional[List[Dict[str, Any]]],
+        attendees_json: Optional[List[Dict[str, Any]]],
+    ) -> tuple[Optional[str], Optional[str]]:
+        people = cls._build_people_lookup(speaker_email_map, speakers_json, attendees_json)
+        normalized_text = cls._normalize_person_text(action_item)
+
+        def resolve_candidate_name(candidate_name: str) -> tuple[Optional[str], Optional[str]]:
+            normalized_candidate = cls._normalize_person_text(candidate_name)
+            for person in people:
+                normalized_name = cls._normalize_person_text(person["name"] or "")
+                aliases = {normalized_name}
+                name_parts = normalized_name.split()
+                if name_parts:
+                    aliases.add(name_parts[0])
+                if normalized_candidate in aliases:
+                    return person["name"], person["email"]
+            return candidate_name, None
+
+        for pattern in (
+            r"^\s*(?:follow up with|coordinate with|contact|ask|tell|have|support|add)\s+([A-Z][A-Za-z']+)",
+        ):
+            match = re.search(pattern, action_item, flags=re.IGNORECASE)
+            if match:
+                return resolve_candidate_name(match.group(1).strip())
+
+        best_match: Optional[tuple[int, int, Dict[str, Optional[str]]]] = None
+        for person in people:
+            name = person["name"] or ""
+            normalized_name = cls._normalize_person_text(name)
+            if not normalized_name:
+                continue
+
+            aliases = {normalized_name}
+            name_parts = normalized_name.split()
+            if name_parts:
+                aliases.add(name_parts[0])
+
+            for alias in aliases:
+                if not alias:
+                    continue
+                pattern = rf"\b{re.escape(alias)}\b"
+                match = re.search(pattern, normalized_text)
+                if not match:
+                    continue
+                prefix_words = normalized_text[: match.start()].split()
+                if prefix_words[-1:] in (["copy"], ["cc"]):
+                    continue
+                score = len(alias.split()) * 10 + len(alias)
+                candidate = (match.start(), -score, person)
+                if best_match is None or candidate < best_match:
+                    best_match = candidate
+
+        if best_match:
+            person = best_match[2]
+            return person["name"], person["email"]
+
+        leading_match = re.match(
+            r"^\s*([A-Z][A-Za-z']+(?:\s+[A-Z][A-Za-z']+)?)\s+to\b",
+            action_item,
+        )
+        if leading_match:
+            candidate_name = leading_match.group(1).strip()
+            if cls._normalize_person_text(candidate_name.split()[0]) not in {
+                "contact",
+                "follow",
+                "coordinate",
+                "review",
+                "provide",
+                "monitor",
+                "support",
+                "add",
+                "take",
+                "perform",
+                "adjust",
+                "export",
+            }:
+                return candidate_name, None
+
+        with_match = re.search(r"\b(?:with|contact|ask|tell|have)\s+([A-Z][A-Za-z']+)\b", action_item)
+        if with_match:
+            return resolve_candidate_name(with_match.group(1).strip())
+
+        return None, None
+
+    @staticmethod
+    def _infer_action_item_priority(action_item: str) -> str:
+        text = (action_item or "").lower()
+        urgent_markers = ("urgent", "immediately", "asap", "today", "tomorrow", "end of day")
+        high_markers = ("priority", "by end of week", "deadline", "due")
+        if any(marker in text for marker in urgent_markers):
+            return "high"
+        if any(marker in text for marker in high_markers):
+            return "medium"
+        return "medium"
+
+    @classmethod
+    def _build_task_rows_from_action_items(
+        cls,
+        metadata_id: str,
+        action_items: List[str],
+        project_id: Optional[int],
+        speaker_email_map: Optional[Dict[str, str]] = None,
+        speakers_json: Optional[List[Dict[str, Any]]] = None,
+        attendees_json: Optional[List[Dict[str, Any]]] = None,
+    ) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        seen_descriptions: set[str] = set()
+        for item in action_items:
+            description = cls._strip_action_item_timestamp(item)
+            if not description:
+                continue
+            dedupe_key = description.lower()
+            if dedupe_key in seen_descriptions:
+                continue
+            seen_descriptions.add(dedupe_key)
+            assignee_name, assignee_email = cls._resolve_action_item_assignee(
+                action_item=description,
+                speaker_email_map=speaker_email_map,
+                speakers_json=speakers_json,
+                attendees_json=attendees_json,
+            )
+            row: Dict[str, Any] = {
+                "metadata_id": metadata_id,
+                "description": description,
+                "assignee_name": assignee_name,
+                "priority": cls._infer_action_item_priority(description),
+                "status": "open",
+                "source_system": "fireflies",
+                "project_id": project_id,
+                "project_ids": [project_id] if project_id is not None else [],
+            }
+            if assignee_email:
+                row["assignee_email"] = assignee_email
+            rows.append(row)
+        return rows
 
     @staticmethod
     def _append_text_section(lines: List[str], title: str, value: Any) -> None:

@@ -100,6 +100,15 @@ function TaskPreviewPane({
         <div>
           <dt className="text-muted-foreground inline-flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5" />
+            Created Date
+          </dt>
+          <dd className="text-foreground mt-1">
+            {task.created_at ? format(new Date(task.created_at), "MMM d, yyyy") : "-"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
             Due Date
           </dt>
           <dd className="text-foreground mt-1">

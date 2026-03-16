@@ -131,8 +131,8 @@ export async function createClient(data: Record<string, any>) {
     const supabase = await createSupabaseClient();
 
     const { data: client, error } = await supabase
-      .from("clients")
-      .insert(data)
+      .from("companies")
+      .insert({ ...data, type: "client" })
       .select()
       .single();
 
@@ -148,15 +148,15 @@ export async function createClient(data: Record<string, any>) {
   }
 }
 
-export async function updateClient(id: number, data: Record<string, any>) {
-  return updateTableRow("clients", id, data, [
+export async function updateClient(id: string, data: Record<string, any>) {
+  return updateTableRow("companies", id, data, [
     "/clients",
     "/directory/clients",
   ]);
 }
 
-export async function deleteClient(id: number) {
-  return deleteTableRow("clients", id, ["/clients", "/directory/clients"]);
+export async function deleteClient(id: string) {
+  return deleteTableRow("companies", id, ["/clients", "/directory/clients"]);
 }
 
 export async function createContact(data: Record<string, any>) {

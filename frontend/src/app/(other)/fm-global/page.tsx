@@ -3,7 +3,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageContainer, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
 import type { Database } from "@/types/database.types";
 import { FmGlobalDashboardClient } from "./fm-global-dashboard-client";
@@ -250,41 +249,14 @@ export default async function FMGlobalDashboardPage(): Promise<ReactElement> {
         }
       />
       <PageContainer maxWidth="full">
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Tables</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-              {tableRows.length}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Figures</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-              {figureRows.length}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>What To Do Next</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <div>Use filters to narrow to the right system and ASRS type.</div>
-              <div>Open the form to match exact sprinkler configurations.</div>
-            </CardContent>
-          </Card>
-        </div>
-        <div className="mt-6">
+        <section>
           <FmGlobalDashboardClient
             tables={tableRows}
             figures={figureRows}
             tablesConfig={buildTablesConfig(tableRows)}
             figuresConfig={buildFiguresConfig(figureRows)}
           />
-        </div>
+        </section>
       </PageContainer>
     </>
   );

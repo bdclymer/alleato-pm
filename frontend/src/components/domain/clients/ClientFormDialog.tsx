@@ -37,7 +37,7 @@ import { createClient, updateClient } from "@/app/(other)/actions/table-actions"
 import { useCompanies } from "@/hooks/use-companies";
 
 interface Client {
-  id: number;
+  id: string;
   name: string | null;
   company_id: string | null;
   status: string | null;

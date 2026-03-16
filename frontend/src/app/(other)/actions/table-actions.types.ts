@@ -21,7 +21,7 @@ export interface ProjectData {
   name?: string;
   project_number?: string;
   client?: string;
-  client_id?: number;
+  client_id?: string;
   phase?: string;
   state?: string;
   address?: string;

@@ -4,19 +4,15 @@ import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
 
 export interface Client {
-  id: number;
-  name: string | null;
-  company_id: string | null;
+  id: string;
+  name: string;
+  type: string | null;
   status: string | null;
-  created_at: string;
-  // Joined company data
-  company?: {
-    id: string;
-    name: string;
-    address: string | null;
-    city: string | null;
-    state: string | null;
-  } | null;
+  website: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  created_at: string | null;
 }
 
 export interface ClientOption {
@@ -25,13 +21,9 @@ export interface ClientOption {
 }
 
 interface UseClientsOptions {
-  // Filter clients by search term
   search?: string;
-  // Filter by status
   status?: "active" | "inactive" | null;
-  // Limit number of results
   limit?: number;
-  // Whether to auto-fetch on mount
   enabled?: boolean;
 }
 
@@ -41,13 +33,9 @@ interface UseClientsReturn {
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  createClient: (client: Partial<Client>) => Promise<Client | null>;
+  createClient: (name: string) => Promise<Client | null>;
 }
 
-/**
- * Hook for fetching clients from Supabase
- * Clients are linked to companies and represent project owners
- */
 export function useClients(options: UseClientsOptions = {}): UseClientsReturn {
   const { search, status, limit = 100, enabled = true } = options;
   const [clients, setClients] = useState<Client[]>([]);
@@ -56,42 +44,25 @@ export function useClients(options: UseClientsOptions = {}): UseClientsReturn {
 
   const fetchClients = useCallback(async () => {
     if (!enabled) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
       const supabase = createClient();
       let query = supabase
-        .from("clients")
-        .select(
-          `
-          *,
-          company:companies(id, name, address, city, state)
-        `,
-        )
+        .from("companies")
+        .select("id, name, type, status, website, address, city, state, created_at")
+        .eq("type", "client")
         .order("name", { ascending: true })
         .limit(limit);
 
-      if (search) {
-        query = query.ilike("name", `%${search}%`);
-      }
-
-      if (status) {
-        query = query.eq("status", status);
-      }
+      if (search) query = query.ilike("name", `%${search}%`);
+      if (status) query = query.eq("status", status);
 
       const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw new Error(queryError.message);
-      }
-
-      setClients(data || []);
+      if (queryError) throw new Error(queryError.message);
+      setClients((data as Client[]) || []);
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch clients"),
-      );
+      setError(err instanceof Error ? err : new Error("Failed to fetch clients"));
     } finally {
       setIsLoading(false);
     }
@@ -102,64 +73,28 @@ export function useClients(options: UseClientsOptions = {}): UseClientsReturn {
   }, [fetchClients]);
 
   const createClientRecord = useCallback(
-    async (
-      client: Partial<Client> & { company_name?: string },
-    ): Promise<Client | null> => {
+    async (name: string): Promise<Client | null> => {
       try {
         const supabase = createClient();
-        let companyId = client.company_id || null;
-
-        if (!companyId && client.company_name) {
-          const { data: company, error: companyError } = await supabase
-            .from("companies")
-            .insert({
-              name: client.company_name,
-            })
-            .select("id")
-            .single();
-
-          if (companyError) {
-            throw new Error(companyError.message);
-          }
-          companyId = company?.id || null;
-        }
-
         const { data, error: insertError } = await supabase
-          .from("clients")
-          .insert({
-            name: client.name || "",
-            company_id: companyId,
-            status: client.status || "active",
-          })
-          .select(
-            `
-          *,
-          company:companies(id, name, address, city, state)
-        `,
-          )
+          .from("companies")
+          .insert({ name, type: "client", status: "active" })
+          .select("id, name, type, status, website, address, city, state, created_at")
           .single();
-
-        if (insertError) {
-          throw new Error(insertError.message);
-        }
-
-        // Refetch to update the list
+        if (insertError) throw new Error(insertError.message);
         await fetchClients();
-        return data;
+        return data as Client;
       } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to create client"),
-        );
+        setError(err instanceof Error ? err : new Error("Failed to create client"));
         return null;
       }
     },
     [fetchClients],
   );
 
-  // Transform clients to options for dropdowns
-  const clientOptions: ClientOption[] = clients.map((client) => ({
-    value: client.id.toString(),
-    label: client.name || "Unnamed Client",
+  const clientOptions: ClientOption[] = clients.map((c) => ({
+    value: c.id,
+    label: c.name,
   }));
 
   return {

@@ -129,7 +129,7 @@ def main():
             storage_path = pipeline._build_storage_path(
                 transcript.get("title") or transcript_id, captured_at
             )
-            storage_url = store.upload_public_text("meetings", storage_path, markdown)
+            storage_url = store.upload_public_text("transcripts", storage_path, markdown)
 
             # Step 6: Re-ingest (upsert metadata + re-embed chunks)
             ingestion = pipeline.ingest_markdown_text(

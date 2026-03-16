@@ -1011,6 +1011,7 @@ export default function CommitmentDetailPage() {
             commitmentType={commitment.type}
           />
         </TabsContent>
+
       </Tabs>
 
       {/* Export Dialog */}

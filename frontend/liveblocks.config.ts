@@ -119,6 +119,8 @@ declare global {
 
     ThreadMetadata: {
       resolved?: boolean;
+      rowId?: string;
+      columnId?: string;
     };
 
     RoomInfo: {

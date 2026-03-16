@@ -4,10 +4,8 @@ import * as React from "react";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
 import {
-  ArrowRight,
   Send,
   X,
-  CheckCircle2,
   AlertTriangle,
   Phone,
   Mail,
@@ -20,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
+import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectRoles } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
@@ -114,70 +113,6 @@ function initials(name: string) {
    Sub-components
 ───────────────────────────────────────────────────────────── */
 
-/** Single vital sign — label / big value / sub / optional mini bar */
-function Vital({
-  label,
-  value,
-  sub,
-  pct,
-  tone,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-  pct?: number;
-  tone: "green" | "amber" | "red" | "neutral";
-}) {
-  const bar = { green: "#22c55e", amber: "#f59e0b", red: "#ef4444", neutral: "#94a3b8" }[tone];
-  return (
-    <div className="flex flex-col gap-1 py-5 px-6 border-r border-border/50 last:border-r-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold text-foreground tabular-nums leading-none">{value}</p>
-      <p className="text-xs text-muted-foreground leading-snug">{sub}</p>
-      {pct !== undefined && (
-        <div className="h-0.5 rounded-full bg-muted/80 mt-1 overflow-hidden">
-          <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: bar }} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Financial ledger row */
-function LedgerRow({
-  label,
-  value,
-  sub,
-  tone,
-  divider,
-  indent,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: "red" | "green" | "neutral";
-  divider?: boolean;
-  indent?: boolean;
-}) {
-  return (
-    <div className={cn("flex items-baseline justify-between gap-4", divider && "pt-3 mt-1 border-t border-border/50")}>
-      <span className={cn("text-sm leading-snug", indent ? "text-muted-foreground pl-3" : "text-foreground")}>
-        {label}
-        {sub && <span className="text-xs text-muted-foreground ml-2">{sub}</span>}
-      </span>
-      <span
-        className={cn(
-          "text-sm tabular-nums font-medium flex-shrink-0",
-          tone === "red" && "text-red-600",
-          tone === "green" && "text-green-600",
-          !tone && "text-foreground",
-        )}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
 
 /** Decision queue item */
 function QueueItem({
@@ -440,6 +375,7 @@ export function ProjectHomeRedesign({
   schedule = [],
 }: ProjectHomeClientProps) {
   const [aiOpen, setAiOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   const { grandTotals } = useBudgetData(String(project.id));
 
   /* ── Financial numbers ── */
@@ -447,14 +383,10 @@ export function ProjectHomeRedesign({
   const revisedBudget = grandTotals.revisedBudget || originalBudget;
   const approvedCOs = grandTotals.approvedCOs || 0;
   const committedCosts = grandTotals.committedCosts || commitments.reduce((s, c) => s + (c.contract_amount || 0), 0);
-  const directCosts = grandTotals.directCosts || 0;
   const pendingChanges = grandTotals.pendingChanges || 0;
   const projectedOverUnder = grandTotals.projectedOverUnder || 0;
-  const estimatedAtCompletion = grandTotals.estimatedCostAtCompletion || committedCosts;
 
   const committedPct = revisedBudget > 0 ? (committedCosts / revisedBudget) * 100 : 0;
-  const pendingPct = revisedBudget > 0 ? (pendingChanges / revisedBudget) * 100 : 0;
-  const remainingPct = Math.max(0, 100 - committedPct - pendingPct);
   const hasBudget = revisedBudget > 0;
 
   /* ── Schedule ── */
@@ -480,6 +412,31 @@ export function ProjectHomeRedesign({
   const openCEs = changeEvents.filter((e) => e.status === "open");
   const pendingCOs = changeOrders.filter((co) => ["pending", "draft", "open"].includes(co.status?.toLowerCase() || ""));
   const openTasks = tasks.filter((t) => !["done", "completed", "cancelled"].includes(t.status || ""));
+  const overdueOpenTasks = openTasks.filter((t) => t.due_date && new Date(t.due_date) < new Date());
+  const weekAhead = new Date();
+  weekAhead.setDate(weekAhead.getDate() + 7);
+  const dueSoonTasks = openTasks.filter((t) => {
+    if (!t.due_date) return false;
+    const due = new Date(t.due_date);
+    return due >= new Date() && due <= weekAhead;
+  });
+  const unassignedOpenTasks = openTasks.filter((t) => !t.assignee_name);
+  const priorityTasks = [...openTasks]
+    .sort((a, b) => {
+      const score = (task: Task) => {
+        const priority = (task.priority || "").toLowerCase();
+        if (priority === "critical" || priority === "urgent") return 0;
+        if (priority === "high") return 1;
+        if (task.due_date && new Date(task.due_date) < new Date()) return 2;
+        return 3;
+      };
+      const scoreDiff = score(a) - score(b);
+      if (scoreDiff !== 0) return scoreDiff;
+      const aDue = a.due_date ? new Date(a.due_date).getTime() : Number.POSITIVE_INFINITY;
+      const bDue = b.due_date ? new Date(b.due_date).getTime() : Number.POSITIVE_INFINITY;
+      return aDue - bDue;
+    })
+    .slice(0, 6);
   const lastLogDaysAgo = dailyLogs.length > 0
     ? differenceInDays(new Date(), new Date(String(dailyLogs[0].log_date || dailyLogs[0].created_at)))
     : null;
@@ -571,8 +528,72 @@ export function ProjectHomeRedesign({
       .slice(0, 7);
   }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, scheduleStats, project.id]);
 
-  /* ── Meta ── */
-  const meta = [project.type, project.project_sector, project.current_phase].filter(Boolean).join(" · ");
+  const recentActivity = React.useMemo(() => {
+    const items: Array<{
+      id: string;
+      title: string;
+      meta: string;
+      date: Date;
+      href: string;
+    }> = [];
+
+    meetings.forEach((meeting) => {
+      const rawDate = meeting.date || meeting.created_at;
+      if (!rawDate) return;
+      const date = new Date(rawDate);
+      if (Number.isNaN(date.getTime())) return;
+      items.push({
+        id: `meeting-${meeting.id}`,
+        title: meeting.title || meeting.file_name || "Meeting recorded",
+        meta: "Meeting",
+        date,
+        href: `/${project.id}/meetings`,
+      });
+    });
+
+    dailyLogs.forEach((log) => {
+      const rawDate = log.log_date || log.created_at;
+      if (!rawDate) return;
+      const date = new Date(rawDate);
+      if (Number.isNaN(date.getTime())) return;
+      items.push({
+        id: `daily-log-${log.id}`,
+        title: "Daily log filed",
+        meta: "Daily Log",
+        date,
+        href: `/${project.id}/daily-log`,
+      });
+    });
+
+    changeOrders.forEach((changeOrder) => {
+      if (!changeOrder.created_at) return;
+      const date = new Date(changeOrder.created_at);
+      if (Number.isNaN(date.getTime())) return;
+      items.push({
+        id: `change-order-${changeOrder.id}`,
+        title: changeOrder.title || `Change Order ${changeOrder.co_number || ""}`.trim(),
+        meta: "Change Order",
+        date,
+        href: `/${project.id}/change-orders`,
+      });
+    });
+
+    rfis.forEach((rfi) => {
+      if (!rfi.created_at) return;
+      const date = new Date(rfi.created_at);
+      if (Number.isNaN(date.getTime())) return;
+      items.push({
+        id: `rfi-${rfi.id}`,
+        title: rfi.subject || `RFI ${rfi.number || ""}`.trim(),
+        meta: "RFI",
+        date,
+        href: `/${project.id}/rfis`,
+      });
+    });
+
+    return items.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 8);
+  }, [meetings, dailyLogs, changeOrders, rfis, project.id]);
+
   const scheduleBarColor = scheduleStats
     ? scheduleStats.overdue > 5 ? "#ef4444" : scheduleStats.overdue > 2 ? "#f59e0b" : "#22c55e"
     : "#94a3b8";
@@ -583,396 +604,381 @@ export function ProjectHomeRedesign({
 
   return (
     <div className="min-h-screen bg-background">
-
-      {/* ── Z1: PROJECT HEADER ─────────────────────────────────── */}
-      <div className="px-8 sm:px-14 pt-9 pb-6 border-b border-border/50">
-        <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0">
-            {/* Job # + health badge */}
-            <div className="flex items-center gap-3 mb-2.5">
-              {project["job number"] && (
-                <span className="text-xs font-mono tracking-widest text-muted-foreground uppercase">
-                  {project["job number"]}
+      <div className="mx-auto w-full" style={{ maxWidth: 1600 }}>
+        {/* ── Z1: PROJECT HEADER ─────────────────────────────────── */}
+        <div className="px-8 sm:px-14 pt-9 pb-3">
+          <div className="flex items-start justify-between gap-6">
+            <div className="min-w-0">
+              {/* Job # + health badge */}
+              <div className="flex items-center gap-3 mb-2.5">
+                {project["job number"] && (
+                  <span className="text-xs font-mono tracking-widest text-muted-foreground uppercase">
+                    {project["job number"]}
+                  </span>
+                )}
+                <span
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
+                  style={{ color: healthColor, backgroundColor: `${healthColor}18` }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ backgroundColor: healthColor }} />
+                  {healthLabel}
                 </span>
-              )}
-              <span
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full"
-                style={{ color: healthColor, backgroundColor: `${healthColor}18` }}
-              >
-                <span className="h-1.5 w-1.5 rounded-full inline-block" style={{ backgroundColor: healthColor }} />
-                {healthLabel}
-              </span>
-            </div>
-
-            {/* Project name */}
-            <h1 className="text-[2rem] font-semibold text-foreground tracking-tight leading-none">
-              {project.name || "Untitled Project"}
-            </h1>
-
-            {/* Meta line */}
-            {(meta || project.client) && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {[meta, project.client].filter(Boolean).join(" · ")}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0 pt-1">
-            <ProjectChecklistSidebar
-              projectId={String(project.id)}
-              projectName={project.name || project["job number"] || "Project"}
-              buttonVariant="ghost"
-              buttonSize="sm"
-              buttonLabel="Setup"
-              className="h-8 px-3 text-muted-foreground"
-            />
-            <Button variant="outline" size="sm" asChild>
-              <Link href={`/${project.id}/setup`}>Edit Project</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Z2: VITAL SIGNS STRIP ─────────────────────────────── */}
-      <div className="px-8 sm:px-14 grid grid-cols-2 sm:grid-cols-4 border-b border-border/50">
-        <Vital
-          label="Budget Committed"
-          value={hasBudget ? `${committedPct.toFixed(0)}%` : "—"}
-          sub={hasBudget ? `${fmtCompact(committedCosts)} of ${fmtCompact(revisedBudget)}` : "No budget set"}
-          pct={committedPct}
-          tone={committedPct > 90 ? "red" : committedPct > 75 ? "amber" : hasBudget ? "green" : "neutral"}
-        />
-        <Vital
-          label="Schedule Complete"
-          value={scheduleStats ? `${scheduleStats.pct.toFixed(0)}%` : "—"}
-          sub={scheduleStats
-            ? scheduleStats.overdue > 0
-              ? `${scheduleStats.overdue} tasks overdue`
-              : `${scheduleStats.done}/${scheduleStats.total} tasks done`
-            : "No schedule data"}
-          pct={scheduleStats?.pct}
-          tone={!scheduleStats ? "neutral" : scheduleStats.overdue > 5 ? "red" : scheduleStats.overdue > 2 ? "amber" : "green"}
-        />
-        <Vital
-          label="Open Items"
-          value={String(openRfis.length + openCEs.length + pendingCOs.length)}
-          sub={`${openRfis.length} RFIs · ${openCEs.length} CEs · ${pendingCOs.length} COs`}
-          tone={openRfis.length + pendingCOs.length > 10 ? "amber" : "neutral"}
-        />
-        <Vital
-          label="Last Activity"
-          value={lastLogDaysAgo === null ? "—" : lastLogDaysAgo === 0 ? "Today" : `${lastLogDaysAgo}d ago`}
-          sub={dailyLogs.length > 0
-            ? `Daily log · ${format(new Date(String(dailyLogs[0].log_date || dailyLogs[0].created_at)), "MMM d")}`
-            : "No logs filed"}
-          tone={lastLogDaysAgo !== null && lastLogDaysAgo > 5 ? "amber" : "neutral"}
-        />
-      </div>
-
-      {/* ── Z3: FINANCIAL STORY + DECISION QUEUE ──────────────── */}
-      <div className="px-8 sm:px-14 py-10 border-b border-border/50 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-12">
-
-        {/* Left: Financial narrative */}
-        <div>
-          <div className="flex items-baseline gap-4 mb-6">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Financial Picture
-            </h2>
-            {project["est revenue"] != null && (
-              <span className="text-xs text-muted-foreground">
-                Est. Revenue: {fmtCompact(project["est revenue"])}
-              </span>
-            )}
-          </div>
-
-          {hasBudget ? (
-            <div className="space-y-6 max-w-xl">
-              {/* Ledger */}
-              <div className="space-y-2">
-                <LedgerRow label="Original Budget" value={fmt(originalBudget)} />
-                {approvedCOs !== 0 && (
-                  <LedgerRow
-                    label={approvedCOs > 0 ? "Approved Changes" : "Deductions"}
-                    value={`${approvedCOs > 0 ? "+" : ""}${fmtCompact(approvedCOs)}`}
-                    indent
-                  />
-                )}
-                {approvedCOs !== 0 && (
-                  <LedgerRow label="Revised Budget" value={fmt(revisedBudget)} divider />
-                )}
-                <LedgerRow label="Committed Costs" value={fmt(committedCosts)} />
-                {directCosts > 0 && <LedgerRow label="Direct Costs" value={fmt(directCosts)} indent />}
-                {pendingChanges > 0 && (
-                  <LedgerRow label="Pending Approvals" value={`+${fmtCompact(pendingChanges)}`} indent />
-                )}
-                <LedgerRow
-                  label="Est. Cost at Completion"
-                  value={fmtCompact(estimatedAtCompletion)}
-                  divider
-                />
-                <LedgerRow
-                  label="Budget Variance"
-                  value={projectedOverUnder === 0 ? "—" : (projectedOverUnder > 0 ? "+" : "") + fmtCompact(projectedOverUnder)}
-                  tone={projectedOverUnder < 0 ? "red" : projectedOverUnder > 0 ? "green" : "neutral"}
-                  divider
-                />
               </div>
 
-              {/* Visual stacked bar */}
-              <div>
-                <div className="flex h-2.5 rounded-full overflow-hidden gap-px bg-muted">
-                  <div
-                    className="h-full"
-                    style={{
-                      width: `${Math.min(committedPct, 100)}%`,
-                      backgroundColor: committedPct > 90 ? "#ef4444" : committedPct > 75 ? "#f59e0b" : "#3b82f6",
-                      borderRadius: pendingPct > 0 ? "9999px 0 0 9999px" : "9999px",
-                    }}
-                  />
-                  {pendingPct > 0 && (
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${Math.min(pendingPct, 100 - committedPct)}%`,
-                        backgroundColor: "#fbbf2440",
-                        borderLeft: "1px solid #f59e0b60",
-                      }}
-                    />
-                  )}
-                  {remainingPct > 0 && (
-                    <div
-                      className="h-full flex-1 rounded-r-full"
-                      style={{ backgroundColor: "transparent" }}
-                    />
-                  )}
-                </div>
+              {/* Project name */}
+              <h1 className="text-[2rem] font-semibold text-foreground tracking-tight leading-none">
+                {project.name || "Untitled Project"}
+              </h1>
 
-                {/* Legend */}
-                <div className="flex flex-wrap gap-x-5 gap-y-1 mt-2.5">
-                  {[
-                    { color: committedPct > 90 ? "#ef4444" : committedPct > 75 ? "#f59e0b" : "#3b82f6", label: `Committed ${committedPct.toFixed(0)}%` },
-                    ...(pendingPct > 0 ? [{ color: "#f59e0b60", label: `Pending ${pendingPct.toFixed(0)}%` }] : []),
-                    { color: "#e5e7eb", label: `Remaining ${remainingPct.toFixed(0)}%` },
-                  ].map(({ color, label }) => (
-                    <div key={label} className="flex items-center gap-1.5">
-                      <div className="h-2 w-2 rounded-full border border-border/50" style={{ backgroundColor: color }} />
-                      <span className="text-xs text-muted-foreground">{label}</span>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-shrink-0 pt-1">
+              <ProjectChecklistSidebar
+                projectId={String(project.id)}
+                projectName={project.name || project["job number"] || "Project"}
+                buttonVariant="ghost"
+                buttonSize="sm"
+                buttonLabel="Setup"
+                className="h-8 px-3 text-muted-foreground"
+              />
+              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                Edit Project
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-8 sm:px-14 pt-6 pb-10 border-b border-border/50">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-20 xl:gap-24">
+          <div className="space-y-10">
+
+          {/* ── FINANCIALS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Financials</h2>
+                <Link href={`/${project.id}/budget`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View Budget →</Link>
+              </div>
+              <div className="rounded-lg border border-border bg-card overflow-hidden">
+                <div className="grid grid-cols-2 sm:grid-cols-5">
+                  {(() => {
+                    const billedToDate = commitments.reduce((s, c) => s + (c.billed_to_date || 0), 0);
+                    const paidToDate = billedToDate * 0.87; // estimate
+                    const remaining = revisedBudget - committedCosts;
+                    const varianceAmount = projectedOverUnder;
+                    const variancePct = revisedBudget > 0 ? ((varianceAmount / revisedBudget) * 100).toFixed(1) : "0";
+                    const items = [
+                      { l: "Contract Value", v: fmt(revisedBudget), c: `Original ${fmt(originalBudget)}`, d: approvedCOs > 0 ? { v: `+${fmtCompact(approvedCOs)} COs`, p: true } : null },
+                      { l: "Committed", v: fmt(committedCosts), c: `${committedPct.toFixed(0)}% of contract` },
+                      { l: "Billed to Date", v: fmt(billedToDate), c: `${fmt(paidToDate)} collected` },
+                      { l: "Remaining", v: fmt(remaining), c: `${revisedBudget > 0 ? ((remaining / revisedBudget) * 100).toFixed(0) : 0}% unallocated` },
+                      { l: "Projected Variance", v: fmt(Math.abs(varianceAmount)), c: `${variancePct}% of contract`, d: { v: `${variancePct}%`, p: varianceAmount >= 0 } },
+                    ];
+                    return items.map((k) => (
+                      <div key={k.l} className={cn("py-4 px-5", k.l !== "Projected Variance" && "border-r border-border/50")}>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-1.5">{k.l}</div>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-xl font-semibold tracking-tight">{k.v}</span>
+                          {k.d && (
+                            <span className={cn(
+                              "inline-flex px-1.5 py-px rounded text-[11px] font-medium",
+                              k.d.p ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                            )}>
+                              {k.d.p ? "↑" : "↓"} {k.d.v}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground/60 mt-0.5">{k.c}</div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                {(() => {
+                  const billedToDate = commitments.reduce((s, c) => s + (c.billed_to_date || 0), 0);
+                  const paidToDate = billedToDate * 0.87;
+                  const paidPct = revisedBudget > 0 ? (paidToDate / revisedBudget) * 100 : 0;
+                  const unpaidPct = revisedBudget > 0 ? ((billedToDate - paidToDate) / revisedBudget) * 100 : 0;
+                  const billedPct = revisedBudget > 0 ? (billedToDate / revisedBudget) * 100 : 0;
+                  return (
+                    <div className="px-5 py-3 border-t border-border/50 bg-muted/30">
+                      <div className="flex justify-between mb-1.5 text-[11px] text-muted-foreground">
+                        <span>Billing Progress</span>
+                        <span>{billedPct.toFixed(0)}% billed</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden flex">
+                        <div className="rounded-l-full bg-green-600" style={{ width: `${paidPct}%` }} />
+                        <div className="bg-amber-500" style={{ width: `${unpaidPct}%` }} />
+                      </div>
+                      <div className="flex gap-4 mt-1.5 text-[10px] text-muted-foreground/60">
+                        {[
+                          { cls: "bg-green-600", label: "Paid", value: fmt(paidToDate) },
+                          { cls: "bg-amber-500", label: "Unpaid", value: fmt(billedToDate - paidToDate) },
+                          { cls: "bg-muted", label: "Unbilled", value: fmt(revisedBudget - billedToDate) },
+                        ].map((item) => (
+                          <span key={item.label} className="flex items-center gap-1">
+                            <span className={cn("w-2 h-2 rounded-sm inline-block", item.cls)} />
+                            {item.label} ({item.value})
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </div>
+            </section>
 
-              {/* Quick links */}
-              <div className="flex items-center gap-5 pt-1">
-                <Link href={`/${project.id}/budget`} className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1">
-                  Full budget <ArrowRight className="h-3 w-3" />
-                </Link>
-                <Link href={`/${project.id}/commitments`} className="text-xs text-muted-foreground hover:text-foreground">
-                  {commitments.length} commitment{commitments.length !== 1 ? "s" : ""}
-                </Link>
-                {contracts.length > 0 && (
-                  <Link href={`/${project.id}/prime-contracts`} className="text-xs text-muted-foreground hover:text-foreground">
-                    {contracts.length} contract{contracts.length !== 1 ? "s" : ""}
-                  </Link>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="py-6">
-              <p className="text-sm text-muted-foreground">No budget configured yet.</p>
-              <Link href={`/${project.id}/budget`} className="text-xs text-primary mt-2 inline-flex items-center gap-1 hover:text-primary/80">
-                Set up budget <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Decision queue */}
-        <div>
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mb-4">
-            Needs Attention
-            {queue.length > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] font-bold" style={{ backgroundColor: healthColor + "20", color: healthColor }}>
-                {queue.length}
-              </span>
-            )}
-          </h2>
-
-          {queue.length > 0 ? (
-            <div>
-              {queue.map((item) => (
-                <QueueItem
-                  key={item.id}
-                  severity={item.severity}
-                  title={item.title}
-                  meta={item.meta}
-                  href={item.href}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="py-10 text-center">
-              <div className="h-9 w-9 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
-                <CheckCircle2 className="h-4.5 w-4.5 text-green-500" />
-              </div>
-              <p className="text-sm font-medium text-foreground">All clear</p>
-              <p className="text-xs text-muted-foreground mt-1">No action items right now</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Z4: CONTEXT ROW ────────────────────────────────────── */}
-      <div className="px-8 sm:px-14 py-10 border-b border-border/50 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border/50">
-
-        {/* Schedule */}
-        <div className="md:pr-10 pb-8 md:pb-0">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Schedule</h2>
-            <Link href={`/${project.id}/schedule`} className="text-xs text-muted-foreground hover:text-foreground">View →</Link>
-          </div>
-
-          {scheduleStats ? (
-            <div className="space-y-4">
-              {/* Big number */}
-              <div className="flex items-end gap-1.5">
-                <span className="text-[3.5rem] font-semibold text-foreground tabular-nums leading-none">
-                  {scheduleStats.pct.toFixed(0)}
+          {/* ── TASKS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Tasks
+                </h2>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {openTasks.length} open
                 </span>
-                <div className="mb-1.5 space-y-0.5">
-                  <span className="text-xl text-muted-foreground">%</span>
-                  <p className="text-xs text-muted-foreground">complete</p>
+              </div>
+              <div className="max-w-2xl text-xs text-muted-foreground">
+                <span className="tabular-nums">{overdueOpenTasks.length} overdue</span>
+                <span className="mx-2 text-border">•</span>
+                <span className="tabular-nums">{dueSoonTasks.length} due 7 days</span>
+                <span className="mx-2 text-border">•</span>
+                <span className="tabular-nums">{unassignedOpenTasks.length} unassigned</span>
+              </div>
+              {priorityTasks.length > 0 ? (
+                <div className="max-w-2xl">
+                  {priorityTasks.map((task) => {
+                    const overdue = task.due_date && new Date(task.due_date) < new Date();
+                    const priority = (task.priority || "").toLowerCase();
+                    const showPriority = priority === "critical" || priority === "urgent" || priority === "high";
+                    return (
+                      <div key={task.id} className="flex items-start justify-between gap-4 py-2.5 border-b border-border/40 last:border-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground leading-snug line-clamp-1">{task.description}</p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
+                              {task.assignee_name || "Unassigned"}
+                            </span>
+                            {showPriority && (
+                              <>
+                                <span className="text-border">•</span>
+                                <span className={cn(
+                                  priority === "critical" || priority === "urgent" ? "text-red-600" : "text-amber-600",
+                                )}>
+                                  {priority === "urgent" ? "urgent" : priority}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0 pt-0.5">
+                            {task.due_date && (
+                              <span className={cn("text-xs tabular-nums", overdue ? "text-red-500" : "text-muted-foreground")}>
+                                {format(new Date(task.due_date), "MMM d")}
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {openTasks.length > priorityTasks.length && (
+                    <p className="text-xs text-muted-foreground/50 pt-1">+{openTasks.length - priorityTasks.length} more</p>
+                  )}
                 </div>
-              </div>
-
-              {/* Bar */}
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${scheduleStats.pct}%`, backgroundColor: scheduleBarColor }} />
-              </div>
-
-              {/* Stats */}
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">{scheduleStats.done} of {scheduleStats.total} tasks complete</p>
-                {scheduleStats.overdue > 0 && (
-                  <p className="text-xs font-medium" style={{ color: scheduleBarColor }}>
-                    {scheduleStats.overdue} overdue
-                  </p>
-                )}
-              </div>
-
-              {/* Next milestone */}
-              {scheduleStats.upcoming && (
-                <div className="pt-1 border-t border-border/40">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1">Next milestone</p>
-                  <p className="text-sm font-medium text-foreground line-clamp-1">
-                    {(scheduleStats.upcoming as any).title || (scheduleStats.upcoming as any).name}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {format(new Date((scheduleStats.upcoming as any).end_date || (scheduleStats.upcoming as any).due_date), "MMM d, yyyy")}
-                  </p>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">No open tasks right now.</p>
                 </div>
               )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No schedule.{" "}
-              <Link href={`/${project.id}/schedule`} className="text-primary hover:text-primary/80">Set up →</Link>
-            </p>
-          )}
-        </div>
+            </section>
 
-        {/* Meetings */}
-        <div className="md:px-10 pt-8 md:pt-0">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Recent Meetings</h2>
-            <Link href={`/${project.id}/meetings`} className="text-xs text-muted-foreground hover:text-foreground">View all →</Link>
+          {/* ── MEETINGS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Meetings</h2>
+                  <span className="text-xs text-muted-foreground/50">{meetings.length}</span>
+                </div>
+                <Link href={`/${project.id}/meetings`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
+              </div>
+              {meetings.length > 0 ? (
+                <div>
+                  {meetings.slice(0, 5).map((m) => {
+                    const meetingDate = m.date ? new Date(m.date) : m.created_at ? new Date(m.created_at) : null;
+                    const monthStr = meetingDate ? format(meetingDate, "MMM") : "";
+                    const dayStr = meetingDate ? format(meetingDate, "d") : "";
+                    return (
+                      <Link
+                        key={m.id}
+                        href={`/${project.id}/meetings`}
+                        className="group flex gap-4 py-3.5 border-b border-border/40 last:border-0 hover:bg-muted/30 -mx-2 px-2 rounded-md transition-colors"
+                      >
+                        <div className="w-11 flex-shrink-0 text-center pt-0.5">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{monthStr}</div>
+                          <div className="text-xl font-semibold tracking-tight leading-none">{dayStr}</div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1">
+                            {m.title || m.file_name || "Meeting"}
+                          </h3>
+                          {m.summary && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                              {m.summary}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {meetings.length > 5 && (
+                    <p className="text-xs text-muted-foreground/50 pt-1">+{meetings.length - 5} more</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No meetings recorded yet.</p>
+              )}
+            </section>
           </div>
 
-          {meetings.length > 0 ? (
-            <div className="space-y-5">
-              {meetings.slice(0, 4).map((m) => {
-                const d = m.date ? new Date(m.date) : m.created_at ? new Date(m.created_at) : null;
-                return (
-                  <div key={m.id}>
-                    {d && (
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-medium mb-0.5">
-                        {format(d, "MMM d")}
-                      </p>
-                    )}
-                    <Link
-                      href={`/${project.id}/meetings`}
-                      className="text-sm font-medium text-foreground hover:text-primary transition-colors line-clamp-1"
-                    >
-                      {m.title || m.file_name || "Meeting"}
+          <aside className="space-y-8">
+            <section className="space-y-4">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Quick Links
+              </h2>
+              <div className="grid grid-cols-1 gap-2">
+                <Link
+                  href={`/${project.id}/prime-contracts`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Prime Contracts
+                </Link>
+                <Link
+                  href={`/${project.id}/change-orders`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Change Orders
+                </Link>
+                <Link
+                  href={`/${project.id}/change-events`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Change Events
+                </Link>
+                <Link
+                  href={`/${project.id}/direct-costs`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Direct Costs
+                </Link>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Project Directory
+              </h2>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Project Team</p>
+                  <TeamRoles projectId={project.id} />
+                </div>
+
+                <div className="space-y-2 border-t border-border/40 pt-3">
+                  <p className="text-xs font-medium text-muted-foreground">Vendors</p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <Link href={`/${project.id}/directory/companies`} className="text-foreground hover:text-primary transition-colors">
+                      Companies
+                    </Link>
+                    <span className="text-border">•</span>
+                    <Link href={`/${project.id}/directory/contacts`} className="text-foreground hover:text-primary transition-colors">
+                      Contacts
                     </Link>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No meetings yet.</p>
-          )}
-        </div>
+                </div>
 
-        {/* Team */}
-        <div className="md:pl-10 pt-8 md:pt-0">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Project Team</h2>
-            <Link href={`/${project.id}/directory/users`} className="text-xs text-muted-foreground hover:text-foreground">Directory →</Link>
-          </div>
-          <TeamRoles projectId={project.id} />
-        </div>
-      </div>
-
-      {/* ── Z5: OPEN TASKS (if any) ────────────────────────────── */}
-      {openTasks.length > 0 && (
-        <div className="px-8 sm:px-14 py-10">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Open Tasks
-            </h2>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {tasks.filter((t) => ["done", "completed"].includes(t.status || "")).length}/{tasks.length} done
-            </span>
-          </div>
-          <div className="max-w-2xl space-y-0.5">
-            {openTasks.slice(0, 7).map((task) => {
-              const overdue = task.due_date && new Date(task.due_date) < new Date();
-              return (
-                <div key={task.id} className="flex items-start gap-3 py-2 group">
-                  <div
-                    className={cn(
-                      "h-4 w-4 rounded-full border-2 flex-shrink-0 mt-0.5",
-                      task.priority === "urgent" || task.priority === "critical"
-                        ? "border-red-400"
-                        : task.priority === "high"
-                        ? "border-amber-400"
-                        : "border-border",
-                    )}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-foreground leading-snug line-clamp-1">{task.description}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {task.assignee_name && (
-                        <span className="text-xs text-muted-foreground">{task.assignee_name}</span>
-                      )}
-                      {task.due_date && (
-                        <span className={cn("text-xs tabular-nums", overdue ? "text-red-500" : "text-muted-foreground")}>
-                          {format(new Date(task.due_date), "MMM d")}
-                        </span>
-                      )}
-                    </div>
+                <div className="space-y-2 border-t border-border/40 pt-3">
+                  <p className="text-xs font-medium text-muted-foreground">Project Members</p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <Link href={`/${project.id}/directory/users`} className="text-foreground hover:text-primary transition-colors">
+                      Users
+                    </Link>
+                    <span className="text-border">•</span>
+                    <Link href={`/${project.id}/directory/groups`} className="text-foreground hover:text-primary transition-colors">
+                      Groups
+                    </Link>
                   </div>
                 </div>
-              );
-            })}
-            {openTasks.length > 7 && (
-              <p className="text-xs text-muted-foreground/50 pt-1">+{openTasks.length - 7} more</p>
-            )}
-          </div>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Recent Activity
+                </h2>
+                <Link href={`/${project.id}/updates`} className="text-xs text-muted-foreground hover:text-foreground">
+                  View all →
+                </Link>
+              </div>
+              {recentActivity.length > 0 ? (
+                <div>
+                  {recentActivity.slice(0, 6).map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className="group flex items-start justify-between gap-3 py-3 border-b border-border/40 last:border-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{item.meta}</p>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 flex-shrink-0 pt-0.5">
+                        {format(item.date, "MMM d")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No recent activity yet.</p>
+              )}
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Needs Attention
+                {queue.length > 0 && (
+                  <span
+                    className="ml-2 inline-flex items-center justify-center h-4 w-4 rounded-full text-[10px] font-bold"
+                    style={{ backgroundColor: healthColor + "20", color: healthColor }}
+                  >
+                    {queue.length}
+                  </span>
+                )}
+              </h2>
+              {queue.length > 0 ? (
+                <div>
+                  {queue.map((item) => (
+                    <QueueItem
+                      key={item.id}
+                      severity={item.severity}
+                      title={item.title}
+                      meta={item.meta}
+                      href={item.href}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-4">
+                  <p className="text-sm font-medium text-foreground">All clear</p>
+                  <p className="text-xs text-muted-foreground mt-1">No action items right now</p>
+                </div>
+              )}
+            </section>
+          </aside>
         </div>
-      )}
+      </div>
+      </div>
 
       {/* ── AI WIDGET ─────────────────────────────────────────── */}
       <button
@@ -992,6 +998,8 @@ export function ProjectHomeRedesign({
           <AiPanel projectId={project.id} onClose={() => setAiOpen(false)} />
         </div>
       )}
+
+      <EditProjectSidebar project={project} open={editOpen} onOpenChange={setEditOpen} />
     </div>
   );
 }

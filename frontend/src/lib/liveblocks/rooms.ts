@@ -21,6 +21,8 @@ export type CommentableEntityType =
   | "drawing"
   | "specification"
   | "schedule-task"
+  | "schedule"
+  | "budget"
   | "budget-line"
   | "commitment"
   | "direct-cost"

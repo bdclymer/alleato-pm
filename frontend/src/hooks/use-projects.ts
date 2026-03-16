@@ -8,7 +8,7 @@ export interface Project {
   name: string | null;
   project_number: string | null;
   client: string | null;
-  client_id: number | null;
+  client_id: string | null;
   phase: string | null;
   state: string | null;
   address: string | null;
@@ -42,7 +42,7 @@ interface UseProjectsOptions {
   // Whether to include archived projects
   includeArchived?: boolean;
   // Filter by client ID
-  clientId?: number;
+  clientId?: string;
   // Limit number of results
   limit?: number;
   // Whether to auto-fetch on mount

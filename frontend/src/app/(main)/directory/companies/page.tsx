@@ -400,16 +400,19 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isClientsRoute =
+    pathname === "/directory/clients" || pathname.endsWith("/directory/clients");
+  const forcedCompanyType = isClientsRoute ? "client" : undefined;
 
   const initialStatus = searchParams.get("status") ?? "";
-  const initialCompanyType = searchParams.get("company_type") ?? "";
+  const initialCompanyType = forcedCompanyType ?? searchParams.get("company_type") ?? "";
   const initialFilters: CompanyFilterState = {
     status: initialStatus || undefined,
     company_type: initialCompanyType || undefined,
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: "global-directory-companies",
+    entityKey: isClientsRoute ? "global-directory-clients" : "global-directory-companies",
     searchParams,
     pathname,
     router,
@@ -428,7 +431,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
-    const nextCompanyType = searchParams.get("company_type") ?? "";
+    const nextCompanyType = forcedCompanyType ?? searchParams.get("company_type") ?? "";
     tableState.setActiveFilters((prev) => {
       const normalizedStatus = nextStatus || undefined;
       const normalizedType = nextCompanyType || undefined;
@@ -440,7 +443,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         company_type: normalizedType,
       };
     });
-  }, [searchParams, tableState.setActiveFilters]);
+  }, [forcedCompanyType, searchParams, tableState.setActiveFilters]);
 
   const activeFilters = tableState.activeFilters as CompanyFilterState;
   const statusFilter =
@@ -448,7 +451,8 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       ? (activeFilters.status as "ACTIVE" | "INACTIVE" | "all")
       : "all";
   const companyTypeFilter =
-    typeof activeFilters.company_type === "string" ? activeFilters.company_type : undefined;
+    forcedCompanyType ??
+    (typeof activeFilters.company_type === "string" ? activeFilters.company_type : undefined);
 
   const [isSyncing, setIsSyncing] = React.useState(false);
 
@@ -490,26 +494,31 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     }));
   }, [companies]);
 
-  const filters: FilterConfig[] = React.useMemo(
-    () => [
-      {
-        id: "status",
-        label: "Status",
-        type: "select",
-        options: [
-          { value: "ACTIVE", label: "Active" },
-          { value: "INACTIVE", label: "Inactive" },
-        ],
-      },
+  const filters: FilterConfig[] = React.useMemo(() => {
+    const statusFilterConfig: FilterConfig = {
+      id: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { value: "ACTIVE", label: "Active" },
+        { value: "INACTIVE", label: "Inactive" },
+      ],
+    };
+
+    if (forcedCompanyType) {
+      return [statusFilterConfig];
+    }
+
+    return [
+      statusFilterConfig,
       {
         id: "company_type",
         label: "Type",
         type: "select",
         options: companyTypeOptions,
       },
-    ],
-    [companyTypeOptions],
-  );
+    ];
+  }, [companyTypeOptions, forcedCompanyType]);
 
   const tableColumns = React.useMemo(() => buildCompanyTableColumns(), []);
   const selectedCompanyId = searchParams.get("detail");
@@ -543,10 +552,18 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   );
 
   const handleFilterChange = (nextFilters: CompanyFilterState) => {
-    tableState.setActiveFilters(nextFilters);
+    const mergedFilters: CompanyFilterState = forcedCompanyType
+      ? {
+          ...nextFilters,
+          company_type: forcedCompanyType,
+        }
+      : nextFilters;
+
+    tableState.setActiveFilters(mergedFilters);
     tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
-      company_type: typeof nextFilters.company_type === "string" ? nextFilters.company_type : null,
+      status: typeof mergedFilters.status === "string" ? mergedFilters.status : null,
+      company_type:
+        typeof mergedFilters.company_type === "string" ? mergedFilters.company_type : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -610,12 +627,12 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.status) ||
-    Boolean(activeFilters.company_type);
+    Boolean(activeFilters.company_type && activeFilters.company_type !== forcedCompanyType);
 
   return (
     <UnifiedTablePage
       header={{
-        title: "Companies",
+        title: isClientsRoute ? "Clients" : "Companies",
         description:
           "Manage companies, clients, contacts, users, and employees across your organization",
         actions: (
@@ -661,7 +678,11 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         filters,
         activeFilters,
         onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        onClearFilters: () =>
+          handleFilterChange({
+            ...EMPTY_FILTERS,
+            ...(forcedCompanyType ? { company_type: forcedCompanyType } : {}),
+          }),
         columns: companyColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
@@ -730,8 +751,10 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         onSelectRow: handleSelectRow,
       }}
       emptyState={{
-        title: "No companies found",
-        description: "No companies are available yet.",
+        title: isClientsRoute ? "No clients found" : "No companies found",
+        description: isClientsRoute
+          ? "No clients are available yet."
+          : "No companies are available yet.",
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
       }}

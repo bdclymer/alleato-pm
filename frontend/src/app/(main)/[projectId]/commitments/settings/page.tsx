@@ -1,5 +1,5 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -115,7 +115,7 @@ export default function CommitmentSettingsPage() {
   };
 
   return (
-    <>
+    <PageContainer className="space-y-6">
       <ProjectPageHeader
         title="Commitment Settings"
         breadcrumbs={[
@@ -148,7 +148,7 @@ export default function CommitmentSettingsPage() {
         }
       />
 
-      <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="max-w-3xl space-y-6">
         <Tabs defaultValue="general">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general">General</TabsTrigger>
@@ -419,6 +419,6 @@ export default function CommitmentSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </PageContainer>
   );
 }

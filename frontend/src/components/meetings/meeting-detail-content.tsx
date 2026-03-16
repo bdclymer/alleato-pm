@@ -233,13 +233,8 @@ export function MeetingDetailContent({
     parsedSections?.bulletGist?.trim() ||
     meeting.summary ||
     undefined;
-  const firefliesHighlights: Array<{ label: string; content: string | null }> = [
-    { label: "Topics Discussed", content: parsedSections?.topicsDiscussed || null },
-    { label: "Notes", content: parsedSections?.notes || null },
-    { label: "Meeting Type", content: parsedSections?.meetingType || null },
-    { label: "Transcript Chapters", content: parsedSections?.transcriptChapters || null },
-    { label: "Action Items", content: parsedSections?.actionItems || null },
-  ].filter((section) => Boolean(section.content?.trim()));
+  const notesContent = parsedSections?.notes?.trim() || null;
+  const actionItemsContent = parsedSections?.actionItems?.trim() || null;
   const shorthandBullet = parsedSections?.shorthandBullet?.trim() || null;
   const hasActionItems =
     allRisks.length > 0 ||
@@ -324,20 +319,20 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Curated Fireflies Insights */}
-          {firefliesHighlights.length > 0 ? (
+          {/* Notes */}
+          {notesContent ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Fireflies Key Insights" defaultOpen={false}>
-                <div className="space-y-5">
-                  {firefliesHighlights.map((section) => (
-                    <div key={section.label} className="space-y-1.5">
-                      <h3 className="text-sm font-medium text-foreground">
-                        {section.label}
-                      </h3>
-                      <FirefliesSectionContent value={section.content || ""} />
-                    </div>
-                  ))}
-                </div>
+              <AccordionSection label="Notes">
+                <FirefliesSectionContent value={notesContent} />
+              </AccordionSection>
+            </section>
+          ) : null}
+
+          {/* Action Items */}
+          {actionItemsContent ? (
+            <section className="border-t border-border pt-6">
+              <AccordionSection label="Action Items">
+                <FirefliesSectionContent value={actionItemsContent} />
               </AccordionSection>
             </section>
           ) : null}

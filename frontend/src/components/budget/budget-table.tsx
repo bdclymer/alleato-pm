@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
+import { CellCommentIndicator } from "@/components/comments/cell-comment-indicator";
 
 type ColumnTooltip = {
   title: string;
@@ -955,26 +956,49 @@ export function BudgetTable({
                         row.getIsSelected() && "bg-primary/5",
                       )}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                        className={cn(
-                          "py-2 text-sm",
-                          cell.column.id === "select"
-                              ? "pl-1 pr-0.5"
-                              : cell.column.id === "expander"
-                                ? "px-0.5"
-                                : "px-1.5",
-                            row.depth > 0 && "text-foreground",
-                            getWidthClass(cell.column.id),
-                          )}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const isDataColumn =
+                          cell.column.id !== "select" &&
+                          cell.column.id !== "expander" &&
+                          cell.column.id !== "description";
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              "py-2 text-sm",
+                              cell.column.id === "select"
+                                ? "pl-1 pr-0.5"
+                                : cell.column.id === "expander"
+                                  ? "px-0.5"
+                                  : "px-1.5",
+                              row.depth > 0 && "text-foreground",
+                              getWidthClass(cell.column.id),
+                              isDataColumn && "group/cell",
+                            )}
+                          >
+                            {isDataColumn ? (
+                              <div className="flex items-center gap-0.5">
+                                <div className="flex-1 min-w-0">
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </div>
+                                <CellCommentIndicator
+                                  rowId={row.original.id}
+                                  columnId={cell.column.id}
+                                />
+                              </div>
+                            ) : (
+                              flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   );
                 })}

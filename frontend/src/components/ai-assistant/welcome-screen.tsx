@@ -6,33 +6,61 @@ import {
   TrendingUpIcon,
   UsersIcon,
   AlertTriangleIcon,
+  FileTextIcon,
+  HardHatIcon,
+  ClipboardListIcon,
+  MessagesSquareIcon,
 } from "lucide-react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 const SUGGESTIONS = [
   {
-    prompt: "What needs my attention this week?",
-    title: "Weekly Focus",
-    description: "Deadlines, action items, and urgent tasks across projects",
+    prompt: "What needs my attention right now across all projects?",
+    title: "Morning Briefing",
+    description: "Overdue items, urgent decisions, and what's at risk today",
     icon: CalendarCheckIcon,
   },
   {
-    prompt: "Analyze our financial position",
-    title: "Financial Analysis",
-    description: "Budgets, contracts, and cash flow across your portfolio",
+    prompt: "How are we tracking financially across the portfolio? Flag anything that concerns you.",
+    title: "Financial Health",
+    description: "Contract values, change order exposure, and collection status",
     icon: TrendingUpIcon,
   },
   {
-    prompt: "Prepare me for the next OAC meeting",
-    title: "Meeting Prep",
-    description: "Talking points, updates, and action items for your next OAC",
-    icon: UsersIcon,
+    prompt: "Which projects are at risk and why? Be direct.",
+    title: "Risk Scan",
+    description: "Projects with overruns, delays, open RFIs, or stalled action items",
+    icon: AlertTriangleIcon,
   },
   {
-    prompt: "Which projects are at risk?",
-    title: "Risk Review",
-    description: "Identify projects with overruns, delays, or missing data",
-    icon: AlertTriangleIcon,
+    prompt: "Who are the subcontractors on our active projects and what's their contract exposure?",
+    title: "Vendor Overview",
+    description: "Subcontractors, committed values, and contract status",
+    icon: HardHatIcon,
+  },
+  {
+    prompt: "What were the key decisions and action items from recent meetings?",
+    title: "Meeting Recap",
+    description: "Decisions made, commitments given, and what's still open",
+    icon: MessagesSquareIcon,
+  },
+  {
+    prompt: "What change orders are pending approval across our projects?",
+    title: "Pending COs",
+    description: "Unapproved change orders and their financial exposure",
+    icon: FileTextIcon,
+  },
+  {
+    prompt: "Who is behind on their action items? Which commitments from meetings haven't moved?",
+    title: "Accountability",
+    description: "Stalled action items and overdue owner commitments by person",
+    icon: ClipboardListIcon,
+  },
+  {
+    prompt: "Prepare me for our next OAC — what do I need to know and what should I raise?",
+    title: "OAC Prep",
+    description: "Status, open issues, and talking points for the owner meeting",
+    icon: UsersIcon,
   },
 ];
 
@@ -56,7 +84,7 @@ export function WelcomeScreen({
         <div className="mt-5 w-full max-w-2xl">{children}</div>
       )}
 
-      {/* Suggestion cards — icon + title + description */}
+      {/* Suggestion cards — 4 columns, 2 rows */}
       <div className="mt-4 grid w-full max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4">
         {SUGGESTIONS.map((s) => (
           <button

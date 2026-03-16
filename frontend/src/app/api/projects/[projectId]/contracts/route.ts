@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         `
         *,
         vendor:vendors(id, name),
-        client:clients(id, name)
+        client:companies!prime_contracts_client_company_id_fkey(id, name)
       `,
       )
       .eq("project_id", parseInt(projectId, 10))

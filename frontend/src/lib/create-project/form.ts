@@ -353,6 +353,13 @@ export const formSections: FormSection[] = [
         allowEmptyOption: true,
       },
       {
+        name: "project_type",
+        label: "Type",
+        control: "select",
+        options: PROJECT_TYPE_OPTIONS.map((value) => ({ value, label: value })),
+        allowEmptyOption: true,
+      },
+      {
         name: "description",
         label: "Description",
         control: "textarea",
@@ -363,28 +370,24 @@ export const formSections: FormSection[] = [
   {
     id: "logo",
     title: "Logo",
-    description: "Optional media shown on the project home page.",
     fields: [
       {
         name: "project_logo",
         label: "Project Logo",
         control: "file",
         accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
-        description: "Square image recommended",
       },
       {
         name: "project_photo",
         label: "Project Photo",
         control: "file",
         accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
-        description: "Landscape image recommended",
       },
     ],
   },
   {
     id: "project-metrics",
     title: "Project Metrics",
-    description: "Financial and classification details for reporting.",
     fields: [
       {
         name: "square_footage",
@@ -398,48 +401,11 @@ export const formSections: FormSection[] = [
         control: "currency",
         placeholder: "$0.00",
       },
-      {
-        name: "project_code",
-        label: "Code",
-        control: "text",
-      },
-      {
-        name: "project_type",
-        label: "Type",
-        control: "select",
-        options: PROJECT_TYPE_OPTIONS.map((value) => ({ value, label: value })),
-        allowEmptyOption: true,
-      },
-    ],
-  },
-  {
-    id: "project-status",
-    title: "Project Status",
-    fields: [
-      {
-        name: "active",
-        label: "Active",
-        control: "checkbox",
-        description: "Show this project across the company.",
-      },
-      {
-        name: "erp_sync",
-        label: "ERP Sync",
-        control: "checkbox",
-        description: "Enable ERP sync flag.",
-      },
-      {
-        name: "test_project",
-        label: "Test Project",
-        control: "checkbox",
-        description: "Mark project as test/sandbox.",
-      },
     ],
   },
   {
     id: "project-location",
     title: "Project Location",
-    description: "Used for maps, reporting, and directory syncing.",
     fields: [
       {
         name: "office",
@@ -478,40 +444,8 @@ export const formSections: FormSection[] = [
     ],
   },
   {
-    id: "timezone",
-    title: "Timezone",
-    fields: [
-      {
-        name: "timezone",
-        label: "Timezone",
-        control: "select",
-        options: TIMEZONE_OPTIONS,
-      },
-      {
-        name: "region",
-        label: "Region",
-        control: "select",
-        options: REGION_OPTIONS,
-        allowEmptyOption: true,
-      },
-    ],
-  },
-  {
-    id: "contact",
-    title: "Contact",
-    fields: [
-      {
-        name: "phone",
-        label: "Phone",
-        control: "text",
-        inputType: "tel",
-      },
-    ],
-  },
-  {
     id: "dates",
     title: "Dates",
-    description: "Required milestone dates (mm/dd/yyyy).",
     fields: [
       {
         name: "start_date",
@@ -522,6 +456,30 @@ export const formSections: FormSection[] = [
         name: "completion_date",
         label: "Completion Date",
         control: "date",
+      },
+    ],
+  },
+  {
+    id: "project-status",
+    title: "Project Status",
+    fields: [
+      {
+        name: "active",
+        label: "Active",
+        control: "checkbox",
+        description: "Show this project across the company.",
+      },
+      {
+        name: "erp_sync",
+        label: "ERP Sync",
+        control: "checkbox",
+        description: "Enable ERP sync flag.",
+      },
+      {
+        name: "test_project",
+        label: "Test Project",
+        control: "checkbox",
+        description: "Mark project as test/sandbox.",
       },
     ],
   },
@@ -548,9 +506,6 @@ export const defaultValues: DefaultValues<CreateProjectFormValues> = {
   city: "",
   state: undefined,
   postal_code: "",
-  timezone: "America/New_York",
-  phone: "",
-  region: undefined,
   office: "Alleato Group Indianapolis",
   start_date: "",
   completion_date: "",

@@ -1855,3 +1855,17 @@
     & > *:last-child { margin-bottom: 0; }
   }
 }
+
+/* ── Hide Safari autofill buttons in Liveblocks composer ────────────────── */
+.lb-composer [contenteditable]::-webkit-contacts-auto-fill-button,
+.lb-composer [contenteditable]::-webkit-credentials-auto-fill-button,
+.lb-thread [contenteditable]::-webkit-contacts-auto-fill-button,
+.lb-thread [contenteditable]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+}

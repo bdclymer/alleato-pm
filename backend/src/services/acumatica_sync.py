@@ -81,6 +81,13 @@ def _num(value: Any) -> Optional[float]:
         return None
 
 
+def _int(value: Any) -> Optional[int]:
+    parsed = _num(value)
+    if parsed is None:
+        return None
+    return int(parsed)
+
+
 def _now_iso() -> str:
     return datetime.utcnow().isoformat() + "Z"
 
@@ -96,6 +103,60 @@ def _normalize_cost_code(value: Optional[str]) -> Optional[str]:
     if len(cleaned) == 6 and cleaned.isdigit():
         return f"{cleaned[:2]}-{cleaned[2:]}"
     return cleaned
+
+
+def _first_text(record: Dict[str, Any], keys: Sequence[str]) -> Optional[str]:
+    for key in keys:
+        value = record.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return None
+
+
+def _project_code_aliases(value: Optional[str]) -> List[str]:
+    if value is None:
+        return []
+    raw = str(value).strip()
+    if not raw:
+        return []
+
+    aliases = {raw}
+    compact = "".join(ch for ch in raw if ch.isalnum())
+    if compact:
+        aliases.add(compact)
+
+        # Normalize common job-number shape: 25126 <-> 25-126
+        if compact.isdigit() and len(compact) >= 4:
+            aliases.add(f"{compact[:2]}-{compact[2:]}")
+
+    return [alias for alias in aliases if alias]
+
+
+def _format_job_number(value: Optional[str]) -> Optional[str]:
+    aliases = _project_code_aliases(value)
+    if not aliases:
+        return None
+    compact = next((alias for alias in aliases if alias.isdigit() and "-" not in alias), None)
+    if compact and len(compact) >= 4:
+        return f"{compact[:2]}-{compact[2:]}"
+    return aliases[0]
+
+
+def _subcontract_project_code(record: Dict[str, Any]) -> Optional[str]:
+    # In many Acumatica tenants, Subcontract project is stored on detail lines.
+    header_project = _first_text(record, ("Project", "ProjectID", "ProjectCD"))
+    if header_project:
+        return header_project
+
+    details = record.get("Details") or []
+    if isinstance(details, list):
+        for detail in details:
+            if not isinstance(detail, dict):
+                continue
+            project = _first_text(detail, ("Project", "ProjectID", "ProjectCD"))
+            if project:
+                return project
+    return None
 
 
 class AcumaticaSession:
@@ -186,9 +247,15 @@ class AcumaticaFinancialSyncService:
         errors: List[str] = []
 
         for entity, handler in (
+            ("projects", self._sync_projects),
             ("vendors", self._sync_vendors),
+            ("change_orders", self._sync_change_orders),
+            ("subcontracts", self._sync_subcontracts),
+            ("purchase_orders", self._sync_purchase_orders),
             ("ap_bills", self._sync_ap_bills),
+            ("commitments_projection", self._sync_commitments_projection),
             ("ar_invoices", self._sync_ar_invoices),
+            ("ar_payments", self._sync_payments),
             ("ap_checks", self._sync_checks),
             ("project_budgets", self._sync_project_budgets),
         ):
@@ -271,13 +338,95 @@ class AcumaticaFinancialSyncService:
         self.supabase.table("acumatica_sync_state").upsert(payload).execute()
 
     def _load_project_map(self) -> Dict[str, Dict[str, Any]]:
-        response = self.supabase.table("projects").select("id, company_id, acumatica_project_id").execute()
+        response = self.supabase.table("projects").select("*").execute()
         project_map: Dict[str, Dict[str, Any]] = {}
         for row in response.data or []:
-            code = row.get("acumatica_project_id")
-            if code:
-                project_map[code] = row
+            for source in (
+                row.get("acumatica_project_id"),
+                row.get("project_number"),
+                row.get("job number"),
+                row.get("name_code"),
+            ):
+                for alias in _project_code_aliases(source):
+                    if alias not in project_map:
+                        project_map[alias] = row
         return project_map
+
+    def _resolve_project_row(self, project_code: Optional[str]) -> Optional[Dict[str, Any]]:
+        if not project_code:
+            return None
+        for alias in _project_code_aliases(project_code):
+            row = self.project_map.get(alias)
+            if row:
+                return row
+        return None
+
+    def _sync_projects(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        result = EntitySyncResult(entity="projects")
+        records = self.session.fetch_entity("Project", top=200, modified_after=last_cursor)
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        default_company_id = next(
+            (row.get("company_id") for row in self.project_map.values() if row.get("company_id")),
+            None,
+        )
+
+        created = 0
+        updated = 0
+        skipped = 0
+
+        for project in records:
+            project_code = _first_text(project, ("ProjectID", "Project", "ProjectCD"))
+            if not project_code:
+                skipped += 1
+                continue
+
+            formatted_job_number = _format_job_number(project_code)
+            project_name = project.get("Description") or project.get("ProjectName") or f"Project {project_code}"
+            project_row = self._resolve_project_row(project_code)
+
+            if project_row:
+                payload: Dict[str, Any] = {
+                    "acumatica_project_id": project_code,
+                    "erp_system": "acumatica",
+                    "erp_sync_status": "synced",
+                }
+
+                if formatted_job_number and not project_row.get("job number"):
+                    payload["job number"] = formatted_job_number
+                if formatted_job_number and not project_row.get("project_number"):
+                    payload["project_number"] = formatted_job_number
+                if project_name and not project_row.get("name"):
+                    payload["name"] = project_name
+
+                self.supabase.table("projects").update(payload).eq("id", project_row["id"]).execute()
+                updated += 1
+                continue
+
+            if not default_company_id:
+                skipped += 1
+                continue
+
+            insert_payload = {
+                "name": project_name,
+                "job number": formatted_job_number,
+                "project_number": formatted_job_number,
+                "acumatica_project_id": project_code,
+                "company_id": default_company_id,
+                "erp_system": "acumatica",
+                "erp_sync_status": "synced",
+            }
+            self.supabase.table("projects").insert(insert_payload).execute()
+            created += 1
+
+        result.upserted = created + updated
+        result.skipped = skipped
+        self.project_map = self._load_project_map()
+        return result
 
     def _load_vendor_map(self) -> Dict[str, Dict[str, Any]]:
         response = self.supabase.table("vendors").select("id, name, company_id, acumatica_vendor_id").execute()
@@ -466,7 +615,7 @@ class AcumaticaFinancialSyncService:
                 (detail.get("Project") for detail in bill.get("Details") or [] if detail.get("Project")),
                 None,
             )
-            project_row = self.project_map.get(project_code) if project_code else None
+            project_row = self._resolve_project_row(project_code)
             vendor_row = self.vendor_map.get(bill.get("Vendor")) if bill.get("Vendor") else None
             external_key = f"{bill.get('Type') or 'Bill'}|{bill.get('ReferenceNbr')}"
 
@@ -695,7 +844,7 @@ class AcumaticaFinancialSyncService:
                 (detail.get("ProjectID") for detail in invoice.get("Details") or [] if detail.get("ProjectID")),
                 None,
             )
-            project_row = self.project_map.get(project_code) if project_code else None
+            project_row = self._resolve_project_row(project_code)
             headers.append(
                 {
                     "reference_nbr": invoice.get("ReferenceNbr"),
@@ -804,6 +953,505 @@ class AcumaticaFinancialSyncService:
         result.upserted = len(rows)
         return result
 
+    def _sync_change_orders(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        result = EntitySyncResult(entity="change_orders")
+        records = self.session.fetch_entity("ChangeOrder", top=100, modified_after=last_cursor)
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for change_order in records:
+            reference_nbr = change_order.get("RefNbr")
+            if not reference_nbr:
+                result.skipped += 1
+                continue
+
+            project_code = _first_text(change_order, ("ProjectID", "Project", "ProjectCD"))
+            project_row = self._resolve_project_row(project_code)
+
+            rows.append(
+                {
+                    "external_key": f"ChangeOrder|{reference_nbr}",
+                    "reference_nbr": reference_nbr,
+                    "project_code": project_code,
+                    "project_id": project_row.get("id") if project_row else None,
+                    "company_id": project_row.get("company_id") if project_row else None,
+                    "customer_id": change_order.get("Customer"),
+                    "class": change_order.get("Class"),
+                    "status": change_order.get("Status"),
+                    "reverse_status": change_order.get("ReverseStatus"),
+                    "revenue_change_nbr": change_order.get("RevenueChangeNbr"),
+                    "description": change_order.get("Description"),
+                    "detailed_description": change_order.get("DetailedDescription"),
+                    "external_ref_nbr": change_order.get("ExternalRefNbr"),
+                    "original_co_ref_nbr": change_order.get("OriginalCORefNbr"),
+                    "change_date": _iso_to_date(change_order.get("ChangeDate")),
+                    "completion_date": _iso_to_date(change_order.get("CompletionDate")),
+                    "hold": change_order.get("Hold"),
+                    "contract_time_change_days": _int(change_order.get("ContractTimeChangeDays")),
+                    "commitments_change_total": _num(change_order.get("CommitmentsChangeTotal")),
+                    "cost_budget_change_total": _num(change_order.get("CostBudgetChangeTotal")),
+                    "revenue_budget_change_total": _num(change_order.get("RevenueBudgetChangeTotal")),
+                    "gross_margin": _num(change_order.get("GrossMargin")),
+                    "gross_margin_amount": _num(change_order.get("GrossMarginAmount")),
+                    "last_modified_at": _iso_timestamp(change_order.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "raw_payload": change_order,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_change_orders").upsert(list(chunk), on_conflict="external_key").execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _sync_subcontracts(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        result = EntitySyncResult(entity="subcontracts")
+        records = self.session.fetch_entity("Subcontract", top=100, expand="Details", modified_after=last_cursor)
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for subcontract in records:
+            subcontract_nbr = subcontract.get("SubcontractNbr")
+            if not subcontract_nbr:
+                result.skipped += 1
+                continue
+
+            project_code = _subcontract_project_code(subcontract)
+            project_row = self._resolve_project_row(project_code)
+            vendor_acumatica_id = subcontract.get("VendorID")
+            vendor_row = self.vendor_map.get(vendor_acumatica_id) if vendor_acumatica_id else None
+
+            rows.append(
+                {
+                    "external_key": f"Subcontract|{subcontract_nbr}",
+                    "subcontract_nbr": subcontract_nbr,
+                    "project_code": project_code,
+                    "project_id": project_row.get("id") if project_row else None,
+                    "company_id": project_row.get("company_id") if project_row else None,
+                    "vendor_id": vendor_acumatica_id,
+                    "vendor_acumatica_id": vendor_acumatica_id,
+                    "vendor_uuid": vendor_row.get("id") if vendor_row else None,
+                    "vendor_ref": subcontract.get("VendorRef"),
+                    "owner": subcontract.get("Owner"),
+                    "status": subcontract.get("Status"),
+                    "description": subcontract.get("Description"),
+                    "terms": subcontract.get("Terms"),
+                    "date": _iso_to_date(subcontract.get("Date")),
+                    "start_date": _iso_to_date(subcontract.get("StartDate")),
+                    "currency_id": subcontract.get("CurrencyID"),
+                    "apply_retainage": subcontract.get("ApplyRetainage"),
+                    "retainage_pct": _num(subcontract.get("RetainagePct")),
+                    "retainage_total": _num(subcontract.get("RetainageTotal")),
+                    "control_total": _num(subcontract.get("ControlTotal")),
+                    "line_total": _num(subcontract.get("LineTotal")),
+                    "discount_total": _num(subcontract.get("DiscountTotal")),
+                    "tax_total": _num(subcontract.get("TaxTotal")),
+                    "subcontract_total": _num(subcontract.get("SubcontractTotal")),
+                    "last_modified_at": _iso_timestamp(subcontract.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "raw_payload": subcontract,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_subcontracts").upsert(list(chunk), on_conflict="external_key").execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _sync_purchase_orders(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        result = EntitySyncResult(entity="purchase_orders")
+        records = self.session.fetch_entity("PurchaseOrder", top=100, modified_after=last_cursor)
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for purchase_order in records:
+            order_nbr = purchase_order.get("OrderNbr")
+            if not order_nbr:
+                result.skipped += 1
+                continue
+
+            project_code = _first_text(purchase_order, ("Project", "ProjectID", "ProjectCD"))
+            project_row = self._resolve_project_row(project_code)
+            vendor_acumatica_id = purchase_order.get("VendorID")
+            vendor_row = self.vendor_map.get(vendor_acumatica_id) if vendor_acumatica_id else None
+
+            rows.append(
+                {
+                    "external_key": f"{purchase_order.get('Type') or 'PurchaseOrder'}|{order_nbr}",
+                    "order_nbr": order_nbr,
+                    "order_type": purchase_order.get("Type"),
+                    "project_code": project_code,
+                    "project_id": project_row.get("id") if project_row else None,
+                    "company_id": project_row.get("company_id") if project_row else None,
+                    "vendor_id": vendor_acumatica_id,
+                    "vendor_acumatica_id": vendor_acumatica_id,
+                    "vendor_uuid": vendor_row.get("id") if vendor_row else None,
+                    "vendor_ref": purchase_order.get("VendorRef"),
+                    "status": purchase_order.get("Status"),
+                    "description": purchase_order.get("Description"),
+                    "terms": purchase_order.get("Terms"),
+                    "date": _iso_to_date(purchase_order.get("Date")),
+                    "promised_on": _iso_to_date(purchase_order.get("PromisedOn")),
+                    "currency_id": purchase_order.get("CurrencyID"),
+                    "hold": purchase_order.get("Hold"),
+                    "control_total": _num(purchase_order.get("ControlTotal")),
+                    "line_total": _num(purchase_order.get("LineTotal")),
+                    "order_total": _num(purchase_order.get("OrderTotal")),
+                    "tax_total": _num(purchase_order.get("TaxTotal")),
+                    "last_modified_at": _iso_timestamp(purchase_order.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "raw_payload": purchase_order,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_purchase_orders").upsert(list(chunk), on_conflict="external_key").execute()
+
+        result.upserted = len(rows)
+        return result
+
+    # ------------------------------------------------------------------
+    # Projection: acumatica raw tables → domain commitment tables
+    # ------------------------------------------------------------------
+
+    def _sync_commitments_projection(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Wrapper so _run_entity_sync can call project_commitments as part of sync_all."""
+        projection = self.project_commitments()
+        sc = projection["subcontracts_projected"]
+        po = projection["purchase_orders_projected"]
+        result = EntitySyncResult(entity="commitments_projection")
+        result.fetched = sc["fetched"] + po["fetched"]
+        result.upserted = sc["upserted"] + po["upserted"]
+        result.skipped = sc["skipped"] + po["skipped"]
+        result.errors = sc["errors"] + po["errors"]
+        result.cursor = last_cursor  # projection is stateless — no cursor needed
+        return result
+
+    _ACUMATICA_STATUS_MAP: Dict[str, str] = {
+        "on hold": "Draft",
+        "open": "Approved",
+        "pending approval": "Pending",
+        "pending receipt": "Approved",
+        "closed": "Closed",
+        "canceled": "Void",
+        "completed": "Executed",
+    }
+
+    def _map_commitment_status(self, acumatica_status: Optional[str]) -> str:
+        if not acumatica_status:
+            return "Draft"
+        return self._ACUMATICA_STATUS_MAP.get(acumatica_status.lower(), "Draft")
+
+    def _get_vendor_company_map(self) -> Dict[str, str]:
+        """Returns {vendor_uuid_str: company_uuid_str} for all vendors."""
+        resp = self.supabase.table("vendors").select("id,company_id").execute()
+        return {v["id"]: v["company_id"] for v in (resp.data or []) if v.get("company_id")}
+
+    def project_commitments(self) -> Dict[str, Any]:
+        """
+        One-shot or scheduled: project acumatica_subcontracts + acumatica_purchase_orders
+        into the domain subcontracts / purchase_orders tables, including SOV line items.
+        Safe to run multiple times (upserts on acumatica_external_key).
+        """
+        sc_result = self._project_subcontracts()
+        po_result = self._project_purchase_orders()
+        return {
+            "subcontracts_projected": sc_result.as_dict(),
+            "purchase_orders_projected": po_result.as_dict(),
+        }
+
+    def _project_subcontracts(self) -> EntitySyncResult:
+        result = EntitySyncResult(entity="subcontracts_domain")
+
+        rows_resp = (
+            self.supabase.table("acumatica_subcontracts")
+            .select("*")
+            .not_.is_("project_id", "null")
+            .execute()
+        )
+        acumatica_rows: List[Dict[str, Any]] = rows_resp.data or []
+        result.fetched = len(acumatica_rows)
+
+        if not acumatica_rows:
+            return result
+
+        synced_at = _now_iso()
+        sc_rows: List[Dict[str, Any]] = []
+
+        for row in acumatica_rows:
+            vendor_uuid = row.get("vendor_uuid")
+            # subcontracts.contract_company_id → vendors(id)
+            sc_rows.append(
+                {
+                    "contract_number": row["subcontract_nbr"],
+                    "project_id": row["project_id"],
+                    "contract_company_id": vendor_uuid,
+                    "title": row.get("description") or row["subcontract_nbr"],
+                    "status": self._map_commitment_status(row.get("status")),
+                    "default_retainage_percent": row.get("retainage_pct"),
+                    "contract_date": row.get("date"),
+                    "start_date": row.get("start_date"),
+                    "description": row.get("description"),
+                    "acumatica_external_key": row["external_key"],
+                    "updated_at": synced_at,
+                }
+            )
+
+        # Upsert on (contract_number, project_id) — the natural business key
+        # This handles both new records and existing ones that need Acumatica linking
+        for chunk in _chunked(sc_rows):
+            self.supabase.table("subcontracts").upsert(
+                list(chunk), on_conflict="contract_number,project_id"
+            ).execute()
+
+        result.upserted = len(sc_rows)
+
+        # Resolve subcontract UUIDs for SOV line item insertion
+        sc_id_resp = (
+            self.supabase.table("subcontracts")
+            .select("id,acumatica_external_key")
+            .in_("acumatica_external_key", [r["acumatica_external_key"] for r in sc_rows])
+            .execute()
+        )
+        sc_id_map = {r["acumatica_external_key"]: r["id"] for r in (sc_id_resp.data or [])}
+
+        # Project SOV line items from raw_payload Details
+        for row in acumatica_rows:
+            subcontract_id = sc_id_map.get(row["external_key"])
+            if not subcontract_id:
+                continue
+
+            raw_payload = row.get("raw_payload") or {}
+            details = raw_payload.get("Details") or []
+            if not isinstance(details, list) or not details:
+                continue
+
+            sov_items: List[Dict[str, Any]] = []
+            for detail in details:
+                if not isinstance(detail, dict):
+                    continue
+                line_nbr = _unwrap(detail.get("LineNbr")) or _unwrap(detail.get("LineNumber"))
+                if line_nbr is None:
+                    continue
+                raw_amount = (
+                    _num(_unwrap(detail.get("Amount")))
+                    or _num(_unwrap(detail.get("ExtCost")))
+                    or _num(_unwrap(detail.get("ExtendedCost")))
+                    or 0
+                )
+                # subcontract_sov_items has amount >= 0 constraint; negative
+                # lines in Acumatica are credit adjustments — clamp to 0
+                amount = max(0, raw_amount)
+                description = _unwrap(detail.get("Description")) or _unwrap(
+                    detail.get("TransactionDescription")
+                )
+                sov_items.append(
+                    {
+                        "subcontract_id": subcontract_id,
+                        "line_number": int(line_nbr),
+                        "acumatica_line_nbr": int(line_nbr),
+                        "description": description,
+                        "budget_code": _unwrap(detail.get("CostCode")),
+                        "amount": amount,
+                        "updated_at": synced_at,
+                    }
+                )
+
+            if sov_items:
+                for chunk in _chunked(sov_items, size=100):
+                    self.supabase.table("subcontract_sov_items").upsert(
+                        list(chunk), on_conflict="subcontract_id,line_number"
+                    ).execute()
+
+        return result
+
+    def _project_purchase_orders(self) -> EntitySyncResult:
+        result = EntitySyncResult(entity="purchase_orders_domain")
+        vendor_company_map = self._get_vendor_company_map()
+
+        rows_resp = (
+            self.supabase.table("acumatica_purchase_orders")
+            .select("*")
+            .not_.is_("project_id", "null")
+            .execute()
+        )
+        acumatica_rows: List[Dict[str, Any]] = rows_resp.data or []
+        result.fetched = len(acumatica_rows)
+
+        if not acumatica_rows:
+            return result
+
+        synced_at = _now_iso()
+        po_rows: List[Dict[str, Any]] = []
+
+        for row in acumatica_rows:
+            vendor_uuid = row.get("vendor_uuid")
+            company_id = vendor_company_map.get(vendor_uuid) if vendor_uuid else None
+
+            po_rows.append(
+                {
+                    "contract_number": row["order_nbr"],
+                    "project_id": row["project_id"],
+                    "contract_company_id": company_id,
+                    "title": row.get("description") or row["order_nbr"],
+                    "status": self._map_commitment_status(row.get("status")),
+                    "payment_terms": row.get("terms"),
+                    "contract_date": row.get("date"),
+                    "delivery_date": row.get("promised_on"),
+                    "description": row.get("description"),
+                    "acumatica_external_key": row["external_key"],
+                    "updated_at": synced_at,
+                }
+            )
+
+        # Upsert on (project_id, contract_number) — the natural business key
+        for chunk in _chunked(po_rows):
+            self.supabase.table("purchase_orders").upsert(
+                list(chunk), on_conflict="project_id,contract_number"
+            ).execute()
+
+        result.upserted = len(po_rows)
+
+        # Resolve purchase order UUIDs for SOV line item insertion
+        po_id_resp = (
+            self.supabase.table("purchase_orders")
+            .select("id,acumatica_external_key")
+            .in_("acumatica_external_key", [r["acumatica_external_key"] for r in po_rows])
+            .execute()
+        )
+        po_id_map = {r["acumatica_external_key"]: r["id"] for r in (po_id_resp.data or [])}
+
+        # Project SOV line items from raw_payload Details
+        for row in acumatica_rows:
+            po_id = po_id_map.get(row["external_key"])
+            if not po_id:
+                continue
+
+            raw_payload = row.get("raw_payload") or {}
+            details = raw_payload.get("Details") or []
+            if not isinstance(details, list) or not details:
+                continue
+
+
+            sov_items: List[Dict[str, Any]] = []
+            for detail in details:
+                if not isinstance(detail, dict):
+                    continue
+                line_nbr = _unwrap(detail.get("LineNbr")) or _unwrap(detail.get("LineNumber"))
+                if line_nbr is None:
+                    continue
+                amount = (
+                    _num(_unwrap(detail.get("Amount")))
+                    or _num(_unwrap(detail.get("ExtCost")))
+                    or _num(_unwrap(detail.get("ExtendedCost")))
+                    or 0
+                )
+                description = _unwrap(detail.get("Description")) or _unwrap(
+                    detail.get("TransactionDescription")
+                )
+                sov_items.append(
+                    {
+                        "purchase_order_id": po_id,
+                        "line_number": int(line_nbr),
+                        "acumatica_line_nbr": int(line_nbr),
+                        "description": description,
+                        "budget_code": _unwrap(detail.get("CostCode")),
+                        "quantity": _num(_unwrap(detail.get("OrderQty"))) or _num(_unwrap(detail.get("Qty"))),
+                        "uom": _unwrap(detail.get("UOM")),
+                        "unit_cost": _num(_unwrap(detail.get("UnitCost"))),
+                        "amount": amount,
+                        "updated_at": synced_at,
+                    }
+                )
+
+            if sov_items:
+                # No unique constraint on (purchase_order_id, line_number) for POs
+                # — delete acumatica-sourced items and re-insert fresh
+                self.supabase.table("purchase_order_sov_items").delete().eq(
+                    "purchase_order_id", po_id
+                ).not_.is_("acumatica_line_nbr", "null").execute()
+                for chunk in _chunked(sov_items, size=100):
+                    self.supabase.table("purchase_order_sov_items").insert(list(chunk)).execute()
+
+        return result
+
+    def _sync_payments(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        result = EntitySyncResult(entity="ar_payments")
+        records = self.session.fetch_entity("Payment", top=100, modified_after=last_cursor)
+        result.fetched = len(records)
+        result.cursor = self._max_cursor(records) or _now_iso()
+
+        if not records:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for payment in records:
+            reference_nbr = payment.get("ReferenceNbr")
+            if not reference_nbr:
+                result.skipped += 1
+                continue
+
+            project_code = _first_text(payment, ("Project", "ProjectID", "ProjectCD"))
+            project_row = self._resolve_project_row(project_code)
+
+            rows.append(
+                {
+                    "external_key": f"{payment.get('Type') or 'Payment'}|{reference_nbr}",
+                    "reference_nbr": reference_nbr,
+                    "document_type": payment.get("Type"),
+                    "project_code": project_code,
+                    "project_id": project_row.get("id") if project_row else None,
+                    "company_id": project_row.get("company_id") if project_row else None,
+                    "customer_id": payment.get("CustomerID") or payment.get("Customer"),
+                    "status": payment.get("Status"),
+                    "description": payment.get("Description"),
+                    "payment_method": payment.get("PaymentMethod"),
+                    "payment_ref": payment.get("PaymentRef"),
+                    "external_ref": payment.get("ExternalRef"),
+                    "cash_account": payment.get("CashAccount"),
+                    "currency_id": payment.get("CurrencyID"),
+                    "application_date": _iso_to_date(payment.get("ApplicationDate")),
+                    "hold": payment.get("Hold"),
+                    "payment_amount": _num(payment.get("PaymentAmount")),
+                    "available_balance": _num(payment.get("AvailableBalance")),
+                    "last_modified_at": _iso_timestamp(payment.get("LastModifiedDateTime")),
+                    "acumatica_sync_at": synced_at,
+                    "raw_payload": payment,
+                    "updated_at": synced_at,
+                }
+            )
+
+        for chunk in _chunked(rows):
+            self.supabase.table("acumatica_payments").upsert(list(chunk), on_conflict="external_key").execute()
+
+        result.upserted = len(rows)
+        return result
+
     def _sync_project_budgets(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="project_budgets")
         records = self.session.fetch_entity("ProjectBudget", top=250, modified_after=last_cursor)
@@ -819,7 +1467,7 @@ class AcumaticaFinancialSyncService:
 
         for budget in records:
             project_code = budget.get("ProjectID")
-            project_row = self.project_map.get(project_code) if project_code else None
+            project_row = self._resolve_project_row(project_code)
             external_key = "|".join(
                 [
                     project_code or "",

@@ -1,4 +1,8 @@
-// COPY THIS FILE TO CREATE A NEW TABLE PAGE
+// DEPRECATED TEMPLATE (GenericDataTable-based)
+// Use UnifiedTablePage for all new table pages.
+// Keep this file only for maintaining legacy GenericDataTable pages.
+//
+// COPY THIS FILE TO CREATE A LEGACY TABLE PAGE
 // 1. Copy this file to: /Users/meganharrison/Documents/github/alleato-procore/frontend/src/app/(tables)/YOUR-TABLE-NAME/page.tsx
 // 2. Replace 'your_table_name' with your actual Supabase table name
 // 3. Update the config object with your table's columns and settings

@@ -1,0 +1,119 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+export interface ProjectVendor {
+  id: string;
+  added_at: string;
+  notes: string | null;
+  vendor: {
+    id: string;
+    name: string;
+    legal_name: string | null;
+    vendor_class: string | null;
+    contact_name: string | null;
+    contact_email: string | null;
+    contact_phone: string | null;
+    city: string | null;
+    state: string | null;
+    is_active: boolean;
+    acumatica_vendor_id: string | null;
+  } | null;
+}
+
+interface UseProjectVendorsResult {
+  vendors: ProjectVendor[];
+  isLoading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+  addVendor: (vendorId: string, notes?: string) => Promise<void>;
+  removeVendor: (id: string) => Promise<void>;
+}
+
+export function useProjectVendors(projectId: string): UseProjectVendorsResult {
+  const [vendors, setVendors] = useState<ProjectVendor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchVendors = useCallback(async () => {
+    if (!projectId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/directory/vendors`);
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error ?? "Failed to fetch vendors");
+      }
+      const { data } = await res.json();
+      setVendors(data ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Unknown error"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      if (!projectId || cancelled) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/projects/${projectId}/directory/vendors`);
+        if (cancelled) return;
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error ?? "Failed to fetch vendors");
+        }
+        const { data } = await res.json();
+        if (!cancelled) setVendors(data ?? []);
+      } catch (err) {
+        if (!cancelled)
+          setError(err instanceof Error ? err : new Error("Unknown error"));
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const addVendor = useCallback(
+    async (vendorId: string, notes?: string) => {
+      const res = await fetch(`/api/projects/${projectId}/directory/vendors`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendor_id: vendorId, notes }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error ?? "Failed to add vendor");
+      }
+      await fetchVendors();
+    },
+    [projectId, fetchVendors],
+  );
+
+  const removeVendor = useCallback(
+    async (id: string) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/directory/vendors?id=${id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error ?? "Failed to remove vendor");
+      }
+      await fetchVendors();
+    },
+    [projectId, fetchVendors],
+  );
+
+  return { vendors, isLoading, error, refetch: fetchVendors, addVendor, removeVendor };
+}

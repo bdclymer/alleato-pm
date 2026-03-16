@@ -1,4 +1,3 @@
-
 ---
 name: build-with-agent-team
 description: Build a project using Codex Agent Teams with tmux split panes. Takes a plan document path and optional team size. Use when you want multiple agents collaborating on a build.

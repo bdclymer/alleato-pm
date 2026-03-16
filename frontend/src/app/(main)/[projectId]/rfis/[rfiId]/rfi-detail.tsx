@@ -615,6 +615,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
               </CardContent>
             </Card>
           </div>
+
         </div>
       )}
     </div>

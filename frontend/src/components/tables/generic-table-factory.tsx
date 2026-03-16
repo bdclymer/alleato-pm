@@ -5,6 +5,11 @@
  * GENERIC DATA TABLE FACTORY
  * ============================================================================
  *
+ * DEPRECATION NOTICE:
+ * GenericDataTable is legacy and should not be used for new table pages.
+ * Prefer UnifiedTablePage from "@/components/tables/unified" for all new work.
+ * Existing GenericDataTable pages should be migrated to UnifiedTablePage over time.
+ *
  * PURPOSE:
  * This is a powerful, reusable table component that eliminates the need to
  * write custom table components for each data type. Instead, you configure
@@ -611,6 +616,9 @@ export interface GenericDataTableProps {
 // MAIN COMPONENT
 // ============================================================================
 
+/**
+ * @deprecated Use UnifiedTablePage from "@/components/tables/unified" for new pages.
+ */
 export function GenericDataTable({
   data: initialData,
   config,

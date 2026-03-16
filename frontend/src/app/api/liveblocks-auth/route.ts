@@ -31,14 +31,14 @@ export async function POST(request: NextRequest) {
     // Continue with email as fallback name
   }
 
-  const { status, body } = await liveblocks.identifyUser(
-    user.id,
-    {
-      userInfo: {
-        name,
-      },
-    },
-  );
+  // Use prepareSession + allow() so the user can create/join any alleato: room
+  const session = liveblocks.prepareSession(user.id, {
+    userInfo: { name },
+  });
 
+  // Grant full access to all alleato rooms (comments, threads, notifications)
+  session.allow("alleato:*", session.FULL_ACCESS);
+
+  const { status, body } = await session.authorize();
   return new Response(body, { status });
 }

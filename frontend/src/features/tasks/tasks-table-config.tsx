@@ -45,6 +45,7 @@ export const tasksColumns: ColumnConfig[] = [
   { id: "project_name", label: "Project Name", defaultVisible: true },
   { id: "meeting_title", label: "Meeting Title", defaultVisible: true },
   { id: "assignee_email", label: "Assignee Email", defaultVisible: false },
+  { id: "created_at", label: "Created Date", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: true },
   { id: "priority", label: "Priority", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -146,6 +147,13 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
           ...column,
           render: (item) => <TableDateValue value={item.due_date} />,
           sortValue: (item) => item.due_date ?? "",
+          sortable: true,
+        };
+      case "created_at":
+        return {
+          ...column,
+          render: (item) => <TableDateValue value={item.created_at} />,
+          sortValue: (item) => item.created_at ?? "",
           sortable: true,
         };
       case "priority":

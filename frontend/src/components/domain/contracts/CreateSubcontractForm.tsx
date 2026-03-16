@@ -3,8 +3,30 @@
 import * as React from "react";
 import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -19,13 +41,10 @@ import {
   Plus,
   AlertCircle,
   Loader2,
-  Info,
   Search,
-  HelpCircle,
+  GripVertical,
   ChevronRight,
   ChevronDown,
-  BarChart3,
-  ChevronsUpDown,
   Wand2,
 } from "lucide-react";
 import {
@@ -36,25 +55,11 @@ import {
   AccountingMethodValues,
 } from "@/lib/schemas/create-subcontract-schema";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
 import { FileUploadField } from "@/components/forms/FileUploadField";
-import { RichTextField } from "@/components/forms/RichTextField";
 import { DateField } from "@/components/forms/DateField";
 import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
-import { SectionHeader } from "@/components/ui/section-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { createClient } from "@/lib/supabase/client";
@@ -96,6 +101,12 @@ interface BudgetCode {
   fullLabel: string;
 }
 
+interface VendorOption {
+  value: string;
+  label: string;
+  companyId: string | null;
+}
+
 const UNIT_OF_MEASURES = [
   { value: "EA", label: "Each" },
   { value: "LF", label: "Linear Foot" },
@@ -115,6 +126,33 @@ interface CreateSubcontractFormProps {
     sovLines?: SovLineItem[];
   };
   mode?: "create" | "edit";
+}
+
+interface SortableSovRowProps {
+  id: string;
+  className: string;
+  children: (handle: {
+    attributes: ReturnType<typeof useSortable>["attributes"];
+    listeners: ReturnType<typeof useSortable>["listeners"];
+  }) => React.ReactNode;
+}
+
+function SortableSovRow({ id, className, children }: SortableSovRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={`${className} ${isDragging ? "opacity-60" : ""}`}
+    >
+      {children({ attributes, listeners })}
+    </tr>
+  );
 }
 
 export function CreateSubcontractForm({
@@ -170,12 +208,39 @@ export function CreateSubcontractForm({
   const [isAutoFilling, setIsAutoFilling] = React.useState(false);
   const [openContractCompanyPopover, setOpenContractCompanyPopover] =
     React.useState(false);
-  const [richTextMode, setRichTextMode] = React.useState<Record<string, boolean>>({});
-  const [moreDatesOpen, setMoreDatesOpen] = React.useState(false);
+  const [vendorOptions, setVendorOptions] = React.useState<VendorOption[]>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = React.useState(true);
 
-  // Use the companies hook
-  const { options: companyOptions, isLoading: isLoadingCompanies } =
-    useCompanies();
+  // Fetch vendors for vendor selection
+  React.useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setIsLoadingVendors(true);
+        const response = await fetch(`/api/projects/${projectId}/vendors`);
+        if (!response.ok) {
+          throw new Error("Failed to load vendors");
+        }
+        const data = (await response.json()) as Array<{
+          id: string;
+          vendor_name: string;
+          company_id?: string | null;
+        }>;
+        setVendorOptions(
+          (data || []).map((vendor) => ({
+            value: vendor.id,
+            label: vendor.vendor_name,
+            companyId: vendor.company_id ?? null,
+          })),
+        );
+      } catch {
+        setVendorOptions([]);
+      } finally {
+        setIsLoadingVendors(false);
+      }
+    };
+
+    fetchVendors();
+  }, [projectId]);
 
   // Use project users hook for non-admin user selection
   const { users: projectUsers, isLoading: isLoadingUsers } = useProjectUsers(
@@ -238,16 +303,20 @@ export function CreateSubcontractForm({
   const accountingMethod = useWatch({ control, name: "accountingMethod" });
   const statusValue = useWatch({ control, name: "status" });
   const executedValue = useWatch({ control, name: "executed" });
-  const selectedContractCompany = React.useMemo(
-    () => companyOptions.find((option) => option.value === contractCompanyId),
-    [companyOptions, contractCompanyId],
+  const selectedVendor = React.useMemo(
+    () => vendorOptions.find((option) => option.value === contractCompanyId),
+    [vendorOptions, contractCompanyId],
+  );
+  const selectedVendorCompanyId = React.useMemo(
+    () => selectedVendor?.companyId ?? null,
+    [selectedVendor],
   );
 
-  // Fetch company contacts when a company is selected
+  // Fetch company contacts from selected vendor's linked company
   const { options: invoiceContactOptions, isLoading: isLoadingContacts } =
     useCompanyContacts({
-      companyId: contractCompanyId,
-      enabled: !!contractCompanyId,
+      companyId: selectedVendorCompanyId ?? undefined,
+      enabled: !!selectedVendorCompanyId,
     });
 
   // Clear invoice contacts when company changes
@@ -452,7 +521,7 @@ export function CreateSubcontractForm({
     setIsAutoFilling(true);
     try {
       const now = Date.now();
-      const defaultCompanyId = companyOptions[0]?.value || "";
+      const defaultCompanyId = vendorOptions[0]?.value || "";
 
       setValue("title", `Autofilled subcontract ${now}`, {
         shouldValidate: true,
@@ -630,10 +699,56 @@ export function CreateSubcontractForm({
   };
 
   const totals = calculateSOVTotals();
+  const sovSortableIds = React.useMemo(
+    () => sovLines.map((_, index) => `sov-line-${index}`),
+    [sovLines.length],
+  );
+  const dndSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const handleSovDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = Number(String(active.id).replace("sov-line-", ""));
+    const newIndex = Number(String(over.id).replace("sov-line-", ""));
+
+    if (Number.isNaN(oldIndex) || Number.isNaN(newIndex)) return;
+
+    setSovLines((prev) =>
+      arrayMove(prev, oldIndex, newIndex).map((line, index) => ({
+        ...line,
+        lineNumber: index + 1,
+      })),
+    );
+  };
+
+  React.useEffect(() => {
+    if (sovLines.length > 0) return;
+
+    const isUnitQuantity = accountingMethod === "unit_quantity";
+    setSovLines([
+      {
+        lineNumber: 1,
+        budgetCodeId: "",
+        budgetCodeLabel: "",
+        description: "",
+        amount: 0,
+        quantity: 1,
+        unitCost: isUnitQuantity ? 0 : undefined,
+        unitOfMeasure: isUnitQuantity ? "" : undefined,
+        billedToDate: 0,
+      } as SovLineItem,
+    ]);
+  }, [sovLines.length, accountingMethod]);
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      <div className="p-6 lg:p-8">
+      <div className="space-y-8">
         {/* Hidden CSV file input */}
         <input
           ref={csvInputRef}
@@ -671,14 +786,13 @@ export function CreateSubcontractForm({
           </Alert>
         )}
 
-        <Accordion type="multiple" defaultValue={["contract-details"]} className="space-y-3">
+        <div className="space-y-8">
 
         {/* General Information Section */}
-        <AccordionItem value="contract-details" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section className="space-y-6 border-b border-border/70 pb-8">
+          <h2 className="text-lg font-semibold text-foreground">
             General Information
-          </AccordionTrigger>
-          <AccordionContent className="space-y-6 pb-5">
+          </h2>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -689,7 +803,6 @@ export function CreateSubcontractForm({
                 id="title"
                 {...register("title")}
                 disabled={isSubmitting}
-                placeholder="Enter contract title"
               />
               {errors.title && (
                 <p className="text-sm text-destructive">
@@ -716,7 +829,7 @@ export function CreateSubcontractForm({
 
             <div className="space-y-2">
               <Label htmlFor="contractCompanyId">
-                Contract Company <span className="text-destructive">*</span>
+                Vendor <span className="text-destructive">*</span>
               </Label>
               <Popover
                 open={openContractCompanyPopover}
@@ -729,16 +842,16 @@ export function CreateSubcontractForm({
                     variant="outline"
                     role="combobox"
                     className="w-full justify-between text-left font-normal"
-                    disabled={isSubmitting || isLoadingCompanies}
+                    disabled={isSubmitting || isLoadingVendors}
                   >
                     <span className="truncate">
-                      {isLoadingCompanies ? (
+                      {isLoadingVendors ? (
                         <span className="flex items-center gap-2 text-muted-foreground">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          Loading companies...
+                          Loading vendors...
                         </span>
                       ) : (
-                        selectedContractCompany?.label || "Select company"
+                        selectedVendor?.label || "Select vendor"
                       )}
                     </span>
                     <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -746,15 +859,15 @@ export function CreateSubcontractForm({
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                   <Command>
-                    <CommandInput placeholder="Type to search companies..." />
+                    <CommandInput placeholder="Type to search vendors..." />
                     <CommandList>
                       <CommandEmpty>
-                        {isLoadingCompanies
-                          ? "Loading companies..."
-                          : "No companies found."}
+                        {isLoadingVendors
+                          ? "Loading vendors..."
+                          : "No vendors found."}
                       </CommandEmpty>
                       <CommandGroup>
-                        {companyOptions.map((option) => (
+                        {vendorOptions.map((option) => (
                           <CommandItem
                             key={option.value}
                             value={option.label}
@@ -795,7 +908,7 @@ export function CreateSubcontractForm({
                 }
                 disabled={isSubmitting}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -817,8 +930,8 @@ export function CreateSubcontractForm({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
             <div>
               <Label htmlFor="defaultRetainagePercent">Default Retainage</Label>
-              <div className="flex items-center gap-2">
-                <Input
+              <InputGroup>
+                <InputGroupInput
                   id="defaultRetainagePercent"
                   type="number"
                   step="0.01"
@@ -828,11 +941,11 @@ export function CreateSubcontractForm({
                     valueAsNumber: true,
                   })}
                   disabled={isSubmitting}
-                  className="w-full"
+                  className="text-right"
                   placeholder="0.00"
                 />
-                <span className="text-sm text-foreground">%</span>
-              </div>
+                <InputGroupAddon align="inline-end">%</InputGroupAddon>
+              </InputGroup>
               {errors.defaultRetainagePercent && (
                 <p className="text-sm text-destructive">
                   {errors.defaultRetainagePercent.message}
@@ -865,53 +978,31 @@ export function CreateSubcontractForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="description">Description</Label>
-            {richTextMode.description ? (
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <RichTextField
-                    label=""
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    disabled={isSubmitting}
-                    placeholder="Enter detailed contract description..."
-                  />
-                )}
-              />
-            ) : (
-              <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                  <Textarea
-                    id="description"
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    disabled={isSubmitting}
-                    placeholder="Enter detailed contract description..."
-                    rows={3}
-                  />
-                )}
-              />
-            )}
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setRichTextMode(prev => ({ ...prev, description: !prev.description }))}
-            >
-              {richTextMode.description ? "Simple text" : "Rich text"}
-            </button>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="description"
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={isSubmitting}
+                  placeholder="Enter detailed contract description..."
+                  rows={3}
+                />
+              )}
+            />
           </div>
-          </AccordionContent>
-        </AccordionItem>
+        </section>
 
         {/* Attachments Section */}
-        <AccordionItem value="attachments" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
-            Attachments
-          </AccordionTrigger>
-          <AccordionContent className="pb-5">
+        <section className="space-y-4 border-b border-border/70 pb-8">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-foreground">Attachments</h2>
+            <p className="text-sm text-muted-foreground">
+              Attach contract documents, plans, or other relevant files
+            </p>
+          </div>
             <FileUploadField
               label=""
               value={attachments}
@@ -920,19 +1011,20 @@ export function CreateSubcontractForm({
               maxFiles={20}
               maxSize={50 * 1024 * 1024}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-              hint="Attach contract documents, plans, or other relevant files"
               disabled={isSubmitting}
             />
-          </AccordionContent>
-        </AccordionItem>
+        </section>
 
-        <AccordionItem value="schedule-of-values" className="rounded-lg bg-muted/30 border-none px-5 py-1" data-testid="sov-section">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section
+          className="border-b border-border/70 pb-8"
+          data-testid="sov-section"
+        >
+          <h2 className="text-lg font-semibold text-foreground">
             Schedule of Values
-          </AccordionTrigger>
-          <AccordionContent className="space-y-6 pb-5">
+          </h2>
+          <div className="space-y-6 pt-4">
           {/* Accounting Method Info */}
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             This contract&apos;s default accounting method is{" "}
             <strong>
               {accountingMethod === "amount_based"
@@ -954,44 +1046,50 @@ export function CreateSubcontractForm({
             </button>
           </p>
 
-          <SectionHeader
-            actions={
-              <Select
-                onValueChange={(value) => {
-                  if (value === "add_group") addGroup();
-                }}
-              >
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Add Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="add_group">Add Group</SelectItem>
-                </SelectContent>
-              </Select>
-            }
-          >
-            Line Item Groups
-          </SectionHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Line Items</h3>
+            <Select
+              onValueChange={(value) => {
+                if (value === "add_group") addGroup();
+              }}
+            >
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Add Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="add_group">Add Group</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* SOV Table */}
           <div
-            className="border rounded-lg overflow-hidden"
+            className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20"
             data-testid="sov-table"
             data-accounting-method={accountingMethod}
           >
-            <table className="w-full">
-              <thead className="bg-muted border-b">
-                <tr>
-                  <th className="px-4 py-4 text-left text-sm font-medium text-foreground w-12">
-                    #
+            <DndContext
+              sensors={dndSensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSovDragEnd}
+            >
+              <SortableContext
+                items={sovSortableIds}
+                strategy={verticalListSortingStrategy}
+              >
+                <table className="w-full">
+              <thead className="border-y-0">
+                <tr className="bg-muted/70 hover:bg-muted/70">
+                  <th className="w-12 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">
                   </th>
-                  <th className="px-4 py-4 text-left text-sm font-medium text-foreground min-w-72">
+                  <th className="min-w-72 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      Budget Code
                       <TooltipProvider>
                         <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help underline decoration-dotted underline-offset-2 decoration-muted-foreground/40">
+                              Budget Code
+                            </span>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Link to a budget code</p>
@@ -1000,278 +1098,291 @@ export function CreateSubcontractForm({
                       </TooltipProvider>
                     </div>
                   </th>
-                  <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
+                  <th className="min-w-64 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">
                     Description
                   </th>
                   {accountingMethod === "unit_quantity" && (
                     <>
-                      <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                      <th className="w-32 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">
                         Qty
                       </th>
-                      <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
+                      <th className="w-32 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">
                         UOM
                       </th>
-                      <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                      <th className="w-48 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">
                         Unit Cost
                       </th>
                     </>
                   )}
-                  <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                  <th className="w-48 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">
                     Amount
                   </th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                  <th className="w-40 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">
                     Billed to Date
                   </th>
-                  <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
+                  <th className="w-40 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">
                     Amount Remaining
                   </th>
-                  <th className="px-4 py-4 w-12"></th>
+                  <th className="w-12 px-1 py-1.5"></th>
                 </tr>
               </thead>
               <tbody>
-                {sovLines.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={accountingMethod === "unit_quantity" ? 10 : 7}
-                      className="px-4 py-12 text-center"
+                {sovLines.map((line, index) =>
+                  line.isGroup ? (
+                    <SortableSovRow
+                      id={`sov-line-${index}`}
+                      key={`group-${index}`}
+                      className="border-b border-border/60 bg-muted/40"
                     >
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                          <BarChart3 className="h-10 w-10 text-muted-foreground" />
-                        </div>
-                        <p className="text-lg font-medium text-foreground">
-                          You Have No Line Items Yet
-                        </p>
-                        <Button
-                          type="button"
-                          onClick={addSOVLine}
-                          variant="default"
-                          disabled={isSubmitting}
-                          data-testid="sov-add-line-empty"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Line
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  sovLines.map((line, index) =>
-                    line.isGroup ? (
-                      <tr
-                        key={`group-${index}`}
-                        className="border-b bg-muted/50"
+                      {({ attributes, listeners }) => (
+                        <>
+                      <td
+                        className="px-1 py-1.5 text-sm font-semibold"
                         data-testid={`sov-group-${index}`}
                       >
-                        <td className="px-4 py-4 text-sm font-semibold">
-                          {index + 1}
-                        </td>
-                        <td
-                          colSpan={accountingMethod === "unit_quantity" ? 8 : 5}
-                          className="px-4 py-4"
+                        <div
+                          {...attributes}
+                          {...listeners}
+                          className="inline-flex cursor-grab rounded p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing"
                         >
-                          <Input
-                            className="h-8 font-semibold"
-                            placeholder="Group name (e.g. General Conditions)"
-                            value={line.description || ""}
-                            onChange={(e) =>
-                              updateSOVLine(index, {
-                                description: e.target.value,
-                              })
-                            }
-                            data-testid="sov-group-name"
-                          />
-                        </td>
-                        <td className="px-4 py-4">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSOVLine(index)}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
-                          >
-                            ×
-                          </Button>
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr
-                        key={`line-${index}`}
-                        className="border-b"
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      </td>
+                      <td
+                        colSpan={accountingMethod === "unit_quantity" ? 8 : 5}
+                        className="px-1 py-1.5"
+                      >
+                        <Input
+                          className="h-10 font-semibold"
+                          placeholder="Group name (e.g. General Conditions)"
+                          value={line.description || ""}
+                          onChange={(e) =>
+                            updateSOVLine(index, {
+                              description: e.target.value,
+                            })
+                          }
+                          data-testid="sov-group-name"
+                        />
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSOVLine(index)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                        >
+                          ×
+                        </Button>
+                      </td>
+                        </>
+                      )}
+                    </SortableSovRow>
+                  ) : (
+                    <SortableSovRow
+                      id={`sov-line-${index}`}
+                      key={`line-${index}`}
+                      className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+                    >
+                      {({ attributes, listeners }) => (
+                        <>
+                      <td
+                        className="px-1 py-1.5 text-sm"
                         data-testid={`sov-line-${index}`}
                       >
-                        <td className="px-4 py-4 text-sm">{index + 1}</td>
-                        <td className="px-4 py-4">
-                          <BudgetCodeSelector
-                            value={line.budgetCodeId || ""}
-                            onValueChange={(_, code) =>
-                              handleBudgetCodeSelect(index, code)
-                            }
-                            budgetCodes={budgetCodes}
-                            loading={loadingBudgetCodes}
-                            onCreateNew={() => setShowCreateBudgetCodeModal(true)}
-                            placeholder="Select budget code..."
-                            className="h-8"
-                          />
-                        </td>
-                        <td className="px-4 py-4">
-                          <Input
-                            value={line.description || ""}
-                            onChange={(e) =>
-                              updateSOVLine(index, {
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Description"
-                            className="h-8"
-                            data-testid="sov-line-description"
-                          />
-                        </td>
-                        {accountingMethod === "unit_quantity" && (
-                          <>
-                            <td className="px-4 py-4">
-                              <Input
-                                type="number"
-                                value={line.quantity ?? 1}
-                                onChange={(e) =>
-                                  updateSOVLine(index, {
-                                    quantity: parseFloat(e.target.value) || 0,
-                                  })
-                                }
-                                className="h-8 text-right"
-                                data-testid="sov-line-quantity"
-                              />
-                            </td>
-                            <td className="px-4 py-4">
-                              <Select
-                                value={line.unitOfMeasure || undefined}
-                                onValueChange={(value) =>
-                                  updateSOVLine(index, {
-                                    unitOfMeasure: value,
-                                  })
-                                }
+                        <div
+                          {...attributes}
+                          {...listeners}
+                          className="inline-flex cursor-grab rounded p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing"
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <BudgetCodeSelector
+                          value={line.budgetCodeId || ""}
+                          onValueChange={(_, code) =>
+                            handleBudgetCodeSelect(index, code)
+                          }
+                          budgetCodes={budgetCodes}
+                          loading={loadingBudgetCodes}
+                          onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                          placeholder="Select budget code..."
+                          className="h-10"
+                        />
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <Input
+                          value={line.description || ""}
+                          onChange={(e) =>
+                            updateSOVLine(index, {
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Description"
+                          className="h-10"
+                          data-testid="sov-line-description"
+                        />
+                      </td>
+                      {accountingMethod === "unit_quantity" && (
+                        <>
+                          <td className="px-1 py-1.5">
+                            <Input
+                              type="number"
+                              value={line.quantity ?? 1}
+                              onChange={(e) =>
+                                updateSOVLine(index, {
+                                  quantity: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="h-10 text-right"
+                              data-testid="sov-line-quantity"
+                            />
+                          </td>
+                          <td className="px-1 py-1.5">
+                            <Select
+                              value={line.unitOfMeasure || undefined}
+                              onValueChange={(value) =>
+                                updateSOVLine(index, {
+                                  unitOfMeasure: value,
+                                })
+                              }
+                            >
+                              <SelectTrigger
+                                className="h-10 w-full"
+                                data-testid="sov-line-unit-of-measure"
                               >
-                                <SelectTrigger
-                                  className="h-8"
-                                  data-testid="sov-line-unit-of-measure"
-                                >
-                                  <SelectValue placeholder="Select UOM" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {UNIT_OF_MEASURES.map((uom) => (
-                                    <SelectItem key={uom.value} value={uom.value}>
-                                      {uom.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </td>
-                            <td className="px-4 py-4">
-                              <Input
+                                <SelectValue placeholder="Select" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {UNIT_OF_MEASURES.map((uom) => (
+                                  <SelectItem key={uom.value} value={uom.value}>
+                                    {uom.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="w-48 px-1 py-1.5">
+                            <InputGroup className="h-10 overflow-hidden bg-transparent">
+                              <InputGroupAddon>$</InputGroupAddon>
+                              <InputGroupInput
                                 type="number"
+                                step="0.01"
                                 value={line.unitCost ?? ""}
                                 onChange={(e) =>
                                   updateSOVLine(index, {
                                     unitCost: parseFloat(e.target.value) || 0,
                                   })
                                 }
-                                className="h-8 text-right"
+                                className="h-10 bg-transparent text-right"
                                 data-testid="sov-line-unit-cost"
                               />
-                            </td>
-                          </>
-                        )}
-                        <td className="px-4 py-4">
-                          <Input
-                            type="number"
-                            value={line.amount || ""}
-                            onChange={(e) =>
-                              updateSOVLine(index, {
-                                amount: parseFloat(e.target.value) || 0,
-                              })
-                            }
-                            className="h-8 text-right"
-                            data-testid="sov-line-amount"
-                            readOnly={accountingMethod === "unit_quantity"}
-                          />
-                        </td>
-                        <td className="px-4 py-4 text-right text-sm">
-                          ${(line.billedToDate || 0).toFixed(2)}
-                        </td>
-                        <td
-                          className="px-4 py-4 text-right text-sm"
-                          data-testid="sov-line-amount-remaining"
+                            </InputGroup>
+                          </td>
+                        </>
+                      )}
+                      <td className="w-48 px-1 py-1.5">
+                        <InputGroup className="h-10 overflow-hidden bg-transparent">
+                          <InputGroupAddon>$</InputGroupAddon>
+                          {accountingMethod === "unit_quantity" ? (
+                            <InputGroupInput
+                              type="number"
+                              step="0.01"
+                              value={line.amount || ""}
+                              className="h-10 bg-transparent text-right"
+                              data-testid="sov-line-amount"
+                              disabled
+                              readOnly
+                            />
+                          ) : (
+                            <InputGroupInput
+                              type="number"
+                              step="0.01"
+                              value={line.amount || ""}
+                              onChange={(e) =>
+                                updateSOVLine(index, {
+                                  amount: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="h-10 bg-transparent text-right"
+                              data-testid="sov-line-amount"
+                            />
+                          )}
+                        </InputGroup>
+                      </td>
+                      <td className="px-1 py-1.5 pt-3 text-right text-sm">
+                        ${(line.billedToDate || 0).toFixed(2)}
+                      </td>
+                      <td
+                        className="px-1 py-1.5 pt-3 text-right text-sm"
+                        data-testid="sov-line-amount-remaining"
+                      >
+                        $
+                        {(
+                          (line.amount || 0) - (line.billedToDate || 0)
+                        ).toFixed(2)}
+                      </td>
+                      <td className="px-1 py-1.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSOVLine(index)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
                         >
-                          $
-                          {(
-                            (line.amount || 0) - (line.billedToDate || 0)
-                          ).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-4">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeSOVLine(index)}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
-                          >
-                            ×
-                          </Button>
-                        </td>
-                      </tr>
-                    ),
-                  )
+                          ×
+                        </Button>
+                      </td>
+                        </>
+                      )}
+                    </SortableSovRow>
+                  ),
                 )}
               </tbody>
-              <tfoot className="bg-muted border-t">
+              <tfoot>
                 <tr>
-                  <td colSpan={2} className="px-4 py-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addSOVLine}
-                      disabled={isSubmitting}
-                      data-testid="sov-add-line-footer"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Line
-                    </Button>
+                  <td className="px-1 py-2" />
+                  <td colSpan={accountingMethod === "unit_quantity" ? 5 : 2} className="px-1 py-3 text-xs font-semibold text-foreground">
+                    Totals
                   </td>
-                  <td className="px-4 py-4 text-right font-medium">Total:</td>
-                  {accountingMethod === "unit_quantity" && (
-                    <>
-                      <td className="px-4 py-4" />
-                      <td className="px-4 py-4" />
-                      <td className="px-4 py-4" />
-                    </>
-                  )}
                   <td
-                    className="px-4 py-4 text-right font-medium"
+                    className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-amount"
                   >
                     ${totals.amount.toFixed(2)}
                   </td>
                   <td
-                    className="px-4 py-4 text-right font-medium"
+                    className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-billed"
                   >
                     ${totals.billedToDate.toFixed(2)}
                   </td>
                   <td
-                    className="px-4 py-4 text-right font-medium"
+                    className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-remaining"
                   >
                     ${totals.amountRemaining.toFixed(2)}
                   </td>
-                  <td></td>
+                  <td className="px-1 py-2" />
                 </tr>
               </tfoot>
-            </table>
+                </table>
+              </SortableContext>
+            </DndContext>
           </div>
 
-          {/* Import dropdown below the table */}
-          <div className="mt-4">
+          <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              onClick={addSOVLine}
+              disabled={isSubmitting}
+              className="h-10 gap-2 px-4"
+              data-testid="sov-add-line-footer"
+            >
+              <Plus className="h-4 w-4" />
+              Add Line Item
+            </Button>
             <Select
               onValueChange={(value) => {
                 if (value === "csv") csvInputRef.current?.click();
@@ -1286,105 +1397,58 @@ export function CreateSubcontractForm({
               </SelectContent>
             </Select>
           </div>
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </section>
 
         {/* Inclusions & Exclusions Section */}
-        <AccordionItem value="inclusions-exclusions" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section className="space-y-4 border-b border-border/70 pb-8">
+          <h2 className="text-lg font-semibold text-foreground">
             Inclusions & Exclusions
-          </AccordionTrigger>
-          <AccordionContent className="space-y-4 pb-5">
+          </h2>
+          <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Inclusions</Label>
-              {richTextMode.inclusions ? (
-                <Controller
-                  name="inclusions"
-                  control={control}
-                  render={({ field }) => (
-                    <RichTextField
-                      label=""
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      disabled={isSubmitting}
-                      placeholder="Enter scope inclusions..."
-                    />
-                  )}
-                />
-              ) : (
-                <Controller
-                  name="inclusions"
-                  control={control}
-                  render={({ field }) => (
-                    <Textarea
-                      value={field.value || ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={isSubmitting}
-                      placeholder="Enter scope inclusions..."
-                      rows={3}
-                    />
-                  )}
-                />
-              )}
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setRichTextMode(prev => ({ ...prev, inclusions: !prev.inclusions }))}
-              >
-                {richTextMode.inclusions ? "Simple text" : "Rich text"}
-              </button>
+              <Controller
+                name="inclusions"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="Enter scope inclusions..."
+                    rows={3}
+                  />
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">
               <Label>Exclusions</Label>
-              {richTextMode.exclusions ? (
-                <Controller
-                  name="exclusions"
-                  control={control}
-                  render={({ field }) => (
-                    <RichTextField
-                      label=""
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      disabled={isSubmitting}
-                      placeholder="Enter scope exclusions..."
-                    />
-                  )}
-                />
-              ) : (
-                <Controller
-                  name="exclusions"
-                  control={control}
-                  render={({ field }) => (
-                    <Textarea
-                      value={field.value || ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      disabled={isSubmitting}
-                      placeholder="Enter scope exclusions..."
-                      rows={3}
-                    />
-                  )}
-                />
-              )}
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => setRichTextMode(prev => ({ ...prev, exclusions: !prev.exclusions }))}
-              >
-                {richTextMode.exclusions ? "Simple text" : "Rich text"}
-              </button>
+              <Controller
+                name="exclusions"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isSubmitting}
+                    placeholder="Enter scope exclusions..."
+                    rows={3}
+                  />
+                )}
+              />
             </div>
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </section>
 
         {/* Contract Dates Section */}
-        <AccordionItem value="contract-dates" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section className="space-y-4 border-b border-border/70 pb-8">
+          <h2 className="text-lg font-semibold text-foreground">
             Contract Dates
-          </AccordionTrigger>
-          <AccordionContent className="space-y-4 pb-5">
-            {/* Primary dates — always visible */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          </h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Controller
                 name="dates.startDate"
                 control={control}
@@ -1414,93 +1478,76 @@ export function CreateSubcontractForm({
                   />
                 )}
               />
+              <Controller
+                name="dates.actualCompletionDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Actual Completion Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select actual completion"
+                    error={errors.dates?.actualCompletionDate?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="dates.contractDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Contract Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select contract date"
+                    error={errors.dates?.contractDate?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="dates.signedContractReceivedDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Signed Contract Received Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select signed contract received"
+                    error={errors.dates?.signedContractReceivedDate?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="dates.issuedOnDate"
+                control={control}
+                render={({ field }) => (
+                  <DateField
+                    label="Issued On Date"
+                    value={field.value instanceof Date ? field.value : undefined}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    placeholder="Select issued on date"
+                    error={errors.dates?.issuedOnDate?.message}
+                  />
+                )}
+              />
             </div>
-
-            {/* Secondary dates — collapsed by default */}
-            <Collapsible open={moreDatesOpen} onOpenChange={setMoreDatesOpen}>
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ChevronsUpDown className="h-3 w-3" />
-                  {moreDatesOpen ? "Fewer dates" : "More dates"}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-4">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <Controller
-                    name="dates.actualCompletionDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DateField
-                        label="Actual Completion Date"
-                        value={field.value instanceof Date ? field.value : undefined}
-                        onChange={(date) => field.onChange(date)}
-                        disabled={isSubmitting}
-                        placeholder="Select actual completion"
-                        error={errors.dates?.actualCompletionDate?.message}
-                      />
-                    )}
-                  />
-
-                  <Controller
-                    name="dates.contractDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DateField
-                        label="Contract Date"
-                        value={field.value instanceof Date ? field.value : undefined}
-                        onChange={(date) => field.onChange(date)}
-                        disabled={isSubmitting}
-                        placeholder="Select contract date"
-                        error={errors.dates?.contractDate?.message}
-                      />
-                    )}
-                  />
-
-                  <Controller
-                    name="dates.signedContractReceivedDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DateField
-                        label="Signed Contract Received Date"
-                        value={field.value instanceof Date ? field.value : undefined}
-                        onChange={(date) => field.onChange(date)}
-                        disabled={isSubmitting}
-                        placeholder="Select signed contract received"
-                        error={errors.dates?.signedContractReceivedDate?.message}
-                      />
-                    )}
-                  />
-
-                  <Controller
-                    name="dates.issuedOnDate"
-                    control={control}
-                    render={({ field }) => (
-                      <DateField
-                        label="Issued On Date"
-                        value={field.value instanceof Date ? field.value : undefined}
-                        onChange={(date) => field.onChange(date)}
-                        disabled={isSubmitting}
-                        placeholder="Select issued on date"
-                        error={errors.dates?.issuedOnDate?.message}
-                      />
-                    )}
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </section>
 
         {/* Contract Privacy Section */}
-        <AccordionItem value="contract-privacy" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section className="space-y-4 border-b border-border/70 pb-8">
+          <h2 className="text-lg font-semibold text-foreground">
             Contract Privacy
-          </AccordionTrigger>
-          <AccordionContent className="space-y-4 pb-5">
-            <p className="text-xs text-muted-foreground">
+          </h2>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
               Privacy restricts access to project admins and selected non-admin users.
             </p>
 
@@ -1572,18 +1619,18 @@ export function CreateSubcontractForm({
                 </div>
               </>
             )}
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </section>
 
         {/* Invoice Contacts Section - Conditional on Company Selection */}
-        <AccordionItem value="invoice-contacts" className="rounded-lg bg-muted/30 border-none px-5 py-1">
-          <AccordionTrigger className="text-sm font-semibold hover:no-underline">
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">
             Invoice Contacts
-          </AccordionTrigger>
-          <AccordionContent className="pb-5">
+          </h2>
+          <div>
             {!contractCompanyId ? (
               <p className="text-sm text-muted-foreground">
-                Select a contract company above to enable invoice contacts.
+                Select a vendor above to enable invoice contacts.
               </p>
             ) : (
               <div className="space-y-2">
@@ -1601,7 +1648,7 @@ export function CreateSubcontractForm({
                         isLoadingContacts
                           ? "Loading contacts..."
                           : invoiceContactOptions.length === 0
-                            ? "No contacts found for this company"
+                            ? "No contacts found for this vendor"
                             : "Select contacts who can submit invoices..."
                       }
                     />
@@ -1609,13 +1656,13 @@ export function CreateSubcontractForm({
                 />
               </div>
             )}
-          </AccordionContent>
-        </AccordionItem>
+          </div>
+        </section>
 
-        </Accordion>
+        </div>
 
         {/* Footer Actions */}
-        <div className="sticky bottom-0 -mx-6 mt-10 flex items-center justify-between gap-4 border-t bg-card/95 px-6 py-4 backdrop-blur lg:-mx-8 lg:px-8">
+        <div className="mt-10 flex items-center justify-between gap-4 border-t pt-4">
           <p className="text-sm text-muted-foreground">
             <span className="text-destructive">*</span> Required fields
           </p>
@@ -1739,7 +1786,7 @@ export function CreateSubcontractForm({
                   })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

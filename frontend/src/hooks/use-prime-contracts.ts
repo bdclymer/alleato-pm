@@ -13,7 +13,7 @@ export interface PrimeContract {
   project_id: number;
   contract_number: string;
   title: string;
-  client_id: number | null;
+  client_id: string | null;
   vendor_id: string | null;
   contractor_id: string | null;
   architect_engineer_id: string | null;

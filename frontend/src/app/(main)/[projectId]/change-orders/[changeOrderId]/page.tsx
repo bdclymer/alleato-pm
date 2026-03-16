@@ -1368,6 +1368,7 @@ export default function ChangeOrderDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
         </Tabs>
       </PageContainer>
     </>

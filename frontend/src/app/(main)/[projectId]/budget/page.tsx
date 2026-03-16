@@ -56,6 +56,8 @@ import {
 } from "@/lib/budget-filters";
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
+import { openCommentsSidebar } from "@/components/header/comments-sidebar";
+import { BudgetTableCommentsWrapper } from "@/components/budget/budget-table-comments-wrapper";
 
 function BudgetTableSkeleton() {
   return (
@@ -254,8 +256,8 @@ function BudgetPageContent() {
   };
 
   const handleOpenChat = React.useCallback(() => {
-    router.push("/ai-assistant");
-  }, [router]);
+    openCommentsSidebar();
+  }, []);
 
   const handleLockBudget = async () => {
     try {
@@ -1005,7 +1007,7 @@ function BudgetPageContent() {
                 {loading ? (
                   <BudgetTableSkeleton />
                 ) : (
-                  <>
+                  <BudgetTableCommentsWrapper projectId={projectId}>
                     <BudgetTable
                       data={filteredData}
                       grandTotals={grandTotals}
@@ -1022,7 +1024,7 @@ function BudgetPageContent() {
                       onPendingCostChangesClick={handlePendingCostChangesClick}
                       onForecastToCompleteClick={handleForecastToCompleteClick}
                     />
-                  </>
+                  </BudgetTableCommentsWrapper>
                 )}
               </Suspense>
             </div>

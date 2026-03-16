@@ -59,7 +59,7 @@ def _refresh_one(
 
     storage_url = None
     if not dry_run:
-        storage_url = pipeline.store.upload_public_text("meetings", storage_path, markdown)
+        storage_url = pipeline.store.upload_public_text("transcripts", storage_path, markdown)
 
     ingestion = pipeline.ingest_markdown_text(
         markdown,

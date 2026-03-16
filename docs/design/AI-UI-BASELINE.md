@@ -19,6 +19,20 @@ This baseline is mandatory for every new or refactored page.
 4. No deprecated wrappers: `ProjectToolPage`, `AppShell`, `TableLayout`, `GenericDataTable`.
 5. No dynamic Tailwind class construction.
 6. No non-functional UI controls.
+7. For form line-item grids (SOV/cost/invoice line items), match the Direct Costs line-items visual pattern from `frontend/src/components/direct-costs/LineItemsManager.tsx`.
+8. Do not use accordion presentation for the primary line-items block in forms.
+
+## Line Items Pattern (Form Grids)
+
+When implementing editable line-item tables in forms, use this as the default baseline:
+
+- Container: subtle bordered shell with muted table backdrop
+- Header: compact label typography (`text-[11px]`, normal weight, muted foreground)
+- Rows: compact vertical rhythm and consistent input heights
+- Totals: dedicated footer row with right-aligned currency totals
+- Actions: primary `Add Line Item` button below the table
+
+If fields differ from Direct Costs, keep behavior different but preserve this visual structure.
 
 ## Verification Before Merge
 

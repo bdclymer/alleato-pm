@@ -136,9 +136,10 @@ export async function POST(request: Request) {
     // 2. CREATE CLIENT (OWNER)
     // ============================================
     const { data: client, error: clientError } = await supabase
-      .from("clients")
+      .from("companies")
       .insert({
         name: "Test Owner LLC",
+        type: "client",
         status: "active",
       })
       .select()

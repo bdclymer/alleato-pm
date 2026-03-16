@@ -145,7 +145,7 @@ export function PageHeader({
   if (variant === "compact") {
     return (
       <div className={cn("border-b", className)}>
-        <div className="px-3 py-4 sm:px-5 lg:px-7">
+        <div className="py-4">
           <div className="flex items-center justify-between">
             <Inline gap="md" align="center">
               {titleContent || <Heading level={2}>{title}</Heading>}
@@ -160,7 +160,7 @@ export function PageHeader({
 
   // Default variant (includes budget variant behavior)
   return (
-    <div className={cn("px-3 sm:px-5 lg:px-7", className)}>
+    <div className={cn(className)}>
       <div>
         {/* Title and Actions */}
         <div className="flex items-center justify-between gap-2 pt-3 pb-4 min-w-0">
