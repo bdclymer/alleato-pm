@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm run build"
+  "buildCommand": "NODE_OPTIONS='--max-old-space-size=7168' pnpm run build"
 }
