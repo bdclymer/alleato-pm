@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typescript: {
+    // Type checking is handled by pre-commit hooks and CI (tsc --noEmit).
+    // Skipping during build saves significant memory on Vercel's 8GB machines.
+    ignoreBuildErrors: true,
+  },
   productionBrowserSourceMaps: false,
   experimental: {
     webpackMemoryOptimizations: true,
