@@ -3,7 +3,21 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  MoreHorizontal,
+  Pencil,
+  Phone,
+  Plus,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +28,10 @@ import {
   UnifiedTablePage,
   useUnifiedTableState,
   CellBadge,
+  CellEmail,
   CellLink,
+  CellText,
+  TableDateValue,
   type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
@@ -206,6 +223,172 @@ function buildContactTableColumns(
   ];
 }
 
+function ContactPreviewPane({
+  contact,
+  contacts,
+  onSelectContact,
+  onClose,
+}: {
+  contact: ContactTableRow | null;
+  contacts: ContactTableRow[];
+  onSelectContact: (id: string) => void;
+  onClose: () => void;
+}): ReactElement {
+  const router = useRouter();
+  const currentIndex = contact ? contacts.findIndex((c) => c.id === contact.id) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < contacts.length - 1;
+
+  if (!contact) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        <p>Select a contact to preview details.</p>
+      </div>
+    );
+  }
+
+  const typeLabel = contact.type
+    ? contact.type.charAt(0).toUpperCase() + contact.type.slice(1).toLowerCase()
+    : null;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Panel header with navigation */}
+      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onSelectContact(contacts[currentIndex - 1].id)}
+            aria-label="Previous contact"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasNext}
+            onClick={() => hasNext && onSelectContact(contacts[currentIndex + 1].id)}
+            aria-label="Next contact"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentIndex + 1} of {contacts.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={() => router.push(`/directory/contacts/${contact.id}`)}
+            aria-label="Open full page"
+            title="Open full page"
+          >
+            <ArrowUpRight className="h-3 w-3" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Contact header */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <User className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-tight truncate">{contact.full_name}</h3>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {typeLabel && (
+                  <CellBadge value={contact.type} colorMap={CONTACT_TYPE_COLORS} />
+                )}
+                {contact.is_admin && (
+                  <Badge variant="default" className="text-xs">Admin</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Company */}
+        {contact.company && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Company
+            </p>
+            <div className="flex items-center gap-2 text-sm">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              {contact.company_id ? (
+                <a
+                  href={`/directory/companies?companyId=${contact.company_id}`}
+                  className="text-primary hover:underline truncate"
+                >
+                  {contact.company}
+                </a>
+              ) : (
+                <span className="truncate">{contact.company}</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Contact info */}
+        {(contact.email || contact.phone) && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Contact
+            </p>
+            <div className="space-y-2">
+              {contact.email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <CellEmail value={contact.email} />
+                </div>
+              )}
+              {contact.phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <CellText value={contact.phone} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Details */}
+        {contact.created_at && (
+          <div className="px-5 pb-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Details
+            </p>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Added</dt>
+                <dd><TableDateValue value={contact.created_at} /></dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DirectoryContactsPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
@@ -369,6 +552,13 @@ export default function DirectoryContactsPage(): ReactElement {
     () => Array.from(new Set(tableData.map((contact) => contact.type).filter(Boolean))),
     [tableData],
   );
+
+  const selectedContactId = searchParams.get("detail");
+  const selectedContact =
+    (selectedContactId ? tableData.find((c) => c.id === selectedContactId) : null) ||
+    tableData[0] ||
+    null;
+  const activeContactId = selectedContact?.id ?? null;
 
   const tabs = getDirectoryTabs(pathname);
   const onInlineDraftChange = React.useCallback((field: keyof InlineEditDraft, value: string) => {
@@ -681,7 +871,19 @@ export default function DirectoryContactsPage(): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
+          activeRowId: activeContactId,
+          onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
           rowActions: renderRowActions,
+        }}
+        sidePanel={{
+          content: (
+            <ContactPreviewPane
+              contact={selectedContact}
+              contacts={tableData}
+              onSelectContact={(id) => tableState.setSearchParams({ detail: id })}
+              onClose={() => tableState.setSearchParams({ detail: null })}
+            />
+          ),
         }}
         sorting={{
           sortBy: tableState.sortBy,

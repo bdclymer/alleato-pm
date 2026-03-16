@@ -1,26 +1,31 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
+import type { ReactElement } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  Users,
-  Plus,
-  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
   Edit,
+  Plus,
   Trash2,
-  UserPlus,
   UserMinus,
+  UserPlus,
+  Users,
+  X,
 } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
 
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageTabs } from "@/components/layout/PageTabs";
-import { Text } from "@/components/ui/text";
-import { Badge } from "@/components/ui/badge";
+import {
+  CellBadge,
+  CellText,
+  TableDateValue,
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type CellColorMap,
+  type ColumnConfig,
+  type TableColumn,
+} from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/components/tables/DataTable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,14 +54,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getDirectoryTabs } from "@/config/directory-tabs";
-import {
-  useDistributionGroups,
-  useCreateGroup,
-  useUpdateGroup,
-  useDeleteGroup,
-} from "@/hooks/use-distribution-groups";
-import type { DistributionGroupWithMembers } from "@/services/distributionGroupService";
 import {
   Select,
   SelectContent,
@@ -64,33 +61,288 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  useDistributionGroups,
+  useCreateGroup,
+  useUpdateGroup,
+  useDeleteGroup,
+} from "@/hooks/use-distribution-groups";
+import { getDirectoryTabs } from "@/config/directory-tabs";
+import type { DistributionGroupWithMembers } from "@/services/distributionGroupService";
 
-export default function DistributionGroupsPage() {
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type GroupRow = DistributionGroupWithMembers;
+
+// ─── Color maps ──────────────────────────────────────────────────────────────
+
+const STATUS_COLORS: CellColorMap = {
+  active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  inactive: "bg-muted text-muted-foreground",
+};
+
+// ─── Column config ────────────────────────────────────────────────────────────
+
+const groupColumns: ColumnConfig[] = [
+  { id: "name", label: "Group Name", alwaysVisible: true },
+  { id: "description", label: "Description", defaultVisible: true },
+  { id: "member_count", label: "Members", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "created_at", label: "Created", defaultVisible: true },
+];
+
+const groupDefaultVisibleColumns = groupColumns
+  .filter((col) => col.defaultVisible !== false)
+  .map((col) => col.id);
+
+function buildGroupTableColumns(
+  onEdit: (group: GroupRow) => void,
+  onDelete: (group: GroupRow) => void,
+): TableColumn<GroupRow>[] {
+  const colMap = Object.fromEntries(groupColumns.map((c) => [c.id, c]));
+  const col = (id: string) => colMap[id];
+
+  return [
+    {
+      ...col("name"),
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Users className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <CellText value={item.name} className="font-medium" />
+        </div>
+      ),
+      sortValue: (item) => item.name,
+    },
+    {
+      ...col("description"),
+      render: (item) => <CellText value={item.description} emptyLabel="-" />,
+      sortValue: (item) => item.description || "",
+    },
+    {
+      ...col("member_count"),
+      render: (item) => {
+        const count = item.member_count ?? 0;
+        return (
+          <span className={count > 0 ? "text-foreground" : "text-muted-foreground"}>
+            {count} member{count !== 1 ? "s" : ""}
+          </span>
+        );
+      },
+      sortValue: (item) => item.member_count ?? 0,
+    },
+    {
+      ...col("status"),
+      render: (item) => <CellBadge value={item.status} colorMap={STATUS_COLORS} emptyLabel="-" />,
+      sortValue: (item) => item.status || "",
+    },
+    {
+      ...col("created_at"),
+      render: (item) => <TableDateValue value={item.created_at} emptyLabel="-" />,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+    },
+    {
+      id: "actions",
+      label: "",
+      render: (item) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-7 w-7 p-0" aria-label="Row actions">
+              <span className="sr-only">Open menu</span>
+              <span className="text-muted-foreground">•••</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => onEdit(item)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Group
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Add Members
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <UserMinus className="mr-2 h-4 w-4" />
+              Manage Members
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => onDelete(item)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Group
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+      sortValue: () => "",
+    },
+  ];
+}
+
+// ─── Side panel ───────────────────────────────────────────────────────────────
+
+function GroupPreviewPane({
+  group,
+  groups,
+  onSelectGroup,
+  onClose,
+}: {
+  group: GroupRow | null;
+  groups: GroupRow[];
+  onSelectGroup: (id: string) => void;
+  onClose: () => void;
+}): ReactElement {
+  const currentIndex = group ? groups.findIndex((g) => g.id === group.id) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < groups.length - 1;
+
+  if (!group) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        <p>Select a group to preview details.</p>
+      </div>
+    );
+  }
+
+  const memberCount = group.member_count ?? 0;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Panel header — h-11 matches table header height */}
+      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onSelectGroup(groups[currentIndex - 1].id)}
+            aria-label="Previous group"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasNext}
+            onClick={() => hasNext && onSelectGroup(groups[currentIndex + 1].id)}
+            aria-label="Next group"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentIndex + 1} of {groups.length}
+          </span>
+        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-5 w-5"
+          onClick={onClose}
+          aria-label="Close panel"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Group header */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-tight truncate">{group.name}</h3>
+              {group.status && (
+                <div className="mt-1.5">
+                  <CellBadge value={group.status} colorMap={STATUS_COLORS} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        {group.description && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
+              Description
+            </p>
+            <p className="text-sm text-foreground">{group.description}</p>
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="px-5 pb-4">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+            Overview
+          </p>
+          <div className="rounded-md bg-background p-3 w-fit min-w-20">
+            <p className="text-lg font-semibold">{memberCount}</p>
+            <p className="text-xs text-muted-foreground">
+              Member{memberCount !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+
+        {/* Details */}
+        {group.created_at && (
+          <div className="px-5 pb-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Details
+            </p>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Created</dt>
+                <dd>
+                  <TableDateValue value={group.created_at} />
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function DistributionGroupsPage(): ReactElement {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Project selector
   const [projectId, setProjectId] = React.useState("1");
 
+  // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
-  const [editingGroup, setEditingGroup] =
-    React.useState<DistributionGroupWithMembers | null>(null);
-  const [deletingGroup, setDeletingGroup] =
-    React.useState<DistributionGroupWithMembers | null>(null);
+  const [editingGroup, setEditingGroup] = React.useState<GroupRow | null>(null);
+  const [deletingGroup, setDeletingGroup] = React.useState<GroupRow | null>(null);
   const [newGroupName, setNewGroupName] = React.useState("");
   const [newGroupDescription, setNewGroupDescription] = React.useState("");
 
-  const { groups, isLoading, error, refetch } =
-    useDistributionGroups(projectId);
+  // Data hooks
+  const { groups, isLoading, error, refetch } = useDistributionGroups(projectId);
   const createMutation = useCreateGroup(projectId);
   const updateMutation = useUpdateGroup(projectId);
   const deleteMutation = useDeleteGroup(projectId);
 
+  // ─── CRUD handlers (unchanged) ──────────────────────────────────────────────
+
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;
-
     await createMutation.mutateAsync({
       name: newGroupName.trim(),
       description: newGroupDescription.trim() || undefined,
     });
-
     setNewGroupName("");
     setNewGroupDescription("");
     setIsAddDialogOpen(false);
@@ -99,7 +351,6 @@ export default function DistributionGroupsPage() {
 
   const handleUpdateGroup = async () => {
     if (!editingGroup || !newGroupName.trim()) return;
-
     await updateMutation.mutateAsync({
       groupId: editingGroup.id,
       data: {
@@ -107,7 +358,6 @@ export default function DistributionGroupsPage() {
         description: newGroupDescription.trim() || undefined,
       },
     });
-
     setNewGroupName("");
     setNewGroupDescription("");
     setEditingGroup(null);
@@ -116,241 +366,213 @@ export default function DistributionGroupsPage() {
 
   const handleDeleteGroup = async () => {
     if (!deletingGroup) return;
-
     await deleteMutation.mutateAsync(deletingGroup.id);
     setDeletingGroup(null);
     refetch();
   };
 
-  const openEditDialog = (group: DistributionGroupWithMembers) => {
+  const openEditDialog = React.useCallback((group: GroupRow) => {
     setNewGroupName(group.name);
     setNewGroupDescription(group.description || "");
     setEditingGroup(group);
+  }, []);
+
+  // ─── Table state ─────────────────────────────────────────────────────────────
+
+  const tableState = useUnifiedTableState({
+    entityKey: "directory-groups",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "name",
+      sortDirection: "asc",
+      visibleColumns: groupDefaultVisibleColumns,
+      filters: {},
+    },
+  });
+
+  const tableColumns = React.useMemo(
+    () => buildGroupTableColumns(openEditDialog, setDeletingGroup),
+    [openEditDialog],
+  );
+
+  // ─── Side panel selection ────────────────────────────────────────────────────
+
+  const selectedGroupId = searchParams.get("detail");
+  const selectedGroup =
+    (selectedGroupId ? groups.find((g) => g.id === selectedGroupId) : null) ||
+    groups[0] ||
+    null;
+  const activeGroupId = selectedGroup?.id ?? null;
+
+  // ─── Keyboard nav ────────────────────────────────────────────────────────────
+
+  const handleTableKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    visibleItems: GroupRow[],
+  ) => {
+    const target = event.target as HTMLElement | null;
+    if (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName)) {
+      return;
+    }
+    if (visibleItems.length === 0) return;
+
+    const currentIndex = visibleItems.findIndex((g) => g.id === activeGroupId);
+    const hasSelection = currentIndex >= 0;
+    const fallbackIndex = hasSelection ? currentIndex : 0;
+
+    if (event.key === "ArrowDown" || event.key === "j") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.min(visibleItems.length - 1, fallbackIndex + 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+      return;
+    }
+    if (event.key === "ArrowUp" || event.key === "k") {
+      event.preventDefault();
+      const nextIndex = hasSelection ? Math.max(0, fallbackIndex - 1) : 0;
+      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
+    }
   };
 
-  const columns: ColumnDef<DistributionGroupWithMembers>[] = [
-    {
-      accessorKey: "name",
-      header: "Group Name",
-      cell: ({ row }) => {
-        const group = row.original;
-        return (
-          <div className="flex items-center gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-            <Text as="span" weight="medium">
-              {group.name}
-            </Text>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => {
-        const group = row.original;
-        return (
-          <Text as="span" size="sm" tone="muted">
-            {group.description || "-"}
-          </Text>
-        );
-      },
-    },
-    {
-      accessorKey: "member_count",
-      header: "Members",
-      cell: ({ row }) => {
-        const group = row.original;
-        return (
-          <Badge variant="outline">
-            {group.member_count || 0} member
-            {(group.member_count || 0) !== 1 ? "s" : ""}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const group = row.original;
-        return (
-          <Badge variant={group.status === "active" ? "active" : "inactive"}>
-            {group.status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "created_at",
-      header: "Created",
-      cell: ({ row }) => {
-        const group = row.original;
-        if (!group.created_at)
-          return (
-            <Text as="span" tone="muted">
-              -
-            </Text>
-          );
-        return (
-          <Text as="span" size="sm" tone="muted">
-            {new Date(group.created_at).toLocaleDateString()}
-          </Text>
-        );
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const group = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => openEditDialog(group)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Group
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Members
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <UserMinus className="mr-2 h-4 w-4" />
-                Manage Members
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => setDeletingGroup(group)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Group
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  const handleSelectAll = (checked: boolean) => {
+    tableState.setSelectedIds(checked ? groups.map((g) => g.id) : []);
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+    } else {
+      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
+  };
 
   const tabs = getDirectoryTabs(pathname);
-
-  if (isLoading) {
-    return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="flex justify-center items-center py-12">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-              <Text tone="muted">Loading distribution groups...</Text>
-            </div>
-          </div>
-        </PageContainer>
-      </>
-    );
-  }
-
-  if (error) {
-    return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="text-center py-12">
-            <Text tone="destructive">
-              Error loading groups: {error.message}
-            </Text>
-          </div>
-        </PageContainer>
-      </>
-    );
-  }
+  const isFiltered = Boolean(tableState.searchInput);
 
   return (
     <>
-      <ProjectPageHeader
-        title="Directory"
-        description="Manage companies, clients, contacts, users, and employees across your organization"
-        showProjectName={false}
-      />
-      <PageTabs tabs={tabs} />
-      <PageContainer>
-        <div className="space-y-6">
-          {/* Project Selector and Actions Bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Text as="span" size="sm" weight="medium">
-                  Project:
-                </Text>
-                <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Goodwill Bart</SelectItem>
-                    {/* TODO: Load projects dynamically from API */}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Text as="p" size="sm" tone="muted">
-                <Text as="span" weight="medium">
-                  {groups.length}
-                </Text>{" "}
-                distribution group{groups.length !== 1 ? "s" : ""}
-              </Text>
-            </div>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Distribution Group
-            </Button>
-          </div>
-
-          {/* Groups Table */}
-          {groups.length === 0 ? (
-            <div className="p-12 text-center border border-dashed rounded-lg">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                No distribution groups found
-              </h3>
-              <Text tone="muted" className="mb-4">
-                Create distribution groups to easily send communications to
-                multiple users at once.
-              </Text>
+      <UnifiedTablePage
+        header={{
+          title: "Distribution Groups",
+          description:
+            "Manage companies, clients, contacts, users, and employees across your organization",
+          actions: (
+            <div className="flex items-center gap-3">
+              {/* Project selector */}
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="Select project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Goodwill Bart</SelectItem>
+                  {/* TODO: Load projects dynamically from API */}
+                </SelectContent>
+              </Select>
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Distribution Group
               </Button>
             </div>
-          ) : (
-            <div className="bg-card rounded-lg shadow border border-border">
-              <DataTable
-                columns={columns}
-                data={groups}
-                searchKey="name"
-                searchPlaceholder="Search groups..."
-              />
-            </div>
-          )}
-        </div>
-      </PageContainer>
+          ),
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems: groups.length,
+          filteredItems: groups.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search groups...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table"],
+          filters: [],
+          activeFilters: tableState.activeFilters,
+          onFilterChange: tableState.setActiveFilters,
+          onClearFilters: () => tableState.setActiveFilters({}),
+          columns: groupColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: groups,
+          isLoading,
+          isFetching: false,
+          error: error ?? undefined,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          activeRowId: activeGroupId,
+          onTableKeyDown: handleTableKeyDown,
+          onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
+        }}
+        sidePanel={{
+          content: (
+            <GroupPreviewPane
+              group={selectedGroup}
+              groups={groups}
+              onSelectGroup={(id) => tableState.setSearchParams({ detail: id })}
+              onClose={() => tableState.setSearchParams({ detail: null })}
+            />
+          ),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        emptyState={{
+          title: "No distribution groups found",
+          description:
+            "Create distribution groups to easily send communications to multiple users at once.",
+          filteredDescription: "Try adjusting your search.",
+          isFiltered,
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages: 1,
+          perPage: tableState.perPage,
+          onPageChange: (nextPage) => {
+            tableState.setPage(nextPage);
+            tableState.setSearchParams({ page: String(nextPage) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            const parsed = Number(nextPerPage);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            tableState.setPerPage(parsed);
+            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+        features={{
+          enableExport: false,
+          enableBulkDelete: false,
+        }}
+      />
 
       {/* Add Group Dialog */}
       <Modal open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -404,9 +626,7 @@ export default function DistributionGroupsPage() {
         <ModalContent>
           <ModalHeader>
             <ModalTitle>Edit Distribution Group</ModalTitle>
-            <ModalDescription>
-              Update the group name and description.
-            </ModalDescription>
+            <ModalDescription>Update the group name and description.</ModalDescription>
           </ModalHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -452,9 +672,8 @@ export default function DistributionGroupsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Distribution Group</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingGroup?.name}"? This
-              action cannot be undone. All members will be removed from this
-              group.
+              Are you sure you want to delete "{deletingGroup?.name}"? This action cannot be
+              undone. All members will be removed from this group.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

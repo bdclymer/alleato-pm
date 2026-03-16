@@ -43,11 +43,11 @@ export function PageTabs({
       : "px-4 sm:px-6 lg:px-8";
   const navClasses =
     variant === "inline"
-      ? "-mb-px flex overflow-x-auto border-b border-border"
+      ? "-mb-px flex overflow-x-auto"
       : "-mb-px flex overflow-x-auto border-b border-border";
   const buttonClasses =
     variant === "inline"
-      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-1.5 pb-2.5 pt-1.5 text-sm transition-colors"
+      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-1.5 text-sm transition-colors"
       : "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-1.5 pb-3 pt-3 text-sm transition-colors";
 
   return (
@@ -72,7 +72,7 @@ export function PageTabs({
                   buttonClasses,
                   isActive
                     ? "border-primary text-primary font-semibold"
-                    : "border-transparent text-foreground/60 font-medium hover:border-border hover:text-foreground",
+                    : "border-transparent text-foreground/60 font-medium hover:text-foreground",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >

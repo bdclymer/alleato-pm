@@ -3,7 +3,19 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  Mail,
+  Phone,
+  Plus,
+  TrendingUp,
+  User,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -146,6 +158,203 @@ function buildProspectTableColumns(): TableColumn<Prospect>[] {
   ];
 }
 
+function ProspectPreviewPane({
+  prospect,
+  prospects,
+  onSelectProspect,
+  onClose,
+}: {
+  prospect: Prospect | null;
+  prospects: Prospect[];
+  onSelectProspect: (id: string) => void;
+  onClose: () => void;
+}): ReactElement {
+  const currentIndex = prospect
+    ? prospects.findIndex((p) => String(p.id) === String(prospect.id))
+    : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < prospects.length - 1;
+
+  if (!prospect) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        <p>Select a prospect to preview details.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Panel header with navigation */}
+      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onSelectProspect(String(prospects[currentIndex - 1].id))}
+            aria-label="Previous prospect"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasNext}
+            onClick={() => hasNext && onSelectProspect(String(prospects[currentIndex + 1].id))}
+            aria-label="Next prospect"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentIndex + 1} of {prospects.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            aria-label="Open full page"
+            title="Open full page"
+            disabled
+          >
+            <ArrowUpRight className="h-3 w-3" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Prospect header */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-tight truncate">{prospect.company_name}</h3>
+              {prospect.contact_name && (
+                <p className="mt-0.5 text-xs text-muted-foreground truncate">{prospect.contact_name}</p>
+              )}
+              {prospect.status && (
+                <div className="mt-1.5">
+                  <StatusBadge status={prospect.status} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Contact section */}
+        {(prospect.contact_name || prospect.contact_email || prospect.contact_phone) && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Contact
+            </p>
+            <div className="space-y-2">
+              {prospect.contact_name && (
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{prospect.contact_name}</span>
+                </div>
+              )}
+              {prospect.contact_email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <a
+                    href={`mailto:${prospect.contact_email}`}
+                    className="text-primary hover:underline truncate"
+                  >
+                    {prospect.contact_email}
+                  </a>
+                </div>
+              )}
+              {prospect.contact_phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{prospect.contact_phone}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Opportunity section */}
+        <div className="px-5 pb-4">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+            Opportunity
+          </p>
+          <div className="space-y-2">
+            {prospect.estimated_project_value != null && (
+              <div className="flex items-center gap-2 text-sm">
+                <DollarSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="tabular-nums">{formatCurrency(prospect.estimated_project_value)}</span>
+              </div>
+            )}
+            {prospect.probability != null && (
+              <div className="flex items-center gap-2 text-sm">
+                <TrendingUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="tabular-nums">{prospect.probability}% probability</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Details section */}
+        <div className="px-5 pb-5">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+            Details
+          </p>
+          <dl className="space-y-2 text-sm">
+            {prospect.lead_source && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground shrink-0">Lead Source</dt>
+                <dd className="text-right">{prospect.lead_source}</dd>
+              </div>
+            )}
+            {prospect.industry && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground shrink-0">Industry</dt>
+                <dd className="text-right">{prospect.industry}</dd>
+              </div>
+            )}
+            {prospect.assigned_to && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground shrink-0">Assigned To</dt>
+                <dd className="text-right">{prospect.assigned_to}</dd>
+              </div>
+            )}
+            {prospect.next_follow_up && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground shrink-0">Next Follow-Up</dt>
+                <dd className="text-right">{formatDate(prospect.next_follow_up)}</dd>
+              </div>
+            )}
+            {prospect.last_contacted && (
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground shrink-0">Last Contacted</dt>
+                <dd className="text-right">{formatDate(prospect.last_contacted)}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DirectoryProspectsPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
@@ -282,6 +491,16 @@ export default function DirectoryProspectsPage(): ReactElement {
     Boolean(activeFilters.lead_source) ||
     Boolean(activeFilters.industry);
 
+  // Side panel: resolve selected prospect from URL param, fall back to first item
+  const selectedProspectId = searchParams.get("detail");
+  const selectedProspect =
+    (selectedProspectId
+      ? filteredProspects.find((p) => String(p.id) === selectedProspectId)
+      : null) ||
+    filteredProspects[0] ||
+    null;
+  const activeProspectId = selectedProspect ? String(selectedProspect.id) : null;
+
   const handleDeleteProspect = React.useCallback(
     async (prospect: Prospect) => {
       try {
@@ -367,7 +586,19 @@ export default function DirectoryProspectsPage(): ReactElement {
       table={{
         columns: tableColumns,
         getRowId: (item) => String(item.id),
+        activeRowId: activeProspectId,
+        onRowClick: (item) => tableState.setSearchParams({ detail: String(item.id) }),
         onDelete: handleDeleteProspect,
+      }}
+      sidePanel={{
+        content: (
+          <ProspectPreviewPane
+            prospect={selectedProspect}
+            prospects={filteredProspects}
+            onSelectProspect={(id) => tableState.setSearchParams({ detail: id })}
+            onClose={() => tableState.setSearchParams({ detail: null })}
+          />
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,

@@ -3,7 +3,17 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Building2, CircleCheck, Mail, Phone, Plus } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -153,55 +163,168 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
   ];
 }
 
-function VendorPreviewPane({ vendor }: { vendor: Vendor | null }): ReactElement {
+function VendorPreviewPane({
+  vendor,
+  vendors,
+  onSelectVendor,
+  onClose,
+}: {
+  vendor: Vendor | null;
+  vendors: Vendor[];
+  onSelectVendor: (id: string) => void;
+  onClose: () => void;
+}): ReactElement {
+  const currentIndex = vendor ? vendors.findIndex((v) => v.id === vendor.id) : -1;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < vendors.length - 1;
+
   if (!vendor) {
     return (
       <div className="p-6 space-y-3 text-sm text-muted-foreground">
         <p>Select a vendor to preview details.</p>
-        <p className="text-xs">Use arrow keys to move between rows.</p>
       </div>
     );
   }
 
+  const email = normalizeVendorField(vendor.contact_email);
+  const phone = normalizeVendorField(vendor.contact_phone);
+  const location = [vendor.city, vendor.state].filter(Boolean).join(", ");
+
   return (
-    <div className="p-6 space-y-5">
-      <div className="space-y-1">
-        <p className="text-sm font-semibold leading-tight">{vendor.name}</p>
-        {vendor.legal_name ? (
-          <p className="text-xs text-muted-foreground">{vendor.legal_name}</p>
-        ) : null}
+    <div className="flex flex-col h-full">
+      {/* Panel header with navigation */}
+      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasPrev}
+            onClick={() => hasPrev && onSelectVendor(vendors[currentIndex - 1].id)}
+            aria-label="Previous vendor"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            disabled={!hasNext}
+            onClick={() => hasNext && onSelectVendor(vendors[currentIndex + 1].id)}
+            aria-label="Next vendor"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs text-muted-foreground ml-1">
+            {currentIndex + 1} of {vendors.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={() => window.open(`/directory/vendors/${vendor.id}`, "_blank")}
+            aria-label="Open full page"
+            title="Open full page"
+          >
+            <ArrowUpRight className="h-3 w-3" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
 
-      <dl className="space-y-3 text-xs">
-        <div>
-          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
-            <CircleCheck className="h-3.5 w-3.5" />
-            Status
-          </dt>
-          <dd className="text-foreground mt-1">{vendor.is_active ? "Active" : "Inactive"}</dd>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Vendor header */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold leading-tight truncate">{vendor.name}</h3>
+              {vendor.legal_name && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">{vendor.legal_name}</p>
+              )}
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <StatusBadge status={vendor.is_active ? "Active" : "Inactive"} />
+                {vendor.vendor_class && (
+                  <StatusBadge status={vendor.vendor_class} />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
-            <Building2 className="h-3.5 w-3.5" />
-            Vendor Class
-          </dt>
-          <dd className="text-foreground mt-1">{vendor.vendor_class || "-"}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
-            <Mail className="h-3.5 w-3.5" />
-            Email
-          </dt>
-          <dd className="text-foreground mt-1">{normalizeVendorField(vendor.contact_email) || "-"}</dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground inline-flex items-center gap-1.5">
-            <Phone className="h-3.5 w-3.5" />
-            Phone
-          </dt>
-          <dd className="text-foreground mt-1">{normalizeVendorField(vendor.contact_phone) || "-"}</dd>
-        </div>
-      </dl>
+
+        {/* Contact section */}
+        {(email || phone) && (
+          <div className="px-5 pb-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Contact
+            </p>
+            <div className="space-y-2">
+              {phone && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{phone}</span>
+                </div>
+              )}
+              {email && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <a href={`mailto:${email}`} className="text-primary hover:underline truncate">
+                    {email}
+                  </a>
+                </div>
+              )}
+              {location && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>{location}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Details section */}
+        {(vendor.payment_method || vendor.terms || vendor.is_1099_vendor != null) && (
+          <div className="px-5 pb-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              Details
+            </p>
+            <dl className="space-y-2 text-sm">
+              {vendor.payment_method && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Payment Method</dt>
+                  <dd>{vendor.payment_method}</dd>
+                </div>
+              )}
+              {vendor.terms && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Terms</dt>
+                  <dd>{vendor.terms}</dd>
+                </div>
+              )}
+              {vendor.is_1099_vendor != null && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">1099 Vendor</dt>
+                  <dd>{vendor.is_1099_vendor ? "Yes" : "No"}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -448,7 +571,14 @@ export default function DirectoryVendorsPage(): ReactElement {
         onDelete: handleDeleteVendor,
       }}
       sidePanel={{
-        content: <VendorPreviewPane vendor={selectedVendor} />,
+        content: (
+          <VendorPreviewPane
+            vendor={selectedVendor}
+            vendors={filteredVendors}
+            onSelectVendor={(id) => tableState.setSearchParams({ detail: id })}
+            onClose={() => tableState.setSearchParams({ detail: null })}
+          />
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,

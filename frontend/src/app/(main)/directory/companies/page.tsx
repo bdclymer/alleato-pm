@@ -241,27 +241,27 @@ function CompanyPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 py-2.5 border-b border-border">
+      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7"
+            className="h-5 w-5"
             disabled={!hasPrev}
             onClick={() => hasPrev && onSelectCompany(companies[currentIndex - 1].id)}
             aria-label="Previous company"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7"
+            className="h-5 w-5"
             disabled={!hasNext}
             onClick={() => hasNext && onSelectCompany(companies[currentIndex + 1].id)}
             aria-label="Next company"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
           <span className="text-xs text-muted-foreground ml-1">
             {currentIndex + 1} of {companies.length}
@@ -271,21 +271,21 @@ function CompanyPreviewPane({
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7"
+            className="h-5 w-5"
             onClick={() => onOpenCompanyPage(company)}
             aria-label="Open full page"
             title="Open full page"
           >
-            <ArrowUpRight className="h-3.5 w-3.5" />
+            <ArrowUpRight className="h-3 w-3" />
           </Button>
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7"
+            className="h-5 w-5"
             onClick={onClose}
             aria-label="Close panel"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
       </div>
@@ -587,16 +587,16 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   return (
     <UnifiedTablePage
       header={{
-        title: "Company Directory: Companies",
+        title: "Companies",
         description:
           "Manage companies, clients, contacts, users, and employees across your organization",
         actions: (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="default" className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button size="sm" variant="default" className="bg-primary hover:bg-primary/90">
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
                 Add
-                <ChevronDown className="ml-2 h-4 w-4" />
+                <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">

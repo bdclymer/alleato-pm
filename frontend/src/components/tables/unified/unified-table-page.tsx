@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, MoreHorizontal, Pin, PinOff, Trash2, X } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -814,7 +814,7 @@ export function UnifiedTablePage<T>({
     <>
       {headerContent}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className="pt-1 sm:pt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div className="pt-1 sm:pt-2 pb-3 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           {!toolbarInlineWithHeader ? tableToolbar : null}
         </div>
@@ -854,8 +854,49 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
+      {/* Mobile card view */}
       {showTable && shouldRenderTableView && (
-        <div className={cn("mt-4", data.isFetching && "opacity-70")}>
+        <div className={cn("sm:hidden", data.isFetching && "opacity-70")}>
+          <div className="divide-y divide-border">
+            {paginatedItems.map((item) => {
+              const rowId = table.getRowId(item);
+              const isActive = table.activeRowId === rowId;
+              // Use first column (alwaysVisible / name) as title, rest as details
+              const titleCol = orderedVisibleColumns[0];
+              const detailCols = orderedVisibleColumns.slice(1, 4);
+              return (
+                <button
+                  key={rowId}
+                  type="button"
+                  className={cn(
+                    "w-full text-left px-4 py-3 cursor-pointer transition-colors",
+                    isActive ? "bg-muted" : "active:bg-muted/60",
+                  )}
+                  onClick={() => activateRow(item)}
+                >
+                  {titleCol && (
+                    <div className="text-sm font-medium truncate">{titleCol.render(item)}</div>
+                  )}
+                  {detailCols.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      {detailCols.map((col) => (
+                        <span key={col.id} className="inline-flex items-center gap-1 truncate max-w-[10rem]">
+                          <span className="text-muted-foreground/60">{col.label}:</span>
+                          <span className="text-foreground/80">{col.render(item)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Desktop table view */}
+      {showTable && shouldRenderTableView && (
+        <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
           <div
             className={cn(
               "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
@@ -1062,7 +1103,7 @@ export function UnifiedTablePage<T>({
                     className={cn(
                       "group/row cursor-pointer transition-colors duration-150",
                       "hover:bg-muted",
-                      table.activeRowId === table.getRowId(item) && "bg-accent",
+                      table.activeRowId === table.getRowId(item) && "bg-muted",
                       selectedIds.includes(table.getRowId(item)) && "bg-muted/50",
                     )}
                     style={style}
@@ -1303,7 +1344,9 @@ export function UnifiedTablePage<T>({
   const leftPaneContent = (
     <>
       {aboveTableContent}
-      {tableAreaContent}
+      <div className="border-t border-border">
+        {tableAreaContent}
+      </div>
     </>
   );
 
@@ -1336,12 +1379,12 @@ export function UnifiedTablePage<T>({
                   : undefined
               }
             >
-              <div className="min-w-0">{tableAreaContent}</div>
+              <div className="min-w-0 border-t border-border">{tableAreaContent}</div>
 
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:block lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] bg-muted border-l border-border relative",
+                  "hidden lg:flex lg:flex-col lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] bg-muted border-l border-t border-border relative",
                   panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
                   sidePanel.widthClassName,
                 )}
@@ -1353,7 +1396,9 @@ export function UnifiedTablePage<T>({
                     aria-hidden="true"
                   />
                 )}
-                {sidePanel.content}
+                <div className="flex-1 flex flex-col min-h-0">
+                  {sidePanel.content}
+                </div>
               </aside>
 
               {/* Collapse/expand toggle button */}
@@ -1363,13 +1408,13 @@ export function UnifiedTablePage<T>({
                   onClick={togglePanelCollapsed}
                   className={cn(
                     "hidden lg:flex items-center justify-center",
-                    "absolute z-20 top-1/2 -translate-y-1/2",
-                    "h-7 w-5 rounded-l-md bg-muted border border-r-0 border-border",
+                    "fixed z-20 top-1/2 -translate-y-1/2",
+                    "h-7 w-5 rounded-md bg-muted border border-border shadow-sm",
                     "text-muted-foreground hover:text-foreground hover:bg-accent",
                     "transition-colors cursor-pointer",
                   )}
                   style={{
-                    right: panelCollapsed ? 0 : panelWidth - 1,
+                    right: panelCollapsed ? -2 : panelWidth - 10,
                     transition: isResizingPanel
                       ? "none"
                       : "right 200ms ease-in-out",
@@ -1389,6 +1434,26 @@ export function UnifiedTablePage<T>({
           leftPaneContent
         )}
       </PageContainer>
+
+      {/* Mobile side panel overlay */}
+      {sidePanel && table.activeRowId && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background sm:hidden">
+          <div className="flex items-center justify-between border-b border-border px-4 h-12">
+            <span className="text-sm font-medium">Details</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => table.onRowClick?.(null as unknown as T)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {sidePanel.content}
+          </div>
+        </div>
+      )}
 
       {table.onDelete && (
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

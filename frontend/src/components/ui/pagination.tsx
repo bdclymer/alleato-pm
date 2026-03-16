@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ButtonProps, buttonVariants } from "@/components/ui/button";
+import { Button, type ButtonProps, buttonVariants } from "@/components/ui/button";
 
 // Simple Pagination Component (for basic use cases)
 type SimplePaginationProps = {
@@ -27,14 +27,17 @@ export function SimplePagination({
     >
       <ul className="flex items-center justify-center flex-wrap gap-1 text-muted-foreground">
         <li>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={currentPage === 1}
             aria-label="Previous page"
             onClick={() => onPageChange(currentPage - 1)}
-            className="h-8 rounded-md px-2.5 text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none"
+            className="h-8 gap-1 text-xs font-medium text-muted-foreground"
           >
+            <ChevronLeft className="h-3.5 w-3.5" />
             Previous
-          </button>
+          </Button>
         </li>
 
         {Array.from({ length: totalPages }, (_, index) => {
@@ -92,14 +95,17 @@ export function SimplePagination({
         })}
 
         <li>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={currentPage === totalPages}
             aria-label="Next page"
             onClick={() => onPageChange(currentPage + 1)}
-            className="h-8 rounded-md px-2.5 text-xs font-medium hover:bg-accent disabled:opacity-40 disabled:pointer-events-none"
+            className="h-8 gap-1 text-xs font-medium text-muted-foreground"
           >
             Next
-          </button>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </li>
       </ul>
     </nav>
@@ -116,27 +122,27 @@ function SimplePaginationButton({
   onPageChange: (page: number) => void;
 }) {
   return (
-    <button
+    <Button
+      variant={isActive ? "default" : "ghost"}
+      size="sm"
       aria-label={`Go to page ${page}`}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "h-8 min-w-8 rounded-md px-2 shrink-0 text-xs font-medium",
-        isActive
-          ? "bg-foreground text-background"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+        "h-8 min-w-8 px-2 text-xs font-medium",
+        !isActive && "text-muted-foreground",
       )}
       onClick={() => onPageChange(page)}
     >
       {page}
-    </button>
+    </Button>
   );
 }
 
 function SimplePaginationEllipsis() {
   return (
-    <button className="h-8 min-w-8 rounded-md px-2 shrink-0 text-xs text-muted-foreground cursor-default">
-      ...
-    </button>
+    <span className="flex h-8 min-w-8 items-center justify-center text-xs text-muted-foreground">
+      <MoreHorizontal className="h-4 w-4" />
+    </span>
   );
 }
 
