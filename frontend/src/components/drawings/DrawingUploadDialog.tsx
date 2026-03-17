@@ -4,16 +4,14 @@ import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,12 +31,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 
 import { useDrawingUpload } from "@/hooks/use-drawing-upload";
-import { useDrawingAreas } from "@/hooks/use-drawing-areas";
+import { useDrawingSets } from "@/hooks/use-drawing-sets";
 import {
   uploadDrawingFormSchema,
   type UploadDrawingFormData,
@@ -46,15 +43,16 @@ import {
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
-  type DrawingUploadProgress,
   type DrawingArea,
 } from "@/types/drawings.types";
+import { useDrawingAreas } from "@/hooks/use-drawing-areas";
 import { cn } from "@/lib/utils";
 
 interface DrawingUploadDialogProps {
   projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   defaultAreaId?: string;
-  children?: React.ReactNode;
   onUploadComplete?: () => void;
 }
 
@@ -67,14 +65,15 @@ interface FileInfo {
 
 export function DrawingUploadDialog({
   projectId,
-  defaultAreaId,
-  children,
+  open,
+  onOpenChange,
   onUploadComplete,
 }: DrawingUploadDialogProps) {
-  const [open, setOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [newSetName, setNewSetName] = useState("");
 
+  const { data: sets = [] } = useDrawingSets(projectId);
   const { data: areas = [] } = useDrawingAreas(projectId);
   const { uploadDrawing, uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
 
@@ -82,67 +81,80 @@ export function DrawingUploadDialog({
     resolver: zodResolver(uploadDrawingFormSchema),
     reValidateMode: "onBlur",
     defaultValues: {
-      drawing_number: "",
-      title: "",
-      revision_number: "A",
-      received_date: new Date().toISOString(),
+      drawing_set_id: "",
+      drawing_date: "",
+      received_date: "",
     },
   });
 
   const handleFilesSelected = (files: File[]) => {
-    const newFiles = files.map(file => ({
+    const newFiles = files.map((file) => ({
       name: file.name,
       size: file.size,
       type: file.type,
       file,
     }));
-
-    setSelectedFiles(prev => [...prev, ...newFiles]);
-
-    // Auto-populate drawing number and title from first file if not already set
-    if (!form.getValues('drawing_number') && files.length > 0) {
-      const fileName = files[0].name.replace(/\.[^/.]+$/, "");
-      form.setValue('drawing_number', fileName);
-      form.setValue('title', fileName);
-    }
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUpload = async (data: UploadDrawingFormData) => {
     if (selectedFiles.length === 0) {
-      toast.error("Please select at least one file to upload");
+      toast.error("You must attach a file");
       return;
     }
 
     clearErrors();
 
     try {
-      if (selectedFiles.length === 1) {
-        // Single file upload with detailed metadata
-        await uploadDrawing(selectedFiles[0].file, data);
-      } else {
-        // Multiple file upload with shared metadata
-        const fileList = new DataTransfer();
-        selectedFiles.forEach(fileInfo => fileList.items.add(fileInfo.file));
-        await uploadMultipleDrawings(fileList.files, data);
+      let setId = data.drawing_set_id;
+
+      // Create new set if user typed a name instead of selecting existing
+      if (setId === "__new__") {
+        if (!newSetName.trim()) {
+          toast.error("Please enter a name for the new drawing set");
+          return;
+        }
+        const res = await fetch(`/api/projects/${projectId}/drawings/sets`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
+        });
+        if (!res.ok) {
+          toast.error("Failed to create drawing set");
+          return;
+        }
+        const newSet = await res.json();
+        setId = newSet.id;
       }
 
-      toast.success(`Successfully uploaded ${selectedFiles.length} drawing${selectedFiles.length > 1 ? 's' : ''}`);
+      const uploadData = { ...data, drawing_set_id: setId };
 
-      // Reset form and close dialog
+      if (selectedFiles.length === 1) {
+        await uploadDrawing(selectedFiles[0].file, uploadData);
+      } else {
+        const fileList = new DataTransfer();
+        selectedFiles.forEach((fileInfo) => fileList.items.add(fileInfo.file));
+        await uploadMultipleDrawings(fileList.files, uploadData);
+      }
+
+      toast.success(
+        `Successfully uploaded ${selectedFiles.length} drawing${selectedFiles.length > 1 ? "s" : ""}`
+      );
+
       form.reset();
       setSelectedFiles([]);
-      setUploadProgress({});
-      setOpen(false);
+      setShowAdvanced(false);
+      onOpenChange(false);
       onUploadComplete?.();
-
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error("Upload failed:", error);
       toast.error("Upload failed", {
-        description: error instanceof Error ? error.message : "An unexpected error occurred"
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred",
       });
     }
   };
@@ -154,260 +166,136 @@ export function DrawingUploadDialog({
   };
 
   const flatAreas = React.useMemo(() => {
-    const flatten = (areasList: DrawingArea[], depth = 0): Array<{id: string, name: string, depth: number}> => {
+    const flatten = (
+      areasList: DrawingArea[],
+      depth = 0
+    ): Array<{ id: string; name: string; depth: number }> => {
       return areasList.flatMap((area: DrawingArea) => [
         { id: area.id, name: area.name, depth },
-        ...flatten(area.children || [], depth + 1)
+        ...flatten(area.children || [], depth + 1),
       ]);
     };
     return flatten(areas);
   }, [areas]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload Drawings
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Upload Drawings</DialogTitle>
-          <DialogDescription>
-            Upload one or more drawing files with metadata. Supported formats: PDF, PNG, JPEG, TIFF.
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleUpload)} className="space-y-6">
-            {/* File Upload Section */}
-            <div className="space-y-4">
-              <FileUploadField
-                label="Drawing Files"
-                accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
-                multiple
-                maxSize={500 * 1024 * 1024} // 500MB
-                onFilesSelected={handleFilesSelected}
-                hint="Drag and drop files here or click to browse. Maximum 500MB per file."
-                required
-              />
+            {/* File Upload */}
+            <FileUploadField
+              label=""
+              accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
+              multiple
+              maxSize={500 * 1024 * 1024}
+              onFilesSelected={handleFilesSelected}
+              hint="or Drag & Drop"
+              required
+            />
 
-              {/* Selected Files List */}
-              {selectedFiles.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Selected Files ({selectedFiles.length})</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {selectedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="flex-shrink-0">
-                            {uploadProgress[file.name] ? (
-                              <div className="flex items-center gap-2">
-                                {uploadProgress[file.name] === 100 ? (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-                                )}
-                              </div>
-                            ) : (
-                              <Upload className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{file.name}</p>
-                            <div className="flex items-center gap-2">
-                              <p className="text-xs text-muted-foreground">
-                                {formatFileSize(file.size)}
-                              </p>
-                              <Badge variant="secondary" className="text-xs">
-                                {file.type.split('/')[1]?.toUpperCase()}
-                              </Badge>
-                            </div>
-                            {uploadProgress[file.name] && (
-                              <Progress
-                                value={uploadProgress[file.name]}
-                                className="h-1 mt-1"
-                              />
-                            )}
-                          </div>
+            {/* Selected Files */}
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-md"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(file.size)}
+                          </p>
+                          <Badge variant="secondary" className="text-xs">
+                            {file.type.split("/")[1]?.toUpperCase()}
+                          </Badge>
                         </div>
-                        {!isUploading && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeFile(index)}
-                          >
-                            Remove
-                          </Button>
-                        )}
                       </div>
-                    ))}
+                    </div>
+                    {!isUploading && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="text-muted-foreground"
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
+
+            {/* Drawing Set */}
+            <FormField
+              control={form.control}
+              name="drawing_set_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Drawing Set <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <p className="text-sm text-muted-foreground -mt-1">
+                    Group and label drawings into a collection as they are issued to keep them organized.
+                  </p>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={isUploading}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select or Create set" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sets.map((set) => (
+                        <SelectItem key={set.id} value={set.id}>
+                          {set.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__new__">+ Create new set...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
+            />
 
-            {/* Metadata Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="drawing_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Drawing Number *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="A-101"
-                        disabled={isUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* New set name input when "Create new set" is selected */}
+            {form.watch("drawing_set_id") === "__new__" && (
+              <FormItem>
+                <FormLabel>New Set Name</FormLabel>
+                <Input
+                  value={newSetName}
+                  onChange={(e) => setNewSetName(e.target.value)}
+                  placeholder="e.g. IFC Set 01 - 2024"
+                  disabled={isUploading}
+                />
+              </FormItem>
+            )}
 
-              <FormField
-                control={form.control}
-                name="revision_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Revision</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="A"
-                        disabled={isUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Title *</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="First Floor Plan"
-                        disabled={isUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="discipline"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Discipline</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={isUploading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select discipline" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {DRAWING_DISCIPLINES.map((discipline) => (
-                          <SelectItem key={discipline} value={discipline}>
-                            {discipline}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="drawing_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={isUploading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {DRAWING_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="area_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Drawing Area</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={isUploading}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select area" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {flatAreas.map((area) => (
-                          <SelectItem key={area.id} value={area.id}>
-                            <span
-                              style={{ paddingLeft: `${area.depth * 16}px` }}
-                              className={cn(area.depth > 0 && "text-muted-foreground")}
-                            >
-                              {area.name}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="drawing_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Drawing Date</FormLabel>
+                    <FormLabel>Default Drawing Date</FormLabel>
+                    <p className="text-sm text-muted-foreground -mt-1">
+                      Enter the date the drawing was authored.
+                    </p>
                     <FormControl>
                       <Input
                         {...field}
@@ -422,15 +310,17 @@ export function DrawingUploadDialog({
 
               <FormField
                 control={form.control}
-                name="description"
+                name="received_date"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Description</FormLabel>
+                  <FormItem>
+                    <FormLabel>Default Received Date</FormLabel>
+                    <p className="text-sm text-muted-foreground -mt-1">
+                      Enter the date the drawings were received from the design team.
+                    </p>
                     <FormControl>
-                      <Textarea
+                      <Input
                         {...field}
-                        placeholder="Additional notes about this drawing..."
-                        rows={3}
+                        type="date"
                         disabled={isUploading}
                       />
                     </FormControl>
@@ -440,49 +330,232 @@ export function DrawingUploadDialog({
               />
             </div>
 
-            {/* Error Display */}
+            {/* Advanced Options */}
+            <div className="border-t pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+              >
+                {showAdvanced ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                Advanced Options
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="drawing_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Drawing Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="A-101" disabled={isUploading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="revision_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Revision</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="A" disabled={isUploading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="First Floor Plan"
+                            disabled={isUploading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="discipline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discipline</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isUploading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select discipline" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {DRAWING_DISCIPLINES.map((d) => (
+                              <SelectItem key={d} value={d}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="drawing_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isUploading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {DRAWING_TYPES.map((t) => (
+                              <SelectItem key={t} value={t}>
+                                {t}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="area_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Drawing Area</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={isUploading}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select area" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {flatAreas.map((area) => (
+                              <SelectItem key={area.id} value={area.id}>
+                                <span
+                                  style={{ paddingLeft: `${area.depth * 16}px` }}
+                                  className={cn(area.depth > 0 && "text-muted-foreground")}
+                                >
+                                  {area.name}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder="Additional notes about this drawing..."
+                            rows={3}
+                            disabled={isUploading}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Errors */}
             {errors.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-4 w-4" />
                   <span className="text-sm font-medium">Upload Errors:</span>
                 </div>
-                <div className="space-y-1">
-                  {errors.map((error, index) => (
-                    <div key={index} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                      <strong>{error.fileName}:</strong> {error.error}
-                    </div>
-                  ))}
-                </div>
+                {errors.map((error, index) => (
+                  <div
+                    key={index}
+                    className="text-sm text-destructive bg-destructive/10 p-2 rounded"
+                  >
+                    <strong>{error.fileName}:</strong> {error.error}
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-4 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={isUploading}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={selectedFiles.length === 0 || isUploading}
-              >
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload {selectedFiles.length > 0 && `(${selectedFiles.length})`}
-                  </>
-                )}
-              </Button>
+            {/* Validation hint */}
+            {selectedFiles.length === 0 && form.formState.isSubmitted && (
+              <p className="text-sm text-destructive">You must attach a file</p>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <p className="text-xs text-muted-foreground">* Required fields</p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                  disabled={isUploading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Process"
+                  )}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

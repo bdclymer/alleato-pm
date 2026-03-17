@@ -45,6 +45,8 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "access", label: "Access", defaultVisible: true },
 ];
 
+type PortfolioScope = "all" | "client" | "internal";
+
 // Map frontend field keys to database column names
 const FIELD_TO_DB_COLUMN: Record<string, string> = {
   name: "name",
@@ -390,6 +392,9 @@ export default function PortfolioPage() {
   const [loading, setLoading] = React.useState(true);
   const [editingProject, setEditingProject] = React.useState<Project | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const scopeParam = searchParams.get("scope");
+  const activeScope: PortfolioScope =
+    scopeParam === "client" || scopeParam === "internal" ? scopeParam : "all";
 
   const parseProjectsResponse = React.useCallback(
     async (response: Response) => {
@@ -641,10 +646,67 @@ export default function PortfolioPage() {
 
   const activeFilters = tableState.activeFilters;
 
+  const projectTabs = React.useMemo(() => {
+    const countByScope = projects.reduce(
+      (acc, project) => {
+        const access = (project.access ?? "").toLowerCase();
+        if (access.includes("client")) {
+          acc.client += 1;
+        }
+        if (access.includes("internal")) {
+          acc.internal += 1;
+        }
+        acc.all += 1;
+        return acc;
+      },
+      { all: 0, client: 0, internal: 0 },
+    );
+
+    const buildScopeHref = (scope: PortfolioScope) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", "1");
+
+      if (scope === "all") {
+        params.delete("scope");
+      } else {
+        params.set("scope", scope);
+      }
+
+      const query = params.toString();
+      return query ? `${pathname}?${query}` : pathname;
+    };
+
+    return [
+      {
+        label: "All",
+        href: buildScopeHref("all"),
+        count: countByScope.all,
+        isActive: activeScope === "all",
+      },
+      {
+        label: "Clients",
+        href: buildScopeHref("client"),
+        count: countByScope.client,
+        isActive: activeScope === "client",
+      },
+      {
+        label: "Internal",
+        href: buildScopeHref("internal"),
+        count: countByScope.internal,
+        isActive: activeScope === "internal",
+      },
+    ];
+  }, [activeScope, pathname, projects, searchParams]);
+
   const filteredProjects = React.useMemo(() => {
     const normalizedSearch = tableState.debouncedSearch.trim().toLowerCase();
 
     return projects.filter((project) => {
+      const normalizedAccess = (project.access ?? "").toLowerCase();
+      const scopeMatch =
+        activeScope === "all" ||
+        (activeScope === "client" && normalizedAccess.includes("client")) ||
+        (activeScope === "internal" && normalizedAccess.includes("internal"));
       const clientMatch =
         !activeFilters.client ||
         (project.client ?? "").toLowerCase() ===
@@ -658,7 +720,7 @@ export default function PortfolioPage() {
         (project.category ?? "").toLowerCase() ===
           String(activeFilters.category).toLowerCase();
 
-      if (!clientMatch || !phaseMatch || !categoryMatch) return false;
+      if (!scopeMatch || !clientMatch || !phaseMatch || !categoryMatch) return false;
 
       if (!normalizedSearch) return true;
 
@@ -676,7 +738,7 @@ export default function PortfolioPage() {
         .map((value) => (value ?? "").toLowerCase())
         .some((value) => value.includes(normalizedSearch));
     });
-  }, [activeFilters.category, activeFilters.client, activeFilters.phase, projects, tableState.debouncedSearch]);
+  }, [activeFilters.category, activeFilters.client, activeFilters.phase, activeScope, projects, tableState.debouncedSearch]);
 
   const handleFilterChange = (nextFilters: Record<string, FilterValue>) => {
     tableState.setActiveFilters(nextFilters);
@@ -909,6 +971,7 @@ export default function PortfolioPage() {
           </Button>
         ),
       }}
+      tabs={projectTabs}
       toolbar={{
         totalItems: projects.length,
         filteredItems: filteredProjects.length,

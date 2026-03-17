@@ -44,8 +44,8 @@ import {
 } from "@/components/ui/table";
 import { Project } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
-import { EditableCell } from "../../components/portfolio/editable-cell";
-import { EditProjectDialog } from "../../components/portfolio/edit-project-dialog";
+import { EditableCell } from "../../../components/portfolio/editable-cell";
+import { EditProjectDialog } from "../../../components/portfolio/edit-project-dialog";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -373,7 +373,7 @@ export function ProjectsTable({
                 return (
                   <div
                     key={row.id}
-                    className="group relative bg-card border border-border rounded-lg p-4 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 transition-all duration-300"
+                    className="group relative bg-card border border-border rounded-lg p-4 hover:border-border/80 hover:-translate-y-1 transition-all duration-300"
                   >
                     <button
                       type="button"
@@ -598,7 +598,7 @@ export function ProjectsTable({
       {/* Desktop Table View - hidden on small screens */}
       <div className="flex-1 overflow-x-auto overflow-y-auto hidden md:block">
         <Table>
-          <TableHeader className="sticky top-0 backdrop-blur-sm z-10">
+          <TableHeader className="sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow
                 key={headerGroup.id}
@@ -607,10 +607,10 @@ export function ProjectsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-xs font-semibold text-foreground/90 py-4 px-4 backdrop-blur-sm"
+                    className="text-xs font-semibold text-foreground/90 py-4 px-4"
                     style={{
                       width: header.getSize(),
-                      ...getStickyStyles(header.column, "rgb(249 250 251 / 0.8)"),
+                      ...getStickyStyles(header.column, "hsl(var(--background))"),
                     }}
                   >
                     {header.isPlaceholder
@@ -638,7 +638,7 @@ export function ProjectsTable({
                       className="py-4 px-4 text-sm transition-colors duration-200"
                       style={{
                         width: cell.column.getSize(),
-                        ...getStickyStyles(cell.column, "#fff"),
+                        ...getStickyStyles(cell.column, "hsl(var(--card))"),
                       }}
                     >
                       {flexRender(

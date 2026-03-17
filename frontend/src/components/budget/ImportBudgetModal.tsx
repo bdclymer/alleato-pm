@@ -290,8 +290,8 @@ export function ImportBudgetModal({
                 className={cn(
                   "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
                   isDragging
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-border hover:border-gray-400 hover:bg-muted",
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-border hover:bg-muted",
                 )}
               >
                 <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />

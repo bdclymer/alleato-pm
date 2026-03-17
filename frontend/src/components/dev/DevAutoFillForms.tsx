@@ -8,6 +8,8 @@ const BUTTON_ATTR = "data-dev-autofill-button";
 const DISABLED_ATTR = "data-dev-autofill-disabled";
 const AUTOFILL_EVENT = "dev-autofill-form";
 const DISABLED_PATHS = new Set<string>(["/template/form-standard"]);
+const LIVEBLOCKS_FORM_SELECTOR =
+  ".lb-composer, .lb-thread-composer, .lb-floating";
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -276,6 +278,9 @@ function enhanceForm(form: HTMLFormElement): void {
     return;
   }
   if (form.hasAttribute(DISABLED_ATTR)) {
+    return;
+  }
+  if (form.closest(LIVEBLOCKS_FORM_SELECTOR)) {
     return;
   }
 

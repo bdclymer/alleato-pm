@@ -132,12 +132,12 @@ export function CreateBudgetLineItemsModal({
       size="xl"
     >
       <ModalBody className="min-h-[420px] space-y-6 bg-background">
-        <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-white px-4 py-4 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+        <div className="rounded-xl border border-border bg-muted px-4 py-4 shadow-sm flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
               Batch Creation
             </p>
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-muted-foreground">
               Add one or many lines with clean, mobile-first cards.
             </p>
           </div>
@@ -151,7 +151,7 @@ export function CreateBudgetLineItemsModal({
           <div className="flex flex-col items-center justify-center py-16">
             <div className="text-center">
               <div className="mb-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-400 rounded-2xl text-white shadow-lg shadow-orange-200/50">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 text-primary rounded-lg">
                   <Plus className="h-8 w-8" />
                 </div>
               </div>
@@ -175,23 +175,23 @@ export function CreateBudgetLineItemsModal({
           // Table with line items
           <div className="space-y-4">
             {/* Mobile: Cards, Desktop: Table */}
-            <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-background">
+            <div className="hidden sm:block overflow-x-auto rounded-xl border border-border shadow-sm bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800 w-[45%]">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground w-[45%]">
                       Budget Code <span className="text-red-500">*</span>
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800 w-[25%]">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground w-[25%]">
                       Qty <span className="text-red-500">*</span>
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800 w-[25%]">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground w-[25%]">
                       UOM
                     </th>
                     <th className="px-4 py-4 w-[5%]"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {items.map((item, index) => (
                     <tr
                       key={item.id}
@@ -277,10 +277,10 @@ export function CreateBudgetLineItemsModal({
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="border border-slate-200 rounded-xl p-4 space-y-4 shadow-sm bg-background/90"
+                  className="border border-border rounded-xl p-4 space-y-4 shadow-sm bg-background/90"
                 >
                   <div className="flex justify-between items-start">
-                    <span className="text-sm font-semibold text-slate-800">
+                    <span className="text-sm font-semibold text-foreground">
                       Line {index + 1}
                     </span>
                     <button

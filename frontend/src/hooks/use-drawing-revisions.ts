@@ -7,12 +7,12 @@ import type { DrawingRevision } from "@/types/drawings.types";
 /**
  * React Query hook for fetching drawing revisions
  */
-export function useDrawingRevisions(drawingId: string) {
+export function useDrawingRevisions(projectId: string, drawingId: string) {
   return useQuery<DrawingRevision[]>({
-    queryKey: ["drawing-revisions", drawingId],
+    queryKey: ["drawing-revisions", projectId, drawingId],
     queryFn: async () => {
       const response = await fetch(
-        `/api/drawings/${drawingId}/revisions`,
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions`,
       );
 
       if (!response.ok) {

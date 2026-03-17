@@ -1,2 +1,0 @@
-deleted:0fe74d46-08f0-4055-b732-956df6bbe0bd
-verified_not_visible_in_list:true

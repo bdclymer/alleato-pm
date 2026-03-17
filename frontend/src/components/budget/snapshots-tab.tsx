@@ -147,7 +147,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+        <Card className="hover:border-border/80 transition-colors cursor-pointer">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Current Budget</CardTitle>
@@ -216,7 +216,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
           snapshots.slice(0, 5).map((snapshot) => (
             <Card
               key={snapshot.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:border-border/80 transition-colors cursor-pointer"
             >
               <CardHeader>
                 <div className="flex items-center justify-between">

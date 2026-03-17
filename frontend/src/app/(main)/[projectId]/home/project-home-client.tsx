@@ -694,7 +694,7 @@ function AiWidget({ projectId }: { projectId: number }) {
       </button>
       {open && (
         <div className="fixed inset-y-0 right-0 z-50 flex">
-          <div className="flex-1 cursor-default" onClick={() => setOpen(false)} />
+          <div role="presentation" className="flex-1 cursor-default" onClick={() => setOpen(false)} />
           <div className="w-[380px] bg-background border-l border-border flex flex-col shadow-sm">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div className="flex items-center gap-2.5">

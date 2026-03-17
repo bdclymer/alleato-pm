@@ -135,7 +135,7 @@ export default function PhotosPage() {
           {photos.map((photo) => (
             <div
               key={photo.id}
-              className="bg-background rounded-lg border overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-background rounded-lg border overflow-hidden hover:border-border/80 transition-colors"
             >
               <div className="aspect-video bg-muted flex items-center justify-center">
                 <ImageIcon className="h-12 w-12 text-muted-foreground" />

@@ -176,7 +176,7 @@ export function EditMeetingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-background/95 backdrop-blur shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]">
+      <DialogContent className="sm:max-w-[600px] bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Meeting</DialogTitle>

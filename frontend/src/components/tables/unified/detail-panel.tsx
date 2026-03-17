@@ -281,11 +281,11 @@ export function DetailPanel<T extends Record<string, unknown>>({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="p-0 flex flex-col bg-[#FAFCFF]"
-        style={{ width: `${width}px`, maxWidth: "100vw", backgroundColor: "#FAFCFF" }}
+        className="p-0 flex flex-col bg-card"
+        style={{ width: `${width}px`, maxWidth: "100vw" }}
       >
         {/* Header */}
-        <SheetHeader className="px-4 py-4 border-b flex-shrink-0 bg-[#FAFCFF]">
+        <SheetHeader className="px-4 py-4 border-b flex-shrink-0 bg-card">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-base font-semibold truncate pr-2">
               {title}

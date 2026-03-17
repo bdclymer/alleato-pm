@@ -114,7 +114,7 @@ export function PendingBudgetChangesModal({
       <SidebarBody className="bg-background">
         <div className="p-6 space-y-4">
           {/* Total Summary */}
-          <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-yellow-50 via-white to-white">
+          <div className="rounded-xl border border-border shadow-sm p-4 bg-gradient-to-br from-yellow-50 via-white to-white">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-foreground">Total Pending Changes</p>
@@ -147,31 +147,31 @@ export function PendingBudgetChangesModal({
           </div>
 
           {/* Change Orders Table */}
-          <div className="overflow-x-auto scrollbar-hide rounded-xl border border-slate-200 shadow-sm bg-background">
+          <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-foreground">
                     CO Number
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-foreground">
                     Description
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-foreground">
                     Status
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-foreground">
                     Contract
                   </th>
-                  <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-right px-4 py-4 font-semibold text-foreground">
                     Amount
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                  <th className="text-left px-4 py-4 font-semibold text-foreground">
                     Requested
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
                     <td

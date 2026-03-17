@@ -491,7 +491,7 @@ export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, vi
                   y={0}
                   width={monthDays * dayWidth}
                   height={HEADER_ROW_1}
-                  fill="#FAFCFF"
+                  fill="hsl(var(--card))"
                   stroke="hsl(var(--border))"
                 />
                 <text

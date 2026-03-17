@@ -2,7 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database.types";
 
-export type DocumentRecordType = "prime-contract" | "commitment" | "change-order";
+export type DocumentRecordType =
+  | "prime-contract"
+  | "commitment"
+  | "change-order"
+  | "prime-contract-change-order";
 
 type TypedSupabaseClient = SupabaseClient<Database>;
 
@@ -85,6 +89,20 @@ interface ContractChangeOrderRow {
   amount: number;
   status: string;
   requested_date: string;
+}
+
+interface PrimeContractChangeOrderRow {
+  id: string;
+  contract_id: string;
+  change_order_number: string;
+  description: string;
+  amount: number;
+  status: string;
+  requested_date: string | null;
+  approved_date: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CommitmentUnifiedRow {
@@ -1534,6 +1552,123 @@ async function loadChangeOrderBundle(
   };
 }
 
+async function loadPrimeContractChangeOrderBundle(
+  supabase: TypedSupabaseClient,
+  recordId: string,
+): Promise<DocumentBundle> {
+  const { data: changeOrderData, error: changeOrderError } = await supabase
+    .from("contract_change_orders")
+    .select("*")
+    .eq("id", recordId)
+    .single();
+
+  if (changeOrderError || !changeOrderData) {
+    throw new Error("Prime contract change order not found");
+  }
+
+  const changeOrder = changeOrderData as PrimeContractChangeOrderRow;
+
+  const { data: contractData, error: contractError } = await supabase
+    .from("prime_contracts")
+    .select(
+      `
+        id,
+        contract_number,
+        title,
+        original_contract_value,
+        revised_contract_value,
+        client:clients(id, name, company_id, company_name),
+        contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
+        contractor:companies!prime_contracts_contractor_id_fkey(id, name)
+      `,
+    )
+    .eq("id", changeOrder.contract_id)
+    .single();
+
+  if (contractError || !contractData) {
+    throw new Error("Parent prime contract not found");
+  }
+
+  const contract = contractData as unknown as PrimeContractRow;
+  const client = coerceSingle(contract.client);
+  const ownerCompany = coerceSingle(contract.contract_company);
+  const contractor = coerceSingle(contract.contractor);
+
+  const recipients = await fetchPeopleSuggestions(
+    supabase,
+    [
+      ...(client?.company_id
+        ? [{ companyId: client.company_id, role: "Owner contact", defaultSelected: true }]
+        : []),
+      ...(ownerCompany?.id
+        ? [{ companyId: ownerCompany.id, role: "Owner company contact", defaultSelected: true }]
+        : []),
+      ...(contractor?.id
+        ? [{ companyId: contractor.id, role: "Contractor contact" }]
+        : []),
+    ],
+  );
+
+  const number = changeOrder.change_order_number || `PCCO-${changeOrder.id.slice(0, 8)}`;
+  const title = changeOrder.description || "Prime Contract Change Order";
+  const filename = `${slugify(number)}-${slugify(title)}.pdf`;
+
+  return {
+    recordType: "prime-contract-change-order",
+    recordId,
+    label: "Prime Contract Change Order",
+    title,
+    number,
+    status: formatPlainValue(changeOrder.status),
+    filename,
+    defaultSubject: `${number} - ${contract.contract_number || contract.title}`,
+    sections: [
+      {
+        title: "Overview",
+        fields: [
+          { label: "Parent Contract", value: contract.contract_number || "Not set" },
+          { label: "Contract Title", value: contract.title || "Not set" },
+          { label: "Owner / Client", value: client?.name || ownerCompany?.name || "Not set" },
+          { label: "Description", value: formatPlainValue(changeOrder.description) },
+        ],
+      },
+      {
+        title: "Workflow",
+        fields: [
+          { label: "Requested Date", value: formatDate(changeOrder.requested_date) },
+          { label: "Approved Date", value: formatDate(changeOrder.approved_date) },
+          { label: "Created At", value: formatDate(changeOrder.created_at) },
+          { label: "Last Updated", value: formatDate(changeOrder.updated_at) },
+        ],
+      },
+    ],
+    totals: [
+      { label: "Change Order Amount", value: formatCurrency(changeOrder.amount) },
+      { label: "Original Contract Value", value: formatCurrency(contract.original_contract_value ?? 0) },
+      { label: "Current Revised Contract Value", value: formatCurrency(contract.revised_contract_value ?? 0) },
+    ],
+    lineItems: [
+      {
+        lineNumber: "1",
+        description: changeOrder.description || "Change order",
+        quantity: "1",
+        unit: "LS",
+        unitCost: formatCurrency(changeOrder.amount),
+        total: formatCurrency(changeOrder.amount),
+      },
+    ],
+    listSections: [
+      {
+        title: "Notes",
+        items: [
+          ...(changeOrder.rejection_reason ? [`Rejection Reason: ${changeOrder.rejection_reason}`] : []),
+        ],
+      },
+    ],
+    recipients,
+  };
+}
+
 export async function getDocumentBundle(
   supabase: TypedSupabaseClient,
   recordType: DocumentRecordType,
@@ -1545,6 +1680,10 @@ export async function getDocumentBundle(
 
   if (recordType === "commitment") {
     return loadCommitmentBundle(supabase, recordId);
+  }
+
+  if (recordType === "prime-contract-change-order") {
+    return loadPrimeContractChangeOrderBundle(supabase, recordId);
   }
 
   return loadChangeOrderBundle(supabase, recordId);

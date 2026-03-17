@@ -3,6 +3,7 @@ import {
   ChevronRight,
   FileText,
   Maximize2,
+  Trash2,
   Shrink,
   Plus,
 } from "lucide-react";
@@ -58,6 +59,7 @@ interface PrimeContractOverviewTabProps {
   sovBilledToDateTotal: number;
   sovRemainingTotal: number;
   setShowAddLineItemDialog: Dispatch<SetStateAction<boolean>>;
+  setLineItemToDelete: Dispatch<SetStateAction<ContractLineItem | null>>;
 }
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
@@ -88,6 +90,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     sovBilledToDateTotal,
     sovRemainingTotal,
     setShowAddLineItemDialog,
+    setLineItemToDelete,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
 
@@ -533,6 +536,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             <TableHead className="text-right">Amount</TableHead>
                             <TableHead className="text-right">Billed to Date</TableHead>
                             <TableHead className="text-right">Amount Remaining</TableHead>
+                            <TableHead className="w-14 text-right">Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -559,6 +563,18 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 <TableCell className="text-right tabular-nums">
                                   {formatCurrency(amountRemaining)}
                                 </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                    onClick={() => setLineItemToDelete(item)}
+                                    aria-label={`Delete line item ${item.line_number}`}
+                                    title="Delete line item"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
                               </TableRow>
                             );
                           })}
@@ -580,6 +596,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             <TableCell className="text-right tabular-nums">
                               {formatCurrency(sovRemainingTotal)}
                             </TableCell>
+                            <TableCell />
                           </TableRow>
                         </tfoot>
                       </Table>

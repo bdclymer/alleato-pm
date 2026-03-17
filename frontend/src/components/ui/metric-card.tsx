@@ -140,7 +140,7 @@ export function MetricCard({
   const content = (
     <div
       className={cn(
-        "bg-white border border-neutral-200/80 rounded-md transition-all relative",
+        "bg-card border border-border rounded-md transition-all relative",
         "shadow-[0_1px_2px_0_rgb(0_0_0/0.03)]",
         href && "cursor-pointer hover:shadow-[0_1px_3px_0_rgb(0_0_0/0.04),0_1px_2px_-1px_rgb(0_0_0/0.04)] hover:border-neutral-300/80",
         styles.container,

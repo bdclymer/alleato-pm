@@ -446,7 +446,7 @@ function AddCompanyModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90">
       <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
         <h3 className="text-lg font-semibold">Add Company to Directory</h3>
         <p className="mt-1 text-sm text-muted-foreground">

@@ -211,7 +211,7 @@ export function PendingCostChangesModal({
         {activeTab === "pending" ? (
           <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-orange-50 via-white to-white">
+            <div className="rounded-xl border border-border shadow-sm p-4 bg-gradient-to-br from-orange-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">
@@ -247,31 +247,31 @@ export function PendingCostChangesModal({
             </div>
 
             {/* Changes Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-slate-200 shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Number
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Type
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Description
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Status
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Requested
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
                       <td
@@ -336,7 +336,7 @@ export function PendingCostChangesModal({
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
+              <div className="rounded-xl border border-border shadow-sm p-4 bg-background">
                 <div className="mb-2">
                   <span className="inline-flex items-center px-4 py-1 text-sm font-semibold rounded-full border bg-blue-100 text-blue-800 border-blue-200">
                     PENDING COMMITMENTS
@@ -353,7 +353,7 @@ export function PendingCostChangesModal({
                 </p>
               </div>
 
-              <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-background">
+              <div className="rounded-xl border border-border shadow-sm p-4 bg-background">
                 <div className="mb-2">
                   <span className="inline-flex items-center px-4 py-1 text-sm font-semibold rounded-full border bg-orange-100 text-orange-800 border-orange-200">
                     CHANGE ORDERS

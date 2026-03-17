@@ -139,7 +139,7 @@ export function JobToDateCostDetailModal({
         {activeTab === "costs" ? (
           <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-blue-50 via-white to-white">
+            <div className="rounded-xl border border-border shadow-sm p-4 bg-gradient-to-br from-blue-50 via-white to-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">
@@ -174,31 +174,31 @@ export function JobToDateCostDetailModal({
             </div>
 
             {/* Costs Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-slate-200 shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Description
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Type
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Vendor
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Invoice #
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Date
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
                       <td
@@ -230,7 +230,7 @@ export function JobToDateCostDetailModal({
                           {cost.description || "-"}
                         </td>
                         <td className="px-4 py-4 text-foreground text-xs">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
                             {cost.costType || "Other"}
                           </span>
                         </td>
@@ -259,25 +259,25 @@ export function JobToDateCostDetailModal({
               Cost breakdown by type for this budget line.
             </p>
 
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-slate-200 shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Cost Type
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       Count
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       Total Amount
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       % of Total
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {Object.entries(costsByType).map(([type, data]) => (
                     <tr
                       key={type}

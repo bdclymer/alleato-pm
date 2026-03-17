@@ -2,7 +2,6 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bot } from "lucide-react";
 import { PanelSection } from "./panel-section";
 import type { Agent } from "@/lib/types";
 
@@ -16,7 +15,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
   return (
     <PanelSection
       title="Available Agents"
-      icon={<Bot className="h-4 w-4 text-blue-600" />}
+      icon={<span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary">A</span>}
     >
       <div className="grid grid-cols-3 gap-4">
         {agents.map((agent) => (
@@ -29,7 +28,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
                 : "opacity-50 filter grayscale cursor-not-allowed pointer-events-none"
             } ${
               agent.name === currentAgent
-                ? "ring-1 ring-blue-500 shadow-md"
+                ? "ring-1 ring-primary shadow-sm"
                 : ""
             }`}
           >
@@ -43,7 +42,7 @@ export function AgentsList({ agents, currentAgent }: AgentsListProps) {
                 {agent.description}
               </p>
               {agent.name === currentAgent && (
-                <Badge className="mt-2 bg-blue-600 hover:bg-blue-700 text-white">
+                <Badge className="mt-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                   Active
                 </Badge>
               )}

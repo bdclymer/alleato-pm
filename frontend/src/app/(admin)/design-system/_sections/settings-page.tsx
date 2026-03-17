@@ -111,7 +111,7 @@ export function SettingsPageSection() {
               <div className="text-[13px] text-muted-foreground">Delete workspace</div>
               <div className="text-[12px] text-muted-foreground/60 mt-0.5">Permanently removes all data.</div>
             </div>
-            <button className="px-3.5 py-[7px] rounded-md text-[13px] font-medium text-red-600 bg-red-50 border border-red-600/20">
+            <button className="px-3.5 py-1.5 rounded-md text-[13px] font-medium text-red-600 bg-red-50 border border-red-600/20">
               Delete workspace
             </button>
           </div>
@@ -119,10 +119,10 @@ export function SettingsPageSection() {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-8 py-4 bg-muted/50 border-t border-border">
-          <button className="px-3.5 py-[7px] rounded-md text-[13px] font-medium text-muted-foreground bg-card border border-border shadow-sm">
+          <button className="px-3.5 py-1.5 rounded-md text-[13px] font-medium text-muted-foreground bg-card border border-border shadow-sm">
             Cancel
           </button>
-          <button className="px-3.5 py-[7px] rounded-md text-[13px] font-semibold text-white bg-primary shadow-sm">
+          <button className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold text-white bg-primary shadow-sm">
             Save
           </button>
         </div>

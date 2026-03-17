@@ -33,11 +33,11 @@ export function useDrawingAreas(projectId: string) {
 /**
  * React Query hook for fetching a single drawing area
  */
-export function useDrawingArea(areaId: string) {
+export function useDrawingArea(projectId: string, areaId: string) {
   return useQuery<DrawingArea>({
-    queryKey: ["drawing-area", areaId],
+    queryKey: ["drawing-area", projectId, areaId],
     queryFn: async () => {
-      const response = await fetch(`/api/drawings/areas/${areaId}`);
+      const response = await fetch(`/api/projects/${projectId}/drawings/areas/${areaId}`);
 
       if (!response.ok) {
         const error = await response.json();

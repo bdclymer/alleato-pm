@@ -893,7 +893,7 @@ function BudgetPageContent() {
 
   return (
     <>
-      <div className="pl-0">
+      <div className="px-4 sm:px-6 lg:px-8">
         <BudgetPageHeader
           title="Budget"
           isLocked={isLocked}

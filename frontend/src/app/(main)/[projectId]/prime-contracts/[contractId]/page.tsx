@@ -904,12 +904,48 @@ export default function ProjectContractDetailPage() {
       setShowNewCoDialog(false);
       setCoForm({ change_order_number: "", description: "", amount: "", status: "draft" });
       toast.success("Change order created successfully");
+      void downloadPrimeContractChangeOrderPdf(newCo);
     } catch {
       toast.error("Failed to create change order");
     } finally {
       setIsSubmittingCo(false);
     }
   };
+
+  async function downloadPrimeContractChangeOrderPdf(
+    changeOrder: Pick<PrimeContractCO, "id" | "change_order_number">,
+  ) {
+    try {
+      const response = await fetch(
+        `/api/document-center/prime-contract-change-order/${changeOrder.id}/pdf`,
+      );
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to generate PDF");
+      }
+
+      const blob = await response.blob();
+      const filename =
+        response.headers
+          .get("Content-Disposition")
+          ?.match(/filename=\"?([^\"]+)\"?/)?.[1] ||
+        `${changeOrder.change_order_number || "prime-contract-change-order"}.pdf`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download change order PDF",
+      );
+    }
+  }
 
   const handleApproveCo = async (coId: string) => {
     try {
@@ -1180,7 +1216,9 @@ export default function ProjectContractDetailPage() {
 
     return (
       <>
-        <ProjectPageHeader
+        
+        <PageContainer>
+          <ProjectPageHeader
           title={`Edit: ${contract.contract_number || contract.title}`}
           description="Update contract details and SOV line items"
           actions={
@@ -1189,17 +1227,14 @@ export default function ProjectContractDetailPage() {
             </Button>
           }
         />
-        <PageContainer>
-          <div className="rounded-lg border border-border bg-card p-8">
-            <ContractForm
-              initialData={initialData}
-              onSubmit={handleInlineEditSubmit}
-              onCancel={() => setIsEditing(false)}
-              isSubmitting={isSavingEdit}
-              mode="edit"
-              projectId={projectId}
-            />
-          </div>
+          <ContractForm
+            initialData={initialData}
+            onSubmit={handleInlineEditSubmit}
+            onCancel={() => setIsEditing(false)}
+            isSubmitting={isSavingEdit}
+            mode="edit"
+            projectId={projectId}
+          />
         </PageContainer>
       </>
     );
@@ -1347,6 +1382,7 @@ export default function ProjectContractDetailPage() {
           sovBilledToDateTotal={sovBilledToDateTotal}
           sovRemainingTotal={sovRemainingTotal}
           setShowAddLineItemDialog={setShowAddLineItemDialog}
+          setLineItemToDelete={setLineItemToDelete}
         />
 
         
@@ -1428,31 +1464,43 @@ export default function ProjectContractDetailPage() {
                               : "--"}
                           </TableCell>
                           <TableCell>
-                            {co.status !== "approved" && co.status !== "rejected" && (
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-xs text-green-700 border-green-300 hover:bg-green-50"
-                                  onClick={() => handleApproveCo(co.id)}
-                                >
-                                  <Check className="h-3 w-3 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-xs text-red-700 border-red-300 hover:bg-red-50"
-                                  onClick={() => {
-                                    setRejectingCoId(co.id);
-                                    setShowRejectCoDialog(true);
-                                  }}
-                                >
-                                  <X className="h-3 w-3 mr-1" />
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                onClick={() => void downloadPrimeContractChangeOrderPdf(co)}
+                                title="Download PDF"
+                                aria-label={`Download ${co.change_order_number || "change order"} PDF`}
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </Button>
+                              {co.status !== "approved" && co.status !== "rejected" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 text-xs text-green-700 border-green-300 hover:bg-green-50"
+                                    onClick={() => handleApproveCo(co.id)}
+                                  >
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 text-xs text-red-700 border-red-300 hover:bg-red-50"
+                                    onClick={() => {
+                                      setRejectingCoId(co.id);
+                                      setShowRejectCoDialog(true);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3 mr-1" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

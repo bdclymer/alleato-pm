@@ -56,7 +56,7 @@ export function BaseModal({
           sizeClasses[size],
           "w-[98vw] sm:w-full",
           "max-h-[92vh] flex flex-col",
-          "rounded-2xl border border-slate-200/80 bg-background/95 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)] backdrop-blur",
+          "rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]",
           "transition-transform duration-200",
           className,
         )}

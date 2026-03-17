@@ -24,7 +24,12 @@ interface EmailRecipient {
 }
 
 function isDocumentRecordType(value: string): value is DocumentRecordType {
-  return value === "prime-contract" || value === "commitment" || value === "change-order";
+  return (
+    value === "prime-contract" ||
+    value === "commitment" ||
+    value === "change-order" ||
+    value === "prime-contract-change-order"
+  );
 }
 
 export const runtime = "nodejs";

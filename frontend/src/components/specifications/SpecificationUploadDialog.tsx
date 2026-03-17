@@ -165,7 +165,7 @@ export function SpecificationUploadDialog({
                   <FormControl>
                     <div className="space-y-4">
                       {!selectedFile ? (
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
+                        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-border transition-colors">
                           <input
                             type="file"
                             accept="*/*"
@@ -177,25 +177,25 @@ export function SpecificationUploadDialog({
                             htmlFor="file-upload"
                             className="cursor-pointer flex flex-col items-center space-y-2"
                           >
-                            <Upload className="h-12 w-12 text-gray-400" />
-                            <div className="text-sm text-gray-600">
-                              <span className="font-medium text-blue-600 hover:text-blue-500">
+                            <Upload className="h-12 w-12 text-muted-foreground" />
+                            <div className="text-sm text-muted-foreground">
+                              <span className="font-medium text-primary hover:text-primary/80">
                                 Click to upload
                               </span>{" "}
                               or drag and drop
                             </div>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               Any file type (max 50MB)
                             </p>
                           </label>
                         </div>
                       ) : (
-                        <div className="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                        <div className="border border-border rounded-lg p-4 flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <FileText className="h-8 w-8 text-red-500" />
                             <div>
                               <p className="text-sm font-medium">{selectedFile.name}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-muted-foreground">
                                 {formatFileSize(selectedFile.size)}
                               </p>
                             </div>
@@ -304,7 +304,7 @@ export function SpecificationUploadDialog({
                                   );
                                 }
                               }}
-                              className="rounded border-gray-300"
+                              className="rounded border-border"
                             />
                             <span className="text-sm">{area.name}</span>
                             <Badge variant="secondary" className="text-xs">

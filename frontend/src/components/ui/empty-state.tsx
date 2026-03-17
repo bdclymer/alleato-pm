@@ -71,7 +71,7 @@ export function EmptyState({
       </p>
 
       {description && (
-        <p className="mt-1 text-sm text-muted-foreground/60 max-w-xs">
+        <p className="mt-1 text-sm text-muted-foreground/60 max-w-md">
           {description}
         </p>
       )}

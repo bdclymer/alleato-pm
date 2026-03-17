@@ -34,8 +34,8 @@ export function useCreateDrawingSet(projectId: string) {
 
   return useMutation({
     mutationFn: async (data: {
-      set_name: string;
-      set_number?: string;
+      name: string;
+      issued_at?: string;
       description?: string;
       status?: string;
     }) => {
@@ -82,8 +82,8 @@ export function useUpdateDrawingSet(projectId: string) {
     }: {
       setId: string;
       data: {
-        set_name?: string;
-        set_number?: string;
+        name?: string;
+        issued_at?: string;
         description?: string;
         status?: string;
       };

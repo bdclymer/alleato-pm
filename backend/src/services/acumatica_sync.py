@@ -250,6 +250,7 @@ class AcumaticaFinancialSyncService:
             ("projects", self._sync_projects),
             ("vendors", self._sync_vendors),
             ("change_orders", self._sync_change_orders),
+            ("change_orders_projection", self._sync_change_orders_projection),
             ("subcontracts", self._sync_subcontracts),
             ("purchase_orders", self._sync_purchase_orders),
             ("ap_bills", self._sync_ap_bills),
@@ -1137,6 +1138,19 @@ class AcumaticaFinancialSyncService:
     # Projection: acumatica raw tables → domain commitment tables
     # ------------------------------------------------------------------
 
+    def _sync_change_orders_projection(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Wrapper so _run_entity_sync can call project_change_orders as part of sync_all."""
+        projection = self.project_change_orders()
+        prime = projection["prime_change_orders_projected"]
+        commit = projection["commitment_change_orders_projected"]
+        result = EntitySyncResult(entity="change_orders_projection")
+        result.fetched = prime["fetched"] + commit["fetched"]
+        result.upserted = prime["upserted"] + commit["upserted"]
+        result.skipped = prime["skipped"] + commit["skipped"]
+        result.errors = prime["errors"] + commit["errors"]
+        result.cursor = last_cursor
+        return result
+
     def _sync_commitments_projection(self, last_cursor: Optional[str]) -> EntitySyncResult:
         """Wrapper so _run_entity_sync can call project_commitments as part of sync_all."""
         projection = self.project_commitments()
@@ -1169,6 +1183,150 @@ class AcumaticaFinancialSyncService:
         """Returns {vendor_uuid_str: company_uuid_str} for all vendors."""
         resp = self.supabase.table("vendors").select("id,company_id").execute()
         return {v["id"]: v["company_id"] for v in (resp.data or []) if v.get("company_id")}
+
+    def _map_co_status_prime(self, acumatica_status: Optional[str]) -> str:
+        """Map Acumatica CO status to prime_contract_change_orders.status (free-text)."""
+        if not acumatica_status:
+            return "Proposed"
+        mapping = {
+            "on hold": "Proposed",
+            "open": "Proposed",
+            "pending approval": "Pending",
+            "closed": "Approved",
+            "canceled": "Void",
+            "balanced": "Approved",
+        }
+        return mapping.get(acumatica_status.lower(), "Proposed")
+
+    def _map_co_status_commitment(self, acumatica_status: Optional[str]) -> str:
+        """Map Acumatica CO status to contract_change_orders.status.
+        The valid_approval_date constraint requires approved_by (user UUID) for
+        approved/rejected rows — since we don't have that, everything maps to 'pending'.
+        """
+        return "pending"
+
+    def _get_primary_prime_contract_by_project(self) -> Dict[int, str]:
+        """Returns {project_id: prime_contract_uuid} using the first prime contract per project."""
+        resp = (
+            self.supabase.table("prime_contracts")
+            .select("id,project_id")
+            .order("created_at", desc=False)
+            .execute()
+        )
+        result: Dict[int, str] = {}
+        for row in resp.data or []:
+            pid = row.get("project_id")
+            if pid and pid not in result:
+                result[pid] = row["id"]
+        return result
+
+    def project_change_orders(self) -> Dict[str, Any]:
+        """
+        Project acumatica_change_orders into domain change order tables:
+          - revenue_budget_change_total != 0 → prime_contract_change_orders
+          - commitments_change_total != 0    → contract_change_orders (Commitments tab)
+        Safe to run multiple times (upserts on acumatica_external_key).
+        """
+        prime_result = self._project_prime_change_orders()
+        commit_result = self._project_commitment_change_orders()
+        return {
+            "prime_change_orders_projected": prime_result.as_dict(),
+            "commitment_change_orders_projected": commit_result.as_dict(),
+        }
+
+    def _project_prime_change_orders(self) -> EntitySyncResult:
+        """Project Acumatica revenue-side COs → prime_contract_change_orders."""
+        result = EntitySyncResult(entity="prime_change_orders_domain")
+
+        rows_resp = (
+            self.supabase.table("acumatica_change_orders")
+            .select("*")
+            .not_.is_("project_id", "null")
+            .neq("revenue_budget_change_total", 0)
+            .execute()
+        )
+        acumatica_rows: List[Dict[str, Any]] = rows_resp.data or []
+        result.fetched = len(acumatica_rows)
+
+        if not acumatica_rows:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for row in acumatica_rows:
+            rows.append(
+                {
+                    "project_id": row["project_id"],
+                    "pcco_number": row["reference_nbr"],
+                    "title": row.get("description") or row["reference_nbr"],
+                    "status": self._map_co_status_prime(row.get("status")),
+                    "executed": row.get("status", "").lower() == "closed",
+                    "total_amount": row.get("revenue_budget_change_total") or 0,
+                    "submitted_at": row.get("change_date"),
+                    "acumatica_external_key": row["external_key"],
+                }
+            )
+
+        # Upsert on acumatica_external_key
+        for chunk in _chunked(rows):
+            self.supabase.table("prime_contract_change_orders").upsert(
+                list(chunk), on_conflict="acumatica_external_key"
+            ).execute()
+
+        result.upserted = len(rows)
+        return result
+
+    def _project_commitment_change_orders(self) -> EntitySyncResult:
+        """Project Acumatica cost/commitment-side COs → contract_change_orders."""
+        result = EntitySyncResult(entity="commitment_change_orders_domain")
+
+        # Load prime contract map: project_id → prime_contract UUID
+        prime_contract_map = self._get_primary_prime_contract_by_project()
+
+        rows_resp = (
+            self.supabase.table("acumatica_change_orders")
+            .select("*")
+            .not_.is_("project_id", "null")
+            .neq("commitments_change_total", 0)
+            .execute()
+        )
+        acumatica_rows: List[Dict[str, Any]] = rows_resp.data or []
+        result.fetched = len(acumatica_rows)
+
+        if not acumatica_rows:
+            return result
+
+        synced_at = _now_iso()
+        rows: List[Dict[str, Any]] = []
+
+        for row in acumatica_rows:
+            prime_contract_id = prime_contract_map.get(row["project_id"])
+            if not prime_contract_id:
+                result.skipped += 1
+                continue
+
+            rows.append(
+                {
+                    "contract_id": prime_contract_id,
+                    "change_order_number": row["reference_nbr"],
+                    "description": row.get("description") or row["reference_nbr"],
+                    "amount": row.get("commitments_change_total") or 0,
+                    "status": self._map_co_status_commitment(row.get("status")),
+                    "requested_date": row.get("change_date"),
+                    "acumatica_external_key": row["external_key"],
+                    "updated_at": synced_at,
+                }
+            )
+
+        # Upsert on acumatica_external_key
+        for chunk in _chunked(rows):
+            self.supabase.table("contract_change_orders").upsert(
+                list(chunk), on_conflict="acumatica_external_key"
+            ).execute()
+
+        result.upserted = len(rows)
+        return result
 
     def project_commitments(self) -> Dict[str, Any]:
         """

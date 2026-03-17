@@ -469,7 +469,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                   {description}
                 </span>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[420px] border bg-popover p-3 text-popover-foreground shadow-md">
+              <TooltipContent className="max-w-[420px] border bg-popover p-3 text-popover-foreground shadow-sm">
                 <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
                   {description}
                 </p>

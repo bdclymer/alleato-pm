@@ -31,7 +31,7 @@ export function KnowledgeDocumentsPanel({
   });
 
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-slate-200/60 bg-background/80 shadow-[0_35px_90px_-45px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/60 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-[0_45px_95px_-50px_rgba(15,23,42,0.85)] dark:ring-slate-800/60">
+    <div className="flex h-full flex-col rounded-xl border border-border bg-card shadow-sm dark:border-border dark:bg-card">
       <div className="border-b border-slate-200/60 px-6 py-4 dark:border-slate-800/60">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -153,7 +153,7 @@ function DocumentGrid({
               type="button"
               key={document.id}
               className={clsx(
-                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-2xl border bg-background/80 p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-800/70 dark:bg-slate-900/80",
+                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-xl border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-border/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-border dark:bg-card",
                 active
                   ? "border-blue-500/70 ring-2 ring-blue-400/60"
                   : "border-slate-200/70 dark:ring-0",

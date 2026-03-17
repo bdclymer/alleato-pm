@@ -430,7 +430,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
           <Card
             key={String(row.id)}
             className={cn(
-              "group hover:shadow-md transition-all cursor-pointer",
+              "group transition-all cursor-pointer",
               selectedIds.has(row.id) && "ring-2 ring-primary",
             )}
             onClick={() => onRowClick?.(row)}

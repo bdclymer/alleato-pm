@@ -420,7 +420,7 @@ export function InlineBudgetLineItemCreator({
       <div className="bg-blue-50 border-y-2 border-blue-200 p-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-foreground">
               Add Budget Line Items
             </h3>
             <Button
@@ -435,19 +435,19 @@ export function InlineBudgetLineItemCreator({
 
           {/* Smart Copy UOM Toggle */}
           <div className="flex gap-4 text-xs mb-2">
-            <label className="flex items-center gap-2 cursor-pointer text-gray-700">
+            <label className="flex items-center gap-2 cursor-pointer text-muted-foreground">
               <input
                 type="checkbox"
                 checked={smartCopyUOM}
                 onChange={(e) => setSmartCopyUOM(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-border"
               />
               <span>Copy UOM to new rows</span>
             </label>
           </div>
 
           {rows.map((row, index) => (
-            <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+            <div key={index} className="bg-card rounded-lg p-4 border border-border">
               <div className="grid grid-cols-12 gap-4">
                 {/* Budget Code Selector */}
                 <div className="col-span-4">
@@ -623,12 +623,12 @@ export function InlineBudgetLineItemCreator({
           {/* Running Total */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-700">Total Amount</span>
+              <span className="text-sm font-medium text-muted-foreground">Total Amount</span>
               <span className="text-2xl font-bold text-blue-900">
                 ${formatCurrency(calculateTotal().toString())}
               </span>
             </div>
-            <div className="mt-2 text-xs text-gray-600">
+            <div className="mt-2 text-xs text-muted-foreground">
               {rows.length} line item{rows.length !== 1 ? 's' : ''}
             </div>
           </div>

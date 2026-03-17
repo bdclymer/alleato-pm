@@ -528,6 +528,84 @@ export function ProjectHomeRedesign({
       .slice(0, 7);
   }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, scheduleStats, project.id]);
 
+  const attentionItems = React.useMemo(() => {
+    const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.amount || 0), 0);
+    const oldestPendingCoDays = pendingCOs.length
+      ? Math.max(...pendingCOs.map((co) => differenceInDays(new Date(), new Date(String(co.created_at)))))
+      : 0;
+
+    const items: Array<{
+      id: string;
+      label: string;
+      count: number;
+      severity: "error" | "warning" | "neutral";
+      metric?: string;
+      detail?: string;
+      href: string;
+    }> = [];
+
+    if (pendingCOs.length > 0) {
+      items.push({
+        id: "pending-co",
+        label: "Change orders pending approval",
+        count: pendingCOs.length,
+        severity: oldestPendingCoDays > 14 ? "error" : "warning",
+        metric: fmtCompact(pendingCoAmount),
+        detail: `Oldest ${oldestPendingCoDays}d`,
+        href: `/${project.id}/change-orders`,
+      });
+    }
+
+    if (openRfis.length > 0) {
+      const overdueRfis = openRfis.filter((rfi) => rfi.due_date && new Date(rfi.due_date) < new Date()).length;
+      items.push({
+        id: "open-rfis",
+        label: "Open RFIs",
+        count: openRfis.length,
+        severity: overdueRfis > 2 ? "warning" : "neutral",
+        detail: overdueRfis > 0 ? `${overdueRfis} overdue` : "On track",
+        href: `/${project.id}/rfis`,
+      });
+    }
+
+    if (scheduleStats && scheduleStats.overdue > 0) {
+      items.push({
+        id: "schedule-overdue",
+        label: "Overdue schedule activities",
+        count: scheduleStats.overdue,
+        severity: scheduleStats.overdue > 8 ? "error" : "warning",
+        detail: `${scheduleStats.done}/${scheduleStats.total} complete`,
+        href: `/${project.id}/schedule`,
+      });
+    }
+
+    if (overdueOpenTasks.length > 0) {
+      items.push({
+        id: "overdue-tasks",
+        label: "Overdue tasks",
+        count: overdueOpenTasks.length,
+        severity: overdueOpenTasks.length > 5 ? "error" : "warning",
+        detail: `${unassignedOpenTasks.length} unassigned`,
+        href: `/${project.id}/updates`,
+      });
+    }
+
+    if (lastLogDaysAgo !== null && lastLogDaysAgo >= 2) {
+      items.push({
+        id: "daily-log-gap",
+        label: "Daily log filing gap",
+        count: lastLogDaysAgo,
+        severity: lastLogDaysAgo >= 5 ? "warning" : "neutral",
+        detail: "days since last entry",
+        href: `/${project.id}/daily-log`,
+      });
+    }
+
+    return items.slice(0, 6);
+  }, [pendingCOs, openRfis, scheduleStats, overdueOpenTasks.length, unassignedOpenTasks.length, lastLogDaysAgo, project.id]);
+
+  const latestDailyLogs = React.useMemo(() => dailyLogs.slice(0, 3), [dailyLogs]);
+
   const scheduleBarColor = scheduleStats
     ? scheduleStats.overdue > 5 ? "#ef4444" : scheduleStats.overdue > 2 ? "#f59e0b" : "#22c55e"
     : "#94a3b8";
@@ -640,14 +718,14 @@ export function ProjectHomeRedesign({
                         <span>{billedPct.toFixed(0)}% billed</span>
                       </div>
                       <div className="h-1.5 bg-muted rounded-full overflow-hidden flex">
-                        <div className="rounded-l-full bg-green-600" style={{ width: `${paidPct}%` }} />
-                        <div className="bg-amber-500" style={{ width: `${unpaidPct}%` }} />
+                        <div className="rounded-l-full bg-status-success" style={{ width: `${paidPct}%` }} />
+                        <div className="bg-status-warning" style={{ width: `${unpaidPct}%` }} />
                       </div>
                       <div className="flex gap-4 mt-1.5 text-[10px] text-muted-foreground/60">
                         {[
-                          { cls: "bg-green-600", label: "Paid", value: fmt(paidToDate) },
-                          { cls: "bg-amber-500", label: "Unpaid", value: fmt(billedToDate - paidToDate) },
-                          { cls: "bg-muted", label: "Unbilled", value: fmt(revisedBudget - billedToDate) },
+                          { label: "Paid", value: fmt(paidToDate), cls: "bg-status-success" },
+                          { label: "Unpaid", value: fmt(billedToDate - paidToDate), cls: "bg-status-warning" },
+                          { label: "Unbilled", value: fmt(revisedBudget - billedToDate), cls: "bg-muted" },
                         ].map((item) => (
                           <span key={item.label} className="flex items-center gap-1">
                             <span className={cn("w-2 h-2 rounded-sm inline-block", item.cls)} />
@@ -659,6 +737,112 @@ export function ProjectHomeRedesign({
                   );
                 })()}
               </div>
+            </section>
+
+          {/* ── NEEDS ATTENTION ── */}
+            <section className="space-y-5 pt-1">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Needs Attention
+              </h2>
+              {attentionItems.length > 0 ? (
+                <div className="rounded-lg border border-border bg-border/80 overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px">
+                    {attentionItems.map((item) => (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        className="bg-background px-4 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="min-w-0 pr-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full flex-shrink-0",
+                                item.severity === "error"
+                                  ? "bg-status-error"
+                                  : item.severity === "warning"
+                                    ? "bg-status-warning"
+                                    : "bg-slate-400",
+                              )}
+                            />
+                            <span className="text-sm text-foreground/90 truncate">{item.label}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {item.metric && <span className="tabular-nums">{item.metric}</span>}
+                          {item.detail && <span className="hidden sm:inline">{item.detail}</span>}
+                          <span
+                            className={cn(
+                              "inline-flex min-w-5 h-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold tabular-nums",
+                              item.severity === "error"
+                                ? "bg-status-error/15 text-status-error"
+                                : item.severity === "warning"
+                                  ? "bg-status-warning/15 text-status-warning"
+                                  : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {item.count}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-2">
+                  <p className="text-sm font-medium text-foreground">All clear</p>
+                  <p className="text-xs text-muted-foreground mt-1">No immediate action items.</p>
+                </div>
+              )}
+              {pendingChanges > 0 && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-status-warning flex-shrink-0" />
+                  <p className="text-xs text-status-warning">
+                    <span className="font-semibold">{fmtCompact(pendingChanges)}</span> pending change exposure
+                  </p>
+                </div>
+              )}
+            </section>
+
+          {/* ── DAILY LOG ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Daily Log</h2>
+                <Link href={`/${project.id}/daily-log`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
+              </div>
+              {latestDailyLogs.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {latestDailyLogs.map((log) => {
+                    const weatherSummary =
+                      typeof log.weather_conditions === "object" &&
+                      log.weather_conditions !== null &&
+                      !Array.isArray(log.weather_conditions) &&
+                      typeof log.weather_conditions.summary === "string"
+                        ? log.weather_conditions.summary
+                        : "No weather data";
+
+                    return (
+                      <Link
+                        key={log.id}
+                        href={`/${project.id}/daily-log`}
+                        className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-foreground">
+                            {format(new Date(log.log_date), "MMM d, yyyy")}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground truncate pl-2">{weatherSummary}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Filed daily report for field activities.</p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-2">
+                  <p className="text-sm text-muted-foreground">No daily log entries yet.</p>
+                </div>
+              )}
             </section>
 
           {/* ── MEETINGS ── */}
@@ -945,7 +1129,7 @@ export function ProjectHomeRedesign({
 
       {aiOpen && (
         <div className="fixed inset-y-0 right-0 z-50 flex">
-          <div className="flex-1 cursor-default" onClick={() => setAiOpen(false)} />
+          <div role="presentation" className="flex-1 cursor-default" onClick={() => setAiOpen(false)} />
           <AiPanel projectId={project.id} onClose={() => setAiOpen(false)} />
         </div>
       )}

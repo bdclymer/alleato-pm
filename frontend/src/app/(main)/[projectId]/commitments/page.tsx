@@ -63,6 +63,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
   const [commitmentToDelete, setCommitmentToDelete] = React.useState<CommitmentListItem | null>(
     null,
   );
@@ -114,7 +117,13 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const activeFilters = tableState.activeFilters as FilterState;
 
-  const { data: response, isLoading, isFetching, error } = useCommitmentsList(projectId, {
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+  } = useCommitmentsList(projectId, {
     page: tableState.page,
     limit: tableState.perPage,
     status:
@@ -245,16 +254,67 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const handleDeleteConfirm = async () => {
     if (!commitmentToDelete) return;
 
+    setIsDeleting(true);
     try {
       await deleteCommitment.mutateAsync(commitmentToDelete.id);
-      toast.success("Commitment deleted");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to delete commitment";
-      toast.error(message);
+    } catch {
+      // Error toast is handled by the delete mutation hook
     } finally {
+      setIsDeleting(false);
       setDeleteDialogOpen(false);
       setCommitmentToDelete(null);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    const ids = tableState.selectedIds;
+    if (ids.length === 0) return;
+
+    setIsBulkDeleting(true);
+    try {
+      const commitmentMap = new Map(commitments.map((item) => [item.id, item]));
+      const failures: string[] = [];
+
+      for (const id of ids) {
+        try {
+          const response = await fetch(`/api/commitments/${id}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const item = commitmentMap.get(id);
+            const label = item?.number || item?.title || id;
+            failures.push(
+              `${label}: ${errorData.message || errorData.error || "Failed to delete commitment"}`,
+            );
+          }
+        } catch {
+          const item = commitmentMap.get(id);
+          const label = item?.number || item?.title || id;
+          failures.push(`${label}: Network error`);
+        }
+      }
+
+      const successCount = ids.length - failures.length;
+
+      if (successCount > 0) {
+        await refetch();
+        tableState.setSelectedIds([]);
+      }
+
+      if (failures.length > 0) {
+        toast.error(
+          `${successCount} deleted, ${failures.length} failed.\n${failures.slice(0, 3).join("\n")}`,
+        );
+      } else {
+        toast.success(
+          `${successCount} commitment${successCount === 1 ? "" : "s"} deleted`,
+        );
+      }
+    } finally {
+      setIsBulkDeleting(false);
+      setBulkDeleteDialogOpen(false);
     }
   };
 
@@ -366,6 +426,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
           columns: commitmentColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          onBulkDelete: tableState.selectedIds.length > 0
+            ? () => setBulkDeleteDialogOpen(true)
+            : undefined,
         }}
         data={{
           items: sortedCommitments,
@@ -452,12 +515,44 @@ export default function ProjectCommitmentsPage(): ReactElement {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
+              disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Commitment
+              {isDeleting ? "Deleting..." : "Delete Commitment"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {tableState.selectedIds.length} Commitment
+              {tableState.selectedIds.length === 1 ? "" : "s"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{tableState.selectedIds.length}</strong> selected commitment
+              {tableState.selectedIds.length === 1 ? "" : "s"}?
+              <br />
+              <br />
+              This action moves selected commitments to the recycle bin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDeleteConfirm}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting
+                ? "Deleting..."
+                : `Delete ${tableState.selectedIds.length} Commitment${tableState.selectedIds.length === 1 ? "" : "s"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

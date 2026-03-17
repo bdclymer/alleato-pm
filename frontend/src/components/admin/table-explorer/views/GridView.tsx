@@ -66,7 +66,7 @@ export function GridView({ table, config, columns, rows }: GridViewProps) {
         return (
           <Card
             key={rowId}
-            className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+            className="cursor-pointer transition-all hover:border-border/80"
             onClick={() => handleRowClick(rowId)}
           >
             <CardHeader className="pb-2">

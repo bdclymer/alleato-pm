@@ -45,7 +45,7 @@ export default function AdminTablesPage() {
               href={`/admin/tables/${tableName}`}
               className="group"
             >
-              <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+              <Card className="h-full transition-all hover:border-primary/50">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="rounded-md bg-muted p-2">

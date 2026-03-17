@@ -130,7 +130,7 @@ function BudgetCodeSelector({
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start" sideOffset={0}>
+      <PopoverContent className="w-[min(400px,90vw)] p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search budget codes..."

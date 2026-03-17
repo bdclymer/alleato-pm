@@ -47,35 +47,28 @@ const drawingFileSchema = z
  */
 // Form schema without file (for react-hook-form)
 export const uploadDrawingFormSchema = z.object({
-  drawing_number: z
-    .string()
-    .min(1, 'Drawing number is required')
-    .max(100, 'Drawing number must be 100 characters or less'),
+  drawing_set_id: z.string().min(1, 'Drawing Set is required'),
 
-  title: z
-    .string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be 255 characters or less'),
-
-  discipline: z.string().optional(),
-
-  drawing_type: z.string().optional(),
-
-  revision_number: z
-    .string()
-    .min(1, 'Revision number is required')
-    .max(10, 'Revision number must be 10 characters or less')
-    .optional(),
+  drawing_set_name: z.string().optional(), // Used when creating a new set by name
 
   drawing_date: z.string().optional(),
 
   received_date: z.string().optional(),
 
-  drawing_set_id: z.string().uuid().optional(),
+  // Advanced options
+  discipline: z.string().optional(),
 
-  description: z.string().max(1000, 'Description must be 1000 characters or less').optional(),
+  drawing_type: z.string().optional(),
 
   area_id: z.string().uuid().optional(),
+
+  drawing_number: z.string().max(100).optional(),
+
+  title: z.string().max(255).optional(),
+
+  revision_number: z.string().max(10).optional(),
+
+  description: z.string().max(1000).optional(),
 });
 
 // Full schema with file (for API validation)

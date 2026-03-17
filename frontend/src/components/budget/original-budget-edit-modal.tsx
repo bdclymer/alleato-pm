@@ -229,11 +229,11 @@ export function OriginalBudgetEditModal({
         className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col"
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex-shrink-0">
+        <div className="bg-foreground text-white px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">Original Budget Amount</h2>
-              <p className="text-sm text-slate-300 mt-0.5">
+              <p className="text-sm text-muted-foreground mt-0.5">
                 {lineItem.costCode}
               </p>
             </div>
@@ -280,11 +280,11 @@ export function OriginalBudgetEditModal({
           {activeTab === "original" ? (
             <div className="p-6 space-y-6">
               {/* Line Item Info */}
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
-                <p className="text-xs uppercase tracking-wider text-slate-500 font-medium">
+              <div className="rounded-lg border border-border bg-muted px-4 py-4">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
                   Line Item
                 </p>
-                <p className="text-sm font-semibold text-slate-900 mt-1">
+                <p className="text-sm font-semibold text-foreground mt-1">
                   {lineItem.description}
                 </p>
               </div>
@@ -324,9 +324,9 @@ export function OriginalBudgetEditModal({
               )}
 
               {/* Current Value */}
-              <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                <span className="text-sm text-slate-600">Current Budget</span>
-                <span className="text-lg font-semibold text-slate-900">
+              <div className="flex items-center justify-between py-2 border-b border-border">
+                <span className="text-sm text-muted-foreground">Current Budget</span>
+                <span className="text-lg font-semibold text-foreground">
                   {currentBudgetValue.toLocaleString("en-US", {
                     style: "currency",
                     currency: "USD",
@@ -338,10 +338,10 @@ export function OriginalBudgetEditModal({
               {!isAggregatedRow && (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-medium text-foreground">
                       Calculation Method
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Choose how this budget line is derived.
                     </p>
                   </div>
@@ -355,7 +355,7 @@ export function OriginalBudgetEditModal({
                             "flex items-start gap-4 rounded-lg border p-4 cursor-pointer transition-all",
                             calculationMethod === method
                               ? "border-brand bg-brand/5 ring-1 ring-brand"
-                              : "border-slate-200 bg-background hover:border-slate-300",
+                              : "border-border bg-background hover:border-border",
                           )}
                         >
                           <input
@@ -367,10 +367,10 @@ export function OriginalBudgetEditModal({
                             className="mt-0.5 h-4 w-4 text-brand focus:ring-brand"
                           />
                           <div>
-                            <div className="font-medium text-slate-900 capitalize">
+                            <div className="font-medium text-foreground capitalize">
                               {method}
                             </div>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-muted-foreground">
                               {method === "manual"
                                 ? "Enter a fixed amount directly."
                                 : "Qty × Unit Cost = Budget"}
@@ -388,7 +388,7 @@ export function OriginalBudgetEditModal({
                 <>
                   <div className="grid gap-4 grid-cols-2">
                     <div>
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Unit Qty
                       </label>
                       <Input
@@ -400,7 +400,7 @@ export function OriginalBudgetEditModal({
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-muted-foreground">
                         UOM
                       </label>
                       <Select
@@ -424,7 +424,7 @@ export function OriginalBudgetEditModal({
                       </Select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Unit Cost
                       </label>
                       <Input
@@ -446,7 +446,7 @@ export function OriginalBudgetEditModal({
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Original Budget
                       </label>
                       <Input
@@ -463,7 +463,7 @@ export function OriginalBudgetEditModal({
                         onFocus={() => setOriginalBudgetFocused(true)}
                         onBlur={() => setOriginalBudgetFocused(false)}
                         placeholder="0.00"
-                        className="mt-1 bg-slate-50 font-semibold"
+                        className="mt-1 bg-muted font-semibold"
                         disabled={calculationMethod === "calculated"}
                       />
                     </div>
@@ -573,7 +573,7 @@ export function OriginalBudgetEditModal({
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-slate-900">
+                          <div className="text-sm font-medium text-foreground">
                             {entry.changed_by.name}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -630,7 +630,7 @@ export function OriginalBudgetEditModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 flex-shrink-0">
+        <div className="border-t border-border bg-muted px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-end gap-4">
             <Button variant="outline" onClick={onClose}>
               {isAggregatedRow ? "Close" : "Cancel"}

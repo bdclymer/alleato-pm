@@ -115,11 +115,11 @@ export function SpecificationListTable({
   if (specifications.length === 0) {
     return (
       <div className="text-center py-12 border border-dashed rounded-lg">
-        <FileText className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-semibold text-gray-900">
+        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-semibold text-foreground">
           No specifications
         </h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Get started by uploading a new specification document.
         </p>
       </div>
@@ -146,7 +146,7 @@ export function SpecificationListTable({
             {specifications.map((spec) => (
               <TableRow
                 key={spec.id}
-                className="cursor-pointer hover:bg-gray-50"
+                className="cursor-pointer hover:bg-muted"
                 onClick={() => handleView(spec.id)}
               >
                 <TableCell className="font-mono font-medium">
@@ -154,11 +154,11 @@ export function SpecificationListTable({
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-gray-400" />
+                    <FileText className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{spec.title}</span>
                   </div>
                   {spec.description && (
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
                       {spec.description}
                     </p>
                   )}
@@ -170,7 +170,7 @@ export function SpecificationListTable({
                       Rev {spec.current_revision.revision_number}
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-400">No revisions</span>
+                    <span className="text-sm text-muted-foreground">No revisions</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -181,7 +181,7 @@ export function SpecificationListTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     {formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
                       addSuffix: true,
                     })}

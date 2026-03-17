@@ -130,7 +130,7 @@ export function OriginalBudgetModal({
         onValueChange={(v) => setActiveTab(v as "budget" | "history")}
       >
         {/* Tab Navigation */}
-        <div className="border-b border-border/80 px-6 bg-background/70 backdrop-blur-sm">
+        <div className="border-b border-border/80 px-6 bg-muted/50">
           <TabsList className="bg-transparent border-0 p-0 h-auto flex gap-4">
             <TabsTrigger
               value="budget"

@@ -54,7 +54,7 @@ export function ChatKitWidget() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:scale-110 transition-all duration-200 flex items-center justify-center"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
         {isOpen ? (

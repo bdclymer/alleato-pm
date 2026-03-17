@@ -18,14 +18,11 @@ export default async function ProjectChangeOrdersPage({
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),
 
-    // Prime contract change orders (joined with contracts to get project_id)
+    // Prime contract change orders — filter directly by project_id
     supabase
       .from("prime_contract_change_orders")
-      .select(`
-        *,
-        contracts!inner(project_id)
-      `)
-      .eq("contracts.project_id", numericProjectId)
+      .select("*")
+      .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),
 
     // Commitment change orders (joined with prime_contracts to get project_id)
@@ -74,7 +71,7 @@ export default async function ProjectChangeOrdersPage({
     ...co,
     contractType: "commitment" as const,
     normalizedNumber: co.change_order_number,
-    normalizedTitle: null,
+    normalizedTitle: co.description,
     normalizedDescription: co.description,
     normalizedStatus: co.status,
     normalizedAmount: co.amount,

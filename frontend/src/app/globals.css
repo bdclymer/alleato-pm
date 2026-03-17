@@ -1869,3 +1869,31 @@
   width: 0 !important;
   height: 0 !important;
 }
+
+/* ── Liveblocks composer readability improvements ────────────────────────── */
+.lb-composer,
+.lb-floating .lb-composer {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 12px !important;
+  background: hsl(var(--background)) !important;
+  box-shadow: 0 10px 30px -16px rgb(0 0 0 / 0.25) !important;
+}
+
+.lb-composer [contenteditable="true"],
+.lb-thread [contenteditable="true"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+.lb-composer [contenteditable="true"]::before,
+.lb-thread [contenteditable="true"]::before {
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 0.95 !important;
+}
+
+.lb-composer:focus-within,
+.lb-thread:focus-within {
+  border-color: hsl(var(--ring)) !important;
+  box-shadow:
+    0 0 0 3px hsl(var(--ring) / 0.2),
+    0 10px 30px -16px rgb(0 0 0 / 0.25) !important;
+}

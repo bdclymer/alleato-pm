@@ -2,14 +2,10 @@
 
 import { Maximize2, Minimize2, SlidersHorizontal, Sigma } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -70,108 +66,125 @@ export function BudgetFilters({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
                 aria-label="View options"
                 title="View options"
+                className="h-9 gap-2 px-3"
               >
                 <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden text-sm sm:inline">View</span>
+                <span className="hidden max-w-56 truncate text-xs text-muted-foreground xl:inline">
+                  {filterSummary}
+                </span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuLabel>View options</DropdownMenuLabel>
-            <DropdownMenuItem className="pointer-events-none text-xs text-muted-foreground">
-              {filterSummary}
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-96 p-0">
+            <div className="px-4 pt-4 pb-3">
+              <p className="text-base font-semibold text-foreground">View options</p>
+              <p className="mt-1 text-xs text-muted-foreground">{filterSummary}</p>
+            </div>
             <DropdownMenuSeparator />
+            <div className="space-y-5 px-4 py-4">
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Snapshot
+                  </h3>
+                  <span className="truncate text-xs text-muted-foreground">{selectedSnapshotName}</span>
+                </div>
+                <div className="grid gap-1.5">
+                  {snapshots.map((snapshot) => {
+                    const isActive = selectedSnapshot === snapshot.id;
+                    return (
+                      <button
+                        key={snapshot.id}
+                        type="button"
+                        onClick={() => onSnapshotChange(snapshot.id)}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          isActive
+                            ? "border-primary/40 bg-primary/10 text-foreground"
+                            : "border-border hover:border-primary/20 hover:bg-accent/40"
+                        )}
+                      >
+                        <span>{snapshot.name}</span>
+                        {isActive ? <span className="text-xs font-medium text-primary">Selected</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                Snapshot
-                <span className="ml-auto truncate text-muted-foreground">{selectedSnapshotName}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-64">
-                {snapshots.map((snapshot) => (
-                  <DropdownMenuItem
-                    key={snapshot.id}
-                    onClick={() => onSnapshotChange(snapshot.id)}
-                    className={selectedSnapshot === snapshot.id ? "bg-accent" : ""}
-                  >
-                    {snapshot.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Grouping
+                  </h3>
+                  <span className="truncate text-xs text-muted-foreground">{selectedGroupName}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {groups.map((group) => {
+                    const isActive = selectedGroup === group.id;
+                    return (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() => onGroupChange(group.id)}
+                        className={cn(
+                          "rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          isActive
+                            ? "border-primary/40 bg-primary/10 text-foreground"
+                            : "border-border hover:border-primary/20 hover:bg-accent/40"
+                        )}
+                      >
+                        {group.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                Grouping
-                <span className="ml-auto truncate text-muted-foreground">{selectedGroupName}</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                {groups.map((group) => (
-                  <DropdownMenuItem
-                    key={group.id}
-                    onClick={() => onGroupChange(group.id)}
-                    className={selectedGroup === group.id ? "bg-accent" : ""}
-                  >
-                    {group.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                Filters
-                <span className="ml-auto truncate text-muted-foreground">
-                  {quickFilterLabels[activeQuickFilter]}
-                </span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                <DropdownMenuItem
-                  onClick={() => onQuickFilterChange?.("all")}
-                  className={activeQuickFilter === "all" ? "bg-accent" : ""}
-                >
-                  All Items
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onQuickFilterChange?.("over-budget")}
-                  className={activeQuickFilter === "over-budget" ? "bg-accent" : ""}
-                >
-                  <span className="mr-2 text-destructive">●</span>
-                  Over Budget
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onQuickFilterChange?.("under-budget")}
-                  className={activeQuickFilter === "under-budget" ? "bg-accent" : ""}
-                >
-                  <span className="mr-2 text-success">●</span>
-                  Under Budget
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onQuickFilterChange?.("no-activity")}
-                  className={activeQuickFilter === "no-activity" ? "bg-accent" : ""}
-                >
-                  <span className="mr-2 text-muted-foreground">●</span>
-                  No Activity
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                Sort
-                <span className="ml-auto text-muted-foreground">Coming soon</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="w-56">
-                <DropdownMenuItem disabled>Budget code (A-Z)</DropdownMenuItem>
-                <DropdownMenuItem disabled>Budget code (Z-A)</DropdownMenuItem>
-                <DropdownMenuItem disabled>Largest variance first</DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Filters
+                  </h3>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {quickFilterLabels[activeQuickFilter]}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(
+                    [
+                      { id: "all", label: "All Items", dotClassName: "bg-muted-foreground" },
+                      { id: "over-budget", label: "Over Budget", dotClassName: "bg-destructive" },
+                      { id: "under-budget", label: "Under Budget", dotClassName: "bg-success" },
+                      { id: "no-activity", label: "No Activity", dotClassName: "bg-muted-foreground/60" },
+                    ] as const
+                  ).map((filter) => {
+                    const isActive = activeQuickFilter === filter.id;
+                    return (
+                      <button
+                        key={filter.id}
+                        type="button"
+                        onClick={() => onQuickFilterChange?.(filter.id)}
+                        className={cn(
+                          "flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          isActive
+                            ? "border-primary/40 bg-primary/10 text-foreground"
+                            : "border-border hover:border-primary/20 hover:bg-accent/40"
+                        )}
+                      >
+                        <span className={cn("h-2 w-2 rounded-full", filter.dotClassName)} />
+                        <span>{filter.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
         <TooltipContent>View options</TooltipContent>

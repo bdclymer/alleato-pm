@@ -124,7 +124,7 @@ export function ProjectStatsCards({ projectId }: ProjectStatsCardsProps) {
           href={stat.href || "#"}
           className="block hover:no-underline"
         >
-          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+          <Card className="hover:border-border/80 transition-colors cursor-pointer h-full">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
                 <CardTitle className="text-sm font-medium text-foreground">

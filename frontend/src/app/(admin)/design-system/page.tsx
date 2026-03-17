@@ -129,7 +129,7 @@ export default function DesignSystemPage() {
                   <li key={item.id}>
                     <a
                       href={`#${item.id}`}
-                      className="block rounded-md px-2 py-[5px] text-[13px] text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+                      className="block rounded-md px-2 py-1 text-[13px] text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
                     >
                       {item.label}
                     </a>
@@ -157,7 +157,7 @@ export default function DesignSystemPage() {
           </p>
 
           {/* Mode Callout */}
-          <div className="bg-primary/[0.07] border border-primary/20 border-l-[3px] border-l-primary rounded-lg px-[18px] py-[14px] text-[13px] text-muted-foreground leading-[1.6] mb-14">
+          <div className="bg-primary/[0.07] border border-primary/20 border-l-[3px] border-l-primary rounded-lg px-4 py-3 text-[13px] text-muted-foreground leading-[1.6] mb-14">
             <strong className="text-foreground">
               Light mode is not dark mode inverted.
             </strong>{" "}

@@ -162,7 +162,7 @@ export function DocsChat() {
       {/* Floating Chat Button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+        className="fixed bottom-24 right-6 h-14 w-14 rounded-full shadow-sm z-50 bg-primary text-primary-foreground hover:bg-primary/90"
         size="icon"
         title="Ask Procore Docs"
       >
@@ -249,7 +249,7 @@ export function DocsChat() {
                   <div
                     className={`max-w-[85%] rounded-xl ${
                       message.role === "user"
-                        ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md"
+                        ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-background dark:bg-gray-800 border border-border dark:border-gray-700 shadow-sm"
                     }`}
                   >
@@ -327,7 +327,7 @@ export function DocsChat() {
                 <Button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                   size="icon"
                 >
                   <Send className="h-4 w-4" />

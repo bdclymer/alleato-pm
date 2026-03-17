@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Bot } from "lucide-react";
 import type { Agent, AgentEvent, GuardrailCheck } from "@/lib/types";
 import { AgentsList } from "./agents-list";
 import { Guardrails } from "../misc/guardrails";
@@ -55,8 +54,8 @@ export function RagAgentPanel({
 
   return (
     <div className="w-3/5 h-full flex flex-col border-r border-border bg-background rounded-xl shadow-sm">
-      <div className="bg-violet-600 text-white h-12 px-4 flex items-center gap-4 shadow-sm rounded-t-xl">
-        <Bot className="h-5 w-5" />
+      <div className="bg-primary text-primary-foreground h-12 px-4 flex items-center gap-4 shadow-sm rounded-t-xl">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-foreground/20 text-xs font-semibold">A</span>
         <h1 className="font-semibold text-sm sm:text-base lg:text-lg">
           Agent View
         </h1>

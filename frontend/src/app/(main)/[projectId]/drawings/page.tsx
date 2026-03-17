@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FileUp } from "lucide-react";
 
@@ -36,6 +37,7 @@ export default function ProjectDrawingsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const projectId = params.projectId ?? "";
   const activeTab = searchParams.get("tab") || "log";
@@ -113,24 +115,19 @@ export default function ProjectDrawingsPage() {
 
   const tabs = [
     {
-      label: "Drawing Log",
+      label: "Current Drawings",
       href: `/${projectId}/drawings`,
-      count: activeTab === "log" ? filteredItems.length : undefined,
-      isActive: activeTab === "log",
+      count: filteredItems.length,
+      isActive: true,
     },
     {
-      label: "Board",
-      href: `/${projectId}/drawings/board`,
+      label: "Drawing Sets",
+      href: `/${projectId}/drawings/sets`,
       isActive: false,
     },
     {
-      label: "Areas",
-      href: `/${projectId}/drawings/areas`,
-      isActive: false,
-    },
-    {
-      label: "Revisions",
-      href: `/${projectId}/drawings/revisions`,
+      label: "Recycle Bin",
+      href: `/${projectId}/drawings/recycle-bin`,
       isActive: false,
     },
   ];
@@ -164,12 +161,17 @@ export default function ProjectDrawingsPage() {
         title: "Drawings",
         description: "Manage construction drawings with revision tracking",
         actions: (
-          <DrawingUploadDialog projectId={projectId}>
-            <Button size="sm">
+          <>
+            <Button size="sm" onClick={() => setUploadOpen(true)}>
               <FileUp className="mr-2 h-4 w-4" />
-              Upload Drawing
+              Upload
             </Button>
-          </DrawingUploadDialog>
+            <DrawingUploadDialog
+              projectId={projectId}
+              open={uploadOpen}
+              onOpenChange={setUploadOpen}
+            />
+          </>
         ),
       }}
       tabs={tabs}
@@ -231,12 +233,10 @@ export default function ProjectDrawingsPage() {
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
         action: (
-          <DrawingUploadDialog projectId={projectId}>
-            <Button size="sm">
-              <FileUp className="mr-2 h-4 w-4" />
-              Upload your first drawing
-            </Button>
-          </DrawingUploadDialog>
+          <Button size="sm" onClick={() => setUploadOpen(true)}>
+            <FileUp className="mr-2 h-4 w-4" />
+            Upload your first drawing
+          </Button>
         ),
       }}
       features={{

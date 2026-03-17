@@ -19,7 +19,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isDocumentRecordType(value: string): value is DocumentRecordType {
-  return value === "prime-contract" || value === "commitment" || value === "change-order";
+  return (
+    value === "prime-contract" ||
+    value === "commitment" ||
+    value === "change-order" ||
+    value === "prime-contract-change-order"
+  );
 }
 
 export async function GET(request: Request, { params }: RouteParams) {

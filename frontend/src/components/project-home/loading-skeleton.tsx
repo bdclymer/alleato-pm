@@ -1,6 +1,6 @@
 export function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       <div className="max-w-[1200px] mx-auto px-8 py-8">
         {/* Header Skeleton */}
         <div className="mb-8">

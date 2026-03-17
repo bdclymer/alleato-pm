@@ -18,13 +18,13 @@ export default function RedocPage() {
           actions={
             <div className="flex flex-wrap gap-4">
               <Link
-                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition hover:border-border hover:bg-muted"
                 href="/redoc"
               >
                 Refresh view
               </Link>
               <Link
-                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition hover:border-border hover:bg-muted"
                 href="/api-docs"
               >
                 Open Swagger UI
@@ -34,7 +34,7 @@ export default function RedocPage() {
           className="pt-4"
         />
 
-        <div className="min-h-[640px] max-h-[calc(100vh-180px)] overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm">
+        <div className="min-h-[640px] max-h-[calc(100vh-180px)] overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-sm">
           <RedocStandalone
             specUrl={SPEC_URL}
             options={{

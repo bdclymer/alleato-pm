@@ -9,11 +9,12 @@ import { DateField } from "@/components/forms/DateField";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { FileUploadField } from "@/components/forms/FileUploadField";
+import { FormSection } from "@/components/forms/FormSection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Info, Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown } from "lucide-react";
 import { FormGrid, FormGridRow } from "@/components/forms";
 import {
   Dialog,
@@ -54,7 +55,6 @@ import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ImportFromBudgetModal } from "@/components/domain/contracts/ImportFromBudgetModal";
 
@@ -145,14 +145,6 @@ interface ContractFormProps {
   projectId: string;
 }
 
-interface SplitFormSectionProps {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-  className?: string;
-  rightHeaderActions?: React.ReactNode;
-}
-
 // ============================================================================
 // Constants
 // ============================================================================
@@ -166,39 +158,6 @@ const CONTRACT_STATUSES = [
   { value: "terminated", label: "Terminated" },
 ];
 
-function SplitFormSection({
-  title,
-  description,
-  children,
-  className,
-  rightHeaderActions,
-}: SplitFormSectionProps) {
-  return (
-    <section
-      className={cn(
-        "border-b border-border/70 pb-8 pt-8 first:pt-0 last:border-b-0 last:pb-0",
-        className,
-      )}
-    >
-      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">
-            {title}
-          </h3>
-          {description ? (
-            <p className="text-sm leading-6 text-muted-foreground">{description}</p>
-          ) : null}
-        </div>
-        <div className="space-y-6">
-          {rightHeaderActions ? (
-            <div className="flex justify-start sm:justify-end">{rightHeaderActions}</div>
-          ) : null}
-          <div>{children}</div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ============================================================================
 // Main Component
@@ -699,7 +658,7 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* GENERAL INFORMATION */}
       {/* ================================================================ */}
-      <SplitFormSection
+      <FormSection
         title="General Information"
         description="Set the core contract details and assign primary companies."
       >
@@ -827,12 +786,12 @@ export function ContractForm({
             </div>
           </FormGridRow>
         </FormGrid>
-      </SplitFormSection>
+      </FormSection>
 
       {/* ================================================================ */}
       {/* CONTRACT DATES */}
       {/* ================================================================ */}
-      <SplitFormSection
+      <FormSection
         title="Contract Dates"
         description="Track key schedule and execution milestones for this contract."
       >
@@ -917,9 +876,9 @@ export function ContractForm({
             </div>
           </FormGridRow>
         </FormGrid>
-      </SplitFormSection>
+      </FormSection>
 
-      <SplitFormSection
+      <FormSection
         title="Description & Attachments"
         description="Capture narrative context and supporting files for the agreement."
       >
@@ -955,7 +914,7 @@ export function ContractForm({
             </div>
           </div>
         </FormGrid>
-      </SplitFormSection>
+      </FormSection>
 
       {/* Add New Company Dialog */}
       <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
@@ -998,10 +957,10 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* SCHEDULE OF VALUES */}
       {/* ================================================================ */}
-      <SplitFormSection
+      <FormSection
         title="Schedule of Values"
         description="Build line items that define contract value and billing progress."
-        rightHeaderActions={
+        actions={
           <Select
             key={sovActionMenuKey}
             onValueChange={(value) => {
@@ -1026,14 +985,14 @@ export function ContractForm({
       >
         {/* SOV Table */}
         <div
-          className="overflow-x-auto"
+          className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20"
           data-testid="sov-table"
           data-accounting-method={formData.accountingMethod}
         >
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="bg-muted">
-                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground min-w-[340px]">
+              <tr className="bg-muted/70">
+                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground min-w-[340px]">
                   <div className="flex items-center gap-1">
                     Budget Code
                     <TooltipProvider>
@@ -1048,16 +1007,16 @@ export function ContractForm({
                     </TooltipProvider>
                   </div>
                 </th>
-                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground min-w-[240px]">
+                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground min-w-[240px]">
                   Description
                 </th>
-                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
+                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
                   Amount
                 </th>
-                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
+                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
                   Billed to Date
                 </th>
-                <th className="py-2 pr-3 text-left text-xs font-medium text-muted-foreground w-36">
+                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
                   Amount Remaining
                 </th>
               </tr>
@@ -1065,24 +1024,14 @@ export function ContractForm({
             <tbody>
               {(formData.sovItems || []).length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-4"
-                  >
-                    <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-md border border-dashed border-border bg-muted px-5 py-6 text-center">
+                  <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center space-y-2">
                       <p className="text-sm text-muted-foreground">
                         No line items yet.
                       </p>
-                      <Button
-                        onClick={addSOVLine}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        data-testid="sov-add-line-empty"
-                      >
-                        <Plus className="mr-2 h-3.5 w-3.5" />
-                        Add Line
-                      </Button>
+                      <p className="text-sm text-muted-foreground">
+                        Click "Add Line Item" to get started.
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -1117,7 +1066,7 @@ export function ContractForm({
                       className="border-b border-border last:border-b-0"
                       data-testid={`sov-line-${index}`}
                     >
-                      <td className="py-2 pr-3 align-middle">
+                      <td className="px-1 py-2 align-middle">
                         <Popover
                           open={openBudgetCodePopover === item.id}
                           onOpenChange={(open) =>
@@ -1185,7 +1134,7 @@ export function ContractForm({
                           </PopoverContent>
                         </Popover>
                       </td>
-                      <td className="py-2 pr-3 align-middle">
+                      <td className="px-1 py-2 align-middle">
                         <div className="flex items-center gap-2">
                           <Input
                             value={item.description}
@@ -1210,7 +1159,7 @@ export function ContractForm({
                           </Button>
                         </div>
                       </td>
-                      <td className="py-2 pr-3 align-middle">
+                      <td className="px-1 py-2 align-middle">
                         <Input
                           type="number"
                           value={item.amount || ""}
@@ -1226,11 +1175,11 @@ export function ContractForm({
                           }
                         />
                       </td>
-                      <td className="py-2 pr-3 text-right text-sm font-medium">
+                      <td className="px-1 py-2 text-right text-sm font-medium">
                         ${(item.billedToDate || 0).toFixed(2)}
                       </td>
                       <td
-                        className="py-2 pr-3 text-right text-sm font-medium"
+                        className="px-1 py-2 text-right text-sm font-medium"
                         data-testid="sov-line-amount-remaining"
                       >
                         ${((item.amount || 0) - (item.billedToDate || 0)).toFixed(2)}
@@ -1241,49 +1190,55 @@ export function ContractForm({
               )}
             </tbody>
             {(formData.sovItems || []).length > 0 ? (
-              <tfoot className="bg-muted">
-                <tr>
-                  <td
-                    colSpan={2}
-                    className="px-3 py-3"
-                  >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      type="button"
-                      onClick={addSOVLine}
-                      data-testid="sov-add-line-footer"
-                      className="h-10 w-10 p-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </td>
-                  <td className="py-3 pr-3 text-right font-semibold text-foreground">Total:</td>
-                  <td
-                    className="py-3 pr-3 text-right font-semibold text-foreground"
-                    data-testid="sov-total-amount"
-                  >
-                    ${sovTotals.amount.toFixed(2)}
-                  </td>
-                  <td
-                    className="py-3 pr-3 text-right font-semibold text-foreground"
-                    data-testid="sov-total-billed"
-                  >
-                    ${sovTotals.billedToDate.toFixed(2)}
-                  </td>
-                  <td
-                    className="py-3 pr-3 text-right font-semibold text-foreground"
-                    data-testid="sov-total-remaining"
-                  >
-                    ${sovTotals.amountRemaining.toFixed(2)}
-                  </td>
-                </tr>
-              </tfoot>
+              <tr className="hover:bg-muted">
+                <td colSpan={2} className="px-1 py-3 text-xs font-semibold text-foreground">
+                  Totals
+                </td>
+                <td
+                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+                  data-testid="sov-total-amount"
+                >
+                  ${sovTotals.amount.toFixed(2)}
+                </td>
+                <td
+                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+                  data-testid="sov-total-billed"
+                >
+                  ${sovTotals.billedToDate.toFixed(2)}
+                </td>
+                <td
+                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+                  data-testid="sov-total-remaining"
+                >
+                  ${sovTotals.amountRemaining.toFixed(2)}
+                </td>
+              </tr>
             ) : null}
           </table>
         </div>
 
-      </SplitFormSection>
+        <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              type="button"
+              size="default"
+              onClick={addSOVLine}
+              className="h-10 gap-2 px-4"
+              data-testid="sov-add-line-item"
+            >
+              <Plus className="h-4 w-4" />
+              Add Line Item
+            </Button>
+
+            {(formData.sovItems || []).length > 1 ? (
+              <div className="text-sm text-muted-foreground">
+                {(formData.sovItems || []).length} line items
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+      </FormSection>
 
       <ImportFromBudgetModal
         open={showImportFromBudget}
@@ -1295,7 +1250,7 @@ export function ContractForm({
       {/* ================================================================ */}
       {/* INCLUSIONS & EXCLUSIONS */}
       {/* ================================================================ */}
-      <SplitFormSection
+      <FormSection
         title="Inclusions & Exclusions"
         description="Clarify scope boundaries that are included and excluded."
       >
@@ -1319,12 +1274,12 @@ export function ContractForm({
             />
           </div>
         </FormGrid>
-      </SplitFormSection>
+      </FormSection>
 
       {/* ================================================================ */}
       {/* CONTRACT PRIVACY */}
       {/* ================================================================ */}
-      <SplitFormSection
+      <FormSection
         title="Contract Privacy"
         description="Using the privacy setting allows only project admins and select non-admin users access."
         className="border-b-0 pb-0"
@@ -1376,46 +1331,41 @@ export function ContractForm({
             </div>
           )}
         </div>
-      </SplitFormSection>
+      </FormSection>
 
       {/* ================================================================ */}
       {/* FORM ACTIONS */}
       {/* ================================================================ */}
-      <div className="grid gap-8 border-t pt-8 lg:gap-14 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-        <div />
-        <div className="flex items-center justify-between gap-4">
-          {/* Auto-fill button (development only) */}
-          {isDevelopment ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleAutoFill}
-              className="gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              Auto-fill
-            </Button>
-          ) : (
-            <div />
-          )}
+      <div className="flex items-center justify-between gap-4 border-t pt-8">
+        {isDevelopment ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAutoFill}
+            className="gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Auto-fill
+          </Button>
+        ) : (
+          <div />
+        )}
 
-          {/* Main actions */}
-          <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              variant="default"
-            >
-              {isSubmitting
-                ? "Creating..."
-                : mode === "create"
-                  ? "Create"
-                  : "Update"}
-            </Button>
-          </div>
+        <div className="flex gap-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            variant="default"
+          >
+            {isSubmitting
+              ? "Creating..."
+              : mode === "create"
+                ? "Create"
+                : "Update"}
+          </Button>
         </div>
       </div>
 

@@ -81,3 +81,13 @@ YokeFlow/
 
 # Test artifacts
 frontend/tests/test-results-*
+
+# Temp files
+tmp/
+
+# Test/run artifacts
+e2e-screenshots/
+output/
+tests/agent-browser-runs/
+frontend/tests/agent-browser-runs/
+logs/

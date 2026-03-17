@@ -72,7 +72,7 @@ function SidebarFlyout({
           : "pointer-events-none -translate-x-1 opacity-0"
       )}
     >
-      <div className="w-52 rounded-lg border border-border/60 bg-popover py-2 shadow-lg">
+      <div className="w-52 rounded-lg border border-border/60 bg-popover py-2 shadow-sm">
         <div className="px-3 pb-1.5 pt-0.5">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
             {group.label}

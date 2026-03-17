@@ -529,7 +529,7 @@ export function DrawingViewer({
             onLoadError={onDocumentLoadError}
             loading=""
             error=""
-            className="shadow-lg"
+            className="shadow-sm"
           >
             <Page
               pageNumber={viewport.pageNumber}

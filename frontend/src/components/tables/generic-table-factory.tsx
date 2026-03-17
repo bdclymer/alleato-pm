@@ -1572,8 +1572,8 @@ export function GenericDataTable({
           <Card
             key={(row.id as string) || idx}
             className={cn(
-              "group hover:shadow-md hover-lift transition-smooth cursor-pointer",
-              "border border-neutral-200 bg-white",
+              "group hover-lift transition-smooth cursor-pointer",
+              "border border-border bg-card",
               selectedIds.has(row.id as string | number) &&
                 "ring-2 ring-primary border-primary/50",
             )}
@@ -1594,7 +1594,7 @@ export function GenericDataTable({
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">
+                    <p className="text-sm sm:text-base font-semibold text-foreground leading-tight">
                       {renderCellContent(primaryColumn, row)}
                     </p>
                     {secondaryColumn && (
@@ -1620,10 +1620,10 @@ export function GenericDataTable({
                   .slice(0, 3)
                   .map((column) => (
                     <div key={column.id} className="flex justify-between items-start gap-2">
-                      <span className="text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         {column.label}
                       </span>
-                      <div className="text-xs sm:text-sm text-gray-900 text-right flex-1 min-w-0">
+                      <div className="text-xs sm:text-sm text-foreground text-right flex-1 min-w-0">
                         {renderCellContent(column, row)}
                       </div>
                     </div>
@@ -1659,7 +1659,7 @@ export function GenericDataTable({
             key={(row.id as string) || idx}
             className={cn(
               "flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 hover-lift transition-smooth cursor-pointer",
-              "border border-neutral-200",
+              "border border-border",
               selectedIds.has(row.id as string | number) &&
                 "ring-2 ring-primary border-primary/50",
             )}
@@ -1680,7 +1680,7 @@ export function GenericDataTable({
               <div className="flex-1 min-w-0">
                 {/* Main content row for mobile */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                  <p className="text-sm sm:text-base font-medium text-gray-900 truncate flex-1">
+                  <p className="text-sm sm:text-base font-medium text-foreground truncate flex-1">
                     {renderCellContent(primaryColumn, row)}
                   </p>
                   {secondaryColumn && (
@@ -1702,8 +1702,8 @@ export function GenericDataTable({
                     .slice(0, 4)
                     .map((column) => (
                       <span key={column.id} className="flex-shrink-0">
-                        <span className="font-medium text-gray-600">{column.label}:</span>{" "}
-                        <span className="text-gray-900">{renderCellContent(column, row)}</span>
+                        <span className="font-medium text-muted-foreground">{column.label}:</span>{" "}
+                        <span className="text-foreground">{renderCellContent(column, row)}</span>
                       </span>
                     ))}
                 </div>

@@ -325,7 +325,7 @@ export function BudgetModificationsModal({
                   return (
                     <div
                       key={mod.id}
-                      className="rounded-xl border border-slate-200 shadow-sm bg-background hover:shadow-md transition-shadow"
+                      className="rounded-xl border border-border shadow-sm bg-background transition-shadow"
                     >
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
@@ -359,7 +359,7 @@ export function BudgetModificationsModal({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>
                               Effective: {formatDate(mod.effectiveDate)}
@@ -411,7 +411,7 @@ export function BudgetModificationsModal({
                 Loading...
               </div>
             ) : modifications.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+              <div className="rounded-xl border border-border bg-muted p-6 text-center">
                 <p className="text-muted-foreground">No modifications found</p>
               </div>
             ) : (
@@ -419,9 +419,9 @@ export function BudgetModificationsModal({
                 {modifications.map((mod) => (
                   <div
                     key={mod.id}
-                    className="rounded-xl border border-slate-200 shadow-sm bg-background"
+                    className="rounded-xl border border-border shadow-sm bg-background"
                   >
-                    <div className="p-4 border-b border-slate-100">
+                    <div className="p-4 border-b border-border">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-blue-600">
@@ -455,7 +455,7 @@ export function BudgetModificationsModal({
                           {mod.lines.map((line) => (
                             <tr
                               key={line.id}
-                              className="border-t border-slate-100"
+                              className="border-t border-border"
                             >
                               <td className="py-2 font-medium">
                                 {line.costCodeId}

@@ -712,7 +712,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
       {...listeners}
       className={cn(
         "border border-border shadow-sm cursor-grab active:cursor-grabbing hover:bg-accent/30 transition-colors duration-150 group",
-        isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-lg ring-2 ring-primary"
+        isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-md ring-2 ring-primary"
       )}
       onClick={() => onTaskClick(task)}
     >
@@ -789,7 +789,7 @@ function TaskCardOverlay({ task }: { task: ScheduleTaskWithHierarchy }) {
   const priority = getTaskPriority(task);
 
   return (
-    <Card className="cursor-grabbing shadow-xl ring-2 ring-primary/20 w-72">
+    <Card className="cursor-grabbing shadow-sm ring-1 ring-primary/30 w-72">
       <CardContent className="p-4 space-y-2">
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
