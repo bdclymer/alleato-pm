@@ -73,10 +73,11 @@ export function useDrawingUpload(projectId: string) {
         },
       ]);
 
+      const fileName = file.name.replace(/\.[^/.]+$/, "");
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("drawing_number", metadata.drawing_number);
-      formData.append("title", metadata.title);
+      formData.append("drawing_number", metadata.drawing_number || fileName);
+      formData.append("title", metadata.title || fileName);
       if (metadata.discipline) formData.append("discipline", metadata.discipline);
       if (metadata.drawing_type) formData.append("drawing_type", metadata.drawing_type);
       formData.append("revision_number", metadata.revision_number || "A");

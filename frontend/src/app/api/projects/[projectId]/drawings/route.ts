@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
 import type { DrawingFilters } from "@/services/DrawingService";
 
@@ -38,7 +39,7 @@ export async function GET(
       : undefined,
   };
 
-  const service = new DrawingService(supabase);
+  const service = new DrawingService(createServiceClient());
   const result = await service.list(projectId, filters);
 
   if (result.error) {
@@ -95,7 +96,7 @@ export async function POST(
       );
     }
 
-    const service = new DrawingService(supabase);
+    const service = new DrawingService(createServiceClient());
 
     // Step 1: Create the drawing
     const createResult = await service.create(
@@ -143,7 +144,7 @@ export async function POST(
         revision_number: revisionNumber,
         drawing_date: drawingDate,
         received_date: receivedDate,
-        status: "active",
+        status: "approved",
         file_url: uploadResult.data.url,
         file_name: file.name,
         file_size: file.size,

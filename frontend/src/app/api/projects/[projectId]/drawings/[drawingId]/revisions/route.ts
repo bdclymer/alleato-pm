@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
 
 /**
@@ -21,7 +22,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new DrawingService(supabase);
+  const service = new DrawingService(createServiceClient());
   const result = await service.listRevisions(drawingId);
 
   if (result.error) {
@@ -75,7 +76,7 @@ export async function POST(
       );
     }
 
-    const service = new DrawingService(supabase);
+    const service = new DrawingService(createServiceClient());
 
     // Step 1: Upload the file
     const uploadResult = await service.uploadFile(projectId, drawingId, file);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingAreaService } from "@/services/DrawingAreaService";
 
 /**
@@ -21,7 +22,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new DrawingAreaService(supabase);
+  const service = new DrawingAreaService(createServiceClient());
   const result = await service.list(projectId);
 
   if (result.error) {
@@ -56,7 +57,7 @@ export async function POST(
   try {
     const body = await request.json();
 
-    const service = new DrawingAreaService(supabase);
+    const service = new DrawingAreaService(createServiceClient());
     const result = await service.create(projectId, body, user.id);
 
     if (result.error) {

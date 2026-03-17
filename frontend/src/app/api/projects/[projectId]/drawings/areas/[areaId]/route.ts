@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingAreaService } from "@/services/DrawingAreaService";
 
 /**
@@ -24,7 +25,7 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    const service = new DrawingAreaService(supabase);
+    const service = new DrawingAreaService(createServiceClient());
     const result = await service.update(areaId, body);
 
     if (result.error) {
@@ -72,7 +73,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = new DrawingAreaService(supabase);
+  const service = new DrawingAreaService(createServiceClient());
   const result = await service.delete(areaId);
 
   if (result.error) {

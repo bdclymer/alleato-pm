@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingSetService } from "@/services/DrawingSetService";
 
 /**
@@ -24,7 +25,7 @@ export async function PATCH(
   try {
     const body = await request.json();
 
-    const service = new DrawingSetService(supabase);
+    const service = new DrawingSetService(createServiceClient());
     const result = await service.update(setId, body);
 
     if (result.error) {
@@ -76,7 +77,7 @@ export async function POST(
       );
     }
 
-    const service = new DrawingSetService(supabase);
+    const service = new DrawingSetService(createServiceClient());
     const result = await service.archive(setId);
 
     if (result.error) {

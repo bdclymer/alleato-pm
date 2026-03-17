@@ -475,7 +475,7 @@ export class DrawingService {
           drawing_set_id: input.drawing_set_id || null,
           drawing_date: input.drawing_date || null,
           received_date: input.received_date,
-          status: input.status || "active",
+          status: input.status || "approved",
           file_url: input.file_url,
           file_name: input.file_name,
           file_size: input.file_size,
